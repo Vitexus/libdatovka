@@ -1,7 +1,9 @@
+#define _XOPEN_SOURCE 500   /* strdup from string.h */
 #include <stdlib.h>
 #include <string.h>
 #include <curl/curl.h>
 #include "isds.h"
+#include "utils.h"
 
 #define _(x) (x)
 
@@ -74,7 +76,7 @@ struct isds_ctx *isds_ctx_create(void) {
     context = malloc(sizeof(struct isds_ctx));
     memset(context, 0, sizeof(*context));
     return context;
-}
+};
 
 
 /* Destroy ISDS context and free memmory.
@@ -83,6 +85,14 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
     if (!context || !*context) {
         return IE_ERROR;
     }
+    
+    /* Free internal structures */
+    if ((*context)->url) free((*context)->url);
+    if ((*context)->curl) {
+        curl_easy_cleanup((*context)->curl);
+        (*context)->curl = NULL;
+    }
+
     free(*context);
     *context = NULL;
     return IE_SUCCESS;
@@ -143,16 +153,27 @@ isds_error isds_set_timeout(struct isds_ctx *context, const unsigned int timeout
 isds_error isds_login(struct isds_ctx *context, const char *url, const char *username,
         const char *password, const char *certificate, const char* key) {
     CURLcode curl_err;
+    char *login_url;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!url || !username || !password) return IE_INVAL;
     if (certificate || key) return IE_NOTSUP;
 
+    if (context->url) free(context->url);
+    context->url = strdup(url);
+    if (!(context->url))
+        return IE_NOMEM;
+
     context->curl = curl_easy_init();
     if (!(context->curl))
         return IE_NETWORK;
 
-    curl_err = curl_easy_setopt(context->curl, CURLOPT_URL, url);
+    login_url = astrcat(context->url, "login");
+    if (!login_url) return IE_NOMEM;
+
+    curl_err = curl_easy_setopt(context->curl, CURLOPT_URL, login_url);
+    free(login_url);
+
     if (curl_err) {
         isds_log_message(context, curl_easy_strerror(curl_err));
         curl_easy_cleanup(context->curl);
@@ -179,6 +200,7 @@ isds_error isds_logout(struct isds_ctx *context) {
 
     if (context->curl) {
         curl_easy_cleanup(context->curl);
+        context->curl = NULL;
     }
 
     if (!(context->cookie)) return IE_NOT_LOGGED_IN;

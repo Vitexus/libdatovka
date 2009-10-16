@@ -6,8 +6,8 @@ all: $(SONAME) libisds.so
 libisds.so: $(SONAME)
 	ln -s $(SONAME) $@
 
-$(SONAME): isds.o
-	$(CC) $(CFLAGS) -fPIC -DPIC -shared -Wl,-soname=$(SONAME) -o $@ $<
+$(SONAME): isds.o utils.o
+	$(CC) $(CFLAGS) -fPIC -DPIC -shared -Wl,-soname=$(SONAME) -o $@ $^
 
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -fPIC -DPIC -c -o $@ $<
