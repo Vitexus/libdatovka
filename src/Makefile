@@ -6,7 +6,7 @@ all: $(SONAME) libisds.so
 libisds.so: $(SONAME)
 	ln -s $(SONAME) $@
 
-$(SONAME): isds.o utils.o
+$(SONAME): isds.o utils.o soap.o
 	$(CC) $(CFLAGS) -lcurl -shared -Wl,-soname=$(SONAME) -o $@ $^
 
 %.o: %.c %.h

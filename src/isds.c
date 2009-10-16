@@ -1,23 +1,11 @@
 #define _XOPEN_SOURCE 500   /* strdup from string.h */
 #include <stdlib.h>
 #include <string.h>
-#include <curl/curl.h>
-#include "isds.h"
+#include "isds_priv.h"
 #include "utils.h"
+#include "soap.h"
 
 #define _(x) (x)
-
-struct isds_ctx {
-    unsigned int timeout;   /* milliseconds */
-    char *url;              /* URL of the ISDS web service */
-    char *username;
-    char *password;
-    char *client_certificate;
-    char *private_key;
-    char *cookie;           /* Autorization token for ISDS HTTP session */
-    CURL *curl;             /* CURL session handle */
-    char *long_message;     /* message buffer */
-};
 
 
 /* Initialize ISDS library.
@@ -111,7 +99,7 @@ char *isds_long_message(const struct isds_ctx *context) {
 
 /* Stores message into context' long_message buffer.
  * Application can pick the message up using isds_long_message(). */
-isds_error isds_log_message(struct isds_ctx *context, const char *message) {
+_hidden isds_error isds_log_message(struct isds_ctx *context, const char *message) {
     char *buffer;
     size_t length;
     
@@ -152,8 +140,9 @@ isds_error isds_set_timeout(struct isds_ctx *context, const unsigned int timeout
  * */
 isds_error isds_login(struct isds_ctx *context, const char *url, const char *username,
         const char *password, const char *certificate, const char* key) {
-    CURLcode curl_err;
-    char *login_url;
+    isds_error soap_err;
+    void *response = NULL;
+    size_t response_length;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!url || !username || !password) return IE_INVAL;
@@ -166,29 +155,17 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
 
     context->curl = curl_easy_init();
     if (!(context->curl))
-        return IE_NETWORK;
+        return IE_ERROR;
 
-    login_url = astrcat(context->url, "login");
-    if (!login_url) return IE_NOMEM;
-
-    curl_err = curl_easy_setopt(context->curl, CURLOPT_URL, login_url);
-    free(login_url);
-
-    if (curl_err) {
-        isds_log_message(context, curl_easy_strerror(curl_err));
+    /* TODO: Pass username and password */
+    soap_err = soap(context, "login", NULL, &response, &response_length);
+    free(response);
+    
+    if (soap_err) {
         curl_easy_cleanup(context->curl);
         context->curl = NULL;
         return IE_NETWORK;
     }
-
-    curl_err = curl_easy_perform(context->curl);
-    if (curl_err) {
-        isds_log_message(context, curl_easy_strerror(curl_err));
-        curl_easy_cleanup(context->curl);
-        context->curl = NULL;
-        return IE_NETWORK;
-    }
-
 
     return IE_NOTSUP;
 }

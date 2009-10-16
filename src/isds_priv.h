@@ -1,0 +1,24 @@
+#ifndef __ISDS_PRIV_H__
+#define __ISDS_PRIV_H__
+
+/* Structures not to export outside library */
+
+#include "isds.h"
+#include <curl/curl.h>
+
+struct isds_ctx {
+    unsigned int timeout;   /* milliseconds */
+    char *url;              /* URL of the ISDS web service */
+    char *username;
+    char *password;
+    char *client_certificate;
+    char *private_key;
+    char *cookie;           /* Autorization token for ISDS HTTP session */
+    CURL *curl;             /* CURL session handle */
+    char *long_message;     /* message buffer */
+};
+
+/* Stores message into context' long_message buffer.
+ * Application can pick the message up using isds_long_message(). */
+isds_error isds_log_message(struct isds_ctx *context, const char *message);
+#endif

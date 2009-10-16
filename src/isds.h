@@ -1,6 +1,9 @@
 #ifndef __ISDS_H__
 #define __ISDS_H__
 
+/* Public interface for libisds.
+ * Private declarations in isds_priv.h. */
+
 struct isds_ctx;    /* Context for specific ISDS box */
 
 typedef enum {
