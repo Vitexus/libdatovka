@@ -1,10 +1,17 @@
 CFLAGS=-std=c99 -Wall -Werror -lcurl
-SONAME=isds
+SONAME=libisds.so.0
 
-all: lib$(SONAME).so
+all: $(SONAME) libisds.so
 
-lib$(SONAME).so: isds.c isds.h
-	$(CC) $(CFLAGS) -fPIC -DPIC -shared -Wl,-soname=$(SO_NAME) -o $@ $<
+libisds.so: $(SONAME)
+	ln -s $(SONAME) $@
+
+$(SONAME): isds.o
+	$(CC) $(CFLAGS) -fPIC -DPIC -shared -Wl,-soname=$(SONAME) -o $@ $<
+
+%.o: %.c %.h
+	$(CC) $(CFLAGS) -fPIC -DPIC -c -o $@ $<
+
 
 clean:
-	-rm -f lib$(SONAME).so
+	-rm -f libisds.so $(SONAME) *.o
