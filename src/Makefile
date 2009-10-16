@@ -1,4 +1,4 @@
-CFLAGS=-std=c99 -Wall -Werror -lcurl
+CFLAGS=-std=c99 -Wall -Werror -fPIC -DPIC
 SONAME=libisds.so.0
 
 all: $(SONAME) libisds.so
@@ -7,10 +7,10 @@ libisds.so: $(SONAME)
 	ln -s $(SONAME) $@
 
 $(SONAME): isds.o utils.o
-	$(CC) $(CFLAGS) -fPIC -DPIC -shared -Wl,-soname=$(SONAME) -o $@ $^
+	$(CC) $(CFLAGS) -lcurl -shared -Wl,-soname=$(SONAME) -o $@ $^
 
 %.o: %.c %.h
-	$(CC) $(CFLAGS) -fPIC -DPIC -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 
 clean:
