@@ -1,5 +1,5 @@
-#ifndef __ISDS_H__
-#define __ISDS_H__
+#ifndef __ISDS_ISDS_H__
+#define __ISDS_ISDS_H__
 
 /* Public interface for libisds.
  * Private declarations in isds_priv.h. */

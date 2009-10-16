@@ -1,5 +1,5 @@
-#ifndef __SOAP_H__
-#define __SOAP_H__
+#ifndef __ISDS_SOAP_H__
+#define __ISDS_SOAP_H__
 
 #include "isds.h"
 

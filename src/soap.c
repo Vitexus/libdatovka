@@ -1,7 +1,6 @@
 #include "isds_priv.h"
 #include "soap.h"
 #include "utils.h"
-#include <curl/curl.h>
 #include <stdlib.h>
 
 /* Do SOAP request.

@@ -1,5 +1,5 @@
-#ifndef __UTILS_H__
-#define __UTILS_H__
+#ifndef __ISDS_UTILS_H__
+#define __ISDS_UTILS_H__
 
 /* _hidden macro marks library private symbols. GCC can exclude them from global
  * symbols table */

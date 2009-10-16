@@ -1,5 +1,5 @@
-#ifndef __ISDS_PRIV_H__
-#define __ISDS_PRIV_H__
+#ifndef __ISDS_ISDS_PRIV_H__
+#define __ISDS_ISDS_PRIV_H__
 
 /* Structures not to export outside library */
 
