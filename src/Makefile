@@ -2,7 +2,6 @@ CFLAGS=-std=c99 -Wall -Werror -fPIC -DPIC
 SONAME=libisds.so.0
 SOURCES=isds.c utils.c soap.c
 
-#include Makefile.deps
 
 all: $(SONAME) libisds.so
 
@@ -15,8 +14,11 @@ $(SONAME): $(SOURCES:%.c=%.o)
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-depend:
-	makedepend -- $(CFLAGS) -- $(SOURCES)
-
 clean:
 	-rm -f libisds.so $(SONAME) *.o
+
+depend:
+	#makedepend -- $(CFLAGS) -- $(SOURCES)
+	for F in $(SOURCES); do cpp $(CFLAGS) -MM "$$F"; done > Makefile.deps
+
+include Makefile.deps

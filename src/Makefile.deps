@@ -1,0 +1,3 @@
+isds.o: isds.c isds_priv.h isds.h utils.h soap.h
+utils.o: utils.c utils.h
+soap.o: soap.c isds_priv.h isds.h soap.h utils.h
