@@ -177,7 +177,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
     if (!url || !username || !password) return IE_INVAL;
     if (certificate || key) return IE_NOTSUP;
 
-    if (context->url) free(context->url);
+    free(context->url);
     context->url = strdup(url);
     if (!(context->url))
         return IE_NOMEM;
@@ -202,7 +202,8 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
     if (response_length == 25 &&
             !strncmp(response, "<message>Hello</message>\n", 25)) {
         err = IE_SUCCESS;
-        context->cookie = realloc(context->cookie, sizeof("42"));
+        free(context->cookie);
+        context->cookie = strdup("42");
         if (!context->cookie)
             err = IE_NOMEM;
     }
