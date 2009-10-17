@@ -168,6 +168,7 @@ isds_error isds_set_timeout(struct isds_ctx *context, const unsigned int timeout
  * */
 isds_error isds_login(struct isds_ctx *context, const char *url, const char *username,
         const char *password, const char *certificate, const char* key) {
+    isds_error err = IE_NOT_LOGGED_IN;
     isds_error soap_err;
     void *response = NULL;
     size_t response_length;
@@ -185,7 +186,9 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
     if (!(context->curl))
         return IE_ERROR;
 
-    /* TODO: Pass username and password */
+    /* TODO: Pass username and password
+     * Real ISDS login is HTTPS digest authentication with optional X.509 TLS
+     * client authentication. */
     soap_err = soap(context, "login", NULL, &response, &response_length);
     
     if (soap_err) {
@@ -195,9 +198,18 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
         return IE_NETWORK;
     }
 
+    /* XXX: Dummy authentication */
+    if (response_length == 25 &&
+            !strncmp(response, "<message>Hello</message>\n", 25)) {
+        err = IE_SUCCESS;
+        context->cookie = realloc(context->cookie, sizeof("42"));
+        if (!context->cookie)
+            err = IE_NOMEM;
+    }
+
     free(response);
 
-    return IE_NOTSUP;
+    return err;
 }
 
 

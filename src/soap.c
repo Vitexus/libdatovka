@@ -95,6 +95,9 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     *response = body.data;
     *length = body.length;
 
+    /* TODO: Check for Content-Type */
+    /* TODO: Return XML Tree */
+
 leave:
     free(url);
     if (err) {

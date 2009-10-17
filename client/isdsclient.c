@@ -33,6 +33,8 @@ int main(int argc, char **argv) {
     if (err) {
         printf("isds_login() failed: %s: %s\n", isds_strerror(err),
                 isds_long_message(ctx));
+    } else {
+        printf("Logged in :)\n");
     }
 
     err = isds_logout(ctx);
