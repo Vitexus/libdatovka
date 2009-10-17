@@ -38,7 +38,9 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
 
     curl_err = curl_easy_perform(context->curl);
     if (curl_err) {
-        isds_log_message(context, curl_easy_strerror(curl_err));
+        isds_log_message(context, url);
+        isds_append_message(context, _(": "));
+        isds_append_message(context, curl_easy_strerror(curl_err));
         err = IE_NETWORK;
         goto leave;
     }

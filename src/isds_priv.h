@@ -6,6 +6,8 @@
 #include "isds.h"
 #include <curl/curl.h>
 
+#define _(x) (x)
+
 struct isds_ctx {
     unsigned int timeout;   /* milliseconds */
     char *url;              /* URL of the ISDS web service */

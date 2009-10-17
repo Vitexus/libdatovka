@@ -5,8 +5,6 @@
 #include "utils.h"
 #include "soap.h"
 
-#define _(x) (x)
-
 
 /* Initialize ISDS library.
  * Global function, must be called before other functions. */
