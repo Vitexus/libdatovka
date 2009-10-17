@@ -16,16 +16,16 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         const char *request, void **response, size_t *length ) {
 
     CURLcode curl_err;
-    char *login_url;
+    char *url;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!response || !length) return IE_INVAL;
 
-    login_url = astrcat(context->url, "login");
-    if (!login_url) return IE_NOMEM;
+    url = astrcat(context->url, "login");
+    if (!url) return IE_NOMEM;
 
-    curl_err = curl_easy_setopt(context->curl, CURLOPT_URL, login_url);
-    free(login_url);
+    curl_err = curl_easy_setopt(context->curl, CURLOPT_URL, url);
+    free(url);
     if (!curl_err) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_FAILONERROR, 1);
     }
