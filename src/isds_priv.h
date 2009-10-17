@@ -21,4 +21,10 @@ struct isds_ctx {
 /* Stores message into context' long_message buffer.
  * Application can pick the message up using isds_long_message(). */
 isds_error isds_log_message(struct isds_ctx *context, const char *message);
+
+/* Appends message into context' long_message buffer.
+ * Application can pick the message up using isds_long_message().
+ * NULL message has void effect. */
+isds_error isds_append_message(struct isds_ctx *context, const char *message);
+
 #endif

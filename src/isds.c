@@ -122,6 +122,32 @@ _hidden isds_error isds_log_message(struct isds_ctx *context,
 }
 
 
+/* Appends message into context' long_message buffer.
+ * Application can pick the message up using isds_long_message().
+ * NULL message has void effect. */
+_hidden isds_error isds_append_message(struct isds_ctx *context,
+        const char *message) {
+    char *buffer;
+    size_t old_length, length;
+    
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!message) return IE_SUCCESS;
+    if (!context->long_message)
+        return isds_log_message(context, message);
+    
+    old_length = strlen(context->long_message);
+    /* FIXME: Check for integer overflow */
+    length = 1 + old_length + strlen(message);
+    buffer = realloc(context->long_message, length);
+    if (!buffer) return IE_NOMEM;
+
+    strcpy(buffer + old_length, message);
+
+    context->long_message = buffer;
+    return IE_SUCCESS;
+}
+
+
 /* Connect to given url.
  * It just makes TCP connection to ISDS server found in @url hostname part. */
 /*int isds_connect(struct isds_ctx *context, const char *url);*/
