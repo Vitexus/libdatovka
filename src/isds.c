@@ -98,20 +98,24 @@ char *isds_long_message(const struct isds_ctx *context) {
 
 
 /* Stores message into context' long_message buffer.
- * Application can pick the message up using isds_long_message(). */
-_hidden isds_error isds_log_message(struct isds_ctx *context, const char *message) {
+ * Application can pick the message up using isds_long_message().
+ * NULL @message truncates the buffer but does not deallocate it. */
+_hidden isds_error isds_log_message(struct isds_ctx *context,
+        const char *message) {
     char *buffer;
     size_t length;
     
     if (!context) return IE_INVALID_CONTEXT;
-    if (!message) return IE_INVAL;
     
     /* FIXME: Check for integer overflow */
-    length = 1 + strlen(message);
+    length = 1 + (message) ? strlen(message) : 0;
     buffer = realloc(context->long_message, length);
     if (!buffer) return IE_NOMEM;
 
-    strncpy(buffer, message, length);
+    if (message)
+        strcpy(buffer, message);
+    else
+        *buffer = '\0';
 
     context->long_message = buffer;
     return IE_SUCCESS;

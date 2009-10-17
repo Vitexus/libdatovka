@@ -17,6 +17,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
 
     CURLcode curl_err;
     char *url;
+    isds_error err = IE_SUCCESS;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!response || !length) return IE_INVAL;
@@ -25,26 +26,30 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     if (!url) return IE_NOMEM;
 
     curl_err = curl_easy_setopt(context->curl, CURLOPT_URL, url);
-    free(url);
     if (!curl_err) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_FAILONERROR, 1);
     }
 
     if (curl_err) {
         isds_log_message(context, curl_easy_strerror(curl_err));
-        curl_easy_cleanup(context->curl);
-        context->curl = NULL;
-        return IE_NETWORK;
+        err = IE_NETWORK;
+        goto leave;
     }
 
     curl_err = curl_easy_perform(context->curl);
     if (curl_err) {
         isds_log_message(context, curl_easy_strerror(curl_err));
-        curl_easy_cleanup(context->curl);
-        context->curl = NULL;
-        return IE_NETWORK;
+        err = IE_NETWORK;
+        goto leave;
     }
 
     *length = 0; 
-    return IE_SUCCESS;
+
+leave:
+    free(url);
+    if (err) {
+        curl_easy_cleanup(context->curl);
+        context->curl = NULL;
+    }
+    return err;
 }
