@@ -187,13 +187,15 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
 
     /* TODO: Pass username and password */
     soap_err = soap(context, "login", NULL, &response, &response_length);
-    free(response);
     
     if (soap_err) {
+        free(response);
         curl_easy_cleanup(context->curl);
         context->curl = NULL;
         return IE_NETWORK;
     }
+
+    free(response);
 
     return IE_NOTSUP;
 }
