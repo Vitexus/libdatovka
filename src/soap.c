@@ -21,7 +21,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     if (!context) return IE_INVALID_CONTEXT;
     if (!response || !length) return IE_INVAL;
 
-    url = astrcat(context->url, "login");
+    url = astrcat(context->url, file);
     if (!url) return IE_NOMEM;
 
     curl_err = curl_easy_setopt(context->curl, CURLOPT_URL, url);
