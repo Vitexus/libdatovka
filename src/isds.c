@@ -12,13 +12,20 @@ isds_error isds_init(void) {
     if (curl_global_init(CURL_GLOBAL_ALL)) {
         return IE_ERROR;
     }
+
+    /* This can _exit() current program. Find not so assertive check. */
+    LIBXML_TEST_VERSION
+
     return IE_SUCCESS;
 }
+
 
 /* Deinicialize ISDS library.
  * Global function, must be called as last library function. */
 isds_error isds_cleanup(void) {
     curl_global_cleanup();
+    xmlCleanupParser();
+
     return IE_SUCCESS;
 }
 
