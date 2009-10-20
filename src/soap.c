@@ -43,13 +43,15 @@ static size_t write_body(void *buffer, size_t size, size_t nmemb, void *userp) {
  * @file is a (CGI) file of SOAP URL,
  * @context holds the base URL,
  * @request is XML document with request (NULL terminated). 
+ * @request_length is lenght of @request in bytes
  * @file and @request must be NULL rather than empty strings, if the should
  * not be signaled in the SOAP request.
  * @reponse is automatically reallocated() buffer to fit SOAP response with
- * @length (does not need to match allocates memory exactly. You must free() the
- * @response. */
+ * @response_length (does not need to match allocatef memory exactly. You must
+ * free() the @response.  Side effect: message buffer */
 _hidden isds_error soap(struct isds_ctx *context, const char *file,
-        const char *request, void **response, size_t *length) {
+        const void *request, const size_t request_length,
+        void **response, size_t *response_length) {
 
     CURLcode curl_err;
     char *url;
@@ -58,7 +60,8 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
 
 
     if (!context) return IE_INVALID_CONTEXT;
-    if (!response || !length) return IE_INVAL;
+    if (request_length > 0 && !request) return IE_INVAL;
+    if (!response || !response_length) return IE_INVAL;
 
     url = astrcat(context->url, file);
     if (!url) return IE_NOMEM;
@@ -83,6 +86,8 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
 
+    /* FIXME: POST request */
+
     curl_err = curl_easy_perform(context->curl);
     if (curl_err) {
         isds_log_message(context, url);
@@ -93,7 +98,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     }
 
     *response = body.data;
-    *length = body.length;
+    *response_length = body.length;
 
     /* TODO: Check for Content-Type */
     /* TODO: Return XML Tree */
@@ -155,4 +160,4 @@ leave:
  *
  * void xmlFreeDoc(xmlDocPtr cur)
  *  Free up all the structures used by a document, tree included.
- *
+ */

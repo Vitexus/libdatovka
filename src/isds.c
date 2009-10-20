@@ -177,6 +177,8 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
         const char *password, const char *certificate, const char* key) {
     isds_error err = IE_NOT_LOGGED_IN;
     isds_error soap_err;
+    char request[] =  "<DummyOperation/>";
+    size_t request_length = sizeof(request);
     void *response = NULL;
     size_t response_length;
 
@@ -196,7 +198,8 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
     /* TODO: Pass username and password
      * Real ISDS login is HTTPS digest authentication with optional X.509 TLS
      * client authentication. */
-    soap_err = soap(context, "login", NULL, &response, &response_length);
+    soap_err = soap(context, "login", request, request_length, &response,
+            &response_length);
     
     if (soap_err) {
         free(response);
