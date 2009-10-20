@@ -1,0 +1,30 @@
+Web service interface
+=====================
+
+Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2
+(2009-06-25) [DataMessage_ws.pdf], Page 3
+
+Web services for messages are synchronous, web services for boxes are
+asynchronous.
+
+Result code of web service operation is stored in dmStatus/@dmStatusCode.
+Valuse "0000" means success.
+
+
+User authorizations
+===================
+
+PRIVIL_READ_NON_PERSONAL    1   Permission to read incoming messages 
+PRIVIL_READ_ALL             2   Permission to read messages addresses only to
+                                conrete person
+PRIVIL_CREATE_DM            4   Permission to sent mesages, to download outgoing
+                                messages
+PRIVIL_VIEW_INFO            8   Permission to download list of messages, to
+                                download data about post (`Dodejka') and
+                                deliviery (`Doručenka')
+PRIVIL_SEARCH_DB            16  Permission to search boxes
+PRIVIL_OWNER_ADM            32  Permission to maintane a box (add users etc.)
+
+User type adminstrator has implicit non-revokable permission PRIVIL_OWNER_ADM.
+Administrator can add other permissions to anybody, even to himselv.
+

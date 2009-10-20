@@ -2,6 +2,8 @@ Message specification
 =====================
 
 Source: Provozní řád ISDS, version 2008-30-06, Page 12
+Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2
+(2009-06-25) [DataMessage_ws.pdf]
 
 Message ::= Envelope, Content
 
@@ -10,6 +12,15 @@ Message format is defined in Appendinx 1, file dmBaseTypes.xsd.
 Content involves one or more attachments (= Documents). Allowed Document
 formats are defined in Appendix 3 of Vyhláška o stanovení podrobností užívání
 a provozování ISDS.
+
+Document is Base64 encoded binary format or XML.
+
+There exist special Document type, ESS format, that can exist in Content only
+once.
+
+Note: ESS format is special XML language designed as interface between
+Electronic Document Systems (ESS). It's defined in Appendix 4 of Provozní řád
+ISDS.
 
 Message with `malicious code' will be refused by ISDS.
 
@@ -22,5 +33,27 @@ Life time of Message:
     moved to off-line storage after 90 days. User can request to move the
     Message back into his box.
 
+Deleted messages are stored off-line with Envelope only without Content.
+
 Note: Delivery through fiction is currently defined as new unread for more
 than 10 days after delivery.
+
+
+Digital Signatures
+==================
+
+Emeded digital signatures are PKCS#7 to avoid expensive XML canonicalization.
+
+
+System messages
+===============
+
+There exists special message type inciated by ISDS (i.e. from system, not from
+other box). Such message has reserverd from-box `aaaaaaa' (7 × `a') and sender
+type `0' and it contains always document of type HTML. There are following
+cases defined:
+
+1   Outgoing message contained malicious code
+2   You, administrator, deleted other user
+3   Outgoing message could not been delivered because recipeient box had been
+    made unaccessible
