@@ -1,0 +1,27 @@
+Log in specification
+=====================
+
+Source: Provozní řád ISDS, version 2008-30-06, Pages 11–12
+
+Connection tracking of web services is done via HTTP Cookie.
+
+Allowed log in methods:
+
+    – HTTPS connection, server authenticated using SSL server certificate,
+    user authenticated using HTTP 1.1 basic authentication with user name and
+    password.
+
+    – SSL connection, user authenticated using `commerical' client
+    certificate. The client certificate must be preregistered in web (browser)
+    interface.
+
+    – SSL connection, user authenticated using `system' client certificate.
+    Client certificate must be preregistered to the box.
+
+    – SSL connection, user authenticated using `system' client certificate of
+    third party AND using user name and password identifying box. This case is
+    intended for hosted Software as Service solutions.
+
+Note: Certificate attributes `commercial' and `system' are defined in Czech
+Electronic Signature Act.
+

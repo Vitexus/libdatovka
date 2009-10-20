@@ -1,0 +1,55 @@
+Maintanance web services specification
+======================================
+
+Source: Provozní řád ISDS, version 2008-30-06, Pages 13–14
+
+These services are intended for administration of box as such. NONE of the
+services MARK incoming messages as delivered.
+
+SOAP web services defined in: db_manipulations.wsdl, db_supplementary.wsdl
+(Appendix 3 of Provozní řád ISDS)
+
+Data types: dbTypes.xsd (Appendix 3)
+
+Documentation: DataBox_ws.pdf, System_ws.doc (Appendix 3)
+
+Note: OVM mode is defined in paragraph 5a of Czech ISDS Act (300/2008 Coll.)
+
+List of SOAP requests follows.
+
+
+db_manipulations.wsdl
+=====================
+
+CreateDataBox
+    Create box
+DeleteDataBox
+    Remove box
+UpdateDataBoxDescr
+    Change data about box owner
+AddDataBoxUser
+    Add person permitted access to the box
+DeleteDataBoxUser
+    Remove person permitted to access to the box
+UpdateDataBoxUser
+    Change data about permitted person
+NewAccessData
+    Reset access data (remove old ones and generates new ones)
+DisableDataBoxExternally
+    Make box unaccessible because owner lost ability to use the box for legal
+    reasons (prisoned person, person with no or weak legal rights)
+DisableOwnDataBox
+    Make box unaccessable on request of its owner
+EnableOwnDataBox
+    Renew access to the box
+SetEffectiveOVM
+    Switch box into OVM mode
+CleareEffectiveOVM
+    Set box of OVM mode
+
+
+db_supplementary.wsdl
+=====================
+
+GetDataBoxUsers
+    Get list of users permitted to access the box.

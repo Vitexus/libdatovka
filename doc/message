@@ -1,0 +1,26 @@
+Message specification
+=====================
+
+Source: Provozní řád ISDS, version 2008-30-06, Page 12
+
+Message ::= Envelope, Content
+
+Message format is defined in Appendinx 1, file dmBaseTypes.xsd.
+
+Content involves one or more attachments (= Documents). Allowed Document
+formats are defined in Appendix 3 of Vyhláška o stanovení podrobností užívání
+a provozování ISDS.
+
+Message with `malicious code' will be refused by ISDS.
+
+Maximal Message size is 10 MB.
+
+Life time of Message:
+
+    – 90 days for delivered message
+    – unlimited for delivered through fiction messages, however they can be
+    moved to off-line storage after 90 days. User can request to move the
+    Message back into his box.
+
+Note: Delivery through fiction is currently defined as new unread for more
+than 10 days after delivery.

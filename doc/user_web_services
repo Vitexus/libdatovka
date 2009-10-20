@@ -1,0 +1,59 @@
+User web services specification
+===============================
+
+Source: Provozní řád ISDS, version 2008-30-06, Pages 12–13
+
+These services are intended for working with messages inside a box by
+a regular user.
+
+SOAP web services defined in: dm_operations.wsdl, dm_info.wsdl, db_search.wsdl
+(Appendix 2 of Provozní řád ISDS)
+
+Data types: dmBaseTypes.xsd (Appendix 1)
+
+Documentation: DataMessage_ws.pdf, DBSeatch_ws.pdf (Appendix 2)
+
+List of SOAP requests follows. Those marked with asterisk DOES NOT MARK
+incoming messages as delivered.
+
+
+dm_operations.wsdl
+==================
+
+CreateMessage (*)
+    Create and send a message
+MessageDownlod
+    Download incoming message
+SignedMessageDownload
+    Download incoming message with digital signature of ministery of interiors
+SignedSentMessageDownload
+    Download outgoing message with digital signature of ministery of interiors
+DummyOperation
+    Void operation used to log in and to keep connection alive
+
+
+dm_info.wsdl
+============
+
+VerifyMessage
+    Verify local copy of message with remote original stored in ISDS
+MessageEnvelopeDownload
+    Download envelope of incoming message
+MarkMessageAsDownloaded
+    Mark message as read
+GetDeliveryInfo
+    Dowload infosheet about message post and delivery
+GetSignedDeliveryInfo
+    Dowload infosheet about message post and delivery with signature of
+    ministery of interiors
+GetListOfRecievedMessages
+    Download list of incoming messages
+GetListOfSentMessages
+    Download list of outgoing messages
+
+
+db_search.wsdl
+==============
+
+FindDataBox (*)
+CheckDataBox (*)
