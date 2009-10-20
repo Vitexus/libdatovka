@@ -108,3 +108,51 @@ leave:
 }
 
 
+/* LibXML functions:
+ *
+ * void xmlInitParser(void)
+ *  Initialization function for the XML parser. This is not reentrant.  Call
+ *  once before processing in case of use in multithreaded programs.
+ *
+ * int xmlInitParserCtxt(xmlParserCtxtPtr ctxt)
+ *  Initialize a parser context
+ *
+ * xmlDocPtr xmlCtxtReadDoc(xmlParserCtxtPtr ctxt, const xmlChar * cur,
+ *  const * char URL, const char * encoding, int options);
+ *  Parse in-memory NULL-terminated document @cur.
+ *
+ * xmlDocPtr xmlParseMemory(const char * buffer, int size)
+ *  Parse an XML in-memory block and build a tree.
+ *
+ * xmlParserCtxtPtr xmlCreateMemoryParserCtxt(const char * buffer, int
+ *  size);
+ *  Create a parser context for an XML in-memory document.
+ *
+ * xmlParserCtxtPtr xmlCreateDocParserCtxt(const xmlChar * cur)
+ *  Creates a parser context for an XML in-memory document.
+ *
+ * xmlDocPtr xmlCtxtReadMemory(xmlParserCtxtPtr ctxt,
+ *  const char * buffer, int size, const char * URL, const char * encoding,
+ *  int options)
+ *  Parse an XML in-memory document and build a tree. This reuses the existing
+ *  @ctxt parser context.
+
+ * void xmlCleanupParser(void)
+ *  Cleanup function for the XML library. It tries to reclaim all parsing
+ *  related glob document related memory. Calling this function should not
+ *  prevent reusing the libr finished using the library or XML document built
+ *  with it.
+ *
+ * void xmlClearParserCtxt(xmlParserCtxtPtr ctxt)
+ *  Clear (release owned resources) and reinitialize a parser context.
+ *
+ * void  xmlCtxtReset(xmlParserCtxtPtr ctxt)
+ *  Reset a parser context
+ *
+ * void  xmlFreeParserCtxt(xmlParserCtxtPtr ctxt)
+ *  Free all the memory used by a parser context. However the parsed document
+ *  in ctxt->myDoc is not freed.
+ *
+ * void xmlFreeDoc(xmlDocPtr cur)
+ *  Free up all the structures used by a document, tree included.
+ *
