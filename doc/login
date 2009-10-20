@@ -1,7 +1,9 @@
 Log in specification
 =====================
 
-Source: Provozní řád ISDS, version 2008-30-06, Pages 11–12
+Source: Provozní řád ISDS, version 2008-30-06, Pages 9–12
+Source: Vyhláška o stanovení podrobností užívání a provozování ISDS (194/2009
+Coll.)
 
 Connection tracking of web services is done via HTTP Cookie.
 
@@ -24,4 +26,13 @@ Allowed log in methods:
 
 Note: Certificate attributes `commercial' and `system' are defined in Czech
 Electronic Signature Act.
+
+Once client certificate is registered, user could not log in with HTTP basic
+auhtentication only.
+
+Client private key must be stored in cryptographic device in unexportable way.
+The device driver must provice any of the APIs in addition:
+
+    – Microsoft CryptoAPI
+    – PKCS#11 API through libp11 library.
 
