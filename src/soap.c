@@ -57,6 +57,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     char *url;
     isds_error err = IE_SUCCESS;
     struct soap_body body;
+    char *content_type;
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -89,6 +90,11 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     /* FIXME: POST request */
 
     curl_err = curl_easy_perform(context->curl);
+
+    if (!curl_err)
+        curl_err = curl_easy_getinfo(context->curl, CURLINFO_CONTENT_TYPE,
+            &content_type);
+
     if (curl_err) {
         isds_log_message(context, url);
         isds_append_message(context, _(": "));
@@ -97,18 +103,21 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
 
-    *response = body.data;
-    *response_length = body.length;
-
     /* TODO: Check for Content-Type */
     /* TODO: Return XML Tree */
 
 leave:
     free(url);
     if (err) {
+        free(body.data);
+        body.length = 0;
         curl_easy_cleanup(context->curl);
         context->curl = NULL;
     }
+
+    *response = body.data;
+    *response_length = body.length;
+
     return err;
 }
 
