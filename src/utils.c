@@ -6,7 +6,7 @@
  * You must free() them, when you don't need it anymore.
  * Any of the arguments can be NULL meaning empty string.
  * In case of error returns NULL.
- * Empty string is always returned as alloceted empty string. */
+ * Empty string is always returned as allocated empty string. */
 _hidden char *astrcat(const char *first, const char *second) {
     size_t first_len, second_len;
     char *buf;
