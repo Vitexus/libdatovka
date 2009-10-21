@@ -10,7 +10,17 @@
 #endif
 
 /* Concatenate two strings into newly allocated buffer.
- * You must free() them, when you don't need it anymore. */
+ * You must free() them, when you don't need it anymore.
+ * Any of the arguments can be NULL meaning empty string.
+ * In case of error returns NULL.
+ * Empty string is always returned as allocated empty string. */
 char *astrcat(const char *first, const char *second);
 
+/* Concatenate three strings into newly allocated buffer.
+ * You must free() them, when you don't need it anymore.
+ * Any of the arguments can be NULL meaning empty string.
+ * In case of error returns NULL.
+ * Empty string is always returned as allocated empty string. */
+char *astrcat3(const char *first, const char *second,
+        const char *third);
 #endif

@@ -21,3 +21,36 @@ _hidden char *astrcat(const char *first, const char *second) {
     }
     return buf;
 }
+
+
+/* Concatenate three strings into newly allocated buffer.
+ * You must free() them, when you don't need it anymore.
+ * Any of the arguments can be NULL meaning empty string.
+ * In case of error returns NULL.
+ * Empty string is always returned as allocated empty string. */
+_hidden char *astrcat3(const char *first, const char *second,
+        const char *third) {
+    size_t first_len, second_len, third_len;
+    char *buf, *next;
+    
+    first_len = (first) ? strlen(first) : 0;
+    second_len = (second) ? strlen(second) : 0;
+    third_len = (third) ? strlen(third) : 0;
+    buf = malloc(1 + first_len + second_len + third_len);
+    if (buf) {
+        buf[0] = '\0';
+        next = buf;
+        if (first) {
+            strcpy(next, first);
+            next += first_len;
+        }
+        if (second) {
+            strcpy(next, second);
+            next += second_len;
+        }
+        if (third) {
+            strcpy(next, third);
+        }
+    }
+    return buf;
+}

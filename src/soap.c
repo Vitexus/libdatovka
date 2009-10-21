@@ -68,6 +68,14 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     if (!url) return IE_NOMEM;
 
     curl_err = curl_easy_setopt(context->curl, CURLOPT_URL, url);
+    if (!curl_err && context->username) {
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_USERNAME,
+                context->username);
+    }
+    if (!curl_err && context->password) {
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_PASSWORD,
+                context->password);
+    }
     if (!curl_err) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_FAILONERROR, 1);
     }
@@ -108,8 +116,10 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
 
 leave:
     free(url);
+
     if (err) {
         free(body.data);
+        body.data = NULL;
         body.length = 0;
         curl_easy_cleanup(context->curl);
         context->curl = NULL;
