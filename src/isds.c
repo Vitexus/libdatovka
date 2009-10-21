@@ -78,13 +78,12 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
     if (!context || !*context) {
         return IE_ERROR;
     }
-    
-    /* Free internal structures */
-    if ((*context)->url) free((*context)->url);
-    if ((*context)->curl) {
-        curl_easy_cleanup((*context)->curl);
-        (*context)->curl = NULL;
-    }
+  
+    /* Discard credentials */
+    isds_logout(*context);
+
+    /* Free other structures */
+    free((*context)->long_message);
 
     free(*context);
     *context = NULL;
@@ -186,18 +185,28 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
     if (!url || !username || !password) return IE_INVAL;
     if (certificate || key) return IE_NOTSUP;
 
+    /* Store configuration */
     free(context->url);
     context->url = strdup(url);
     if (!(context->url))
+        return IE_NOMEM;
+
+    free(context->username);
+    context->username = strdup(username);
+    if (!(context->username))
+        return IE_NOMEM;
+
+    /* FIXME: mlock password
+     * (I have a library) */
+    free(context->password);
+    context->password = strdup(password);
+    if (!(context->password))
         return IE_NOMEM;
 
     context->curl = curl_easy_init();
     if (!(context->curl))
         return IE_ERROR;
 
-    /* TODO: Pass username and password
-     * Real ISDS login is HTTPS digest authentication with optional X.509 TLS
-     * client authentication. */
     soap_err = soap(context, "login", request, request_length, &response,
             &response_length);
     
@@ -224,17 +233,30 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
 }
 
 
-/* Log out from ISDS server and close connection. */
+/* Log out from ISDS server discards credentials and connection configuration. */
 isds_error isds_logout(struct isds_ctx *context) {
     if (!context) return IE_INVALID_CONTEXT;
 
+    /* Close connection */
     if (context->curl) {
         curl_easy_cleanup(context->curl);
         context->curl = NULL;
     }
 
-    if (!(context->cookie)) return IE_NOT_LOGGED_IN;
-    return IE_NOTSUP;
+    /* Discard credentials */
+    free(context->url);
+    context->url = NULL;
+    free(context->username);
+    context->username = NULL;
+    free(context->password);
+    context->password = NULL;
+
+    if (!context->cookie) 
+        return IE_NOT_LOGGED_IN;
+    free(context->cookie);
+    context->cookie = NULL;
+
+    return IE_SUCCESS;
 }
 
 
