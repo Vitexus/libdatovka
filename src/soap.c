@@ -96,14 +96,22 @@ static isds_error http(struct isds_ctx *context, const char *url,
     if (!curl_err) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEDATA, &body);
     }
-
     if (!curl_err) {
         headers = curl_slist_append(headers, "Accept: application/soap+xml");
         if (!headers) {
             err = IE_NOMEM;
             goto leave;
         }
+        headers = curl_slist_append(headers, "Content-Type: application/soap+xml");
+        if (!headers) {
+            err = IE_NOMEM;
+            goto leave;
+        }
         curl_err = curl_easy_setopt(context->curl, CURLOPT_HTTPHEADER, headers);
+    }
+    if (!curl_err) {
+        /* TODO: Presnet library version, curl etc. in User-Agent */
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_USERAGENT, "libisds");
     }
 
     if (curl_err) {
