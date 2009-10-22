@@ -72,6 +72,10 @@ static isds_error http(struct isds_ctx *context, const char *url,
     if (request_length > 0 && !request) return IE_INVAL;
     if (!response || !response_length) return IE_INVAL;
 
+    /* Set the body here to allow deallocataion in leave block */
+    body.data = *response;
+    body.length = 0;
+
     curl_err = curl_easy_setopt(context->curl, CURLOPT_URL, url);
     if (!curl_err && context->username) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_USERNAME,
@@ -89,10 +93,10 @@ static isds_error http(struct isds_ctx *context, const char *url,
                 write_body);
     }
     if (!curl_err) {
-        body.data = NULL;
-        body.length = 0;
         curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEDATA, &body);
     }
+
+    /* FIXME: Send Accept: application/soap+xml */
 
     if (curl_err) {
         isds_log_message(context, curl_easy_strerror(curl_err));
