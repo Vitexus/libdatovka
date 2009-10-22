@@ -65,6 +65,7 @@ static isds_error http(struct isds_ctx *context, const char *url,
     isds_error err = IE_SUCCESS;
     struct soap_body body;
     char *content_type;
+    struct curl_slist *headers = NULL;
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -96,7 +97,14 @@ static isds_error http(struct isds_ctx *context, const char *url,
         curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEDATA, &body);
     }
 
-    /* FIXME: Send Accept: application/soap+xml */
+    if (!curl_err) {
+        headers = curl_slist_append(headers, "Accept: application/soap+xml");
+        if (!headers) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_HTTPHEADER, headers);
+    }
 
     if (curl_err) {
         isds_log_message(context, curl_easy_strerror(curl_err));
@@ -154,6 +162,8 @@ static isds_error http(struct isds_ctx *context, const char *url,
     }
 
 leave:
+    free(headers);
+
     if (err) {
         free(body.data);
         body.data = NULL;
