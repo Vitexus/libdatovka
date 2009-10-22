@@ -1,3 +1,4 @@
+#define _XOPEN_SOURCE 500   /* strdup from string.h */
 #include "isds_priv.h"
 #include "soap.h"
 #include "utils.h"
@@ -39,33 +40,37 @@ static size_t write_body(void *buffer, size_t size, size_t nmemb, void *userp) {
 }
 
 
-/* Do SOAP request.
- * @file is a (CGI) file of SOAP URL,
+/* Do HTTP request.
  * @context holds the base URL,
- * @request is XML document with request (NULL terminated). 
- * @request_length is lenght of @request in bytes
- * @file and @request must be NULL rather than empty strings, if the should
- * not be signaled in the SOAP request.
- * @reponse is automatically reallocated() buffer to fit SOAP response with
- * @response_length (does not need to match allocatef memory exactly. You must
- * free() the @response.  Side effect: message buffer */
-_hidden isds_error soap(struct isds_ctx *context, const char *file,
+ * @url is a (CGI) file of SOAP URL,
+ * @request is body for POST request 
+ * @request_length is length of @request in bytes
+ * @reponse is automatically reallocated() buffer to fit HTTP response with
+ * @response_length (does not need to match allocatef memory exactly). You must
+ * free() the @response.
+ * @mime_type is automatically allocated MIME type send by server (*NULL if not
+ * sent). Set NULL if you don't care.
+ * @charset is charset of the body signaled by server. The same constrains
+ * like on @mime_type apply.
+ * In case of error, the response memory, MIME type, charset and lenght will be
+ * deallocated and zerod automatically. Thus be sure they are preallocated or
+ * they points to NULL.
+ * Side effect: message buffer */
+static isds_error http(struct isds_ctx *context, const char *url,
         const void *request, const size_t request_length,
-        void **response, size_t *response_length) {
+        void **response, size_t *response_length,
+        char **mime_type, char**charset) {
 
     CURLcode curl_err;
-    char *url;
     isds_error err = IE_SUCCESS;
     struct soap_body body;
     char *content_type;
 
 
     if (!context) return IE_INVALID_CONTEXT;
+    if (!url) return IE_INVAL;
     if (request_length > 0 && !request) return IE_INVAL;
     if (!response || !response_length) return IE_INVAL;
-
-    url = astrcat(context->url, file);
-    if (!url) return IE_NOMEM;
 
     curl_err = curl_easy_setopt(context->curl, CURLOPT_URL, url);
     if (!curl_err && context->username) {
@@ -111,22 +116,117 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
 
-    /* TODO: Check for Content-Type */
-    /* TODO: Return XML Tree */
+    /* Extract MIME type and charset */
+    if (content_type) {
+        /* FIXME: implement it */
+        char *sep = strchr(content_type, ';');
+        size_t offset = (sep) ? (size_t) (sep - content_type) : 0;
+        if (mime_type) {
+            *mime_type = malloc(offset + 1);
+            if (!*mime_type) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+            memcpy(*mime_type, content_type, offset);
+            (*mime_type)[offset] = '\0';
+
+        }
+        if (charset) {
+            if (!sep) {
+               *charset = NULL;
+            } else {
+                sep = strstr(sep, "charset=");
+                if (!sep) {
+                    *charset = NULL;
+                } else {
+                    *charset = strdup(sep + 8);
+                    if (!*charset) {
+                        err = IE_NOMEM;
+                        goto leave;
+                    }
+                }
+            }
+        }
+    }
 
 leave:
-    free(url);
-
     if (err) {
         free(body.data);
         body.data = NULL;
         body.length = 0;
+
+        if (mime_type) {
+            free(*mime_type);
+            *mime_type = NULL;
+        }
+        if (charset) {
+            free(*charset);
+            *charset = NULL;
+        }
+
         curl_easy_cleanup(context->curl);
         context->curl = NULL;
     }
 
     *response = body.data;
     *response_length = body.length;
+
+    return err;
+}
+
+
+/* Do SOAP request.
+ * @context holds the base URL,
+ * @file is a (CGI) file of SOAP URL,
+ * @request is XML document with request. 
+ * @request_length is lenght of @request in bytes
+ * @file and @request must be NULL rather than empty strings, if the should
+ * not be signaled in the SOAP request.
+ * @reponse is automatically reallocated() buffer to fit SOAP response with
+ * @response_length (does not need to match allocatef memory exactly). You must
+ * free() the @response. In case of error the response memory and lenght will
+ * be deallocated and zerod automatically.
+ * Side effect: message buffer */
+_hidden isds_error soap(struct isds_ctx *context, const char *file,
+        const void *request, const size_t request_length,
+        void **response, size_t *response_length) {
+
+    char *url;
+    isds_error err = IE_SUCCESS;
+    char *mime_type = NULL;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (request_length > 0 && !request) return IE_INVAL;
+    if (!response || !response_length) return IE_INVAL;
+
+    url = astrcat(context->url, file);
+    if (!url) return IE_NOMEM;
+
+    /* TODO: Wrap the request into SOAP envelope */
+
+    err = http(context, url, request, request_length,
+            response, response_length,
+            &mime_type, NULL);
+
+    if (err) {
+        goto leave;
+    }
+
+    /* TODO: Check for Content-Type: application/soap+xml */
+    /* TODO: Convert returned body into XML default encoding */
+    /* TODO: Extract XML Tree with ISDS response from SOAP envelope and return
+     * it*/
+
+leave:
+    free(url);
+
+    if (err) {
+        free(*response);
+        *response =  NULL;
+        *response_length = 0;
+        free(mime_type);
+    }
 
     return err;
 }
