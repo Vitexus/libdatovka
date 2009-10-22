@@ -130,7 +130,6 @@ static isds_error http(struct isds_ctx *context, const char *url,
 
     /* Extract MIME type and charset */
     if (content_type) {
-        /* FIXME: implement it */
         char *sep = strchr(content_type, ';');
         size_t offset = (sep) ? (size_t) (sep - content_type) : 0;
         if (mime_type) {
