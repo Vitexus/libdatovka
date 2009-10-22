@@ -110,7 +110,7 @@ static isds_error http(struct isds_ctx *context, const char *url,
         curl_err = curl_easy_setopt(context->curl, CURLOPT_HTTPHEADER, headers);
     }
     if (!curl_err) {
-        /* TODO: Presnet library version, curl etc. in User-Agent */
+        /* TODO: Present library version, curl etc. in User-Agent */
         curl_err = curl_easy_setopt(context->curl, CURLOPT_USERAGENT, "libisds");
     }
 
