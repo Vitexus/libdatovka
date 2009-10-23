@@ -239,7 +239,9 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     char *url;
     isds_error err = IE_SUCCESS;
     char *mime_type = NULL;
-    xmlDocPtr soapTree = NULL;
+    xmlDocPtr soap_tree = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr soap_body = NULL;
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -274,17 +276,34 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
 
     /* TODO: Extract XML Tree with ISDS response from SOAP envelope and return
      * it*/
-    soapTree = xmlParseMemory(*response, *response_length);
-
-    if (!soapTree) {
+    soap_tree = xmlParseMemory(*response, *response_length);
+    if (!soap_tree) {
         err = IE_XML;
         goto leave;
     }
 
+    xpath_ctx = xmlXPathNewContext(soap_tree);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    if (register_namespaces(xpath_ctx)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    soap_body = xmlXPathEvalExpression(BAD_CAST "/soap:Envelope/soap:Body/*",
+            xpath_ctx);
+
+    
+
 
 leave:
+    xmlXPathFreeObject(soap_body);
+    xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(soap_tree);
     free(url);
-    xmlFreeDoc(soapTree);
 
     if (err) {
         free(*response);
