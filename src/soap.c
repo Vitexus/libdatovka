@@ -300,7 +300,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         err = IE_ERROR;
         goto leave;
     }
-    if (soap_headers->boolval) {
+    if (soap_headers->nodesetval) {
         isds_log_message(context, "SOAP response requires unsupported feature");
         /* TODO: log the headers 
          * xmlChar *fragment = NULL;
@@ -315,7 +315,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         err = IE_ERROR;
         goto leave;
     }
-    if (!(soap_body->boolval)) {
+    if (!(soap_body->nodesetval)) {
         isds_log_message(context, "SOAP response does not contain Body element");
         err = IE_SOAP;
         goto leave;
