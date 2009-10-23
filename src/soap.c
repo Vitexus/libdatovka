@@ -239,6 +239,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     char *url;
     isds_error err = IE_SUCCESS;
     char *mime_type = NULL;
+    xmlDocPtr soapTree = NULL;
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -258,7 +259,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
 
-    /* TODO: Check for Content-Type: application/soap+xml */
+    /* Check for Content-Type: application/soap+xml */
     if (mime_type && strcmp(mime_type, "application/soap+xml")
             && strcmp(mime_type, "application/xml")
             && strcmp(mime_type, "text/xml")) {
@@ -268,12 +269,22 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         err = IE_SOAP;
         goto leave;
     }
+    
     /* TODO: Convert returned body into XML default encoding */
+
     /* TODO: Extract XML Tree with ISDS response from SOAP envelope and return
      * it*/
+    soapTree = xmlParseMemory(*response, *response_length);
+
+    if (!soapTree) {
+        err = IE_XML;
+        goto leave;
+    }
+
 
 leave:
     free(url);
+    xmlFreeDoc(soapTree);
 
     if (err) {
         free(*response);

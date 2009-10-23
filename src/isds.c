@@ -57,6 +57,8 @@ char *isds_strerror(const isds_error error) {
             return(_("Network problem")); break;
         case IE_SOAP:
             return(_("SOAP problem")); break;
+        case IE_XML:
+            return(_("XML problem")); break;
         default:
             return(_("Unknown error"));
     }
@@ -272,3 +274,20 @@ int isds_find_recipient(struct isds_ctx *context, const struct address *pattern,
 int isds_message_free(struct isds_message **message);
 int isds_address_free(struct isds_address **address);
 */
+
+/* Makes known all relevant namespaces to give @xpat_ctx */
+_hidden isds_error register_namespaces(xmlXPathContextPtr xpath_ctx) {
+    if (!xpath_ctx) return IE_ERROR;
+
+    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "soap",
+                BAD_CAST "http://www.w3.org/2003/05/soap-envelope"))
+        return IE_ERROR;
+    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "isds",
+                BAD_CAST "http://isds.czechpoint.cz/v20"))
+        return IE_ERROR;
+    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "xs",
+                BAD_CAST "http://www.w3.org/2001/XMLSchema"))
+        return IE_ERROR;
+    return IE_SUCCESS;
+}
+

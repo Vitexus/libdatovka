@@ -7,6 +7,8 @@
 #include <curl/curl.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
 
 #define _(x) (x)
 
@@ -30,5 +32,8 @@ isds_error isds_log_message(struct isds_ctx *context, const char *message);
  * Application can pick the message up using isds_long_message().
  * NULL message has void effect. */
 isds_error isds_append_message(struct isds_ctx *context, const char *message);
+
+/* Makes known all relevant namespaces to give @xpat_ctx */
+isds_error register_namespaces(xmlXPathContextPtr xpath_ctx);
 
 #endif
