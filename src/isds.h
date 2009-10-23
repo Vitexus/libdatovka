@@ -17,7 +17,8 @@ typedef enum {
     IE_TIMED_OUT,
     IE_NOEXIST,
     IE_NOMEM,
-    IE_NETWORK
+    IE_NETWORK,
+    IE_SOAP
 } isds_error;
 
 /* Return text description of ISDS error */

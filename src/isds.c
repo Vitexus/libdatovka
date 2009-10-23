@@ -55,6 +55,8 @@ char *isds_strerror(const isds_error error) {
             return(_("Out of memmory")); break;
         case IE_NETWORK:
             return(_("Network problem")); break;
+        case IE_SOAP:
+            return(_("SOAP problem")); break;
         default:
             return(_("Unknown error"));
     }
@@ -214,7 +216,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
         free(response);
         curl_easy_cleanup(context->curl);
         context->curl = NULL;
-        return IE_NETWORK;
+        return soap_err;
     }
 
     /* XXX: Dummy authentication */

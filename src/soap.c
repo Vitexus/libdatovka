@@ -254,6 +254,15 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     }
 
     /* TODO: Check for Content-Type: application/soap+xml */
+    if (mime_type && strcmp(mime_type, "application/soap+xml")
+            && strcmp(mime_type, "application/xml")
+            && strcmp(mime_type, "text/xml")) {
+        isds_log_message(context, url);
+        isds_append_message(context, _(": bad MIME type sent by server: "));
+        isds_append_message(context, mime_type);
+        err = IE_SOAP;
+        goto leave;
+    }
     /* TODO: Convert returned body into XML default encoding */
     /* TODO: Extract XML Tree with ISDS response from SOAP envelope and return
      * it*/
