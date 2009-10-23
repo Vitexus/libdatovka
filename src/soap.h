@@ -10,13 +10,13 @@
  * @request_length is lenght of @request in bytes
  * @file and @request must be NULL rather than empty strings, if the should
  * not be signaled in the SOAP request.
- * @reponse is automatically reallocated() buffer to fit SOAP response with
- * @response_length (does not need to match allocatef memory exactly). You must
- * free() the @response. In case of error the response memory and lenght will
- * be deallocated and zerod automatically.
+ * @reponse is automatically allocated() node set with SOAP response body.
+ * You must xmlFreeNodeList() it. This is literal body, empty (NULL), one node
+ * or more nodes can be returned.
+ * In case of error the response will be deallocated automatically.
  * Side effect: message buffer */
 isds_error soap(struct isds_ctx *context, const char *file,
         const void *request, const size_t request_length,
-        void **response, size_t *response_length);
+        xmlNodePtr *response);
 
 #endif

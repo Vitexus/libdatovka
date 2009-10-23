@@ -227,27 +227,31 @@ leave:
  * @request_length is lenght of @request in bytes
  * @file and @request must be NULL rather than empty strings, if the should
  * not be signaled in the SOAP request.
- * @reponse is automatically reallocated() buffer to fit SOAP response with
- * @response_length (does not need to match allocatef memory exactly). You must
- * free() the @response. In case of error the response memory and lenght will
- * be deallocated and zerod automatically.
+ * @reponse is automatically allocated() node set with SOAP response body.
+ * You must xmlFreeNodeList() it. This is literal body, empty (NULL), one node
+ * or more nodes can be returned.
+ * In case of error the response will be deallocated automatically.
  * Side effect: message buffer */
 _hidden isds_error soap(struct isds_ctx *context, const char *file,
         const void *request, const size_t request_length,
-        void **response, size_t *response_length) {
+        xmlNodePtr *response) {
 
-    char *url;
     isds_error err = IE_SUCCESS;
+    char *url = NULL;
     char *mime_type = NULL;
+    void *http_response = NULL;
+    size_t response_length = 0;
     xmlDocPtr soap_tree = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr soap_headers = NULL, soap_body = NULL;
-    xmlNodePtr body_content = NULL;
 
 
     if (!context) return IE_INVALID_CONTEXT;
     if (request_length > 0 && !request) return IE_INVAL;
-    if (!response || !response_length) return IE_INVAL;
+    if (!response) return IE_INVAL;
+
+    xmlFreeNodeList(*response);
+    *response = NULL;
 
     url = astrcat(context->url, file);
     if (!url) return IE_NOMEM;
@@ -255,8 +259,11 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     /* TODO: Wrap the request into SOAP envelope */
 
     err = http(context, url, request, request_length,
-            response, response_length,
+            &http_response, &response_length,
             &mime_type, NULL);
+
+    /* TODO: HTTP binding for SOAP prescribes non-200 HTTP return codes
+     * to be processes too. See SOAP Part 2, Table 16. */
 
     if (err) {
         goto leave;
@@ -276,7 +283,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     /* TODO: Convert returned body into XML default encoding */
 
     /* Parse the HTTP body as XML */
-    soap_tree = xmlParseMemory(*response, *response_length);
+    soap_tree = xmlParseMemory(http_response, response_length);
     if (!soap_tree) {
         err = IE_XML;
         goto leave;
@@ -329,9 +336,9 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
 
 
     /* Extract XML Tree with ISDS response from SOAP envelope and return it */
-    body_content = xmlDocCopyNodeList(soap_tree,
+    *response = xmlDocCopyNodeList(soap_tree,
             soap_body->nodesetval->nodeTab[0]);
-    if (!body_content) {
+    if (!*response) {
         err = IE_NOMEM;
         goto leave;
     }
@@ -343,21 +350,20 @@ leave:
     /* TODO: Return body_content and forget *response.
      * I.e. change soap() prototype from returning buffer to returning
      * xmlNodeSet. */
-        xmlFreeNode(body_content);
     /*}*/
+
+    if (err) {
+        xmlFreeNodeList(*response);
+        *response = NULL;
+    }
 
     xmlXPathFreeObject(soap_body);
     xmlXPathFreeObject(soap_headers);
     xmlXPathFreeContext(xpath_ctx);
     xmlFreeDoc(soap_tree);
+    free(mime_type);
+    free(http_response);
     free(url);
-
-    if (err) {
-        free(*response);
-        *response =  NULL;
-        *response_length = 0;
-        free(mime_type);
-    }
 
     return err;
 }

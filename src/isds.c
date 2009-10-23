@@ -182,8 +182,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
     isds_error soap_err;
     char request[] =  "<DummyOperation/>";
     size_t request_length = sizeof(request);
-    void *response = NULL;
-    size_t response_length;
+    xmlNodePtr response = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!url || !username || !password) return IE_INVAL;
@@ -211,27 +210,28 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
     if (!(context->curl))
         return IE_ERROR;
 
-    soap_err = soap(context, "login", request, request_length, &response,
-            &response_length);
+    soap_err = soap(context, "login", request, request_length, &response);
     
     if (soap_err) {
-        free(response);
+        xmlFreeNodeList(response);
         curl_easy_cleanup(context->curl);
         context->curl = NULL;
         return soap_err;
     }
 
-    /* XXX: Dummy authentication */
-    if (response_length == 25 &&
-            !strncmp(response, "<message>Hello</message>\n", 25)) {
-        err = IE_SUCCESS;
-        free(context->cookie);
-        context->cookie = strdup("42");
-        if (!context->cookie)
-            err = IE_NOMEM;
+    /* XXX: Untill we don't propagate HTTP code 500 or 4xx, we can be sure
+     * authentication succeeded if soap_err == IE_SUCCESS */
+    err = IE_SUCCESS;
+    /* XXX: Dummy cookie.
+     * Probably, we could remove the cookie from context because CURL
+     * administrer it on its own and soap()/http() does autologin now. */
+    free(context->cookie);
+    context->cookie = strdup("42");
+    if (!context->cookie) {
+        err = IE_NOMEM;
     }
 
-    free(response);
+    xmlFreeNodeList(response);
 
     return err;
 }
