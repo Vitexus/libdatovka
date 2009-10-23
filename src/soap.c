@@ -241,7 +241,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     char *mime_type = NULL;
     xmlDocPtr soap_tree = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
-    xmlXPathObjectPtr soap_body = NULL;
+    xmlXPathObjectPtr soap_headers = NULL, soap_body = NULL;
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -274,8 +274,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     
     /* TODO: Convert returned body into XML default encoding */
 
-    /* TODO: Extract XML Tree with ISDS response from SOAP envelope and return
-     * it*/
+    /* Parse the HTTP body as XML */
     soap_tree = xmlParseMemory(*response, *response_length);
     if (!soap_tree) {
         err = IE_XML;
@@ -293,14 +292,50 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
 
-    soap_body = xmlXPathEvalExpression(BAD_CAST "/soap:Envelope/soap:Body/*",
-            xpath_ctx);
+    /* Check for SOAP requirements */
+    soap_headers = xmlXPathEvalExpression(
+            BAD_CAST "/soap:Envelope/soap:Header/"
+            "*[@soap:mustUnderstand/text() = true()]", xpath_ctx);
+    if (!soap_headers) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (soap_headers->boolval) {
+        isds_log_message(context, "SOAP response requires unsupported feature");
+        /* TODO: log the headers 
+         * xmlChar *fragment = NULL;
+         * fragment = xmlXPathCastNodeSetToSting(soap_headers->nodesetval);*/
+        err = IE_NOTSUP;
+        goto leave;
+    }
 
+    soap_body = xmlXPathEvalExpression(BAD_CAST "/soap:Envelope/soap:Body",
+            xpath_ctx);
+    if (!soap_body) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (!(soap_body->boolval)) {
+        isds_log_message(context, "SOAP response does not contain Body element");
+        err = IE_SOAP;
+        goto leave;
+    }
+    if (soap_body->nodesetval->nodeNr > 1) {
+        isds_log_message(context, "SOAP body has more than Body element");
+        err = IE_SOAP;
+        goto leave;
+    }
+
+
+    /* TODO: Extract XML Tree with ISDS response from SOAP envelope and return
+     * it*/
+    /* soap_body->nodesetval->nodeTab[0] */
     
 
 
 leave:
     xmlXPathFreeObject(soap_body);
+    xmlXPathFreeObject(soap_headers);
     xmlXPathFreeContext(xpath_ctx);
     xmlFreeDoc(soap_tree);
     free(url);
