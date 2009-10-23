@@ -77,11 +77,14 @@ static isds_error http(struct isds_ctx *context, const char *url,
     body.data = *response;
     body.length = 0;
 
+    /* Set Request-URI */
     curl_err = curl_easy_setopt(context->curl, CURLOPT_URL, url);
     if (!curl_err && context->username) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_USERNAME,
                 context->username);
     }
+
+    /* Set credentials */
     if (!curl_err && context->password) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_PASSWORD,
                 context->password);
@@ -89,6 +92,8 @@ static isds_error http(struct isds_ctx *context, const char *url,
     if (!curl_err) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_FAILONERROR, 1);
     }
+
+    /* Set get-response function */
     if (!curl_err) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEFUNCTION,
                 write_body);
@@ -96,6 +101,8 @@ static isds_error http(struct isds_ctx *context, const char *url,
     if (!curl_err) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEDATA, &body);
     }
+
+    /* Set MIME types and user agent identification */
     if (!curl_err) {
         headers = curl_slist_append(headers, "Accept: application/soap+xml");
         if (!headers) {
@@ -114,14 +121,26 @@ static isds_error http(struct isds_ctx *context, const char *url,
         curl_err = curl_easy_setopt(context->curl, CURLOPT_USERAGENT, "libisds");
     }
 
+    /* Set POST request body */
+    if (!curl_err) {
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_POST, 1);
+    }
+    if (!curl_err) {
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_POSTFIELDS, request);
+    }
+    if (!curl_err) {
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_POSTFIELDSIZE,
+                request_length);
+    }
+
+    /* Check for errors so far */
     if (curl_err) {
         isds_log_message(context, curl_easy_strerror(curl_err));
         err = IE_NETWORK;
         goto leave;
     }
 
-    /* FIXME: POST request */
-
+    /*  Do the request */
     curl_err = curl_easy_perform(context->curl);
 
     if (!curl_err)
