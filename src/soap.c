@@ -157,8 +157,13 @@ static isds_error http(struct isds_ctx *context, const char *url,
 
     /* Extract MIME type and charset */
     if (content_type) {
-        char *sep = strchr(content_type, ';');
-        size_t offset = (sep) ? (size_t) (sep - content_type) : 0;
+        char *sep;
+        size_t offset;
+
+        sep = strchr(content_type, ';');
+        if (sep) offset = (size_t) (sep - content_type);
+        else offset = strlen(content_type);
+
         if (mime_type) {
             *mime_type = malloc(offset + 1);
             if (!*mime_type) {
@@ -167,8 +172,8 @@ static isds_error http(struct isds_ctx *context, const char *url,
             }
             memcpy(*mime_type, content_type, offset);
             (*mime_type)[offset] = '\0';
-
         }
+
         if (charset) {
             if (!sep) {
                *charset = NULL;
