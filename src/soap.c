@@ -232,7 +232,7 @@ leave:
  * In case of error the response will be deallocated automatically.
  * Side effect: message buffer */
 _hidden isds_error soap(struct isds_ctx *context, const char *file,
-        const xmlNodePtr *request, xmlNodePtr *response) {
+        const xmlNodePtr request, xmlNodePtr *response) {
 
     isds_error err = IE_SUCCESS;
     char *url = NULL;
@@ -242,7 +242,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     void *http_response = NULL;
     size_t response_length = 0;
     xmlNsPtr soap_ns = NULL;
-    xmlNodePtr request_soap_tree = NULL;
+    xmlNodePtr request_soap_tree = NULL, request_body = NULL;
     xmlDocPtr soap_tree = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr soap_headers = NULL, soap_body = NULL;
@@ -257,7 +257,6 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     url = astrcat(context->url, file);
     if (!url) return IE_NOMEM;
 
-    /* TODO: Wrap the request into SOAP envelope */
     /* Build SOAP request envelope */
     request_soap_tree = xmlNewNode(NULL, BAD_CAST "Envelope");
     if (!request_soap_tree) {
@@ -275,6 +274,26 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
     xmlSetNs(request_soap_tree, soap_ns);
+    request_body = xmlNewNode(soap_ns, BAD_CAST "Body");
+    if (!request_body) {
+        isds_log_message(context, _("Could not create SOAP request body"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (!xmlAddChild(request_soap_tree, request_body)) {
+        isds_log_message(context, _("Could not add Body to SOAP request envelope"));
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    /* Append request XML node set to SOAP body if request is not empty*/
+    if (request && !xmlAddChildList(request_body, request)) {
+        isds_log_message(context,
+                _("Could not add request content to SOAP request envelope"));
+        err = IE_ERROR;
+        goto leave;
+    }
+
 
     /* Serialize the SOAP request into HTTP request body */
     /*xmlChar* fragment = xmlNodeSetToSting(soap_headers->nodesetval);*/
@@ -402,7 +421,9 @@ leave:
     xmlFreeDoc(soap_tree);
     free(mime_type);
     free(http_response);
-    xmlFreeNode(request_soap_tree);
+    /* FIXME: Deatch request node set from request_soap_tree to not free this
+     * outer structure */
+    xmlFreeNode(request_soap_tree); /* recursive, frees request_body too */
     xmlBufferFree(http_request);
     xmlSaveClose(save_ctx);
     free(url);

@@ -15,6 +15,6 @@
  * In case of error the response will be deallocated automatically.
  * Side effect: message buffer */
 isds_error soap(struct isds_ctx *context, const char *file,
-        const xmlNodePtr *request, xmlNodePtr *response);
+        const xmlNodePtr request, xmlNodePtr *response);
 
 #endif
