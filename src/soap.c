@@ -241,7 +241,6 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     xmlSaveCtxtPtr save_ctx = NULL;
     void *http_response = NULL;
     size_t response_length = 0;
-    xmlNsPtr soap_ns = NULL;
     xmlNodePtr request_soap_tree = NULL, request_body = NULL;
     xmlDocPtr soap_tree = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
@@ -258,22 +257,12 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     if (!url) return IE_NOMEM;
 
     /* Build SOAP request envelope */
-    request_soap_tree = xmlNewNode(NULL, BAD_CAST "Envelope");
+    request_soap_tree = xmlNewNode(soap_ns, BAD_CAST "Envelope");
     if (!request_soap_tree) {
         isds_log_message(context, _("Could not build SOAP request envelope"));
         err = IE_ERROR;
         goto leave;
     }
-    soap_ns = xmlNewNs(request_soap_tree,
-            BAD_CAST "http://www.w3.org/2003/05/soap-envelope",
-            BAD_CAST "soap");
-    if (!soap_ns) {
-        isds_log_message(context,
-                _("Could not set name space to SOAP request envelope"));
-        err = IE_ERROR;
-        goto leave;
-    }
-    xmlSetNs(request_soap_tree, soap_ns);
     request_body = xmlNewNode(soap_ns, BAD_CAST "Body");
     if (!request_body) {
         isds_log_message(context, _("Could not create SOAP request body"));
