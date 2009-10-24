@@ -281,6 +281,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
     xmlSetNs(request_soap_envelope, soap_ns);
+    /* TODO: Use xmlNewChild() instead of xmlNewNode() + xmlAddChild() */
     request_soap_body = xmlNewNode(soap_ns, BAD_CAST "Body");
     if (!request_soap_body) {
         isds_log_message(context, _("Could not create SOAP request body"));
@@ -293,12 +294,24 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
 
-    /* Append request XML node set to SOAP body if request is not empty*/
-    if (request && !xmlAddChildList(request_soap_body, request)) {
-        isds_log_message(context,
-                _("Could not add request content to SOAP request envelope"));
-        err = IE_ERROR;
-        goto leave;
+    /* Append request XML node set to SOAP body if request is not empty */
+    /* XXX: Copy of request must be used, otherwise xmlFreeDoc(request_soap_doc)
+     * would destroy this outer structure. */
+    if (request) {
+        xmlNodePtr request_copy = xmlCopyNodeList(request);
+        if (!request_copy) {
+            isds_log_message(context,
+                    _("Could not copy request content"));
+            err = IE_ERROR;
+            goto leave;
+        }
+        if (!xmlAddChildList(request_soap_body, request_copy)) {
+            xmlFreeNodeList(request_copy);
+            isds_log_message(context,
+                    _("Could not add request content to SOAP request envelope"));
+            err = IE_ERROR;
+            goto leave;
+        }
     }
 
 
@@ -429,12 +442,6 @@ leave:
     xmlFreeDoc(response_soap_doc);
     free(mime_type);
     free(http_response);
-    /* FIXME: Detach request node set from request_soap_doc to not free this
-     * outer structure */
-    /*if (request) {
-        for (int i = 0; i < request->nodesetvalue->Nr; i++)
-            xmlUnlinkNode(request->nodesetvalue->nodeTab[i]);
-    }*/
     xmlFreeDoc(request_soap_doc); /* recursive, frees request_body, soap_ns*/
     xmlBufferFree(http_request);
     xmlSaveClose(save_ctx);
