@@ -239,12 +239,13 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     char *mime_type = NULL;
     xmlBufferPtr http_request = NULL;
     xmlSaveCtxtPtr save_ctx = NULL;
+    xmlDocPtr request_soap_doc = NULL;
+    xmlNodePtr request_soap_envelope = NULL, request_soap_body = NULL;
     void *http_response = NULL;
     size_t response_length = 0;
-    xmlNodePtr request_soap_tree = NULL, request_body = NULL;
-    xmlDocPtr soap_tree = NULL;
+    xmlDocPtr response_soap_doc = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
-    xmlXPathObjectPtr soap_headers = NULL, soap_body = NULL;
+    xmlXPathObjectPtr response_soap_headers = NULL, response_soap_body = NULL;
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -257,26 +258,33 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     if (!url) return IE_NOMEM;
 
     /* Build SOAP request envelope */
-    request_soap_tree = xmlNewNode(soap_ns, BAD_CAST "Envelope");
-    if (!request_soap_tree) {
+    request_soap_doc = xmlNewDoc(BAD_CAST "1.0");
+    if (!request_soap_doc) {
+        isds_log_message(context, _("Could not build SOAP request document"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    request_soap_envelope = xmlNewNode(soap_ns, BAD_CAST "Envelope");
+    if (!request_soap_envelope) {
         isds_log_message(context, _("Could not build SOAP request envelope"));
         err = IE_ERROR;
         goto leave;
     }
-    request_body = xmlNewNode(soap_ns, BAD_CAST "Body");
-    if (!request_body) {
+    xmlDocSetRootElement(request_soap_doc, request_soap_envelope);
+    request_soap_body = xmlNewNode(soap_ns, BAD_CAST "Body");
+    if (!request_soap_body) {
         isds_log_message(context, _("Could not create SOAP request body"));
         err = IE_ERROR;
         goto leave;
     }
-    if (!xmlAddChild(request_soap_tree, request_body)) {
+    if (!xmlAddChild(request_soap_envelope, request_soap_body)) {
         isds_log_message(context, _("Could not add Body to SOAP request envelope"));
         err = IE_ERROR;
         goto leave;
     }
 
     /* Append request XML node set to SOAP body if request is not empty*/
-    if (request && !xmlAddChildList(request_body, request)) {
+    if (request && !xmlAddChildList(request_soap_body, request)) {
         isds_log_message(context,
                 _("Could not add request content to SOAP request envelope"));
         err = IE_ERROR;
@@ -293,7 +301,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
     /* Last argument 1 means format the XML tree. This is pretty but it breaks
-     * digital signatures probably because ISDS does not use XMLSec */
+     * digital signatures probably because ISDS abadoned XMLSec */
     save_ctx = xmlSaveToBuffer(http_request, "UTF-8", 1);
     if (!save_ctx) {
         isds_log_message(context,
@@ -303,7 +311,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     }
     /* XXX: According LibXML documentation, this function does not return
      * meaningfull value yet */
-    xmlSaveTree(save_ctx, request_soap_tree);
+    xmlSaveDoc(save_ctx, request_soap_doc);
     if (-1 == xmlSaveFlush(save_ctx)) {
         isds_log_message(context,
                 _("Could not serialize SOAP request to HTTP request bddy"));
@@ -337,13 +345,13 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     /* TODO: Convert returned body into XML default encoding */
 
     /* Parse the HTTP body as XML */
-    soap_tree = xmlParseMemory(http_response, response_length);
-    if (!soap_tree) {
+    response_soap_doc = xmlParseMemory(http_response, response_length);
+    if (!response_soap_doc) {
         err = IE_XML;
         goto leave;
     }
 
-    xpath_ctx = xmlXPathNewContext(soap_tree);
+    xpath_ctx = xmlXPathNewContext(response_soap_doc);
     if (!xpath_ctx) {
         err = IE_ERROR;
         goto leave;
@@ -355,34 +363,34 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     }
 
     /* Check for SOAP requirements */
-    soap_headers = xmlXPathEvalExpression(
+    response_soap_headers = xmlXPathEvalExpression(
             BAD_CAST "/soap:Envelope/soap:Header/"
             "*[@soap:mustUnderstand/text() = true()]", xpath_ctx);
-    if (!soap_headers) {
+    if (!response_soap_headers) {
         err = IE_ERROR;
         goto leave;
     }
-    if (soap_headers->nodesetval) {
+    if (response_soap_headers->nodesetval) {
         isds_log_message(context, "SOAP response requires unsupported feature");
         /* TODO: log the headers 
          * xmlChar *fragment = NULL;
-         * fragment = xmlXPathCastNodeSetToSting(soap_headers->nodesetval);*/
+         * fragment = xmlXPathCastNodeSetToSting(response_soap_headers->nodesetval);*/
         err = IE_NOTSUP;
         goto leave;
     }
 
-    soap_body = xmlXPathEvalExpression(BAD_CAST "/soap:Envelope/soap:Body",
-            xpath_ctx);
-    if (!soap_body) {
+    response_soap_body = xmlXPathEvalExpression(
+            BAD_CAST "/soap:Envelope/soap:Body", xpath_ctx);
+    if (!response_soap_body) {
         err = IE_ERROR;
         goto leave;
     }
-    if (!(soap_body->nodesetval)) {
+    if (!(response_soap_body->nodesetval)) {
         isds_log_message(context, "SOAP response does not contain Body element");
         err = IE_SOAP;
         goto leave;
     }
-    if (soap_body->nodesetval->nodeNr > 1) {
+    if (response_soap_body->nodesetval->nodeNr > 1) {
         isds_log_message(context, "SOAP body has more than Body element");
         err = IE_SOAP;
         goto leave;
@@ -390,8 +398,8 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
 
 
     /* Extract XML Tree with ISDS response from SOAP envelope and return it */
-    *response = xmlDocCopyNodeList(soap_tree,
-            soap_body->nodesetval->nodeTab[0]);
+    *response = xmlDocCopyNodeList(response_soap_doc,
+            response_soap_body->nodesetval->nodeTab[0]);
     if (!*response) {
         err = IE_NOMEM;
         goto leave;
@@ -405,19 +413,19 @@ leave:
         *response = NULL;
     }
 
-    xmlXPathFreeObject(soap_body);
-    xmlXPathFreeObject(soap_headers);
+    xmlXPathFreeObject(response_soap_body);
+    xmlXPathFreeObject(response_soap_headers);
     xmlXPathFreeContext(xpath_ctx);
-    xmlFreeDoc(soap_tree);
+    xmlFreeDoc(response_soap_doc);
     free(mime_type);
     free(http_response);
-    /* FIXME: Deatch request node set from request_soap_tree to not free this
+    /* FIXME: Detach request node set from request_soap_doc to not free this
      * outer structure */
     /*if (request) {
         for (int i = 0; i < request->nodesetvalue->Nr; i++)
             xmlUnlinkNode(request->nodesetvalue->nodeTab[i]);
     }*/
-    xmlFreeNode(request_soap_tree); /* recursive, frees request_body too */
+    xmlFreeDoc(request_soap_doc); /* recursive, frees request_body too */
     xmlBufferFree(http_request);
     xmlSaveClose(save_ctx);
     free(url);
