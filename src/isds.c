@@ -210,7 +210,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
         return IE_ERROR;
 
     /* Build login request */
-    request = xmlNewNode(NULL, BAD_CAST "DummyOperartion");
+    request = xmlNewNode(NULL, BAD_CAST "DummyOperation");
     if (!request) {
         isds_log_message(context, _("Could build ISDS login request"));
         return IE_ERROR;
