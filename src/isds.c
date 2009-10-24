@@ -205,6 +205,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
         const char *password, const char *certificate, const char* key) {
     isds_error err = IE_NOT_LOGGED_IN;
     isds_error soap_err;
+    xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
     xmlNodePtr response = NULL;
 
@@ -235,11 +236,18 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
         return IE_ERROR;
 
     /* Build login request */
-    request = xmlNewNode(isds_ns, BAD_CAST "DummyOperation");
+    request = xmlNewNode(NULL, BAD_CAST "DummyOperation");
     if (!request) {
         isds_log_message(context, _("Could build ISDS login request"));
         return IE_ERROR;
     }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
 
     soap_err = soap(context, "login", request, &response);
    

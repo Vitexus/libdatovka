@@ -241,6 +241,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     xmlSaveCtxtPtr save_ctx = NULL;
     xmlDocPtr request_soap_doc = NULL;
     xmlNodePtr request_soap_envelope = NULL, request_soap_body = NULL;
+    xmlNsPtr soap_ns = NULL;
     void *http_response = NULL;
     size_t response_length = 0;
     xmlDocPtr response_soap_doc = NULL;
@@ -264,13 +265,22 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         err = IE_ERROR;
         goto leave;
     }
-    request_soap_envelope = xmlNewNode(soap_ns, BAD_CAST "Envelope");
+    request_soap_envelope = xmlNewNode(NULL, BAD_CAST "Envelope");
     if (!request_soap_envelope) {
         isds_log_message(context, _("Could not build SOAP request envelope"));
         err = IE_ERROR;
         goto leave;
     }
     xmlDocSetRootElement(request_soap_doc, request_soap_envelope);
+    /* Only this way we get namespace definition as @xmlns:soap,
+     * otherwise we get namespace prefix without definition */
+    soap_ns = xmlNewNs(request_soap_envelope, BAD_CAST SOAP_NS, NULL);
+    if(!soap_ns) {
+        isds_log_message(context, _("Could not create SOAP name space"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    xmlSetNs(request_soap_envelope, soap_ns);
     request_soap_body = xmlNewNode(soap_ns, BAD_CAST "Body");
     if (!request_soap_body) {
         isds_log_message(context, _("Could not create SOAP request body"));
@@ -425,7 +435,7 @@ leave:
         for (int i = 0; i < request->nodesetvalue->Nr; i++)
             xmlUnlinkNode(request->nodesetvalue->nodeTab[i]);
     }*/
-    xmlFreeDoc(request_soap_doc); /* recursive, frees request_body too */
+    xmlFreeDoc(request_soap_doc); /* recursive, frees request_body, soap_ns*/
     xmlBufferFree(http_request);
     xmlSaveClose(save_ctx);
     free(url);

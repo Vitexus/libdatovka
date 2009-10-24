@@ -12,6 +12,8 @@
 #include <libxml/xmlsave.h>
 
 #define _(x) (x)
+#define SOAP_NS "http://www.w3.org/2003/05/soap-envelope"
+#define ISDS_NS "http://isds.czechpoint.cz/v20"
 
 /* Global variables.
  * Allocated in isds_init() and deallocated in isds_cleanup(). */
