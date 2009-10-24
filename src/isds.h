@@ -40,7 +40,9 @@ struct isds_message {
 
 
 /* Initialize ISDS library.
- * Global function, must be called before other functions. */
+ * Global function, must be called before other functions.
+ * If it failes you can not use ISDS library and must call isds_cleanup() to
+ * free partially inititialized global variables. */
 isds_error isds_init(void);
 
 /* Deinicialize ISDS library.

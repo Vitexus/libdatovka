@@ -7,14 +7,33 @@
 
 
 /* Initialize ISDS library.
- * Global function, must be called before other functions. */
+ * Global function, must be called before other functions.
+ * If it failes you can not use ISDS library and must call isds_cleanup() to
+ * free partially inititialized global variables. */
 isds_error isds_init(void) {
+    /* NULL global variables */
+    xml_node = NULL;
+    soap_ns = NULL;
+
+    /* Initialize CURL */
     if (curl_global_init(CURL_GLOBAL_ALL)) {
         return IE_ERROR;
     }
 
     /* This can _exit() current program. Find not so assertive check. */
-    LIBXML_TEST_VERSION
+    LIBXML_TEST_VERSION;
+
+    /* Allocate global variables */
+    if (!(xml_node = xmlNewNode(NULL, BAD_CAST "global-element")))
+        return IE_ERROR;
+    if (!(soap_ns = xmlNewNs(NULL,
+            BAD_CAST "http://www.w3.org/2003/05/soap-envelope",
+            BAD_CAST "soap")))
+        return IE_ERROR;
+    if (!(isds_ns = xmlNewNs(NULL,
+            BAD_CAST "http://isds.czechpoint.cz/v20",
+            BAD_CAST "isds")))
+        return IE_ERROR;
 
     return IE_SUCCESS;
 }
@@ -23,8 +42,14 @@ isds_error isds_init(void) {
 /* Deinicialize ISDS library.
  * Global function, must be called as last library function. */
 isds_error isds_cleanup(void) {
-    curl_global_cleanup();
+    /* XML */
+    xmlFreeNs(isds_ns);
+    xmlFreeNs(soap_ns);
+    xmlFreeNode(xml_node);
     xmlCleanupParser();
+    
+    /* Curl */
+    curl_global_cleanup();
 
     return IE_SUCCESS;
 }

@@ -13,6 +13,13 @@
 
 #define _(x) (x)
 
+/* Global variables.
+ * Allocated in isds_init() and deallocated in isds_cleanup(). */
+xmlNodePtr xml_node;
+xmlNsPtr soap_ns, isds_ns;
+/* End of global variables */
+
+/* Context */
 struct isds_ctx {
     unsigned int timeout;   /* milliseconds */
     char *url;              /* URL of the ISDS web service */
