@@ -180,8 +180,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
         const char *password, const char *certificate, const char* key) {
     isds_error err = IE_NOT_LOGGED_IN;
     isds_error soap_err;
-    /*char request[] =  "<DummyOperation/>";
-    size_t request_length = sizeof(request);*/
+    xmlNodePtr request = NULL;
     xmlNodePtr response = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -210,10 +209,18 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
     if (!(context->curl))
         return IE_ERROR;
 
-    /* FIXME: pass request as XML node set 
-    soap_err = soap(context, "login", request, request_length, &response);*/
-    soap_err = soap(context, "login", NULL, &response);
-    
+    /* Build login request */
+    request = xmlNewNode(NULL, BAD_CAST "DummyOperartion");
+    if (!request) {
+        isds_log_message(context, _("Could build ISDS login request"));
+        return IE_ERROR;
+    }
+
+    soap_err = soap(context, "login", request, &response);
+   
+    /* Destroy login request */
+    xmlFreeNode(request);
+
     if (soap_err) {
         xmlFreeNodeList(response);
         curl_easy_cleanup(context->curl);

@@ -423,6 +423,10 @@ leave:
     free(http_response);
     /* FIXME: Deatch request node set from request_soap_tree to not free this
      * outer structure */
+    /*if (request) {
+        for (int i = 0; i < request->nodesetvalue->Nr; i++)
+            xmlUnlinkNode(request->nodesetvalue->nodeTab[i]);
+    }*/
     xmlFreeNode(request_soap_tree); /* recursive, frees request_body too */
     xmlBufferFree(http_request);
     xmlSaveClose(save_ctx);
