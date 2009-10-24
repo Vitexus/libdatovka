@@ -223,9 +223,8 @@ leave:
 /* Do SOAP request.
  * @context holds the base URL,
  * @file is a (CGI) file of SOAP URL,
- * @request is XML document with request. 
- * @request_length is lenght of @request in bytes
- * @file and @request must be NULL rather than empty strings, if the should
+ * @request is XML node set with SOAP request body. 
+ * @file must be NULL, @request should be NULL rather than empty, if they should
  * not be signaled in the SOAP request.
  * @reponse is automatically allocated() node set with SOAP response body.
  * You must xmlFreeNodeList() it. This is literal body, empty (NULL), one node
@@ -233,21 +232,23 @@ leave:
  * In case of error the response will be deallocated automatically.
  * Side effect: message buffer */
 _hidden isds_error soap(struct isds_ctx *context, const char *file,
-        const void *request, const size_t request_length,
-        xmlNodePtr *response) {
+        const xmlNodePtr *request, xmlNodePtr *response) {
 
     isds_error err = IE_SUCCESS;
     char *url = NULL;
     char *mime_type = NULL;
+    xmlBufferPtr http_request = NULL;
+    xmlSaveCtxtPtr save_ctx = NULL;
     void *http_response = NULL;
     size_t response_length = 0;
+    xmlNsPtr soap_ns = NULL;
+    xmlNodePtr request_soap_tree = NULL;
     xmlDocPtr soap_tree = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr soap_headers = NULL, soap_body = NULL;
 
 
     if (!context) return IE_INVALID_CONTEXT;
-    if (request_length > 0 && !request) return IE_INVAL;
     if (!response) return IE_INVAL;
 
     xmlFreeNodeList(*response);
@@ -257,8 +258,52 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     if (!url) return IE_NOMEM;
 
     /* TODO: Wrap the request into SOAP envelope */
+    /* Build SOAP request envelope */
+    request_soap_tree = xmlNewNode(NULL, BAD_CAST "Envelope");
+    if (!request_soap_tree) {
+        isds_log_message(context, _("Could not build SOAP request envelope"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    soap_ns = xmlNewNs(request_soap_tree,
+            BAD_CAST "http://www.w3.org/2003/05/soap-envelope",
+            BAD_CAST "soap");
+    if (!soap_ns) {
+        isds_log_message(context,
+                _("Could not set name space to SOAP request envelope"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    xmlSetNs(request_soap_tree, soap_ns);
 
-    err = http(context, url, request, request_length,
+    /* Serialize the SOAP request into HTTP request body */
+    /*xmlChar* fragment = xmlNodeSetToSting(soap_headers->nodesetval);*/
+    http_request = xmlBufferCreate();
+    if (!http_request) {
+        isds_log_message(context,
+                _("Could not create xmlBuffer for HTTP request body"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    save_ctx = xmlSaveToBuffer(http_request, "UTF-8", 0);
+    if (!save_ctx) {
+        isds_log_message(context,
+                _("Could not create XML serializer"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* XXX: According LibXML documentation, this function does not return
+     * meaningfull value yet */
+    xmlSaveTree(save_ctx, request_soap_tree);
+    if (-1 == xmlSaveFlush(save_ctx)) {
+        isds_log_message(context,
+                _("Could not serialize SOAP request to HTTP request bddy"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    
+
+    err = http(context, url, http_request->content, http_request->use,
             &http_response, &response_length,
             &mime_type, NULL);
 
@@ -346,12 +391,6 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
 
 
 leave:
-    /*if (err) {*/
-    /* TODO: Return body_content and forget *response.
-     * I.e. change soap() prototype from returning buffer to returning
-     * xmlNodeSet. */
-    /*}*/
-
     if (err) {
         xmlFreeNodeList(*response);
         *response = NULL;
@@ -363,6 +402,9 @@ leave:
     xmlFreeDoc(soap_tree);
     free(mime_type);
     free(http_response);
+    xmlFreeNode(request_soap_tree);
+    xmlBufferFree(http_request);
+    xmlSaveClose(save_ctx);
     free(url);
 
     return err;

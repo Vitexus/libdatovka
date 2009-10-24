@@ -52,7 +52,7 @@ char *isds_strerror(const isds_error error) {
         case IE_NOEXIST:
             return(_("Not exist")); break;
         case IE_NOMEM:
-            return(_("Out of memmory")); break;
+            return(_("Out of memory")); break;
         case IE_NETWORK:
             return(_("Network problem")); break;
         case IE_SOAP:
@@ -180,8 +180,8 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
         const char *password, const char *certificate, const char* key) {
     isds_error err = IE_NOT_LOGGED_IN;
     isds_error soap_err;
-    char request[] =  "<DummyOperation/>";
-    size_t request_length = sizeof(request);
+    /*char request[] =  "<DummyOperation/>";
+    size_t request_length = sizeof(request);*/
     xmlNodePtr response = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -210,7 +210,9 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
     if (!(context->curl))
         return IE_ERROR;
 
-    soap_err = soap(context, "login", request, request_length, &response);
+    /* FIXME: pass request as XML node set 
+    soap_err = soap(context, "login", request, request_length, &response);*/
+    soap_err = soap(context, "login", NULL, &response);
     
     if (soap_err) {
         xmlFreeNodeList(response);
