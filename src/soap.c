@@ -296,7 +296,6 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
 
 
     /* Serialize the SOAP request into HTTP request body */
-    /*xmlChar* fragment = xmlNodeSetToSting(soap_headers->nodesetval);*/
     http_request = xmlBufferCreate();
     if (!http_request) {
         isds_log_message(context,
@@ -304,7 +303,9 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         err = IE_ERROR;
         goto leave;
     }
-    save_ctx = xmlSaveToBuffer(http_request, "UTF-8", 0);
+    /* Last argument 1 means format the XML tree. This is pretty but it breaks
+     * digital signatures probably because ISDS does not use XMLSec */
+    save_ctx = xmlSaveToBuffer(http_request, "UTF-8", 1);
     if (!save_ctx) {
         isds_log_message(context,
                 _("Could not create XML serializer"));
