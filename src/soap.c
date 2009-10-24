@@ -281,14 +281,9 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
     xmlSetNs(request_soap_envelope, soap_ns);
-    /* TODO: Use xmlNewChild() instead of xmlNewNode() + xmlAddChild() */
-    request_soap_body = xmlNewNode(soap_ns, BAD_CAST "Body");
+    request_soap_body = xmlNewChild(request_soap_envelope, NULL,
+            BAD_CAST "Body", NULL);
     if (!request_soap_body) {
-        isds_log_message(context, _("Could not create SOAP request body"));
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (!xmlAddChild(request_soap_envelope, request_soap_body)) {
         isds_log_message(context, _("Could not add Body to SOAP request envelope"));
         err = IE_ERROR;
         goto leave;
