@@ -19,6 +19,8 @@ int main(int argc, char **argv) {
         printf("isds_init() failed: %s\n", isds_strerror(err));
     }
 
+    isds_set_logging(ILF_HTTP, ILL_DEBUG);
+
     ctx = isds_ctx_create();
     if (!ctx) {
         printf("isds_ctx_create() failed");
