@@ -140,7 +140,12 @@ static isds_error http(struct isds_ctx *context, const char *url,
         goto leave;
     }
 
-    isds_log(ILF_HTTP, ILL_DEBUG, "Sending POST request to %s\n", url);
+    isds_log(ILF_HTTP, ILL_DEBUG, _("Sending POST request to %s\n"), url);
+    isds_log(ILF_HTTP, ILL_DEBUG,
+            _("POST body length: %zu, content follows:\n"), request_length);
+    isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n", request_length, request);
+    isds_log(ILF_HTTP, ILL_DEBUG, _("End of POST body\n"));
+    
 
     /*  Do the request */
     curl_err = curl_easy_perform(context->curl);
