@@ -210,7 +210,7 @@ _hidden isds_error isds_log(const isds_log_facility facility,
      * (e.g. fprintf to stderr or copy to text area GUI widget). */
 
     va_start(ap, message);
-    fprintf(stderr, message, ap);
+    vfprintf(stderr, message, ap);
     va_end(ap);
     /* Line buffered printf is default.
      * fflush(stderr);*/
