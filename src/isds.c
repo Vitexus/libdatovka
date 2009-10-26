@@ -1,6 +1,7 @@
 #define _XOPEN_SOURCE 500   /* strdup from string.h */
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "isds_priv.h"
 #include "utils.h"
 #include "soap.h"
@@ -14,6 +15,8 @@ isds_error isds_init(void) {
     /* NULL global variables */
     xml_node = NULL;
     soap_ns = NULL;
+    log_facilities = ILF_NONE;
+    log_level = ILL_NONE;
 
     /* Initialize CURL */
     if (curl_global_init(CURL_GLOBAL_ALL)) {
@@ -177,6 +180,35 @@ _hidden isds_error isds_append_message(struct isds_ctx *context,
     strcpy(buffer + old_length, message);
 
     context->long_message = buffer;
+    return IE_SUCCESS;
+}
+
+
+/* Set logging up.
+ * @facilities is bitmask of isds_log_facility values,
+ * @level is verbosity level. */
+void isds_set_logging(const unsigned int facilities,
+        const isds_log_level level) {
+    log_facilities = facilities;
+    log_level = level;
+}
+
+
+/* Log @message in class @facility with log @level into global log.
+ * For debugging purposes. */
+_hidden isds_error isds_log(const isds_log_facility facility,
+        const isds_log_level level, const char *message) {
+    if (level > log_level) return IE_SUCCESS;
+    if (!(log_facilities & facility)) return IE_SUCCESS;
+    if (!message) return IE_INVAL;
+
+    /* TODO: Allow to register output function privided by application
+     * (e.g. fprintf to stderr or copy to text area GUI widget). */
+
+    fprintf(stderr, "%s\n", message);
+    /* Line buffered printf is default.
+     * fflush(stderr);*/
+
     return IE_SUCCESS;
 }
 

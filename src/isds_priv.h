@@ -19,6 +19,9 @@
  * Allocated in isds_init() and deallocated in isds_cleanup(). */
 xmlNodePtr xml_node;
 xmlNsPtr soap_ns, isds_ns;
+unsigned int log_facilities;
+isds_log_level log_level;
+
 /* End of global variables */
 
 /* Context */
@@ -42,6 +45,11 @@ isds_error isds_log_message(struct isds_ctx *context, const char *message);
  * Application can pick the message up using isds_long_message().
  * NULL message has void effect. */
 isds_error isds_append_message(struct isds_ctx *context, const char *message);
+
+/* Log @message in class @facility with log @level into global log.
+ * For debugging purposes. */
+isds_error isds_log(const isds_log_facility facility,
+        const isds_log_level level, const char *message);
 
 /* Makes known all relevant namespaces to give @xpat_ctx */
 isds_error register_namespaces(xmlXPathContextPtr xpath_ctx);

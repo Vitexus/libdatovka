@@ -22,6 +22,24 @@ typedef enum {
     IE_XML
 } isds_error;
 
+typedef enum {
+    ILL_NONE = 0,
+    ILL_CRIT = 10,
+    ILL_ERR = 20,
+    ILL_WARNING = 30,
+    ILL_INFO = 40,
+    ILL_DEBUG = 50
+} isds_log_level;
+
+typedef enum {
+    ILF_NONE = 0x0,
+    ILF_HTTP = 0x1,
+    ILF_SOAP = 0x2,
+    ILF_ISDS = 0x4,
+    ILF_FILE = 0x8,
+    ILF_SEC  = 0x10
+} isds_log_facility;
+
 /* Return text description of ISDS error */
 char *isds_strerror(const isds_error error);
 
@@ -63,6 +81,11 @@ isds_error isds_ctx_free(struct isds_ctx **context);
  * mesage. Returned pointer is only valid until new library function is
  * called. */
 char *isds_long_message(const struct isds_ctx *context);
+
+/* Set logging up.
+ * @facilities is bitmask of isds_log_facility values,
+ * @level is verbosity level. */
+void isds_set_logging(const unsigned int facilities, const isds_log_level level);
 
 /* Connect to given url.
  * It just makes TCP connection to ISDS server found in @url hostname part. */
