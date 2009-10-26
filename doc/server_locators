@@ -1,3 +1,15 @@
 Production ISDS instance:
     https://www.mojedatovaschranka.cz/DS/dz
 
+Testing ISDS instance:
+    https://www.czebox.cz/DS/dz
+
+According <http://www.abclinuxu.cz/datove-schranky/wiki/poznatky> different
+login methods requires different URLs:
+
+    /DS/*
+        HTTP basic authentication
+    /cert/DS/*
+        Client certificate authentication
+    /hspis/DS*
+        Login via hosted third party solution
