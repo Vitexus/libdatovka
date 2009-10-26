@@ -3,9 +3,9 @@
 #include <locale.h>
 #include <isds.h>
 
-char url[] = "http://localhost:1505/";
-char username[] = "petr";
-char password[] = "xxxx";
+char url[] = "https://www.czebox.cz/DS/dz";
+char username[] = "jrfh7i";
+char password[] = "Ab123456";
 struct isds_ctx *ctx;
 
 
