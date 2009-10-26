@@ -3,7 +3,7 @@
 #include <locale.h>
 #include <isds.h>
 
-char url[] = "https://www.czebox.cz/DS/dz";
+char url[] = "https://www.czebox.cz/DS/dz/";
 char username[] = "jrfh7i";
 char password[] = "Ab123456";
 struct isds_ctx *ctx;
