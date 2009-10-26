@@ -28,7 +28,8 @@ typedef enum {
     ILL_ERR = 20,
     ILL_WARNING = 30,
     ILL_INFO = 40,
-    ILL_DEBUG = 50
+    ILL_DEBUG = 50,
+    ILL_ALL = 100
 } isds_log_level;
 
 typedef enum {
@@ -37,7 +38,8 @@ typedef enum {
     ILF_SOAP = 0x2,
     ILF_ISDS = 0x4,
     ILF_FILE = 0x8,
-    ILF_SEC  = 0x10
+    ILF_SEC  = 0x10,
+    ILF_ALL  = 0xFF
 } isds_log_facility;
 
 /* Return text description of ISDS error */
