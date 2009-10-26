@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include "isds_priv.h"
 #include "utils.h"
 #include "soap.h"
@@ -194,10 +195,13 @@ void isds_set_logging(const unsigned int facilities,
 }
 
 
-/* Log @message in class @facility with log @level into global log.
+/* Log @message in class @facility with log @level into global log. @message
+ * is printf(3) formating string, variadic arguments may be neccessary.
  * For debugging purposes. */
 _hidden isds_error isds_log(const isds_log_facility facility,
-        const isds_log_level level, const char *message) {
+        const isds_log_level level, const char *message, ...) {
+    va_list ap;
+
     if (level > log_level) return IE_SUCCESS;
     if (!(log_facilities & facility)) return IE_SUCCESS;
     if (!message) return IE_INVAL;
@@ -205,7 +209,9 @@ _hidden isds_error isds_log(const isds_log_facility facility,
     /* TODO: Allow to register output function privided by application
      * (e.g. fprintf to stderr or copy to text area GUI widget). */
 
-    fprintf(stderr, "%s\n", message);
+    va_start(ap, message);
+    fprintf(stderr, message, ap);
+    va_end(ap);
     /* Line buffered printf is default.
      * fflush(stderr);*/
 

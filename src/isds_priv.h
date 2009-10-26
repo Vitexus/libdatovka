@@ -46,10 +46,11 @@ isds_error isds_log_message(struct isds_ctx *context, const char *message);
  * NULL message has void effect. */
 isds_error isds_append_message(struct isds_ctx *context, const char *message);
 
-/* Log @message in class @facility with log @level into global log.
+/* Log @message in class @facility with log @level into global log. @message
+ * is printf(3) formating string, variadic arguments may be neccessary.
  * For debugging purposes. */
 isds_error isds_log(const isds_log_facility facility,
-        const isds_log_level level, const char *message);
+        const isds_log_level level, const char *message, ...);
 
 /* Makes known all relevant namespaces to give @xpat_ctx */
 isds_error register_namespaces(xmlXPathContextPtr xpath_ctx);
