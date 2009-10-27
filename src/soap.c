@@ -422,7 +422,8 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
     if (response_soap_headers->nodesetval) {
-        isds_log_message(context, "SOAP response requires unsupported feature");
+        isds_log_message(context,
+                _("SOAP response requires unsupported feature"));
         /* TODO: log the headers 
          * xmlChar *fragment = NULL;
          * fragment = xmlXPathCastNodeSetToSting(response_soap_headers->nodesetval);*/
@@ -443,7 +444,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
     if (response_soap_body->nodesetval->nodeNr > 1) {
-        isds_log_message(context, "SOAP body has more than Body element");
+        isds_log_message(context, _("SOAP body has more than Body element"));
         err = IE_SOAP;
         goto leave;
     }
