@@ -30,13 +30,9 @@ isds_error isds_init(void) {
     /* Allocate global variables */
     if (!(xml_node = xmlNewNode(NULL, BAD_CAST "global-element")))
         return IE_ERROR;
-    if (!(soap_ns = xmlNewNs(NULL,
-            BAD_CAST "http://www.w3.org/2003/05/soap-envelope",
-            BAD_CAST "soap")))
+    if (!(soap_ns = xmlNewNs(NULL, BAD_CAST SOAP_NS, BAD_CAST "soap")))
         return IE_ERROR;
-    if (!(isds_ns = xmlNewNs(NULL,
-            BAD_CAST "http://isds.czechpoint.cz/v20",
-            BAD_CAST "isds")))
+    if (!(isds_ns = xmlNewNs(NULL, BAD_CAST ISDS_NS, BAD_CAST "isds")))
         return IE_ERROR;
 
     return IE_SUCCESS;
@@ -359,14 +355,11 @@ int isds_address_free(struct isds_address **address);
 _hidden isds_error register_namespaces(xmlXPathContextPtr xpath_ctx) {
     if (!xpath_ctx) return IE_ERROR;
 
-    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "soap",
-                BAD_CAST "http://www.w3.org/2003/05/soap-envelope"))
+    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "soap", BAD_CAST SOAP_NS))
         return IE_ERROR;
-    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "isds",
-                BAD_CAST "http://isds.czechpoint.cz/v20"))
+    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "isds", BAD_CAST ISDS_NS))
         return IE_ERROR;
-    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "xs",
-                BAD_CAST "http://www.w3.org/2001/XMLSchema"))
+    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "xs", BAD_CAST SCHEMA_NS))
         return IE_ERROR;
     return IE_SUCCESS;
 }
