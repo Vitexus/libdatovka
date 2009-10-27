@@ -89,8 +89,21 @@ static isds_error http(struct isds_ctx *context, const char *url,
         curl_err = curl_easy_setopt(context->curl, CURLOPT_PASSWORD,
                 context->password);
     }
+
+    /* Set other CURL features */
     if (!curl_err) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_FAILONERROR, 1);
+    }
+    if (!curl_err) {
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_FOLLOWLOCATION, 1);
+    }
+    if (!curl_err) {
+        /* TODO: Make the redirect depth configurable */
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_MAXREDIRS, 8);
+    }
+    if (!curl_err) {
+        curl_err = curl_easy_setopt(context->curl,
+                CURLOPT_UNRESTRICTED_AUTH, 1);
     }
 
     /* Set get-response function */
@@ -145,6 +158,9 @@ static isds_error http(struct isds_ctx *context, const char *url,
             _("POST body length: %zu, content follows:\n"), request_length);
     isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n", request_length, request);
     isds_log(ILF_HTTP, ILL_DEBUG, _("End of POST body\n"));
+    if ((log_facilities & ILF_HTTP) && (log_level >= ILL_DEBUG) ) {
+        curl_easy_setopt(context->curl, CURLOPT_VERBOSE, 1);
+    }
     
 
     /*  Do the request */
@@ -153,6 +169,13 @@ static isds_error http(struct isds_ctx *context, const char *url,
     if (!curl_err)
         curl_err = curl_easy_getinfo(context->curl, CURLINFO_CONTENT_TYPE,
             &content_type);
+
+    isds_log(ILF_HTTP, ILL_DEBUG, _("Recieved final response to %s\n"), url);
+    isds_log(ILF_HTTP, ILL_DEBUG,
+            _("Response body length: %zu, content follows:\n"),
+            body.length);
+    isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n", body.length, body.data);
+    isds_log(ILF_HTTP, ILL_DEBUG, _("End of response body\n"));
 
     if (curl_err) {
         isds_log_message(context, url);
