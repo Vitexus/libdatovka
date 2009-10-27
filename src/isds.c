@@ -221,8 +221,23 @@ _hidden isds_error isds_log(const isds_log_facility facility,
 
 /* Set timeout in miliseconds for each network job like connecting to server
  * or sending message. Use 0 to disable timeout limits. */
-isds_error isds_set_timeout(struct isds_ctx *context, const unsigned int timeout) {
-    return IE_NOTSUP;
+isds_error isds_set_timeout(struct isds_ctx *context,
+        const unsigned int timeout) {
+    if (!context) return IE_INVALID_CONTEXT;
+
+    context->timeout = timeout;
+
+    if (context->curl) {
+        CURLcode curl_err;
+
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_NOSIGNAL, 1);
+        if (!curl_err) 
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_TIMEOUT_MS,
+                    context->timeout);
+        if (curl_err) return IE_ERROR;
+    }
+
+    return IE_SUCCESS;
 }
 
 

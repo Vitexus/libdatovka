@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
         printf("isds_ctx_create() failed");
     }
 
-    err = isds_set_timeout(ctx, 2000);
+    err = isds_set_timeout(ctx, 10000);
     if (err) {
         printf("isds_set_timeout() failed: %s\n", isds_strerror(err));
     }

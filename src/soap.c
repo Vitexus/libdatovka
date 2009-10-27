@@ -95,6 +95,15 @@ static isds_error http(struct isds_ctx *context, const char *url,
                 context->password);
     }
 
+    /* Set timeout */
+    if (!curl_err) {
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_NOSIGNAL, 1);
+    }
+    if (!curl_err && context->timeout) {
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_TIMEOUT_MS,
+                context->timeout);
+    }
+
     /* Set other CURL features */
     if (!curl_err) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_FAILONERROR, 0);
@@ -461,7 +470,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
             _("SOAP response recieved:\n%.*s\nEnd of SOAP response\n"),
             response_length, http_response);
 
-    /* Check for SOAP requirements */
+    /* Check for SOAP Headers */
     response_soap_headers = xmlXPathEvalExpression(
             BAD_CAST "/soap:Envelope/soap:Header/"
             "*[@soap:mustUnderstand/text() = true()]", xpath_ctx);
@@ -478,6 +487,8 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         err = IE_NOTSUP;
         goto leave;
     }
+
+    /* TODO: Check for SOAP Faults */
 
     response_soap_body = xmlXPathEvalExpression(
             BAD_CAST "/soap:Envelope/soap:Body", xpath_ctx);
