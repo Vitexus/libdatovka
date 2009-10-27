@@ -52,14 +52,19 @@ static size_t write_body(void *buffer, size_t size, size_t nmemb, void *userp) {
  * sent). Set NULL if you don't care.
  * @charset is charset of the body signaled by server. The same constrains
  * like on @mime_type apply.
+ * @http_code is final HTTP code returned by server. This can be 200, 401, 500
+ * or any other one. Pass NULL if you don't interrest.
  * In case of error, the response memory, MIME type, charset and lenght will be
  * deallocated and zerod automatically. Thus be sure they are preallocated or
  * they points to NULL.
+ * Be ware that successful return value does not mean the HTTP request has
+ * been accepted by the server. You must cosult @http_code. OTOH, failure
+ * return value means the request could not been sent (e.g. SSL error).
  * Side effect: message buffer */
 static isds_error http(struct isds_ctx *context, const char *url,
         const void *request, const size_t request_length,
         void **response, size_t *response_length,
-        char **mime_type, char**charset) {
+        char **mime_type, char **charset, long *http_code) {
 
     CURLcode curl_err;
     isds_error err = IE_SUCCESS;
@@ -92,7 +97,7 @@ static isds_error http(struct isds_ctx *context, const char *url,
 
     /* Set other CURL features */
     if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_FAILONERROR, 1);
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_FAILONERROR, 0);
     }
     if (!curl_err) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_FOLLOWLOCATION, 1);
@@ -233,6 +238,16 @@ static isds_error http(struct isds_ctx *context, const char *url,
         }
     }
 
+    /* Get HTTP response code */
+    if (http_code) {
+        curl_err = curl_easy_getinfo(context->curl,
+                CURLINFO_RESPONSE_CODE, http_code);
+        if (curl_err) {
+            err = IE_ERROR;
+            goto leave;
+        }
+    }
+
 leave:
     free(headers);
 
@@ -278,6 +293,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     isds_error err = IE_SUCCESS;
     char *url = NULL;
     char *mime_type = NULL;
+    long http_code = 0;
     xmlBufferPtr http_request = NULL;
     xmlSaveCtxtPtr save_ctx = NULL;
     xmlDocPtr request_soap_doc = NULL;
@@ -381,19 +397,29 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
 
     err = http(context, url, http_request->content, http_request->use,
             &http_response, &response_length,
-            &mime_type, NULL);
+            &mime_type, NULL, &http_code);
 
     /* TODO: HTTP binding for SOAP prescribes non-200 HTTP return codes
-     * to be processes too. See SOAP Part 2, Table 16. */
+     * to be processes too. */
 
     if (err) {
         goto leave;
     }
 
-    /* Check for Content-Type: application/soap+xml */
-    if (mime_type && strcmp(mime_type, "application/soap+xml")
-            && strcmp(mime_type, "application/xml")
-            && strcmp(mime_type, "text/xml")) {
+    /* Check for HTTP return code */
+    switch (http_code) {
+        case 401:
+            err = IE_NOT_LOGGED_IN;
+            isds_log_message(context, _("Authorization failed"));
+        /* 500 should return standard SOAP message */
+    }
+
+    /* Check for Content-Type: text/xml.
+     * Do it after HTTP code check because 401 Unauthorized returns HTML web
+     * page for browsers. */
+    if (mime_type && strcmp(mime_type, "text/xml")
+            && strcmp(mime_type, "application/soap+xml")
+            && strcmp(mime_type, "application/xml")) {
         isds_log_message(context, url);
         isds_append_message(context, _(": bad MIME type sent by server: "));
         isds_append_message(context, mime_type);
