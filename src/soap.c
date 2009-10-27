@@ -437,7 +437,8 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
     if (!(response_soap_body->nodesetval)) {
-        isds_log_message(context, "SOAP response does not contain Body element");
+        isds_log_message(context,
+                _("SOAP response does not contain SOAP 1.1 Body element"));
         err = IE_SOAP;
         goto leave;
     }
