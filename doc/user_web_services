@@ -2,6 +2,12 @@ User web services specification
 ===============================
 
 Source: Provozní řád ISDS, version 2008-30-06, Pages 12–13
+Source: Webové služby ISDS pro manipulaci s datovými zprávami,
+    version 2 (2009-06-25)
+Source: Webové služby ISDS pro vyhledávání datových schránek,
+    version 2 (2009-06-26)
+
+
 
 These services are intended for working with messages inside a box by
 a regular user.
@@ -20,6 +26,9 @@ incoming messages as delivered.
 dm_operations.wsdl
 ==================
 
+URL postfix: dz
+Constraints: Client must be autenticated in Access Manager
+
 CreateMessage (*)
     Create and send a message
 MessageDownlod
@@ -34,6 +43,9 @@ DummyOperation
 
 dm_info.wsdl
 ============
+
+URL postfix: dx
+Constraints: Client must be autenticated in Access Manager
 
 VerifyMessage
     Verify local copy of message with remote original stored in ISDS
@@ -54,6 +66,8 @@ GetListOfSentMessages
 
 db_search.wsdl
 ==============
+
+URL postfix: df
 
 FindDataBox (*)
 CheckDataBox (*)
