@@ -105,6 +105,9 @@ static isds_error http(struct isds_ctx *context, const char *url,
         curl_err = curl_easy_setopt(context->curl,
                 CURLOPT_UNRESTRICTED_AUTH, 1);
     }
+    if (!curl_err) {
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_COOKIEFILE, "");
+    }
 
     /* Set get-response function */
     if (!curl_err) {
