@@ -118,14 +118,21 @@ static isds_error http(struct isds_ctx *context, const char *url,
         curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEDATA, &body);
     }
 
-    /* Set MIME types and user agent identification */
+    /* Set MIME types and headers requires by SOAP 1.1.
+     * SOAP 1.1 requires text/xml, SOAP 1.2 requires application/soap+xml */
     if (!curl_err) {
-        headers = curl_slist_append(headers, "Accept: application/soap+xml");
+        headers = curl_slist_append(headers,
+                "Accept: application/soap+xml,application/xml,text/xml");
         if (!headers) {
             err = IE_NOMEM;
             goto leave;
         }
-        headers = curl_slist_append(headers, "Content-Type: application/soap+xml");
+        headers = curl_slist_append(headers, "Content-Type: text/xml");
+        if (!headers) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+        headers = curl_slist_append(headers, "SOAPAction: ");
         if (!headers) {
             err = IE_NOMEM;
             goto leave;
@@ -133,6 +140,7 @@ static isds_error http(struct isds_ctx *context, const char *url,
         curl_err = curl_easy_setopt(context->curl, CURLOPT_HTTPHEADER, headers);
     }
     if (!curl_err) {
+        /* Set user agent identification */
         /* TODO: Present library version, curl etc. in User-Agent */
         curl_err = curl_easy_setopt(context->curl, CURLOPT_USERAGENT, "libisds");
     }
