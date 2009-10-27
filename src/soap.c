@@ -394,6 +394,9 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
     
+    isds_log(ILF_SOAP, ILL_DEBUG,
+            _("SOAP request to sent to %s:\n%.*s\nEnd of SOAP request\n"),
+            url, http_request->use, http_request->content);
 
     err = http(context, url, http_request->content, http_request->use,
             &http_response, &response_length,
@@ -407,7 +410,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     }
 
     /* Check for HTTP return code */
-    isds_log(ILF_SOAP, ILL_DEBUG, "Server returned %ld HTTP code\n",
+    isds_log(ILF_SOAP, ILL_DEBUG, _("Server returned %ld HTTP code\n"),
             http_code);
     switch (http_code) {
         case 401:
@@ -453,6 +456,10 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         err = IE_ERROR;
         goto leave;
     }
+
+    isds_log(ILF_SOAP, ILL_DEBUG,
+            _("SOAP response recieved:\n%.*s\nEnd of SOAP response\n"),
+            response_length, http_response);
 
     /* Check for SOAP requirements */
     response_soap_headers = xmlXPathEvalExpression(

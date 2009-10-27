@@ -5,7 +5,7 @@
 
 char url[] = "https://www.czebox.cz/DS/";
 char username[] = "jrfh7i";
-char password[] = "X-Ab123456";
+char password[] = "Ab123456";
 struct isds_ctx *ctx;
 
 
@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
         printf("isds_init() failed: %s\n", isds_strerror(err));
     }
 
-    isds_set_logging(ILF_ALL, ILL_ALL);
+    isds_set_logging(ILF_ALL & ~ILF_HTTP, ILL_ALL);
 
     ctx = isds_ctx_create();
     if (!ctx) {
