@@ -99,8 +99,8 @@ char *isds_strerror(const isds_error error) {
  * ISDS server with different credentials. */
 struct isds_ctx *isds_ctx_create(void) {
     struct isds_ctx *context;
-    context = malloc(sizeof(struct isds_ctx));
-    memset(context, 0, sizeof(*context));
+    context = malloc(sizeof(*context));
+    if (context) memset(context, 0, sizeof(*context));
     return context;
 };
 
@@ -109,7 +109,7 @@ struct isds_ctx *isds_ctx_create(void) {
  * @context will be NULLed on success. */
 isds_error isds_ctx_free(struct isds_ctx **context) {
     if (!context || !*context) {
-        return IE_ERROR;
+        return IE_INVALID_CONTEXT;
     }
   
     /* Discard credentials */
@@ -145,7 +145,7 @@ _hidden isds_error isds_log_message(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     
     /* FIXME: Check for integer overflow */
-    length = 1 + (message) ? strlen(message) : 0;
+    length = 1 + ((message) ? strlen(message) : 0);
     buffer = realloc(context->long_message, length);
     if (!buffer) return IE_NOMEM;
 
@@ -287,7 +287,8 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
     }
     xmlSetNs(request, isds_ns);
 
-    soap_err = soap(context, "login", request, &response);
+    /*soap_err = soap(context, "login", request, &response);*/
+    soap_err = soap(context, NULL, request, &response);
    
     /* Destroy login request */
     xmlFreeNode(request);
