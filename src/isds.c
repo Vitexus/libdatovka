@@ -287,8 +287,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
     }
     xmlSetNs(request, isds_ns);
 
-    /*soap_err = soap(context, "login", request, &response);*/
-    soap_err = soap(context, NULL, request, &response);
+    soap_err = soap(context, "dz", request, &response);
    
     /* Destroy login request */
     xmlFreeNode(request);
