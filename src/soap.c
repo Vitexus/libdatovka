@@ -313,7 +313,8 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     xmlDocPtr response_soap_doc = NULL;
     xmlNodePtr response_root = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
-    xmlXPathObjectPtr response_soap_headers = NULL, response_soap_body = NULL;
+    xmlXPathObjectPtr response_soap_headers = NULL, response_soap_body = NULL,
+                      response_soap_fault = NULL;
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -494,7 +495,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         err = IE_ERROR;
         goto leave;
     }
-    if (response_soap_headers->nodesetval) {
+    if (!xmlXPathNodeSetIsEmpty(response_soap_headers->nodesetval)) {
         isds_log_message(context,
                 _("SOAP response requires unsupported feature"));
         /* TODO: log the headers 
@@ -504,22 +505,36 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
 
-    /* TODO: Check for SOAP Faults */
-
+    /* Get SOAP Body */
     response_soap_body = xmlXPathEvalExpression(
             BAD_CAST "/soap:Envelope/soap:Body", xpath_ctx);
     if (!response_soap_body) {
         err = IE_ERROR;
         goto leave;
     }
-    if (!(response_soap_body->nodesetval)) {
+    if (xmlXPathNodeSetIsEmpty(response_soap_body->nodesetval)) {
         isds_log_message(context,
-                _("SOAP response does not contain SOAP 1.1 Body element"));
+                _("SOAP response does not contain SOAP Body element"));
         err = IE_SOAP;
         goto leave;
     }
     if (response_soap_body->nodesetval->nodeNr > 1) {
-        isds_log_message(context, _("SOAP body has more than Body element"));
+        isds_log_message(context,
+                _("SOAP response has more than one Body element"));
+        err = IE_SOAP;
+        goto leave;
+    }
+
+    /* Check for SOAP Fault */
+    response_soap_fault = xmlXPathEvalExpression(
+            BAD_CAST "/soap:Envelope/soap:Body/soap:Fault", xpath_ctx);
+    if (!response_soap_fault) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (!xmlXPathNodeSetIsEmpty(response_soap_fault->nodesetval)) {
+        /* TODO: log the fultcode and faultstring */ 
+        isds_log_message(context, _("SOAP response signals Fault"));
         err = IE_SOAP;
         goto leave;
     }
@@ -541,6 +556,7 @@ leave:
         *response = NULL;
     }
 
+    xmlXPathFreeObject(response_soap_fault);
     xmlXPathFreeObject(response_soap_body);
     xmlXPathFreeObject(response_soap_headers);
     xmlXPathFreeContext(xpath_ctx);
