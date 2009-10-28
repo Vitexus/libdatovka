@@ -250,8 +250,9 @@ isds_error isds_set_timeout(struct isds_ctx *context,
  * @key is private key for client's certificate as (base64 encoded?) NULL
  * terminated string. Use NULL if only password autentication is desired.
  * */
-isds_error isds_login(struct isds_ctx *context, const char *url, const char *username,
-        const char *password, const char *certificate, const char* key) {
+isds_error isds_login(struct isds_ctx *context, const char *url,
+        const char *username, const char *password,
+        const char *certificate, const char* key) {
     isds_error err = IE_NOT_LOGGED_IN;
     isds_error soap_err;
     xmlNsPtr isds_ns = NULL;
@@ -298,6 +299,9 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
     }
     xmlSetNs(request, isds_ns);
 
+    isds_log(ILF_ISDS, ILL_DEBUG, _("Logging user %s into server %s\n"),
+            username, url);
+
     soap_err = soap(context, "dz", request, &response);
    
     /* Destroy login request */
@@ -324,6 +328,10 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
 
     xmlFreeNodeList(response);
 
+    if (!err) 
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("User %s has been logged into server %s successfully\n"),
+            username, url);
     return err;
 }
 
@@ -351,6 +359,7 @@ isds_error isds_logout(struct isds_ctx *context) {
     free(context->cookie);
     context->cookie = NULL;
 
+    isds_log(ILF_ISDS, ILL_DEBUG, _("Logged out from ISDS server\n"));
     return IE_SUCCESS;
 }
 
@@ -383,6 +392,8 @@ isds_error isds_ping(struct isds_ctx *context) {
     }
     xmlSetNs(request, isds_ns);
 
+    isds_log(ILF_ISDS, ILL_DEBUG, _("Pinging ISDS server\n"));
+
     /* Sent dummy request */
     soap_err = soap(context, "dz", request, &response);
    
@@ -390,6 +401,8 @@ isds_error isds_ping(struct isds_ctx *context) {
     xmlFreeNode(request);
 
     if (soap_err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("ISDS server could not be contacted\n"));
         xmlFreeNodeList(response);
         curl_easy_cleanup(context->curl);
         context->curl = NULL;
@@ -403,6 +416,8 @@ isds_error isds_ping(struct isds_ctx *context) {
     
 
     xmlFreeNodeList(response);
+
+    isds_log(ILF_ISDS, ILL_DEBUG, _("ISDS server alive\n"));
 
     return IE_SUCCESS;
 }
