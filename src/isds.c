@@ -355,6 +355,59 @@ isds_error isds_logout(struct isds_ctx *context) {
 }
 
 
+/* Verify connection to ISDS is alive and server is responding.
+ * Sent dumy request to ISDS and expect dummy response. */
+isds_error isds_ping(struct isds_ctx *context) {
+    isds_error soap_err;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlNodePtr response = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+
+    /* Check connection is established */
+    if (!context->curl) return IE_ERROR;
+
+
+    /* Build dummy request */
+    request = xmlNewNode(NULL, BAD_CAST "DummyOperation");
+    if (!request) {
+        isds_log_message(context, _("Could build ISDS dummy request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    /* Sent dummy request */
+    soap_err = soap(context, "dz", request, &response);
+   
+    /* Destroy login request */
+    xmlFreeNode(request);
+
+    if (soap_err) {
+        xmlFreeNodeList(response);
+        curl_easy_cleanup(context->curl);
+        context->curl = NULL;
+        return soap_err;
+    }
+
+    /* XXX: Untill we don't propagate HTTP code 500 or 4xx, we can be sure
+     * authentication succeeded if soap_err == IE_SUCCESS */
+    /* TODO: ISDS documentation does not specify response body.
+     * However real server sends back DummyOperationResponse */
+    
+
+    xmlFreeNodeList(response);
+
+    return IE_SUCCESS;
+}
+
+
 /*int isds_get_message(struct isds_ctx *context, const unsigned int id,
         struct isds_message **message);
 int isds_send_message(struct isds_ctx *context, struct isds_message *message);

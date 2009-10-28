@@ -112,6 +112,9 @@ isds_error isds_login(struct isds_ctx *context, const char *url, const char *use
 /* Log out from ISDS server and close connection. */
 isds_error isds_logout(struct isds_ctx *context);
 
+/* Verify connection to ISDS is alive and server is responding.
+ * Sent dumy request to ISDS and expect dummy response. */
+isds_error isds_ping(struct isds_ctx *context);
 
 /*int isds_get_message(struct isds_ctx *context, const unsigned int id,
         struct isds_message **message);

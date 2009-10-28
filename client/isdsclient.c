@@ -39,6 +39,11 @@ int main(int argc, char **argv) {
         printf("Logged in :)\n");
     }
 
+    err = isds_ping(ctx);
+    if (err) {
+        printf("isds_ping() failed: %s\n", isds_strerror(err));
+    }
+
     err = isds_logout(ctx);
     if (err) {
         printf("isds_logout() failed: %s\n", isds_strerror(err));
