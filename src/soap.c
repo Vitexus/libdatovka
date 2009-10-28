@@ -311,6 +311,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     void *http_response = NULL;
     size_t response_length = 0;
     xmlDocPtr response_soap_doc = NULL;
+    xmlNodePtr response_root = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr response_soap_headers = NULL, response_soap_body = NULL;
 
@@ -469,6 +470,21 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     isds_log(ILF_SOAP, ILL_DEBUG,
             _("SOAP response recieved:\n%.*s\nEnd of SOAP response\n"),
             response_length, http_response);
+
+
+    /* Check for SOAP version */
+    response_root = xmlDocGetRootElement(response_soap_doc);
+    if (!response_root) {
+        isds_log_message(context, "SOAP response has no root element");
+        err = IE_SOAP;
+        goto leave;
+    }
+    if (xmlStrcmp(response_root->name, BAD_CAST "Envelope") ||
+            xmlStrcmp(response_root->ns->href, BAD_CAST SOAP_NS)) {
+        isds_log_message(context, "SOAP response is not SOAP 1.1 document");
+        err = IE_SOAP;
+        goto leave;
+    }
 
     /* Check for SOAP Headers */
     response_soap_headers = xmlXPathEvalExpression(
