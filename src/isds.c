@@ -6,6 +6,7 @@
 #include "isds_priv.h"
 #include "utils.h"
 #include "soap.h"
+#include "validator.h"
 
 
 /* Initialize ISDS library.
@@ -448,10 +449,10 @@ isds_error isds_ping(struct isds_ctx *context) {
 /* Send bogus request to ISDS.
  * Just for test purposes */
 isds_error isds_bogus_request(struct isds_ctx *context) {
-    isds_error soap_err;
+    isds_error err;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
-    xmlNodePtr response = NULL;
+    xmlDocPtr response = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
 
@@ -476,17 +477,17 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending bogus request to ISDS\n"));
 
     /* Sent bogus request */
-    soap_err = soap(context, "dz", request, &response);
+    err = isds(context, SERVICE_DM_OPERATIONS, request, &response);
    
     /* Destroy login request */
     xmlFreeNode(request);
 
-    if (soap_err) {
+    if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Processing SOAP reposonse on bogus request failedn"));
-        xmlFreeNodeList(response);
+                _("Processing ISDS response on bogus request failed\n"));
+        xmlFreeDoc(response);
         close_connection(context);
-        return soap_err;
+        return err;
     }
 
     /* XXX: Untill we don't propagate HTTP code 500 or 4xx, we can be sure
@@ -495,7 +496,7 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
      * However real server sends back DummyOperationResponse */
     
 
-    xmlFreeNodeList(response);
+    xmlFreeDoc(response);
 
     isds_log(ILF_ISDS, ILL_DEBUG,
             _("Bogus message accpted by server. This should not happen.\n"));
