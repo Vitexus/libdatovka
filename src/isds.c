@@ -243,7 +243,7 @@ isds_error isds_set_timeout(struct isds_ctx *context,
 
 /* Discard credentials.
  * Only that. It does not cause log out, connection close or similar. */
-_hidden isds_error discard_credentials(struct isds_ctx *context) {
+static isds_error discard_credentials(struct isds_ctx *context) {
     if(!context) return IE_INVALID_CONTEXT;
 
     if (context->username) {
