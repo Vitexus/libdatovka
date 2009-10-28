@@ -49,7 +49,8 @@ int main(int argc, char **argv) {
     printf("Sending bogus request\n");
     err = isds_bogus_request(ctx);
     if (err) {
-        printf("isds_bogus_request() failed: %s\n", isds_strerror(err));
+        printf("isds_bogus_request() failed: %s: %s\n", isds_strerror(err),
+                isds_long_message(ctx));
     } else {
         printf("isds_bogus_request() succeeded\n");
     }
@@ -70,7 +71,8 @@ int main(int argc, char **argv) {
     printf("Sending bogus request after logout\n");
     err = isds_bogus_request(ctx);
     if (err) {
-        printf("isds_bogus_request() failed: %s\n", isds_strerror(err));
+        printf("isds_bogus_request() failed: %s: %s\n", isds_strerror(err),
+                isds_long_message(ctx));
     } else {
         printf("isds_bogus_request() succeeded\n");
     }
