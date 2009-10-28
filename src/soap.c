@@ -288,8 +288,7 @@ leave:
             *charset = NULL;
         }
 
-        curl_easy_cleanup(context->curl);
-        context->curl = NULL;
+        close_connection(context);
     }
 
     *response = body.data;

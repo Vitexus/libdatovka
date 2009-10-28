@@ -309,8 +309,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 
     if (soap_err) {
         xmlFreeNodeList(response);
-        curl_easy_cleanup(context->curl);
-        context->curl = NULL;
+        close_connection(context);
         return soap_err;
     }
 
@@ -342,8 +341,7 @@ isds_error isds_logout(struct isds_ctx *context) {
 
     /* Close connection */
     if (context->curl) {
-        curl_easy_cleanup(context->curl);
-        context->curl = NULL;
+        close_connection(context);
     }
 
     /* Discard credentials */
@@ -404,8 +402,7 @@ isds_error isds_ping(struct isds_ctx *context) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("ISDS server could not be contacted\n"));
         xmlFreeNodeList(response);
-        curl_easy_cleanup(context->curl);
-        context->curl = NULL;
+        close_connection(context);
         return soap_err;
     }
 
