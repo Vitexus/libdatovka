@@ -22,6 +22,7 @@ _hidden isds_error close_connection(struct isds_ctx *context) {
         context->curl = NULL;
     }
 
+    isds_log(ILF_HTTP, ILL_DEBUG, _("Connection to server closed"));
     return IE_SUCCESS;
 }
 
