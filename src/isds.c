@@ -241,6 +241,26 @@ isds_error isds_set_timeout(struct isds_ctx *context,
 }
 
 
+/* Discard credentials.
+ * Only that. It does not cause log out, connection close or similar. */
+_hidden isds_error discard_credentials(struct isds_ctx *context) {
+    if(!context) return IE_INVALID_CONTEXT;
+
+    if (context->username) {
+        memset(context->username, 0, strlen(context->username));
+        free(context->username);
+        context->username = NULL;
+    }
+    if (context->password) {
+        memset(context->password, 0, strlen(context->password));
+        free(context->password);
+        context->password = NULL;
+    }
+
+    return IE_SUCCESS;
+}
+
+
 /* Connect and log in into ISDS server.
  * @url is address of ISDS web service
  * @username is user name of ISDS user
@@ -269,18 +289,18 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     if (!(context->url))
         return IE_NOMEM;
 
-    free(context->username);
-    context->username = strdup(username);
-    if (!(context->username))
-        return IE_NOMEM;
-
+    /* Store credentials */
     /* FIXME: mlock password
      * (I have a library) */
-    free(context->password);
+    discard_credentials(context);
+    context->username = strdup(username);
     context->password = strdup(password);
-    if (!(context->password))
+    if (!(context->username && context->password)) {
+        discard_credentials(context);
         return IE_NOMEM;
+    }
 
+    /* Prepare CURL handle */
     context->curl = curl_easy_init();
     if (!(context->curl))
         return IE_ERROR;
@@ -302,7 +322,10 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     isds_log(ILF_ISDS, ILL_DEBUG, _("Logging user %s into server %s\n"),
             username, url);
 
+    /* Send login request */
     soap_err = soap(context, "dz", request, &response);
+    
+    discard_credentials(context);
    
     /* Destroy login request */
     xmlFreeNode(request);
@@ -344,13 +367,11 @@ isds_error isds_logout(struct isds_ctx *context) {
         close_connection(context);
     }
 
-    /* Discard credentials */
+    /* Discard credentials for sure. They should no survive isds_login(),
+     * even successful .*/
+    discard_credentials(context);
     free(context->url);
     context->url = NULL;
-    free(context->username);
-    context->username = NULL;
-    free(context->password);
-    context->password = NULL;
 
     if (!context->cookie) 
         return IE_NOT_LOGGED_IN;
