@@ -84,6 +84,8 @@ char *isds_strerror(const isds_error error) {
             return(_("SOAP problem")); break;
         case IE_XML:
             return(_("XML problem")); break;
+        case IE_ISDS:
+            return(_("ISDS server problem")); break;
         default:
             return(_("Unknown error"));
     }

@@ -62,4 +62,4 @@ validator.o: validator.c isds_priv.h isds.h \
   /usr/include/libxml2/libxml/threads.h \
   /usr/include/libxml2/libxml/xpath.h \
   /usr/include/libxml2/libxml/xpathInternals.h \
-  /usr/include/libxml2/libxml/xmlsave.h utils.h
+  /usr/include/libxml2/libxml/xmlsave.h utils.h validator.h soap.h

@@ -19,7 +19,8 @@ typedef enum {
     IE_NOMEM,
     IE_NETWORK,
     IE_SOAP,
-    IE_XML
+    IE_XML,
+    IE_ISDS
 } isds_error;
 
 typedef enum {
