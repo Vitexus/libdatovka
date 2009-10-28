@@ -39,7 +39,7 @@ leave:
 _hidden isds_error isds(struct isds_ctx *context, const isds_service service,
         const xmlNodePtr request, xmlDocPtr *response) {
     isds_error err = IE_SUCCESS;
-    xmlNodePtr response_body = NULL, node, isds_node;
+    xmlNodePtr response_body = NULL, isds_node;
     char *file = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -62,9 +62,10 @@ _hidden isds_error isds(struct isds_ctx *context, const isds_service service,
     }
 
     /* Find ISDS element */
-    for (node = response_body, isds_node = NULL; node; node = node->next) {
-        if (node->type == XML_ELEMENT_NODE &&
-                node->ns && !xmlStrcmp(node->ns->href, BAD_CAST ISDS_NS))
+    for (isds_node = response_body; isds_node; isds_node = isds_node->next) {
+        if (isds_node->type == XML_ELEMENT_NODE &&
+                isds_node->ns &&
+                !xmlStrcmp(isds_node->ns->href, BAD_CAST ISDS_NS))
             break;
     }
     if (!isds_node) {

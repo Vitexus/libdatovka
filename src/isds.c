@@ -499,7 +499,7 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
     xmlFreeDoc(response);
 
     isds_log(ILF_ISDS, ILL_DEBUG,
-            _("Bogus message accpted by server. This should not happen.\n"));
+            _("Bogus message accepted by server. This should not happen.\n"));
 
     return IE_SUCCESS;
 }

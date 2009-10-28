@@ -554,13 +554,17 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     }
 
 
-    /* Extract XML Tree with ISDS response from SOAP envelope and return it */
-    *response = xmlDocCopyNodeList(response_soap_doc,
-            response_soap_body->nodesetval->nodeTab[0]);
-    if (!*response) {
-        err = IE_NOMEM;
-        goto leave;
-    }
+    /* Extract XML Tree with ISDS response from SOAP envelope and return it.
+     * XXX: response_soap_body is Body, we nned children which may not exist
+     * (i.e. empty Body). */
+    if (response_soap_body->nodesetval->nodeTab[0]->children) {
+        *response = xmlDocCopyNodeList(response_soap_doc,
+                response_soap_body->nodesetval->nodeTab[0]->children);
+        if (!*response) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+    } else *response = NULL;
     
 
 
