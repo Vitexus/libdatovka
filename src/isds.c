@@ -375,7 +375,7 @@ isds_error isds_ping(struct isds_ctx *context) {
     if (!context) return IE_INVALID_CONTEXT;
 
     /* Check connection is established */
-    if (!context->curl) return IE_ERROR;
+    if (!context->curl) return IE_CONNECTION_CLOSED;
 
 
     /* Build dummy request */

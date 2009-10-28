@@ -42,11 +42,21 @@ int main(int argc, char **argv) {
     err = isds_ping(ctx);
     if (err) {
         printf("isds_ping() failed: %s\n", isds_strerror(err));
+    } else {
+        printf("isds_ping() succeeded\n");
     }
 
     err = isds_logout(ctx);
     if (err) {
         printf("isds_logout() failed: %s\n", isds_strerror(err));
+    }
+
+    printf("Ping after logout should fail\n");
+    err = isds_ping(ctx);
+    if (err) {
+        printf("isds_ping() failed: %s\n", isds_strerror(err));
+    } else {
+        printf("isds_ping() succeeded\n");
     }
 
     err = isds_ctx_free(&ctx);
