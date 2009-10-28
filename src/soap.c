@@ -12,6 +12,20 @@ struct soap_body {
 };
 
 
+/* Close connection to server and destroy CURL handle associated
+ * with @context */
+_hidden isds_error close_connection(struct isds_ctx *context) {
+    if (!context) return IE_INVALID_CONTEXT;
+
+    if (context->curl) {
+        curl_easy_cleanup(context->curl);
+        context->curl = NULL;
+    }
+
+    return IE_SUCCESS;
+}
+
+
 /* CURL call back function called when chunk of HTTP reponse body is available.
  * @buffer points to new data
  * @size * @nmemb is length of the chunk in bytes. Zero means empty body.

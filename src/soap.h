@@ -3,6 +3,10 @@
 
 #include "isds.h"
 
+/* Close connection to server and destroy CURL handle associated
+ * with @context */
+isds_error close_connection(struct isds_ctx *context);
+
 /* Do SOAP request.
  * @context holds the base URL,
  * @file is a (CGI) file of SOAP URL,
