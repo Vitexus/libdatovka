@@ -289,17 +289,6 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     if (!(context->url))
         return IE_NOMEM;
 
-    /* Store credentials */
-    /* FIXME: mlock password
-     * (I have a library) */
-    discard_credentials(context);
-    context->username = strdup(username);
-    context->password = strdup(password);
-    if (!(context->username && context->password)) {
-        discard_credentials(context);
-        return IE_NOMEM;
-    }
-
     /* Prepare CURL handle */
     context->curl = curl_easy_init();
     if (!(context->curl))
@@ -319,12 +308,25 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     }
     xmlSetNs(request, isds_ns);
 
+    /* Store credentials */
+    /* FIXME: mlock password
+     * (I have a library) */
+    discard_credentials(context);
+    context->username = strdup(username);
+    context->password = strdup(password);
+    if (!(context->username && context->password)) {
+        discard_credentials(context);
+        xmlFreeNode(request);
+        return IE_NOMEM;
+    }
+
     isds_log(ILF_ISDS, ILL_DEBUG, _("Logging user %s into server %s\n"),
             username, url);
 
     /* Send login request */
     soap_err = soap(context, "dz", request, &response);
-    
+   
+    /* Remove credentials */
     discard_credentials(context);
    
     /* Destroy login request */
