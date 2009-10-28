@@ -7,8 +7,26 @@ Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2
 Web services for messages are synchronous, web services for boxes are
 asynchronous.
 
+
+Error Reporting
+===============
+
 Result code of web service operation is stored in dmStatus/@dmStatusCode.
 Valuse "0000" means success.
+
+NON-NORMATIVE: ISDS on bogus ISDS request but still valid SOAP request
+reponses with SOAP non-Fault 200-HTTP Code message. Example:
+
+POST https://www.czebox.cz/DS/dz
+<?xml version="1.0" encoding="UTF-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+  <Body>
+    <X-BogusOperation xmlns="http://isds.czechpoint.cz/v20"/>
+  </Body>
+</Envelope>
+
+200
+<?xml version='1.0' encoding='utf-8'?><SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><SOAP-ENV:Body><q:X-BogusOperationResponse xmlns:q="http://isds.czechpoint.cz/v20" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><q:dmStatus><q:dmStatusCode>2006</q:dmStatusCode><q:dmStatusMessage>Unknown operation: X-BogusOperation</q:dmStatusMessage></q:dmStatus></q:X-BogusOperationResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>
 
 
 User authorizations
