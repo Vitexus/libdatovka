@@ -555,8 +555,10 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
 
 
     /* Extract XML Tree with ISDS response from SOAP envelope and return it.
-     * XXX: response_soap_body is Body, we nned children which may not exist
+     * XXX: response_soap_body is Body, we need children which may not exist
      * (i.e. empty Body). */
+    /* TODO: Destroy SOAP response but Body childern. This is more memory
+     * friendly than copying (potentialy) fat body */
     if (response_soap_body->nodesetval->nodeTab[0]->children) {
         *response = xmlDocCopyNodeList(response_soap_doc,
                 response_soap_body->nodesetval->nodeTab[0]->children);
