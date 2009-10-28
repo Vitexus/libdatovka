@@ -3,7 +3,10 @@ Log in specification
 
 Source: Provozní řád ISDS, version 2008-30-06, Pages 9–12
 Source: Vyhláška o stanovení podrobností užívání a provozování ISDS (194/2009
-Coll.)
+    Coll.)
+Source: Webové služby ISDS pro manipulaci s datovými zprávami,
+    version 2 (2009-06-25)
+
 
 Connection tracking of web services is done via HTTP Cookie.
 
@@ -35,4 +38,8 @@ The device driver must provice any of the APIs in addition:
 
     – Microsoft CryptoAPI
     – PKCS#11 API through libp11 library.
+
+Login HTTP request must not be larger than 50 KB because server implementation
+uses weird HTTP redirects etc. Therefore SOAP DummyOperation is available for
+login purposes that is small enough (other SOAP requests can be much bigger).
 
