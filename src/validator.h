@@ -9,14 +9,15 @@ typedef enum {
     SERVICE_DB_SEARCH
 } isds_service;
 
-/* Get ISDS dmstatus info from ISDS @response xml node set.
- * Be ware that different request familes return differently encoded status
+/* Get ISDS status info from ISDS @response XML document.
+ * Be ware that different request families return differently encoded status
  * (e.g. dmStatus, dbStatus)
- * @response is SOAP body response 
+ * @service is ISDS web service identifier
+ * @response is ISDS response document
  * @code is status code of the response
- * @message is automatically allocated status message*/
-isds_error isds_response_dmstatus(xmlNodePtr response,
-        unsigned int *code, xmlChar **message);
+ * @message is automatically allocated status message */
+isds_error isds_response_status(const isds_service service,
+        xmlDocPtr response, unsigned int *code, xmlChar **message);
 
 /* Send @request to ISDS and return ISDS @response as XML document.
  * The returned @response is guaranted to be valid ISDS message as defined in
