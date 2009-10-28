@@ -210,7 +210,7 @@ static isds_error http(struct isds_ctx *context, const char *url,
         curl_err = curl_easy_getinfo(context->curl, CURLINFO_CONTENT_TYPE,
             &content_type);
 
-    isds_log(ILF_HTTP, ILL_DEBUG, _("Recieved final response to %s\n"), url);
+    isds_log(ILF_HTTP, ILL_DEBUG, _("Received final response to %s\n"), url);
     isds_log(ILF_HTTP, ILL_DEBUG,
             _("Response body length: %zu, content follows:\n"),
             body.length);
@@ -483,7 +483,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     }
 
     isds_log(ILF_SOAP, ILL_DEBUG,
-            _("SOAP response recieved:\n%.*s\nEnd of SOAP response\n"),
+            _("SOAP response received:\n%.*s\nEnd of SOAP response\n"),
             response_length, http_response);
 
 
