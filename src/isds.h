@@ -116,6 +116,10 @@ isds_error isds_logout(struct isds_ctx *context);
  * Sent dumy request to ISDS and expect dummy response. */
 isds_error isds_ping(struct isds_ctx *context);
 
+/* Send bogus request to ISDS.
+ * Just for test purposes */
+isds_error isds_bogus_request(struct isds_ctx *context);
+
 /*int isds_get_message(struct isds_ctx *context, const unsigned int id,
         struct isds_message **message);
 int isds_send_message(struct isds_ctx *context, struct isds_message *message);

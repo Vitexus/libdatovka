@@ -443,6 +443,65 @@ isds_error isds_ping(struct isds_ctx *context) {
 }
 
 
+/* Send bogus request to ISDS.
+ * Just for test purposes */
+isds_error isds_bogus_request(struct isds_ctx *context) {
+    isds_error soap_err;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlNodePtr response = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+
+    /* Check if connection is established */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Build dummy request */
+    request = xmlNewNode(NULL, BAD_CAST "X-BogusOperation");
+    if (!request) {
+        isds_log_message(context, _("Could build ISDS bogus request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending bogus request to ISDS\n"));
+
+    /* Sent bogus request */
+    soap_err = soap(context, "dz", request, &response);
+   
+    /* Destroy login request */
+    xmlFreeNode(request);
+
+    if (soap_err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Processing SOAP reposonse on bogus request failedn"));
+        xmlFreeNodeList(response);
+        close_connection(context);
+        return soap_err;
+    }
+
+    /* XXX: Untill we don't propagate HTTP code 500 or 4xx, we can be sure
+     * authentication succeeded if soap_err == IE_SUCCESS */
+    /* TODO: ISDS documentation does not specify response body.
+     * However real server sends back DummyOperationResponse */
+    
+
+    xmlFreeNodeList(response);
+
+    isds_log(ILF_ISDS, ILL_DEBUG,
+            _("Bogus message accpted by server. This should not happen.\n"));
+
+    return IE_SUCCESS;
+}
+
+
 /*int isds_get_message(struct isds_ctx *context, const unsigned int id,
         struct isds_message **message);
 int isds_send_message(struct isds_ctx *context, struct isds_message *message);
