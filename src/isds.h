@@ -112,7 +112,7 @@ struct isds_DbOwnerInfo {
     _Bool dbEffectiveOVM;           /* Box has OVM role (§ 5a) */
 };
 
-struct isds_address {
+/*struct isds_address {
     struct isds_address *next;
     char *box_id;
     char *name;
@@ -123,7 +123,7 @@ struct isds_message {
     struct isds_address *sender;
     struct isds_address *recipient;
     char *subject;
-};
+};*/
 
 
 /* Initialize ISDS library.
