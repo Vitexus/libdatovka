@@ -7,24 +7,119 @@
 /* Get ISDS status info from ISDS @response XML document.
  * Be ware that different request families return differently encoded status
  * (e.g. dmStatus, dbStatus)
+ * @context is ISDS context
  * @service is ISDS web service identifier
  * @response is ISDS response document
- * @code is status code of the response
- * @message is automatically allocated status message */
-_hidden isds_error isds_response_status(const isds_service service,
-        xmlDocPtr response, unsigned int *code, xmlChar **message) {
+ * @code is automatically allocated status code of the response
+ * @message is automatically allocated status message. Use NULL if you don't
+ * care.
+ * @refnumber is automatically allocated status reference number. Returned
+ * NULL means no referce was delivered by server. Use NULL if you don't care.
+ * */
+_hidden isds_error isds_response_status(struct isds_ctx *context,
+        const isds_service service, xmlDocPtr response,
+        xmlChar **code, xmlChar **message, xmlChar **refnumber) {
     isds_error err = IE_SUCCESS;
+    xmlChar *status_code_expr = NULL, *status_message_expr = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
 
-    if (!response || !code || !message) {
+    if (!response || !code) {
         err = IE_INVAL;
         goto leave;
     }
 
+    switch (service) {
+        case SERVICE_DM_OPERATIONS:
+        case SERVICE_DM_INFO:
+            status_code_expr = BAD_CAST
+                "/*/isds:dmStatus/isds:dmStatusCode/text()";
+            status_message_expr = BAD_CAST
+                "/*/isds:dmStatus/isds:dmStatusMessage/text()";
+            break;
+        case SERVICE_DB_SEARCH:
+            status_code_expr = BAD_CAST
+                "/*/isds:dbStatus/isds:dbStatusCode/text()";
+            status_message_expr = BAD_CAST
+                "/*/isds:dbStatus/isds:dbStatusMessage/text()";
+            break;
+        default:
+            err = IE_NOTSUP;
+            goto leave;
+    }
 
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    /* Get status code */
+    result = xmlXPathEvalExpression(status_code_expr, xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context, _("ISDS response is missing StatusCode"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    *code = xmlXPathCastNodeSetToString(result->nodesetval);
+    if (!code) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    if (message) {
+        /* Get status message */
+        xmlXPathFreeObject(result);
+        result = xmlXPathEvalExpression(status_message_expr, xpath_ctx);
+        if (!result) {
+            err = IE_ERROR;
+            goto leave;
+        }
+        if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+            isds_log_message(context,
+                    _("ISDS response is missing StatusMessage"));
+            err = IE_ISDS;
+            goto leave;
+        }
+        *message = xmlXPathCastNodeSetToString(result->nodesetval);
+        if (!message) {
+            err = IE_ERROR;
+            goto leave;
+        }
+    }
+
+    if (refnumber) {
+        /* Get status reference number */
+        xmlXPathFreeObject(result);
+        result = xmlXPathEvalExpression(
+                BAD_CAST "/*/isds:dbStatus/isds:dbStatusRefNumber/text()",
+                xpath_ctx);
+        if (!result) {
+            err = IE_ERROR;
+            goto leave;
+        }
+        if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+            *refnumber = NULL;
+        } else {
+            *refnumber = xmlXPathCastNodeSetToString(result->nodesetval);
+            if (!message) {
+                err = IE_ERROR;
+                goto leave;
+            }
+        }
+    }
 leave:
-
-    /*return err;*/
-    return IE_NOTSUP;
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+    return err;
 }
 
 
