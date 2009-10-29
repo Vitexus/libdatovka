@@ -453,6 +453,7 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
     xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
 
@@ -479,23 +480,41 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
     /* Sent bogus request */
     err = isds(context, SERVICE_DM_OPERATIONS, request, &response);
    
-    /* Destroy login request */
+    /* Destroy request */
     xmlFreeNode(request);
 
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Processing ISDS response on bogus request failed\n"));
         xmlFreeDoc(response);
-        close_connection(context);
         return err;
     }
 
-    /* XXX: Untill we don't propagate HTTP code 500 or 4xx, we can be sure
-     * authentication succeeded if soap_err == IE_SUCCESS */
-    /* TODO: ISDS documentation does not specify response body.
-     * However real server sends back DummyOperationResponse */
-    
+    /* Check for response status */
+    err = isds_response_status(context, SERVICE_DM_OPERATIONS, response,
+            &code, &message, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("ISDS response on bogus request is missing status\n"));
+        free(code);
+        free(message);
+        xmlFreeDoc(response);
+        return err;
+    }
+    if (xmlStrcmp(code, BAD_CAST "0000")) {
+        /* FIXME: Convert UTF-8 into locale */
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server refused bogus request (code=%s, message=%s)\n"),
+                code, message);
+        free(code);
+        free(message);
+        xmlFreeDoc(response);
+        return err;
+    }
+   
 
+    free(code);
+    free(message);
     xmlFreeDoc(response);
 
     isds_log(ILF_ISDS, ILL_DEBUG,
