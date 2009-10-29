@@ -46,6 +46,72 @@ typedef enum {
 /* Return text description of ISDS error */
 char *isds_strerror(const isds_error error);
 
+/* Box type */
+typedef enum {
+    DBTYPE_FO,
+    DBTYPE_PFO,
+    DBTYPE_PFO_ADVOK,
+    DBTYPE_PFO_DANPOR,
+    DBTYPE_PFO_INSSPR,
+    DBTYPE_PO,
+    DBTYPE_PO_ZAK,
+    DBTYPE_PO_REQ,
+    DBTYPE_OVM,
+    DBTYPE_OVM_NOTAR,
+    DBTYPE_OVM_EXEKUT,
+    DBTYPE_OVM_REQ
+} isds_DbType;
+
+/* Name of person */
+struct isds_PersonName {
+    char *pnFirstName;
+    char *pnMiddleName;
+    char *pnLastName;
+    char *pnLastNameAtBirth;
+};
+
+/* Date and place of birth */
+struct isds_BirthInfo {
+    struct tm *biDate;      /* Date of Birth in local time at birth place,
+                               only tm_year, tm_mon and tm_mday carry sane
+                               value */
+    char *biCity;
+    char *biCounty;         /* German: Bezirk, Czech: okres */
+    char *biState;
+};
+
+/* Post address */
+struct isds_Address {
+    char *adCity;
+    char *adStreet;
+    char *adNumberInStreet;
+    char *adNumberInMunicipality;
+    char *adZipCode;
+    char *adState;
+};
+
+/* Data about box and his owner */
+struct isds_DbOwnerInfo {
+    char *dbID;                     /* Box ID */
+    isds_DbType dbType;             /* Box Type */
+    char *IdentificationNumber;     /* ID */
+    struct isds_PersonName *personName;     /* Name of person */
+    char *firmName;                 /* Name of firm */
+    struct isds_BirthInfo *birthInfo;       /* Birth of person */
+    struct isds_Address *address;   /* Post address */
+    char *nationality;
+    char *email;
+    char *telNumber;
+    char *identifier;               /* External box identifier for data
+                                       provider (OVM, PO, maybe PFO)
+                                       [Max. 20 chars] */
+    char *registryCode;             /* PFO External registry code
+                                       [Max. 5 chars] */
+    int dbState;                    /* Box state; 1 <=> active box;
+                                       TODO: enum? */
+    _Bool dbEffectiveOVM;           /* Box has OVM role (§ 5a) */
+};
+
 struct isds_address {
     struct isds_address *next;
     char *box_id;
@@ -116,6 +182,10 @@ isds_error isds_logout(struct isds_ctx *context);
 /* Verify connection to ISDS is alive and server is responding.
  * Sent dumy request to ISDS and expect dummy response. */
 isds_error isds_ping(struct isds_ctx *context);
+
+/* Get data about logged in user and his box. */
+isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
+        struct isds_DbOwnerInfo **db_owner_info);
 
 /* Send bogus request to ISDS.
  * Just for test purposes */

@@ -525,6 +525,13 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
 }
 
 
+/* Get data about logged in user and his box. */
+isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
+        struct isds_DbOwnerInfo **db_owner_info) {
+    return IE_NOTSUP;
+}
+
+
 /*int isds_get_message(struct isds_ctx *context, const unsigned int id,
         struct isds_message **message);
 int isds_send_message(struct isds_ctx *context, struct isds_message *message);
