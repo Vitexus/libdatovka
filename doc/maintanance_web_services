@@ -2,6 +2,8 @@ Maintanance web services specification
 ======================================
 
 Source: Provozní řád ISDS, version 2008-30-06, Pages 13–14
+Source: Webové služby ISDS pro podporu procesů, version 2009-06-26
+
 
 These services are intended for administration of box as such. NONE of the
 services MARK incoming messages as delivered.
@@ -20,6 +22,8 @@ List of SOAP requests follows.
 
 db_manipulations.wsdl
 =====================
+
+URL postfix: DsManage
 
 CreateDataBox
     Create box
@@ -51,5 +55,11 @@ CleareEffectiveOVM
 db_supplementary.wsdl
 =====================
 
+URL postfix: DsManage
+
 GetDataBoxUsers
     Get list of users permitted to access the box.
+GetOwnerInfoFromLogin
+    Get data about logged in user and his (current) box.
+StoreAccessDataDeliveryInfo
+    Save date when credentials has been (out-of-band) delivered to user.
