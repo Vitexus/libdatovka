@@ -543,6 +543,71 @@ int isds_message_free(struct isds_message **message);
 int isds_address_free(struct isds_address **address);
 */
 
+
+/* Deallocate structure isds_PersonName recursively and NULL it */
+static void isds_PersonName_free(struct isds_PersonName **person_name) {
+    if (!person_name || !*person_name) return;
+
+    free((*person_name)->pnFirstName);
+    free((*person_name)->pnMiddleName);
+    free((*person_name)->pnLastName);
+    free((*person_name)->pnLastNameAtBirth);
+    
+    *person_name = NULL;
+}
+
+
+/* Deallocate structure isds_BirthInfo recursively and NULL it */
+static void isds_BirthInfo_free(struct isds_BirthInfo **birth_info) {
+    if (!birth_info || !*birth_info) return;
+
+    free((*birth_info)->biDate);
+    free((*birth_info)->biCity);
+    free((*birth_info)->biCounty);
+    free((*birth_info)->biState);
+    
+    *birth_info = NULL;
+}
+
+
+/* Deallocate structure isds_Address recursively and NULL it */
+static void isds_Address_free(struct isds_Address **address) {
+    if (!address || !*address) return;
+
+    free((*address)->adCity);
+    free((*address)->adStreet);
+    free((*address)->adNumberInStreet);
+    free((*address)->adNumberInMunicipality);
+    free((*address)->adZipCode);
+    free((*address)->adState);
+    
+    *address = NULL;
+}
+
+
+/* Deallocate structure isds_DbOwnerInfo recursively and NULL it */
+void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info) {
+    if (!db_owner_info || !*db_owner_info) return;
+
+    free((*db_owner_info)->dbID);
+    /* dbType */
+    free((*db_owner_info)->ic);
+    isds_PersonName_free(&((*db_owner_info)->personName));
+    free((*db_owner_info)->firmName);
+    isds_BirthInfo_free(&((*db_owner_info)->birthInfo));
+    isds_Address_free(&((*db_owner_info)->address));
+    free((*db_owner_info)->nationality);
+    free((*db_owner_info)->email);
+    free((*db_owner_info)->telNumber);
+    free((*db_owner_info)->identifier);
+    free((*db_owner_info)->registryCode);
+    /* dbState */
+    /* dbEffectiveOVM */
+    
+    *db_owner_info = NULL;
+}
+
+
 /* Makes known all relevant namespaces to give @xpat_ctx */
 _hidden isds_error register_namespaces(xmlXPathContextPtr xpath_ctx) {
     if (!xpath_ctx) return IE_ERROR;

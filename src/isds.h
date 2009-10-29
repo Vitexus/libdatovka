@@ -94,7 +94,7 @@ struct isds_Address {
 struct isds_DbOwnerInfo {
     char *dbID;                     /* Box ID */
     isds_DbType dbType;             /* Box Type */
-    char *IdentificationNumber;     /* ID */
+    char *ic;                       /* ID */
     struct isds_PersonName *personName;     /* Name of person */
     char *firmName;                 /* Name of firm */
     struct isds_BirthInfo *birthInfo;       /* Birth of person */
@@ -201,5 +201,8 @@ int isds_find_recipient(struct isds_ctx *context, const struct address *pattern,
 int isds_message_free(struct isds_message **message);
 int isds_address_free(struct isds_address **address);
 */
+
+/* Deallocate structure isds_DbOwnerInfo recursively and NULL it */
+void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info);
 
 #endif
