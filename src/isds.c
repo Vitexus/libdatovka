@@ -506,10 +506,11 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Server refused bogus request (code=%s, message=%s)\n"),
                 code, message);
+        isds_log_message(context, _((char *)message));
         free(code);
         free(message);
         xmlFreeDoc(response);
-        return err;
+        return IE_ISDS;
     }
    
 
