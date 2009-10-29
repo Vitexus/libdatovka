@@ -536,6 +536,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
     xmlNodePtr node;
 
     if (!context) return IE_INVALID_CONTEXT;
+    if (!db_owner_info) return IE_INVAL;
 
     /* Check if connection is established */
     if (!context->curl) return IE_CONNECTION_CLOSED;
