@@ -55,6 +55,21 @@ int main(int argc, char **argv) {
         printf("isds_bogus_request() succeeded\n");
     }
 
+    {
+        struct isds_DbOwnerInfo *db_owner_info = NULL;
+
+        err = isds_GetOwnerInfoFromLogin(ctx, &db_owner_info);
+        if (err) {
+            printf("isds_GetOwnerInfoFromLogin() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        } else {
+            printf("isds_GetOwnerInfoFromLogin() succeeded\n");
+        }
+
+        isds_DbOwnerInfo_free(&db_owner_info);
+    }
+
+
     err = isds_logout(ctx);
     if (err) {
         printf("isds_logout() failed: %s\n", isds_strerror(err));

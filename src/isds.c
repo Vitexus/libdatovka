@@ -528,7 +528,93 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
 /* Get data about logged in user and his box. */
 isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         struct isds_DbOwnerInfo **db_owner_info) {
-    return IE_NOTSUP;
+    isds_error err;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+    xmlNodePtr node;
+
+    if (!context) return IE_INVALID_CONTEXT;
+
+    /* Check if connection is established */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Build GetOwnerInfoFromLogin request */
+    request = xmlNewNode(NULL, BAD_CAST "GetOwnerInfoFromLogin");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build GetOwnerInfoFromLogin request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+    node = xmlNewChild(request, NULL, BAD_CAST "dbDummy", NULL);
+    if (!node) {
+        isds_log_message(context, _("Could nod add dbDummy Child to "
+                    "GetOwnerInfoFromLogin element"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+
+
+    isds_log(ILF_ISDS, ILL_DEBUG,
+            _("Sending GetOwnerInfoFromLogin request to ISDS\n"));
+
+    /* Sent request */
+    err = isds(context, SERVICE_DB_SUPPLEMENTARY, request, &response);
+   
+    /* Destroy request */
+    xmlFreeNode(request);
+
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Processing ISDS response on GetOwnerInfoFromLogin "
+                    "request failed\n"));
+        xmlFreeDoc(response);
+        return err;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, SERVICE_DB_SUPPLEMENTARY, response,
+            &code, &message, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("ISDS response on GetOwnerInfoFromLogin request is "
+                    "missing status\n"));
+        free(code);
+        free(message);
+        xmlFreeDoc(response);
+        return err;
+    }
+    if (xmlStrcmp(code, BAD_CAST "0000")) {
+        /* FIXME: Convert UTF-8 into locale */
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server refused GetOwnerInfoFromLogin request "
+                    "(code=%s, message=%s)\n"), code, message);
+        isds_log_message(context, _((char *)message));
+        free(code);
+        free(message);
+        xmlFreeDoc(response);
+        return IE_ISDS;
+    }
+   
+
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+
+    isds_log(ILF_ISDS, ILL_DEBUG,
+            _("GetOwnerInfoFromLogin request processed by server "
+                "successfully.\n"));
+
+    return IE_SUCCESS;
 }
 
 
