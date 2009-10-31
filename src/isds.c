@@ -292,6 +292,11 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     if (!(context->url))
         return IE_NOMEM;
 
+    /* Close connection if already logged in */
+    if (context->curl) {
+        close_connection(context);
+    }
+
     /* Prepare CURL handle */
     context->curl = curl_easy_init();
     if (!(context->curl))
