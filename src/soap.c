@@ -99,12 +99,12 @@ static isds_error http(struct isds_ctx *context, const char *url,
 
     /* Set Request-URI */
     curl_err = curl_easy_setopt(context->curl, CURLOPT_URL, url);
+
+    /* Set credentials */
     if (!curl_err && context->username) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_USERNAME,
                 context->username);
     }
-
-    /* Set credentials */
     if (!curl_err && context->password) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_PASSWORD,
                 context->password);
@@ -205,6 +205,14 @@ static isds_error http(struct isds_ctx *context, const char *url,
 
     /*  Do the request */
     curl_err = curl_easy_perform(context->curl);
+
+    /* Wipe credentials out of the handler */
+    if (context->username) {
+        curl_easy_setopt(context->curl, CURLOPT_USERNAME, NULL);
+    }
+    if (context->password) {
+        curl_easy_setopt(context->curl, CURLOPT_PASSWORD, NULL);
+    }
 
     if (!curl_err)
         curl_err = curl_easy_getinfo(context->curl, CURLINFO_CONTENT_TYPE,
