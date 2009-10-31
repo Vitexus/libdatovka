@@ -8,6 +8,90 @@ char username[] = "jrfh7i";
 char password[] = "Ab123456";
 struct isds_ctx *ctx;
 
+void print_DbOwnerInfo(struct isds_DbOwnerInfo *info) {
+    printf("dbOwnerinfo = ");
+
+    if (!info) {
+        printf ("NULL\n");
+        return;
+    }
+
+    printf("{\n");
+    printf("\tdbID = %s\n", info->dbID);
+
+    printf("\tdbType = ");
+    switch(info->dbType) {
+        case DBTYPE_FO: printf("FO\n"); break;
+        case DBTYPE_PFO: printf("PFO\n"); break;
+        case DBTYPE_PFO_ADVOK: printf("PFO_ADVOK\n"); break;
+        case DBTYPE_PFO_DANPOR: printf("PFO_DAPOR\n"); break;
+        case DBTYPE_PFO_INSSPR: printf("PFO_INSSPR\n"); break;
+        case DBTYPE_PO: printf("PO\n"); break;
+        case DBTYPE_PO_ZAK: printf("PO_ZAK\n"); break;
+        case DBTYPE_PO_REQ: printf("PO_REQ\n"); break;
+        case DBTYPE_OVM: printf("OVM\n"); break;
+        case DBTYPE_OVM_NOTAR: printf("OVM_NOTAR\n"); break;
+        case DBTYPE_OVM_EXEKUT: printf("OVM_EXEKUT\n"); break;
+        case DBTYPE_OVM_REQ: printf("OVM_REQ\n"); break;
+        default: printf("<unknown type %d>\n", info->dbType);
+    }
+    printf("\tic = %s\n", info->ic);
+
+    printf("\tpersonName = ");
+    if (!info->personName) printf("NULL\n");
+    else {
+        printf("{\n");
+        printf("\t\tpnFirstName = %s\n", info->personName->pnFirstName);
+        printf("\t\tpnMiddleName = %s\n", info->personName->pnMiddleName);
+        printf("\t\tpnLastName = %s\n", info->personName->pnLastName);
+        printf("\t\tpnLastNameAtBirth = %s\n", info->personName->pnLastNameAtBirth);
+        printf("\t}\n");
+    }
+        
+    printf("\tfirmName = %s\n", info->firmName);
+    
+    printf("\tbirthInfo = ");
+    if (!info->birthInfo) printf("NULL\n");
+    else {
+        printf("{\n");
+        
+        printf("\t\tbiDate = ");
+        if (!info->birthInfo->biDate) printf("NULL\n");
+        /*else printf("%d-%d-%d\n", info->birthInfo->biDate->tm_year + 1900,
+                info->birthInfo->biDate->tm_mon + 1,
+                info->birthInfo->biDate->tm_mday);*/
+
+        printf("\t\tbiCity = %s\n", info->birthInfo->biCity);
+        printf("\t\tbiCounty = %s\n", info->birthInfo->biCounty);
+        printf("\t\tbiState = %s\n", info->birthInfo->biState);
+        printf("\t}\n");
+    }
+    
+    printf("\taddress = ");
+    if (!info->address) printf("NULL\n");
+    else {
+        printf("{\n");
+        printf("\t\tadCity = %s\n", info->address->adCity);
+        printf("\t\tadStreet = %s\n", info->address->adStreet);
+        printf("\t\tadNumberInStreet = %s\n", info->address->adNumberInStreet);
+        printf("\t\tadNumberInMunicipality = %s\n",
+                info->address->adNumberInMunicipality);
+        printf("\t\tadZipCode = %s\n", info->address->adZipCode);
+        printf("\t\tadState = %s\n", info->address->adState);
+        printf("\t}\n");
+    }
+
+    printf("\tnationality = %s\n", info->nationality);
+    printf("\temail = %s\n", info->email);
+    printf("\ttelNumber = %s\n", info->telNumber);
+    printf("\tidentifier = %s\n", info->identifier);
+    printf("\tregistryCode = %s\n", info->registryCode);
+    printf("\tdbState = %d\n", info->dbState);
+    printf("\tdbEffectiveOVM = %s\n", info->dbEffectiveOVM ? "true" : "false");
+
+    printf("}\n");
+
+}
 
 int main(int argc, char **argv) {
     isds_error err;
@@ -65,6 +149,7 @@ int main(int argc, char **argv) {
         } else {
             printf("isds_GetOwnerInfoFromLogin() succeeded\n");
         }
+        print_DbOwnerInfo(db_owner_info);
 
         isds_DbOwnerInfo_free(&db_owner_info);
     }
