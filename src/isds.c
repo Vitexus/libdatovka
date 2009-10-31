@@ -344,14 +344,6 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     /* XXX: Until we don't propagate HTTP code 500 or 4xx, we can be sure
      * authentication succeeded if soap_err == IE_SUCCESS */
     err = IE_SUCCESS;
-    /* XXX: Dummy cookie.
-     * Probably, we could remove the cookie from context because CURL
-     * administrate it on its own and soap()/http() does autologin now. */
-    free(context->cookie);
-    context->cookie = strdup("42");
-    if (!context->cookie) {
-        err = IE_NOMEM;
-    }
 
     xmlFreeNodeList(response);
 
@@ -377,11 +369,6 @@ isds_error isds_logout(struct isds_ctx *context) {
     discard_credentials(context);
     free(context->url);
     context->url = NULL;
-
-    if (!context->cookie) 
-        return IE_NOT_LOGGED_IN;
-    free(context->cookie);
-    context->cookie = NULL;
 
     isds_log(ILF_ISDS, ILL_DEBUG, _("Logged out from ISDS server\n"));
     return IE_SUCCESS;

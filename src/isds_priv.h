@@ -34,7 +34,6 @@ struct isds_ctx {
     char *password;
     char *client_certificate;
     char *private_key;
-    char *cookie;           /* Autorization token for ISDS HTTP session */
     CURL *curl;             /* CURL session handle */
     char *long_message;     /* message buffer */
 };
