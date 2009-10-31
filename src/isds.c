@@ -341,12 +341,12 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
         return soap_err;
     }
 
-    /* XXX: Untill we don't propagate HTTP code 500 or 4xx, we can be sure
+    /* XXX: Until we don't propagate HTTP code 500 or 4xx, we can be sure
      * authentication succeeded if soap_err == IE_SUCCESS */
     err = IE_SUCCESS;
     /* XXX: Dummy cookie.
      * Probably, we could remove the cookie from context because CURL
-     * administrer it on its own and soap()/http() does autologin now. */
+     * administrate it on its own and soap()/http() does autologin now. */
     free(context->cookie);
     context->cookie = strdup("42");
     if (!context->cookie) {
@@ -372,7 +372,7 @@ isds_error isds_logout(struct isds_ctx *context) {
         close_connection(context);
     }
 
-    /* Discard credentials for sure. They should no survive isds_login(),
+    /* Discard credentials for sure. They should not survive isds_login(),
      * even successful .*/
     discard_credentials(context);
     free(context->url);
