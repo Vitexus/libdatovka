@@ -273,7 +273,7 @@ static isds_error http(struct isds_ctx *context, const char *url,
     }
 
 leave:
-    free(headers);
+    curl_slist_free_all(headers);
 
     if (err) {
         free(body.data);
