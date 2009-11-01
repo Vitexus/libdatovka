@@ -21,6 +21,7 @@ void print_DbOwnerInfo(struct isds_DbOwnerInfo *info) {
 
     printf("\tdbType = ");
     switch(info->dbType) {
+        case DBTYPE_UNDEFINED: printf("<Undefined value>\n"); break;
         case DBTYPE_FO: printf("FO\n"); break;
         case DBTYPE_PFO: printf("PFO\n"); break;
         case DBTYPE_PFO_ADVOK: printf("PFO_ADVOK\n"); break;

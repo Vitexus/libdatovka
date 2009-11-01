@@ -48,6 +48,7 @@ char *isds_strerror(const isds_error error);
 
 /* Box type */
 typedef enum {
+    DBTYPE_UNDEFINED = 0,   /* Value is uknown */
     DBTYPE_FO,
     DBTYPE_PFO,
     DBTYPE_PFO_ADVOK,
