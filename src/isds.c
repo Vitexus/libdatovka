@@ -520,12 +520,14 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
 /* Get data about logged in user and his box. */
 isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         struct isds_DbOwnerInfo **db_owner_info) {
-    isds_error err;
+    isds_error err = IE_SUCCESS;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *message = NULL;
     xmlNodePtr node;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!db_owner_info) return IE_INVAL;
@@ -597,7 +599,48 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         xmlFreeDoc(response);
         return IE_ISDS;
     }
-   
+
+    /* Extract data */
+    isds_DbOwnerInfo_free(db_owner_info);
+    *db_owner_info = calloc(1, sizeof(**db_owner_info));
+    if (!*db_owner_info) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    result = xmlXPathEvalExpression(BAD_CAST
+            "/isds:GetOwnerInfoFromLoginResponse/isds:dbOwnerInfo/isds:dbID/text()", xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        (*db_owner_info)->dbID = (char *)
+            xmlXPathCastNodeSetToString(result->nodesetval);
+        if (!(*db_owner_info)->dbID) {
+            err = IE_ERROR;
+            goto leave;
+        }
+    }
+
+
+
+leave:
+    if (err) {
+        isds_DbOwnerInfo_free(db_owner_info);
+    }
+
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
 
     free(code);
     free(message);
@@ -607,7 +650,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
             _("GetOwnerInfoFromLogin request processed by server "
                 "successfully.\n"));
 
-    return IE_SUCCESS;
+    return err;
 }
 
 

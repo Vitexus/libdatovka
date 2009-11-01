@@ -9,7 +9,7 @@ char password[] = "Ab123456";
 struct isds_ctx *ctx;
 
 void print_DbOwnerInfo(struct isds_DbOwnerInfo *info) {
-    printf("dbOwnerinfo = ");
+    printf("dbOwnerInfo = ");
 
     if (!info) {
         printf ("NULL\n");
