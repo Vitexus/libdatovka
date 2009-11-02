@@ -601,6 +601,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
     }
 
     /* Extract data */
+    /* Prepare stucture */
     isds_DbOwnerInfo_free(db_owner_info);
     *db_owner_info = calloc(1, sizeof(**db_owner_info));
     if (!*db_owner_info) {
@@ -617,8 +618,28 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         goto leave;
     }
 
+    /* Set context node */
     result = xmlXPathEvalExpression(BAD_CAST
-            "/isds:GetOwnerInfoFromLoginResponse/isds:dbOwnerInfo/isds:dbID/text()", xpath_ctx);
+            "/isds:GetOwnerInfoFromLoginResponse/isds:dbOwnerInfo", xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context, _("Missing dbOwnerInfo element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    if (result->nodesetval->nodeNr > 1) {
+        isds_log_message(context, _("Multiple dbOwnerInfo element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+    xmlXPathFreeObject(result);
+
+    /* Get dbID */
+    result = xmlXPathEvalExpression(BAD_CAST "isds:dbID/text()", xpath_ctx);
     if (!result) {
         err = IE_ERROR;
         goto leave;
