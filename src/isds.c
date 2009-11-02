@@ -639,7 +639,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
     xmlXPathFreeObject(result);
 
     /* Get dbID */
-    result = xmlXPathEvalExpression(BAD_CAST "isds:dbID/text()", xpath_ctx);
+    /*result = xmlXPathEvalExpression(BAD_CAST "isds:dbID/text()", xpath_ctx);
     if (!result) {
         err = IE_ERROR;
         goto leave;
@@ -656,9 +656,31 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
             err = IE_ERROR;
             goto leave;
         }
+    }*/
+#define EXTRACT_STRING(element, string) \
+    result = xmlXPathEvalExpression(BAD_CAST element "/text()", xpath_ctx); \
+    if (!result) { \
+        err = IE_ERROR; \
+        goto leave; \
+    } \
+    if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) { \
+        if (result->nodesetval->nodeNr > 1) { \
+            isds_log_message(context, _("Multiple " element " element")); \
+            err = IE_ERROR; \
+            goto leave; \
+        } \
+        (string) = (char *) \
+            xmlXPathCastNodeSetToString(result->nodesetval); \
+        if (!(string)) { \
+            err = IE_ERROR; \
+            goto leave; \
+        } \
     }
 
+    EXTRACT_STRING("isds:dbID", (*db_owner_info)->dbID)
+    EXTRACT_STRING("isds:ic", (*db_owner_info)->ic)
 
+#undef EXTRACT_STRING
 
 leave:
     if (err) {
