@@ -125,8 +125,10 @@ leave:
 
 
 /* Send @request to ISDS and return ISDS @response as XML document.
- * The returned @response is guaranted to be valid ISDS message as defined in
- * ISDS XML Schemata.
+ * Be ware the @response can be invalid (in sense of XML Schema).
+ * (And it is because current ISDS server does not follow its own
+ * specification. Please appology my government, its herd of imcompetent
+ * creatures.)
  * @context is ISDS session context,
  * @service identifies ISDS web service
  * @request is tree with ISDS message, can be NULL
