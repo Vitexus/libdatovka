@@ -12,7 +12,7 @@ void print_DbOwnerInfo(struct isds_DbOwnerInfo *info) {
     printf("dbOwnerInfo = ");
 
     if (!info) {
-        printf ("NULL\n");
+        printf("NULL\n");
         return;
     }
 
@@ -20,22 +20,23 @@ void print_DbOwnerInfo(struct isds_DbOwnerInfo *info) {
     printf("\tdbID = %s\n", info->dbID);
 
     printf("\tdbType = ");
-    switch(info->dbType) {
-        case DBTYPE_UNDEFINED: printf("<Undefined value>\n"); break;
-        case DBTYPE_FO: printf("FO\n"); break;
-        case DBTYPE_PFO: printf("PFO\n"); break;
-        case DBTYPE_PFO_ADVOK: printf("PFO_ADVOK\n"); break;
-        case DBTYPE_PFO_DANPOR: printf("PFO_DAPOR\n"); break;
-        case DBTYPE_PFO_INSSPR: printf("PFO_INSSPR\n"); break;
-        case DBTYPE_PO: printf("PO\n"); break;
-        case DBTYPE_PO_ZAK: printf("PO_ZAK\n"); break;
-        case DBTYPE_PO_REQ: printf("PO_REQ\n"); break;
-        case DBTYPE_OVM: printf("OVM\n"); break;
-        case DBTYPE_OVM_NOTAR: printf("OVM_NOTAR\n"); break;
-        case DBTYPE_OVM_EXEKUT: printf("OVM_EXEKUT\n"); break;
-        case DBTYPE_OVM_REQ: printf("OVM_REQ\n"); break;
-        default: printf("<unknown type %d>\n", info->dbType);
-    }
+    if (!info->dbType) printf("NULL\n");
+    else
+        switch(*(info->dbType)) {
+            case DBTYPE_FO: printf("FO\n"); break;
+            case DBTYPE_PFO: printf("PFO\n"); break;
+            case DBTYPE_PFO_ADVOK: printf("PFO_ADVOK\n"); break;
+            case DBTYPE_PFO_DANPOR: printf("PFO_DAPOR\n"); break;
+            case DBTYPE_PFO_INSSPR: printf("PFO_INSSPR\n"); break;
+            case DBTYPE_PO: printf("PO\n"); break;
+            case DBTYPE_PO_ZAK: printf("PO_ZAK\n"); break;
+            case DBTYPE_PO_REQ: printf("PO_REQ\n"); break;
+            case DBTYPE_OVM: printf("OVM\n"); break;
+            case DBTYPE_OVM_NOTAR: printf("OVM_NOTAR\n"); break;
+            case DBTYPE_OVM_EXEKUT: printf("OVM_EXEKUT\n"); break;
+            case DBTYPE_OVM_REQ: printf("OVM_REQ\n"); break;
+            default: printf("<unknown type %d>\n", *(info->dbType));
+        }
     printf("\tic = %s\n", info->ic);
 
     printf("\tpersonName = ");
@@ -87,8 +88,14 @@ void print_DbOwnerInfo(struct isds_DbOwnerInfo *info) {
     printf("\ttelNumber = %s\n", info->telNumber);
     printf("\tidentifier = %s\n", info->identifier);
     printf("\tregistryCode = %s\n", info->registryCode);
-    printf("\tdbState = %d\n", info->dbState);
-    printf("\tdbEffectiveOVM = %s\n", info->dbEffectiveOVM ? "true" : "false");
+
+    printf("\tdbState = ");
+    if (!info->dbState) printf("NULL\n");
+    else printf("%d\n", *(info->dbState));
+    
+    printf("\tdbEffectiveOVM = %s\n",
+            !info->dbEffectiveOVM ? "NULL" :
+                (*(info->dbEffectiveOVM)? "true" : "false"));
 
     printf("}\n");
 

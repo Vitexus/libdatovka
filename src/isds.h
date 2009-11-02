@@ -48,7 +48,6 @@ char *isds_strerror(const isds_error error);
 
 /* Box type */
 typedef enum {
-    DBTYPE_UNDEFINED = 0,   /* Value is uknown */
     DBTYPE_FO,
     DBTYPE_PFO,
     DBTYPE_PFO_ADVOK,
@@ -91,10 +90,11 @@ struct isds_Address {
     char *adState;
 };
 
-/* Data about box and his owner */
+/* Data about box and his owner.
+ * NULL pointer means undefined value */
 struct isds_DbOwnerInfo {
     char *dbID;                     /* Box ID */
-    isds_DbType dbType;             /* Box Type */
+    isds_DbType *dbType;            /* Box Type */
     char *ic;                       /* ID */
     struct isds_PersonName *personName;     /* Name of person */
     char *firmName;                 /* Name of firm */
@@ -108,9 +108,9 @@ struct isds_DbOwnerInfo {
                                        [Max. 20 chars] */
     char *registryCode;             /* PFO External registry code
                                        [Max. 5 chars] */
-    int dbState;                    /* Box state; 1 <=> active box;
+    int *dbState;                   /* Box state; 1 <=> active box;
                                        TODO: enum? */
-    _Bool dbEffectiveOVM;           /* Box has OVM role (§ 5a) */
+    _Bool *dbEffectiveOVM;          /* Box has OVM role (§ 5a) */
 };
 
 /*struct isds_address {

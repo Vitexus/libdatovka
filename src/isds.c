@@ -712,7 +712,7 @@ void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info) {
     if (!db_owner_info || !*db_owner_info) return;
 
     free((*db_owner_info)->dbID);
-    /* dbType */
+    free((*db_owner_info)->dbType);
     free((*db_owner_info)->ic);
     isds_PersonName_free(&((*db_owner_info)->personName));
     free((*db_owner_info)->firmName);
@@ -723,9 +723,10 @@ void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info) {
     free((*db_owner_info)->telNumber);
     free((*db_owner_info)->identifier);
     free((*db_owner_info)->registryCode);
-    /* dbState */
-    /* dbEffectiveOVM */
+    free((*db_owner_info)->dbState);
+    free((*db_owner_info)->dbEffectiveOVM);
     
+    free(*db_owner_info);
     *db_owner_info = NULL;
 }
 
