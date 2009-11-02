@@ -624,6 +624,11 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         goto leave;
     }
     if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        if (result->nodesetval->nodeNr > 1) {
+            isds_log_message(context, _("Multiple dbID element"));
+            err = IE_ERROR;
+            goto leave;
+        }
         (*db_owner_info)->dbID = (char *)
             xmlXPathCastNodeSetToString(result->nodesetval);
         if (!(*db_owner_info)->dbID) {
