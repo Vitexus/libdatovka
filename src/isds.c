@@ -732,6 +732,8 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
             (*db_owner_info)->personName->pnLastName);
     EXTRACT_STRING("isds:pnLastNameAtBirth",
             (*db_owner_info)->personName->pnLastNameAtBirth);
+
+    EXTRACT_STRING("isds:firmName", (*db_owner_info)->firmName);
 #undef EXTRACT_STRING
 
 leave:
