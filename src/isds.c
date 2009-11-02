@@ -87,6 +87,8 @@ char *isds_strerror(const isds_error error) {
             return(_("XML problem")); break;
         case IE_ISDS:
             return(_("ISDS server problem")); break;
+        case IE_ENUM:
+            return(_("Invalid enum value")); break;
         default:
             return(_("Unknown error"));
     }
@@ -517,6 +519,40 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
 }
 
 
+/* Convert UTF-8 @string represantion of ISDS dbType to enum @type */
+static isds_error string2isds_DbType(xmlChar *string, isds_DbType *type) {
+    if (!string || !type) return IE_INVAL;
+
+    if (!xmlStrcmp(string, BAD_CAST "FO"))
+        *type = DBTYPE_FO;
+    else if (!xmlStrcmp(string, BAD_CAST "PFO"))
+        *type = DBTYPE_PFO;
+    else if (!xmlStrcmp(string, BAD_CAST "PFO_ADVOK"))
+        *type = DBTYPE_PFO_ADVOK;
+    else if (!xmlStrcmp(string, BAD_CAST "PFO_DANPOR"))
+        *type = DBTYPE_PFO_DANPOR;
+    else if (!xmlStrcmp(string, BAD_CAST "PFO_INSSPR"))
+        *type = DBTYPE_PFO_INSSPR;
+    else if (!xmlStrcmp(string, BAD_CAST "PO"))
+        *type = DBTYPE_PO;
+    else if (!xmlStrcmp(string, BAD_CAST "PO_ZAK"))
+        *type = DBTYPE_PO_ZAK;
+    else if (!xmlStrcmp(string, BAD_CAST "PO_REQ"))
+        *type = DBTYPE_PO_REQ;
+    else if (!xmlStrcmp(string, BAD_CAST "OVM"))
+        *type = DBTYPE_OVM;
+    else if (!xmlStrcmp(string, BAD_CAST "OVM_NOTAR"))
+        *type = DBTYPE_OVM_NOTAR;
+    else if (!xmlStrcmp(string, BAD_CAST "OVM_EXEKUT"))
+        *type = DBTYPE_OVM_EXEKUT;
+    else if (!xmlStrcmp(string, BAD_CAST "OVM_REQ"))
+        *type = DBTYPE_OVM_REQ;
+    else
+        return IE_ENUM;
+    return IE_SUCCESS;
+}
+
+
 /* Get data about logged in user and his box. */
 isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         struct isds_DbOwnerInfo **db_owner_info) {
@@ -528,6 +564,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
     xmlNodePtr node;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!db_owner_info) return IE_INVAL;
@@ -677,8 +714,27 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         } \
     }
 
-    EXTRACT_STRING("isds:dbID", (*db_owner_info)->dbID)
-    EXTRACT_STRING("isds:ic", (*db_owner_info)->ic)
+    EXTRACT_STRING("isds:dbID", (*db_owner_info)->dbID);
+    
+    EXTRACT_STRING("isds:dbType", string);
+    (*db_owner_info)->dbType = malloc(sizeof((*db_owner_info)->dbType));
+    if (!(*db_owner_info)->dbType) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+    err = string2isds_DbType((xmlChar *)string, (*db_owner_info)->dbType);
+    if (err) {
+        if (err == IE_ENUM) {
+            err = IE_ISDS;
+            isds_log_message(context, _("Unknown isds:dbType: "));
+            isds_append_message(context, (char *)string);
+        }
+        goto leave;
+    }
+    free(string); string = NULL;
+
+
+    EXTRACT_STRING("isds:ic", (*db_owner_info)->ic);
 
 #undef EXTRACT_STRING
 
@@ -687,6 +743,7 @@ leave:
         isds_DbOwnerInfo_free(db_owner_info);
     }
 
+    free(string);
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
 
