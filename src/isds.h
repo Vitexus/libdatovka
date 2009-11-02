@@ -21,7 +21,8 @@ typedef enum {
     IE_SOAP,
     IE_XML,
     IE_ISDS,
-    IE_ENUM
+    IE_ENUM,
+    IE_DATE
 } isds_error;
 
 typedef enum {

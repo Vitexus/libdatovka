@@ -89,6 +89,8 @@ char *isds_strerror(const isds_error error) {
             return(_("ISDS server problem")); break;
         case IE_ENUM:
             return(_("Invalid enum value")); break;
+        case IE_DATE:
+            return(_("Invalid date value")); break;
         default:
             return(_("Unknown error"));
     }
@@ -553,6 +555,13 @@ static isds_error string2isds_DbType(xmlChar *string, isds_DbType *type) {
 }
 
 
+/* Convert UTF-8 @string represantion of date to @time */
+static isds_error string2tm(xmlChar *string, struct tm *time) {
+    if (!string || !time) return IE_INVAL;
+    return IE_NOTSUP;
+}
+
+
 /* Get data about logged in user and his box. */
 isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         struct isds_DbOwnerInfo **db_owner_info) {
@@ -734,6 +743,38 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
             (*db_owner_info)->personName->pnLastNameAtBirth);
 
     EXTRACT_STRING("isds:firmName", (*db_owner_info)->firmName);
+
+    (*db_owner_info)->birthInfo =
+        calloc(1, sizeof(*((*db_owner_info)->birthInfo)));
+    if (!(*db_owner_info)->birthInfo) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+    /* FIXME: Parse biDate
+     * TODO: What about time zone? */
+    EXTRACT_STRING("isds:biDate", string);
+    (*db_owner_info)->birthInfo->biDate =
+        calloc(1, sizeof(*((*db_owner_info)->birthInfo->biDate)));
+    if (!(*db_owner_info)->birthInfo->biDate) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+    err = string2tm((xmlChar *)string,
+            (*db_owner_info)->birthInfo->biDate);
+    if (err) {
+        free((*db_owner_info)->birthInfo->biDate);
+        (*db_owner_info)->birthInfo->biDate = NULL;
+        if (err == IE_DATE) {
+            err = IE_ISDS;
+            isds_log_message(context, _("Invalid isds:biDate value: "));
+            isds_append_message(context, (char *)string);
+        }
+        goto leave;
+    }
+    free(string); string = NULL;
+    EXTRACT_STRING("isds:biCity", (*db_owner_info)->birthInfo->biCity);
+    EXTRACT_STRING("isds:biCounty", (*db_owner_info)->birthInfo->biCounty);
+    EXTRACT_STRING("isds:biState", (*db_owner_info)->birthInfo->biState);
 #undef EXTRACT_STRING
 
 leave:
