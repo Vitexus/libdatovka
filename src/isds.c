@@ -698,13 +698,15 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
     EXTRACT_STRING("isds:dbID", (*db_owner_info)->dbID);
     
     EXTRACT_STRING("isds:dbType", string);
-    (*db_owner_info)->dbType = malloc(sizeof((*db_owner_info)->dbType));
+    (*db_owner_info)->dbType = calloc(1, sizeof(*((*db_owner_info)->dbType)));
     if (!(*db_owner_info)->dbType) {
         err = IE_NOMEM;
         goto leave;
     }
     err = string2isds_DbType((xmlChar *)string, (*db_owner_info)->dbType);
     if (err) {
+        free((*db_owner_info)->dbType);
+        (*db_owner_info)->dbType = NULL;
         if (err == IE_ENUM) {
             err = IE_ISDS;
             isds_log_message(context, _("Unknown isds:dbType: "));
@@ -716,6 +718,20 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
 
     EXTRACT_STRING("isds:ic", (*db_owner_info)->ic);
 
+    (*db_owner_info)->personName =
+        calloc(1, sizeof(*((*db_owner_info)->personName)));
+    if (!(*db_owner_info)->personName) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+    EXTRACT_STRING("isds:pnFirstName",
+            (*db_owner_info)->personName->pnFirstName);
+    EXTRACT_STRING("isds:pnMiddleName",
+            (*db_owner_info)->personName->pnMiddleName);
+    EXTRACT_STRING("isds:pnLastName",
+            (*db_owner_info)->personName->pnLastName);
+    EXTRACT_STRING("isds:pnLastNameAtBirth",
+            (*db_owner_info)->personName->pnLastNameAtBirth);
 #undef EXTRACT_STRING
 
 leave:
