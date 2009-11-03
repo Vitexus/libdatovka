@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "utils.h"
 
 /* Concatenate two strings into newly allocated buffer.
@@ -54,3 +55,51 @@ _hidden char *astrcat3(const char *first, const char *second,
     }
     return buf;
 }
+
+
+/* Print formated string into automtically reallocated @uffer.
+ * @buffer automatically reallocated buffer. Must be &NULL or preallocated
+ * memory.
+ * @format format string as for printf(3)
+ * @ap list of variadic arguments, after call will be in udefined state
+ * @Returns number of bytes printed. In case of errror, -1 and NULL @buffer*/
+_hidden int isds_vasprintf(char **buffer, const char *format, va_list ap) {
+    va_list aq;
+    int length, new_length;
+    char *new_buffer;
+
+    if (!buffer || !format) {
+        if (buffer) {
+            free(*buffer);
+            *buffer = NULL;
+        }
+        return -1;
+    }
+
+    va_copy(aq, ap);
+    length = vsnprintf(NULL, 0, format, aq) + 1;
+    va_end(aq);
+    if (length <= 0) {
+        free(*buffer);
+        *buffer = NULL;
+        return -1;
+    }
+
+    new_buffer = realloc(*buffer, length);
+    if (!new_buffer) {
+        free(*buffer);
+        *buffer = NULL;
+        return -1;
+    }
+    *buffer = new_buffer;
+
+    new_length = vsnprintf(*buffer, length, format, ap) + 1;
+    if (new_length >= length) {
+        free(*buffer);
+        *buffer = NULL;
+        return -1;
+    }
+
+    return new_length;
+}
+
