@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <locale.h>
+#include <time.h>
 #include <isds.h>
 
 char url[] = "https://www.czebox.cz/DS/";
@@ -59,9 +60,7 @@ void print_DbOwnerInfo(struct isds_DbOwnerInfo *info) {
         
         printf("\t\tbiDate = ");
         if (!info->birthInfo->biDate) printf("NULL\n");
-        /*else printf("%d-%d-%d\n", info->birthInfo->biDate->tm_year + 1900,
-                info->birthInfo->biDate->tm_mon + 1,
-                info->birthInfo->biDate->tm_mday);*/
+        else printf("%s\n", asctime(info->birthInfo->biDate));
 
         printf("\t\tbiCity = %s\n", info->birthInfo->biCity);
         printf("\t\tbiCounty = %s\n", info->birthInfo->biCounty);
