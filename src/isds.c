@@ -1,8 +1,9 @@
-#define _XOPEN_SOURCE 500   /* strdup from string.h */
+#define _XOPEN_SOURCE 500   /* strdup from string.h, strptime from time.h */
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <time.h>
 #include "isds_priv.h"
 #include "utils.h"
 #include "soap.h"
@@ -555,9 +556,25 @@ static isds_error string2isds_DbType(xmlChar *string, isds_DbType *type) {
 }
 
 
-/* Convert UTF-8 @string represantion of date to @time */
-static isds_error string2tm(xmlChar *string, struct tm *time) {
+/* Convert UTF-8 @string represantion of ISO 8601 date to @time.
+ * XXX: Not all ISO formats are supported */
+static isds_error datestring2tm(xmlChar *string, struct tm *time) {
+    char *offset;
     if (!string || !time) return IE_INVAL;
+    
+    /* xsd:date is ISO 8601 string, thus ASCII */
+    offset = strptime((char*)string, "%Y-%m-%d", time);
+    if (offset && *offset == '\0')
+        return IE_SUCCESS;
+
+    offset = strptime((char*)string, "%Y%m%d", time);
+    if (offset && *offset == '\0')
+        return IE_SUCCESS;
+
+    offset = strptime((char*)string, "%Y-%j", time);
+    if (offset && *offset == '\0')
+        return IE_SUCCESS;
+
     return IE_NOTSUP;
 }
 
@@ -759,12 +776,12 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         err = IE_NOMEM;
         goto leave;
     }
-    err = string2tm((xmlChar *)string,
+    err = datestring2tm((xmlChar *)string,
             (*db_owner_info)->birthInfo->biDate);
     if (err) {
         free((*db_owner_info)->birthInfo->biDate);
         (*db_owner_info)->birthInfo->biDate = NULL;
-        if (err == IE_DATE) {
+        if (err == IE_NOTSUP) {
             err = IE_ISDS;
             isds_log_message(context, _("Invalid isds:biDate value: "));
             isds_append_message(context, (char *)string);
