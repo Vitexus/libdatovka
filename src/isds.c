@@ -471,7 +471,11 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
     if (!context) return IE_INVALID_CONTEXT;
 
     /* Check if connection is established */
-    if (!context->curl) return IE_CONNECTION_CLOSED;
+    if (!context->curl) {
+        /* Testing printf message */
+        isds_printf_message(context, "%s", _("I said connection closed"));
+        return IE_CONNECTION_CLOSED;
+    }
 
 
     /* Build dummy request */

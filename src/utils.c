@@ -93,7 +93,7 @@ _hidden int isds_vasprintf(char **buffer, const char *format, va_list ap) {
     }
     *buffer = new_buffer;
 
-    new_length = vsnprintf(*buffer, length, format, ap) + 1;
+    new_length = vsnprintf(*buffer, length, format, ap);
     if (new_length >= length) {
         free(*buffer);
         *buffer = NULL;
