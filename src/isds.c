@@ -755,8 +755,8 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         (*db_owner_info)->dbType = NULL;
         if (err == IE_ENUM) {
             err = IE_ISDS;
-            isds_log_message(context, _("Unknown isds:dbType: "));
-            isds_append_message(context, (char *)string);
+            isds_printf_message(context, _("Unknown isds:dbType: %s"), 
+                (char *)string);
         }
         goto leave;
     }
@@ -802,8 +802,8 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         (*db_owner_info)->birthInfo->biDate = NULL;
         if (err == IE_NOTSUP) {
             err = IE_ISDS;
-            isds_log_message(context, _("Invalid isds:biDate value: "));
-            isds_append_message(context, (char *)string);
+            isds_printf_message(context, _("Invalid isds:biDate value: %s"),
+                    (char *)string);
         }
         goto leave;
     }
@@ -846,19 +846,18 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         number = strtol((char*)string, &endptr, 10);
 
         if (*endptr != '\0') {
-            isds_log_message(context,
-                    _("dbState is not valid integer: "));
             /* FIXME: convert to locale */
-            isds_append_message(context, (char *)string);
+            isds_printf_message(context,
+                    _("dbState is not valid integer: %s"), (char *)string);
             err = IE_ISDS;
             goto leave;
         }
 
         if (number == LONG_MIN || number == LONG_MAX) {
-            isds_log_message(context,
-                    _("dbState value out of range of long int: "));
             /* FIXME: convert to locale */
-            isds_append_message(context, (char *)string);
+            isds_printf_message(context,
+                    _("dbState value out of range of long int: %s"),
+                    (char *)string);
             err = IE_ERROR;
             goto leave;
         }
@@ -891,10 +890,10 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
                 !xmlStrcmp((xmlChar *)string, BAD_CAST "0"))
             *((*db_owner_info)->dbEffectiveOVM) = 0;
         else {
-            isds_log_message(context,
-                    _("dbEffectiveOVM value is not valid boolean: "));
             /* FIXME: convert to locale */
-            isds_append_message(context, (char *)string);
+            isds_printf_message(context,
+                    _("dbEffectiveOVM value is not valid boolean: "),
+                    (char *)string);
             err = IE_ERROR;
             goto leave;
         }

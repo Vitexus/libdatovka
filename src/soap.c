@@ -226,9 +226,9 @@ static isds_error http(struct isds_ctx *context, const char *url,
     isds_log(ILF_HTTP, ILL_DEBUG, _("End of response body\n"));
 
     if (curl_err) {
-        isds_log_message(context, url);
-        isds_append_message(context, _(": "));
-        isds_append_message(context, curl_easy_strerror(curl_err));
+        /* FIXME: convert to locale */
+        isds_printf_message(context,
+                _("%s: %s"), url, curl_easy_strerror(curl_err));
         err = IE_NETWORK;
         goto leave;
     }
@@ -463,9 +463,9 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     if (mime_type && strcmp(mime_type, "text/xml")
             && strcmp(mime_type, "application/soap+xml")
             && strcmp(mime_type, "application/xml")) {
-        isds_log_message(context, url);
-        isds_append_message(context, _(": bad MIME type sent by server: "));
-        isds_append_message(context, mime_type);
+        /* FIXME: Convert to locale */
+        isds_printf_message(context,
+                _("%s: bad MIME type sent by server: %s"), url, mime_type);
         err = IE_SOAP;
         goto leave;
     }
