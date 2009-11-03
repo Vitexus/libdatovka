@@ -854,6 +854,34 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         *((*db_owner_info)->dbState) = number;
     }
 
+    EXTRACT_STRING("isds:dbEffectiveOVM", string);
+    if (string) {
+
+        (*db_owner_info)->dbEffectiveOVM =
+            calloc(1, sizeof(*((*db_owner_info)->dbEffectiveOVM)));
+        if (!(*db_owner_info)->dbEffectiveOVM) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+
+        if (!xmlStrcmp((xmlChar *)string, BAD_CAST "true") ||
+                !xmlStrcmp((xmlChar *)string, BAD_CAST "1"))
+            *((*db_owner_info)->dbEffectiveOVM) = 1;
+        else if (!xmlStrcmp((xmlChar *)string, BAD_CAST "false") ||
+                !xmlStrcmp((xmlChar *)string, BAD_CAST "0"))
+            *((*db_owner_info)->dbEffectiveOVM) = 0;
+        else {
+            isds_log_message(context,
+                    _("dbEffectiveOVM value is not valid boolean: "));
+            /* FIXME: convert to locale */
+            isds_append_message(context, (char *)string);
+            err = IE_ERROR;
+            goto leave;
+        }
+
+        free(string); string = NULL;
+    }
+
 #undef EXTRACT_STRING
 
 leave:
