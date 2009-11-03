@@ -47,6 +47,11 @@ isds_error isds_log_message(struct isds_ctx *context, const char *message);
  * NULL message has void effect. */
 isds_error isds_append_message(struct isds_ctx *context, const char *message);
 
+/* Stores formated message into context' long_message buffer.
+ * Application can pick the message up using isds_long_message(). */
+isds_error isds_printf_message(struct isds_ctx *context,
+        const char *format, ...);
+
 /* Log @message in class @facility with log @level into global log. @message
  * is printf(3) formating string, variadic arguments may be neccessary.
  * For debugging purposes. */

@@ -189,6 +189,22 @@ _hidden isds_error isds_append_message(struct isds_ctx *context,
 }
 
 
+/* Stores formated message into context' long_message buffer.
+ * Application can pick the message up using isds_long_message(). */
+_hidden isds_error isds_printf_message(struct isds_ctx *context,
+        const char *format, ...) {
+    va_list ap;
+    int length;
+    
+    if (!context) return IE_INVALID_CONTEXT;
+    va_start(ap, format);
+    length = isds_vasprintf(&(context->long_message), format, ap);
+    va_end(ap);
+        
+    return (length < 0) ? IE_ERROR: IE_SUCCESS;
+}
+
+
 /* Set logging up.
  * @facilities is bitmask of isds_log_facility values,
  * @level is verbosity level. */
