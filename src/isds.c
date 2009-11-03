@@ -767,8 +767,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         err = IE_NOMEM;
         goto leave;
     }
-    /* FIXME: Parse biDate
-     * TODO: What about time zone? */
+
     EXTRACT_STRING("isds:biDate", string);
     (*db_owner_info)->birthInfo->biDate =
         calloc(1, sizeof(*((*db_owner_info)->birthInfo->biDate)));
@@ -792,6 +791,25 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
     EXTRACT_STRING("isds:biCity", (*db_owner_info)->birthInfo->biCity);
     EXTRACT_STRING("isds:biCounty", (*db_owner_info)->birthInfo->biCounty);
     EXTRACT_STRING("isds:biState", (*db_owner_info)->birthInfo->biState);
+
+    (*db_owner_info)->address =
+        calloc(1, sizeof(*((*db_owner_info)->address)));
+    if (!(*db_owner_info)->address) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+    EXTRACT_STRING("isds:adCity",
+            (*db_owner_info)->address->adCity);
+    EXTRACT_STRING("isds:adStreet",
+            (*db_owner_info)->address->adStreet);
+    EXTRACT_STRING("isds:adNumberInStreet",
+            (*db_owner_info)->address->adNumberInStreet);
+    EXTRACT_STRING("isds:adNumberInMunicipality",
+            (*db_owner_info)->address->adNumberInMunicipality);
+    EXTRACT_STRING("isds:adZipCode",
+            (*db_owner_info)->address->adZipCode);
+    EXTRACT_STRING("isds:adState",
+            (*db_owner_info)->address->adState);
 #undef EXTRACT_STRING
 
 leave:
