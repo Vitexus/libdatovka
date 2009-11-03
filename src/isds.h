@@ -110,7 +110,8 @@ struct isds_DbOwnerInfo {
                                        [Max. 20 chars] */
     char *registryCode;             /* PFO External registry code
                                        [Max. 5 chars] */
-    int *dbState;                   /* Box state; 1 <=> active box;
+    long int *dbState;              /* Box state; 1 <=> active box;
+                                       long int beacause xsd:integer
                                        TODO: enum? */
     _Bool *dbEffectiveOVM;          /* Box has OVM role (§ 5a) */
 };

@@ -90,7 +90,7 @@ void print_DbOwnerInfo(struct isds_DbOwnerInfo *info) {
 
     printf("\tdbState = ");
     if (!info->dbState) printf("NULL\n");
-    else printf("%d\n", *(info->dbState));
+    else printf("%ld\n", *(info->dbState));
     
     printf("\tdbEffectiveOVM = %s\n",
             !info->dbEffectiveOVM ? "NULL" :

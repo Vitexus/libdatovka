@@ -817,6 +817,43 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
     EXTRACT_STRING("isds:identifier", (*db_owner_info)->identifier);
     EXTRACT_STRING("isds:registryCode", (*db_owner_info)->registryCode);
 
+    
+    EXTRACT_STRING("isds:dbState", string);
+    if (string) {
+        long int number;
+        char *endptr;
+
+        number = strtol((char*)string, &endptr, 10);
+
+        if (*endptr != '\0') {
+            isds_log_message(context,
+                    _("dbState is not valid integer: "));
+            /* FIXME: convert to locale */
+            isds_append_message(context, (char *)string);
+            err = IE_ISDS;
+            goto leave;
+        }
+
+        if (number == LONG_MIN || number == LONG_MAX) {
+            isds_log_message(context,
+                    _("dbState value out of range of long int: "));
+            /* FIXME: convert to locale */
+            isds_append_message(context, (char *)string);
+            err = IE_ERROR;
+            goto leave;
+        }
+
+        free(string); string = NULL;
+
+        (*db_owner_info)->dbState =
+            calloc(1, sizeof(*((*db_owner_info)->dbState)));
+        if (!(*db_owner_info)->dbState) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+        *((*db_owner_info)->dbState) = number;
+    }
+
 #undef EXTRACT_STRING
 
 leave:
