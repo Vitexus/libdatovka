@@ -810,6 +810,13 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
             (*db_owner_info)->address->adZipCode);
     EXTRACT_STRING("isds:adState",
             (*db_owner_info)->address->adState);
+
+    EXTRACT_STRING("isds:nationality", (*db_owner_info)->nationality);
+    EXTRACT_STRING("isds:email", (*db_owner_info)->email);
+    EXTRACT_STRING("isds:telNumber", (*db_owner_info)->telNumber);
+    EXTRACT_STRING("isds:identifier", (*db_owner_info)->identifier);
+    EXTRACT_STRING("isds:registryCode", (*db_owner_info)->registryCode);
+
 #undef EXTRACT_STRING
 
 leave:
