@@ -34,4 +34,10 @@ char *astrcat3(const char *first, const char *second,
  * @Returns number of bytes printed. In case of errror, -1 and NULL @buffer*/
 int isds_vasprintf(char **buffer, const char *format, va_list ap);
 
+/* Converts UTF8 string into locale encoded string.
+ * @utf string int UTF-8 terminated by zero byte
+ * @return allocated string encoded in locale specific encoding. You must free
+ * it.*/
+char *utf82locale(const char *utf);
+
 #endif

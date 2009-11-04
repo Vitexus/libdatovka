@@ -1,6 +1,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <iconv.h>
+#include <langinfo.h>
 #include "utils.h"
 
 /* Concatenate two strings into newly allocated buffer.
@@ -101,5 +103,62 @@ _hidden int isds_vasprintf(char **buffer, const char *format, va_list ap) {
     }
 
     return new_length;
+}
+
+
+/* Converts UTF8 string into locale encoded string.
+ * @utf string int UTF-8 terminated by zero byte
+ * @return allocated string encoded in locale specific encoding. You must free
+ * it. In case of error or NULL @utf returns NULL. */
+char *utf82locale(const char *utf) {
+    iconv_t state;
+    size_t utf_length;
+    char *buffer = NULL, *new_buffer;
+    size_t buffer_length = 0, buffer_used = 0;
+    char *inbuf, *outbuf;
+    size_t inleft, outleft;
+
+    if (!utf) return NULL;
+
+    /* nl_langinfo() is not thread-safe */
+    state = iconv_open(nl_langinfo(CODESET), "UTF-8");
+    if (state == (iconv_t) -1) return NULL;
+
+    /* Get the initial ouput buffer length */
+    utf_length = strlen(utf);
+    buffer_length = utf_length + 1;
+
+    inbuf = (char *) utf;
+    inleft = utf_length + 1;
+
+    while (inleft > 0) {
+        /* Extend buffer */
+        new_buffer = realloc(buffer, buffer_length);
+        if (!buffer) {
+            free(buffer);
+            buffer = NULL;
+            goto leave;
+        }
+        buffer = new_buffer;
+
+        /* FIXME */
+        outbuf = buffer + buffer_used;
+        outleft = buffer_length - buffer_used;
+        
+        /* Convert chunk of data */
+        if ((size_t) -1 == iconv(state, &inbuf, &inleft, &outbuf, &outleft)) {
+            free(buffer);
+            buffer = NULL;
+            goto leave;
+        }
+
+        /* Update positions */
+        buffer_length += 1024;
+        buffer_used = outbuf - buffer;
+    }
+
+leave:
+    iconv_close(state);
+    return buffer;
 }
 
