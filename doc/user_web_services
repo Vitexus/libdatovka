@@ -70,4 +70,47 @@ db_search.wsdl
 URL postfix: df
 
 FindDataBox (*)
+    Find boxes conforming to serch criteria
 CheckDataBox (*)
+    Return state of given box
+
+
+FindDataBox
+===========
+
+Find boxes conforming to serch criteria or exact ID and returns corresponding
+(possibly truncated) list of boxes.
+
+Returned boxes exist, but it does not mean they can recieve messages. Use
+CheckDataBox to figure out.
+
+If dbID filled in request, search only to exact box.
+If identifier and registryCode filled, search only to exact box.
+Otherwise search against other criteria.
+
+Returns list of boxes (possibly empty).
+
+Error codes:
+    0002    No box suits to search request (by other criteria)
+    0003    To much boxes suit to search request (by other criteria),
+            response truncated. Returned list of boxes is still valid.
+    5001    No such box exists (by box ID or registry identifier)
+
+
+CheckDataBox
+============
+
+Return state of one box identified by dbID.
+
+State of the box is stored in dbStatus element:
+    0 or empty  Error occurred
+    1           Box is accessible.
+    2           Temporarily unaccesible
+    3           Not yet active
+    4           Permanently unaccesible
+    5           Box has been removed
+
+Only state 1 means box is capable of receiving messages.
+
+Error codes:
+    5001    Box does not exist
