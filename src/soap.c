@@ -226,9 +226,10 @@ static isds_error http(struct isds_ctx *context, const char *url,
     isds_log(ILF_HTTP, ILL_DEBUG, _("End of response body\n"));
 
     if (curl_err) {
-        /* FIXME: convert to locale */
+        /* TODO: CURL is not internationalized yet. Collect CURL messages for
+         * I18N. */
         isds_printf_message(context,
-                _("%s: %s"), url, curl_easy_strerror(curl_err));
+                _("%s: %s"), url, _(curl_easy_strerror(curl_err)));
         err = IE_NETWORK;
         goto leave;
     }
@@ -463,9 +464,11 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     if (mime_type && strcmp(mime_type, "text/xml")
             && strcmp(mime_type, "application/soap+xml")
             && strcmp(mime_type, "application/xml")) {
-        /* FIXME: Convert to locale */
+        char *mime_type_locale = utf82locale(mime_type);
         isds_printf_message(context,
-                _("%s: bad MIME type sent by server: %s"), url, mime_type);
+                _("%s: bad MIME type sent by server: %s"), url,
+                mime_type_locale);
+        free(mime_type_locale);
         err = IE_SOAP;
         goto leave;
     }

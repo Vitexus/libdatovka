@@ -519,13 +519,18 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
         return err;
     }
     if (xmlStrcmp(code, BAD_CAST "0000")) {
-        /* FIXME: Convert UTF-8 into locale */
         char *code_locale = utf82locale((char*)code);
+        char *message_locale = utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Server refused bogus request (code=%s, message=%s)\n"),
-                code_locale, message);
-        isds_log_message(context, _((char *)message));
+                code_locale, message_locale);
+        /* XXX: Literal error messages from ISDS are Czech mesages
+         * (English sometimes) in UTF-8. It's hard to catch them for
+         * translation. Successfully gettextized would return in locale
+         * encoding, unsuccessfully translated would pass in UTF-8. */
+        isds_log_message(context, message_locale);
         free(code_locale);
+        free(message_locale);
         free(code);
         free(message);
         xmlFreeDoc(response);
@@ -674,11 +679,14 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         return err;
     }
     if (xmlStrcmp(code, BAD_CAST "0000")) {
-        /* FIXME: Convert UTF-8 into locale */
+        char *code_locale = utf82locale((char*)code);
+        char *message_locale = utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Server refused GetOwnerInfoFromLogin request "
-                    "(code=%s, message=%s)\n"), code, message);
-        isds_log_message(context, _((char *)message));
+                    "(code=%s, message=%s)\n"), code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
         free(code);
         free(message);
         xmlFreeDoc(response);
@@ -848,18 +856,20 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         number = strtol((char*)string, &endptr, 10);
 
         if (*endptr != '\0') {
-            /* FIXME: convert to locale */
+            char *string_locale = utf82locale((char *)string);
             isds_printf_message(context,
-                    _("dbState is not valid integer: %s"), (char *)string);
+                    _("dbState is not valid integer: %s"), string_locale);
+            free(string_locale);
             err = IE_ISDS;
             goto leave;
         }
 
         if (number == LONG_MIN || number == LONG_MAX) {
-            /* FIXME: convert to locale */
+            char *string_locale = utf82locale((char *)string);
             isds_printf_message(context,
                     _("dbState value out of range of long int: %s"),
-                    (char *)string);
+                    string_locale);
+            free(string_locale);
             err = IE_ERROR;
             goto leave;
         }
@@ -892,10 +902,11 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
                 !xmlStrcmp((xmlChar *)string, BAD_CAST "0"))
             *((*db_owner_info)->dbEffectiveOVM) = 0;
         else {
-            /* FIXME: convert to locale */
+            char *string_locale = utf82locale((char*)string);
             isds_printf_message(context,
                     _("dbEffectiveOVM value is not valid boolean: "),
-                    (char *)string);
+                    string_locale);
+            free(string_locale);
             err = IE_ERROR;
             goto leave;
         }
