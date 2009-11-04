@@ -22,7 +22,8 @@ typedef enum {
     IE_XML,
     IE_ISDS,
     IE_ENUM,
-    IE_DATE
+    IE_DATE,
+    IE_2BIG
 } isds_error;
 
 typedef enum {
@@ -118,6 +119,12 @@ struct isds_DbOwnerInfo {
                                        messages from anybody */  
 };
 
+/* General linked list */
+struct isds_list {
+    struct isds_list *next;
+    void *data;
+};
+
 /*struct isds_address {
     struct isds_address *next;
     char *box_id;
@@ -193,6 +200,19 @@ isds_error isds_ping(struct isds_ctx *context);
 /* Get data about logged in user and his box. */
 isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         struct isds_DbOwnerInfo **db_owner_info);
+
+/* Find boxes suiting given criteria.
+ * @criteria is filter. You should fill in at least some memebers.
+ * @result is list isds_DbOwnerInfo structs, possibly empty (NULL can be too).
+ * @return:
+ *  IE_SUCCESS if search sucseeded, @result contains usefull data
+ *  IE_NOEXIST if no such box exists, @result will be NULL
+ *  IE_2BIG if too much boxes exist and server truncated the resuluts, @result
+ *      contains still valid data
+ *  other code if something bad happens. @result will be NULL. */
+isds_error isds_FindDataBox(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *criteria,
+        struct isds_list **result);
 
 /* Send bogus request to ISDS.
  * Just for test purposes */

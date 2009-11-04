@@ -92,6 +92,8 @@ char *isds_strerror(const isds_error error) {
             return(_("Invalid enum value")); break;
         case IE_DATE:
             return(_("Invalid date value")); break;
+        case IE_2BIG:
+            return(_("Too big")); break;
         default:
             return(_("Unknown error"));
     }
@@ -945,6 +947,29 @@ leave:
                 "successfully.\n"));
 
     return err;
+}
+
+
+/* Find boxes suiting given criteria.
+ * @criteria is filter. You should fill in at least some memebers.
+ * @result is list isds_DbOwnerInfo structs, possibly empty (NULL can be too).
+ * @return:
+ *  IE_SUCCESS if search sucseeded, @result contains usefull data
+ *  IE_NOEXIST if no such box exists, @result will be NULL
+ *  IE_2BIG if too much boxes exist and server truncated the resuluts, @result
+ *      contains still valid data
+ *  other code if something bad happens. @result will be NULL. */
+isds_error isds_FindDataBox(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *criteria,
+        struct isds_list **result) {
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!result) return IE_INVAL;
+    if (!criteria) {
+        if (result) *result = NULL;
+        return IE_INVAL;
+    }
+
+    return IE_NOTSUP;
 }
 
 
