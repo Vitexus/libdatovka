@@ -96,6 +96,10 @@ void print_DbOwnerInfo(struct isds_DbOwnerInfo *info) {
             !info->dbEffectiveOVM ? "NULL" :
                 (*(info->dbEffectiveOVM)? "true" : "false"));
 
+    printf("\tdbOpenAddressing = %s\n",
+            !info->dbOpenAddressing ? "NULL" :
+                (*(info->dbOpenAddressing)? "true" : "false"));
+
     printf("}\n");
 
 }

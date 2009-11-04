@@ -114,6 +114,8 @@ struct isds_DbOwnerInfo {
                                        long int beacause xsd:integer
                                        TODO: enum? */
     _Bool *dbEffectiveOVM;          /* Box has OVM role (§ 5a) */
+    _Bool *dbOpenAddressing;        /* Non-OVM Box is free to recieve
+                                       messages from anybody */  
 };
 
 /*struct isds_address {

@@ -752,6 +752,40 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         } \
     }
 
+#define EXTRACT_BOOLEAN(element, booleanPtr) \
+    { \
+        char *string = NULL; \
+        EXTRACT_STRING(element, string); \
+         \
+        if (string) { \
+            (booleanPtr) = calloc(1, sizeof(*(booleanPtr))); \
+            if (!(booleanPtr)) { \
+                free(string); \
+                err = IE_NOMEM; \
+                goto leave; \
+            } \
+             \
+            if (!xmlStrcmp((xmlChar *)string, BAD_CAST "true") || \
+                    !xmlStrcmp((xmlChar *)string, BAD_CAST "1")) \
+                *(booleanPtr) = 1; \
+            else if (!xmlStrcmp((xmlChar *)string, BAD_CAST "false") || \
+                    !xmlStrcmp((xmlChar *)string, BAD_CAST "0")) \
+                *(booleanPtr) = 0; \
+            else { \
+                char *string_locale = utf82locale((char*)string); \
+                isds_printf_message(context, \
+                        _(element " value is not valid boolean: "), \
+                        string_locale); \
+                free(string_locale); \
+                free(string); \
+                err = IE_ERROR; \
+                goto leave; \
+            } \
+             \
+            free(string); \
+        } \
+    } 
+
     EXTRACT_STRING("isds:dbID", (*db_owner_info)->dbID);
     
     EXTRACT_STRING("isds:dbType", string);
@@ -886,35 +920,11 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         *((*db_owner_info)->dbState) = number;
     }
 
-    EXTRACT_STRING("isds:dbEffectiveOVM", string);
-    if (string) {
+    EXTRACT_BOOLEAN("isds:dbEffectiveOVM", (*db_owner_info)->dbEffectiveOVM);
+    EXTRACT_BOOLEAN("isds:dbOpenAddressing",
+            (*db_owner_info)->dbOpenAddressing);
 
-        (*db_owner_info)->dbEffectiveOVM =
-            calloc(1, sizeof(*((*db_owner_info)->dbEffectiveOVM)));
-        if (!(*db_owner_info)->dbEffectiveOVM) {
-            err = IE_NOMEM;
-            goto leave;
-        }
-
-        if (!xmlStrcmp((xmlChar *)string, BAD_CAST "true") ||
-                !xmlStrcmp((xmlChar *)string, BAD_CAST "1"))
-            *((*db_owner_info)->dbEffectiveOVM) = 1;
-        else if (!xmlStrcmp((xmlChar *)string, BAD_CAST "false") ||
-                !xmlStrcmp((xmlChar *)string, BAD_CAST "0"))
-            *((*db_owner_info)->dbEffectiveOVM) = 0;
-        else {
-            char *string_locale = utf82locale((char*)string);
-            isds_printf_message(context,
-                    _("dbEffectiveOVM value is not valid boolean: "),
-                    string_locale);
-            free(string_locale);
-            err = IE_ERROR;
-            goto leave;
-        }
-
-        free(string); string = NULL;
-    }
-
+#undef EXTRACT_BOOLEAN
 #undef EXTRACT_STRING
 
 leave:
