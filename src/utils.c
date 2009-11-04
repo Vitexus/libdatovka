@@ -134,7 +134,7 @@ char *utf82locale(const char *utf) {
     while (inleft > 0) {
         /* Extend buffer */
         new_buffer = realloc(buffer, buffer_length);
-        if (!buffer) {
+        if (!new_buffer) {
             free(buffer);
             buffer = NULL;
             goto leave;

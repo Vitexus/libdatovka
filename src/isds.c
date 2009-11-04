@@ -520,10 +520,12 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
     }
     if (xmlStrcmp(code, BAD_CAST "0000")) {
         /* FIXME: Convert UTF-8 into locale */
+        char *code_locale = utf82locale((char*)code);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Server refused bogus request (code=%s, message=%s)\n"),
-                code, message);
+                code_locale, message);
         isds_log_message(context, _((char *)message));
+        free(code_locale);
         free(code);
         free(message);
         xmlFreeDoc(response);
