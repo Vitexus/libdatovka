@@ -39,7 +39,9 @@ struct isds_ctx {
 };
 
 /* Stores message into context' long_message buffer.
- * Application can pick the message up using isds_long_message(). */
+ * Application can pick the message up using isds_long_message().
+ * NULL @message truncates the buffer but does not deallocate it.
+ * @message is coded in locale encoding */
 isds_error isds_log_message(struct isds_ctx *context, const char *message);
 
 /* Appends message into context' long_message buffer.

@@ -152,7 +152,8 @@ isds_error isds_ctx_free(struct isds_ctx **context);
 
 /* Return long message text produced by library fucntion, e.g. detailed error
  * mesage. Returned pointer is only valid until new library function is
- * called. */
+ * called for the same context. Could be NULL, especially if NULL context is
+ * supplied. Return string is locale encoded. */
 char *isds_long_message(const struct isds_ctx *context);
 
 /* Set logging up.

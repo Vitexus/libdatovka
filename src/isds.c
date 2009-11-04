@@ -131,7 +131,7 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
 /* Return long message text produced by library fucntion, e.g. detailed error
  * mesage. Returned pointer is only valid until new library function is
  * called for the same context. Could be NULL, especially if NULL context is
- * supplied. */
+ * supplied. Return string is locale encoded. */
 char *isds_long_message(const struct isds_ctx *context) {
     if (!context) return NULL;
     return context->long_message;
@@ -140,7 +140,8 @@ char *isds_long_message(const struct isds_ctx *context) {
 
 /* Stores message into context' long_message buffer.
  * Application can pick the message up using isds_long_message().
- * NULL @message truncates the buffer but does not deallocate it. */
+ * NULL @message truncates the buffer but does not deallocate it.
+ * @message is coded in locale encoding */
 _hidden isds_error isds_log_message(struct isds_ctx *context,
         const char *message) {
     char *buffer;
