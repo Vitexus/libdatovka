@@ -985,6 +985,23 @@ int isds_address_free(struct isds_address **address);
 */
 
 
+/* Free isds_list with all member data.
+ * @list list to free, on return will be NULL */
+void isds_list_free(struct isds_list **list) {
+    struct isds_list *item, *next_item;
+
+    if (!list || !*list) return;
+    
+    for(item = *list; item; item = next_item) {
+        (item->destructor)(&(item->data));
+        next_item = item->next;
+        free(item);
+    }
+
+    *list = NULL;
+}
+
+
 /* Deallocate structure isds_PersonName recursively and NULL it */
 static void isds_PersonName_free(struct isds_PersonName **person_name) {
     if (!person_name || !*person_name) return;

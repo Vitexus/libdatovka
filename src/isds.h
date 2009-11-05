@@ -121,9 +121,15 @@ struct isds_DbOwnerInfo {
 
 /* General linked list */
 struct isds_list {
-    struct isds_list *next;
-    void *data;
+    struct isds_list *next;         /* Next list item,
+                                       or NULL if current is last */
+    void *data;                     /* Payload */
+    void (*destructor) (void **);   /* Payload deallocator */
 };
+
+/* Free isds_list with all member data.
+ * @list list to free, on return will be NULL */
+void isds_list_free(struct isds_list **list);
 
 /*struct isds_address {
     struct isds_address *next;
