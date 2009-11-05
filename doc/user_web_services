@@ -95,6 +95,8 @@ Error codes:
     0003    To much boxes suit to search request (by other criteria),
             response truncated. Returned list of boxes is still valid.
     5001    No such box exists (by box ID or registry identifier)
+Non-normative error codes:
+    1101    Box type (dbType) must be specified
 
 
 CheckDataBox

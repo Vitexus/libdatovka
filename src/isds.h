@@ -209,16 +209,17 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
 
 /* Find boxes suiting given criteria.
  * @criteria is filter. You should fill in at least some memebers.
- * @result is list isds_DbOwnerInfo structs, possibly empty (NULL can be too).
+ * @boxes is automatically reallocated list of isds_DbOwnerInfo structures,
+ * possibly empty. Input NULL or valid old structure.
  * @return:
- *  IE_SUCCESS if search sucseeded, @result contains usefull data
- *  IE_NOEXIST if no such box exists, @result will be NULL
- *  IE_2BIG if too much boxes exist and server truncated the resuluts, @result
+ *  IE_SUCCESS if search sucseeded, @boxes contains usefull data
+ *  IE_NOEXIST if no such box exists, @boxes will be NULL
+ *  IE_2BIG if too much boxes exist and server truncated the resuluts, @boxes
  *      contains still valid data
- *  other code if something bad happens. @result will be NULL. */
+ *  other code if something bad happens. @boxes will be NULL. */
 isds_error isds_FindDataBox(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *criteria,
-        struct isds_list **result);
+        struct isds_list **boxes);
 
 /* Send bogus request to ISDS.
  * Just for test purposes */

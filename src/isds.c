@@ -942,9 +942,10 @@ leave:
     free(message);
     xmlFreeDoc(response);
 
-    isds_log(ILF_ISDS, ILL_DEBUG,
-            _("GetOwnerInfoFromLogin request processed by server "
-                "successfully.\n"));
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("GetOwnerInfoFromLogin request processed by server "
+                    "successfully.\n"));
 
     return err;
 }
@@ -952,24 +953,148 @@ leave:
 
 /* Find boxes suiting given criteria.
  * @criteria is filter. You should fill in at least some memebers.
- * @result is list isds_DbOwnerInfo structs, possibly empty (NULL can be too).
+ * @boxes is automatically reallocated list of isds_DbOwnerInfo structures,
+ * possibly empty. Input NULL or valid old structure.
  * @return:
- *  IE_SUCCESS if search sucseeded, @result contains usefull data
- *  IE_NOEXIST if no such box exists, @result will be NULL
- *  IE_2BIG if too much boxes exist and server truncated the resuluts, @result
+ *  IE_SUCCESS if search sucseeded, @boxes contains usefull data
+ *  IE_NOEXIST if no such box exists, @boxes will be NULL
+ *  IE_2BIG if too much boxes exist and server truncated the resuluts, @boxes
  *      contains still valid data
- *  other code if something bad happens. @result will be NULL. */
+ *  other code if something bad happens. @boxes will be NULL. */
 isds_error isds_FindDataBox(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *criteria,
-        struct isds_list **result) {
+        struct isds_list **boxes) {
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+    xmlNodePtr node;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+
+
     if (!context) return IE_INVALID_CONTEXT;
-    if (!result) return IE_INVAL;
+    if (!boxes) return IE_INVAL;
+    isds_list_free(boxes);
+
     if (!criteria) {
-        if (result) *result = NULL;
         return IE_INVAL;
     }
 
-    return IE_NOTSUP;
+    /* Check if connection is established
+     * TODO: This check should be done donwstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Build FindDataBox request */
+    request = xmlNewNode(NULL, BAD_CAST "FindDataBox");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build FindDataBox request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+    node = xmlNewChild(request, NULL, BAD_CAST "dbOwnerInfo", NULL);
+    if (!node) {
+        isds_log_message(context, _("Could not add dbOwnerInfo Child to "
+                    "FindDataBox element"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+
+
+    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending FindDataBox request to ISDS\n"));
+
+    /* Sent request */
+    err = isds(context, SERVICE_DB_SUPPLEMENTARY, request, &response);
+   
+    /* Destroy request */
+    xmlFreeNode(request);
+
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Processing ISDS response on FindDataBox "
+                    "request failed\n"));
+        goto leave;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, SERVICE_DB_SUPPLEMENTARY, response,
+            &code, &message, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("ISDS response on FindDataBox request is missing status\n"));
+        goto leave;
+    }
+
+    /* Requeast processed, but nothing found */
+    if (!xmlStrcmp(code, BAD_CAST "0002") ||
+            !xmlStrcmp(code, BAD_CAST "5001")) {
+        char *code_locale = utf82locale((char*)code);
+        char *message_locale = utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server did not found any box on FindDataBox request "
+                    "(code=%s, message=%s)\n"), code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_NOEXIST;
+        goto leave;
+    }
+
+    /* Warning, not a error */
+    if (!xmlStrcmp(code, BAD_CAST "0003")) {
+        char *code_locale = utf82locale((char*)code);
+        char *message_locale = utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server truncated response on FindDataBox request "
+                    "(code=%s, message=%s)\n"), code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+    }
+
+    /* Other error */
+    if (xmlStrcmp(code, BAD_CAST "0000")) {
+        char *code_locale = utf82locale((char*)code);
+        char *message_locale = utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server refused FindDataBox request "
+                    "(code=%s, message=%s)\n"), code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+
+leave:
+    if (err) {
+        isds_list_free(boxes);
+    }
+
+    free(string);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("FindDataBox request processed by server successfully.\n"));
+
+    return err;
 }
 
 
