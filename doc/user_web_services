@@ -97,6 +97,7 @@ Error codes:
     5001    No such box exists (by box ID or registry identifier)
 Non-normative error codes:
     1101    Box type (dbType) must be specified
+    2017    Syntax error in date (biDate)
 
 
 CheckDataBox

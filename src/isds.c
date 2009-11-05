@@ -612,7 +612,7 @@ static isds_error datestring2tm(xmlChar *string, struct tm *time) {
 static isds_error tm2datestring(struct tm *time, xmlChar **string) {
     if (!time || !string) return IE_INVAL;
 
-    if (-1 == isds_asprintf((char **) string, "%d-%02d-%2d",
+    if (-1 == isds_asprintf((char **) string, "%d-%02d-%02d",
                 time->tm_year + 1900, time->tm_mon + 1, time->tm_mday))
         return IE_ERROR;
 
