@@ -1137,10 +1137,11 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         isds_log_message(context, message_locale);
         free(code_locale);
         free(message_locale);
-    }
-
+        err = IE_2BIG;
+    } 
+    
     /* Other error */
-    if (xmlStrcmp(code, BAD_CAST "0000")) {
+    else if (xmlStrcmp(code, BAD_CAST "0000")) {
         char *code_locale = utf82locale((char*)code);
         char *message_locale = utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
