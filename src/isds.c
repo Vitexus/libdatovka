@@ -586,6 +586,27 @@ static isds_error string2isds_DbType(xmlChar *string, isds_DbType *type) {
 }
 
 
+/* Convert ISDS dbType enum @type to UTF-8 string.
+ * @Return pointer tot static string, or NULL if unkwnow enum value */
+static const xmlChar *isds_DbType2string(const isds_DbType type) {
+     switch(type) {
+            case DBTYPE_FO: return(BAD_CAST "FO"); break;
+            case DBTYPE_PFO: return(BAD_CAST "PFO"); break;
+            case DBTYPE_PFO_ADVOK: return(BAD_CAST "PFO_ADVOK"); break;
+            case DBTYPE_PFO_DANPOR: return(BAD_CAST "PFO_DAPOR"); break;
+            case DBTYPE_PFO_INSSPR: return(BAD_CAST "PFO_INSSPR"); break;
+            case DBTYPE_PO: return(BAD_CAST "PO"); break;
+            case DBTYPE_PO_ZAK: return(BAD_CAST "PO_ZAK"); break;
+            case DBTYPE_PO_REQ: return(BAD_CAST "PO_REQ"); break;
+            case DBTYPE_OVM: return(BAD_CAST "OVM"); break;
+            case DBTYPE_OVM_NOTAR: return(BAD_CAST "OVM_NOTAR"); break;
+            case DBTYPE_OVM_EXEKUT: return(BAD_CAST "OVM_EXEKUT"); break;
+            case DBTYPE_OVM_REQ: return(BAD_CAST "OVM_REQ"); break;
+        }
+     return NULL;
+}
+
+
 /* Convert UTF-8 @string represantion of ISO 8601 date to @time.
  * XXX: Not all ISO formats are supported */
 static isds_error datestring2tm(xmlChar *string, struct tm *time) {
@@ -1031,7 +1052,19 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
     }
 
     INSERT_STRING("dbID", criteria->dbID);
-    /* FIXME: dbType */
+
+    /* dbType */
+    if (criteria->dbType) {
+        const xmlChar *type_string = isds_DbType2string(*(criteria->dbType));
+        if (!type_string) {
+            isds_printf_message(context, _("Invalid dbType value: %d"),
+                    *(criteria->dbType));
+            xmlFreeNode(request);
+            return IE_ENUM;
+        }
+        INSERT_STRING("dbType", type_string);
+    }
+
     INSERT_STRING("firmName", criteria->firmName);
     INSERT_STRING("ic", criteria->ic);
     if (criteria->personName) {
