@@ -108,6 +108,7 @@ void print_DbOwnerInfo(struct isds_DbOwnerInfo *info) {
 
 int main(int argc, char **argv) {
     isds_error err;
+    struct isds_DbOwnerInfo *db_owner_info = NULL;
     
     setlocale(LC_ALL, "");
 
@@ -153,7 +154,6 @@ int main(int argc, char **argv) {
     }
 
     {
-        struct isds_DbOwnerInfo *db_owner_info = NULL;
 
         printf("Getting info about my box:\n");
         err = isds_GetOwnerInfoFromLogin(ctx, &db_owner_info);
@@ -165,8 +165,30 @@ int main(int argc, char **argv) {
         }
         print_DbOwnerInfo(db_owner_info);
 
-        isds_DbOwnerInfo_free(&db_owner_info);
     }
+
+    {
+        struct isds_list *boxes = NULL, *item;
+
+        printf("Searching for my own box:\n");
+        err = isds_FindDataBox(ctx, db_owner_info, &boxes);
+        if (err == IE_SUCCESS || err == IE_2BIG) {
+            if (err == IE_2BIG) 
+                printf("isds_FindDataBox() results truncated\n");
+            printf("isds_FindDataBox() succeeded:\n");
+
+            for(item = boxes; item; item = item->next) {
+                printf("List item:\n");
+                print_DbOwnerInfo(item->data);
+            }
+        } else {
+            printf("isds_FindDataBox() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        }
+
+        isds_list_free(&boxes);
+    }
+    isds_DbOwnerInfo_free(&db_owner_info);
 
     {
         struct isds_list *boxes = NULL, *item;
@@ -206,6 +228,7 @@ int main(int argc, char **argv) {
         isds_list_free(&boxes);
         isds_DbOwnerInfo_free(&criteria);
     }
+
 
 
     err = isds_logout(ctx);
