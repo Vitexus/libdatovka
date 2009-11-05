@@ -34,6 +34,14 @@ char *astrcat3(const char *first, const char *second,
  * @Returns number of bytes printed. In case of errror, -1 and NULL @buffer*/
 int isds_vasprintf(char **buffer, const char *format, va_list ap);
 
+/* Print formated string into automtically reallocated @uffer.
+ * @buffer automatically reallocated buffer. Must be &NULL or preallocated
+ * memory.
+ * @format format string as for printf(3)
+ * @... variadic arguments
+ * @Returns number of bytes printed. In case of errror, -1 and NULL @buffer*/
+int isds_asprintf(char **buffer, const char *format, ...);
+
 /* Converts UTF8 string into locale encoded string.
  * @utf string int UTF-8 terminated by zero byte
  * @return allocated string encoded in locale specific encoding. You must free

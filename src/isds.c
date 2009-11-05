@@ -608,6 +608,17 @@ static isds_error datestring2tm(xmlChar *string, struct tm *time) {
     return IE_NOTSUP;
 }
 
+/* Convert struct tm *@time to UTF-8 ISO 8601 date @string. */
+static isds_error tm2datestring(struct tm *time, xmlChar **string) {
+    if (!time || !string) return IE_INVAL;
+
+    if (-1 == isds_asprintf((char **) string, "%d-%02d-%2d",
+                time->tm_year + 1900, time->tm_mon + 1, time->tm_mday))
+        return IE_ERROR;
+
+    return IE_SUCCESS;
+}
+
 
 /* Get data about logged in user and his box. */
 isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
@@ -969,10 +980,10 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
     xmlNodePtr request = NULL;
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *message = NULL;
-    xmlNodePtr node;
+    xmlNodePtr db_owner_info, node;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
-    char *string = NULL;
+    xmlChar *string = NULL;
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -1002,14 +1013,47 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         return IE_ERROR;
     }
     xmlSetNs(request, isds_ns);
-    node = xmlNewChild(request, NULL, BAD_CAST "dbOwnerInfo", NULL);
-    if (!node) {
+    db_owner_info = xmlNewChild(request, NULL, BAD_CAST "dbOwnerInfo", NULL);
+    if (!db_owner_info) {
         isds_log_message(context, _("Could not add dbOwnerInfo Child to "
                     "FindDataBox element"));
         xmlFreeNode(request);
         return IE_ERROR;
     }
+#define INSERT_STRING(element, string) \
+    node = xmlNewTextChild(db_owner_info, NULL, BAD_CAST (element), \
+            (xmlChar *) (string)); \
+    if (!node) { \
+        isds_log_message(context, _("Could not add " element " child to " \
+                    "dbOwnerInfo element")); \
+        xmlFreeNode(request); \
+        return IE_ERROR; \
+    }
 
+    INSERT_STRING("dbID", criteria->dbID);
+    /* FIXME: dbType */
+    INSERT_STRING("firmName", criteria->firmName);
+    INSERT_STRING("ic", criteria->ic);
+    if (criteria->personName) {
+        INSERT_STRING("pnFirstName", criteria->personName->pnFirstName);
+        INSERT_STRING("pnMiddleName", criteria->personName->pnMiddleName);
+        INSERT_STRING("pnLastName", criteria->personName->pnLastName);
+        INSERT_STRING("pnLastNameAtBirth",
+                criteria->personName->pnLastNameAtBirth);
+    }
+    if(criteria->birthInfo) {
+        if (criteria->birthInfo->biDate) {
+            if (!tm2datestring(criteria->birthInfo->biDate, &string))
+                INSERT_STRING("biDate", string);
+            free(string); string = NULL;
+        }
+        INSERT_STRING("biCity", criteria->birthInfo->biCity);
+        INSERT_STRING("biCounty", criteria->birthInfo->biCounty);
+        INSERT_STRING("biState", criteria->birthInfo->biState);
+    }
+
+
+#undef INSERT_STRING
 
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending FindDataBox request to ISDS\n"));
 

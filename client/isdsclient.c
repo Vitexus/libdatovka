@@ -180,6 +180,12 @@ int main(int argc, char **argv) {
             printf("Not enough memory for criteria->firmName\n");
             exit(-1);
         }
+        criteria->dbType = malloc(sizeof(*(criteria->dbType)));
+        if (!criteria->dbType) {
+            printf("Not enough memory for criteria->dbType\n");
+            exit(-1);
+        }
+        *(criteria->dbType) = DBTYPE_OVM;
 
         printf("Searching box with firm name `%s':\n", criteria->firmName);
         err = isds_FindDataBox(ctx, criteria, &boxes);
