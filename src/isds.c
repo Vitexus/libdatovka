@@ -1051,6 +1051,13 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         return IE_ERROR; \
     }
 
+#define INSERT_BOOLEAN(element, booleanPtr) \
+    if ((booleanPtr)) { \
+        if (*(booleanPtr)) { INSERT_STRING(element, "true"); } \
+        else { INSERT_STRING(element, "false"); } \
+    } else {INSERT_STRING(element, NULL) };
+
+
     INSERT_STRING("dbID", criteria->dbID);
 
     /* dbType */
@@ -1074,7 +1081,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         INSERT_STRING("pnLastNameAtBirth",
                 criteria->personName->pnLastNameAtBirth);
     }
-    if(criteria->birthInfo) {
+    if (criteria->birthInfo) {
         if (criteria->birthInfo->biDate) {
             if (!tm2datestring(criteria->birthInfo->biDate, &string))
                 INSERT_STRING("biDate", string);
@@ -1084,6 +1091,34 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         INSERT_STRING("biCounty", criteria->birthInfo->biCounty);
         INSERT_STRING("biState", criteria->birthInfo->biState);
     }
+    if (criteria->address) {
+        INSERT_STRING("adCity", criteria->address->adCity);
+        INSERT_STRING("adStreet", criteria->address->adStreet);
+        INSERT_STRING("adNumberInStreet", criteria->address->adNumberInStreet);
+        INSERT_STRING("adNumberInMunicipality",
+                criteria->address->adNumberInMunicipality);
+        INSERT_STRING("adZipCode", criteria->address->adZipCode);
+        INSERT_STRING("adState", criteria->address->adState);
+    }
+    INSERT_STRING("nationality", criteria->nationality);
+    INSERT_STRING("email", criteria->email);
+    INSERT_STRING("telNumber", criteria->telNumber);
+    INSERT_STRING("identifier", criteria->identifier);
+    INSERT_STRING("registryCode", criteria->registryCode);
+
+    if (criteria->dbState) {
+        xmlChar *string = NULL;
+        if (-1 == isds_asprintf((char **) &string, "%ld",
+                    *(criteria->dbState))) {
+            xmlFreeNode(request);
+            return IE_NOMEM;
+        }
+        INSERT_STRING("dbState", string);
+        free(string);
+    }
+
+    INSERT_BOOLEAN("dbEffectiveOVM", criteria->dbEffectiveOVM);
+    INSERT_BOOLEAN("dbOpenAddressing", criteria->dbOpenAddressing);
 
 
 #undef INSERT_STRING
