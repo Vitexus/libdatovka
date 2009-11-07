@@ -1108,6 +1108,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
 
     if (criteria->dbState) {
         xmlChar *string = NULL;
+        /* FIXME: This is locale dependend */
         if (-1 == isds_asprintf((char **) &string, "%ld",
                     *(criteria->dbState))) {
             xmlFreeNode(request);
@@ -1121,6 +1122,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
     INSERT_BOOLEAN("dbOpenAddressing", criteria->dbOpenAddressing);
 
 
+#undef INSERT_BOOLEAN
 #undef INSERT_STRING
 
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending FindDataBox request to ISDS\n"));
