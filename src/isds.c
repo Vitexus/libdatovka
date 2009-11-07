@@ -641,130 +641,30 @@ static isds_error tm2datestring(struct tm *time, xmlChar **string) {
 }
 
 
-/* Get data about logged in user and his box. */
-isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
-        struct isds_DbOwnerInfo **db_owner_info) {
+
+/* Convert isds:dBOwnerInfo XML tree into structure
+ * @context is ISDS context
+ * @db_owner_info is automically reallocated box owner info structure
+ * @xpath_ctx is XPath context with current node as isds:dBOwnerInfo element
+ * In case of error @db_owner_info will be freed. */
+static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
+        struct isds_DbOwnerInfo **db_owner_info,
+        xmlXPathContextPtr xpath_ctx) {
     isds_error err = IE_SUCCESS;
-    xmlNsPtr isds_ns = NULL;
-    xmlNodePtr request = NULL;
-    xmlDocPtr response = NULL;
-    xmlChar *code = NULL, *message = NULL;
-    xmlNodePtr node;
-    xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     char *string = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!db_owner_info) return IE_INVAL;
-
-    /* Check if connection is established */
-    if (!context->curl) return IE_CONNECTION_CLOSED;
-
-
-    /* Build GetOwnerInfoFromLogin request */
-    request = xmlNewNode(NULL, BAD_CAST "GetOwnerInfoFromLogin");
-    if (!request) {
-        isds_log_message(context,
-                _("Could build GetOwnerInfoFromLogin request"));
-        return IE_ERROR;
-    }
-    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
-    if(!isds_ns) {
-        isds_log_message(context, _("Could not create ISDS name space"));
-        xmlFreeNode(request);
-        return IE_ERROR;
-    }
-    xmlSetNs(request, isds_ns);
-    node = xmlNewChild(request, NULL, BAD_CAST "dbDummy", NULL);
-    if (!node) {
-        isds_log_message(context, _("Could nod add dbDummy Child to "
-                    "GetOwnerInfoFromLogin element"));
-        xmlFreeNode(request);
-        return IE_ERROR;
-    }
-
-
-    isds_log(ILF_ISDS, ILL_DEBUG,
-            _("Sending GetOwnerInfoFromLogin request to ISDS\n"));
-
-    /* Sent request */
-    err = isds(context, SERVICE_DB_SUPPLEMENTARY, request, &response);
-   
-    /* Destroy request */
-    xmlFreeNode(request);
-
-    if (err) {
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Processing ISDS response on GetOwnerInfoFromLogin "
-                    "request failed\n"));
-        xmlFreeDoc(response);
-        return err;
-    }
-
-    /* Check for response status */
-    err = isds_response_status(context, SERVICE_DB_SUPPLEMENTARY, response,
-            &code, &message, NULL);
-    if (err) {
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("ISDS response on GetOwnerInfoFromLogin request is "
-                    "missing status\n"));
-        free(code);
-        free(message);
-        xmlFreeDoc(response);
-        return err;
-    }
-    if (xmlStrcmp(code, BAD_CAST "0000")) {
-        char *code_locale = utf82locale((char*)code);
-        char *message_locale = utf82locale((char*)message);
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Server refused GetOwnerInfoFromLogin request "
-                    "(code=%s, message=%s)\n"), code_locale, message_locale);
-        isds_log_message(context, message_locale);
-        free(code_locale);
-        free(message_locale);
-        free(code);
-        free(message);
-        xmlFreeDoc(response);
-        return IE_ISDS;
-    }
-
-    /* Extract data */
-    /* Prepare stucture */
     isds_DbOwnerInfo_free(db_owner_info);
+    if (!xpath_ctx) return IE_INVAL;
+
+
     *db_owner_info = calloc(1, sizeof(**db_owner_info));
     if (!*db_owner_info) {
         err = IE_NOMEM;
         goto leave;
     }
-    xpath_ctx = xmlXPathNewContext(response);
-    if (!xpath_ctx) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (register_namespaces(xpath_ctx)) {
-        err = IE_ERROR;
-        goto leave;
-    }
-
-    /* Set context node */
-    result = xmlXPathEvalExpression(BAD_CAST
-            "/isds:GetOwnerInfoFromLoginResponse/isds:dbOwnerInfo", xpath_ctx);
-    if (!result) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-        isds_log_message(context, _("Missing dbOwnerInfo element"));
-        err = IE_ISDS;
-        goto leave;
-    }
-    if (result->nodesetval->nodeNr > 1) {
-        isds_log_message(context, _("Multiple dbOwnerInfo element"));
-        err = IE_ISDS;
-        goto leave;
-    }
-    xpath_ctx->node = result->nodesetval->nodeTab[0];
-    xmlXPathFreeObject(result);
 
 #define EXTRACT_STRING(element, string) \
     result = xmlXPathEvalExpression(BAD_CAST element "/text()", xpath_ctx); \
@@ -960,6 +860,141 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
 
 #undef EXTRACT_BOOLEAN
 #undef EXTRACT_STRING
+
+leave:
+    if (err) isds_DbOwnerInfo_free(db_owner_info);
+    free(string);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+/* Get data about logged in user and his box. */
+isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
+        struct isds_DbOwnerInfo **db_owner_info) {
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+    xmlNodePtr node;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!db_owner_info) return IE_INVAL;
+
+    /* Check if connection is established */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Build GetOwnerInfoFromLogin request */
+    request = xmlNewNode(NULL, BAD_CAST "GetOwnerInfoFromLogin");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build GetOwnerInfoFromLogin request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+    node = xmlNewChild(request, NULL, BAD_CAST "dbDummy", NULL);
+    if (!node) {
+        isds_log_message(context, _("Could nod add dbDummy Child to "
+                    "GetOwnerInfoFromLogin element"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+
+
+    isds_log(ILF_ISDS, ILL_DEBUG,
+            _("Sending GetOwnerInfoFromLogin request to ISDS\n"));
+
+    /* Sent request */
+    err = isds(context, SERVICE_DB_SUPPLEMENTARY, request, &response);
+   
+    /* Destroy request */
+    xmlFreeNode(request);
+
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Processing ISDS response on GetOwnerInfoFromLogin "
+                    "request failed\n"));
+        xmlFreeDoc(response);
+        return err;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, SERVICE_DB_SUPPLEMENTARY, response,
+            &code, &message, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("ISDS response on GetOwnerInfoFromLogin request is "
+                    "missing status\n"));
+        free(code);
+        free(message);
+        xmlFreeDoc(response);
+        return err;
+    }
+    if (xmlStrcmp(code, BAD_CAST "0000")) {
+        char *code_locale = utf82locale((char*)code);
+        char *message_locale = utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server refused GetOwnerInfoFromLogin request "
+                    "(code=%s, message=%s)\n"), code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+        free(code);
+        free(message);
+        xmlFreeDoc(response);
+        return IE_ISDS;
+    }
+
+    /* Extract data */
+    /* Prepare stucture */
+    isds_DbOwnerInfo_free(db_owner_info);
+    *db_owner_info = calloc(1, sizeof(**db_owner_info));
+    if (!*db_owner_info) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    /* Set context node */
+    result = xmlXPathEvalExpression(BAD_CAST
+            "/isds:GetOwnerInfoFromLoginResponse/isds:dbOwnerInfo", xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context, _("Missing dbOwnerInfo element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    if (result->nodesetval->nodeNr > 1) {
+        isds_log_message(context, _("Multiple dbOwnerInfo element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+    xmlXPathFreeObject(result);
+
+    /* Extract it */
+    err = extract_DbOwnerInfo(context, db_owner_info, xpath_ctx);
 
 leave:
     if (err) {
@@ -1191,6 +1226,34 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         goto leave;
     }
 
+    /* Extract boxes if they present */
+    result = xmlXPathEvalExpression(BAD_CAST
+            "/isds:FindDataBoxResponse/isds:dbResults/isds:dbOwnerInfo", xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        struct isds_list *item, *prev_item = NULL;
+        for (int i = 0; i < result->nodesetval->nodeNr; i++) {
+            item = calloc(1, sizeof(*item));
+            if (!item) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+           
+            /* FIXME: Check types and whether cast is needed */
+            item->destructor = (void (*)(void **))isds_DbOwnerInfo_free;
+            if (i == 0) *boxes = item;
+            else prev_item->next = item;
+            prev_item = item;
+
+            xpath_ctx->node = result->nodesetval->nodeTab[i];
+            err = extract_DbOwnerInfo(context,
+                    (struct isds_DbOwnerInfo **) &(item->data), xpath_ctx);
+            if (err) goto leave;
+        }
+    }
 
 leave:
     if (err) {
