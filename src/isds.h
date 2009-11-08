@@ -65,6 +65,15 @@ typedef enum {
     DBTYPE_OVM_REQ
 } isds_DbType;
 
+/* Box status from point of view of accesibilty */
+typedef enum {
+    DBSTATE_ACCESIBLE = 1,
+    DBSTATE_TEMP_UNACCESSIBLE = 2,
+    DBSTATE_NOT_YET_ACCESSIBLE = 3,
+    DBSTATE_PERM_UNACCESSIBLE = 4,
+    DBSTATE_REMOVED = 5
+} isds_DbState;
+
 /* Name of person */
 struct isds_PersonName {
     char *pnFirstName;
