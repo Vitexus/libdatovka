@@ -1226,6 +1226,16 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         goto leave;
     }
 
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
     /* Extract boxes if they present */
     result = xmlXPathEvalExpression(BAD_CAST
             "/isds:FindDataBoxResponse/isds:dbResults/isds:dbOwnerInfo", xpath_ctx);
