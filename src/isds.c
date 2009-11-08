@@ -1367,7 +1367,7 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
 
     /* Request processed, but nothing found */
     if (!xmlStrcmp(code, BAD_CAST "5001")) {
-        char *box_id = utf82locale((char*)box_id);
+        char *box_id_locale = utf82locale((char*)box_id);
         char *code_locale = utf82locale((char*)code);
         char *message_locale = utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
@@ -1393,6 +1393,16 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
         free(code_locale);
         free(message_locale);
         err = IE_ISDS;
+        goto leave;
+    }
+
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx)) {
+        err = IE_ERROR;
         goto leave;
     }
 
