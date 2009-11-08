@@ -1184,7 +1184,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         goto leave;
     }
 
-    /* Requeast processed, but nothing found */
+    /* Request processed, but nothing found */
     if (!xmlStrcmp(code, BAD_CAST "0002") ||
             !xmlStrcmp(code, BAD_CAST "5001")) {
         char *code_locale = utf82locale((char*)code);
@@ -1271,6 +1271,134 @@ leave:
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("FindDataBox request processed by server successfully.\n"));
+
+    return err;
+}
+
+
+/* Get status of a box.
+ * @context is ISDS session context.
+ * @box_id is UTF-8 encoded box identifier as zero terminated string
+ * @box_status is return value of box status.
+ * @return:
+ *  IE_SUCCESS if box has been found and its status retrieved
+ *  IE_NOEXIST if box is not known to ISDS server
+ *  or other appropriate error.
+ *  You can use isds_DbState to enumerate box status. However out of enum
+ *  range value can be returned too. This is feature because ISDS
+ *  specification leaves the set of values open.
+ *  Be ware that status DBSTATE_REMOVED is signaled as IE_SUCCESS. That means
+ *  the box has been deleted, but ISDS still lists its former existence. */
+isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
+        long int *box_status) {
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL, db_id;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    xmlChar *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!box_status || !box_id || *box_id == '\0') return IE_INVAL;
+
+    /* Check if connection is established
+     * TODO: This check should be done donwstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Build CheckDataBox request */
+    request = xmlNewNode(NULL, BAD_CAST "CheckDataBox");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build CheckDataBox request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+    db_id = xmlNewTextChild(request, NULL, BAD_CAST "dbID", (xmlChar *) box_id);
+    if (!db_id) {
+        isds_log_message(context, _("Could not add dbId Child to "
+                    "CheckDataBox element"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+
+
+    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending CheckDataBox request to ISDS\n"));
+
+    /* Sent request */
+    err = isds(context, SERVICE_DB_SUPPLEMENTARY, request, &response);
+   
+    /* Destroy request */
+    xmlFreeNode(request);
+
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Processing ISDS response on CheckDataBox "
+                    "request failed\n"));
+        goto leave;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, SERVICE_DB_SUPPLEMENTARY, response,
+            &code, &message, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("ISDS response on CheckDataBox request is missing status\n"));
+        goto leave;
+    }
+
+    /* Request processed, but nothing found */
+    if (!xmlStrcmp(code, BAD_CAST "5001")) {
+        char *box_id = utf82locale((char*)box_id);
+        char *code_locale = utf82locale((char*)code);
+        char *message_locale = utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server did not found box %s on CheckDataBox request "
+                    "(code=%s, message=%s)\n"),
+                box_id_locale, code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(box_id_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_NOEXIST;
+        goto leave;
+    }
+
+    /* Other error */
+    else if (xmlStrcmp(code, BAD_CAST "0000")) {
+        char *code_locale = utf82locale((char*)code);
+        char *message_locale = utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server refused CheckDataBox request "
+                    "(code=%s, message=%s)\n"), code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+
+leave:
+    free(string);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("CheckDataBox request processed by server successfully.\n"));
 
     return err;
 }

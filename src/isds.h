@@ -217,6 +217,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         struct isds_DbOwnerInfo **db_owner_info);
 
 /* Find boxes suiting given criteria.
+ * @context is ISDS session context.
  * @criteria is filter. You should fill in at least some memebers.
  * @boxes is automatically reallocated list of isds_DbOwnerInfo structures,
  * possibly empty. Input NULL or valid old structure.
@@ -229,6 +230,22 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
 isds_error isds_FindDataBox(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *criteria,
         struct isds_list **boxes);
+
+/* Get status of a box.
+ * @context is ISDS session context.
+ * @box_id is UTF-8 encoded box identifier as zero terminated string
+ * @box_status is return value of box status.
+ * @return:
+ *  IE_SUCCESS if box has been found and its status retrieved
+ *  IE_NOEXIST if box is not known to ISDS server
+ *  or other appropriate error.
+ *  You can use isds_DbState to enumerate box status. However out of enum
+ *  range value can be returned too. This is feature because ISDS
+ *  specification leaves the set of values open.
+ *  Be ware that status DBSTATE_REMOVED is signaled as IE_SUCCESS. That means
+ *  the box has been deleted, but ISDS still lists its former existence. */
+isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
+        long int *box_status);
 
 /* Send bogus request to ISDS.
  * Just for test purposes */
