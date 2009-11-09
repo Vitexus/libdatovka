@@ -594,9 +594,9 @@ leave:
     xmlFreeDoc(response_soap_doc);
     free(mime_type);
     free(http_response);
-    xmlFreeDoc(request_soap_doc); /* recursive, frees request_body, soap_ns*/
-    xmlBufferFree(http_request);
     xmlSaveClose(save_ctx);
+    xmlBufferFree(http_request);
+    xmlFreeDoc(request_soap_doc); /* recursive, frees request_body, soap_ns*/
     free(url);
 
     return err;
