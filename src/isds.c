@@ -10,6 +10,90 @@
 #include "validator.h"
 
 
+/* Free isds_list with all member data.
+ * @list list to free, on return will be NULL */
+void isds_list_free(struct isds_list **list) {
+    struct isds_list *item, *next_item;
+
+    if (!list || !*list) return;
+    
+    for(item = *list; item; item = next_item) {
+        (item->destructor)(&(item->data));
+        next_item = item->next;
+        free(item);
+    }
+
+    *list = NULL;
+}
+
+
+/* Deallocate structure isds_PersonName recursively and NULL it */
+static void isds_PersonName_free(struct isds_PersonName **person_name) {
+    if (!person_name || !*person_name) return;
+
+    free((*person_name)->pnFirstName);
+    free((*person_name)->pnMiddleName);
+    free((*person_name)->pnLastName);
+    free((*person_name)->pnLastNameAtBirth);
+   
+    free(*person_name);
+    *person_name = NULL;
+}
+
+
+/* Deallocate structure isds_BirthInfo recursively and NULL it */
+static void isds_BirthInfo_free(struct isds_BirthInfo **birth_info) {
+    if (!birth_info || !*birth_info) return;
+
+    free((*birth_info)->biDate);
+    free((*birth_info)->biCity);
+    free((*birth_info)->biCounty);
+    free((*birth_info)->biState);
+    
+    free(*birth_info);
+    *birth_info = NULL;
+}
+
+
+/* Deallocate structure isds_Address recursively and NULL it */
+static void isds_Address_free(struct isds_Address **address) {
+    if (!address || !*address) return;
+
+    free((*address)->adCity);
+    free((*address)->adStreet);
+    free((*address)->adNumberInStreet);
+    free((*address)->adNumberInMunicipality);
+    free((*address)->adZipCode);
+    free((*address)->adState);
+    
+    free(*address);
+    *address = NULL;
+}
+
+
+/* Deallocate structure isds_DbOwnerInfo recursively and NULL it */
+void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info) {
+    if (!db_owner_info || !*db_owner_info) return;
+
+    free((*db_owner_info)->dbID);
+    free((*db_owner_info)->dbType);
+    free((*db_owner_info)->ic);
+    isds_PersonName_free(&((*db_owner_info)->personName));
+    free((*db_owner_info)->firmName);
+    isds_BirthInfo_free(&((*db_owner_info)->birthInfo));
+    isds_Address_free(&((*db_owner_info)->address));
+    free((*db_owner_info)->nationality);
+    free((*db_owner_info)->email);
+    free((*db_owner_info)->telNumber);
+    free((*db_owner_info)->identifier);
+    free((*db_owner_info)->registryCode);
+    free((*db_owner_info)->dbState);
+    free((*db_owner_info)->dbEffectiveOVM);
+    
+    free(*db_owner_info);
+    *db_owner_info = NULL;
+}
+
 /* Initialize ISDS library.
  * Global function, must be called before other functions.
  * If it failes you can not use ISDS library and must call isds_cleanup() to
@@ -723,23 +807,26 @@ static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
     EXTRACT_STRING("isds:dbID", (*db_owner_info)->dbID);
     
     EXTRACT_STRING("isds:dbType", string);
-    (*db_owner_info)->dbType = calloc(1, sizeof(*((*db_owner_info)->dbType)));
-    if (!(*db_owner_info)->dbType) {
-        err = IE_NOMEM;
-        goto leave;
-    }
-    err = string2isds_DbType((xmlChar *)string, (*db_owner_info)->dbType);
-    if (err) {
-        free((*db_owner_info)->dbType);
-        (*db_owner_info)->dbType = NULL;
-        if (err == IE_ENUM) {
-            err = IE_ISDS;
-            isds_printf_message(context, _("Unknown isds:dbType: %s"), 
-                (char *)string);
+    if (string) {
+        (*db_owner_info)->dbType =
+            calloc(1, sizeof(*((*db_owner_info)->dbType)));
+        if (!(*db_owner_info)->dbType) {
+            err = IE_NOMEM;
+            goto leave;
         }
-        goto leave;
+        err = string2isds_DbType((xmlChar *)string, (*db_owner_info)->dbType);
+        if (err) {
+            free((*db_owner_info)->dbType);
+            (*db_owner_info)->dbType = NULL;
+            if (err == IE_ENUM) {
+                err = IE_ISDS;
+                isds_printf_message(context, _("Unknown isds:dbType: %s"), 
+                    (char *)string);
+            }
+            goto leave;
+        }
+        free(string); string = NULL;
     }
-    free(string); string = NULL;
 
     EXTRACT_STRING("isds:ic", (*db_owner_info)->ic);
 
@@ -757,6 +844,11 @@ static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
             (*db_owner_info)->personName->pnLastName);
     EXTRACT_STRING("isds:pnLastNameAtBirth",
             (*db_owner_info)->personName->pnLastNameAtBirth);
+    if (!(*db_owner_info)->personName->pnFirstName &&
+            !(*db_owner_info)->personName->pnMiddleName &&
+            !(*db_owner_info)->personName->pnLastName &&
+            !(*db_owner_info)->personName->pnLastNameAtBirth)
+        isds_PersonName_free(&(*db_owner_info)->personName);
 
     EXTRACT_STRING("isds:firmName", (*db_owner_info)->firmName);
 
@@ -766,30 +858,36 @@ static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
         err = IE_NOMEM;
         goto leave;
     }
-
     EXTRACT_STRING("isds:biDate", string);
-    (*db_owner_info)->birthInfo->biDate =
-        calloc(1, sizeof(*((*db_owner_info)->birthInfo->biDate)));
-    if (!(*db_owner_info)->birthInfo->biDate) {
-        err = IE_NOMEM;
-        goto leave;
-    }
-    err = datestring2tm((xmlChar *)string,
-            (*db_owner_info)->birthInfo->biDate);
-    if (err) {
-        free((*db_owner_info)->birthInfo->biDate);
-        (*db_owner_info)->birthInfo->biDate = NULL;
-        if (err == IE_NOTSUP) {
-            err = IE_ISDS;
-            isds_printf_message(context, _("Invalid isds:biDate value: %s"),
-                    (char *)string);
+    if (string) {
+        (*db_owner_info)->birthInfo->biDate =
+            calloc(1, sizeof(*((*db_owner_info)->birthInfo->biDate)));
+        if (!(*db_owner_info)->birthInfo->biDate) {
+            err = IE_NOMEM;
+            goto leave;
         }
-        goto leave;
+        err = datestring2tm((xmlChar *)string,
+                (*db_owner_info)->birthInfo->biDate);
+        if (err) {
+            free((*db_owner_info)->birthInfo->biDate);
+            (*db_owner_info)->birthInfo->biDate = NULL;
+            if (err == IE_NOTSUP) {
+                err = IE_ISDS;
+                isds_printf_message(context,
+                        _("Invalid isds:biDate value: %s"), (char *)string);
+            }
+            goto leave;
+        }
+        free(string); string = NULL;
     }
-    free(string); string = NULL;
     EXTRACT_STRING("isds:biCity", (*db_owner_info)->birthInfo->biCity);
     EXTRACT_STRING("isds:biCounty", (*db_owner_info)->birthInfo->biCounty);
     EXTRACT_STRING("isds:biState", (*db_owner_info)->birthInfo->biState);
+    if (!(*db_owner_info)->birthInfo->biDate &&
+            !(*db_owner_info)->birthInfo->biCity &&
+            !(*db_owner_info)->birthInfo->biCounty &&
+            !(*db_owner_info)->birthInfo->biState)
+        isds_BirthInfo_free(&(*db_owner_info)->birthInfo);
 
     (*db_owner_info)->address =
         calloc(1, sizeof(*((*db_owner_info)->address)));
@@ -809,6 +907,13 @@ static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
             (*db_owner_info)->address->adZipCode);
     EXTRACT_STRING("isds:adState",
             (*db_owner_info)->address->adState);
+    if (!(*db_owner_info)->address->adCity &&
+            !(*db_owner_info)->address->adStreet &&
+            !(*db_owner_info)->address->adNumberInStreet &&
+            !(*db_owner_info)->address->adNumberInMunicipality &&
+            !(*db_owner_info)->address->adZipCode &&
+            !(*db_owner_info)->address->adState)
+        isds_Address_free(&(*db_owner_info)->address);
 
     EXTRACT_STRING("isds:nationality", (*db_owner_info)->nationality);
     EXTRACT_STRING("isds:email", (*db_owner_info)->email);
@@ -1438,91 +1543,6 @@ int isds_find_recipient(struct isds_ctx *context, const struct address *pattern,
 int isds_message_free(struct isds_message **message);
 int isds_address_free(struct isds_address **address);
 */
-
-
-/* Free isds_list with all member data.
- * @list list to free, on return will be NULL */
-void isds_list_free(struct isds_list **list) {
-    struct isds_list *item, *next_item;
-
-    if (!list || !*list) return;
-    
-    for(item = *list; item; item = next_item) {
-        (item->destructor)(&(item->data));
-        next_item = item->next;
-        free(item);
-    }
-
-    *list = NULL;
-}
-
-
-/* Deallocate structure isds_PersonName recursively and NULL it */
-static void isds_PersonName_free(struct isds_PersonName **person_name) {
-    if (!person_name || !*person_name) return;
-
-    free((*person_name)->pnFirstName);
-    free((*person_name)->pnMiddleName);
-    free((*person_name)->pnLastName);
-    free((*person_name)->pnLastNameAtBirth);
-   
-    free(*person_name);
-    *person_name = NULL;
-}
-
-
-/* Deallocate structure isds_BirthInfo recursively and NULL it */
-static void isds_BirthInfo_free(struct isds_BirthInfo **birth_info) {
-    if (!birth_info || !*birth_info) return;
-
-    free((*birth_info)->biDate);
-    free((*birth_info)->biCity);
-    free((*birth_info)->biCounty);
-    free((*birth_info)->biState);
-    
-    free(*birth_info);
-    *birth_info = NULL;
-}
-
-
-/* Deallocate structure isds_Address recursively and NULL it */
-static void isds_Address_free(struct isds_Address **address) {
-    if (!address || !*address) return;
-
-    free((*address)->adCity);
-    free((*address)->adStreet);
-    free((*address)->adNumberInStreet);
-    free((*address)->adNumberInMunicipality);
-    free((*address)->adZipCode);
-    free((*address)->adState);
-    
-    free(*address);
-    *address = NULL;
-}
-
-
-/* Deallocate structure isds_DbOwnerInfo recursively and NULL it */
-void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info) {
-    if (!db_owner_info || !*db_owner_info) return;
-
-    free((*db_owner_info)->dbID);
-    free((*db_owner_info)->dbType);
-    free((*db_owner_info)->ic);
-    isds_PersonName_free(&((*db_owner_info)->personName));
-    free((*db_owner_info)->firmName);
-    isds_BirthInfo_free(&((*db_owner_info)->birthInfo));
-    isds_Address_free(&((*db_owner_info)->address));
-    free((*db_owner_info)->nationality);
-    free((*db_owner_info)->email);
-    free((*db_owner_info)->telNumber);
-    free((*db_owner_info)->identifier);
-    free((*db_owner_info)->registryCode);
-    free((*db_owner_info)->dbState);
-    free((*db_owner_info)->dbEffectiveOVM);
-    
-    free(*db_owner_info);
-    *db_owner_info = NULL;
-}
 
 
 /* Makes known all relevant namespaces to give @xpat_ctx */
