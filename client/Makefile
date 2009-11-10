@@ -1,5 +1,5 @@
 LIBDIR=../src
-CFLAGS=-std=c99 -Wall -Werror
+CFLAGS=-std=c99 -Wall -Werror -g
 CFLAGS+=-I$(LIBDIR)
 LDFLAGS=-L$(LIBDIR)
 
