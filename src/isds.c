@@ -991,7 +991,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         goto leave;
     }
     xpath_ctx->node = result->nodesetval->nodeTab[0];
-    xmlXPathFreeObject(result);
+    xmlXPathFreeObject(result); result = NULL;
 
     /* Extract it */
     err = extract_DbOwnerInfo(context, db_owner_info, xpath_ctx);
