@@ -1032,6 +1032,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *criteria,
         struct isds_list **boxes) {
     isds_error err = IE_SUCCESS;
+    _Bool truncated = 0;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
     xmlDocPtr response = NULL;
@@ -1209,7 +1210,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         isds_log_message(context, message_locale);
         free(code_locale);
         free(message_locale);
-        err = IE_2BIG;
+        truncated = 1;
     } 
     
     /* Other error */
@@ -1278,6 +1279,7 @@ leave:
     free(message);
     xmlFreeDoc(response);
 
+    if (truncated) err = IE_2BIG;
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("FindDataBox request processed by server successfully.\n"));

@@ -216,8 +216,9 @@ int main(int argc, char **argv) {
                 printf("isds_FindDataBox() results truncated\n");
             printf("isds_FindDataBox() succeeded:\n");
 
-            for(item = boxes; item; item = item->next) {
-                printf("List item:\n");
+            int n;
+            for(item = boxes, n = 1; item; item = item->next, n++) {
+                printf("List item #%d:\n", n);
                 print_DbOwnerInfo(item->data);
             }
         } else {
