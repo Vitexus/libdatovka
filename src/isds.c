@@ -725,31 +725,8 @@ static isds_error tm2datestring(struct tm *time, xmlChar **string) {
 }
 
 
-
-/* Convert isds:dBOwnerInfo XML tree into structure
- * @context is ISDS context
- * @db_owner_info is automically reallocated box owner info structure
- * @xpath_ctx is XPath context with current node as isds:dBOwnerInfo element
- * In case of error @db_owner_info will be freed. */
-static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
-        struct isds_DbOwnerInfo **db_owner_info,
-        xmlXPathContextPtr xpath_ctx) {
-    isds_error err = IE_SUCCESS;
-    xmlXPathObjectPtr result = NULL;
-    char *string = NULL;
-
-    if (!context) return IE_INVALID_CONTEXT;
-    if (!db_owner_info) return IE_INVAL;
-    isds_DbOwnerInfo_free(db_owner_info);
-    if (!xpath_ctx) return IE_INVAL;
-
-
-    *db_owner_info = calloc(1, sizeof(**db_owner_info));
-    if (!*db_owner_info) {
-        err = IE_NOMEM;
-        goto leave;
-    }
-
+/* Following EXTRACT_* macros expects @result, @xpath_ctx, @err, @context
+ * and leave lable */
 #define EXTRACT_STRING(element, string) \
     result = xmlXPathEvalExpression(BAD_CAST element "/text()", xpath_ctx); \
     if (!result) { \
@@ -843,6 +820,31 @@ static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
             } \
             *(longintPtr) = number; \
         } \
+    }
+
+
+/* Convert isds:dBOwnerInfo XML tree into structure
+ * @context is ISDS context
+ * @db_owner_info is automically reallocated box owner info structure
+ * @xpath_ctx is XPath context with current node as isds:dBOwnerInfo element
+ * In case of error @db_owner_info will be freed. */
+static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
+        struct isds_DbOwnerInfo **db_owner_info,
+        xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!db_owner_info) return IE_INVAL;
+    isds_DbOwnerInfo_free(db_owner_info);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *db_owner_info = calloc(1, sizeof(**db_owner_info));
+    if (!*db_owner_info) {
+        err = IE_NOMEM;
+        goto leave;
     }
 
     EXTRACT_STRING("isds:dbID", (*db_owner_info)->dbID);
@@ -967,9 +969,6 @@ static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
     EXTRACT_BOOLEAN("isds:dbEffectiveOVM", (*db_owner_info)->dbEffectiveOVM);
     EXTRACT_BOOLEAN("isds:dbOpenAddressing",
             (*db_owner_info)->dbOpenAddressing);
-
-#undef EXTRACT_BOOLEAN
-#undef EXTRACT_STRING
 
 leave:
     if (err) isds_DbOwnerInfo_free(db_owner_info);
@@ -1535,6 +1534,10 @@ leave:
 
     return err;
 }
+
+#undef EXTRACT_LONGINT
+#undef EXTRACT_BOOLEAN
+#undef EXTRACT_STRING
 
 
 /*int isds_get_message(struct isds_ctx *context, const unsigned int id,
