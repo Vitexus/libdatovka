@@ -781,7 +781,7 @@ static isds_error tm2datestring(struct tm *time, xmlChar **string) {
         } \
     } 
 
-#define EXTRACT_LONGINT(element, longintPtr) \
+#define EXTRACT_LONGINT(element, longintPtr, preallocated) \
     { \
         char *string = NULL; \
         EXTRACT_STRING(element, string); \
@@ -813,10 +813,12 @@ static isds_error tm2datestring(struct tm *time, xmlChar **string) {
              \
             free(string); string = NULL; \
              \
-            (longintPtr) = calloc(1, sizeof(*(longintPtr))); \
-            if (!(longintPtr)) { \
-                err = IE_NOMEM; \
-                goto leave; \
+            if (!(preallocated)) { \
+                (longintPtr) = calloc(1, sizeof(*(longintPtr))); \
+                if (!(longintPtr)) { \
+                    err = IE_NOMEM; \
+                    goto leave; \
+                } \
             } \
             *(longintPtr) = number; \
         } \
@@ -964,7 +966,7 @@ static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
     EXTRACT_STRING("isds:identifier", (*db_owner_info)->identifier);
     EXTRACT_STRING("isds:registryCode", (*db_owner_info)->registryCode);
     
-    EXTRACT_LONGINT("isds:dbState", (*db_owner_info)->dbState);
+    EXTRACT_LONGINT("isds:dbState", (*db_owner_info)->dbState, 0);
 
     EXTRACT_BOOLEAN("isds:dbEffectiveOVM", (*db_owner_info)->dbEffectiveOVM);
     EXTRACT_BOOLEAN("isds:dbOpenAddressing",
@@ -1508,6 +1510,7 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
         goto leave;
     }
 
+    /* Extract data */
     xpath_ctx = xmlXPathNewContext(response);
     if (!xpath_ctx) {
         err = IE_ERROR;
@@ -1517,6 +1520,26 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
         err = IE_ERROR;
         goto leave;
     }
+    result = xmlXPathEvalExpression(BAD_CAST "/isds:CheckDataBoxResponse",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context, _("Missing CheckDataBoxResponse element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    if (result->nodesetval->nodeNr > 1) {
+        isds_log_message(context, _("Multiple CheckDataBoxResponse element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+    xmlXPathFreeObject(result); result = NULL;
+
+    EXTRACT_LONGINT("isds:dbState", box_status, 1); 
 
 
 leave:
