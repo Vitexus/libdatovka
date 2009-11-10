@@ -212,15 +212,62 @@ int main(int argc, char **argv) {
         printf("Searching box with firm name `%s':\n", criteria->firmName);
         err = isds_FindDataBox(ctx, criteria, &boxes);
         if (err == IE_SUCCESS || err == IE_2BIG) {
-            if (err == IE_2BIG) 
-                printf("isds_FindDataBox() results truncated\n");
             printf("isds_FindDataBox() succeeded:\n");
 
             int n;
             for(item = boxes, n = 1; item; item = item->next, n++) {
-                printf("List item #%d:\n", n);
-                print_DbOwnerInfo(item->data);
+                if (err != IE_2BIG) {
+                    printf("List item #%d:\n", n);
+                    print_DbOwnerInfo(item->data);
+                }
             }
+            if (err == IE_2BIG) 
+                printf("isds_FindDataBox() results truncated to %d boxes\n",
+                        --n);
+        } else {
+            printf("isds_FindDataBox() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        }
+
+        isds_list_free(&boxes);
+        isds_DbOwnerInfo_free(&criteria);
+    }
+
+
+    {
+        struct isds_list *boxes = NULL, *item;
+        struct isds_DbOwnerInfo *criteria = calloc(1, sizeof(*criteria));
+        if (!criteria) {
+            printf("Not enough memory for struct isds_DbOwnerInfo criteria\n");
+            exit(-1);
+        }
+        criteria->firmName = strdup("Místní");
+        if (!criteria->firmName) {
+            printf("Not enough memory for criteria->firmName\n");
+            exit(-1);
+        }
+        criteria->dbType = malloc(sizeof(*(criteria->dbType)));
+        if (!criteria->dbType) {
+            printf("Not enough memory for criteria->dbType\n");
+            exit(-1);
+        }
+        *(criteria->dbType) = DBTYPE_OVM;
+
+        printf("Searching box with firm name `%s':\n", criteria->firmName);
+        err = isds_FindDataBox(ctx, criteria, &boxes);
+        if (err == IE_SUCCESS || err == IE_2BIG) {
+            printf("isds_FindDataBox() succeeded:\n");
+
+            int n;
+            for(item = boxes, n = 1; item; item = item->next, n++) {
+                if (err != IE_2BIG) {
+                    printf("List item #%d:\n", n);
+                    print_DbOwnerInfo(item->data);
+                }
+            }
+            if (err == IE_2BIG) 
+                printf("isds_FindDataBox() results truncated to %d boxes\n",
+                        --n);
         } else {
             printf("isds_FindDataBox() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
