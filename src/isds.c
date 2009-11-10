@@ -1359,7 +1359,6 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
                 goto leave;
             }
            
-            /* FIXME: Check types and whether cast is needed */
             item->destructor = (void (*)(void **))isds_DbOwnerInfo_free;
             if (i == 0) *boxes = item;
             else prev_item->next = item;
