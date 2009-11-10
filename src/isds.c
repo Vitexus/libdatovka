@@ -1461,7 +1461,8 @@ static void isds_PersonName_free(struct isds_PersonName **person_name) {
     free((*person_name)->pnMiddleName);
     free((*person_name)->pnLastName);
     free((*person_name)->pnLastNameAtBirth);
-    
+   
+    free(*person_name);
     *person_name = NULL;
 }
 
@@ -1475,6 +1476,7 @@ static void isds_BirthInfo_free(struct isds_BirthInfo **birth_info) {
     free((*birth_info)->biCounty);
     free((*birth_info)->biState);
     
+    free(*birth_info);
     *birth_info = NULL;
 }
 
@@ -1490,6 +1492,7 @@ static void isds_Address_free(struct isds_Address **address) {
     free((*address)->adZipCode);
     free((*address)->adState);
     
+    free(*address);
     *address = NULL;
 }
 
