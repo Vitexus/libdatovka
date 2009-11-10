@@ -1239,7 +1239,8 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
 
     /* Extract boxes if they present */
     result = xmlXPathEvalExpression(BAD_CAST
-            "/isds:FindDataBoxResponse/isds:dbResults/isds:dbOwnerInfo", xpath_ctx);
+            "/isds:FindDataBoxResponse/isds:dbResults/isds:dbOwnerInfo",
+            xpath_ctx);
     if (!result) {
         err = IE_ERROR;
         goto leave;
