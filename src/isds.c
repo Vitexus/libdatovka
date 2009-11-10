@@ -1270,6 +1270,8 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
 leave:
     if (err) {
         isds_list_free(boxes);
+    } else {
+        if (truncated) err = IE_2BIG;
     }
 
     free(string);
@@ -1280,7 +1282,6 @@ leave:
     free(message);
     xmlFreeDoc(response);
 
-    if (truncated) err = IE_2BIG;
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("FindDataBox request processed by server successfully.\n"));
