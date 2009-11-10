@@ -67,7 +67,7 @@ typedef enum {
 
 /* Box status from point of view of accesibilty */
 typedef enum {
-    DBSTATE_ACCESIBLE = 1,
+    DBSTATE_ACCESSIBLE = 1,
     DBSTATE_TEMP_UNACCESSIBLE = 2,
     DBSTATE_NOT_YET_ACCESSIBLE = 3,
     DBSTATE_PERM_UNACCESSIBLE = 4,

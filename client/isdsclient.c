@@ -11,6 +11,19 @@ char username[] = "jrfh7i";
 char password[] = "Ab123456";
 struct isds_ctx *ctx;
 
+
+void print_DbState(const long int state) {
+    switch(state) {
+        case DBSTATE_ACCESSIBLE: printf("ACCESSIBLE\n"); break;
+        case DBSTATE_TEMP_UNACCESSIBLE: printf("TEMP_UNACCESSIBLE\n"); break;
+        case DBSTATE_NOT_YET_ACCESSIBLE: printf("NOT_YET_ACCESSIBLE\n"); break;
+        case DBSTATE_PERM_UNACCESSIBLE: printf("PERM_UNACCESSIBLE\n"); break;
+        case DBSTATE_REMOVED: printf("REMOVED\n"); break;
+        default: printf("<unknown state %ld>\n", state);
+    }
+}
+
+
 void print_DbOwnerInfo(struct isds_DbOwnerInfo *info) {
     printf("dbOwnerInfo = ");
 
@@ -92,7 +105,7 @@ void print_DbOwnerInfo(struct isds_DbOwnerInfo *info) {
 
     printf("\tdbState = ");
     if (!info->dbState) printf("NULL\n");
-    else printf("%ld\n", *(info->dbState));
+    else print_DbState(*(info->dbState));
     
     printf("\tdbEffectiveOVM = %s\n",
             !info->dbEffectiveOVM ? "NULL" :
@@ -105,6 +118,7 @@ void print_DbOwnerInfo(struct isds_DbOwnerInfo *info) {
     printf("}\n");
 
 }
+
 
 int main(int argc, char **argv) {
     isds_error err;
@@ -188,7 +202,6 @@ int main(int argc, char **argv) {
 
         isds_list_free(&boxes);
     }
-    isds_DbOwnerInfo_free(&db_owner_info);
 
     {
         struct isds_list *boxes = NULL, *item;
@@ -275,6 +288,36 @@ int main(int argc, char **argv) {
 
         isds_list_free(&boxes);
         isds_DbOwnerInfo_free(&criteria);
+    }
+
+
+    {
+        long int box_status = 0;
+        printf("Getting status of my box with ID `%s'\n", db_owner_info->dbID);
+        err = isds_CheckDataBox(ctx, db_owner_info->dbID, &box_status);
+        if (err)
+            printf("isds_CheckDataBox() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        else {
+            printf("isds_CheckDataBox() succeeded: status = ");
+            print_DbState(box_status);
+        }
+    }
+
+    isds_DbOwnerInfo_free(&db_owner_info);
+
+    {
+        char *box_id = "7777777";
+        long int box_status = 0;
+        printf("Getting status of non existing box with ID `%s'\n", box_id);
+        err = isds_CheckDataBox(ctx, box_id, &box_status);
+        if (err)
+            printf("isds_CheckDataBox() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        else {
+            printf("isds_CheckDataBox() succeeded: status = ");
+            print_DbState(box_status);
+        }
     }
 
 

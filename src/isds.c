@@ -804,6 +804,47 @@ static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
         } \
     } 
 
+#define EXTRACT_LONGINT(element, longintPtr) \
+    { \
+        char *string = NULL; \
+        EXTRACT_STRING(element, string); \
+        if (string) { \
+            long int number; \
+            char *endptr; \
+             \
+            number = strtol((char*)string, &endptr, 10); \
+             \
+            if (*endptr != '\0') { \
+                char *string_locale = utf82locale((char *)string); \
+                isds_printf_message(context, \
+                        _(element" is not valid integer: %s"), \
+                        string_locale); \
+                free(string_locale); \
+                err = IE_ISDS; \
+                goto leave; \
+            } \
+             \
+            if (number == LONG_MIN || number == LONG_MAX) { \
+                char *string_locale = utf82locale((char *)string); \
+                isds_printf_message(context, \
+                        _(element " value out of range of long int: %s"), \
+                        string_locale); \
+                free(string_locale); \
+                err = IE_ERROR; \
+                goto leave; \
+            } \
+             \
+            free(string); string = NULL; \
+             \
+            (longintPtr) = calloc(1, sizeof(*(longintPtr))); \
+            if (!(longintPtr)) { \
+                err = IE_NOMEM; \
+                goto leave; \
+            } \
+            *(longintPtr) = number; \
+        } \
+    }
+
     EXTRACT_STRING("isds:dbID", (*db_owner_info)->dbID);
     
     EXTRACT_STRING("isds:dbType", string);
@@ -920,44 +961,8 @@ static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
     EXTRACT_STRING("isds:telNumber", (*db_owner_info)->telNumber);
     EXTRACT_STRING("isds:identifier", (*db_owner_info)->identifier);
     EXTRACT_STRING("isds:registryCode", (*db_owner_info)->registryCode);
-
     
-    EXTRACT_STRING("isds:dbState", string);
-    if (string) {
-        long int number;
-        char *endptr;
-
-        number = strtol((char*)string, &endptr, 10);
-
-        if (*endptr != '\0') {
-            char *string_locale = utf82locale((char *)string);
-            isds_printf_message(context,
-                    _("dbState is not valid integer: %s"), string_locale);
-            free(string_locale);
-            err = IE_ISDS;
-            goto leave;
-        }
-
-        if (number == LONG_MIN || number == LONG_MAX) {
-            char *string_locale = utf82locale((char *)string);
-            isds_printf_message(context,
-                    _("dbState value out of range of long int: %s"),
-                    string_locale);
-            free(string_locale);
-            err = IE_ERROR;
-            goto leave;
-        }
-
-        free(string); string = NULL;
-
-        (*db_owner_info)->dbState =
-            calloc(1, sizeof(*((*db_owner_info)->dbState)));
-        if (!(*db_owner_info)->dbState) {
-            err = IE_NOMEM;
-            goto leave;
-        }
-        *((*db_owner_info)->dbState) = number;
-    }
+    EXTRACT_LONGINT("isds:dbState", (*db_owner_info)->dbState);
 
     EXTRACT_BOOLEAN("isds:dbEffectiveOVM", (*db_owner_info)->dbEffectiveOVM);
     EXTRACT_BOOLEAN("isds:dbOpenAddressing",

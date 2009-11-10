@@ -117,3 +117,5 @@ Only state 1 means box is capable of receiving messages.
 
 Error codes:
     5001    Box does not exist
+Non-normative:
+    2011    Box ID malformed
