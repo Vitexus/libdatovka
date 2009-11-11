@@ -228,6 +228,25 @@ typedef enum {
                                        document information system) purposes */
 } isds_FileMetaType;
 
+/* Message status */
+typedef enum {
+    MESSAGESTATE_SENT = 1,          /* Message has been put into ISDS */
+    MESSAGESTATE_STAMPED = 2,       /* Message stamped by TSA */
+    MESSAGESTATE_INFECTED = 3,      /* Message included virues,
+                                       infected document has been removed */
+    MESSAGESTATE_DELIVERED = 4,     /* Message delivered
+                                       (dmDeliveryTime stored) */
+    MESSAGESTATE_SUBSTITUTED = 5,   /* Message delivered through fiction,
+                                       dmAcceptanceTime stored */
+    MESSAGESTATE_RECIEVED = 6,      /* Message devlivered by user login
+                                       dmAcceptanceTime stored */
+    MESSAGESTATE_READ = 7,          /* Message has been read by user */
+    MESSAGESTATE_UNDELIVERABLE = 8, /* Message could not been delivered
+                                       (e.g. recipent box has been made
+                                       unaccessible meantime) */
+    MESSAGESTATE_REMOVED = 9        /* Message content deleted */
+
+} isds_message_status;
 
 /* Document */
 struct isds_document {
@@ -248,10 +267,11 @@ struct isds_document {
                                        Optional. */
 };
 
+
 /* Message */
 struct isds_message {
     struct isds_envelope *envelope; /* Message envelope */
-    struct isds_list *documents;    /* List of isds_documents.
+    struct isds_list *documents;    /* List of isds_document's.
                                        Valid message must contain exactly one
                                        document of type FILEMETATYPE_MAIN and
                                        can contain any number of other type
