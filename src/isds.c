@@ -671,7 +671,7 @@ static isds_error string2isds_DbType(xmlChar *string, isds_DbType *type) {
 
 
 /* Convert ISDS dbType enum @type to UTF-8 string.
- * @Return pointer tot static string, or NULL if unkwnow enum value */
+ * @Return pointer to static string, or NULL if unkwnow enum value */
 static const xmlChar *isds_DbType2string(const isds_DbType type) {
      switch(type) {
             case DBTYPE_FO: return(BAD_CAST "FO"); break;
@@ -686,8 +686,8 @@ static const xmlChar *isds_DbType2string(const isds_DbType type) {
             case DBTYPE_OVM_NOTAR: return(BAD_CAST "OVM_NOTAR"); break;
             case DBTYPE_OVM_EXEKUT: return(BAD_CAST "OVM_EXEKUT"); break;
             case DBTYPE_OVM_REQ: return(BAD_CAST "OVM_REQ"); break;
+            default: return NULL; break;
         }
-     return NULL;
 }
 
 

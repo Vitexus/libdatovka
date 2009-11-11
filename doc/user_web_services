@@ -75,7 +75,33 @@ CheckDataBox (*)
     Return state of given box
 
 
-FindDataBox
+CreateMessage (*)
+=============
+
+Create and send a message.
+
+Envelope of outgoing message must contain dbIDRecipient and dmAnnotation.
+Other elements are optional (dmRecipientOrgUnit, dmRecipientOrgUnitNum,
+dmSenderOrgUnit, dmSenderOrgUnitNum, dmToHands, dmPersonalDelivery,
+dmAllowSubstDelivery, dmRecipientRefNumber, dmRecipientIdent,
+dmSenderRefNumber, dmSenderIdent, dmLegalTitleLaw, dmLegalTitleYear,
+dmLegalTitleSect, dmLegalTitlePar, dmLegalTitlePoint, dmOVM).
+
+Constraints: Sender must have PRIVIL_CREATE_DM permission.
+Constraints: Exactly one document in message must be main type.
+Constraints: Total size of all documents must not be bigger than 10 MB.
+
+Identifier of just sent message assigned by system is returned.
+
+Error codes:
+    0000    Message sent successfully
+
+In case of positive virus detection (processed after sending), infected
+document is removed, message state is set to value 3 (from point of view of
+recipient) and sender get new message originated by server.
+    
+
+FindDataBox (*)
 ===========
 
 Find boxes conforming to serch criteria or exact ID and returns corresponding
@@ -100,7 +126,7 @@ Non-normative error codes:
     2017    Syntax error in date (biDate)
 
 
-CheckDataBox
+CheckDataBox (*)
 ============
 
 Return state of one box identified by dbID.

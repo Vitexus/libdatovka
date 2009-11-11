@@ -51,18 +51,20 @@ char *isds_strerror(const isds_error error);
 
 /* Box type */
 typedef enum {
-    DBTYPE_FO,
-    DBTYPE_PFO,
-    DBTYPE_PFO_ADVOK,
-    DBTYPE_PFO_DANPOR,
-    DBTYPE_PFO_INSSPR,
-    DBTYPE_PO,
-    DBTYPE_PO_ZAK,
-    DBTYPE_PO_REQ,
-    DBTYPE_OVM,
-    DBTYPE_OVM_NOTAR,
-    DBTYPE_OVM_EXEKUT,
-    DBTYPE_OVM_REQ
+    DBTYPE_SYSTEM = 0,          /* This is special sender value for messages
+                                   sent by ISDS. */
+    DBTYPE_OVM = 10,
+    DBTYPE_OVM_NOTAR = 11,
+    DBTYPE_OVM_EXEKUT = 12,
+    DBTYPE_OVM_REQ = 13,
+    DBTYPE_PO = 20,
+    DBTYPE_PO_ZAK = 21,
+    DBTYPE_PO_REQ = 22,
+    DBTYPE_PFO = 30,
+    DBTYPE_PFO_ADVOK = 31,
+    DBTYPE_PFO_DANPOR = 32,
+    DBTYPE_PFO_INSSPR = 33,
+    DBTYPE_FO = 40
 } isds_DbType;
 
 /* Box status from point of view of accesibilty */
@@ -73,6 +75,23 @@ typedef enum {
     DBSTATE_PERM_UNACCESSIBLE = 4,
     DBSTATE_REMOVED = 5
 } isds_DbState;
+
+/* User permissions from point of view of ISDS.
+ * Instances can be bitmas of any discrete values. */
+typedef enum {
+    PRIVIL_READ_NON_PERSONAL = 0x1, /* Can download and read messages with
+                                       dmPersonalDelivery == false */
+    PRIVIL_READ_ALL = 0x2,          /* Can download and read messages with
+                                       dmPersonalDelivery == true */
+    PRIVIL_CREATE_DM = 0x4,         /* Can create and sent messages,
+                                       can dowload outgoing (sent) messages */
+    PRIVIL_VIEW_INFO = 0x8,         /* Can list messages and data about
+                                       post and delivery */
+    PRIVIL_SEARCH_DB = 0x10,        /* Can search for boxes */
+    PRIVIL_OWNER_ADM = 0x20         /* Can administer his box (add/remove
+                                       permitted users and theirs
+                                       permissions) */
+} isds_priviledges;
 
 /* Name of person */
 struct isds_PersonName {
@@ -126,6 +145,118 @@ struct isds_DbOwnerInfo {
     _Bool *dbEffectiveOVM;          /* Box has OVM role (§ 5a) */
     _Bool *dbOpenAddressing;        /* Non-OVM Box is free to recieve
                                        messages from anybody */  
+};
+
+
+/* Message envelope */
+struct isds_envelope {
+    /* Following memebers apply to incoming messages only: */
+    char *dmID;                     /* Message ID.
+                                       Maximal length is 20 characters. */
+    char *dbIDSender;               /* Box ID of sender.
+                                       Special value "aaaaaaa" means sent by
+                                       ISDS. */
+    char *dmSender;                 /* Sender name;
+                                       Maximal length is 100 characters. */
+    char *dmSenderAddress;          /* Postal address of sender;
+                                       Maximal length is 100 characters. */
+    long int *dmSenderType;         /* Gross Box type of sender
+                                       TODO: isds_DbType ? */
+    char *dmRecipient;              /* Recipient name;
+                                       Maximal length is 100 characters. */
+    char *dmRecipientAddress;       /* Postal address of recipient;
+                                       Maximal length is 100 characters. */
+    _Bool *dmAmbiguousRecipient;    /* Recipient has OVM role */ 
+
+    /* Following members apply to both outgoing and incoming messages: */
+    char *dmSenderOrgUnit;          /* Organisation unit of sender as string;
+                                       Optional. */
+    long int *dmSenderOrgUnitNum;   /* Organisation unit of sender as number;
+                                       Optional. */
+    char *dbIDRecipient;            /* Box ID of recipient; Mandatory. */
+    char *dmRecipientOrgUnit;       /* Organisation unit of recipient as
+                                       string; Optional. */
+    long int *dmRecipientOrgUnitNum;    /* Organisation unit of recipient as
+                                           number; Optional. */
+    char *dmToHands;                /* Person in recipient organisation;
+                                       Optional. */
+    char *dmAnnotation;             /* Subject (title) of the message.
+                                       Maximal length is 255 characters. */
+    char *dmRecipientRefNumber;     /* Czech: číslo jednací příjemce; Optional.
+                                       Maximal length is 50 characters. */
+    char *dmSenderRefNumber;        /* Czech: číslo jednací odesílatele;
+                                       Optional. Maximal lenght is 50 chars. */
+    char *dmRecipientIdent;         /* Czech: spisová značka příjemce; Optional.
+                                       Maximal length is 50 characters. */
+    char *dmSenderIdent;            /* Czech: spisová značka odesílatele;
+                                       Optional. Maximal lenght is 50 chars. */
+
+    /* Act addressing in Czech Republic:
+     * Point (Parahraph) § Section Law/Year Coll. */
+    long int *dmLegalTitleLaw;      /* Number of act mandating authority */
+    long int *dmLegalTitleYear;     /* Year of act issue mandating authority */
+    char *dmLegalTitleSect;         /* Section of act mandating authority.
+                                       Czech: paragraf */
+    char *dmLegalTitlePar;          /* Parahraph of act mandating authority.
+                                       Czech: odstavec */
+    char *dmLegalTitlePoint;        /* Point of act mandating authority.
+                                       Czech: písmeno */
+
+    _Bool *dmPersonalDelivery;      /* If true, only person with higher
+                                       priviledges can read this message */
+    _Bool *dmAllowSubstDelivery;    /* Allow delivery through fiction.
+                                       I.e. Even if recipient did not read this
+                                       message, message is considered as
+                                       delivered after (currently) 10 days.
+                                       This is delivery through fiction.
+                                       Applies only to OVM dbType sender. */
+    _Bool *dmOVM;                   /* OVM sending mode.
+                                       Non-OVM dbType boxes that has
+                                       dbEffectiveOVM == true MUST select
+                                       between true (OVM mode) and
+                                       false (non-OVM mode.
+                                       Optionable; Implicit value is true. */
+};
+
+
+/* Document type from point of hiearchy */
+typedef enum {
+    FILEMETATYPE_MAIN,              /* Main document */
+    FILEMETATYPE_ENCLOSURE,         /* Appendix */
+    FILEMETATYPE_SIGNATURE,         /* Digital signature of other document */
+    FILEMETATYPE_META               /* XML document for ESS (electronic
+                                       document information system) purposes */
+} isds_FileMetaType;
+
+
+/* Document */
+struct isds_document {
+    void *data;                     /* Document content.
+                                       The encoding and interpretation depends
+                                       on dmMimeType.
+                                       TODO: inline XML */
+    char *dmMimeType;               /* MIME type of data; Mandatory. */
+    isds_FileMetaType dmFileMetaType;   /* Document type to create hierarchy */
+    char *dmFileGuid;               /* Message-local document identifier;
+                                       Optional. */
+    char *dmUpFileGuid;             /* Reference to upper document identifier
+                                       (dmFileGuid); Optional. */
+    char *dmFileDescr;              /* Document name (title). E.g. file name;
+                                       Mandatory. */
+    char *dmFormat;                 /* Reference to XML form definition;
+                                       Defines howto interpret XML document;
+                                       Optional. */
+};
+
+/* Message */
+struct isds_message {
+    struct isds_envelope *envelope; /* Message envelope */
+    struct isds_list *documents;    /* List of isds_documents.
+                                       Valid message must contain exactly one
+                                       document of type FILEMETATYPE_MAIN and
+                                       can contain any number of other type
+                                       documents. Totol size of documents
+                                       must not exceed 10 MB. */
 };
 
 /* General linked list */
