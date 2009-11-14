@@ -291,7 +291,7 @@ int main(int argc, char **argv) {
     }
 
 
-    {
+    if (db_owner_info) {
         long int box_status = 0;
         printf("Getting status of my box with ID `%s'\n", db_owner_info->dbID);
         err = isds_CheckDataBox(ctx, db_owner_info->dbID, &box_status);
