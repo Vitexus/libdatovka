@@ -94,6 +94,76 @@ void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info) {
     *db_owner_info = NULL;
 }
 
+
+/* Deallocate struct isds_envelope recurisvely and NULL it */
+void isds_envelope_free(struct isds_envelope **envelope) {
+    if (!envelope || !*envelope) return;
+
+    free((*envelope)->dmID);
+    free((*envelope)->dbIDSender);
+    free((*envelope)->dmSender);
+    free((*envelope)->dmSenderAddress);
+    free((*envelope)->dmSenderType);
+    free((*envelope)->dmRecipient);
+    free((*envelope)->dmRecipientAddress);
+    free((*envelope)->dmAmbiguousRecipient);
+
+    free((*envelope)->dmSenderOrgUnit);
+    free((*envelope)->dmSenderOrgUnitNum);
+    free((*envelope)->dbIDRecipient);
+    free((*envelope)->dmRecipientOrgUnit);
+    free((*envelope)->dmRecipientOrgUnitNum);
+    free((*envelope)->dmToHands);
+    free((*envelope)->dmAnnotation);
+    free((*envelope)->dmRecipientRefNumber);
+    free((*envelope)->dmSenderRefNumber);
+    free((*envelope)->dmRecipientIdent);
+    free((*envelope)->dmSenderIdent);
+
+    free((*envelope)->dmLegalTitleLaw);
+    free((*envelope)->dmLegalTitleYear);
+    free((*envelope)->dmLegalTitleSect);
+    free((*envelope)->dmLegalTitlePar);
+    free((*envelope)->dmLegalTitlePoint);
+
+    free((*envelope)->dmPersonalDelivery);
+    free((*envelope)->dmAllowSubstDelivery);
+    free((*envelope)->dmOVM);
+
+    free(*envelope);
+    *envelope = NULL;
+}
+
+
+/* Deallocate struct isds_message recurisvely and NULL it */
+void isds_message_free(struct isds_message **message) {
+    if (!message || !*message) return;
+
+    free((*message)->raw);
+    isds_envelope_free(&((*message)->envelope));
+    isds_list_free(&((*message)->documents));
+
+    free(*message);
+    *message = NULL;
+}
+
+
+/* Deallocate struct isds_document recurisvely and NULL it */
+void isds_document_free(struct isds_document **document) {
+    if (!document || !*document) return;
+
+    free((*document)->data);
+    free((*document)->dmMimeType);
+    free((*document)->dmFileGuid);
+    free((*document)->dmUpFileGuid);
+    free((*document)->dmFileDescr);
+    free((*document)->dmFormat);
+    
+    free(*document);
+    *document = NULL;
+}
+
+
 /* Initialize ISDS library.
  * Global function, must be called before other functions.
  * If it failes you can not use ISDS library and must call isds_cleanup() to

@@ -4,6 +4,8 @@
 /* Public interface for libisds.
  * Private declarations in isds_priv.h. */
 
+#include <stdlib.h> /* For size_t */
+
 struct isds_ctx;    /* Context for specific ISDS box */
 
 typedef enum {
@@ -254,6 +256,7 @@ struct isds_document {
                                        The encoding and interpretation depends
                                        on dmMimeType.
                                        TODO: inline XML */
+    size_t data_length;             /* Length of the data in bytes */
     char *dmMimeType;               /* MIME type of data; Mandatory. */
     isds_FileMetaType dmFileMetaType;   /* Document type to create hierarchy */
     char *dmFileGuid;               /* Message-local document identifier;
@@ -270,6 +273,10 @@ struct isds_document {
 
 /* Message */
 struct isds_message {
+    void *raw;                      /* Raw message in XML format as send to or
+                                       from the ISDS. You can use it to store
+                                       local copy. This is binary buffer. */
+    size_t *raw_length;               /* Lenght of raw message in bytes */
     struct isds_envelope *envelope; /* Message envelope */
     struct isds_list *documents;    /* List of isds_document's.
                                        Valid message must contain exactly one
@@ -415,5 +422,14 @@ int isds_address_free(struct isds_address **address);
 
 /* Deallocate structure isds_DbOwnerInfo recursively and NULL it */
 void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info);
+
+/* Deallocate struct isds_envelope recurisvely and NULL it */
+void isds_envelope_free(struct isds_envelope **envelope);
+
+/* Deallocate struct isds_document recurisvely and NULL it */
+void isds_document_free(struct isds_document **document);
+
+/* Deallocate struct isds_message recurisvely and NULL it */
+void isds_message_free(struct isds_message **message);
 
 #endif
