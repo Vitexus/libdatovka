@@ -356,7 +356,7 @@ int main(int argc, char **argv) {
         envelope.dbIDRecipient = recipient;
         long int dmSenderOrgUnitNum = 42;
         envelope.dmSenderOrgUnitNum = &dmSenderOrgUnitNum;
-        envelope.dmToHands = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        envelope.dmAnnotation = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
        /*     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"

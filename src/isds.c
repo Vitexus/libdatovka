@@ -1711,6 +1711,7 @@ isds_error isds_send_message(struct isds_ctx *context,
             outgoing_message->envelope->dmRecipientOrgUnit);
     INSERT_LONGINT(envelope, "dmRecipientOrgUnitNum",
             outgoing_message->envelope->dmRecipientOrgUnitNum, string);
+    INSERT_STRING(envelope, "dmToHands", outgoing_message->envelope->dmToHands);
 
 #define CHECK_FOR_STRING_LENGTH(string, limit, name) \
     if ((string) && xmlUTF8Strlen((xmlChar *) (string)) > (limit)) { \
@@ -1720,9 +1721,10 @@ isds_error isds_send_message(struct isds_ctx *context,
         goto leave; \
     }
 
-    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmToHands, 255,
-            "dmToHands");
-    INSERT_STRING(envelope, "dmToHands", outgoing_message->envelope->dmToHands);
+    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmAnnotation, 255,
+            "dmAnnotation");
+    INSERT_STRING(envelope, "dmAnnotation",
+            outgoing_message->envelope->dmAnnotation);
 
 #undef CHECK_FOR_STRING_LENGTH
 
