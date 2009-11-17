@@ -1710,6 +1710,34 @@ isds_error isds_sent_message(struct isds_ctx *context,
         goto leave;
     }
 
+    /* Check for response status */
+    err = isds_response_status(context, SERVICE_DM_OPERATIONS, response,
+            &code, &message, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("ISDS response on CreateMessage request "
+                    "is missing status\n"));
+        goto leave;
+    }
+
+    /* Request processed, but nothing found */
+    if (xmlStrcmp(code, BAD_CAST "0000")) {
+        char *box_id_locale =
+            utf82locale((char*)outgoing_message->envelope->dbIDRecipient);
+        char *code_locale = utf82locale((char*)code);
+        char *message_locale = utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server did not accept message for %s on CheckDataBox "
+                    "request (code=%s, message=%s)\n"),
+                box_id_locale, code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(box_id_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
 leave:
     free(string);
     xmlXPathFreeObject(result);
