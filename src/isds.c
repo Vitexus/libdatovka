@@ -1258,24 +1258,24 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         xmlFreeNode(request);
         return IE_ERROR;
     }
-#define INSERT_STRING(element, string) \
-    node = xmlNewTextChild(db_owner_info, NULL, BAD_CAST (element), \
+#define INSERT_STRING(parent, element, string) \
+    node = xmlNewTextChild(parent, NULL, BAD_CAST (element), \
             (xmlChar *) (string)); \
     if (!node) { \
-        isds_log_message(context, _("Could not add " element " child to " \
-                    "dbOwnerInfo element")); \
+        isds_printf_message(context, _("Could not add " element " child to " \
+                    "%s element"), (parent)->name); \
         xmlFreeNode(request); \
         return IE_ERROR; \
     }
 
-#define INSERT_BOOLEAN(element, booleanPtr) \
+#define INSERT_BOOLEAN(parent, element, booleanPtr) \
     if ((booleanPtr)) { \
-        if (*(booleanPtr)) { INSERT_STRING(element, "true"); } \
-        else { INSERT_STRING(element, "false"); } \
-    } else {INSERT_STRING(element, NULL) };
+        if (*(booleanPtr)) { INSERT_STRING(parent, element, "true"); } \
+        else { INSERT_STRING(parent, element, "false"); } \
+    } else {INSERT_STRING(parent, element, NULL) };
 
 
-    INSERT_STRING("dbID", criteria->dbID);
+    INSERT_STRING(db_owner_info, "dbID", criteria->dbID);
 
     /* dbType */
     if (criteria->dbType) {
@@ -1286,42 +1286,46 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
             xmlFreeNode(request);
             return IE_ENUM;
         }
-        INSERT_STRING("dbType", type_string);
+        INSERT_STRING(db_owner_info, "dbType", type_string);
     }
 
-    INSERT_STRING("firmName", criteria->firmName);
-    INSERT_STRING("ic", criteria->ic);
+    INSERT_STRING(db_owner_info, "firmName", criteria->firmName);
+    INSERT_STRING(db_owner_info, "ic", criteria->ic);
     if (criteria->personName) {
-        INSERT_STRING("pnFirstName", criteria->personName->pnFirstName);
-        INSERT_STRING("pnMiddleName", criteria->personName->pnMiddleName);
-        INSERT_STRING("pnLastName", criteria->personName->pnLastName);
-        INSERT_STRING("pnLastNameAtBirth",
+        INSERT_STRING(db_owner_info, "pnFirstName",
+                criteria->personName->pnFirstName);
+        INSERT_STRING(db_owner_info, "pnMiddleName",
+                criteria->personName->pnMiddleName);
+        INSERT_STRING(db_owner_info, "pnLastName",
+                criteria->personName->pnLastName);
+        INSERT_STRING(db_owner_info, "pnLastNameAtBirth",
                 criteria->personName->pnLastNameAtBirth);
     }
     if (criteria->birthInfo) {
         if (criteria->birthInfo->biDate) {
             if (!tm2datestring(criteria->birthInfo->biDate, &string))
-                INSERT_STRING("biDate", string);
+                INSERT_STRING(db_owner_info, "biDate", string);
             free(string); string = NULL;
         }
-        INSERT_STRING("biCity", criteria->birthInfo->biCity);
-        INSERT_STRING("biCounty", criteria->birthInfo->biCounty);
-        INSERT_STRING("biState", criteria->birthInfo->biState);
+        INSERT_STRING(db_owner_info, "biCity", criteria->birthInfo->biCity);
+        INSERT_STRING(db_owner_info, "biCounty", criteria->birthInfo->biCounty);
+        INSERT_STRING(db_owner_info, "biState", criteria->birthInfo->biState);
     }
     if (criteria->address) {
-        INSERT_STRING("adCity", criteria->address->adCity);
-        INSERT_STRING("adStreet", criteria->address->adStreet);
-        INSERT_STRING("adNumberInStreet", criteria->address->adNumberInStreet);
-        INSERT_STRING("adNumberInMunicipality",
+        INSERT_STRING(db_owner_info, "adCity", criteria->address->adCity);
+        INSERT_STRING(db_owner_info, "adStreet", criteria->address->adStreet);
+        INSERT_STRING(db_owner_info, "adNumberInStreet",
+                criteria->address->adNumberInStreet);
+        INSERT_STRING(db_owner_info, "adNumberInMunicipality",
                 criteria->address->adNumberInMunicipality);
-        INSERT_STRING("adZipCode", criteria->address->adZipCode);
-        INSERT_STRING("adState", criteria->address->adState);
+        INSERT_STRING(db_owner_info, "adZipCode", criteria->address->adZipCode);
+        INSERT_STRING(db_owner_info, "adState", criteria->address->adState);
     }
-    INSERT_STRING("nationality", criteria->nationality);
-    INSERT_STRING("email", criteria->email);
-    INSERT_STRING("telNumber", criteria->telNumber);
-    INSERT_STRING("identifier", criteria->identifier);
-    INSERT_STRING("registryCode", criteria->registryCode);
+    INSERT_STRING(db_owner_info, "nationality", criteria->nationality);
+    INSERT_STRING(db_owner_info, "email", criteria->email);
+    INSERT_STRING(db_owner_info, "telNumber", criteria->telNumber);
+    INSERT_STRING(db_owner_info, "identifier", criteria->identifier);
+    INSERT_STRING(db_owner_info, "registryCode", criteria->registryCode);
 
     if (criteria->dbState) {
         xmlChar *string = NULL;
@@ -1331,12 +1335,13 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
             xmlFreeNode(request);
             return IE_NOMEM;
         }
-        INSERT_STRING("dbState", string);
+        INSERT_STRING(db_owner_info, "dbState", string);
         free(string);
     }
 
-    INSERT_BOOLEAN("dbEffectiveOVM", criteria->dbEffectiveOVM);
-    INSERT_BOOLEAN("dbOpenAddressing", criteria->dbOpenAddressing);
+    INSERT_BOOLEAN(db_owner_info, "dbEffectiveOVM", criteria->dbEffectiveOVM);
+    INSERT_BOOLEAN(db_owner_info, "dbOpenAddressing",
+            criteria->dbOpenAddressing);
 
 
 #undef INSERT_BOOLEAN
@@ -1624,6 +1629,81 @@ leave:
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("CheckDataBox request processed by server successfully.\n"));
+
+    return err;
+}
+
+
+/* Send a message via ISDS to a recipent
+ * @context is session context
+ * @outgoing_message is message to send; Some memebers are mandatory (like
+ * dbIDRecipient), some are optional and some are irrelevant (especialy data
+ * about sender). Included pointer to isds_list documents must contain at
+ * least one document of FILEMETATYPE_MAIN. This is read-write structure, some
+ * members will be filled with valid data from ISDS. Exact list of write
+ * members is subject to change. Currently dmId is changed.
+ * @return ISDS_SUCCESS, or other error code if something goes wrong. */
+isds_error isds_sent_message(struct isds_ctx *context,
+        struct isds_message *outgoing_message) {
+
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL, envelope;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    xmlChar *string = NULL;
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!message || *message) return IE_INVAL;
+
+    /* Check if connection is established
+     * TODO: This check should be done donwstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Build CreateMessage request */
+    request = xmlNewNode(NULL, BAD_CAST "CreateMessage");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build CreateMessage request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+
+    /* Build envelope */
+    envelope = xmlNewChild(request, NULL, BAD_CAST "dmEnvelope", NULL);
+    if (!envelope) {
+        isds_log_message(context, _("Could not add dmEnvelope child to "
+                    "dmEnvelope element"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+
+    /*dmOVM*/
+    goto leave;
+
+    /* TODO: append dmFiles */
+leave:
+    free(string);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("CreateMessage request processed by server "
+                    "successfully.\n"));
 
     return err;
 }

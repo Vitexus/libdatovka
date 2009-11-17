@@ -405,6 +405,18 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
 isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
         long int *box_status);
 
+/* Send a message via ISDS to a recipent
+ * @context is session context
+ * @outgoing_message is message to send; Some memebers are mandatory (like
+ * dbIDRecipient), some are optional and some are irrelevant (especialy data
+ * about sender). Included pointer to isds_list documents must contain at
+ * least one document of FILEMETATYPE_MAIN. This is read-write structure, some
+ * members will be filled with valid data from ISDS. Exact list of write
+ * members is subject to change. Currently dmId is changed.
+ * @return ISDS_SUCCESS, or other error code if something goes wrong. */
+isds_error isds_sent_message(struct isds_ctx *context,
+        struct isds_message *outgoing_message);
+
 /* Send bogus request to ISDS.
  * Just for test purposes */
 isds_error isds_bogus_request(struct isds_ctx *context);
