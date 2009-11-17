@@ -1347,7 +1347,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending FindDataBox request to ISDS\n"));
 
     /* Sent request */
-    err = isds(context, SERVICE_DB_SUPPLEMENTARY, request, &response);
+    err = isds(context, SERVICE_DB_SEARCH, request, &response);
    
     /* Destroy request */
     xmlFreeNode(request);
@@ -1360,7 +1360,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
     }
 
     /* Check for response status */
-    err = isds_response_status(context, SERVICE_DB_SUPPLEMENTARY, response,
+    err = isds_response_status(context, SERVICE_DB_SEARCH, response,
             &code, &message, NULL);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
@@ -1530,7 +1530,7 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending CheckDataBox request to ISDS\n"));
 
     /* Sent request */
-    err = isds(context, SERVICE_DB_SUPPLEMENTARY, request, &response);
+    err = isds(context, SERVICE_DB_SEARCH, request, &response);
    
     /* Destroy request */
     xmlFreeNode(request);
@@ -1543,7 +1543,7 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
     }
 
     /* Check for response status */
-    err = isds_response_status(context, SERVICE_DB_SUPPLEMENTARY, response,
+    err = isds_response_status(context, SERVICE_DB_SEARCH, response,
             &code, &message, NULL);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
