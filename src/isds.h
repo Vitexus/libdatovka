@@ -276,7 +276,7 @@ struct isds_message {
     void *raw;                      /* Raw message in XML format as send to or
                                        from the ISDS. You can use it to store
                                        local copy. This is binary buffer. */
-    size_t *raw_length;               /* Lenght of raw message in bytes */
+    size_t *raw_length;             /* Lenght of raw message in bytes */
     struct isds_envelope *envelope; /* Message envelope */
     struct isds_list *documents;    /* List of isds_document's.
                                        Valid message must contain exactly one
