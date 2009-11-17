@@ -1695,6 +1695,10 @@ isds_error isds_send_message(struct isds_ctx *context,
 
     INSERT_STRING(envelope, "dmSenderOrgUnit",
             outgoing_message->envelope->dmSenderOrgUnit);
+    INSERT_LONGINT(envelope, "dmSenderOrgUnitNum",
+            outgoing_message->envelope->dmSenderOrgUnitNum, string);
+
+
     INSERT_BOOLEAN(envelope, "dmOVM", outgoing_message->envelope->dmOVM);
 
     /* TODO: append dmFiles */
@@ -1706,7 +1710,7 @@ isds_error isds_send_message(struct isds_ctx *context,
     err = isds(context, SERVICE_DM_OPERATIONS, request, &response);
    
     /* Destroy request */
-    xmlFreeNode(request);
+    xmlFreeNode(request); request = NULL;
 
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
@@ -1751,6 +1755,7 @@ leave:
     free(code);
     free(message);
     xmlFreeDoc(response);
+    xmlFreeNode(request);
 
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
