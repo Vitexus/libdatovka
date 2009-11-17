@@ -1698,6 +1698,33 @@ isds_error isds_send_message(struct isds_ctx *context,
     INSERT_LONGINT(envelope, "dmSenderOrgUnitNum",
             outgoing_message->envelope->dmSenderOrgUnitNum, string);
 
+    if (!outgoing_message->envelope->dbIDRecipient) {
+        isds_log_message(context,
+                "outgoing_message is missing recipient box identifier");
+        err = IE_INVAL;
+        goto leave;
+    }
+    INSERT_STRING(envelope, "dbIDRecipient",
+            outgoing_message->envelope->dbIDRecipient);
+
+    INSERT_STRING(envelope, "dmRecipientOrgUnit",
+            outgoing_message->envelope->dmRecipientOrgUnit);
+    INSERT_LONGINT(envelope, "dmRecipientOrgUnitNum",
+            outgoing_message->envelope->dmRecipientOrgUnitNum, string);
+
+#define CHECK_FOR_STRING_LENGTH(string, limit, name) \
+    if ((string) && xmlUTF8Strlen((xmlChar *) (string)) > (limit)) { \
+        isds_printf_message(context, \
+                _("%s has more than %d characters"), (name), (limit)); \
+        err = IE_2BIG; \
+        goto leave; \
+    }
+
+    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmToHands, 255,
+            "dmToHands");
+    INSERT_STRING(envelope, "dmToHands", outgoing_message->envelope->dmToHands);
+
+#undef CHECK_FOR_STRING_LENGTH
 
     INSERT_BOOLEAN(envelope, "dmOVM", outgoing_message->envelope->dmOVM);
 
