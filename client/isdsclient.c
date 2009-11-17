@@ -169,7 +169,6 @@ int main(int argc, char **argv) {
     }
 
     {
-
         printf("Getting info about my box:\n");
         err = isds_GetOwnerInfoFromLogin(ctx, &db_owner_info);
         if (err) {
@@ -183,6 +182,8 @@ int main(int argc, char **argv) {
     }
 
     {
+        /* Current server implementation (2009-11-17) does not allow to find
+         * myself. Previous version allowed it. */
         struct isds_list *boxes = NULL, *item;
 
         printf("Searching for my own box:\n");
@@ -245,6 +246,39 @@ int main(int argc, char **argv) {
 
         isds_list_free(&boxes);
         isds_DbOwnerInfo_free(&criteria);
+    }
+
+    {
+        struct isds_list *boxes = NULL, *item;
+        struct isds_DbOwnerInfo criteria;
+        isds_DbType criteria_db_type = DBTYPE_OVM;
+        memset(&criteria, 0, sizeof(criteria));
+        criteria.dbType = &criteria_db_type;
+        criteria.dbID = "vqbab52";
+
+        printf("Searching for exact box by ID `%s' and type:\n", criteria.dbID);
+        err = isds_FindDataBox(ctx, &criteria, &boxes);
+        if (err == IE_SUCCESS || err == IE_2BIG) {
+            printf("isds_FindDataBox() succeeded:\n");
+
+            int n;
+            for(item = boxes, n = 1; item; item = item->next, n++) {
+                if (err != IE_2BIG) {
+                    printf("List item #%d:\n", n);
+                    print_DbOwnerInfo(item->data);
+                }
+                if (n == 1) recipient = strdup(
+                        ((struct isds_DbOwnerInfo *)(item->data))->dbID);
+            }
+            if (err == IE_2BIG) 
+                printf("isds_FindDataBox() results truncated to %d boxes\n",
+                        --n);
+        } else {
+            printf("isds_FindDataBox() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        }
+
+        isds_list_free(&boxes);
     }
 
 
