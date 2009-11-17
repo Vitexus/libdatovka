@@ -894,6 +894,21 @@ static isds_error tm2datestring(struct tm *time, xmlChar **string) {
         } \
     }
 
+#define INSERT_STRING(parent, element, string) \
+    node = xmlNewTextChild(parent, NULL, BAD_CAST (element), \
+            (xmlChar *) (string)); \
+    if (!node) { \
+        isds_printf_message(context, _("Could not add " element " child to " \
+                    "%s element"), (parent)->name); \
+        xmlFreeNode(request); \
+        return IE_ERROR; \
+    }
+
+#define INSERT_BOOLEAN(parent, element, booleanPtr) \
+    if ((booleanPtr)) { \
+        if (*(booleanPtr)) { INSERT_STRING(parent, element, "true"); } \
+        else { INSERT_STRING(parent, element, "false"); } \
+    } else {INSERT_STRING(parent, element, NULL) };
 
 /* Convert isds:dBOwnerInfo XML tree into structure
  * @context is ISDS context
@@ -1258,21 +1273,6 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         xmlFreeNode(request);
         return IE_ERROR;
     }
-#define INSERT_STRING(parent, element, string) \
-    node = xmlNewTextChild(parent, NULL, BAD_CAST (element), \
-            (xmlChar *) (string)); \
-    if (!node) { \
-        isds_printf_message(context, _("Could not add " element " child to " \
-                    "%s element"), (parent)->name); \
-        xmlFreeNode(request); \
-        return IE_ERROR; \
-    }
-
-#define INSERT_BOOLEAN(parent, element, booleanPtr) \
-    if ((booleanPtr)) { \
-        if (*(booleanPtr)) { INSERT_STRING(parent, element, "true"); } \
-        else { INSERT_STRING(parent, element, "false"); } \
-    } else {INSERT_STRING(parent, element, NULL) };
 
 
     INSERT_STRING(db_owner_info, "dbID", criteria->dbID);
@@ -1343,9 +1343,6 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
     INSERT_BOOLEAN(db_owner_info, "dbOpenAddressing",
             criteria->dbOpenAddressing);
 
-
-#undef INSERT_BOOLEAN
-#undef INSERT_STRING
 
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending FindDataBox request to ISDS\n"));
 
@@ -1708,6 +1705,8 @@ leave:
     return err;
 }
 
+#undef INSERT_BOOLEAN
+#undef INSERT_STRING
 #undef EXTRACT_LONGINT
 #undef EXTRACT_BOOLEAN
 #undef EXTRACT_STRING
