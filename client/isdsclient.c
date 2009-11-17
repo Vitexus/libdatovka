@@ -350,6 +350,7 @@ int main(int argc, char **argv) {
     {
         struct isds_message message;
         memset(&message, 0, sizeof(message));
+
         struct isds_envelope envelope;
         memset(&envelope, 0, sizeof(envelope));
         message.envelope = &envelope;
@@ -377,7 +378,25 @@ int main(int argc, char **argv) {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"*/
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-        
+       
+        struct isds_document main_document;
+        memset(&main_document, 0, sizeof(main_document));
+        main_document.data = "Hello World!";
+        main_document.data_length = strlen(main_document.data) + 1;
+        main_document.dmMimeType = "text/plain";
+        /* XXX: This should fail */
+        main_document.dmFileMetaType = FILEMETATYPE_ENCLOSURE;
+        /* XXX" This is mandatory, should fail */
+        /*main_document.dmFileDescr = "Standard text";*/
+
+        struct isds_list documents = {
+            .data = &main_document,
+            .next = NULL,
+            .destructor = NULL
+        };
+        message.documents = &documents;
+
+
         printf("Sending message to box ID `%s'\n",
                 message.envelope->dbIDRecipient);
         err = isds_send_message(ctx, &message);
