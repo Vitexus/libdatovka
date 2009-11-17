@@ -123,6 +123,7 @@ void print_DbOwnerInfo(struct isds_DbOwnerInfo *info) {
 int main(int argc, char **argv) {
     isds_error err;
     struct isds_DbOwnerInfo *db_owner_info = NULL;
+    char *recipient = NULL;
     
     setlocale(LC_ALL, "");
 
@@ -266,6 +267,8 @@ int main(int argc, char **argv) {
                     printf("List item #%d:\n", n);
                     print_DbOwnerInfo(item->data);
                 }
+                if (n == 1) recipient = strdup(
+                        ((struct isds_DbOwnerInfo *)(item->data))->dbID);
             }
             if (err == IE_2BIG) 
                 printf("isds_FindDataBox() results truncated to %d boxes\n",
@@ -306,6 +309,30 @@ int main(int argc, char **argv) {
             printf("isds_CheckDataBox() succeeded: status = ");
             print_DbState(box_status);
         }
+    }
+
+
+    /* Send message */
+    {
+        struct isds_message message;
+        memset(&message, 0, sizeof(message));
+        struct isds_envelope envelope;
+        memset(&envelope, 0, sizeof(envelope));
+        message.envelope = &envelope;
+        envelope.dbIDRecipient = recipient;
+        
+        printf("Sending message to box ID `%s'\n",
+                message.envelope->dbIDRecipient);
+        err = isds_send_message(ctx, &message);
+        if (err)
+            printf("isds_send_message() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        else {
+            printf("isds_send_message() succeeded: assigned message ID = %s\n",
+                message.envelope->dmID);
+        }
+
+        free(message.envelope->dmID);
     }
 
 
