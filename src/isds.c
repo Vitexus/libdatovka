@@ -1645,7 +1645,7 @@ isds_error isds_sent_message(struct isds_ctx *context,
 
     isds_error err = IE_SUCCESS;
     xmlNsPtr isds_ns = NULL;
-    xmlNodePtr request = NULL, envelope;
+    xmlNodePtr request = NULL, envelope, node;
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *message = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
@@ -1684,10 +1684,32 @@ isds_error isds_sent_message(struct isds_ctx *context,
         return IE_ERROR;
     }
 
-    /*dmOVM*/
-    goto leave;
+    if (!outgoing_message->envelope) {
+        isds_log_message(context, "outgoing_message is missing envelope");
+        err = IE_INVAL;
+        goto leave;
+    }
+
+    INSERT_BOOLEAN(envelope, "dmOVM", outgoing_message->envelope->dmOVM);
 
     /* TODO: append dmFiles */
+    
+
+    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending CreateMessage request to ISDS\n"));
+
+    /* Sent request */
+    err = isds(context, SERVICE_DM_OPERATIONS, request, &response);
+   
+    /* Destroy request */
+    xmlFreeNode(request);
+
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Processing ISDS response on CreateMessage "
+                    "request failed\n"));
+        goto leave;
+    }
+
 leave:
     free(string);
     xmlXPathFreeObject(result);
