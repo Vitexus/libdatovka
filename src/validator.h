@@ -17,8 +17,8 @@ typedef enum {
  * @service is ISDS web service identifier
  * @response is ISDS response document
  * @code is automatically allocated status code of the response
- * @message is automatically allocated status message. Use NULL if you don't
- * care.
+ * @message is automatically allocated status message. Returned NULL means no
+ * message was delivered by server. Use NULL if you don't care.
  * @refnumber is automatically allocated status reference number. Returned
  * NULL means no referce was delivered by server. Use NULL if you don't care.
  * */

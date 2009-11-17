@@ -11,8 +11,8 @@
  * @service is ISDS web service identifier
  * @response is ISDS response document
  * @code is automatically allocated status code of the response
- * @message is automatically allocated status message. Use NULL if you don't
- * care.
+ * @message is automatically allocated status message. Returned NULL means no
+ * message was delivered by server. Use NULL if you don't care.
  * @refnumber is automatically allocated status reference number. Returned
  * NULL means no referce was delivered by server. Use NULL if you don't care.
  * */
@@ -85,15 +85,15 @@ _hidden isds_error isds_response_status(struct isds_ctx *context,
             goto leave;
         }
         if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-            isds_log_message(context,
-                    _("ISDS response is missing StatusMessage"));
-            err = IE_ISDS;
-            goto leave;
-        }
-        *message = xmlXPathCastNodeSetToString(result->nodesetval);
-        if (!message) {
-            err = IE_ERROR;
-            goto leave;
+            /* E.g. CreateMessageResponse with dmStatusCode 9005 has empty
+             * message */
+            *message = NULL;
+        } else {
+            *message = xmlXPathCastNodeSetToString(result->nodesetval);
+            if (!message) {
+                err = IE_ERROR;
+                goto leave;
+            }
         }
     }
 

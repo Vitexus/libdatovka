@@ -95,6 +95,8 @@ Identifier of just sent message assigned by system is returned.
 
 Error codes:
     0000    Message sent successfully
+Non-normative error codes:
+    9005    Message not valid (probably)
 
 In case of positive virus detection (processed after sending), infected
 document is removed, message state is set to value 3 (from point of view of
