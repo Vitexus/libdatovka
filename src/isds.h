@@ -414,7 +414,7 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
  * members will be filled with valid data from ISDS. Exact list of write
  * members is subject to change. Currently dmId is changed.
  * @return ISDS_SUCCESS, or other error code if something goes wrong. */
-isds_error isds_sent_message(struct isds_ctx *context,
+isds_error isds_send_message(struct isds_ctx *context,
         struct isds_message *outgoing_message);
 
 /* Send bogus request to ISDS.
