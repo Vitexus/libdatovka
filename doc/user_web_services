@@ -96,6 +96,7 @@ Identifier of just sent message assigned by system is returned.
 Error codes:
     0000    Message sent successfully
 Non-normative error codes:
+    2010    First document structure invalid
     9005    Message not valid (probably)
 
 In case of positive virus detection (processed after sending), infected
