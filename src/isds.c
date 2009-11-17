@@ -1760,7 +1760,7 @@ leave:
     return err;
 }
 
-#undef INSERT_LONGING
+#undef INSERT_LONGINT
 #undef INSERT_BOOLEAN
 #undef INSERT_STRING
 #undef EXTRACT_LONGINT
