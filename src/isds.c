@@ -1651,8 +1651,9 @@ isds_error isds_send_message(struct isds_ctx *context,
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     xmlChar *string = NULL;
+
     if (!context) return IE_INVALID_CONTEXT;
-    if (!message || *message) return IE_INVAL;
+    if (!outgoing_message || *outgoing_message) return IE_INVAL;
 
     /* Check if connection is established
      * TODO: This check should be done donwstairs. */
