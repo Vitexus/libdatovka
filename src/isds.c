@@ -900,15 +900,26 @@ static isds_error tm2datestring(struct tm *time, xmlChar **string) {
     if (!node) { \
         isds_printf_message(context, _("Could not add " element " child to " \
                     "%s element"), (parent)->name); \
-        xmlFreeNode(request); \
-        return IE_ERROR; \
+        err = IE_ERROR; \
+        goto leave; \
     }
 
 #define INSERT_BOOLEAN(parent, element, booleanPtr) \
     if ((booleanPtr)) { \
         if (*(booleanPtr)) { INSERT_STRING(parent, element, "true"); } \
-        else { INSERT_STRING(parent, element, "false"); } \
-    } else {INSERT_STRING(parent, element, NULL) };
+        else { INSERT_STRING(parent, element, "false") } \
+    } else { INSERT_STRING(parent, element, NULL) }
+
+#define INSERT_LONGINT(parent, element, longintPtr, buffer) \
+    if ((longintPtr)) { \
+        /* FIXME: locale sensitive */ \
+        if (-1 == isds_asprintf((char **)&(buffer), "%ld", *(longintPtr))) { \
+            err = IE_NOMEM; \
+            goto leave; \
+        } \
+        INSERT_STRING(parent, element, buffer) \
+        free(buffer); (buffer) = NULL; \
+    } else { INSERT_STRING(parent, element, NULL) }
 
 /* Convert isds:dBOwnerInfo XML tree into structure
  * @context is ISDS context
@@ -1283,8 +1294,8 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         if (!type_string) {
             isds_printf_message(context, _("Invalid dbType value: %d"),
                     *(criteria->dbType));
-            xmlFreeNode(request);
-            return IE_ENUM;
+            err = IE_ENUM;
+            goto leave;
         }
         INSERT_STRING(db_owner_info, "dbType", type_string);
     }
@@ -1327,17 +1338,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
     INSERT_STRING(db_owner_info, "identifier", criteria->identifier);
     INSERT_STRING(db_owner_info, "registryCode", criteria->registryCode);
 
-    if (criteria->dbState) {
-        xmlChar *string = NULL;
-        /* FIXME: This is locale dependend */
-        if (-1 == isds_asprintf((char **) &string, "%ld",
-                    *(criteria->dbState))) {
-            xmlFreeNode(request);
-            return IE_NOMEM;
-        }
-        INSERT_STRING(db_owner_info, "dbState", string);
-        free(string);
-    }
+    INSERT_LONGINT(db_owner_info, "dbState", criteria->dbState, string);
 
     INSERT_BOOLEAN(db_owner_info, "dbEffectiveOVM", criteria->dbEffectiveOVM);
     INSERT_BOOLEAN(db_owner_info, "dbOpenAddressing",
@@ -1350,7 +1351,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
     err = isds(context, SERVICE_DB_SEARCH, request, &response);
    
     /* Destroy request */
-    xmlFreeNode(request);
+    xmlFreeNode(request); request = NULL;
 
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
@@ -1457,6 +1458,7 @@ leave:
     }
 
     free(string);
+    xmlFreeNode(request);
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
 
@@ -1691,6 +1693,8 @@ isds_error isds_send_message(struct isds_ctx *context,
         goto leave;
     }
 
+    INSERT_STRING(envelope, "dmSenderOrgUnit",
+            outgoing_message->envelope->dmSenderOrgUnit);
     INSERT_BOOLEAN(envelope, "dmOVM", outgoing_message->envelope->dmOVM);
 
     /* TODO: append dmFiles */
@@ -1756,6 +1760,7 @@ leave:
     return err;
 }
 
+#undef INSERT_LONGING
 #undef INSERT_BOOLEAN
 #undef INSERT_STRING
 #undef EXTRACT_LONGINT

@@ -216,7 +216,7 @@ struct isds_envelope {
                                        Non-OVM dbType boxes that has
                                        dbEffectiveOVM == true MUST select
                                        between true (OVM mode) and
-                                       false (non-OVM mode.
+                                       false (non-OVM mode).
                                        Optionable; Implicit value is true. */
 };
 

@@ -320,6 +320,8 @@ int main(int argc, char **argv) {
         memset(&envelope, 0, sizeof(envelope));
         message.envelope = &envelope;
         envelope.dbIDRecipient = recipient;
+        long int dmSenderOrgUnitNum = 42;
+        envelope.dmSenderOrgUnitNum = &dmSenderOrgUnitNum;
         
         printf("Sending message to box ID `%s'\n",
                 message.envelope->dbIDRecipient);
