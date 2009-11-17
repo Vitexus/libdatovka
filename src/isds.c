@@ -1688,7 +1688,7 @@ isds_error isds_send_message(struct isds_ctx *context,
     }
 
     if (!outgoing_message->envelope) {
-        isds_log_message(context, "outgoing_message is missing envelope");
+        isds_log_message(context, _("outgoing message is missing envelope"));
         err = IE_INVAL;
         goto leave;
     }
@@ -1700,7 +1700,7 @@ isds_error isds_send_message(struct isds_ctx *context,
 
     if (!outgoing_message->envelope->dbIDRecipient) {
         isds_log_message(context,
-                "outgoing_message is missing recipient box identifier");
+                _("outgoing message is missing recipient box identifier"));
         err = IE_INVAL;
         goto leave;
     }
