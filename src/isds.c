@@ -1726,8 +1726,46 @@ isds_error isds_send_message(struct isds_ctx *context,
     INSERT_STRING(envelope, "dmAnnotation",
             outgoing_message->envelope->dmAnnotation);
 
+    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmRecipientRefNumber,
+            50, "dmRecipientRefNumber");
+    INSERT_STRING(envelope, "dmRecipientRefNumber",
+            outgoing_message->envelope->dmRecipientRefNumber);
+
+    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmSenderRefNumber,
+            50, "dmSenderRefNumber");
+    INSERT_STRING(envelope, "dmSenderRefNumber",
+            outgoing_message->envelope->dmSenderRefNumber);
+
+    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmRecipientIdent,
+            50, "dmRecipientIdent");
+    INSERT_STRING(envelope, "dmRecipientIdent",
+            outgoing_message->envelope->dmRecipientIdent);
+
+    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmSenderIdent,
+            50, "dmSenderIdent");
+    INSERT_STRING(envelope, "dmSenderIdent",
+            outgoing_message->envelope->dmSenderIdent);
+
+    INSERT_LONGINT(envelope, "dmLegalTitleLaw",
+            outgoing_message->envelope->dmLegalTitleLaw, string);
+    INSERT_LONGINT(envelope, "dmLegalTitleYear",
+            outgoing_message->envelope->dmLegalTitleYear, string);
+    INSERT_STRING(envelope, "dmLegalTitleSect",
+            outgoing_message->envelope->dmLegalTitleSect);
+    INSERT_STRING(envelope, "dmLegalTitlePar",
+            outgoing_message->envelope->dmLegalTitlePar);
+    INSERT_STRING(envelope, "dmLegalTitlePoint",
+            outgoing_message->envelope->dmLegalTitlePoint);
+
+    INSERT_BOOLEAN(envelope, "dmPersonalDelivery",
+            outgoing_message->envelope->dmPersonalDelivery);
+    INSERT_BOOLEAN(envelope, "dmAllowSubstDelivery",
+            outgoing_message->envelope->dmAllowSubstDelivery);
+
 #undef CHECK_FOR_STRING_LENGTH
 
+    /* ???: Should we require value for dbEffectiveOVM sender?
+     * ISDS has default as true */
     INSERT_BOOLEAN(envelope, "dmOVM", outgoing_message->envelope->dmOVM);
 
     /* TODO: append dmFiles */
