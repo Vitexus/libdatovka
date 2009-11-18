@@ -98,6 +98,7 @@ Error codes:
 Non-normative error codes:
     1214    Document desciption is not a filename with acceptable file name
             extension
+    1214    Document description extension does not match document content
     2010    First document structure invalid
     9005    Message not valid (probably)
 
