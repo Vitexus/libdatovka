@@ -1936,7 +1936,7 @@ isds_error isds_send_message(struct isds_ctx *context,
         char *code_locale = utf82locale((char*)code);
         char *message_locale = utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Server did not accept message for %s on CheckDataBox "
+                _("Server did not accept message for %s on CreateMessage "
                     "request (code=%s, message=%s)\n"),
                 box_id_locale, code_locale, message_locale);
         isds_log_message(context, message_locale);
@@ -1945,6 +1945,46 @@ isds_error isds_send_message(struct isds_ctx *context,
         free(message_locale);
         err = IE_ISDS;
         goto leave;
+    }
+
+
+    /* Extract data */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(BAD_CAST "/isds:CreateMessageResponse",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context, _("Missing CreateMessageResponse element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    if (result->nodesetval->nodeNr > 1) {
+        isds_log_message(context, _("Multiple CreateMessageResponse element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+    xmlXPathFreeObject(result); result = NULL;
+
+    if (outgoing_message->envelope->dmID) {
+        free(outgoing_message->envelope->dmID);
+        outgoing_message->envelope->dmID = NULL;
+    }
+    EXTRACT_STRING("isds:dmID", outgoing_message->envelope->dmID);
+    if (!outgoing_message->envelope->dmID) {
+        isds_log(ILF_ISDS, ILL_ERR, _("Server accepted sent message, "
+                    "but did not returen assigned message ID\n"));
     }
 
 leave:
