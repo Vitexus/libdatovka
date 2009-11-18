@@ -761,6 +761,19 @@ static const xmlChar *isds_DbType2string(const isds_DbType type) {
 }
 
 
+/* Convert ISDS dmFileMetaType enum @type to UTF-8 string.
+ * @Return pointer to static string, or NULL if unkwnow enum value */
+static const xmlChar *isds_FileMetaType2string(const isds_FileMetaType type) {
+     switch(type) {
+            case FILEMETATYPE_MAIN: return(BAD_CAST "main"); break;
+            case FILEMETATYPE_ENCLOSURE: return(BAD_CAST "enclosure"); break;
+            case FILEMETATYPE_SIGNATURE: return(BAD_CAST "signature"); break;
+            case FILEMETATYPE_META: return(BAD_CAST "meta"); break;
+            default: return NULL; break;
+        }
+}
+
+
 /* Convert UTF-8 @string represantion of ISO 8601 date to @time.
  * XXX: Not all ISO formats are supported */
 static isds_error datestring2tm(xmlChar *string, struct tm *time) {
@@ -920,6 +933,17 @@ static isds_error tm2datestring(struct tm *time, xmlChar **string) {
         INSERT_STRING(parent, element, buffer) \
         free(buffer); (buffer) = NULL; \
     } else { INSERT_STRING(parent, element, NULL) }
+
+#define INSERT_STRING_ATTRIBUTE(parent, attribute, string) \
+    attribute_node = xmlNewProp((parent), BAD_CAST (attribute), \
+            (xmlChar *) (string)); \
+    if (!attribute_node) { \
+        isds_printf_message(context, _("Could not add " attribute \
+                    " attribute to %s element"), (parent)->name); \
+        err = IE_ERROR; \
+        goto leave; \
+    }
+
 
 /* Convert isds:dBOwnerInfo XML tree into structure
  * @context is ISDS context
@@ -1083,7 +1107,71 @@ leave:
  * @return error code, in case of error context' message is filled. */
 static isds_error insert_document(struct isds_ctx *context,
         struct isds_document *document, xmlNodePtr dm_files) {
-    return IE_NOTSUP;
+    isds_error err = IE_SUCCESS;
+    xmlNodePtr file = NULL, node;
+    xmlAttrPtr attribute_node;
+    xmlChar *base64data = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!document || !dm_files) return IE_INVAL;
+
+    
+    file = xmlNewChild(dm_files, NULL, BAD_CAST "dmFile", NULL);
+    if (!file) {
+        isds_printf_message(context, _("Could not add dmFile child to "
+                    "%s element"), dm_files->name);
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    /* @dmMimeType is required */
+    if (!document->dmMimeType) {
+        isds_log_message(context,
+                _("Document is missing mandatory MIME type definition"));
+        err = IE_INVAL;
+        goto leave;
+    }
+    INSERT_STRING_ATTRIBUTE(file, "dmMimeType", document->dmMimeType);
+
+    const xmlChar *string = isds_FileMetaType2string(document->dmFileMetaType);
+    if (!string) {
+        isds_printf_message(context,
+                _("Document has unkown dmFileMetaType: %ld"),
+                document->dmFileMetaType);
+        err = IE_ENUM;
+        goto leave;
+    }
+    INSERT_STRING_ATTRIBUTE(file, "dmFileMetaType", string);
+
+    if (document->dmFileGuid) {
+        INSERT_STRING_ATTRIBUTE(file, "dmFileGuid", document->dmFileGuid);
+    }
+    if (document->dmUpFileGuid) {
+        INSERT_STRING_ATTRIBUTE(file, "dmUpFileGuid", document->dmUpFileGuid);
+    }
+
+    /* @dmFileDescr is required */
+    if (!document->dmFileDescr) {
+        isds_log_message(context,
+                _("Document is missing mandatory desciption (title)"));
+        err = IE_INVAL;
+        goto leave;
+    }
+    INSERT_STRING_ATTRIBUTE(file, "dmFileDescr", document->dmFileDescr);
+
+    if (document->dmFormat) {
+        INSERT_STRING_ATTRIBUTE(file, "dmFormat", document->dmFormat);
+    }
+
+
+    /* Insert content (data) of the document. */
+    /* XXX; Only base64 is implemented currently. */
+    /* FIXME: covert document->data/data_length to base64data */
+    base64data = BAD_CAST "";
+    INSERT_STRING(file, "dmEncodedContent", base64data)
+
+leave:
+    return err;
 }
 
 
@@ -1792,8 +1880,8 @@ isds_error isds_send_message(struct isds_ctx *context,
     if (!dm_files) {
         isds_log_message(context, _("Could not add dmFiles child to "
                     "CreateMessage element"));
-        xmlFreeNode(request);
-        return IE_ERROR;
+        err = IE_ERROR;
+        goto leave;
     }
 
     /* Process each document */
@@ -1806,6 +1894,8 @@ isds_error isds_send_message(struct isds_ctx *context,
             err = IE_INVAL;
             goto leave;
         }
+        /* FIXME: Check for dmFileMetaType and for document references.
+         * Only first document can be of MAIN type */
         err = insert_document(context, (struct isds_document*) item->data,
                 dm_files);
 
@@ -1875,6 +1965,7 @@ leave:
     return err;
 }
 
+#undef INSERT_STRING_ATTRIBUTE
 #undef INSERT_LONGINT
 #undef INSERT_BOOLEAN
 #undef INSERT_STRING
