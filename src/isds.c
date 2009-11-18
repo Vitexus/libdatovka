@@ -1075,6 +1075,18 @@ leave:
     return err;
 }
 
+
+/* Convert isds_document structure into XML tree and append to dmFiles node.
+ * @context is session context
+ * @document is ISDS document
+ * @dm_files is XML element the resulting tree will be appended to as a child.
+ * @return error code, in case of error context' message is filled. */
+static isds_error insert_document(struct isds_ctx *context,
+        struct isds_document *document, xmlNodePtr dm_files) {
+    return IE_NOTSUP;
+}
+
+
 /* Get data about logged in user and his box. */
 isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         struct isds_DbOwnerInfo **db_owner_info) {
@@ -1647,7 +1659,7 @@ isds_error isds_send_message(struct isds_ctx *context,
 
     isds_error err = IE_SUCCESS;
     xmlNsPtr isds_ns = NULL;
-    xmlNodePtr request = NULL, envelope, node;
+    xmlNodePtr request = NULL, envelope, dm_files, node;
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *message = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
@@ -1682,7 +1694,7 @@ isds_error isds_send_message(struct isds_ctx *context,
     envelope = xmlNewChild(request, NULL, BAD_CAST "dmEnvelope", NULL);
     if (!envelope) {
         isds_log_message(context, _("Could not add dmEnvelope child to "
-                    "dmEnvelope element"));
+                    "CreateMessage element"));
         xmlFreeNode(request);
         return IE_ERROR;
     }
@@ -1768,7 +1780,38 @@ isds_error isds_send_message(struct isds_ctx *context,
      * ISDS has default as true */
     INSERT_BOOLEAN(envelope, "dmOVM", outgoing_message->envelope->dmOVM);
 
-    /* TODO: append dmFiles */
+
+    /* Append dmFiles */
+    if (!outgoing_message->documents) {
+        isds_log_message(context,
+                _("outgoing message is missing list of documents"));
+        err = IE_INVAL;
+        goto leave;
+    }
+    dm_files = xmlNewChild(request, NULL, BAD_CAST "dmFiles", NULL);
+    if (!dm_files) {
+        isds_log_message(context, _("Could not add dmFiles child to "
+                    "CreateMessage element"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+
+    /* Process each document */
+    for (struct isds_list *item =
+            (struct isds_list *) outgoing_message->documents;
+            item; item = item->next) {
+        if (!item->data) {
+            isds_log_message(context,
+                    _("list of documents contains empty item"));
+            err = IE_INVAL;
+            goto leave;
+        }
+        err = insert_document(context, (struct isds_document*) item->data,
+                dm_files);
+
+        if (err) goto leave;
+    }
+
     
 
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending CreateMessage request to ISDS\n"));
