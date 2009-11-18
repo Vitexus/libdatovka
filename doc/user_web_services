@@ -96,6 +96,8 @@ Identifier of just sent message assigned by system is returned.
 Error codes:
     0000    Message sent successfully
 Non-normative error codes:
+    1214    Document desciption is not a filename with acceptable file name
+            extension
     2010    First document structure invalid
     9005    Message not valid (probably)
 

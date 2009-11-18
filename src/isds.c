@@ -1166,8 +1166,14 @@ static isds_error insert_document(struct isds_ctx *context,
 
     /* Insert content (data) of the document. */
     /* XXX; Only base64 is implemented currently. */
-    /* FIXME: covert document->data/data_length to base64data */
-    base64data = BAD_CAST "";
+    base64data = (xmlChar *) b64encode(document->data, document->data_length);
+    if (!base64data) {
+        isds_printf_message(context,
+                _("Not enought memory to encode %zd bytes into Base64"),
+                document->data_length);
+        err = IE_NOMEM;
+        goto leave;
+    }
     INSERT_STRING(file, "dmEncodedContent", base64data)
 
 leave:
