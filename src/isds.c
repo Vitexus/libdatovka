@@ -1153,7 +1153,7 @@ static isds_error insert_document(struct isds_ctx *context,
     /* @dmFileDescr is required */
     if (!document->dmFileDescr) {
         isds_log_message(context,
-                _("Document is missing mandatory desciption (title)"));
+                _("Document is missing mandatory description (title)"));
         err = IE_INVAL;
         goto leave;
     }
