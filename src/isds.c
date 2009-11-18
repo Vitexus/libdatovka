@@ -1115,7 +1115,8 @@ static isds_error insert_document(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     if (!document || !dm_files) return IE_INVAL;
 
-    
+   
+    /* FIXME: Add main document in the begining */
     file = xmlNewChild(dm_files, NULL, BAD_CAST "dmFile", NULL);
     if (!file) {
         isds_printf_message(context, _("Could not add dmFile child to "
