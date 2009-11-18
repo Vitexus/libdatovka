@@ -48,4 +48,11 @@ int isds_asprintf(char **buffer, const char *format, ...);
  * it. In case of error or NULL @utf returns NULL. */
 char *utf82locale(const char *utf);
 
+/* Encode given data into MIME Base64 encoded zero terminated string.
+ * @plain are input data (binary stream)
+ * @length is liength of @plain data in bytes
+ * @return allocated string of base64 encoded plain data or NULL in case of
+ * error. You must free it. */
+char *b64encode(const void *plain, const size_t length);
+
 #endif

@@ -4,6 +4,7 @@
 #include <iconv.h>
 #include <langinfo.h>
 #include "utils.h"
+#include "cencode.h"
 
 /* Concatenate two strings into newly allocated buffer.
  * You must free() them, when you don't need it anymore.
@@ -175,6 +176,41 @@ char *utf82locale(const char *utf) {
 
 leave:
     iconv_close(state);
+    return buffer;
+}
+
+
+/* Encode given data into MIME Base64 encoded zero terminated string.
+ * @plain are input data (binary stream)
+ * @length is liength of @plain data in bytes
+ * @return allocated string of base64 encoded plain data or NULL in case of
+ * error. You must free it. */
+char *b64encode(const void *plain, const size_t length) {
+
+    base64_encodestate state;
+    size_t code_length;
+    char *buffer, *new_buffer;
+
+    if (!plain) return NULL;
+
+    base64_init_encodestate(&state);
+
+    /* Allocate buffer
+     * (4 is padding, 1 is final new line, and 1 is string terminator) */
+    buffer = malloc(length * 2 + 4 + 1 + 1);
+    if (!buffer) return NULL;
+
+    /* Encode plain data */
+    code_length = base64_encode_block(plain, length, buffer, &state);
+    code_length += base64_encode_blockend(buffer + code_length, &state);
+
+    /* Terminate string */
+    buffer[code_length++] = '\0';
+
+    /* Shrink the buffer */
+    new_buffer = realloc(buffer, code_length);
+    if (new_buffer) buffer = new_buffer;
+
     return buffer;
 }
 
