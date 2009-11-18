@@ -202,3 +202,42 @@ leave:
     return err;
 }
 
+/* Walk through list of isds_documents and check for their types and
+ * references.
+ * @context is session context
+ * @documents is list of isds_document to check
+ * @returns IE_SUCCESS if structure is valid, otherwise context' message will
+ * be filled with explanation of found problem. */
+isds_error check_documents_hiararchy(struct isds_ctx *context,
+        const struct isds_list *documents) {
+
+    const struct isds_list *item;
+    const struct isds_document *document;
+    _Bool main_exists = 0;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!documents) return IE_INVAL;
+
+    for (item = documents; item; item = item->next) {
+        document = (const struct isds_document *) item->data;
+        if (!document) continue;
+
+        if (document->dmFileMetaType == FILEMETATYPE_MAIN) {
+            if (main_exists) {
+                isds_log_message(context,
+                        _("List contains more main documents"));
+                return IE_ERROR;
+            }
+            main_exists = 1;
+        }
+        
+    }
+    
+    if (!main_exists) {
+        isds_log_message(context, _("List does not contain main document"));
+        return IE_ERROR;
+    }
+
+    return IE_SUCCESS;
+}
+

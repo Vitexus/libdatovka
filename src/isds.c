@@ -1891,6 +1891,10 @@ isds_error isds_send_message(struct isds_ctx *context,
         goto leave;
     }
 
+    /* Check for document hieararchy */
+    err = check_documents_hiararchy(context, outgoing_message->documents);
+    if (err) goto leave;
+
     /* Process each document */
     for (struct isds_list *item =
             (struct isds_list *) outgoing_message->documents;

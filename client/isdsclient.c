@@ -387,8 +387,8 @@ int main(int argc, char **argv) {
          * See <http://www.abclinuxu.cz/forum/show/284940> */
         main_document.dmMimeType = "text/plain";
         /* XXX: This should fail */
-        /*main_document.dmFileMetaType = FILEMETATYPE_ENCLOSURE;*/
-        main_document.dmFileMetaType = FILEMETATYPE_MAIN;
+        main_document.dmFileMetaType = FILEMETATYPE_ENCLOSURE;
+        /*main_document.dmFileMetaType = FILEMETATYPE_MAIN;*/
         /* Server implementation demands dmFileDescr to be valid file name */
         /*main_document.dmFileDescr = "Standard text.txt";*/
         main_document.dmFileDescr = "standard_text.txt";
