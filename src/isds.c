@@ -1174,7 +1174,8 @@ static isds_error insert_document(struct isds_ctx *context,
         err = IE_NOMEM;
         goto leave;
     }
-    INSERT_STRING(file, "dmEncodedContent", base64data)
+    INSERT_STRING(file, "dmEncodedContent", base64data);
+    free(base64data);
 
 leave:
     return err;
