@@ -386,8 +386,7 @@ int main(int argc, char **argv) {
         main_document.dmMimeType = "text/plain";
         /* XXX: This should fail */
         main_document.dmFileMetaType = FILEMETATYPE_ENCLOSURE;
-        /* XXX" This is mandatory, should fail */
-        /*main_document.dmFileDescr = "Standard text";*/
+        main_document.dmFileDescr = "Standard text";
 
         struct isds_list documents = {
             .data = &main_document,
