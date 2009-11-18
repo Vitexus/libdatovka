@@ -13,6 +13,32 @@ Content involves one or more attachments (= Documents). Allowed Document
 formats are defined in Appendix 3 of Vyhláška o stanovení podrobností užívání
 a provozování ISDS.
 
+Currently (2009-11-18) allowed formats are (quotation follows):
+
+    – pdf (Portable Document Format)
+    – PDF/A (Portable Document Format for the Long-term Archiving)
+    – xml (Extensible Markup Language Document); must be valid against
+    free available XML Schema published by recipient
+    – fo/zfo (602XML Filler dokument)
+    – html/htm (Hypertext Markup Language Document)
+    – odt (Open Document Text)
+    – ods (Open Document Spreadsheet)
+    – odp (Open Document Presentation)
+    – txt (plain text)
+    – rtf (Rich Text Format)
+    – doc (MS Word Document)
+    – xls (MS Excel Spreadsheet)
+    – ppt (MS PowerPoint Presentation)
+    – jpg/jpeg/jfif (Joint Photographic Experts Group File Interchange Format)
+    – png (Portable Network Graphics)
+    – tiff (Tagged Image File Format)
+    – gif (Graphics Interchange Format)
+    – mpeg1/mpeg2 (Moving Picture Experts Group Phase 1 / Phase 2)
+    – wav (Waveform Audio Format)
+    – mp2/mp3 (MPEG-1 Audio Layer 2 / Layer 3)
+    – isdoc/isdocx (Information System Document) version 5.2 a higher
+    
+
 Document is Base64 encoded binary format or XML.
 
 There exist special Document type, ESS format, that can exist in Content only
