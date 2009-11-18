@@ -36,7 +36,7 @@ Currently (2009-11-18) allowed formats are (quotation follows):
     – mpeg1/mpeg2 (Moving Picture Experts Group Phase 1 / Phase 2)
     – wav (Waveform Audio Format)
     – mp2/mp3 (MPEG-1 Audio Layer 2 / Layer 3)
-    – isdoc/isdocx (Information System Document) version 5.2 a higher
+    – isdoc/isdocx (Information System Document) version 5.2 or higher
     
 
 Document is Base64 encoded binary format or XML.
