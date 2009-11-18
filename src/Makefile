@@ -1,6 +1,6 @@
 CFLAGS = -std=c99 -Wall -Werror -fPIC -DPIC -g
 SONAME = libisds.so.0
-SOURCES = isds.c utils.c soap.c validator.c
+SOURCES = isds.c utils.c soap.c validator.c cencode.c cdecode.c
 
 LIBXML_CFLAGS := $(shell pkg-config --cflags libxml-2.0)
 LIBCURL_CFLAGS := $(shell pkg-config --cflags libcurl)
