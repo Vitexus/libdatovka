@@ -1108,17 +1108,29 @@ leave:
 static isds_error insert_document(struct isds_ctx *context,
         struct isds_document *document, xmlNodePtr dm_files) {
     isds_error err = IE_SUCCESS;
-    xmlNodePtr file = NULL, node;
+    xmlNodePtr new_file = NULL, file = NULL, node;
     xmlAttrPtr attribute_node;
     xmlChar *base64data = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!document || !dm_files) return IE_INVAL;
 
-   
-    /* FIXME: Add main document in the begining */
-    file = xmlNewChild(dm_files, NULL, BAD_CAST "dmFile", NULL);
+    /* Allocate new dmFile */
+    new_file = xmlNewNode(dm_files->ns, BAD_CAST "dmFile");
+    if (!new_file) {
+        isds_printf_message(context, _("Could not allocate main dmFile"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* Append the new dmFile.
+     * XXX: Main document must go first */
+    if (document->dmFileMetaType == FILEMETATYPE_MAIN && dm_files->children)
+        file = xmlAddPrevSibling(dm_files->children, new_file);
+    else 
+        file = xmlAddChild(dm_files, new_file);
+
     if (!file) {
+        xmlFreeNode(new_file); new_file = NULL;
         isds_printf_message(context, _("Could not add dmFile child to "
                     "%s element"), dm_files->name);
         err = IE_ERROR;

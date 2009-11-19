@@ -379,6 +379,18 @@ int main(int argc, char **argv) {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"*/
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
        
+        struct isds_document minor_document;
+        memset(&minor_document, 0, sizeof(minor_document));
+        minor_document.data = "hello world?";
+        minor_document.data_length = strlen(minor_document.data) + 1;
+        minor_document.dmMimeType = "text/plain";
+        /* XXX: This should fail 
+        minor_document.dmFileMetaType = FILEMETATYPE_MAIN; */
+        minor_document.dmFileMetaType = FILEMETATYPE_ENCLOSURE;
+        /* Server implementation demands dmFileDescr to be valid file name */
+        /*minor_document.dmFileDescr = "Standard text.txt";*/
+        minor_document.dmFileDescr = "minor_standard_text.txt";
+
         struct isds_document main_document;
         memset(&main_document, 0, sizeof(main_document));
         main_document.data = "Hello World!";
@@ -387,18 +399,23 @@ int main(int argc, char **argv) {
          * See <http://www.abclinuxu.cz/forum/show/284940> */
         main_document.dmMimeType = "text/plain";
         /* XXX: This should fail */
-        main_document.dmFileMetaType = FILEMETATYPE_ENCLOSURE;
-        /*main_document.dmFileMetaType = FILEMETATYPE_MAIN;*/
+        /*main_document.dmFileMetaType = FILEMETATYPE_ENCLOSURE;*/
+        main_document.dmFileMetaType = FILEMETATYPE_MAIN;
         /* Server implementation demands dmFileDescr to be valid file name */
         /*main_document.dmFileDescr = "Standard text.txt";*/
         main_document.dmFileDescr = "standard_text.txt";
 
-        struct isds_list documents = {
+        struct isds_list documents_main_item = {
             .data = &main_document,
             .next = NULL,
             .destructor = NULL
         };
-        message.documents = &documents;
+        struct isds_list documents_minor_item = {
+            .data = &minor_document,
+            .next = &documents_main_item,
+            .destructor = NULL
+        };
+        message.documents = &documents_minor_item;
 
 
         printf("Sending message to box ID `%s'\n",

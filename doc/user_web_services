@@ -101,6 +101,7 @@ Non-normative error codes:
     1214    Document description extension does not match document content
     1214    Provided MIME type does not match document
     2010    First document structure invalid
+    2032    Message does not carry any document
     9005    Message not valid (probably)
 
 In case of positive virus detection (processed after sending), infected
