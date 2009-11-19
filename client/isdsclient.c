@@ -382,7 +382,7 @@ int main(int argc, char **argv) {
         struct isds_document minor_document;
         memset(&minor_document, 0, sizeof(minor_document));
         minor_document.data = "hello world?";
-        minor_document.data_length = strlen(minor_document.data) + 1;
+        minor_document.data_length = strlen(minor_document.data);
         minor_document.dmMimeType = "text/plain";
         /* XXX: This should fail 
         minor_document.dmFileMetaType = FILEMETATYPE_MAIN; */
@@ -394,7 +394,7 @@ int main(int argc, char **argv) {
         struct isds_document main_document;
         memset(&main_document, 0, sizeof(main_document));
         main_document.data = "Hello World!";
-        main_document.data_length = strlen(main_document.data) + 1;
+        main_document.data_length = strlen(main_document.data);
         /* Server implementation sais text is not text file
          * See <http://www.abclinuxu.cz/forum/show/284940> */
         main_document.dmMimeType = "text/plain";
