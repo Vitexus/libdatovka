@@ -391,6 +391,7 @@ int main(int argc, char **argv) {
         /*minor_document.dmFileDescr = "Standard text.txt";*/
         minor_document.dmFileDescr = "minor_standard_text.txt";
         minor_document.dmFileGuid = "2";
+        minor_document.dmUpFileGuid = "1";
 
         struct isds_document main_document;
         memset(&main_document, 0, sizeof(main_document));

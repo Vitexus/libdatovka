@@ -241,6 +241,18 @@ _hidden isds_error check_documents_hiararchy(struct isds_ctx *context,
                 return IE_ERROR;
             }
         }
+
+        /* All document references should point to existing document ID */
+        /* ???: Should we forbid self-refencing? */
+        if (document->dmUpFileGuid) {
+            if (!isds_find_document_by_id(documents,
+                        document->dmUpFileGuid)) {
+                isds_printf_message(context, _("List contains documents "
+                            "referencing to unexisting document ID `%s'"),
+                        document->dmUpFileGuid);
+                return IE_ERROR;
+            }
+        }
     }
     
     if (!main_exists) {
