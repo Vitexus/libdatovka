@@ -44,7 +44,7 @@ isds_error isds(struct isds_ctx *context, const isds_service service,
  * @documents is list of isds_document to check
  * @returns IE_SUCCESS if structure is valid, otherwise context' message will
  * be filled with explanation of found problem. */
-isds_error check_documents_hiararchy(struct isds_ctx *context,
+isds_error check_documents_hierarchy(struct isds_ctx *context,
         const struct isds_list *documents);
 
 #endif
