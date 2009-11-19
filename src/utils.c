@@ -195,6 +195,10 @@ char *b64encode(const void *plain, const size_t length) {
 
     base64_init_encodestate(&state);
 
+    /* TODO: This function assumes sizeof(char) == 1 byte.
+     * To fix it, one must fix underlying functions too. */
+    if (sizeof(char) != 1) PANIC("sizeof(char) != 1 byte");
+
     /* Allocate buffer
      * (4 is padding, 1 is final new line, and 1 is string terminator) */
     buffer = malloc(length * 2 + 4 + 1 + 1);

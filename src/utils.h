@@ -12,6 +12,14 @@
 #define _hidden
 #endif
 
+/* PANIC macro aborts current proces without any clean up.
+ * Use it as last resort fatal error solution */
+#define PANIC(message) { \
+    if (stderr != NULL ) fprintf(stderr, \
+            "LIBISDS PANIC (%s:%d): %s\n", __FILE__, __LINE__, (message)); \
+    abort(); \
+}
+
 /* Concatenate two strings into newly allocated buffer.
  * You must free() them, when you don't need it anymore.
  * Any of the arguments can be NULL meaning empty string.
