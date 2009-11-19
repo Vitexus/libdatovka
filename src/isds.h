@@ -432,6 +432,14 @@ int isds_message_free(struct isds_message **message);
 int isds_address_free(struct isds_address **address);
 */
 
+/* Search for document by document ID in list of documents. IDs are compared
+ * as UTF-8 string.
+ * @documents is list of isds_documents
+ * @id is document identifier
+ * @return first matching document or NULL. */
+const struct isds_document *isds_find_document_by_id(
+        const struct isds_list *documents, const char *id);
+
 /* Deallocate structure isds_DbOwnerInfo recursively and NULL it */
 void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info);
 

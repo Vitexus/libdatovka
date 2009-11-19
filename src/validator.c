@@ -222,6 +222,7 @@ _hidden isds_error check_documents_hiararchy(struct isds_ctx *context,
         document = (const struct isds_document *) item->data;
         if (!document) continue;
 
+        /* Only one document can be main */
         if (document->dmFileMetaType == FILEMETATYPE_MAIN) {
             if (main_exists) {
                 isds_log_message(context,
@@ -231,6 +232,15 @@ _hidden isds_error check_documents_hiararchy(struct isds_ctx *context,
             main_exists = 1;
         }
         
+        /* All document identifiers should be unique */
+        if (document->dmFileGuid) {
+            if (isds_find_document_by_id(documents, document->dmFileGuid) !=
+                    document) {
+                isds_printf_message(context, _("List contains more documents "
+                            "with the same ID `%s'"), document->dmFileGuid);
+                return IE_ERROR;
+            }
+        }
     }
     
     if (!main_exists) {

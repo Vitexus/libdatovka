@@ -390,6 +390,7 @@ int main(int argc, char **argv) {
         /* Server implementation demands dmFileDescr to be valid file name */
         /*minor_document.dmFileDescr = "Standard text.txt";*/
         minor_document.dmFileDescr = "minor_standard_text.txt";
+        minor_document.dmFileGuid = "2";
 
         struct isds_document main_document;
         memset(&main_document, 0, sizeof(main_document));
@@ -404,6 +405,7 @@ int main(int argc, char **argv) {
         /* Server implementation demands dmFileDescr to be valid file name */
         /*main_document.dmFileDescr = "Standard text.txt";*/
         main_document.dmFileDescr = "standard_text.txt";
+        main_document.dmFileGuid = "1";
 
         struct isds_list documents_main_item = {
             .data = &main_document,

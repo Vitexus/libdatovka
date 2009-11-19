@@ -2038,6 +2038,28 @@ leave:
 #undef EXTRACT_STRING
 
 
+/* Search for document by document ID in list of documents. IDs are compared
+ * as UTF-8 string.
+ * @documents is list of isds_documents
+ * @id is document identifier
+ * @return first matching document or NULL. */
+const struct isds_document *isds_find_document_by_id(
+        const struct isds_list *documents, const char *id) {
+    const struct isds_list *item;
+    const struct isds_document *document;
+
+    for (item = documents; item; item = item->next) {
+        document = (struct isds_document *) item->data;
+        if (!document) continue;
+
+        if (!xmlStrcmp((xmlChar *) id, (xmlChar *) document->dmFileGuid))
+            return document;
+    }
+
+    return NULL;
+}
+
+
 /*int isds_get_message(struct isds_ctx *context, const unsigned int id,
         struct isds_message **message);
 int isds_send_message(struct isds_ctx *context, struct isds_message *message);
