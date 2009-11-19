@@ -1,6 +1,7 @@
 #ifndef __ISDS_UTILS_H__
 #define __ISDS_UTILS_H__
 
+#include <stdlib.h>
 #include <stdarg.h>
 
 /* _hidden macro marks library private symbols. GCC can exclude them from global

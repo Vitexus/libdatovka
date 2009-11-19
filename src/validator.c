@@ -208,7 +208,7 @@ leave:
  * @documents is list of isds_document to check
  * @returns IE_SUCCESS if structure is valid, otherwise context' message will
  * be filled with explanation of found problem. */
-isds_error check_documents_hiararchy(struct isds_ctx *context,
+_hidden isds_error check_documents_hiararchy(struct isds_ctx *context,
         const struct isds_list *documents) {
 
     const struct isds_list *item;

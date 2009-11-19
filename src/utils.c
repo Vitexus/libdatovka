@@ -113,7 +113,7 @@ _hidden int isds_vasprintf(char **buffer, const char *format, va_list ap) {
  * @format format string as for printf(3)
  * @... variadic arguments
  * @Returns number of bytes printed. In case of errror, -1 and NULL @buffer*/
-int isds_asprintf(char **buffer, const char *format, ...) {
+_hidden int isds_asprintf(char **buffer, const char *format, ...) {
     int ret;
     va_list ap;
     va_start(ap, format);
@@ -127,7 +127,7 @@ int isds_asprintf(char **buffer, const char *format, ...) {
  * @utf string int UTF-8 terminated by zero byte
  * @return allocated string encoded in locale specific encoding. You must free
  * it. In case of error or NULL @utf returns NULL. */
-char *utf82locale(const char *utf) {
+_hidden char *utf82locale(const char *utf) {
     iconv_t state;
     size_t utf_length;
     char *buffer = NULL, *new_buffer;

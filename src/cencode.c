@@ -6,24 +6,26 @@ For details, see http://sourceforge.net/projects/libb64
 */
 
 #include "cencode.h"
+#include "utils.h"
 
 const int CHARS_PER_LINE = 72;
 
-void base64_init_encodestate(base64_encodestate* state_in)
+_hidden void base64_init_encodestate(base64_encodestate* state_in)
 {
 	state_in->step = step_A;
 	state_in->result = 0;
 	state_in->stepcount = 0;
 }
 
-char base64_encode_value(char value_in)
+_hidden char base64_encode_value(char value_in)
 {
 	static const char* encoding = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	if (value_in > 63) return '=';
 	return encoding[(int)value_in];
 }
 
-int base64_encode_block(const char* plaintext_in, int length_in, char* code_out, base64_encodestate* state_in)
+_hidden int base64_encode_block(const char* plaintext_in, int length_in,
+        char* code_out, base64_encodestate* state_in)
 {
 	const char* plainchar = plaintext_in;
 	const char* const plaintextend = plaintext_in + length_in;
@@ -84,7 +86,7 @@ int base64_encode_block(const char* plaintext_in, int length_in, char* code_out,
 	return codechar - code_out;
 }
 
-int base64_encode_blockend(char* code_out, base64_encodestate* state_in)
+_hidden int base64_encode_blockend(char* code_out, base64_encodestate* state_in)
 {
 	char* codechar = code_out;
 	
