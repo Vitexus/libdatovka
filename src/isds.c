@@ -1773,6 +1773,7 @@ isds_error isds_send_message(struct isds_ctx *context,
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     xmlChar *string = NULL;
+    _Bool message_is_complete = 0;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!outgoing_message) return IE_INVAL;
@@ -1926,6 +1927,9 @@ isds_error isds_send_message(struct isds_ctx *context,
         if (err) goto leave;
     }
 
+    /* Signal we can serilize message since now */
+    message_is_complete = 1;
+
     
 
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending CreateMessage request to ISDS\n"));
@@ -1933,8 +1937,7 @@ isds_error isds_send_message(struct isds_ctx *context,
     /* Sent request */
     err = isds(context, SERVICE_DM_OPERATIONS, request, &response);
    
-    /* Destroy request */
-    xmlFreeNode(request); request = NULL;
+    /* Dont' destroy request, we want to privode it to application later */
 
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
@@ -2012,6 +2015,52 @@ isds_error isds_send_message(struct isds_ctx *context,
     }
 
 leave:
+    /* TODO: Serialize message into structure member raw */
+    /* XXX: Each web service transport message in different format.
+     * Therefore it's not possible to save them directly.
+     * To save them, one must figure out common format.
+     * We can leave it on application, or we can implement the ESS format. */
+    /*if (message_is_complete) {
+        if (outgoing_message->envelope->dmID) {
+        */
+            /* Add assigned message ID as first child*/
+            /*xmlNodePtr dmid_text = xmlNewText(
+                    (xmlChar *) outgoing_message->envelope->dmID);
+            if (!dmid_text) goto serialization_failed;
+
+            xmlNodePtr dmid_element = xmlNewNode(envelope->ns,
+                    BAD_CAST "dmID");
+            if (!dmid_element) {
+                xmlFreeNode(dmid_text);
+                goto serialization_failed;
+            }
+
+            xmlNodePtr dmid_element_with_text =
+                xmlAddChild(dmid_element, dmid_text);
+            if (!dmid_element_with_text) {
+                xmlFreeNode(dmid_element);
+                xmlFreeNode(dmid_text);
+                goto serialization_failed;
+            }
+
+            node = xmlAddPrevSibling(envelope->childern,
+                    dmid_element_with_text);
+            if (!node) {
+                xmlFreeNodeList(dmid_element_with_text);
+                goto serialization_failed;
+            }
+            */
+
+            /* Serialize message with ID into raw */
+            /*buffer = serialize_element(envelope)*/
+/*        }
+
+serialization_failed:
+        
+
+    }*/
+
+    /* Clean up */
     free(string);
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
