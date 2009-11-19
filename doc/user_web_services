@@ -31,7 +31,7 @@ Constraints: Client must be autenticated in Access Manager
 
 CreateMessage (*)
     Create and send a message
-MessageDownlod
+MessageDownload
     Download incoming message
 SignedMessageDownload
     Download incoming message with digital signature of ministery of interiors
