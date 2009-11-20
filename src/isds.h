@@ -232,23 +232,24 @@ typedef enum {
 
 /* Message status */
 typedef enum {
-    MESSAGESTATE_SENT = 1,          /* Message has been put into ISDS */
-    MESSAGESTATE_STAMPED = 2,       /* Message stamped by TSA */
-    MESSAGESTATE_INFECTED = 3,      /* Message included virues,
-                                       infected document has been removed */
-    MESSAGESTATE_DELIVERED = 4,     /* Message delivered
-                                       (dmDeliveryTime stored) */
-    MESSAGESTATE_SUBSTITUTED = 5,   /* Message delivered through fiction,
-                                       dmAcceptanceTime stored */
-    MESSAGESTATE_RECIEVED = 6,      /* Message devlivered by user login
-                                       dmAcceptanceTime stored */
-    MESSAGESTATE_READ = 7,          /* Message has been read by user */
-    MESSAGESTATE_UNDELIVERABLE = 8, /* Message could not been delivered
-                                       (e.g. recipent box has been made
-                                       unaccessible meantime) */
-    MESSAGESTATE_REMOVED = 9        /* Message content deleted */
+    MESSAGESTATE_SENT = 0x2,            /* Message has been put into ISDS */
+    MESSAGESTATE_STAMPED = 0x4,         /* Message stamped by TSA */
+    MESSAGESTATE_INFECTED = 0x8,        /* Message included virues,
+                                           infected document has been removed */
+    MESSAGESTATE_DELIVERED = 0x10,      /* Message delivered
+                                           (dmDeliveryTime stored) */
+    MESSAGESTATE_SUBSTITUTED = 0x20,    /* Message delivered through fiction,
+                                           dmAcceptanceTime stored */
+    MESSAGESTATE_RECIEVED = 0x40,       /* Message devlivered by user login
+                                           dmAcceptanceTime stored */
+    MESSAGESTATE_READ = 0x80,           /* Message has been read by user */
+    MESSAGESTATE_UNDELIVERABLE = 0x100, /* Message could not been delivered
+                                           (e.g. recipent box has been made
+                                           unaccessible meantime) */
+    MESSAGESTATE_REMOVED = 0x200        /* Message content deleted */
 
 } isds_message_status;
+#define MESSAGESTATE_ANY 0x3FE          /* Union of all isds_message_status values */
 
 /* Document */
 struct isds_document {
@@ -416,6 +417,35 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
  * @return ISDS_SUCCESS, or other error code if something goes wrong. */
 isds_error isds_send_message(struct isds_ctx *context,
         struct isds_message *outgoing_message);
+
+/* Get list of outgoing (already sent) messages.
+ * Any criterion argument can be NULL, if you don't care about it.
+ * @context is session context. Must not be NULL.
+ * @from_time is minimal time and date of message sending inclusive.
+ * @to_time is maximal time and date of message sending inclusive
+ * @dmSenderOrgUnitNum is the same as isds_envelope.dmSenderOrgUnitNum
+ * @status_filter is bit field of isds_message_states values. Use special
+ * value MESSAGESTATE_ANY to signal you don't care. (It's defined as union of
+ * all values, you can use bitwise arithmetic if you want.)
+ * @offset is index of first message we are interested in. First message is 1.
+ * Set to 0 (or 1) if you don't care.
+ * @number is maximal length of list you want to get as input value, outputs
+ * number of messages matching these criteria. Can be NULL if you don't care
+ * (applies to output value either).
+ * @messages is automatically reallocated list of isds_message's. Be ware that
+ * it returns only brief overview (envelope and some other fields) about each
+ * message, not the complete message. FIXME: Specify exact fields.
+ * Use NULL if
+ * you don't care about don't need the data (useful if you want to know only
+ * the @number). If you provide &NULL, list will be allocated on heap, if you
+ * provide pointer to non-NULL, list will be freed automacally at first. Also
+ * in case of error the list will be NULLed.
+ * @return IE_SUCCESS or appropriate error code. */
+isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
+        const struct tm *from_time, const struct tm *to_time,
+        const long int *dmSenderOrgUnitNum, const unsigned int status_filter,
+        const unsigned long int offset, unsigned long int *number,
+        struct isds_list **messages);
 
 /* Send bogus request to ISDS.
  * Just for test purposes */
