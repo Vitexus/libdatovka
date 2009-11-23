@@ -816,7 +816,8 @@ static isds_error tm2datestring(const struct tm *time, xmlChar **string) {
 static isds_error tm2timestring(const struct tm *time, xmlChar **string) {
     if (!time || !string) return IE_INVAL;
 
-    long int zone_hours = timezone / (60 * 60);
+    /* timezone is number of seconds west of GMT */
+    long int zone_hours = - timezone / (60 * 60);
     long int zone_minutes = ( ((timezone < 0) ? (-1 * timezone) : timezone)
             % (60 * 60)) / 60;
 
@@ -824,7 +825,7 @@ static isds_error tm2timestring(const struct tm *time, xmlChar **string) {
      * true for glibc "%04d". We should implement it.
      * See <http://www.w3.org/TR/2001/REC-xmlschema-2-20010502/#dateTime> */ 
     if (-1 == isds_asprintf((char **) string,
-                "%04d-%02d-%02dT%02d:%02d:%02dZ%+02ld:%02ld",
+                "%04d-%02d-%02dT%02d:%02d:%02d%+03ld:%02ld",
                 time->tm_year + 1900, time->tm_mon + 1, time->tm_mday,
                 time->tm_hour, time->tm_min, time->tm_sec,
                 zone_hours, zone_minutes))
