@@ -436,6 +436,20 @@ int main(int argc, char **argv) {
     }
 
 
+    /* Get list of sent messages */
+    {
+        /* TODO: Try different criteria */
+        printf("Getting list of sent messages\n");
+        err = isds_get_list_of_sent_messages(ctx, NULL, NULL, NULL,
+                MESSAGESTATE_ANY, 0, NULL, NULL);
+        if (err)
+            printf("isds_isds_get_list_of_sent_messages() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        else {
+            printf("isds_isds_get_list_of_sent_messages() succeeded\n");
+        }
+    }
+
 
     err = isds_logout(ctx);
     if (err) {
