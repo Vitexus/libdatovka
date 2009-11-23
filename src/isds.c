@@ -191,6 +191,9 @@ isds_error isds_init(void) {
     if (!(isds_ns = xmlNewNs(NULL, BAD_CAST ISDS_NS, BAD_CAST "isds")))
         return IE_ERROR;
 
+    /* Time arithmetics (extern timezone) */
+    tzset();
+
     return IE_SUCCESS;
 }
 
@@ -776,7 +779,7 @@ static const xmlChar *isds_FileMetaType2string(const isds_FileMetaType type) {
 
 /* Convert UTF-8 @string represantion of ISO 8601 date to @time.
  * XXX: Not all ISO formats are supported */
-static isds_error datestring2tm(xmlChar *string, struct tm *time) {
+static isds_error datestring2tm(const xmlChar *string, struct tm *time) {
     char *offset;
     if (!string || !time) return IE_INVAL;
     
@@ -796,8 +799,9 @@ static isds_error datestring2tm(xmlChar *string, struct tm *time) {
     return IE_NOTSUP;
 }
 
+
 /* Convert struct tm *@time to UTF-8 ISO 8601 date @string. */
-static isds_error tm2datestring(struct tm *time, xmlChar **string) {
+static isds_error tm2datestring(const struct tm *time, xmlChar **string) {
     if (!time || !string) return IE_INVAL;
 
     if (-1 == isds_asprintf((char **) string, "%d-%02d-%02d",
@@ -807,6 +811,28 @@ static isds_error tm2datestring(struct tm *time, xmlChar **string) {
     return IE_SUCCESS;
 }
 
+
+/* Convert struct tm *@time to UTF-8 ISO 8601 date-time @string. */
+static isds_error tm2timestring(const struct tm *time, xmlChar **string) {
+    if (!time || !string) return IE_INVAL;
+
+    long int zone_hours = timezone / (60 * 60);
+    long int zone_minutes = ( ((timezone < 0) ? (-1 * timezone) : timezone)
+            % (60 * 60)) / 60;
+
+    /* TODO: small negative year should be formated as "-0012". This is not
+     * true for glibc "%04d". We should implement it.
+     * See <http://www.w3.org/TR/2001/REC-xmlschema-2-20010502/#dateTime> */ 
+    if (-1 == isds_asprintf((char **) string,
+                "%04d-%02d-%02dT%02d:%02d:%02dZ%+02ld:%02ld",
+                time->tm_year + 1900, time->tm_mon + 1, time->tm_mday,
+                time->tm_hour, time->tm_min, time->tm_sec,
+                zone_hours, zone_minutes))
+        return IE_ERROR;
+
+
+    return IE_SUCCESS;
+}
 
 /* Following EXTRACT_* macros expects @result, @xpath_ctx, @err, @context
  * and leave lable */
@@ -2077,6 +2103,176 @@ serialization_failed:
 
     return err;
 }
+
+
+/* Get list of outgoing (already sent) messages.
+ * Any criterion argument can be NULL, if you don't care about it.
+ * @context is session context. Must not be NULL.
+ * @from_time is minimal time and date of message sending inclusive.
+ * @to_time is maximal time and date of message sending inclusive
+ * @dmSenderOrgUnitNum is the same as isds_envelope.dmSenderOrgUnitNum
+ * @status_filter is bit field of isds_message_states values. Use special
+ * value MESSAGESTATE_ANY to signal you don't care. (It's defined as union of
+ * all values, you can use bitwise arithmetic if you want.)
+ * @offset is index of first message we are interested in. First message is 1.
+ * Set to 0 (or 1) if you don't care.
+ * @number is maximal length of list you want to get as input value, outputs
+ * number of messages matching these criteria. Can be NULL if you don't care
+ * (applies to output value either).
+ * @messages is automatically reallocated list of isds_message's. Be ware that
+ * it returns only brief overview (envelope and some other fields) about each
+ * message, not the complete message. FIXME: Specify exact fields.
+ * Use NULL if
+ * you don't care about don't need the data (useful if you want to know only
+ * the @number). If you provide &NULL, list will be allocated on heap, if you
+ * provide pointer to non-NULL, list will be freed automacally at first. Also
+ * in case of error the list will be NULLed.
+ * @return IE_SUCCESS or appropriate error code. */
+isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
+        const struct tm *from_time, const struct tm *to_time,
+        const long int *dmSenderOrgUnitNum, const unsigned int status_filter,
+        const unsigned long int offset, unsigned long int *number,
+        struct isds_list **messages) {
+
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL, node;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    xmlChar *string = NULL;
+    /*_Bool message_is_complete = 0;*/
+
+    if (!context) return IE_INVALID_CONTEXT;
+
+    /* Check if connection is established
+     * TODO: This check should be done donwstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+    /* Build GetListOfSentMessages request */
+    request = xmlNewNode(NULL, BAD_CAST "GetListOfSentMessages");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build GetListOfSentMessages request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+   
+    if (from_time) {
+        err = tm2timestring(from_time, &string);
+        if (err) goto leave;
+    }
+    INSERT_STRING(request, "dmFromTime", string);
+    free(string); string = NULL;
+
+    if (to_time) {
+        err = tm2timestring(to_time, &string);
+        if (err) goto leave;
+    }
+    INSERT_STRING(request, "dmToTime", string);
+    free(string); string = NULL;
+
+    INSERT_LONGINT(request, "dmSenderOrgUnitNum", dmSenderOrgUnitNum, string);
+
+    /* FIXME: add next criteria */
+
+
+    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending GetListOfSentMessages request "
+                "to ISDS\n"));
+
+    /* Sent request */
+    err = isds(context, SERVICE_DM_INFO, request, &response);
+    xmlFreeNode(request); request = NULL;
+    
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Processing ISDS response on GetListOfSentMessages "
+                    "request failed\n"));
+        goto leave;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, SERVICE_DM_INFO, response,
+            &code, &message, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("ISDS response on GetListOfSentMessages request "
+                    "is missing status\n"));
+        goto leave;
+    }
+
+    /* FIXME: Review error handling for this request */
+    /* Request processed, but nothing found */
+    if (xmlStrcmp(code, BAD_CAST "0000")) {
+        char *code_locale = utf82locale((char*)code);
+        char *message_locale = utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server refused GetListOfSentMessages request "
+                    "(code=%s, message=%s)\n"), code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+
+    /* Extract data */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(
+            BAD_CAST "/isds:GetListOfSentMessagesResponse", xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context,
+                _("Missing GetListOfSentMessagesResponse element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    if (result->nodesetval->nodeNr > 1) {
+        isds_log_message(context,
+                _("Multiple GetListOfSentMessagesResponse element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+    xmlXPathFreeObject(result); result = NULL;
+
+leave:
+    free(string);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+    xmlFreeNode(request);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("GetListOfSentMessages request processed by server "
+                    "successfully.\n"));
+    return err;
+}
+
 
 #undef INSERT_STRING_ATTRIBUTE
 #undef INSERT_LONGINT
