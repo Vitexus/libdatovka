@@ -438,9 +438,18 @@ int main(int argc, char **argv) {
 
     /* Get list of sent messages */
     {
+        struct tm from_time = {
+            .tm_year = 2000 - 1900,
+            .tm_mon = 1 - 1,
+            .tm_mday = 1,
+            .tm_hour = 1,
+            .tm_min = 2,
+            .tm_sec = 3,
+        };
+
         /* TODO: Try different criteria */
         printf("Getting list of sent messages\n");
-        err = isds_get_list_of_sent_messages(ctx, NULL, NULL, NULL,
+        err = isds_get_list_of_sent_messages(ctx, &from_time, NULL, NULL,
                 MESSAGESTATE_ANY, 0, NULL, NULL);
         if (err)
             printf("isds_isds_get_list_of_sent_messages() failed: %s: %s\n",
