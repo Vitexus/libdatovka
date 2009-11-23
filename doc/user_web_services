@@ -107,7 +107,15 @@ Non-normative error codes:
 In case of positive virus detection (processed after sending), infected
 document is removed, message state is set to value 3 (from point of view of
 recipient) and sender get new message originated by server.
-    
+
+
+GetListOfSentMessages
+=====================
+Download list of outgoing messages matching search criteria.
+
+Non-normative error codes:
+    2017    Syntax error in date-time
+
 
 FindDataBox (*)
 ===========
