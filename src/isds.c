@@ -2163,9 +2163,12 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     xmlChar *string = NULL;
-    /*_Bool message_is_complete = 0;*/
+    long unsigned int count = 0;
 
     if (!context) return IE_INVALID_CONTEXT;
+   
+    /* Free former message list if any */
+    if (messages) isds_list_free(messages);
 
     /* Check if connection is established
      * TODO: This check should be done donwstairs. */
@@ -2249,7 +2252,6 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
         goto leave;
     }
 
-    /* FIXME: Review error handling for this request */
     /* Request processed, but nothing found */
     if (xmlStrcmp(code, BAD_CAST "0000")) {
         char *code_locale = utf82locale((char*)code);
@@ -2276,25 +2278,21 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
         goto leave;
     }
     result = xmlXPathEvalExpression(
-            BAD_CAST "/isds:GetListOfSentMessagesResponse", xpath_ctx);
+            BAD_CAST
+            "/isds:GetListOfSentMessagesResponse/isds:dmRecords/isds:dmRecord",
+            xpath_ctx);
     if (!result) {
         err = IE_ERROR;
         goto leave;
     }
-    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-        isds_log_message(context,
-                _("Missing GetListOfSentMessagesResponse element"));
-        err = IE_ISDS;
-        goto leave;
+    
+    /* Fill output arguments in */
+    if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        for (count = 0; count < result->nodesetval->nodeNr; count++) {
+            node = result->nodesetval->nodeTab[count];
+        }
     }
-    if (result->nodesetval->nodeNr > 1) {
-        isds_log_message(context,
-                _("Multiple GetListOfSentMessagesResponse element"));
-        err = IE_ISDS;
-        goto leave;
-    }
-    xpath_ctx->node = result->nodesetval->nodeTab[0];
-    xmlXPathFreeObject(result); result = NULL;
+    if (number) *number = count;
 
 leave:
     free(string);

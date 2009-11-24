@@ -462,7 +462,8 @@ int main(int argc, char **argv) {
             printf("isds_isds_get_list_of_sent_messages() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
         else {
-            printf("isds_isds_get_list_of_sent_messages() succeeded\n");
+            printf("isds_isds_get_list_of_sent_messages() succeeded: "
+                    "number of messages = %lu\n", number);
         }
     }
 
