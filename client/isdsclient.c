@@ -452,11 +452,12 @@ int main(int argc, char **argv) {
             .tv_sec = from_time_t,
             .tv_usec = 4000
         };
+        unsigned long int number = 0;
 
         /* TODO: Try different criteria */
         printf("Getting list of sent messages\n");
         err = isds_get_list_of_sent_messages(ctx, &from_time, NULL, NULL,
-                MESSAGESTATE_ANY, 0, NULL, NULL);
+                MESSAGESTATE_ANY, 0, &number, NULL);
         if (err)
             printf("isds_isds_get_list_of_sent_messages() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));

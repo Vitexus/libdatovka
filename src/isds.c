@@ -960,6 +960,26 @@ static isds_error timeval2timestring(const struct timeval *time,
         free(buffer); (buffer) = NULL; \
     } else { INSERT_STRING(parent, element, NULL) }
 
+#define INSERT_ULONGINT(parent, element, ulongintPtr, buffer) \
+    if ((ulongintPtr)) { \
+        /* FIXME: locale sensitive */ \
+        if (-1 == isds_asprintf((char **)&(buffer), "%lu", *(ulongintPtr))) { \
+            err = IE_NOMEM; \
+            goto leave; \
+        } \
+        INSERT_STRING(parent, element, buffer) \
+        free(buffer); (buffer) = NULL; \
+    } else { INSERT_STRING(parent, element, NULL) }
+
+#define INSERT_ULONGINTNOPTR(parent, element, ulongint, buffer) \
+    /* FIXME: locale sensitive */ \
+    if (-1 == isds_asprintf((char **)&(buffer), "%lu", ulongint)) { \
+        err = IE_NOMEM; \
+        goto leave; \
+    } \
+    INSERT_STRING(parent, element, buffer) \
+    free(buffer); (buffer) = NULL; \
+
 #define INSERT_STRING_ATTRIBUTE(parent, attribute, string) \
     attribute_node = xmlNewProp((parent), BAD_CAST (attribute), \
             (xmlChar *) (string)); \
@@ -2122,6 +2142,7 @@ serialization_failed:
  * @messages is automatically reallocated list of isds_message's. Be ware that
  * it returns only brief overview (envelope and some other fields) about each
  * message, not the complete message. FIXME: Specify exact fields.
+ * The list is sorted by delivery time in ascending order.
  * Use NULL if
  * you don't care about don't need the data (useful if you want to know only
  * the @number). If you provide &NULL, list will be allocated on heap, if you
@@ -2182,7 +2203,26 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
 
     INSERT_LONGINT(request, "dmSenderOrgUnitNum", dmSenderOrgUnitNum, string);
 
-    /* FIXME: add next criteria */
+    if (status_filter > MESSAGESTATE_ANY) {
+        isds_printf_message(context,
+                _("Invalid message state filter value: %ld"), status_filter);
+        err = IE_INVAL;
+        goto leave;
+    }
+    INSERT_ULONGINTNOPTR(request, "dmStatusFilter", status_filter, string);
+
+    if (offset > 0 ) {
+        INSERT_ULONGINTNOPTR(request, "dmOffset", offset, string);
+    } else {
+        INSERT_STRING(request, "dmOffset", "1");
+    }
+
+    /* number 0 means no limit */
+    if (number && *number == 0) {
+        INSERT_STRING(request, "dmLimit", NULL);
+    } else {
+        INSERT_ULONGINT(request, "dmLimit", number, string);
+    }
 
 
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending GetListOfSentMessages request "
@@ -2275,6 +2315,8 @@ leave:
 
 
 #undef INSERT_STRING_ATTRIBUTE
+#undef INSERT_ULONGINTNOPTR
+#undef INSERT_ULONGINT
 #undef INSERT_LONGINT
 #undef INSERT_BOOLEAN
 #undef INSERT_STRING
