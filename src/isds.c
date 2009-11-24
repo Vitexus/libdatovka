@@ -817,6 +817,7 @@ static isds_error timeval2timestring(const struct timeval *time,
     if (!time || !string) return IE_INVAL;
 
     if (!gmtime_r(&time->tv_sec, &broken)) return IE_DATE;
+    if (time->tv_usec < 0 || time->tv_usec > 999999) return IE_DATE;
 
     /* TODO: small negative year should be formated as "-0012". This is not
      * true for glibc "%04d". We should implement it.
