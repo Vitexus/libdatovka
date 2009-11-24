@@ -177,10 +177,13 @@ struct isds_envelope {
                                        incoming/outgoing messages */
     enum isds_message_states *dmMessageStatus;  /* Message state */
     long int *dmAttachmentSize;     /* Size of message documents in
-                                       kilobytes (rounded).*/
-    struct timeval *dmDeliveryTime;     /* Time of delivery into a box */
+                                       kilobytes (rounded). */
+    struct timeval *dmDeliveryTime;     /* Time of delivery into a box
+                                           NULL, if message has not been
+                                           delivered yet */
     struct timeval *dmAcceptanceTime;   /* Time of accpetance of the message
-                                           by an user */
+                                           by an user. NULL if message has not
+                                           been accepted yet. */
 
     /* Following members apply to both outgoing and incoming messages: */
     char *dmSenderOrgUnit;          /* Organisation unit of sender as string;

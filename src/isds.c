@@ -1151,6 +1151,17 @@ leave:
 }
 
 
+/* Convert isds:dmRecord XML tree into structure
+ * @context is ISDS context
+ * @envelope is automically reallocated message envelope structure
+ * @xpath_ctx is XPath context with current node as isds:dmRecord element
+ * In case of error @envelope will be freed. */
+static isds_error extract_DmRecord(struct isds_ctx *context,
+        struct isds_envelope **envelope, xmlXPathContextPtr xpath_ctx) {
+    return IE_NOTSUP;
+}
+
+
 /* Convert isds_document structure into XML tree and append to dmFiles node.
  * @context is session context
  * @document is ISDS document
@@ -2293,13 +2304,52 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
     
     /* Fill output arguments in */
     if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        struct isds_envelope *envelope;
+        struct isds_list *item = NULL, *last_item = NULL;
+
         for (count = 0; count < result->nodesetval->nodeNr; count++) {
-            node = result->nodesetval->nodeTab[count];
+            /* Create new message  */
+            item = calloc(1, sizeof(*item));
+            if (!item) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+            item->destructor = (void(*)(void**)) &isds_message_free;
+            item->data = calloc(1, sizeof(struct isds_message));
+            if (!item->data) {
+                isds_list_free(&item);
+                err = IE_NOMEM;
+                goto leave;
+            }
+
+            /* Extract envelope data */
+            xpath_ctx->node = result->nodesetval->nodeTab[count];
+            envelope = NULL;
+            err = extract_DmRecord(context, &envelope, xpath_ctx);
+            if (err) {
+                isds_list_free(&item);
+                goto leave;
+            }
+
+            /* Attach extracted envelope */
+            ((struct isds_message *) item->data)->envelope = envelope;
+
+            /* Append new message into the list */
+            if (!*messages) { 
+                *messages = last_item = item;
+            } else {
+                last_item->next = item;
+                last_item = item;
+            }
         }
     }
     if (number) *number = count;
 
 leave:
+    if (err) {
+        isds_list_free(messages);
+    }
+
     free(string);
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
