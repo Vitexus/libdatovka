@@ -438,13 +438,19 @@ int main(int argc, char **argv) {
 
     /* Get list of sent messages */
     {
-        struct tm from_time = {
+        struct tm from_time_tm = {
             .tm_year = 2000 - 1900,
             .tm_mon = 1 - 1,
             .tm_mday = 1,
             .tm_hour = 1,
             .tm_min = 2,
             .tm_sec = 3,
+            .tm_isdst = -1
+        };
+        time_t from_time_t = mktime(&from_time_tm);
+        struct timeval from_time = {
+            .tv_sec = from_time_t,
+            .tv_usec = 4000
         };
 
         /* TODO: Try different criteria */

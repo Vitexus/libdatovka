@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <time.h>
 #include "isds_priv.h"
 #include "utils.h"
 #include "soap.h"
@@ -190,9 +189,6 @@ isds_error isds_init(void) {
         return IE_ERROR;
     if (!(isds_ns = xmlNewNs(NULL, BAD_CAST ISDS_NS, BAD_CAST "isds")))
         return IE_ERROR;
-
-    /* Time arithmetics (extern timezone) */
-    tzset();
 
     return IE_SUCCESS;
 }
@@ -812,28 +808,30 @@ static isds_error tm2datestring(const struct tm *time, xmlChar **string) {
 }
 
 
-/* Convert struct tm *@time to UTF-8 ISO 8601 date-time @string. */
-static isds_error tm2timestring(const struct tm *time, xmlChar **string) {
+/* Convert struct timeval * @time to UTF-8 ISO 8601 date-time @string. It
+ * respects the @time microseconds too. */
+static isds_error timeval2timestring(const struct timeval *time,
+        xmlChar **string) {
+    struct tm broken;
+
     if (!time || !string) return IE_INVAL;
 
-    /* timezone is number of seconds west of GMT */
-    long int zone_hours = - timezone / (60 * 60);
-    long int zone_minutes = ( ((timezone < 0) ? (-1 * timezone) : timezone)
-            % (60 * 60)) / 60;
+    if (!gmtime_r(&time->tv_sec, &broken)) return IE_DATE;
 
     /* TODO: small negative year should be formated as "-0012". This is not
      * true for glibc "%04d". We should implement it.
+     * TODO: What's type of time->tv_usec exactly? Unsigned? Absolute?
      * See <http://www.w3.org/TR/2001/REC-xmlschema-2-20010502/#dateTime> */ 
     if (-1 == isds_asprintf((char **) string,
-                "%04d-%02d-%02dT%02d:%02d:%02d%+03ld:%02ld",
-                time->tm_year + 1900, time->tm_mon + 1, time->tm_mday,
-                time->tm_hour, time->tm_min, time->tm_sec,
-                zone_hours, zone_minutes))
+                "%04d-%02d-%02dT%02d:%02d:%02d.%06ld",
+                broken.tm_year + 1900, broken.tm_mon + 1, broken.tm_mday,
+                broken.tm_hour, broken.tm_min, broken.tm_sec,
+                time->tv_usec))
         return IE_ERROR;
-
 
     return IE_SUCCESS;
 }
+
 
 /* Following EXTRACT_* macros expects @result, @xpath_ctx, @err, @context
  * and leave lable */
@@ -2130,7 +2128,7 @@ serialization_failed:
  * in case of error the list will be NULLed.
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
-        const struct tm *from_time, const struct tm *to_time,
+        const struct timeval *from_time, const struct timeval *to_time,
         const long int *dmSenderOrgUnitNum, const unsigned int status_filter,
         const unsigned long int offset, unsigned long int *number,
         struct isds_list **messages) {
@@ -2168,14 +2166,14 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
 
    
     if (from_time) {
-        err = tm2timestring(from_time, &string);
+        err = timeval2timestring(from_time, &string);
         if (err) goto leave;
     }
     INSERT_STRING(request, "dmFromTime", string);
     free(string); string = NULL;
 
     if (to_time) {
-        err = tm2timestring(to_time, &string);
+        err = timeval2timestring(to_time, &string);
         if (err) goto leave;
     }
     INSERT_STRING(request, "dmToTime", string);

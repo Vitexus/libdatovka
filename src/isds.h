@@ -5,6 +5,7 @@
  * Private declarations in isds_priv.h. */
 
 #include <stdlib.h> /* For size_t */
+#include <sys/time.h> /* For struct timeval */
 
 struct isds_ctx;    /* Context for specific ISDS box */
 
@@ -442,7 +443,7 @@ isds_error isds_send_message(struct isds_ctx *context,
  * in case of error the list will be NULLed.
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
-        const struct tm *from_time, const struct tm *to_time,
+        const struct timeval *from_time, const struct timeval *to_time,
         const long int *dmSenderOrgUnitNum, const unsigned int status_filter,
         const unsigned long int offset, unsigned long int *number,
         struct isds_list **messages);
