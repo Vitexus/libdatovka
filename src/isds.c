@@ -107,6 +107,11 @@ void isds_envelope_free(struct isds_envelope **envelope) {
     free((*envelope)->dmRecipientAddress);
     free((*envelope)->dmAmbiguousRecipient);
 
+    free((*envelope)->dmOrdinal);
+    free((*envelope)->dmMessageStatus);
+    free((*envelope)->dmDeliveryTime);
+    free((*envelope)->dmAcceptanceTime);
+
     free((*envelope)->dmSenderOrgUnit);
     free((*envelope)->dmSenderOrgUnitNum);
     free((*envelope)->dbIDRecipient);

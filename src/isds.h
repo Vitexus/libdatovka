@@ -171,6 +171,17 @@ struct isds_envelope {
                                        Maximal length is 100 characters. */
     _Bool *dmAmbiguousRecipient;    /* Recipient has OVM role */ 
 
+    /* Following memebers are assigned by ISDS in different phases of message
+     * life cycle. */
+    unsigned long int *dmOrdinal;   /* Ordinal number in list of
+                                       incoming/outgoing messages */
+    enum isds_message_states *dmMessageStatus;  /* Message state */
+    long int *dmAttachmentSize;     /* Size of message documents in
+                                       kilobytes (rounded).*/
+    struct timeval *dmDeliveryTime;     /* Time of delivery into a box */
+    struct timeval *dmAcceptanceTime;   /* Time of accpetance of the message
+                                           by an user */
+
     /* Following members apply to both outgoing and incoming messages: */
     char *dmSenderOrgUnit;          /* Organisation unit of sender as string;
                                        Optional. */
@@ -271,7 +282,6 @@ struct isds_document {
                                        Defines howto interpret XML document;
                                        Optional. */
 };
-
 
 /* Message */
 struct isds_message {
