@@ -838,9 +838,18 @@ static isds_error timeval2timestring(const struct timeval *time,
     return IE_SUCCESS;
 }
 
+
+/* Convert UTF-8 ISO 8601 date-time @string to struct timeval.
+ * It respects microseconds too. */
+static isds_error timestring2timeval(const xmlChar *string,
+        struct timeval **time) {
+    return IE_NOTSUP;
+}
+
+
 /* Convert unsigned int into isds_message_status.
  * @context is session context
- * @number is pointer to number value
+ * @number is pointer to number value. NULL will be treated as invalid value.
  * @status is automatically reallocated status
  * @return IE_SUCCESS, or error code and free status */
 static isds_error uint2isds_message_status(struct isds_ctx *context,
@@ -1255,8 +1264,11 @@ static isds_error extract_DmRecord(struct isds_ctx *context,
         goto leave;
     }
 
+
+    /* Extract tRecord data */
     EXTRACT_ULONGINT("isds:dmOrdinal", (*envelope)->dmOrdinal, 0);
 
+    /* dmMessageStatus element is mandatory */
     EXTRACT_ULONGINT("isds:dmMessageStatus", unumber, 0);
     err = uint2isds_message_status(context, unumber,
             &((*envelope)->dmMessageStatus));
@@ -1264,9 +1276,21 @@ static isds_error extract_DmRecord(struct isds_ctx *context,
         if (err == IE_ENUM) err = IE_ISDS;
         goto leave;
     }
+    free(unumber); unumber = NULL;
     
     EXTRACT_ULONGINT("isds:dmAttachmentSize", (*envelope)->dmAttachmentSize, 0);
 
+    EXTRACT_STRING("isds:dmDeliveryTime", string);
+    err = timestring2timeval((xmlChar *) string,
+            &((*envelope)->dmDeliveryTime));
+    if (err) goto leave;
+
+    EXTRACT_STRING("isds:dmAcceptanceTime", string);
+    err = timestring2timeval((xmlChar *) string,
+            &((*envelope)->dmAcceptanceTime));
+    if (err) goto leave;
+
+    /* TODO: Extract envelope element */
 leave:
     if (err) isds_envelope_free(envelope);
     free(unumber);
