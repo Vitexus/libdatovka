@@ -120,6 +120,13 @@ static isds_error http(struct isds_ctx *context, const char *url,
         curl_err = curl_easy_setopt(context->curl, CURLOPT_CAINFO,
                 context->tls_ca_file);
     }
+    if (!curl_err && context->tls_ca_dir) {
+        isds_log(ILF_SEC, ILL_INFO,
+                _("CA certificates will be searched in `%s' directory "
+                    "since now\n"), context->tls_ca_file);
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_CAINFO,
+                context->tls_ca_file);
+    }
 
 
     /* Set credentials */

@@ -282,6 +282,7 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
     /* Free other structures */
     free((*context)->tls_verify_server);
     free((*context)->tls_ca_file);
+    free((*context)->tls_ca_dir);
     free((*context)->long_message);
 
     free(*context);
@@ -444,6 +445,18 @@ isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
 
     va_start(ap, option);
 
+#define REPLACE_VA_STRING(destination) \
+    string = va_arg(ap, char *); \
+    if (string) { \
+        pointer = realloc((destination), 1 + strlen(string)); \
+        if (!pointer) { err = IE_NOMEM; goto leave; } \
+        strcpy(pointer, string); \
+        (destination) = pointer; \
+    } else { \
+        free(destination); \
+        (destination) = NULL; \
+    } 
+
     switch (option) {
         case ITLS_VERIFY_SERVER:
             if (!context->tls_verify_server) {
@@ -457,21 +470,17 @@ isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
             break;
 
         case ITLS_CA_FILE:
-            string = va_arg(ap, char *);
-            if (string) {
-                pointer = realloc(context->tls_ca_file, 1 + strlen(string));
-                if (!pointer) { err = IE_NOMEM; goto leave; }
-                strcpy(pointer, string);
-                context->tls_ca_file = pointer;
-            } else {
-                free(context->tls_ca_file);
-                context->tls_ca_file = NULL;
-            }
+            REPLACE_VA_STRING(context->tls_ca_file);
+            break;
+        case ITLS_CA_DIRECTORY:
+            REPLACE_VA_STRING(context->tls_ca_dir);
             break;
 
         default:
             err = IE_ENUM; goto leave;
     }
+
+#undef REPLACE_VA_STRING
 
 leave:
     va_end(ap);

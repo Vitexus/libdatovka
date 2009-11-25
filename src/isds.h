@@ -55,8 +55,8 @@ char *isds_strerror(const isds_error error);
 /* TLS libisds options */
 typedef enum {
     ITLS_VERIFY_SERVER,     /*  _Bool: Verify server idetity? */
-    ITLS_CA_FILE            /* char *: File name with CA certificates */
-
+    ITLS_CA_FILE,           /* char *: File name with CA certificates */
+    ITLS_CA_DIRECTORY       /* char *: Directory name with CA certificates */
 } isds_tls_option;
 
 /* Box type */
