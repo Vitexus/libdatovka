@@ -838,6 +838,32 @@ static isds_error timeval2timestring(const struct timeval *time,
     return IE_SUCCESS;
 }
 
+/* Convert unsigned int into isds_message_status.
+ * @context is session context
+ * @number is pointer to number value
+ * @status is automatically reallocated status
+ * @return IE_SUCCESS, or error code and free status */
+static isds_error uint2isds_message_status(struct isds_ctx *context,
+    const unsigned long int *number, isds_message_status **status) {
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!status) return IE_INVAL;
+
+    free(*status); *status = NULL;
+    if (!number) return IE_INVAL;
+
+    if (*number < 1 || *number > 9) {
+        isds_printf_message(context, _("Invalid messsage status value: %lu"),
+                *number);
+        return IE_ENUM;
+    }
+
+    *status = malloc(sizeof(**status));
+    if (!*status) return IE_NOMEM;
+
+    **status = 1 << *number;
+    return IE_SUCCESS;
+}
+
 
 /* Following EXTRACT_* macros expects @result, @xpath_ctx, @err, @context
  * and leave lable */
@@ -1215,6 +1241,7 @@ static isds_error extract_DmRecord(struct isds_ctx *context,
     isds_error err = IE_SUCCESS;
     xmlXPathObjectPtr result = NULL;
     char *string = NULL;
+    unsigned long int *unumber = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!envelope) return IE_INVAL;
@@ -1230,8 +1257,19 @@ static isds_error extract_DmRecord(struct isds_ctx *context,
 
     EXTRACT_ULONGINT("isds:dmOrdinal", (*envelope)->dmOrdinal, 0);
 
+    EXTRACT_ULONGINT("isds:dmMessageStatus", unumber, 0);
+    err = uint2isds_message_status(context, unumber,
+            &((*envelope)->dmMessageStatus));
+    if (err) {
+        if (err == IE_ENUM) err = IE_ISDS;
+        goto leave;
+    }
+    
+    EXTRACT_ULONGINT("isds:dmAttachmentSize", (*envelope)->dmAttachmentSize, 0);
+
 leave:
     if (err) isds_envelope_free(envelope);
+    free(unumber);
     free(string);
     xmlXPathFreeObject(result);
     return err;
