@@ -54,7 +54,9 @@ char *isds_strerror(const isds_error error);
 
 /* TLS libisds options */
 typedef enum {
-    ITLS_VERIFY_SERVER
+    ITLS_VERIFY_SERVER,     /*  _Bool: Verify server idetity? */
+    ITLS_CA_FILE            /* char *: File name with CA certificates */
+
 } isds_tls_option;
 
 /* Box type */
@@ -373,9 +375,14 @@ void isds_set_logging(const unsigned int facilities, const isds_log_level level)
 isds_error isds_set_timeout(struct isds_ctx *context, const unsigned int timeout);
 
 
-/* Change SSL/TLS settings */
+/* Change SSL/TLS settings.
+ * @context is context which setting vill be applied to
+ * @option is name of option. It determines the type of last argument. See
+ * isds_tls_option definition for more info.
+ * @... is value of new setting. Type is determined by @option
+ * */
 isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
-        const _Bool value);
+        ...);
 
 /* Connect and log in into ISDS server.
  * @url is address of ISDS web service

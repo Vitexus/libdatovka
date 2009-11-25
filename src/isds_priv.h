@@ -35,7 +35,8 @@ struct isds_ctx {
     char *client_certificate;
     char *private_key;
     CURL *curl;             /* CURL session handle */
-    _Bool *tls_verify_server;
+    _Bool *tls_verify_server;   /* Verify the server? */
+    char *tls_ca_file;      /* File name with CA certificates */
     char *long_message;     /* message buffer */
 };
 

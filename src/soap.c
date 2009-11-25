@@ -104,8 +104,8 @@ static isds_error http(struct isds_ctx *context, const char *url,
     if (!curl_err && context->tls_verify_server) {
         if (!*context->tls_verify_server)
             isds_log(ILF_SEC, ILL_WARNING,
-                    "Disabling server identity verification. "
-                    "That was your decision.\n");
+                    _("Disabling server identity verification. "
+                    "That was your decision.\n"));
         curl_err = curl_easy_setopt(context->curl, CURLOPT_SSL_VERIFYPEER,
                 (*context->tls_verify_server)? 1L : 0L);
         if (!curl_err) {
@@ -113,6 +113,14 @@ static isds_error http(struct isds_ctx *context, const char *url,
                     (*context->tls_verify_server)? 2L : 0L);
         }
     }
+    if (!curl_err && context->tls_ca_file) {
+        isds_log(ILF_SEC, ILL_INFO,
+                _("CA certificates will be searched in `%s' file since now\n"),
+                context->tls_ca_file);
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_CAINFO,
+                context->tls_ca_file);
+    }
+
 
     /* Set credentials */
     if (!curl_err && context->username) {

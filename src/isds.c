@@ -281,6 +281,7 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
 
     /* Free other structures */
     free((*context)->tls_verify_server);
+    free((*context)->tls_ca_file);
     free((*context)->long_message);
 
     free(*context);
@@ -427,22 +428,54 @@ isds_error isds_set_timeout(struct isds_ctx *context,
 }
 
 
-/* Change SSL/TLS settings */
+/* Change SSL/TLS settings.
+ * @context is context which setting vill be applied to
+ * @option is name of option. It determines the type of last argument. See
+ * isds_tls_option definition for more info.
+ * @... is value of new setting. Type is determined by @option
+ * */
 isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
-        const _Bool value) {
+        ...) {
+    isds_error err = IE_SUCCESS;
+    va_list ap;
+    char *pointer, *string;
+
     if (!context) return IE_INVALID_CONTEXT;
+
+    va_start(ap, option);
 
     switch (option) {
         case ITLS_VERIFY_SERVER:
-            context->tls_verify_server =
-                malloc(sizeof(*context->tls_verify_server));
-            if (!context->tls_verify_server) return IE_NOMEM;
-            *context->tls_verify_server = value;
+            if (!context->tls_verify_server) {
+                context->tls_verify_server =
+                    malloc(sizeof(*context->tls_verify_server));
+                if (!context->tls_verify_server) {
+                    err = IE_NOMEM; goto leave;
+                }
+            }
+            *context->tls_verify_server = (_Bool) (0 != va_arg(ap, int));
             break;
-        default: return IE_INVAL;
+
+        case ITLS_CA_FILE:
+            string = va_arg(ap, char *);
+            if (string) {
+                pointer = realloc(context->tls_ca_file, 1 + strlen(string));
+                if (!pointer) { err = IE_NOMEM; goto leave; }
+                strcpy(pointer, string);
+                context->tls_ca_file = pointer;
+            } else {
+                free(context->tls_ca_file);
+                context->tls_ca_file = NULL;
+            }
+            break;
+
+        default:
+            err = IE_ENUM; goto leave;
     }
 
-    return IE_SUCCESS;
+leave:
+    va_end(ap);
+    return err;
 }
 
 
