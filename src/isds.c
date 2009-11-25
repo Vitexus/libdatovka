@@ -843,7 +843,61 @@ static isds_error timeval2timestring(const struct timeval *time,
  * It respects microseconds too. */
 static isds_error timestring2timeval(const xmlChar *string,
         struct timeval **time) {
-    return IE_NOTSUP;
+    struct tm broken;
+    char *offset, *delim;
+    float subseconds;
+    
+    if (!time) return IE_INVAL;
+
+    memset(&broken, 0, sizeof(broken));
+
+    if (!*time) {
+        *time = calloc(1, sizeof(**time));
+        if (!*time) return IE_NOMEM;
+    } else {
+        memset(*time, 0, sizeof(**time));
+    }
+
+
+    /* xsd:date is ISO 8601 string, thus ASCII */
+    /*TODO: negative year */
+
+    /* Parse date and time without subseconds and offset */
+    offset = strptime((char*)string, "%Y-%m-%dT%T", &broken);
+    if (!offset)
+        return IE_DATE;
+    
+    /* Get subseconds */
+    /* TODO: Use integer arthmetic to avoid round errors */
+    if (*offset == '.' ) {
+        if (0 >= sscanf(offset, "%f", &subseconds)) subseconds = .0;
+        (*time)->tv_usec = (subseconds * 1000000 + 0.5);
+
+        /* move to the zone offset delimiter */
+        delim = strchr(offset, '-');
+        if (!delim)
+            delim = strchr(offset, '+');
+        offset = delim;
+    }
+
+    /* Get zone offset */
+    if (*offset == '-' || *offset == '+') {
+        offset = strptime((char*)offset, "%z", &broken);
+        if (!offset) {
+            free(*time); *time = NULL;
+            return IE_DATE;
+        }
+    }
+
+    /* Convert to time_t */
+    /* FIXME: Don't run-time TZ */
+    (*time)->tv_sec = mktime(&broken);
+    if ((*time)->tv_sec == (time_t) -1) {
+        free(*time); *time = NULL;
+        return IE_DATE;
+    }
+
+    return IE_SUCCESS;
 }
 
 
@@ -1281,14 +1335,34 @@ static isds_error extract_DmRecord(struct isds_ctx *context,
     EXTRACT_ULONGINT("isds:dmAttachmentSize", (*envelope)->dmAttachmentSize, 0);
 
     EXTRACT_STRING("isds:dmDeliveryTime", string);
-    err = timestring2timeval((xmlChar *) string,
-            &((*envelope)->dmDeliveryTime));
-    if (err) goto leave;
+    if (string) {
+        err = timestring2timeval((xmlChar *) string,
+                &((*envelope)->dmDeliveryTime));
+        if (err) {
+            char *string_locale = utf82locale(string);
+            if (err == IE_DATE) err = IE_ISDS;
+            isds_printf_message(context,
+                    _("Could not convert dmDeliveryTime as ISO time: %s"),
+                    string_locale);
+            free(string_locale);
+            goto leave;
+        }
+    }
 
     EXTRACT_STRING("isds:dmAcceptanceTime", string);
-    err = timestring2timeval((xmlChar *) string,
-            &((*envelope)->dmAcceptanceTime));
-    if (err) goto leave;
+    if (string) {
+        err = timestring2timeval((xmlChar *) string,
+                &((*envelope)->dmAcceptanceTime));
+        if (err) {
+            char *string_locale = utf82locale(string);
+            if (err == IE_DATE) err = IE_ISDS;
+            isds_printf_message(context,
+                    _("Could not convert dmAcceptanceTime as ISO time: %s"),
+                    string_locale);
+            free(string_locale);
+            goto leave;
+        }
+    }
 
     /* TODO: Extract envelope element */
 leave:
