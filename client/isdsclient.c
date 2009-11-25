@@ -134,6 +134,37 @@ void print_envelope(struct isds_envelope *envelope) {
     if (!envelope->dmOrdinal) printf("NULL\n");
     else printf("%lu\n", *(envelope->dmOrdinal));
 
+    printf("\t\tdmMessageStatus = ");
+    if (!envelope->dmMessageStatus) printf("NULL\n");
+    else
+        switch(*(envelope->dmMessageStatus)) {
+            case MESSAGESTATE_SENT: printf("SENT\n"); break;
+            case MESSAGESTATE_STAMPED: printf("STAMPED\n"); break;
+            case MESSAGESTATE_INFECTED: printf("INFECTED\n"); break;
+            case MESSAGESTATE_DELIVERED: printf("DELIVERED\n"); break;
+            case MESSAGESTATE_SUBSTITUTED: printf("SUBSTITUTED\n"); break;
+            case MESSAGESTATE_RECIEVED: printf("RECIEVED\n"); break;
+            case MESSAGESTATE_READ: printf("READ\n"); break;
+            case MESSAGESTATE_UNDELIVERABLE: printf("UNDELIVERABLE\n"); break;
+            case MESSAGESTATE_REMOVED: printf("REMOVED\n"); break;
+            default: printf("<unknown type %d>\n",
+                             *(envelope->dmMessageStatus));
+        }
+
+    printf("\t\tdmAttachmentSize = ");
+    if (!envelope->dmAttachmentSize) printf("NULL\n");
+    else printf("%lu kB\n", *(envelope->dmAttachmentSize));
+
+    printf("\t\tdmDeliveryTime = ");
+    if (!envelope->dmDeliveryTime) printf("NULL\n");
+    else printf("%s and %ld us\n", ctime(&(envelope->dmDeliveryTime->tv_sec)),
+            envelope->dmDeliveryTime->tv_usec);
+
+    printf("\t\tdmAcceptanceTime = ");
+    if (!envelope->dmAcceptanceTime) printf("NULL\n");
+    else printf("%s and %ld us\n", ctime(&(envelope->dmAcceptanceTime->tv_sec)),
+            envelope->dmAcceptanceTime->tv_usec);
+
     printf("\t}\n");
 }
 

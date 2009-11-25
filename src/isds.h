@@ -96,6 +96,28 @@ typedef enum {
                                        permissions) */
 } isds_priviledges;
 
+/* Message status */
+typedef enum {
+    MESSAGESTATE_SENT = 0x2,            /* Message has been put into ISDS */
+    MESSAGESTATE_STAMPED = 0x4,         /* Message stamped by TSA */
+    MESSAGESTATE_INFECTED = 0x8,        /* Message included virues,
+                                           infected document has been removed */
+    MESSAGESTATE_DELIVERED = 0x10,      /* Message delivered
+                                           (dmDeliveryTime stored) */
+    MESSAGESTATE_SUBSTITUTED = 0x20,    /* Message delivered through fiction,
+                                           dmAcceptanceTime stored */
+    MESSAGESTATE_RECIEVED = 0x40,       /* Message devlivered by user login
+                                           dmAcceptanceTime stored */
+    MESSAGESTATE_READ = 0x80,           /* Message has been read by user */
+    MESSAGESTATE_UNDELIVERABLE = 0x100, /* Message could not been delivered
+                                           (e.g. recipent box has been made
+                                           unaccessible meantime) */
+    MESSAGESTATE_REMOVED = 0x200        /* Message content deleted */
+
+} isds_message_status;
+#define MESSAGESTATE_ANY 0x3FE          /* Union of all isds_message_status
+                                           values */
+
 /* Name of person */
 struct isds_PersonName {
     char *pnFirstName;
@@ -175,7 +197,7 @@ struct isds_envelope {
      * life cycle. */
     unsigned long int *dmOrdinal;   /* Ordinal number in list of
                                        incoming/outgoing messages */
-    enum isds_message_states *dmMessageStatus;  /* Message state */
+    isds_message_status *dmMessageStatus;  /* Message state */
     long int *dmAttachmentSize;     /* Size of message documents in
                                        kilobytes (rounded). */
     struct timeval *dmDeliveryTime;     /* Time of delivery into a box
@@ -244,27 +266,6 @@ typedef enum {
     FILEMETATYPE_META               /* XML document for ESS (electronic
                                        document information system) purposes */
 } isds_FileMetaType;
-
-/* Message status */
-typedef enum {
-    MESSAGESTATE_SENT = 0x2,            /* Message has been put into ISDS */
-    MESSAGESTATE_STAMPED = 0x4,         /* Message stamped by TSA */
-    MESSAGESTATE_INFECTED = 0x8,        /* Message included virues,
-                                           infected document has been removed */
-    MESSAGESTATE_DELIVERED = 0x10,      /* Message delivered
-                                           (dmDeliveryTime stored) */
-    MESSAGESTATE_SUBSTITUTED = 0x20,    /* Message delivered through fiction,
-                                           dmAcceptanceTime stored */
-    MESSAGESTATE_RECIEVED = 0x40,       /* Message devlivered by user login
-                                           dmAcceptanceTime stored */
-    MESSAGESTATE_READ = 0x80,           /* Message has been read by user */
-    MESSAGESTATE_UNDELIVERABLE = 0x100, /* Message could not been delivered
-                                           (e.g. recipent box has been made
-                                           unaccessible meantime) */
-    MESSAGESTATE_REMOVED = 0x200        /* Message content deleted */
-
-} isds_message_status;
-#define MESSAGESTATE_ANY 0x3FE          /* Union of all isds_message_status values */
 
 /* Document */
 struct isds_document {
@@ -438,7 +439,7 @@ isds_error isds_send_message(struct isds_ctx *context,
  * @from_time is minimal time and date of message sending inclusive.
  * @to_time is maximal time and date of message sending inclusive
  * @dmSenderOrgUnitNum is the same as isds_envelope.dmSenderOrgUnitNum
- * @status_filter is bit field of isds_message_states values. Use special
+ * @status_filter is bit field of isds_message_status values. Use special
  * value MESSAGESTATE_ANY to signal you don't care. (It's defined as union of
  * all values, you can use bitwise arithmetic if you want.)
  * @offset is index of first message we are interested in. First message is 1.

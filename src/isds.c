@@ -2223,7 +2223,7 @@ serialization_failed:
  * @from_time is minimal time and date of message sending inclusive.
  * @to_time is maximal time and date of message sending inclusive
  * @dmSenderOrgUnitNum is the same as isds_envelope.dmSenderOrgUnitNum
- * @status_filter is bit field of isds_message_states values. Use special
+ * @status_filter is bit field of isds_message_status values. Use special
  * value MESSAGESTATE_ANY to signal you don't care. (It's defined as union of
  * all values, you can use bitwise arithmetic if you want.)
  * @offset is index of first message we are interested in. First message is 1.
