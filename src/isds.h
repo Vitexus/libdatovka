@@ -52,6 +52,11 @@ typedef enum {
 /* Return text description of ISDS error */
 char *isds_strerror(const isds_error error);
 
+/* TLS libisds options */
+typedef enum {
+    ITLS_VERIFY_SERVER
+} isds_tls_option;
+
 /* Box type */
 typedef enum {
     DBTYPE_SYSTEM = 0,          /* This is special sender value for messages
@@ -366,6 +371,11 @@ void isds_set_logging(const unsigned int facilities, const isds_log_level level)
 /* Set timeout in miliseconds for each network job like connecting to server
  * or sending message. Use 0 to disable timeout limits. */
 isds_error isds_set_timeout(struct isds_ctx *context, const unsigned int timeout);
+
+
+/* Change SSL/TLS settings */
+isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
+        const _Bool value);
 
 /* Connect and log in into ISDS server.
  * @url is address of ISDS web service

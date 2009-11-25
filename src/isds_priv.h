@@ -35,6 +35,7 @@ struct isds_ctx {
     char *client_certificate;
     char *private_key;
     CURL *curl;             /* CURL session handle */
+    _Bool *tls_verify_server;
     char *long_message;     /* message buffer */
 };
 

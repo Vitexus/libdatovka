@@ -100,6 +100,20 @@ static isds_error http(struct isds_ctx *context, const char *url,
     /* Set Request-URI */
     curl_err = curl_easy_setopt(context->curl, CURLOPT_URL, url);
 
+    /* Set TLS options */
+    if (!curl_err && context->tls_verify_server) {
+        if (!*context->tls_verify_server)
+            isds_log(ILF_SEC, ILL_WARNING,
+                    "Disabling server identity verification. "
+                    "That was your decision.\n");
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_SSL_VERIFYPEER,
+                (*context->tls_verify_server)? 1L : 0L);
+        if (!curl_err) {
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_SSL_VERIFYHOST,
+                    (*context->tls_verify_server)? 2L : 0L);
+        }
+    }
+
     /* Set credentials */
     if (!curl_err && context->username) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_USERNAME,

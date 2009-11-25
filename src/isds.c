@@ -280,6 +280,7 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
     isds_logout(*context);
 
     /* Free other structures */
+    free((*context)->tls_verify_server);
     free((*context)->long_message);
 
     free(*context);
@@ -420,6 +421,25 @@ isds_error isds_set_timeout(struct isds_ctx *context,
             curl_err = curl_easy_setopt(context->curl, CURLOPT_TIMEOUT_MS,
                     context->timeout);
         if (curl_err) return IE_ERROR;
+    }
+
+    return IE_SUCCESS;
+}
+
+
+/* Change SSL/TLS settings */
+isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
+        const _Bool value) {
+    if (!context) return IE_INVALID_CONTEXT;
+
+    switch (option) {
+        case ITLS_VERIFY_SERVER:
+            context->tls_verify_server =
+                malloc(sizeof(*context->tls_verify_server));
+            if (!context->tls_verify_server) return IE_NOMEM;
+            *context->tls_verify_server = value;
+            break;
+        default: return IE_INVAL;
     }
 
     return IE_SUCCESS;
