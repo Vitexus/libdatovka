@@ -911,6 +911,7 @@ static isds_error timeval2timestring(const struct timeval *time,
                         _(element" is not valid integer: %s"), \
                         string_locale); \
                 free(string_locale); \
+                free(string); \
                 err = IE_ISDS; \
                 goto leave; \
             } \
@@ -921,6 +922,7 @@ static isds_error timeval2timestring(const struct timeval *time,
                         _(element " value out of range of long int: %s"), \
                         string_locale); \
                 free(string_locale); \
+                free(string); \
                 err = IE_ERROR; \
                 goto leave; \
             } \
@@ -937,6 +939,58 @@ static isds_error timeval2timestring(const struct timeval *time,
             *(longintPtr) = number; \
         } \
     }
+
+#define EXTRACT_ULONGINT(element, ulongintPtr, preallocated) \
+    { \
+        char *string = NULL; \
+        EXTRACT_STRING(element, string); \
+        if (string) { \
+            long int number; \
+            char *endptr; \
+             \
+            number = strtol((char*)string, &endptr, 10); \
+             \
+            if (*endptr != '\0') { \
+                char *string_locale = utf82locale((char *)string); \
+                isds_printf_message(context, \
+                        _(element" is not valid integer: %s"), \
+                        string_locale); \
+                free(string_locale); \
+                free(string); \
+                err = IE_ISDS; \
+                goto leave; \
+            } \
+             \
+            if (number == LONG_MIN || number == LONG_MAX) { \
+                char *string_locale = utf82locale((char *)string); \
+                isds_printf_message(context, \
+                        _(element " value out of range of long int: %s"), \
+                        string_locale); \
+                free(string_locale); \
+                free(string); \
+                err = IE_ERROR; \
+                goto leave; \
+            } \
+             \
+            free(string); string = NULL; \
+            if (number < 0) { \
+                isds_printf_message(context, \
+                        _(element " value is negative: %ld"), number); \
+                err = IE_ERROR; \
+                goto leave; \
+            } \
+             \
+            if (!(preallocated)) { \
+                (ulongintPtr) = calloc(1, sizeof(*(ulongintPtr))); \
+                if (!(ulongintPtr)) { \
+                    err = IE_NOMEM; \
+                    goto leave; \
+                } \
+            } \
+            *(ulongintPtr) = number; \
+        } \
+    }
+
 
 #define INSERT_STRING(parent, element, string) \
     node = xmlNewTextChild(parent, NULL, BAD_CAST (element), \
@@ -1158,7 +1212,29 @@ leave:
  * In case of error @envelope will be freed. */
 static isds_error extract_DmRecord(struct isds_ctx *context,
         struct isds_envelope **envelope, xmlXPathContextPtr xpath_ctx) {
-    return IE_NOTSUP;
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!envelope) return IE_INVAL;
+    isds_envelope_free(envelope);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *envelope = calloc(1, sizeof(**envelope));
+    if (!*envelope) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    EXTRACT_ULONGINT("isds:dmOrdinal", (*envelope)->dmOrdinal, 0);
+
+leave:
+    if (err) isds_envelope_free(envelope);
+    free(string);
+    xmlXPathFreeObject(result);
+    return err;
 }
 
 
@@ -2373,6 +2449,7 @@ leave:
 #undef INSERT_LONGINT
 #undef INSERT_BOOLEAN
 #undef INSERT_STRING
+#undef EXTRACT_ULONGINT
 #undef EXTRACT_LONGINT
 #undef EXTRACT_BOOLEAN
 #undef EXTRACT_STRING
