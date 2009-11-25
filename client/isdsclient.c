@@ -119,6 +119,40 @@ void print_DbOwnerInfo(struct isds_DbOwnerInfo *info) {
 
 }
 
+void print_envelope(struct isds_envelope *envelope) {
+    printf("\tenvelope = ");
+
+    if (!envelope) {
+        printf("NULL\n");
+        return;
+    }
+    printf("{\n");
+
+    printf("\t\tdmID = %s\n", envelope->dmID);
+
+    printf("\t\tdmOrdinal = ");
+    if (!envelope->dmOrdinal) printf("NULL\n");
+    else printf("%lu\n", *(envelope->dmOrdinal));
+
+    printf("\t}\n");
+}
+
+
+void print_message(struct isds_message *message) {
+    printf("message = ");
+
+    if (!message) {
+        printf("NULL\n");
+        return;
+    }
+
+    printf("{\n");
+
+    print_envelope(message->envelope);
+
+    printf("}\n");
+}
+
 
 int main(int argc, char **argv) {
     isds_error err;
@@ -453,18 +487,25 @@ int main(int argc, char **argv) {
             .tv_usec = 4000
         };
         unsigned long int number = 0;
+        struct isds_list *messages = NULL, *item;
 
         /* TODO: Try different criteria */
         printf("Getting list of sent messages\n");
         err = isds_get_list_of_sent_messages(ctx, &from_time, NULL, NULL,
-                MESSAGESTATE_ANY, 0, &number, NULL);
+                MESSAGESTATE_ANY, 0, &number, &messages);
         if (err)
             printf("isds_isds_get_list_of_sent_messages() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
         else {
             printf("isds_isds_get_list_of_sent_messages() succeeded: "
-                    "number of messages = %lu\n", number);
+                    "number of messages = %lu:\n", number);
+            for(item = messages; item; item = item->next) {
+                printf("List item:\n");
+                print_message(item->data);
+            }
+
         }
+        isds_list_free(&messages);
     }
 
 
