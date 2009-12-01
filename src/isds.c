@@ -611,15 +611,17 @@ isds_error isds_logout(struct isds_ctx *context) {
     /* Close connection */
     if (context->curl) {
         close_connection(context);
+
+        /* Discard credentials for sure. They should not survive isds_login(),
+         * even successful .*/
+        discard_credentials(context);
+        free(context->url);
+        context->url = NULL;
+
+        isds_log(ILF_ISDS, ILL_DEBUG, _("Logged out from ISDS server\n"));
+    } else {
+        discard_credentials(context);
     }
-
-    /* Discard credentials for sure. They should not survive isds_login(),
-     * even successful .*/
-    discard_credentials(context);
-    free(context->url);
-    context->url = NULL;
-
-    isds_log(ILF_ISDS, ILL_DEBUG, _("Logged out from ISDS server\n"));
     return IE_SUCCESS;
 }
 
