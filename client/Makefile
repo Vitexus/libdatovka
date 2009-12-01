@@ -3,22 +3,27 @@ CFLAGS=-std=c99 -Wall -Werror -g
 CFLAGS+=-I$(LIBDIR)
 LDFLAGS=-L$(LIBDIR)
 
-.PHONY: libisds
+.PHONY: libisds depend
 
 all: isdsclient
 
 libisds:
 	$(MAKE) -C $(LIBDIR) all
 
-isdsclient.o: isdsclient.c
+%.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 #isdsclient: isdsclient.o libisds
-isdsclient: isdsclient.o
-	$(CC) $(LDFLAGS) -lisds -o $@ $<
+isdsclient: isdsclient.o common.o
+	$(CC) $(LDFLAGS) -lisds -o $@ $^
 
 clean:
-	-rm -f isdsclient isdsclient.o
+	-rm -f isdsclient *.o
 
 test: isdsclient
 	LD_LIBRARY_PATH=$(LIBDIR) ./isdsclient
+
+depend:
+	for F in *.c; do cpp $(CFLAGS) -MM "$$F"; done > Makefile.deps
+
+include Makefile.deps
