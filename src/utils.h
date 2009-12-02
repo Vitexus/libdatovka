@@ -64,4 +64,12 @@ char *utf82locale(const char *utf);
  * error. You must free it. */
 char *b64encode(const void *plain, const size_t length);
 
+/* Switches time zone to UTC.
+ * XXX: This is not reentrant and not thread-safe */
+_hidden void switch_tz_to_utc(void);
+
+/* Switches time zone to original value.
+ * XXX: This is not reentrant and not thread-safe */
+_hidden void switch_tz_to_native(void);
+
 #endif

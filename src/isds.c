@@ -974,8 +974,9 @@ static isds_error timestring2timeval(const xmlChar *string,
     }
 
     /* Convert to time_t */
-    /* FIXME: Don't run-time TZ */
+    switch_tz_to_utc();
     (*time)->tv_sec = mktime(&broken);
+    switch_tz_to_native();
     if ((*time)->tv_sec == (time_t) -1) {
         free(*time); *time = NULL;
         return IE_DATE;
