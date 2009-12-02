@@ -118,6 +118,13 @@ void print_DbOwnerInfo(struct isds_DbOwnerInfo *info) {
 
 }
 
+
+void print_timeval(const struct timeval *time) {
+    if (!time) printf("NULL\n");
+    else printf("%s and %ld us\n", ctime(&(time->tv_sec)), time->tv_usec);
+}
+
+
 void print_envelope(struct isds_envelope *envelope) {
     printf("\tenvelope = ");
 
@@ -155,14 +162,10 @@ void print_envelope(struct isds_envelope *envelope) {
     else printf("%lu kB\n", *(envelope->dmAttachmentSize));
 
     printf("\t\tdmDeliveryTime = ");
-    if (!envelope->dmDeliveryTime) printf("NULL\n");
-    else printf("%s and %ld us\n", ctime(&(envelope->dmDeliveryTime->tv_sec)),
-            envelope->dmDeliveryTime->tv_usec);
+    print_timeval(envelope->dmDeliveryTime);
 
     printf("\t\tdmAcceptanceTime = ");
-    if (!envelope->dmAcceptanceTime) printf("NULL\n");
-    else printf("%s and %ld us\n", ctime(&(envelope->dmAcceptanceTime->tv_sec)),
-            envelope->dmAcceptanceTime->tv_usec);
+    print_timeval(envelope->dmAcceptanceTime);
 
     printf("\t}\n");
 }
