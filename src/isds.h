@@ -474,13 +474,41 @@ isds_error isds_send_message(struct isds_ctx *context,
  * @messages is automatically reallocated list of isds_message's. Be ware that
  * it returns only brief overview (envelope and some other fields) about each
  * message, not the complete message. FIXME: Specify exact fields.
- * Use NULL if
- * you don't care about don't need the data (useful if you want to know only
- * the @number). If you provide &NULL, list will be allocated on heap, if you
- * provide pointer to non-NULL, list will be freed automacally at first. Also
- * in case of error the list will be NULLed.
+ * The list is sorted by delivery time in ascending order.
+ * Use NULL if you don't care about the metadata (useful if you want to know
+ * only the @number). If you provide &NULL, list will be allocated on heap,
+ * if you provide pointer to non-NULL, list will be freed automacally at first.
+ * Also in case of error the list will be NULLed.
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
+        const struct timeval *from_time, const struct timeval *to_time,
+        const long int *dmSenderOrgUnitNum, const unsigned int status_filter,
+        const unsigned long int offset, unsigned long int *number,
+        struct isds_list **messages);
+
+/* Get list of incoming (addressed to you) messages.
+ * Any criterion argument can be NULL, if you don't care about it.
+ * @context is session context. Must not be NULL.
+ * @from_time is minimal time and date of message sending inclusive.
+ * @to_time is maximal time and date of message sending inclusive
+ * @dmSenderOrgUnitNum is the same as isds_envelope.dmSenderOrgUnitNum
+ * @status_filter is bit field of isds_message_status values. Use special
+ * value MESSAGESTATE_ANY to signal you don't care. (It's defined as union of
+ * all values, you can use bitwise arithmetic if you want.)
+ * @offset is index of first message we are interested in. First message is 1.
+ * Set to 0 (or 1) if you don't care.
+ * @number is maximal length of list you want to get as input value, outputs
+ * number of messages matching these criteria. Can be NULL if you don't care
+ * (applies to output value either).
+ * @messages is automatically reallocated list of isds_message's. Be ware that
+ * it returns only brief overview (envelope and some other fields) about each
+ * message, not the complete message. FIXME: Specify exact fields.
+ * Use NULL if you don't care about the metadata (useful if you want to know
+ * only the @number). If you provide &NULL, list will be allocated on heap,
+ * if you provide pointer to non-NULL, list will be freed automacally at first.
+ * Also in case of error the list will be NULLed.
+ * @return IE_SUCCESS or appropriate error code. */
+isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
         const struct timeval *from_time, const struct timeval *to_time,
         const long int *dmSenderOrgUnitNum, const unsigned int status_filter,
         const unsigned long int offset, unsigned long int *number,

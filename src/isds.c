@@ -2492,12 +2492,15 @@ serialization_failed:
 }
 
 
-/* Get list of outgoing (already sent) messages.
+/* Get list of messages. This is common core for getting sent or received
+ * messaeges.
  * Any criterion argument can be NULL, if you don't care about it.
  * @context is session context. Must not be NULL.
+ * @outgoing_direction is true if you want list of outgoing messages,
+ * it's false if you want incoming messages.
  * @from_time is minimal time and date of message sending inclusive.
  * @to_time is maximal time and date of message sending inclusive
- * @dmSenderOrgUnitNum is the same as isds_envelope.dmSenderOrgUnitNum
+ * @organization_unit_number is number of sender/recipient respectively.
  * @status_filter is bit field of isds_message_status values. Use special
  * value MESSAGESTATE_ANY to signal you don't care. (It's defined as union of
  * all values, you can use bitwise arithmetic if you want.)
@@ -2516,9 +2519,11 @@ serialization_failed:
  * provide pointer to non-NULL, list will be freed automacally at first. Also
  * in case of error the list will be NULLed.
  * @return IE_SUCCESS or appropriate error code. */
-isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
+static isds_error isds_get_list_of_messages(struct isds_ctx *context,
+        _Bool outgoing_direction,
         const struct timeval *from_time, const struct timeval *to_time,
-        const long int *dmSenderOrgUnitNum, const unsigned int status_filter,
+        const long int *organization_unit_number,
+        const unsigned int status_filter,
         const unsigned long int offset, unsigned long int *number,
         struct isds_list **messages) {
 
@@ -2541,11 +2546,18 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
      * TODO: This check should be done donwstairs. */
     if (!context->curl) return IE_CONNECTION_CLOSED;
 
-    /* Build GetListOfSentMessages request */
-    request = xmlNewNode(NULL, BAD_CAST "GetListOfSentMessages");
+    /* Build GetListOf*Messages request */
+    request = xmlNewNode(NULL,
+            (outgoing_direction) ?
+                BAD_CAST "GetListOfSentMessages" :
+                BAD_CAST "GetListOfReceivedMessages"
+            );
     if (!request) {
         isds_log_message(context,
-                _("Could build GetListOfSentMessages request"));
+                (outgoing_direction) ?
+                _("Could not build GetListOfSentMessages request") :
+                _("Could not build GetListOfReceivedMessages request")
+                );
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
@@ -2571,7 +2583,13 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
     INSERT_STRING(request, "dmToTime", string);
     free(string); string = NULL;
 
-    INSERT_LONGINT(request, "dmSenderOrgUnitNum", dmSenderOrgUnitNum, string);
+    if (outgoing_direction) {
+        INSERT_LONGINT(request, "dmSenderOrgUnitNum",
+                organization_unit_number, string);
+    } else {
+        INSERT_LONGINT(request, "dmRecipientOrgUnitNum",
+                organization_unit_number, string);
+    }
 
     if (status_filter > MESSAGESTATE_ANY) {
         isds_printf_message(context,
@@ -2595,8 +2613,11 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
     }
 
 
-    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending GetListOfSentMessages request "
-                "to ISDS\n"));
+    isds_log(ILF_ISDS, ILL_DEBUG,
+            (outgoing_direction) ?
+                _("Sending GetListOfSentMessages request to ISDS\n") :
+                _("Sending GetListOfReceivedMessages request to ISDS\n")
+            );
 
     /* Sent request */
     err = isds(context, SERVICE_DM_INFO, request, &response);
@@ -2604,8 +2625,12 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
     
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Processing ISDS response on GetListOfSentMessages "
-                    "request failed\n"));
+                (outgoing_direction) ?
+                    _("Processing ISDS response on GetListOfSentMessages "
+                        "request failed\n") :
+                    _("Processing ISDS response on GetListOfReceivedMessages "
+                        "request failed\n")
+                );
         goto leave;
     }
 
@@ -2614,8 +2639,12 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
             &code, &message, NULL);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
-                _("ISDS response on GetListOfSentMessages request "
-                    "is missing status\n"));
+                (outgoing_direction) ?
+                    _("ISDS response on GetListOfSentMessages request "
+                        "is missing status\n") :
+                    _("ISDS response on GetListOfReceivedMessages request "
+                        "is missing status\n")
+                );
         goto leave;
     }
 
@@ -2624,8 +2653,12 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
         char *code_locale = utf82locale((char*)code);
         char *message_locale = utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Server refused GetListOfSentMessages request "
-                    "(code=%s, message=%s)\n"), code_locale, message_locale);
+                (outgoing_direction) ?
+                    _("Server refused GetListOfSentMessages request "
+                        "(code=%s, message=%s)\n") :
+                    _("Server refused GetListOfReceivedMessages request "
+                        "(code=%s, message=%s)\n"),
+                code_locale, message_locale);
         isds_log_message(context, message_locale);
         free(code_locale);
         free(message_locale);
@@ -2645,8 +2678,11 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
         goto leave;
     }
     result = xmlXPathEvalExpression(
-            BAD_CAST
-            "/isds:GetListOfSentMessagesResponse/isds:dmRecords/isds:dmRecord",
+            (outgoing_direction) ?
+                BAD_CAST "/isds:GetListOfSentMessagesResponse/"
+                "isds:dmRecords/isds:dmRecord" :
+                BAD_CAST "/isds:GetListOfReceivedMessagesResponse/"
+                "isds:dmRecords/isds:dmRecord",
             xpath_ctx);
     if (!result) {
         err = IE_ERROR;
@@ -2712,9 +2748,87 @@ leave:
 
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
-                _("GetListOfSentMessages request processed by server "
-                    "successfully.\n"));
+                (outgoing_direction) ?
+                    _("GetListOfSentMessages request processed by server "
+                        "successfully.\n") :
+                    _("GetListOfReceivedMessages request processed by server "
+                        "successfully.\n")
+                );
     return err;
+}
+
+
+/* Get list of outgoing (already sent) messages.
+ * Any criterion argument can be NULL, if you don't care about it.
+ * @context is session context. Must not be NULL.
+ * @from_time is minimal time and date of message sending inclusive.
+ * @to_time is maximal time and date of message sending inclusive
+ * @dmSenderOrgUnitNum is the same as isds_envelope.dmSenderOrgUnitNum
+ * @status_filter is bit field of isds_message_status values. Use special
+ * value MESSAGESTATE_ANY to signal you don't care. (It's defined as union of
+ * all values, you can use bitwise arithmetic if you want.)
+ * @offset is index of first message we are interested in. First message is 1.
+ * Set to 0 (or 1) if you don't care.
+ * @number is maximal length of list you want to get as input value, outputs
+ * number of messages matching these criteria. Can be NULL if you don't care
+ * (applies to output value either).
+ * @messages is automatically reallocated list of isds_message's. Be ware that
+ * it returns only brief overview (envelope and some other fields) about each
+ * message, not the complete message. FIXME: Specify exact fields.
+ * The list is sorted by delivery time in ascending order.
+ * Use NULL if you don't care about the metadata (useful if you want to know
+ * only the @number). If you provide &NULL, list will be allocated on heap,
+ * if you provide pointer to non-NULL, list will be freed automacally at first.
+ * Also in case of error the list will be NULLed.
+ * @return IE_SUCCESS or appropriate error code. */
+isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
+        const struct timeval *from_time, const struct timeval *to_time,
+        const long int *dmSenderOrgUnitNum, const unsigned int status_filter,
+        const unsigned long int offset, unsigned long int *number,
+        struct isds_list **messages) {
+
+    return isds_get_list_of_messages(
+            context, 1,
+            from_time, to_time, dmSenderOrgUnitNum, status_filter,
+            offset, number,
+            messages);
+}
+
+
+/* Get list of incoming (addressed to you) messages.
+ * Any criterion argument can be NULL, if you don't care about it.
+ * @context is session context. Must not be NULL.
+ * @from_time is minimal time and date of message sending inclusive.
+ * @to_time is maximal time and date of message sending inclusive
+ * @dmRecipientOrgUnitNum is the same as isds_envelope.dmRecipientOrgUnitNum
+ * @status_filter is bit field of isds_message_status values. Use special
+ * value MESSAGESTATE_ANY to signal you don't care. (It's defined as union of
+ * all values, you can use bitwise arithmetic if you want.)
+ * @offset is index of first message we are interested in. First message is 1.
+ * Set to 0 (or 1) if you don't care.
+ * @number is maximal length of list you want to get as input value, outputs
+ * number of messages matching these criteria. Can be NULL if you don't care
+ * (applies to output value either).
+ * @messages is automatically reallocated list of isds_message's. Be ware that
+ * it returns only brief overview (envelope and some other fields) about each
+ * message, not the complete message. FIXME: Specify exact fields.
+ * Use NULL if you don't care about the metadata (useful if you want to know
+ * only the @number). If you provide &NULL, list will be allocated on heap,
+ * if you provide pointer to non-NULL, list will be freed automacally at first.
+ * Also in case of error the list will be NULLed.
+ * @return IE_SUCCESS or appropriate error code. */
+isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
+        const struct timeval *from_time, const struct timeval *to_time,
+        const long int *dmRecipientOrgUnitNum,
+        const unsigned int status_filter,
+        const unsigned long int offset, unsigned long int *number,
+        struct isds_list **messages) {
+
+    return isds_get_list_of_messages(
+            context, 0,
+            from_time, to_time, dmRecipientOrgUnitNum, status_filter,
+            offset, number,
+            messages);
 }
 
 

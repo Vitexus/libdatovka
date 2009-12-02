@@ -2,10 +2,11 @@ LIBDIR=../src
 CFLAGS=-std=c99 -Wall -Werror -g
 CFLAGS+=-I$(LIBDIR)
 LDFLAGS=-L$(LIBDIR) -lisds
+BINS=isdsclient getsent getreceived
 
 .PHONY: libisds depend
 
-all: isdsclient getsent
+all: $(BINS)
 
 libisds:
 	$(MAKE) -C $(LIBDIR) all
@@ -19,14 +20,15 @@ isdsclient: isdsclient.o common.o
 getsent: getsent.o common.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
+getreceived: getreceived.o common.o
+	$(CC) $(LDFLAGS) -o $@ $^
+
 clean:
-	-rm -f isdsclient *.o
+	-rm -f $(BINS) *.o
 
-test: isdsclient
+test-%: %
 	LD_LIBRARY_PATH=$(LIBDIR) ./$<
 
-test-getsent: getsent
-	LD_LIBRARY_PATH=$(LIBDIR) ./$<
 
 depend:
 	for F in *.c; do cpp $(CFLAGS) -MM "$$F"; done > Makefile.deps
