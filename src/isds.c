@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <ctype.h>
 #include "isds_priv.h"
 #include "utils.h"
 #include "soap.h"
@@ -908,8 +909,9 @@ static isds_error timeval2timestring(const struct timeval *time,
 static isds_error timestring2timeval(const xmlChar *string,
         struct timeval **time) {
     struct tm broken;
-    char *offset, *delim;
-    float subseconds;
+    char *offset, *delim, *endptr;
+    char subseconds[7];
+    int i;
     
     if (!time) return IE_INVAL;
 
@@ -932,10 +934,28 @@ static isds_error timestring2timeval(const xmlChar *string,
         return IE_DATE;
     
     /* Get subseconds */
-    /* TODO: Use integer arthmetic to avoid round errors */
     if (*offset == '.' ) {
-        if (0 >= sscanf(offset, "%f", &subseconds)) subseconds = .0;
-        (*time)->tv_usec = (subseconds * 1000000 + 0.5);
+        offset++;
+
+        /* Copy first 6 digits, padd it with zeros.
+         * XXX: It truncates longer number, no round.
+         * Current server implementation uses only milisecond resolution. */
+        /* TODO: isdigit() is locale sensitive */
+        for (i = 0;
+                i < sizeof(subseconds)/sizeof(char) - 1  && isdigit(*offset);
+                i++, offset++) {
+            subseconds[i] = *offset;
+        }
+        for (; i < sizeof(subseconds)/sizeof(char) - 1; i++) {
+            subseconds[i] = '0';
+        }
+        subseconds[6] = '\0';
+
+        /* Convert it into integer */
+        (*time)->tv_usec = strtol(subseconds, &endptr, 10); 
+        if (*endptr != '\0') return IE_DATE;
+        if ((*time)->tv_usec == LONG_MIN || (*time)->tv_usec == LONG_MAX)
+            return IE_DATE;
 
         /* move to the zone offset delimiter */
         delim = strchr(offset, '-');
