@@ -120,8 +120,23 @@ void print_DbOwnerInfo(struct isds_DbOwnerInfo *info) {
 
 
 void print_timeval(const struct timeval *time) {
-    if (!time) printf("NULL\n");
-    else printf("%s and %ld us\n", ctime(&(time->tv_sec)), time->tv_usec);
+    struct tm broken;
+    char buffer[128];
+
+    if (!time) {
+        printf("NULL\n");
+        return;
+    }
+    
+    if (!localtime_r(&(time->tv_sec), &broken)) goto error;
+    if (!strftime(buffer, sizeof(buffer)/sizeof(char), "%c", &broken))
+        goto error;
+    printf("%s, %ld us\n", buffer, time->tv_usec);
+    return;
+
+error:
+    printf("<Error while formating>\n>");
+    return;
 }
 
 
