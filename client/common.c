@@ -23,7 +23,7 @@ void print_DbState(const long int state) {
 }
 
 
-void print_DbOwnerInfo(struct isds_DbOwnerInfo *info) {
+void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info) {
     printf("dbOwnerInfo = ");
 
     if (!info) {
@@ -140,7 +140,7 @@ error:
 }
 
 
-void print_envelope(struct isds_envelope *envelope) {
+void print_envelope(const struct isds_envelope *envelope) {
     printf("\tenvelope = ");
 
     if (!envelope) {
@@ -186,7 +186,7 @@ void print_envelope(struct isds_envelope *envelope) {
 }
 
 
-void print_message(struct isds_message *message) {
+void print_message(const struct isds_message *message) {
     printf("message = ");
 
     if (!message) {
