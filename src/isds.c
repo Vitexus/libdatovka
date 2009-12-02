@@ -1462,6 +1462,8 @@ static isds_error extract_DmRecord(struct isds_ctx *context,
     }
 
     /* TODO: Extract envelope element */
+    EXTRACT_STRING("isds:dmID", (*envelope)->dmID);
+    
 leave:
     if (err) isds_envelope_free(envelope);
     free(unumber);
