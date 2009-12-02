@@ -905,12 +905,14 @@ static isds_error timeval2timestring(const struct timeval *time,
 
 
 /* Convert UTF-8 ISO 8601 date-time @string to struct timeval.
- * It respects microseconds too. */
+ * It respects microseconds too.
+ * In case of error, @time will be freed. */
 static isds_error timestring2timeval(const xmlChar *string,
         struct timeval **time) {
     struct tm broken;
     char *offset, *delim, *endptr;
     char subseconds[7];
+    int offset_hours, offset_minutes;
     int i;
     
     if (!time) return IE_INVAL;
@@ -930,8 +932,10 @@ static isds_error timestring2timeval(const xmlChar *string,
 
     /* Parse date and time without subseconds and offset */
     offset = strptime((char*)string, "%Y-%m-%dT%T", &broken);
-    if (!offset)
+    if (!offset) {
+        free(*time); *time = NULL;
         return IE_DATE;
+    }
     
     /* Get subseconds */
     if (*offset == '.' ) {
@@ -953,9 +957,11 @@ static isds_error timestring2timeval(const xmlChar *string,
 
         /* Convert it into integer */
         (*time)->tv_usec = strtol(subseconds, &endptr, 10); 
-        if (*endptr != '\0') return IE_DATE;
-        if ((*time)->tv_usec == LONG_MIN || (*time)->tv_usec == LONG_MAX)
+        if (*endptr != '\0' || (*time)->tv_usec == LONG_MIN ||
+            (*time)->tv_usec == LONG_MAX) {
+            free(*time); *time = NULL;
             return IE_DATE;
+        }
 
         /* move to the zone offset delimiter */
         delim = strchr(offset, '-');
@@ -965,12 +971,18 @@ static isds_error timestring2timeval(const xmlChar *string,
     }
 
     /* Get zone offset */
+    /* ISO allows zone offset string only: "" | "Z" | ("+"|"-" "<HH>:<MM>")
+     * "" equals to "Z" and it means UTC zone. */
+    /* One can not use strptime(, "%z",) becase it's RFC E-MAIL format without
+     * colon separator */
     if (*offset == '-' || *offset == '+') {
-        offset = strptime((char*)offset, "%z", &broken);
-        if (!offset) {
+        offset++;
+        if (2 != sscanf(offset, "%2d:%2d", &offset_hours, &offset_minutes)) {
             free(*time); *time = NULL;
             return IE_DATE;
         }
+        broken.tm_hour -= offset_hours;
+        broken.tm_min -= offset_minutes * ((offset_hours<0) ? -1 : 1);
     }
 
     /* Convert to time_t */
