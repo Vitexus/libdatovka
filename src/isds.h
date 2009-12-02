@@ -225,7 +225,8 @@ struct isds_envelope {
                                        Optional. */
     long int *dmSenderOrgUnitNum;   /* Organisation unit of sender as number;
                                        Optional. */
-    char *dbIDRecipient;            /* Box ID of recipient; Mandatory. */
+    char *dbIDRecipient;            /* Box ID of recipient; Mandatory.
+                                       Maximal length is 7 characters. */
     char *dmRecipientOrgUnit;       /* Organisation unit of recipient as
                                        string; Optional. */
     long int *dmRecipientOrgUnitNum;    /* Organisation unit of recipient as

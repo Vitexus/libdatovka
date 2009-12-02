@@ -1461,8 +1461,48 @@ static isds_error extract_DmRecord(struct isds_ctx *context,
         }
     }
 
-    /* TODO: Extract envelope element */
+    /* Extract envelope elements added by ISDS
+     * (XSD: gMessageEnvelope type) */
     EXTRACT_STRING("isds:dmID", (*envelope)->dmID);
+    EXTRACT_STRING("isds:dbIDSender", (*envelope)->dbIDSender);
+    EXTRACT_STRING("isds:dmSender", (*envelope)->dmSender);
+    EXTRACT_STRING("isds:dmSenderAddress", (*envelope)->dmSenderAddress);
+    /* XML Schema does not guaratee enumratation. It's plain xs:int. */
+    EXTRACT_LONGINT("isds:dmSenderType", (*envelope)->dmSenderType, 0);
+    EXTRACT_STRING("isds:dmRecipient", (*envelope)->dmRecipient);
+    EXTRACT_STRING("isds:dmRecipientAddress", (*envelope)->dmRecipientAddress);
+    EXTRACT_BOOLEAN("isds:dmAmbiguousRecipient",
+            (*envelope)->dmAmbiguousRecipient);
+
+    /* Extract envelope elements added by sender or ISDS
+     * (XSD: gMessageEnvelopeSub type) */
+    EXTRACT_STRING("isds:dmSenderOrgUnit", (*envelope)->dmSenderOrgUnit);
+    EXTRACT_LONGINT("isds:dmSenderOrgUnitNum",
+            (*envelope)->dmSenderOrgUnitNum, 0);
+    EXTRACT_STRING("isds:dbIDRecipient", (*envelope)->dbIDRecipient);
+    EXTRACT_STRING("isds:dmRecipientOrgUnit", (*envelope)->dmRecipientOrgUnit);
+    EXTRACT_LONGINT("isds:dmRecipientOrgUnitNum",
+            (*envelope)->dmSenderOrgUnitNum, 0);
+    EXTRACT_STRING("isds:dmToHands", (*envelope)->dmToHands);
+    EXTRACT_STRING("isds:dmAnnotation", (*envelope)->dmAnnotation);
+    EXTRACT_STRING("isds:dmRecipientRefNumber",
+            (*envelope)->dmRecipientRefNumber);
+    EXTRACT_STRING("isds:dmSenderRefNumber", (*envelope)->dmSenderRefNumber);
+    EXTRACT_STRING("isds:dmRecipientIdent", (*envelope)->dmRecipientIdent);
+    EXTRACT_STRING("isds:dmSenderIdent", (*envelope)->dmSenderIdent);
+
+    /* Extract envelope elements regarding law refference */
+    EXTRACT_LONGINT("isds:dmLegalTitleLaw", (*envelope)->dmLegalTitleLaw, 0);
+    EXTRACT_LONGINT("isds:dmLegalTitleYear", (*envelope)->dmLegalTitleYear, 0);
+    EXTRACT_STRING("isds:dmLegalTitleSect", (*envelope)->dmLegalTitleSect);
+    EXTRACT_STRING("isds:dmLegalTitlePar", (*envelope)->dmLegalTitlePar);
+    EXTRACT_STRING("isds:dmLegalTitlePoint", (*envelope)->dmLegalTitlePoint);
+
+    /* Extract envelope other elements */
+    EXTRACT_BOOLEAN("isds:dmPersonalDelivery", (*envelope)->dmPersonalDelivery);
+    EXTRACT_BOOLEAN("isds:dmAllowSubstDelivery",
+            (*envelope)->dmAllowSubstDelivery);
+    /* dmOVM can not be obtained from ISDS */
     
 leave:
     if (err) isds_envelope_free(envelope);

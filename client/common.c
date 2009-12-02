@@ -22,6 +22,37 @@ void print_DbState(const long int state) {
     }
 }
 
+void print_DbType(const long int *type) {
+    if (!type) printf("NULL\n");
+    else
+        switch(*type) {
+            case DBTYPE_FO: printf("FO\n"); break;
+            case DBTYPE_PFO: printf("PFO\n"); break;
+            case DBTYPE_PFO_ADVOK: printf("PFO_ADVOK\n"); break;
+            case DBTYPE_PFO_DANPOR: printf("PFO_DAPOR\n"); break;
+            case DBTYPE_PFO_INSSPR: printf("PFO_INSSPR\n"); break;
+            case DBTYPE_PO: printf("PO\n"); break;
+            case DBTYPE_PO_ZAK: printf("PO_ZAK\n"); break;
+            case DBTYPE_PO_REQ: printf("PO_REQ\n"); break;
+            case DBTYPE_OVM: printf("OVM\n"); break;
+            case DBTYPE_OVM_NOTAR: printf("OVM_NOTAR\n"); break;
+            case DBTYPE_OVM_EXEKUT: printf("OVM_EXEKUT\n"); break;
+            case DBTYPE_OVM_REQ: printf("OVM_REQ\n"); break;
+            default: printf("<unknown type %ld>\n", *type);
+        }
+}
+
+
+void print_bool(const _Bool *boolean) {
+    printf("%s\n", (!boolean) ? "NULL" : ((*boolean)? "true" : "false") );
+}
+
+
+void print_longint(const long int *number) {
+    if (!number) printf("NULL\n");
+    else printf("%ld\n", *number);
+}
+
 
 void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info) {
     printf("dbOwnerInfo = ");
@@ -35,23 +66,7 @@ void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info) {
     printf("\tdbID = %s\n", info->dbID);
 
     printf("\tdbType = ");
-    if (!info->dbType) printf("NULL\n");
-    else
-        switch(*(info->dbType)) {
-            case DBTYPE_FO: printf("FO\n"); break;
-            case DBTYPE_PFO: printf("PFO\n"); break;
-            case DBTYPE_PFO_ADVOK: printf("PFO_ADVOK\n"); break;
-            case DBTYPE_PFO_DANPOR: printf("PFO_DAPOR\n"); break;
-            case DBTYPE_PFO_INSSPR: printf("PFO_INSSPR\n"); break;
-            case DBTYPE_PO: printf("PO\n"); break;
-            case DBTYPE_PO_ZAK: printf("PO_ZAK\n"); break;
-            case DBTYPE_PO_REQ: printf("PO_REQ\n"); break;
-            case DBTYPE_OVM: printf("OVM\n"); break;
-            case DBTYPE_OVM_NOTAR: printf("OVM_NOTAR\n"); break;
-            case DBTYPE_OVM_EXEKUT: printf("OVM_EXEKUT\n"); break;
-            case DBTYPE_OVM_REQ: printf("OVM_REQ\n"); break;
-            default: printf("<unknown type %d>\n", *(info->dbType));
-        }
+    print_DbType((long int *) (info->dbType));
     printf("\tic = %s\n", info->ic);
 
     printf("\tpersonName = ");
@@ -106,13 +121,11 @@ void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info) {
     if (!info->dbState) printf("NULL\n");
     else print_DbState(*(info->dbState));
     
-    printf("\tdbEffectiveOVM = %s\n",
-            !info->dbEffectiveOVM ? "NULL" :
-                (*(info->dbEffectiveOVM)? "true" : "false"));
+    printf("\tdbEffectiveOVM = ");
+    print_bool(info->dbEffectiveOVM);
 
-    printf("\tdbOpenAddressing = %s\n",
-            !info->dbOpenAddressing ? "NULL" :
-                (*(info->dbOpenAddressing)? "true" : "false"));
+    printf("\tdbOpenAddressing = ");
+    print_bool(info->dbOpenAddressing);
 
     printf("}\n");
 
@@ -150,6 +163,44 @@ void print_envelope(const struct isds_envelope *envelope) {
     printf("{\n");
 
     printf("\t\tdmID = %s\n", envelope->dmID);
+    printf("\t\tdbIDSender = %s\n", envelope->dbIDSender);
+    printf("\t\tdmSender = %s\n", envelope->dmSender);
+    printf("\t\tdmSenderAddress = %s\n", envelope->dmSenderAddress);
+    printf("\t\tdmSenderType = ");
+    print_DbType(envelope->dmSenderType);
+    printf("\t\tdmRecipient = %s\n", envelope->dmRecipient);
+    printf("\t\tdmRecipientAddress = %s\n", envelope->dmRecipientAddress);
+    printf("\t\tdmAmbiguousRecipient = ");
+    print_bool(envelope->dmAmbiguousRecipient);
+
+    printf("\t\tdmSenderOrgUnit = %s\n", envelope->dmSenderOrgUnit);
+    printf("\t\tdmSenderOrgUnitNum = ");
+    print_longint(envelope->dmSenderOrgUnitNum);
+    printf("\t\tdbIDRecipient = %s\n", envelope->dbIDRecipient);
+    printf("\t\tdmRecipientOrgUnit = %s\n", envelope->dmRecipientOrgUnit);
+    printf("\t\tdmRecipientOrgUnitNum = ");
+    print_longint(envelope->dmRecipientOrgUnitNum);
+    printf("\t\tdmToHands = %s\n", envelope->dmToHands);
+    printf("\t\tdmAnnotation = %s\n", envelope->dmAnnotation);
+    printf("\t\tdmRecipientRefNumber = %s\n", envelope->dmRecipientRefNumber);
+    printf("\t\tdmSenderRefNumber = %s\n", envelope->dmSenderRefNumber);
+    printf("\t\tdmRecipientIdent = %s\n", envelope->dmRecipientIdent);
+    printf("\t\tdmSenderIdent = %s\n", envelope->dmSenderIdent);
+
+    printf("\t\tdmLegalTitleLaw = ");
+    print_longint(envelope->dmLegalTitleLaw);
+    printf("\t\tdmLegalTitleYear = ");
+    print_longint(envelope->dmLegalTitleYear);
+    printf("\t\tdmLegalTitleSect = %s\n", envelope->dmLegalTitleSect);
+    printf("\t\tdmLegalTitlePar = %s\n", envelope->dmLegalTitlePar);
+    printf("\t\tdmLegalTitlePoint = %s\n", envelope->dmLegalTitlePoint);
+
+    printf("\t\tdmPersonalDelivery = ");
+    print_bool(envelope->dmPersonalDelivery);
+    printf("\t\tdmAllowSubstDelivery = ");
+    print_bool(envelope->dmAllowSubstDelivery);
+    printf("\t\tdmOVM = ");
+    print_bool(envelope->dmOVM);
 
     printf("\t\tdmOrdinal = ");
     if (!envelope->dmOrdinal) printf("NULL\n");
