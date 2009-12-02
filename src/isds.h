@@ -180,14 +180,20 @@ struct isds_DbOwnerInfo {
 };
 
 
-/* Message envelope */
+/* Message envelope
+ * Be ware that the string length contraints are forced only on output
+ * memebers transmitted to ISDS. The other direction (downloded from ISDS)
+ * can break these rules. It should not happen, but nobody knows how much
+ * incompatible new version of ISDS protocol will be. This is the gold
+ * Internet rule: be strict on what you put, be tollerant on what you get. */
 struct isds_envelope {
     /* Following memebers apply to incoming messages only: */
     char *dmID;                     /* Message ID.
                                        Maximal length is 20 characters. */
     char *dbIDSender;               /* Box ID of sender.
                                        Special value "aaaaaaa" means sent by
-                                       ISDS. */
+                                       ISDS.
+                                       Maximal length is 7 characters. */
     char *dmSender;                 /* Sender name;
                                        Maximal length is 100 characters. */
     char *dmSenderAddress;          /* Postal address of sender;
