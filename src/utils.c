@@ -185,7 +185,7 @@ leave:
  * @length is liength of @plain data in bytes
  * @return allocated string of base64 encoded plain data or NULL in case of
  * error. You must free it. */
-char *b64encode(const void *plain, const size_t length) {
+_hidden char *b64encode(const void *plain, const size_t length) {
 
     base64_encodestate state;
     size_t code_length;
