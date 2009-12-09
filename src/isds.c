@@ -3135,6 +3135,8 @@ isds_error isds_get_received_message(struct isds_ctx *context,
         err = IE_ISDS;
         goto leave;
     }
+    /* One message */
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
 
     /* Extract the message */
     err = extract_TReturnedMessage(context, message, xpath_ctx);
