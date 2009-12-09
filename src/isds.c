@@ -2975,7 +2975,7 @@ leave:
     xmlXPathFreeContext(xpath_ctx);
 
     free(code);
-    free(message);
+    free(status_message);
     xmlFreeDoc(response);
     xmlFreeNode(request);
 
