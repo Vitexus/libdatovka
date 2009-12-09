@@ -2934,7 +2934,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
         goto leave;
     }
     result = xmlXPathEvalExpression(
-            BAD_CAST "/isds:MessageDownloadResponse/isds:dmReturnedMessage/",
+            BAD_CAST "/isds:MessageDownloadResponse/isds:dmReturnedMessage",
             xpath_ctx);
     if (!result) {
         err = IE_ERROR;
