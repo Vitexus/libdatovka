@@ -1,0 +1,48 @@
+* Asynchronous interface
+    Grep for (rentrant|thread) comments
+* Multithreaded interface
+    Grep for (rentrant|thread) comments
+* Download/upload progress notification
+* Autotools driven build
+    Libtool allows to build SO on many platforms
+* Make CURL (network services) optional
+* Improve isds_*message() system
+    Clean context message buffer on function entry point
+    Allow formated message appeding, preserve deep messages
+* Make function tests
+    Test static functions
+    Simulate server?
+* Make release tools
+    Changelog/NEWS
+    Version numbering
+    Proper SONAME / symbol versioning
+    Git taging
+    Digital singing
+* Implement X.509 authentication
+* Write high level documentation
+    ISDS overview
+    Gather comments from header files
+    Write manual page(s)
+* I18N
+    Use gettext and define _()
+    Solve UTF-8 vs. locale-encoded logging schism
+* Implement all necessary web services
+    VerifyMessage
+    MessageDownload
+    SignedMessageDownload
+    SignedMessageDownload
+    MessageEnvelopeDownload
+    MarkMessageAsDownloaded
+    GetDeliveryInfo
+    GetSignedDeliveryInfo
+* Test message is system generated
+* Make high logic checks optional
+* Validate XML trees (optional)
+* Upgrade to ISDS specification version >= 2
+* Check for minimal dependency library versions
+* Distinguish processing errors by different isds_error values instead of
+  generic IE_ERROR
+    Invalid input from application (IE_INVAL?)
+    Library error on processing application data
+    Library error on processing server data
+    Server error
