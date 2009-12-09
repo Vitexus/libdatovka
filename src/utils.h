@@ -66,10 +66,13 @@ char *b64encode(const void *plain, const size_t length);
 
 /* Switches time zone to UTC.
  * XXX: This is not reentrant and not thread-safe */
-_hidden void switch_tz_to_utc(void);
+void switch_tz_to_utc(void);
 
 /* Switches time zone to original value.
  * XXX: This is not reentrant and not thread-safe */
-_hidden void switch_tz_to_native(void);
+void switch_tz_to_native(void);
+
+/* Free() and set to NULL pointed memory */
+void zfree(void *memory);
 
 #endif

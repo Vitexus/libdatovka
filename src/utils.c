@@ -259,3 +259,10 @@ _hidden void switch_tz_to_native(void) {
     }
     tzset();
 }
+
+/* Free() and set to NULL pointed memory */
+_hidden void zfree(void *memory) {
+    free(memory);
+    memory = NULL;
+}
+

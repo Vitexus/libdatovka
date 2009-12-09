@@ -1391,12 +1391,71 @@ leave:
 }
 
 
-/* Convert isds:dmRecord XML tree into structure
+/* Convert XSD gMessageEnvelope group of elements from XML tree into
+ * isds_envelope structure. The envelope is automatically allocated but not
+ * reallocated. The date are just appended into envelope structure.
  * @context is ISDS context
- * @envelope is automically reallocated message envelope structure
- * @xpath_ctx is XPath context with current node as isds:dmRecord element
+ * @envelope is automically allocated message envelope structure
+ * @xpath_ctx is XPath context with current node as gMessageEnvelope parent
  * In case of error @envelope will be freed. */
-static isds_error extract_DmRecord(struct isds_ctx *context,
+static isds_error append_GMessageEnvelope(struct isds_ctx *context,
+        struct isds_envelope **envelope, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!envelope) return IE_INVAL;
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    if (!*envelope) {
+        /* Allocate envelope */
+        *envelope = calloc(1, sizeof(**envelope));
+        if (!*envelope) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+    } else {
+        /* Else free former data */
+        zfree((*envelope)->dmID);
+        zfree((*envelope)->dbIDSender);
+        zfree((*envelope)->dmSender);
+        zfree((*envelope)->dmSenderAddress);
+        zfree((*envelope)->dmSenderType);
+        zfree((*envelope)->dmRecipient);
+        zfree((*envelope)->dmRecipientAddress);
+        zfree((*envelope)->dmAmbiguousRecipient);
+    }
+
+    /* Extract envelope elements added by ISDS
+     * (XSD: gMessageEnvelope type) */
+    EXTRACT_STRING("isds:dmID", (*envelope)->dmID);
+    EXTRACT_STRING("isds:dbIDSender", (*envelope)->dbIDSender);
+    EXTRACT_STRING("isds:dmSender", (*envelope)->dmSender);
+    EXTRACT_STRING("isds:dmSenderAddress", (*envelope)->dmSenderAddress);
+    /* XML Schema does not guaratee enumratation. It's plain xs:int. */
+    EXTRACT_LONGINT("isds:dmSenderType", (*envelope)->dmSenderType, 0);
+    EXTRACT_STRING("isds:dmRecipient", (*envelope)->dmRecipient);
+    EXTRACT_STRING("isds:dmRecipientAddress", (*envelope)->dmRecipientAddress);
+    EXTRACT_BOOLEAN("isds:dmAmbiguousRecipient",
+            (*envelope)->dmAmbiguousRecipient);
+    
+leave:
+    if (err) isds_envelope_free(envelope);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
+/* Convert other envelope elements from XML tree into isds_envelope structure:
+ * dmMessageStatus, dmAttachmentSize, dmDeliveryTime, dmAcceptanceTime. 
+ * The envelope is automatically allocated but not reallocated.
+ * The data are just appended into envelope structure.
+ * @context is ISDS context
+ * @envelope is automically allocated message envelope structure
+ * @xpath_ctx is XPath context with current node as parent desired elements
+ * In case of error @envelope will be freed. */
+static isds_error append_status_size_times(struct isds_ctx *context,
         struct isds_envelope **envelope, xmlXPathContextPtr xpath_ctx) {
     isds_error err = IE_SUCCESS;
     xmlXPathObjectPtr result = NULL;
@@ -1405,20 +1464,25 @@ static isds_error extract_DmRecord(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!envelope) return IE_INVAL;
-    isds_envelope_free(envelope);
     if (!xpath_ctx) return IE_INVAL;
 
 
-    *envelope = calloc(1, sizeof(**envelope));
     if (!*envelope) {
-        err = IE_NOMEM;
-        goto leave;
+        /* Allocate new */
+        *envelope = calloc(1, sizeof(**envelope));
+        if (!*envelope) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+    } else {
+        /* Free old data */
+        zfree((*envelope)->dmMessageStatus);
+        zfree((*envelope)->dmAttachmentSize);
+        zfree((*envelope)->dmDeliveryTime);
+        zfree((*envelope)->dmAcceptanceTime);
     }
 
-
-    /* Extract tRecord data */
-    EXTRACT_ULONGINT("isds:dmOrdinal", (*envelope)->dmOrdinal, 0);
-
+    
     /* dmMessageStatus element is mandatory */
     EXTRACT_ULONGINT("isds:dmMessageStatus", unumber, 0);
     err = uint2isds_message_status(context, unumber,
@@ -1461,18 +1525,50 @@ static isds_error extract_DmRecord(struct isds_ctx *context,
         }
     }
 
+leave:
+    if (err) isds_envelope_free(envelope);
+    free(unumber);
+    free(string);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
+/* Convert isds:dmRecord XML tree into structure
+ * @context is ISDS context
+ * @envelope is automically reallocated message envelope structure
+ * @xpath_ctx is XPath context with current node as isds:dmRecord element
+ * In case of error @envelope will be freed. */
+static isds_error extract_DmRecord(struct isds_ctx *context,
+        struct isds_envelope **envelope, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!envelope) return IE_INVAL;
+    isds_envelope_free(envelope);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *envelope = calloc(1, sizeof(**envelope));
+    if (!*envelope) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+
+    /* Extract tRecord data */
+    EXTRACT_ULONGINT("isds:dmOrdinal", (*envelope)->dmOrdinal, 0);
+
+    /* Get dmMessageStatus, dmAttachmentSize, dmDeliveryTime,
+     * dmAcceptanceTime. */
+    err = append_status_size_times(context, envelope, xpath_ctx);
+    if (err) goto leave;
+
     /* Extract envelope elements added by ISDS
      * (XSD: gMessageEnvelope type) */
-    EXTRACT_STRING("isds:dmID", (*envelope)->dmID);
-    EXTRACT_STRING("isds:dbIDSender", (*envelope)->dbIDSender);
-    EXTRACT_STRING("isds:dmSender", (*envelope)->dmSender);
-    EXTRACT_STRING("isds:dmSenderAddress", (*envelope)->dmSenderAddress);
-    /* XML Schema does not guaratee enumratation. It's plain xs:int. */
-    EXTRACT_LONGINT("isds:dmSenderType", (*envelope)->dmSenderType, 0);
-    EXTRACT_STRING("isds:dmRecipient", (*envelope)->dmRecipient);
-    EXTRACT_STRING("isds:dmRecipientAddress", (*envelope)->dmRecipientAddress);
-    EXTRACT_BOOLEAN("isds:dmAmbiguousRecipient",
-            (*envelope)->dmAmbiguousRecipient);
+    err = append_GMessageEnvelope(context, envelope, xpath_ctx);
+    if (err) goto leave;
 
     /* Extract envelope elements added by sender or ISDS
      * (XSD: gMessageEnvelopeSub type) */
@@ -1506,8 +1602,87 @@ static isds_error extract_DmRecord(struct isds_ctx *context,
     
 leave:
     if (err) isds_envelope_free(envelope);
-    free(unumber);
-    free(string);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
+/* Convert XSD tReturnedMessage XML tree into message structure
+ * @context is ISDS context
+ * @message is automically reallocated message structure
+ * @xpath_ctx is XPath context with current node as tReturnedMessage element
+ * type
+ * In case of error @message will be freed. */
+static isds_error extract_TReturnedMessage(struct isds_ctx *context,
+        struct isds_message **message, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    xmlNodePtr message_node;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!message) return IE_INVAL;
+    isds_message_free(message);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *message = calloc(1, sizeof(**message));
+    if (!*message) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    /* Save message XPATH context node */
+    message_node = xpath_ctx->node;
+
+
+    /* extract dmDM */
+    xmlXPathFreeObject(result); result = NULL;
+    result = xmlXPathEvalExpression(BAD_CAST "isds:dmDm", xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* Empty response */
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        char *parent_locale = utf82locale((char*) xpath_ctx->node->name);
+        isds_printf_message(context,
+                _("%s element does not contain dmDM child"), parent_locale);
+        free(parent_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* More messages */
+    if (result->nodesetval->nodeNr > 1) {
+        char *parent_locale = utf82locale((char*) xpath_ctx->node->name);
+        isds_printf_message(context,
+                _("%s element contains multiple dmDM childs"), parent_locale);
+        free(parent_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+    xmlXPathFreeObject(result); result = NULL;
+    err = append_GMessageEnvelope(context, &((*message)->envelope), xpath_ctx);
+    if (err) goto leave;
+
+    /* TODO: Extract dmFiles */
+
+
+    /* Restore context to message */
+    xmlXPathFreeObject(result); result = NULL;
+    xpath_ctx->node = message_node;
+
+    /* TODO: dmHash, dmQTimestamp, */
+   
+    /* Get dmMessageStatus, dmAttachmentSize, dmDeliveryTime,
+     * dmAcceptanceTime. */
+    err = append_status_size_times(context, &((*message)->envelope), xpath_ctx);
+    if (err) goto leave;
+    
+     /* TODO: save XML blob */
+leave:
+    if (err) isds_message_free(message);
     xmlXPathFreeObject(result);
     return err;
 }
@@ -2940,7 +3115,6 @@ isds_error isds_get_received_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    
     /* Empty response */
     if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
         char *message_id_locale = utf82locale((char*) message_id);
@@ -2951,7 +3125,6 @@ isds_error isds_get_received_message(struct isds_ctx *context,
         err = IE_ISDS;
         goto leave;
     }
-
     /* More messages */
     if (result->nodesetval->nodeNr > 1) {
         char *message_id_locale = utf82locale((char*) message_id);
@@ -2963,8 +3136,8 @@ isds_error isds_get_received_message(struct isds_ctx *context,
         goto leave;
     }
 
-    /* TODO: extract message (result->nodesetval->nodeTab[0]) */
-
+    /* Extract the message */
+    err = extract_TReturnedMessage(context, message, xpath_ctx);
 
 leave:
     if (err) {
