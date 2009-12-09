@@ -11,6 +11,7 @@
 int main(int argc, char **argv) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
+    char *last_message_id = NULL;
     
     setlocale(LC_ALL, "");
 
@@ -71,24 +72,52 @@ int main(int argc, char **argv) {
         };
         unsigned long int number = 0;
         struct isds_list *messages = NULL, *item;
+        struct isds_message *last_message = NULL;
 
         /* TODO: Try different criteria */
         printf("Getting list of received messages\n");
         err = isds_get_list_of_received_messages(ctx, &from_time, NULL, NULL,
                 MESSAGESTATE_ANY, 0, &number, &messages);
         if (err)
-            printf("isds_isds_get_list_of_received_messages() failed: %s: %s\n",
+            printf("isds_get_list_of_received_messages() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
         else {
-            printf("isds_isds_get_list_of_received_messages() succeeded: "
+            printf("isds_get_list_of_received_messages() succeeded: "
                     "number of messages = %lu:\n", number);
             for(item = messages; item; item = item->next) {
                 printf("List item:\n");
                 print_message(item->data);
+                last_message = (struct isds_message *) (item->data);
             }
 
         }
+
+        if (last_message) {
+            /*Save last message for latter refference */
+            if (last_message->envelope && last_message->envelope->dmID) {
+                last_message_id = strdup(last_message->envelope->dmID);
+            }
+        }
+
         isds_list_free(&messages);
+    }
+
+
+    /* Download last message */
+    if (last_message_id) {
+        struct isds_message *message = NULL;
+
+        printf("Getting last received message with ID: %s\n", last_message_id);
+        err = isds_get_received_message(ctx, last_message_id, &message);
+        if (err)
+            printf("isds_get_received_message() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        else {
+            printf("isds_get_received_message() succeeded:\n");
+            print_message(message);
+        }
+
+        isds_message_free(&message);
     }
 
 
