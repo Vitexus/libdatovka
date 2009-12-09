@@ -2941,7 +2941,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
         goto leave;
     }
     
-    /* Empty reposone */
+    /* Empty response */
     if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
         char *message_id_locale = utf82locale((char*) message_id);
         isds_printf_message(context,

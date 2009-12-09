@@ -142,12 +142,12 @@ int main(int argc, char **argv) {
     }
 
 
-    /* Download non-existing message */
+    /* Download nonexistent message */
     {
         struct isds_message *message = NULL;
         char *id = "7777777";
 
-        printf("Getting nonexisting received message with ID: %s\n", id);
+        printf("Getting nonexistent received message with ID: %s\n", id);
         err = isds_get_received_message(ctx, id, &message);
         if (err)
             printf("isds_get_received_message() failed as assumed: %s: %s\n",
