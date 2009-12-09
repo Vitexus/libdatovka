@@ -30,7 +30,7 @@
     VerifyMessage
     MessageDownload
     SignedMessageDownload
-    SignedMessageDownload
+    SignedSentMessageDownload
     MessageEnvelopeDownload
     MarkMessageAsDownloaded
     GetDeliveryInfo
