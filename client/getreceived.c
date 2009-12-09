@@ -118,6 +118,47 @@ int main(int argc, char **argv) {
         }
 
         isds_message_free(&message);
+        free(last_message_id);
+    }
+
+
+    /* Download message with invalid ID*/
+    {
+        struct isds_message *message = NULL;
+        char *id = "123456789112345678921";
+
+        printf("Getting received message with invalid ID: %s\n", id);
+        err = isds_get_received_message(ctx, id, &message);
+        if (err)
+            printf("isds_get_received_message() failed as assumed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        else {
+            printf("isds_get_received_message() succeeded. "
+                    "This should not happen:\n");
+            print_message(message);
+        }
+
+        isds_message_free(&message);
+    }
+
+
+    /* Download non-existing message */
+    {
+        struct isds_message *message = NULL;
+        char *id = "7777777";
+
+        printf("Getting nonexisting received message with ID: %s\n", id);
+        err = isds_get_received_message(ctx, id, &message);
+        if (err)
+            printf("isds_get_received_message() failed as assumed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        else {
+            printf("isds_get_received_message() succeeded. "
+                    "This should not happen:\n");
+            print_message(message);
+        }
+
+        isds_message_free(&message);
     }
 
 
