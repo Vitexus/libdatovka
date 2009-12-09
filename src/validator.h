@@ -47,4 +47,11 @@ isds_error isds(struct isds_ctx *context, const isds_service service,
 isds_error check_documents_hierarchy(struct isds_ctx *context,
         const struct isds_list *documents);
 
+/* Check for message ID length
+ * @context is session context
+ * @message_id checked message ID
+ * @return IE_SUCCESS or appropriate error code and fill context' message */
+isds_error validate_message_id_length(struct isds_ctx *context,
+        const xmlChar *message_id);
+
 #endif

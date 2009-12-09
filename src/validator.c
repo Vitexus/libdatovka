@@ -263,3 +263,37 @@ _hidden isds_error check_documents_hierarchy(struct isds_ctx *context,
     return IE_SUCCESS;
 }
 
+
+/* Check for message ID length
+ * @context is session context
+ * @message_id checked message ID
+ * @return IE_SUCCESS or appropriate error code and fill context' message */
+isds_error validate_message_id_length(struct isds_ctx *context,
+        const xmlChar *message_id) {
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!message_id) return IE_INVAL;
+
+    const int length = xmlUTF8Strlen(message_id);
+
+    if (length == -1) {
+        char *message_id_locale = utf82locale((char*) message_id);
+        isds_printf_message(context,
+                _("Could not check message ID length: %s"),
+                message_id_locale);
+        free(message_id_locale);
+        return IE_ERROR;
+    }
+
+    if (length >= 20) {
+        char *message_id_locale = utf82locale((char*) message_id);
+        isds_printf_message(context,
+                _("Message ID must not be longer than 20 characters: %s"),
+                message_id_locale);
+        free(message_id_locale);
+        return IE_INVAL;
+    }
+
+    return IE_SUCCESS;
+}
+
+

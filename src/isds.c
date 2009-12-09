@@ -2832,6 +2832,162 @@ isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
 }
 
 
+/* Dwwnload incomping message identified by ID.
+ * @context is session context
+ * @message_id is message identifier (you can get them from
+ * isds_get_list_of_received_messages())
+ * @message is automatically reallocated message retrieved from ISDS */
+isds_error isds_get_received_message(struct isds_ctx *context,
+        const char *message_id, struct isds_message **message) {
+    /* ???: XSD allows list of @message_id's and list of @message's, but
+     * documentation talks only about `a message' */
+
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL, node;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *status_message = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+   
+    /* Free former message if any */
+    if (message) isds_message_free(message);
+
+    if (!message_id) return IE_INVAL;
+
+    /* Check if connection is established
+     * TODO: This check should be done donwstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+    /* Build MessageDownload request */
+    request = xmlNewNode(NULL, BAD_CAST "MessageDownload");
+    if (!request) {
+        isds_log_message(context,
+                _("Could not build MessageDownload request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+
+    /* Add requested ID */
+    err = validate_message_id_length(context, (xmlChar *) message_id);
+    if (err) goto leave;
+    INSERT_STRING(request, "dmID", message_id);
+
+
+    isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Sending MessageDownload request to ISDS\n"));
+
+    /* Sent request */
+    err = isds(context, SERVICE_DM_OPERATIONS, request, &response);
+    xmlFreeNode(request); request = NULL;
+    
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("Processing ISDS response on MessageDownload "
+                        "request failed\n"));
+        goto leave;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, SERVICE_DM_OPERATIONS, response,
+            &code, &status_message, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("ISDS response on MessageDownload request "
+                        "is missing status\n"));
+        goto leave;
+    }
+
+    /* Request processed, but nothing found */
+    if (xmlStrcmp(code, BAD_CAST "0000")) {
+        char *code_locale = utf82locale((char*)code);
+        char *status_message_locale = utf82locale((char*)status_message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("Server refused MessageDownload request "
+                        "(code=%s, message=%s)\n"),
+                code_locale, status_message_locale);
+        isds_log_message(context, status_message_locale);
+        free(code_locale);
+        free(status_message_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+
+    /* Extract data */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(
+            BAD_CAST "/isds:MessageDownloadResponse/isds:dmReturnedMessage/",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    
+    /* Empty reposone */
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        char *message_id_locale = utf82locale((char*) message_id);
+        isds_printf_message(context,
+                _("Server did not return any message for ID `%s' "
+                    "on MessageDownload request"), message_id);
+        free(message_id_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+    /* More messages */
+    if (result->nodesetval->nodeNr > 1) {
+        char *message_id_locale = utf82locale((char*) message_id);
+        isds_printf_message(context,
+                _("Server did return more messages for ID `%s' "
+                    "on MessageDownload request"), message_id);
+        free(message_id_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+    /* TODO: extract message (result->nodesetval->nodeTab[0]) */
+
+
+leave:
+    if (err) {
+        isds_message_free(message);
+    }
+
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+    xmlFreeNode(request);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("MessageDownloadrequest processed by server "
+                        "successfully.\n")
+                );
+    return err;
+}
+
+
 #undef INSERT_STRING_ATTRIBUTE
 #undef INSERT_ULONGINTNOPTR
 #undef INSERT_ULONGINT

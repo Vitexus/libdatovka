@@ -514,6 +514,14 @@ isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
         const unsigned long int offset, unsigned long int *number,
         struct isds_list **messages);
 
+/* Dwwnload incomping message identified by ID.
+ * @context is session context
+ * @message_id is message identifier (you can get them from
+ * isds_get_list_of_received_messages())
+ * @message is automatically reallocated message retrieved from ISDS */
+isds_error isds_get_received_message(struct isds_ctx *context,
+        const char *message_id, struct isds_message **message);
+
 /* Send bogus request to ISDS.
  * Just for test purposes */
 isds_error isds_bogus_request(struct isds_ctx *context);
