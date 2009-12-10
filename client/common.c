@@ -237,6 +237,55 @@ void print_envelope(const struct isds_envelope *envelope) {
 }
 
 
+void print_document(const struct isds_document *document) {
+    printf("\t\tdocument = ");
+
+    if (!document) {
+        printf("NULL\n");
+        return;
+    }
+    printf("\{\n");
+
+    printf("\t\t\tdata = %1$p \"%1$16s\"...\n", (char *) document->data);
+    printf("\t\t\tdata_length = %zu\n", document->data_length);
+    printf("\t\t\tdmMimeType = %s\n", document->dmMimeType);
+
+    printf("\t\t\tdmFileMetaType = ");
+    switch(document->dmFileMetaType) {
+        case FILEMETATYPE_MAIN: printf("MAIN\n"); break;
+        case FILEMETATYPE_ENCLOSURE: printf("ENCLOSURE\n"); break;
+        case FILEMETATYPE_SIGNATURE: printf("SIGNATURE\n"); break;
+        case FILEMETATYPE_META: printf("META\n"); break;
+        default: printf("<unknown type %d>\n", document->dmFileMetaType);
+    }
+
+    printf("\t\t\tdmFileGuid = %s\n", document->dmFileGuid);
+    printf("\t\t\tdmUpFileGuid = %s\n", document->dmUpFileGuid);
+    printf("\t\t\tdmFileDescr = %s\n", document->dmFileDescr);
+    printf("\t\t\tdmFormat = %s\n", document->dmFormat);
+    printf("\t\t}\n");
+}
+
+
+void print_documents(const struct isds_list *documents) {
+    const struct isds_list *item;
+
+    printf("\tdocuments = ");
+
+    if (!documents) {
+        printf("NULL\n");
+        return;
+    }
+    printf("{\n");
+
+    for (item = documents; item; item = item->next) {
+        print_document((struct isds_document *) (item->data));
+    }
+
+    printf("\t}\n");
+}
+
+
 void print_message(const struct isds_message *message) {
     printf("message = ");
 
@@ -248,6 +297,7 @@ void print_message(const struct isds_message *message) {
     printf("{\n");
 
     print_envelope(message->envelope);
+    print_documents(message->documents);
 
     printf("}\n");
 }
