@@ -246,7 +246,7 @@ void print_document(const struct isds_document *document) {
     }
     printf("\{\n");
 
-    printf("\t\t\tdata = %1$p \"%1$16s\"...\n", (char *) document->data);
+    printf("\t\t\tdata = %p\n", (char *) document->data);
     printf("\t\t\tdata_length = %zu\n", document->data_length);
     printf("\t\t\tdmMimeType = %s\n", document->dmMimeType);
 
