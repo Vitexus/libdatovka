@@ -246,7 +246,7 @@ void print_document(const struct isds_document *document) {
     }
     printf("\{\n");
 
-    printf("\t\t\tdata = %p\n", (char *) document->data);
+    printf("\t\t\tdata = %p\n", document->data);
     printf("\t\t\tdata_length = %zu\n", document->data_length);
     printf("\t\t\tdmMimeType = %s\n", document->dmMimeType);
 
@@ -296,6 +296,8 @@ void print_message(const struct isds_message *message) {
 
     printf("{\n");
 
+    printf("\traw = %p\n", message->raw);
+    printf("\traw_length = %zu\n", message->raw_length);
     print_envelope(message->envelope);
     print_documents(message->documents);
 

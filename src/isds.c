@@ -777,6 +777,115 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
 }
 
 
+/* Serialize XML subtree to buffer preserving XML indentatition.
+ * @context is session context
+ * @subtree is XML element to be serialized (with childern)
+ * @buffer is automarically reallocated buffer where serialize to
+ * @length is size of serialized stream in bytes
+ * @return standard error code, free @buffer in case of error */
+static isds_error serialize_subtree(struct isds_ctx *context,
+        xmlNodePtr subtree, void **buffer, size_t *length) {
+    isds_error err = IE_SUCCESS;
+    xmlBufferPtr xml_buffer = NULL;
+    xmlSaveCtxtPtr save_ctx = NULL;
+    xmlDocPtr subtree_doc = NULL;
+    xmlNodePtr subtree_copy;
+    xmlNsPtr isds_ns;
+    void *new_buffer;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!buffer) return IE_INVAL;
+    zfree(*buffer);
+    if (!subtree || !length) return IE_INVAL;
+
+    /* Make temporary XML document with @subtree root element */
+    /* XXX: We can not use xmlNodeDump() because it dumps the subtree as is.
+     * It can result in not well-formed on invalid XML tree (e.g. name space
+     * prefix definition can miss. */
+    /*FIXME */
+    
+    subtree_doc = xmlNewDoc(BAD_CAST "1.0");
+    if (!subtree_doc) {
+        isds_log_message(context, _("Could not build temporary document"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    
+    /* XXX: Copy subtree and attach the copy to document.
+     * One node can not bee attached into more document at the same time.
+     * XXX: Check xmlDOMWrapRemoveNode(). It could solve NS references
+     * automatically.
+     * XXX: Check xmlSaveTree() too. */
+    subtree_copy = xmlCopyNodeList(subtree);
+    if (!subtree_copy) {
+        isds_log_message(context, _("Could not copy subtree"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    xmlDocSetRootElement(subtree_doc, subtree_copy);
+
+    /* Only this way we get namespace definition as @xmlns:isds,
+     * otherwise we get namespace prefix without definition */
+    /* FIXME: Don't overwrite original default namespace */
+    isds_ns = xmlNewNs(subtree_copy, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    xmlSetNs(subtree_copy, isds_ns);
+
+
+    /* Serialize the document into buffer */
+    xml_buffer = xmlBufferCreate();
+    if (!xml_buffer) {
+        isds_log_message(context, _("Could not create xmlBuffer"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* Last argument 0 means to not format the XML tree */
+    save_ctx = xmlSaveToBuffer(xml_buffer, "UTF-8", 0);
+    if (!save_ctx) {
+        isds_log_message(context, _("Could not create XML serializer"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* XXX: According LibXML documentation, this function does not return
+     * meaningfull value yet */
+    xmlSaveDoc(save_ctx, subtree_doc);
+    if (-1 == xmlSaveFlush(save_ctx)) {
+        isds_log_message(context,
+                _("Could not serialize XML subtree"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* XXX: libxml-2.7.4 complains when xmlSaveClose() on immutable buffer
+     * even after xmlSaveFlush(). Thus close it here */
+    xmlSaveClose(save_ctx); save_ctx = NULL;
+   
+
+    /* Store and detach buffer from xml_buffer */
+    *buffer = xml_buffer->content;
+    *length = xml_buffer->use;
+    xmlBufferSetAllocationScheme(xml_buffer, XML_BUFFER_ALLOC_IMMUTABLE);
+
+    /* Shrink buffer */
+    new_buffer = realloc(*buffer, *length);
+    if (new_buffer) *buffer = new_buffer;
+
+leave:
+    if (err) {
+        zfree(*buffer);
+        *length = 0;
+    }
+
+    xmlSaveClose(save_ctx);
+    xmlBufferFree(xml_buffer);
+    xmlFreeDoc(subtree_doc); /* Frees subtree_copy, isds_ns etc. */
+    return err;
+}
+
+
 /* Convert UTF-8 @string represantion of ISDS dbType to enum @type */
 static isds_error string2isds_DbType(xmlChar *string, isds_DbType *type) {
     if (!string || !type) return IE_INVAL;
@@ -1946,6 +2055,8 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
     if (err) goto leave;
     
      /* TODO: save XML blob */
+    err = serialize_subtree(context, message_node, &(*message)->raw,
+            &(*message)->raw_length);
 
 leave:
     if (err) isds_message_free(message);
