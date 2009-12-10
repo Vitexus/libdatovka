@@ -8,6 +8,7 @@
 #include <time.h>
 #include "utils.h"
 #include "cencode.h"
+#include "cdecode.h"
 
 char *tz_orig; /* Copy of original TZ variable */
 
@@ -187,7 +188,7 @@ leave:
 
 /* Encode given data into MIME Base64 encoded zero terminated string.
  * @plain are input data (binary stream)
- * @length is liength of @plain data in bytes
+ * @length is length of @plain data in bytes
  * @return allocated string of base64 encoded plain data or NULL in case of
  * error. You must free it. */
 _hidden char *b64encode(const void *plain, const size_t length) {
@@ -221,6 +222,56 @@ _hidden char *b64encode(const void *plain, const size_t length) {
     if (new_buffer) buffer = new_buffer;
 
     return buffer;
+}
+
+
+/* Decode given data from MIME Base64 encoded zero terminated string to binary
+ * stream.
+ * @encoded are input data (Base64 zero terminated string)
+ * @plain are automatically realocated output data (binary stream). You must
+ * free it. Will be freed in case of error.
+ * @return length of @plain data in bytes or (size_t) -1 in case of decoding
+ * failure. */
+_hidden size_t b64decode(const char *encoded, void **plain) {
+
+    base64_decodestate state;
+    size_t encoded_length;
+    int plain_length;
+    char *buffer;
+
+    if (!encoded || !plain) {
+        if (plain && *plain) zfree(*plain);
+        return ((size_t) -1);
+    }
+
+    encoded_length = strlen(encoded);
+    base64_init_decodestate(&state);
+
+    /* TODO: This function assumes sizeof(char) == 1 byte.
+     * To fix it, one must fix underlying functions too. */
+    if (sizeof(char) != 1) PANIC("sizeof(char) != 1 byte");
+
+    /* Allocate buffer */
+    buffer = realloc(*plain, encoded_length);
+    if (!buffer) {
+        zfree(*plain);
+        return ((size_t) -1);
+    }
+    *plain = buffer;
+
+    /* Decode encoded data */
+    plain_length = base64_decode_block(encoded, encoded_length,
+            *plain, &state);
+    if (plain_length < 0) {
+        zfree(*plain);
+        return((size_t) -1);
+    }
+
+    /* Shrink the buffer */
+    buffer = realloc(*plain, plain_length);
+    if (!buffer) *plain = buffer;
+
+    return plain_length;
 }
 
 

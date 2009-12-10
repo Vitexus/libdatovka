@@ -59,10 +59,19 @@ char *utf82locale(const char *utf);
 
 /* Encode given data into MIME Base64 encoded zero terminated string.
  * @plain are input data (binary stream)
- * @length is liength of @plain data in bytes
+ * @length is length of @plain data in bytes
  * @return allocated string of base64 encoded plain data or NULL in case of
  * error. You must free it. */
 char *b64encode(const void *plain, const size_t length);
+
+/* Decode given data from MIME Base64 encoded zero terminated string to binary
+ * stream.
+ * @encoded are input data (Base64 zero terminated string)
+ * @plain are automatically realocated output data (binary stream). You must
+ * free it. Will be freed in case of error.
+ * @return length of @plain data in bytes or (size_t) -1 in case of decoding
+ * failure. */
+size_t b64decode(const char *encoded, void **plain);
 
 /* Switches time zone to UTC.
  * XXX: This is not reentrant and not thread-safe */

@@ -1651,8 +1651,7 @@ static isds_error extract_document(struct isds_ctx *context,
         goto leave;
     }
 
-    /* TODO: Extract data */
-
+    /* Extract document metadata */
     EXTRACT_STRING_ATTRIBUTE("dmMimeType", (*document)->dmMimeType, 1)
 
     EXTRACT_STRING_ATTRIBUTE("dmFileMetaType", string, 1)
@@ -1667,13 +1666,84 @@ static isds_error extract_document(struct isds_ctx *context,
         err = IE_ISDS;
         goto leave;
     }
-
+    zfree(string);
 
     EXTRACT_STRING_ATTRIBUTE("dmFileGuid", (*document)->dmFileGuid, 0)
     EXTRACT_STRING_ATTRIBUTE("dmUpFileGuid", (*document)->dmUpFileGuid, 0)
     EXTRACT_STRING_ATTRIBUTE("dmFileDescr", (*document)->dmFileDescr, 0)
     EXTRACT_STRING_ATTRIBUTE("dmFormat", (*document)->dmFormat, 0)
     
+
+    /* Extract document data.
+     * Base64 encoded blob or XML subtree must be presented. */
+
+    /* Check from dmEncodedContent */
+    result = xmlXPathEvalExpression(BAD_CAST "isds:dmEncodedContent",
+            xpath_ctx);
+    if (!result) {
+        err = IE_XML;
+        goto leave;
+    }
+
+    if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        /* Here we have Base64 blob */
+
+        if (result->nodesetval->nodeNr > 1) {
+            isds_printf_message(context,
+                    _("Document has more dmEncodedContent elements"));
+            err = IE_ISDS;
+            goto leave;
+        }
+
+        xmlXPathFreeObject(result); result = NULL;
+        EXTRACT_STRING("isds:dmEncodedContent", string);
+
+        /* Decode non-emptys document */
+        if (string && string[0] != '\0') {
+            (*document)->data_length = b64decode(string, &((*document)->data));
+            if ((*document)->data_length == (size_t) -1) {
+                isds_printf_message(context,
+                        _("Error while Base64-decoding document content"));
+                err = IE_ERROR;
+                goto leave;
+            }
+        }
+    } else {
+        /* No Base64 blob, try XML document */
+        xmlXPathFreeObject(result); result = NULL;
+        result = xmlXPathEvalExpression(BAD_CAST "isds:dmXMLContent",
+                xpath_ctx);
+        if (!result) {
+            err = IE_XML;
+            goto leave;
+        }
+
+        if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+            /* Here we have XML document */
+
+            if (result->nodesetval->nodeNr > 1) {
+                isds_printf_message(context,
+                        _("Document has more dmXMLContent elements"));
+                err = IE_ISDS;
+                goto leave;
+            }
+
+            /* FIXME: Serialize the tree rooted at result's node */
+            isds_printf_message(context,
+                    _("XML documents not yet supported"));
+            err = IE_NOTSUP;
+            goto leave;
+        } else {
+            /* No bas64 blob, nor XML document */
+            isds_printf_message(context,
+                    _("Document has no dmEncodedContent, nor dmXMLContent "
+                        "element"));
+            err = IE_ISDS;
+            goto leave;
+        }
+    }
+
+
 leave:
     if (err) isds_document_free(document);
     free(string);
