@@ -845,6 +845,26 @@ static const xmlChar *isds_FileMetaType2string(const isds_FileMetaType type) {
 }
 
 
+/* Convert UTF-8 @string to ISDS dmFileMetaType enum @type.
+ * @Return IE_ENUM if @string is not valid enum member */
+static isds_error string2isds_FileMetaType(const xmlChar *string,
+        isds_FileMetaType *type) {
+    if (!string || !type) return IE_INVAL;
+
+    if (!xmlStrcmp(string, BAD_CAST "main"))
+        *type = FILEMETATYPE_MAIN;
+    else if (!xmlStrcmp(string, BAD_CAST "enclosure"))
+        *type = FILEMETATYPE_ENCLOSURE;
+    else if (!xmlStrcmp(string, BAD_CAST "signature"))
+        *type = FILEMETATYPE_SIGNATURE;
+    else if (!xmlStrcmp(string, BAD_CAST "meta"))
+        *type = FILEMETATYPE_META;
+    else
+        return IE_ENUM;
+    return IE_SUCCESS;
+}
+
+
 /* Convert UTF-8 @string represantion of ISO 8601 date to @time.
  * XXX: Not all ISO formats are supported */
 static isds_error datestring2tm(const xmlChar *string, struct tm *time) {
@@ -1618,6 +1638,7 @@ static isds_error extract_document(struct isds_ctx *context,
     isds_error err = IE_SUCCESS;
     xmlXPathObjectPtr result = NULL;
     xmlNodePtr file_node = xpath_ctx->node;
+    char *string = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!document) return IE_INVAL;
@@ -1633,9 +1654,29 @@ static isds_error extract_document(struct isds_ctx *context,
     /* TODO: Extract data */
 
     EXTRACT_STRING_ATTRIBUTE("dmMimeType", (*document)->dmMimeType, 1)
+
+    EXTRACT_STRING_ATTRIBUTE("dmFileMetaType", string, 1)
+    err = string2isds_FileMetaType((xmlChar*)string,
+            &((*document)->dmFileMetaType));
+    if (err) {
+        char *meta_type_locale = utf82locale(string);
+        isds_printf_message(context,
+                _("Document has invalid dmFileMetaType attribute value: %s"),
+                meta_type_locale);
+        free(meta_type_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+
+    EXTRACT_STRING_ATTRIBUTE("dmFileGuid", (*document)->dmFileGuid, 0)
+    EXTRACT_STRING_ATTRIBUTE("dmUpFileGuid", (*document)->dmUpFileGuid, 0)
+    EXTRACT_STRING_ATTRIBUTE("dmFileDescr", (*document)->dmFileDescr, 0)
+    EXTRACT_STRING_ATTRIBUTE("dmFormat", (*document)->dmFormat, 0)
     
 leave:
     if (err) isds_document_free(document);
+    free(string);
     xmlXPathFreeObject(result);
     xpath_ctx->node = file_node;
     return err;
