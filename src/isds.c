@@ -241,6 +241,8 @@ char *isds_strerror(const isds_error error) {
             return(_("Out of memory")); break;
         case IE_NETWORK:
             return(_("Network problem")); break;
+        case IE_HTTP:
+            return(_("HTTP problem")); break;
         case IE_SOAP:
             return(_("SOAP problem")); break;
         case IE_XML:

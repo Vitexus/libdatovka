@@ -477,12 +477,18 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     isds_log(ILF_SOAP, ILL_DEBUG, _("Server returned %ld HTTP code\n"),
             http_code);
     switch (http_code) {
+        /* XXX: We must see which code is used for not permitted ISDS
+         * operation like downloading message without proper user
+         * permissions. In that cat we should keep connection opened. */
         case 401:
-            /* XXX: We must see which code is used for not permitted ISDS
-             * opperation like downloading message without proper user
-             * permissions. In that cat we should keep connection opened. */
             err = IE_NOT_LOGGED_IN;
             isds_log_message(context, _("Authentication failed"));
+            goto leave;
+            break;
+        case 404:
+            err = IE_HTTP;
+            isds_log_message(context,
+                    _("Code 404: Document not found on server"));
             goto leave;
             break;
         /* 500 should return standard SOAP message */

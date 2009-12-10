@@ -21,6 +21,7 @@ typedef enum {
     IE_NOEXIST,
     IE_NOMEM,
     IE_NETWORK,
+    IE_HTTP,
     IE_SOAP,
     IE_XML,
     IE_ISDS,
