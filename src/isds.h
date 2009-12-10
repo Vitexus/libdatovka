@@ -26,7 +26,8 @@ typedef enum {
     IE_ISDS,
     IE_ENUM,
     IE_DATE,
-    IE_2BIG
+    IE_2BIG,
+    IE_NOTUNIQ
 } isds_error;
 
 typedef enum {

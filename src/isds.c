@@ -253,6 +253,8 @@ char *isds_strerror(const isds_error error) {
             return(_("Invalid date value")); break;
         case IE_2BIG:
             return(_("Too big")); break;
+        case IE_NOTUNIQ:
+            return(_("Value not unique")); break;
         default:
             return(_("Unknown error"));
     }
@@ -1177,6 +1179,21 @@ static isds_error uint2isds_message_status(struct isds_ctx *context,
         } \
     }
 
+#define EXTRACT_STRING_ATTRIBUTE(attribute, string, required) \
+    (string) = (char *) xmlGetNsProp(xpath_ctx->node, ( BAD_CAST attribute), \
+            NULL); \
+    if ((required) && (!string)) { \
+        char *attribute_locale = utf82locale(attribute); \
+        char *element_locale = utf82locale((char *)xpath_ctx->node->name); \
+        isds_printf_message(context, \
+                _("Could not extract required %s attribute value from " \
+                    "%s element"), attribute_locale, element_locale); \
+        free(element_locale); \
+        free(attribute_locale); \
+        err = IE_ERROR; \
+        goto leave; \
+    }
+
 
 #define INSERT_STRING(parent, element, string) \
     node = xmlNewTextChild(parent, NULL, BAD_CAST (element), \
@@ -1234,6 +1251,63 @@ static isds_error uint2isds_message_status(struct isds_ctx *context,
         err = IE_ERROR; \
         goto leave; \
     }
+
+
+/* Find child element by name in given XPath context and switch context onto
+ * it. The child must be uniq and must exist. Otherwise failes.
+ * @context is ISDS context
+ * @child is child element name
+ * @xpath_ctx is XPath context. In success, the @xpath_ctx will be changed
+ * into it child. In error case, the @xpath_ctx keeps original value. */
+static isds_error move_xpathctx_to_child(struct isds_ctx *context,
+        const xmlChar *child, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!child || !xpath_ctx) return IE_INVAL;
+
+    /* Find child */
+    result = xmlXPathEvalExpression(child, xpath_ctx);
+    if (!result) {
+        err = IE_XML;
+        goto leave;
+    }
+
+    /* No match */
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        char *parent_locale = utf82locale((char*) xpath_ctx->node->name);
+        char *child_locale = utf82locale((char*) child);
+        isds_printf_message(context,
+                _("%s element does not contain %s child"),
+                parent_locale, child_locale);
+        free(child_locale);
+        free(parent_locale);
+        err = IE_NOEXIST;
+        goto leave;
+    }
+
+    /* More matches */
+    if (result->nodesetval->nodeNr > 1) {
+        char *parent_locale = utf82locale((char*) xpath_ctx->node->name);
+        char *child_locale = utf82locale((char*) child);
+        isds_printf_message(context,
+                _("%s element contains multiple %s childs"),
+                parent_locale, child_locale);
+        free(child_locale);
+        free(parent_locale);
+        err = IE_NOTUNIQ;
+        goto leave;
+    }
+
+    /* Switch context */
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+
+leave:
+    xmlXPathFreeObject(result);
+    return err;
+}
+
 
 
 /* Convert isds:dBOwnerInfo XML tree into structure
@@ -1534,6 +1608,106 @@ leave:
 }
 
 
+/* Extract message document into reallocated document structure
+ * @context is ISDS context
+ * @document is automically reallocated message documents structure
+ * @xpath_ctx is XPath context with current node as isds:dmFile
+ * In case of error @document will be freed. */
+static isds_error extract_document(struct isds_ctx *context,
+        struct isds_document **document, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    xmlNodePtr file_node = xpath_ctx->node;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!document) return IE_INVAL;
+    isds_document_free(document);
+    if (!xpath_ctx) return IE_INVAL;
+
+    *document = calloc(1, sizeof(**document));
+    if (!*document) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    /* TODO: Extract data */
+
+    EXTRACT_STRING_ATTRIBUTE("dmMimeType", (*document)->dmMimeType, 1)
+    
+leave:
+    if (err) isds_document_free(document);
+    xmlXPathFreeObject(result);
+    xpath_ctx->node = file_node;
+    return err;
+}
+
+
+
+/* Extract message documents into reallocated list of documents
+ * @context is ISDS context
+ * @documents is automically reallocated message documents list structure
+ * @xpath_ctx is XPath context with current node as XSD tFilesArray
+ * In case of error @documents will be freed. */
+static isds_error extract_documents(struct isds_ctx *context,
+        struct isds_list **documents, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    xmlNodePtr file;
+    xmlNodePtr files_node = xpath_ctx->node;
+    struct isds_list *document, *prev_document;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!documents) return IE_INVAL;
+    isds_list_free(documents);
+    if (!xpath_ctx) return IE_INVAL;
+
+    /* Find documents */
+    result = xmlXPathEvalExpression(BAD_CAST "isds:dmFile", xpath_ctx);
+    if (!result) {
+        err = IE_XML;
+        goto leave;
+    }
+
+    /* No match */
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_printf_message(context,
+                _("Message does not contain any document"));
+        err = IE_ISDS;
+        goto leave;
+    }
+
+
+    /* Iterate over documents */
+    for (int i = 0; i < result->nodesetval->nodeNr; i++) {
+        file = result->nodesetval->nodeTab[i];
+
+        /* Allocate and append list item */
+        document = calloc(1, sizeof(*document));
+        if (!document) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+        document->destructor = (void (*)(void **))isds_document_free;
+        if (i == 0) *documents = document;
+        else prev_document->next = document;
+        prev_document = document;
+
+        /* Extract document */
+        xpath_ctx->node =  result->nodesetval->nodeTab[i];
+        err = extract_document(context,
+                (struct isds_document **) &(document->data), xpath_ctx);
+        if (err) goto leave;
+    }
+
+    
+leave:
+    if (err) isds_list_free(documents);
+    xmlXPathFreeObject(result);
+    xpath_ctx->node = files_node;
+    return err;
+}
+
+
 /* Convert isds:dmRecord XML tree into structure
  * @context is ISDS context
  * @envelope is automically reallocated message envelope structure
@@ -1616,7 +1790,6 @@ leave:
 static isds_error extract_TReturnedMessage(struct isds_ctx *context,
         struct isds_message **message, xmlXPathContextPtr xpath_ctx) {
     isds_error err = IE_SUCCESS;
-    xmlXPathObjectPtr result = NULL;
     xmlNodePtr message_node;
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -1635,42 +1808,23 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
     message_node = xpath_ctx->node;
 
 
-    /* extract dmDM */
-    xmlXPathFreeObject(result); result = NULL;
-    result = xmlXPathEvalExpression(BAD_CAST "isds:dmDm", xpath_ctx);
-    if (!result) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    /* Empty response */
-    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-        char *parent_locale = utf82locale((char*) xpath_ctx->node->name);
-        isds_printf_message(context,
-                _("%s element does not contain dmDM child"), parent_locale);
-        free(parent_locale);
-        err = IE_ISDS;
-        goto leave;
-    }
-    /* More messages */
-    if (result->nodesetval->nodeNr > 1) {
-        char *parent_locale = utf82locale((char*) xpath_ctx->node->name);
-        isds_printf_message(context,
-                _("%s element contains multiple dmDM childs"), parent_locale);
-        free(parent_locale);
-        err = IE_ISDS;
-        goto leave;
-    }
-
-    xpath_ctx->node = result->nodesetval->nodeTab[0];
-    xmlXPathFreeObject(result); result = NULL;
+    /* Extract dmDM */
+    err = move_xpathctx_to_child(context, BAD_CAST "isds:dmDm", xpath_ctx);
+    if (err == IE_NOEXIST || err == IE_NOTUNIQ) { err = IE_ISDS; goto leave; }
+    if (err) { err = IE_ERROR; goto leave; }
     err = append_GMessageEnvelope(context, &((*message)->envelope), xpath_ctx);
     if (err) goto leave;
 
-    /* TODO: Extract dmFiles */
+    /* Extract dmFiles */
+    err = move_xpathctx_to_child(context, BAD_CAST "isds:dmFiles", xpath_ctx);
+    if (err == IE_NOEXIST || err == IE_NOTUNIQ) { err = IE_ISDS; goto leave; }
+    if (err) { err = IE_ERROR; goto leave; }
+    err = extract_documents(context, &((*message)->documents), xpath_ctx);
+    if (err) goto leave;
+
 
 
     /* Restore context to message */
-    xmlXPathFreeObject(result); result = NULL;
     xpath_ctx->node = message_node;
 
     /* TODO: dmHash, dmQTimestamp, */
@@ -1681,9 +1835,9 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
     if (err) goto leave;
     
      /* TODO: save XML blob */
+
 leave:
     if (err) isds_message_free(message);
-    xmlXPathFreeObject(result);
     return err;
 }
 
@@ -3169,6 +3323,7 @@ leave:
 #undef INSERT_LONGINT
 #undef INSERT_BOOLEAN
 #undef INSERT_STRING
+#undef EXTRACT_STRING_ATTRIBUTE
 #undef EXTRACT_ULONGINT
 #undef EXTRACT_LONGINT
 #undef EXTRACT_BOOLEAN
