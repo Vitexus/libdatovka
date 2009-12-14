@@ -1,6 +1,9 @@
 CFLAGS = -std=c99 -Wall -Werror -fPIC -DPIC -g
 SONAME = libisds.so.0
 SOURCES = isds.c utils.c soap.c validator.c cencode.c cdecode.c
+PREFIX=/usr/local
+LIBDIR=$(PREFIX)/lib
+INCLUDEDIR=$(PREFIX)/include
 
 LIBXML_CFLAGS := $(shell pkg-config --cflags libxml-2.0)
 LIBCURL_CFLAGS := $(shell pkg-config --cflags libcurl)
@@ -24,6 +27,16 @@ $(SONAME): $(SOURCES:%.c=%.o)
 
 clean:
 	-rm -f libisds.so $(SONAME) *.o
+
+install: all
+	install -d $(LIBDIR) $(INCLUDEDIR)
+	install -t $(LIBDIR) $(SONAME)
+	ln -s $(SONAME) $(LIBDIR)/libisds.so
+	install -m 644 -t $(INCLUDEDIR) isds.h
+
+uninstall:
+	-rm $(LIBDIR)/$(SONAME) $(LIBDIR)/libisds.so
+	-rm $(INCLUDEDIR)/isds.h
 
 depend:
 	#makedepend -- $(CFLAGS) -- $(SOURCES)

@@ -1,0 +1,27 @@
+This is client library for accessing SOAP services of ISDS (Informační systém
+datových schránek / Data Box Information System) as defined in Czech ISDS Act
+(300/2008 Coll.) <http://portal.gov.cz/zakon/300/2008> and implied documents.
+
+Copyright (C) 2009  Petr Písař <petr.pisar@atlas.cz>
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+details.
+
+
+This code is written in ISO99 C language and requires libxml2 and cURL libraries.
+It has been tested on GNU/Linux (Linux 2.6.32, glibc-2.9) with libxml2-2.7.4
+and curl-7.19.6.
+
+Latest code can be obtained from GIT repository
+<http://repo.or.cz/w/libisds.git>.
+
+ISDS documentation is located under doc directory, user documentation can
+be found in header files. See client directory for examples how to use this
+library.
