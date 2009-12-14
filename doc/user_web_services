@@ -109,6 +109,17 @@ document is removed, message state is set to value 3 (from point of view of
 recipient) and sender get new message originated by server.
 
 
+DownloadMessage
+===============
+
+Retrieve incoming message identified by message ID.
+
+Error codes:
+    0000    Message sent successfully
+Non-normative error codes:
+    1219    Message with ID does not exist in ISDS in current box.
+
+
 GetListOfSentMessages
 =====================
 Download list of outgoing messages matching search criteria.
