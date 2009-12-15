@@ -18,7 +18,8 @@ isds.o: isds.c isds_priv.h isds.h /usr/include/libxml2/libxml/parser.h \
   /usr/include/libxml2/libxml/threads.h \
   /usr/include/libxml2/libxml/xpath.h \
   /usr/include/libxml2/libxml/xpathInternals.h \
-  /usr/include/libxml2/libxml/xmlsave.h utils.h soap.h validator.h
+  /usr/include/libxml2/libxml/xmlsave.h utils.h soap.h validator.h \
+  crypto.h
 utils.o: utils.c utils.h cencode.h cdecode.h
 soap.o: soap.c isds_priv.h isds.h /usr/include/libxml2/libxml/parser.h \
   /usr/include/libxml2/libxml/xmlversion.h \

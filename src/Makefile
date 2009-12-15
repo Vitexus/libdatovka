@@ -7,11 +7,13 @@ INCLUDEDIR=$(PREFIX)/include
 
 LIBXML_CFLAGS := $(shell pkg-config --cflags libxml-2.0)
 LIBCURL_CFLAGS := $(shell pkg-config --cflags libcurl)
-CFLAGS += $(LIBCURL_CFLAGS) $(LIBXML_CFLAGS)
+LIBGCRYPT_CFLAGS := $(shell libgcrypt-config --cflags)
+CFLAGS += $(LIBCURL_CFLAGS) $(LIBXML_CFLAGS) $(LIBGCRYPT_CFLAGS)
 
 LIBXML_LDFLAGS := $(shell pkg-config --libs libxml-2.0)
 LIBCURL_LDFLAGS := $(shell pkg-config --libs libcurl)
-LDFLAGS += $(LIBCURL_LDFLAGS) $(LIBXML_LDFLAGS)
+LIBGCRYPT_LDFLAGS := $(shell libgcrypt-config --libs)
+LDFLAGS += $(LIBCURL_LDFLAGS) $(LIBXML_LDFLAGS) $(LIBGCRYPT_LDFLAGS)
 
 
 all: $(SONAME) libisds.so

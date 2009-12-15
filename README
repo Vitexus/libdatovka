@@ -15,9 +15,9 @@ FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 details.
 
 
-This code is written in ISO99 C language and requires libxml2 and cURL libraries.
-It has been tested on GNU/Linux (Linux 2.6.32, glibc-2.9) with libxml2-2.7.4
-and curl-7.19.6.
+This code is written in ISO99 C language and requires libxml2, cURL, and
+libgcrypt libraries. It has been tested on GNU/Linux (Linux 2.6.32, glibc-2.9)
+with libxml2-2.7.4, curl-7.19.6, and libgcrypt-1.4.4.
 
 Latest code can be obtained from GIT repository
 <http://repo.or.cz/w/libisds.git>.
