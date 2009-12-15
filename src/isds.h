@@ -11,7 +11,7 @@ struct isds_ctx;    /* Context for specific ISDS box */
 
 typedef enum {
     IE_SUCCESS = 0, /* No error, just for C conveniece (0 means Ok) */
-    IE_ERROR,       /* unsepcified error */
+    IE_ERROR,       /* Unspecified error */
     IE_NOTSUP,
     IE_INVAL,
     IE_INVALID_CONTEXT,
