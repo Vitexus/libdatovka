@@ -122,10 +122,27 @@ Non-normative error codes:
 
 GetListOfSentMessages
 =====================
+
 Download list of outgoing messages matching search criteria.
 
 Non-normative error codes:
     2017    Syntax error in date-time
+
+
+VerifyMessage
+=============
+
+Retrieve message hash (dmHash element) for given message from ISDS.
+
+Works for not yet deleted messages only.
+
+Only SHA-1 algorithm is in use currently. SHA-2 family is expected after
+2010 year begining.
+
+Hash input is isds:dmDM subtree procesed as raw bit stream without XML
+canonicalization. Authoritative isds:dmDM element can be get via
+MessageDownload service. God bless ISDS developers not change XML
+serialization.
 
 
 FindDataBox (*)
