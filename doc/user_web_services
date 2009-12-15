@@ -120,6 +120,14 @@ Non-normative error codes:
     1219    Message with ID does not exist in ISDS in current box.
 
 
+GetListOfRecievedMessages
+=========================
+
+Download list of incoming messages matching search criteria.
+
+See GetListOfSentMessages for more details.
+
+
 GetListOfSentMessages
 =====================
 
