@@ -43,7 +43,7 @@ void print_DbType(const long int *type) {
         }
 }
 
-static void print_hash(const struct isds_hash *hash) {
+void print_hash(const struct isds_hash *hash) {
     if (!hash) {
         printf("NULL\n");
         return;

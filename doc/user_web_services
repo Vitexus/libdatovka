@@ -152,6 +152,9 @@ canonicalization. Authoritative isds:dmDM element can be get via
 MessageDownload service. God bless ISDS developers not change XML
 serialization.
 
+Non-normative error codes:
+    1219    Message with ID does not exist in ISDS.
+
 
 FindDataBox (*)
 ===========

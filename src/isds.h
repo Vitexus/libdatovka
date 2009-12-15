@@ -536,13 +536,21 @@ isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
         const unsigned long int offset, unsigned long int *number,
         struct isds_list **messages);
 
-/* Dwwnload incomping message identified by ID.
+/* Download incoming message identified by ID.
  * @context is session context
  * @message_id is message identifier (you can get them from
  * isds_get_list_of_received_messages())
  * @message is automatically reallocated message retrieved from ISDS */
 isds_error isds_get_received_message(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
+
+/* Retrieve hash of message identified by ID stored in ISDS.
+ * @context is session context
+ * @message_id is message identifier
+ * @hash is automatically reallocated message hash downloaded from ISDS.
+ * Message must exist in system and must not be deleted. */
+isds_error isds_download_message_hash(struct isds_ctx *context,
+        const char *message_id, struct isds_hash **hash);
 
 /* Send bogus request to ISDS.
  * Just for test purposes */

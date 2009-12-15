@@ -2,3 +2,4 @@ common.o: common.c ../src/isds.h
 getreceived.o: getreceived.c ../src/isds.h common.h
 getsent.o: getsent.c ../src/isds.h common.h
 isdsclient.o: isdsclient.c ../src/isds.h common.h
+verifyreceivedhash.o: verifyreceivedhash.c ../src/isds.h common.h

@@ -3611,6 +3611,123 @@ isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
 }
 
 
+/* Build ISDS request of XSD tIDMessInput type, sent it and check for error
+ * code
+ * @context is session context
+ * @service is ISDS WS service handler
+ * @service_name is name of SERVICE_DM_OPERATIONS
+ * @message_id is message ID to send as service argument to ISDS
+ * @response is server SOAP body response as XML document
+ * @code is ISDS status code
+ * @status_message is ISDS status message
+ * @return error coded from lower layer, context message will be set up
+ * appropriately. */
+static isds_error build_send_check_message_request(struct isds_ctx *context,
+        const isds_service service, const xmlChar *service_name,
+        const char *message_id,
+        xmlDocPtr *response, xmlChar **code, xmlChar **status_message) {
+    /* ???: XSD allows list of @message_id's and list of @message's, but
+     * documentation talks only about `a message' */
+
+    isds_error err = IE_SUCCESS;
+    char *service_name_locale = NULL, *message_id_locale = NULL;
+    xmlNodePtr request = NULL, node;
+    xmlNsPtr isds_ns = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!service_name || !message_id) return IE_INVAL;
+    if (!response || !code || !status_message) return IE_INVAL;
+
+    /* Free output argument */
+    xmlFreeDoc(*response);
+    free(*code);
+    free(*status_message);
+
+
+    /* Check if connection is established
+     * TODO: This check should be done donwstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+    service_name_locale = utf82locale((char*)service_name);
+    message_id_locale = utf82locale(message_id);
+    if (!service_name_locale || !message_id_locale) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    /* Build request */
+    request = xmlNewNode(NULL, service_name);
+    if (!request) {
+        isds_printf_message(context,
+                _("Could not build %s request"), service_name_locale);
+        err = IE_ERROR;
+        goto leave;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    xmlSetNs(request, isds_ns);
+
+
+    /* Add requested ID */
+    err = validate_message_id_length(context, (xmlChar *) message_id);
+    if (err) goto leave;
+    INSERT_STRING(request, "dmID", message_id);
+
+
+    isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Sending %s request for %s message ID to ISDS\n"),
+                service_name_locale, message_id_locale);
+
+    /* Send request */
+    err = isds(context, service, request, response);
+    xmlFreeNode(request); request = NULL;
+    
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("Processing ISDS response on %s request failed\n"),
+                    service_name_locale);
+        goto leave;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, service, *response,
+            code, status_message, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("ISDS response on %s request is missing status\n"),
+                    service_name_locale);
+        goto leave;
+    }
+
+    /* Request processed, but nothing found */
+    if (xmlStrcmp(*code, BAD_CAST "0000")) {
+        char *code_locale = utf82locale((char*) *code);
+        char *status_message_locale = utf82locale((char*) *status_message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("Server refused %s request for %s message ID "
+                        "(code=%s, message=%s)\n"),
+                service_name_locale, message_id_locale,
+                code_locale, status_message_locale);
+        isds_log_message(context, status_message_locale);
+        free(code_locale);
+        free(status_message_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+leave:
+    free(message_id_locale);
+    free(service_name_locale);
+    xmlFreeNode(request);
+    return err;
+}
+
+
+
 /* Dwwnload incomping message identified by ID.
  * @context is session context
  * @message_id is message identifier (you can get them from
@@ -3724,7 +3841,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
         char *message_id_locale = utf82locale((char*) message_id);
         isds_printf_message(context,
                 _("Server did not return any message for ID `%s' "
-                    "on MessageDownload request"), message_id);
+                    "on MessageDownload request"), message_id_locale);
         free(message_id_locale);
         err = IE_ISDS;
         goto leave;
@@ -3734,7 +3851,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
         char *message_id_locale = utf82locale((char*) message_id);
         isds_printf_message(context,
                 _("Server did return more messages for ID `%s' "
-                    "on MessageDownload request"), message_id);
+                    "on MessageDownload request"), message_id_locale);
         free(message_id_locale);
         err = IE_ISDS;
         goto leave;
@@ -3760,7 +3877,97 @@ leave:
 
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
-                    _("MessageDownloadrequest processed by server "
+                    _("MessageDownload request processed by server "
+                        "successfully.\n")
+                );
+    return err;
+}
+
+
+/* Retrieve hash of message identified by ID stored in ISDS.
+ * @context is session context
+ * @message_id is message identifier
+ * @hash is automatically reallocated message hash downloaded from ISDS.
+ * Message must exist in system and must not be deleted. */
+isds_error isds_download_message_hash(struct isds_ctx *context,
+        const char *message_id, struct isds_hash **hash) {
+    /* ???: XSD allows list of @message_id's and list of @message's, but
+     * documentation talks only about `a message' */
+
+    isds_error err = IE_SUCCESS;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *status_message = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+   
+    isds_hash_free(hash);
+
+    err = build_send_check_message_request(context, SERVICE_DM_INFO,
+            BAD_CAST "VerifyMessage", message_id,
+            &response, &code, &status_message);
+    if (err) goto leave;
+
+
+    /* Extract data */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(
+            BAD_CAST "/isds:VerifyMessageResponse",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* Empty response */
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        char *message_id_locale = utf82locale((char*) message_id);
+        isds_printf_message(context,
+                _("Server did not return any response for ID `%s' "
+                    "on VerifyMessage request"), message_id_locale);
+        free(message_id_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* More responses */
+    if (result->nodesetval->nodeNr > 1) {
+        char *message_id_locale = utf82locale((char*) message_id);
+        isds_printf_message(context,
+                _("Server did return more responses for ID `%s' "
+                    "on VerifyMessage request"), message_id_locale);
+        free(message_id_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* One response */
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+
+    /* Extract the hash */
+    err = find_and_extract_DmHash(context, hash, xpath_ctx);
+
+leave:
+    if (err) {
+        isds_hash_free(hash);
+    }
+
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(status_message);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("VerifyMessage request processed by server "
                         "successfully.\n")
                 );
     return err;

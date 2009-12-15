@@ -2,7 +2,7 @@ LIBDIR=../src
 CFLAGS=-std=c99 -Wall -Werror -g
 CFLAGS+=-I$(LIBDIR)
 LDFLAGS=-L$(LIBDIR) -lisds
-BINS=isdsclient getsent getreceived
+BINS=isdsclient getsent getreceived verifyreceivedhash
 
 .PHONY: libisds depend
 
@@ -21,6 +21,9 @@ getsent: getsent.o common.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 getreceived: getreceived.o common.o
+	$(CC) $(LDFLAGS) -o $@ $^
+
+verifyreceivedhash: verifyreceivedhash.o common.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 clean:
