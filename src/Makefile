@@ -1,6 +1,6 @@
 CFLAGS = -std=c99 -Wall -Werror -fPIC -DPIC -g
 SONAME = libisds.so.0
-SOURCES = isds.c utils.c soap.c validator.c cencode.c cdecode.c
+SOURCES = isds.c utils.c soap.c validator.c cencode.c cdecode.c crypto.c
 PREFIX=/usr/local
 LIBDIR=$(PREFIX)/lib
 INCLUDEDIR=$(PREFIX)/include

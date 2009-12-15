@@ -552,6 +552,14 @@ isds_error isds_get_received_message(struct isds_ctx *context,
 isds_error isds_download_message_hash(struct isds_ctx *context,
         const char *message_id, struct isds_hash **hash);
 
+/* Compute hash of message from raw representation and store it into envelope.
+ * Original hash structure will be destroyed in envelope.
+ * @context is session context
+ * @message is message carrying raw XML message blob
+ * @algorithm is desired hash algorithm to use */
+isds_error isds_compute_message_hash(struct isds_ctx *context,
+        struct isds_message *message, const isds_hash_algorithm algorithm);
+
 /* Send bogus request to ISDS.
  * Just for test purposes */
 isds_error isds_bogus_request(struct isds_ctx *context);

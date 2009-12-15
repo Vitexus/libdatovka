@@ -8,6 +8,7 @@
 #include "utils.h"
 #include "soap.h"
 #include "validator.h"
+#include "crypto.h"
 
 
 /* Free isds_list with all member data.
@@ -3920,6 +3921,116 @@ leave:
 #undef EXTRACT_LONGINT
 #undef EXTRACT_BOOLEAN
 #undef EXTRACT_STRING
+
+
+/* Compute hash of message from raw representation and store it into envelope.
+ * Original hash structure will be destroyed in envelope.
+ * @context is session context
+ * @message is message carrying raw XML message blob
+ * @algorithm is desired hash algorithm to use */
+isds_error isds_compute_message_hash(struct isds_ctx *context,
+        struct isds_message *message, const isds_hash_algorithm algorithm) {
+    isds_error err = IE_SUCCESS;
+    xmlDocPtr message_doc = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    char *buffer = 0;
+    size_t length;
+    struct isds_hash *new_hash = NULL;
+    
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!message) return IE_INVAL;
+    
+    if (!message->raw) {
+        isds_log_message(context,
+                _("Message does not carry raw XML representation"));
+        return IE_INVAL;
+    }
+
+    /* Parse raw message */
+    message_doc = xmlParseMemory(message->raw, message->raw_length);
+    if (!message_doc) {
+        isds_log_message(context,
+                _("Message does not carry well-formed XML representation"));
+        err = IE_XML;
+        goto leave;
+    }
+
+    /* Find dmDM element */
+    xpath_ctx = xmlXPathNewContext(message_doc);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(
+            BAD_CAST "/isds:dmReturnedMessage/isds:dmDM", xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context,
+                _("Raw message does not contain isds:dmDM element"));
+        err = IE_XML;
+        goto leave;
+    }
+    if (result->nodesetval->nodeNr > 1) {
+        isds_log_message(context,
+                _("Raw message contains more isds:dmDM elements"));
+        err = IE_XML;
+        goto leave;
+    }
+
+    /* Extract dmDM element as bit stream */
+    err = serialize_subtree(context, result->nodesetval->nodeTab[0],
+            (void**) &buffer, &length);
+    if (err) goto leave;
+
+    /* Free memory */
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(message_doc);
+
+    /* TODO: Compute hash */
+    new_hash = calloc(1, sizeof(*new_hash));
+    if (!new_hash) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+    new_hash->algorithm = algorithm;
+    err = compute_hash(buffer, length, new_hash);
+    if (err) {
+        isds_log_message(context, _("Could compute message hash"));
+        goto leave;
+    }
+
+    /* Save cumputed hash */
+    if (!message->envelope) {
+        message->envelope = calloc(1, sizeof(*message->envelope));
+        if (!message->envelope) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+    }
+    isds_hash_free(&message->envelope->hash);
+    message->envelope->hash = new_hash;
+    
+leave:
+    if (err) {
+        isds_hash_free(&new_hash);
+    }
+
+    free(buffer);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(message_doc);
+    return err;
+}
 
 
 /* Search for document by document ID in list of documents. IDs are compared
