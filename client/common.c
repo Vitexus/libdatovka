@@ -4,6 +4,7 @@
 /*#include <locale.h>*/
 #include <time.h>
 #include <string.h>
+#include <stdint.h>
 #include <isds.h>
 
 char url[] = "https://www.czebox.cz/DS/";
@@ -40,6 +41,31 @@ void print_DbType(const long int *type) {
             case DBTYPE_OVM_REQ: printf("OVM_REQ\n"); break;
             default: printf("<unknown type %ld>\n", *type);
         }
+}
+
+static void print_hash(const struct isds_hash *hash) {
+    if (!hash) {
+        printf("NULL\n");
+        return;
+    }
+    
+    switch(hash->algorithm) {
+        case HASH_ALGORITHM_MD5: printf("MD5 "); break;
+        case HASH_ALGORITHM_SHA_1: printf("SHA-1 "); break;
+        case HASH_ALGORITHM_SHA_256: printf("SHA-256 "); break;
+        case HASH_ALGORITHM_SHA_512: printf("SHA-512 "); break;
+        default: printf("<Unknown hash algorithm %zd> ", hash->algorithm);
+                 break;
+    }
+
+    if (!hash->value) printf("<NULL>");
+    else
+        for (int i = 0; i < hash->length; i++) {
+            if (i > 0) printf(":");
+            printf("%02x", ((uint8_t *)(hash->value))[i]);
+        }
+
+    printf("\n");
 }
 
 
@@ -232,6 +258,9 @@ void print_envelope(const struct isds_envelope *envelope) {
 
     printf("\t\tdmAcceptanceTime = ");
     print_timeval(envelope->dmAcceptanceTime);
+
+    printf("\t\thash = ");
+    print_hash(envelope->hash);
 
     printf("\t}\n");
 }

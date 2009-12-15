@@ -27,6 +27,15 @@ void isds_list_free(struct isds_list **list) {
 }
 
 
+/* Deallocate structure isds_hash and NULL it.
+ * @hash  hash to to free */
+void isds_hash_free(struct isds_hash **hash) {
+    if(!hash || !*hash) return;
+    free((*hash)->value);
+    zfree((*hash));
+}
+
+
 /* Deallocate structure isds_PersonName recursively and NULL it */
 static void isds_PersonName_free(struct isds_PersonName **person_name) {
     if (!person_name || !*person_name) return;
@@ -112,6 +121,8 @@ void isds_envelope_free(struct isds_envelope **envelope) {
     free((*envelope)->dmMessageStatus);
     free((*envelope)->dmDeliveryTime);
     free((*envelope)->dmAcceptanceTime);
+    isds_hash_free(&(*envelope)->hash);
+    free((*envelope)->timestamp);
 
     free((*envelope)->dmSenderOrgUnit);
     free((*envelope)->dmSenderOrgUnitNum);
@@ -970,6 +981,26 @@ static isds_error string2isds_FileMetaType(const xmlChar *string,
         *type = FILEMETATYPE_SIGNATURE;
     else if (!xmlStrcmp(string, BAD_CAST "meta"))
         *type = FILEMETATYPE_META;
+    else
+        return IE_ENUM;
+    return IE_SUCCESS;
+}
+
+
+/* Convert UTF-8 @string to ISDS hash @algorithm.
+ * @Return IE_ENUM if @string is not valid enum member */
+static isds_error string2isds_hash_algorithm(const xmlChar *string,
+        isds_hash_algorithm *algorithm) {
+    if (!string || !algorithm) return IE_INVAL;
+
+    if (!xmlStrcmp(string, BAD_CAST "MD5"))
+        *algorithm = HASH_ALGORITHM_MD5;
+    else if (!xmlStrcmp(string, BAD_CAST "SHA-1"))
+        *algorithm = HASH_ALGORITHM_SHA_1;
+    else if (!xmlStrcmp(string, BAD_CAST "SHA-256"))
+        *algorithm = HASH_ALGORITHM_SHA_256;
+    else if (!xmlStrcmp(string, BAD_CAST "SHA-512"))
+        *algorithm = HASH_ALGORITHM_SHA_512;
     else
         return IE_ENUM;
     return IE_SUCCESS;
@@ -2062,6 +2093,81 @@ leave:
 }
 
 
+/* Convert isds:dmRecord XML tree into structure
+ * @context is ISDS context
+ * @envelope is automically reallocated message hash structure
+ * @xpath_ctx is XPath context with current node containing isds:dmHash child
+ * In case of error @hash will be freed. */
+static isds_error find_and_extract_DmHash(struct isds_ctx *context,
+        struct isds_hash **hash, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlNodePtr old_ctx_node;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!hash) return IE_INVAL;
+    isds_hash_free(hash);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *hash = calloc(1, sizeof(**hash));
+    if (!*hash) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    old_ctx_node = xpath_ctx->node;
+
+    /* Locate dmHash */
+    err = move_xpathctx_to_child(context, BAD_CAST "isds:dmHash", xpath_ctx);
+    if (err == IE_NOEXIST || err == IE_NOTUNIQ) {
+        err = IE_ISDS;
+        goto leave;
+    }
+    if (err) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    /* Get hash algorithm */
+    EXTRACT_STRING_ATTRIBUTE("algorithm", string, 1);
+    err = string2isds_hash_algorithm((xmlChar*) string, &(*hash)->algorithm);
+    if (err) {
+        if (err == IE_ENUM) {
+            char *string_locale = utf82locale(string);
+            isds_printf_message(context, _("Unsported hash algorithm: %s"),
+                    string_locale);
+            free(string_locale);
+        }
+        goto leave;
+    }
+    zfree(string);
+
+    /* Get hash value */
+    EXTRACT_STRING(".", string);
+    if (!string) {
+        isds_printf_message(context, _("tHash element is missing hash value"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    (*hash)->length = b64decode(string, &((*hash)->value));
+    if ((*hash)->length == (size_t) -1) {
+        isds_printf_message(context,
+                _("Error while Base64-decoding hash value"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    
+leave:
+    if (err) isds_hash_free(hash);
+    free(string);
+    xmlXPathFreeObject(result);
+    xpath_ctx->node = old_ctx_node;
+    return err;
+}
+
+
 /* Convert XSD tReturnedMessage XML tree into message structure
  * @context is ISDS context
  * @message is automically reallocated message structure
@@ -2104,18 +2210,25 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
     if (err) goto leave;
 
 
+    /* Restore context to message */
+    xpath_ctx->node = message_node;
+
+    /* Extract dmHash */
+    err = find_and_extract_DmHash(context, &(*message)->envelope->hash,
+            xpath_ctx);
+    if (err) goto leave;
 
     /* Restore context to message */
     xpath_ctx->node = message_node;
 
-    /* TODO: dmHash, dmQTimestamp, */
+    /* TODO: dmQTimestamp, */
    
     /* Get dmMessageStatus, dmAttachmentSize, dmDeliveryTime,
      * dmAcceptanceTime. */
     err = append_status_size_times(context, &((*message)->envelope), xpath_ctx);
     if (err) goto leave;
     
-     /* TODO: save XML blob */
+     /* Save XML blob */
     err = serialize_subtree(context, message_node, &(*message)->raw,
             &(*message)->raw_length);
 

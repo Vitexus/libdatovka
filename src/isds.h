@@ -127,6 +127,21 @@ typedef enum {
 #define MESSAGESTATE_ANY 0x3FE          /* Union of all isds_message_status
                                            values */
 
+/* Hash algoritm types */
+typedef enum {
+    HASH_ALGORITHM_MD5,
+    HASH_ALGORITHM_SHA_1,
+    HASH_ALGORITHM_SHA_256,
+    HASH_ALGORITHM_SHA_512,
+} isds_hash_algorithm;
+
+/* Hash value storage */
+struct isds_hash {
+    isds_hash_algorithm algorithm;      /* Hash algoritgm */
+    size_t length;                 /* Hash value lenght in bytes */
+    void *value;                        /* Hash value */
+};
+
 /* Name of person */
 struct isds_PersonName {
     char *pnFirstName;
@@ -221,6 +236,11 @@ struct isds_envelope {
     struct timeval *dmAcceptanceTime;   /* Time of accpetance of the message
                                            by an user. NULL if message has not
                                            been accepted yet. */
+    struct isds_hash *hash;         /* Message hash.
+                                       This is hash of isds:dmDM subtree. */
+    void *timestamp;                /* Qualified time stamp */
+    size_t timestamp_length;        /* Lenght of timestamp in bytes */
+
 
     /* Following members apply to both outgoing and incoming messages: */
     char *dmSenderOrgUnit;          /* Organisation unit of sender as string;
@@ -546,6 +566,10 @@ int isds_address_free(struct isds_address **address);
  * @return first matching document or NULL. */
 const struct isds_document *isds_find_document_by_id(
         const struct isds_list *documents, const char *id);
+
+/* Deallocate structure isds_hash and NULL it.
+ * @hash  hash to to free */
+void isds_hash_free(struct isds_hash **hash);
 
 /* Deallocate structure isds_DbOwnerInfo recursively and NULL it */
 void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info);
