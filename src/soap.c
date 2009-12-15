@@ -440,7 +440,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
     /* Last argument 1 means format the XML tree. This is pretty but it breaks
-     * digital signatures probably because ISDS abadoned XMLDSig */
+     * digital signatures probably because ISDS abandoned XMLDSig */
     save_ctx = xmlSaveToBuffer(http_request, "UTF-8", 1);
     if (!save_ctx) {
         isds_log_message(context,
