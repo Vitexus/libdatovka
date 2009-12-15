@@ -3968,20 +3968,20 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
         goto leave;
     }
     result = xmlXPathEvalExpression(
-            BAD_CAST "/isds:dmReturnedMessage/isds:dmDM", xpath_ctx);
+            BAD_CAST "/isds:dmReturnedMessage/isds:dmDm", xpath_ctx);
     if (!result) {
         err = IE_ERROR;
         goto leave;
     }
     if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
         isds_log_message(context,
-                _("Raw message does not contain isds:dmDM element"));
+                _("Raw message does not contain isds:dmDm element"));
         err = IE_XML;
         goto leave;
     }
     if (result->nodesetval->nodeNr > 1) {
         isds_log_message(context,
-                _("Raw message contains more isds:dmDM elements"));
+                _("Raw message contains more isds:dmDm elements"));
         err = IE_XML;
         goto leave;
     }
@@ -3992,9 +3992,9 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
     if (err) goto leave;
 
     /* Free memory */
-    xmlXPathFreeObject(result);
-    xmlXPathFreeContext(xpath_ctx);
-    xmlFreeDoc(message_doc);
+    xmlXPathFreeObject(result); result = NULL;
+    xmlXPathFreeContext(xpath_ctx); xpath_ctx = NULL;
+    xmlFreeDoc(message_doc); message_doc = NULL;
 
     /* TODO: Compute hash */
     new_hash = calloc(1, sizeof(*new_hash));
@@ -4005,7 +4005,7 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
     new_hash->algorithm = algorithm;
     err = compute_hash(buffer, length, new_hash);
     if (err) {
-        isds_log_message(context, _("Could compute message hash"));
+        isds_log_message(context, _("Could not compute message hash"));
         goto leave;
     }
 

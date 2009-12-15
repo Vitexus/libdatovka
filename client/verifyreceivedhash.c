@@ -130,6 +130,18 @@ int main(int argc, char **argv) {
             print_hash(hash);
         }
 
+        /* Recompute last message hash locally */
+        printf("Recalculating last received message hash\n");
+        err = isds_compute_message_hash(ctx, message, hash->algorithm);
+        if (err)
+            printf("isds_compute_message_hash() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        else {
+            printf("isds_compute_message_hash() succeeded: ");
+            print_hash(message->envelope->hash);
+        }
+
+
         isds_hash_free(&hash);
         isds_message_free(&message);
         free(last_message_id);
