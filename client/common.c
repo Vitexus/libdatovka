@@ -262,6 +262,9 @@ void print_envelope(const struct isds_envelope *envelope) {
     printf("\t\thash = ");
     print_hash(envelope->hash);
 
+    printf("\t\ttimestamp = %p\n", envelope->timestamp);
+    printf("\t\ttimestamp_length = %zu\n", envelope->timestamp_length);
+
     printf("\t}\n");
 }
 

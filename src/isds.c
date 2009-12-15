@@ -2093,7 +2093,7 @@ leave:
 }
 
 
-/* Convert isds:dmRecord XML tree into structure
+/* Find and convert isds:dmHash XML tree into structure
  * @context is ISDS context
  * @envelope is automically reallocated message hash structure
  * @xpath_ctx is XPath context with current node containing isds:dmHash child
@@ -2168,6 +2168,60 @@ leave:
 }
 
 
+/* Find and append isds:dmQTimestamp XML tree into envelope
+ * @context is ISDS context
+ * @envelope is automically allocated evnelope structure
+ * @xpath_ctx is XPath context with current node containing isds:dmQTimestamp
+ * child
+ * In case of error @envelope will be freed. */
+static isds_error find_and_append_DmQTimestamp(struct isds_ctx *context,
+        struct isds_envelope **envelope, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!envelope) return IE_INVAL;
+    if (!xpath_ctx) {
+        isds_envelope_free(envelope);
+        return IE_INVAL;
+    }
+
+    if (!*envelope) {
+        *envelope = calloc(1, sizeof(**envelope));
+        if (!*envelope) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+    } else {
+        zfree((*envelope)->timestamp);
+        (*envelope)->timestamp_length = 0;
+    }
+
+    /* Get dmQTimestamp */
+    EXTRACT_STRING("isds:dmQTimestamp", string);
+    if (!string) {
+        isds_printf_message(context, _("Missing dmQTimestamp element content"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    (*envelope)->timestamp_length =
+        b64decode(string, &((*envelope)->timestamp));
+    if ((*envelope)->timestamp_length == (size_t) -1) {
+        isds_printf_message(context,
+                _("Error while Base64-decoding timestamp value"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    
+leave:
+    if (err) isds_envelope_free(envelope);
+    free(string);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
 /* Convert XSD tReturnedMessage XML tree into message structure
  * @context is ISDS context
  * @message is automically reallocated message structure
@@ -2218,10 +2272,10 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
             xpath_ctx);
     if (err) goto leave;
 
-    /* Restore context to message */
-    xpath_ctx->node = message_node;
-
-    /* TODO: dmQTimestamp, */
+    /* Extract dmQTimestamp, */
+    err = find_and_append_DmQTimestamp(context, &(*message)->envelope,
+            xpath_ctx);
+    if (err) goto leave;
    
     /* Get dmMessageStatus, dmAttachmentSize, dmDeliveryTime,
      * dmAcceptanceTime. */
