@@ -13,7 +13,7 @@ _hidden isds_error compute_hash(const void *input, const size_t length,
     int g_algorithm;
     void *buffer;
 
-    if (!input || !hash) return IE_INVAL;
+    if ((length != 0 && !input) || !hash) return IE_INVAL;
 
     /* Select algorithm */
     switch (hash->algorithm) {
@@ -34,7 +34,7 @@ _hidden isds_error compute_hash(const void *input, const size_t length,
     hash->value = buffer;
 
     /* Compute the hash */
-    gcry_md_hash_buffer(g_algorithm, hash->value, buffer, length);
+    gcry_md_hash_buffer(g_algorithm, hash->value, (length)?buffer:"", length);
 
     return IE_SUCCESS;
 }
