@@ -11,4 +11,14 @@
 isds_error compute_hash(const void *input, const size_t length,
         struct isds_hash *hash);
 
+/* Extract data from CMS (successor of PKCS#7)
+ * @context is session context
+ * @cms is input block with CMS structure
+ * @cms_length is @cms block length in bytes
+ * @data is automatically reallocated bit stream with data found in @cms
+ * @data_length is length of @data in bytes */
+isds_error extract_cms_data(struct isds_ctx *context,
+        const void *cms, const size_t cms_length,
+        void **data, size_t *data_length);
+
 #endif

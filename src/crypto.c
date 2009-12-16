@@ -40,3 +40,113 @@ _hidden isds_error compute_hash(const void *input, const size_t length,
     return IE_SUCCESS;
 }
 
+
+/* Extract data from CMS (successor of PKCS#7)
+ * @context is session context
+ * @cms is input block with CMS structure
+ * @cms_length is @cms block length in bytes
+ * @data is automatically reallocated bit stream with data found in @cms
+ * @data_length is length of @data in bytes */
+_hidden isds_error extract_cms_data(struct isds_ctx *context,
+        const void *cms, const size_t cms_length,
+        void **data, size_t *data_length) {
+    isds_error err = IE_SUCCESS;
+    ksba_cms_t cms_handler = NULL;
+    ksba_reader_t cms_reader = NULL;
+    ksba_writer_t cms_writer = NULL;
+    gpg_error_t gerr;
+    char gpg_error_string[128];
+    ksba_stop_reason_t stop_reason;
+
+    if (!cms || !data || !data_length) return IE_INVAL;
+
+    zfree(*data);
+    *data_length = 0;
+
+    if (ksba_cms_new(&cms_handler)) {
+        isds_log_message(context, _("Could not allocate CMS parser handler"));
+        err = IE_NOMEM;
+        goto leave;
+    }
+    if (ksba_reader_new(&cms_reader)) {
+        isds_log_message(context, _("Could not allocate CMS reader"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (ksba_reader_set_mem(cms_reader, cms, cms_length)) {
+        isds_log_message(context,
+                _("Could not bind CMS reader to PKCS#7 structure"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (ksba_writer_new(&cms_writer)) {
+        isds_log_message(context, _("Could not allocate CMS writer"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (ksba_writer_set_mem(cms_writer, 0)) {
+        isds_log_message(context,
+                _("Could not bind CMS reader to PKCS#7 structure"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (ksba_cms_set_reader_writer(cms_handler, cms_reader, cms_writer)) {
+        isds_log_message(context,
+                _("Could not register CMS reader to CMS handler"));
+        err = IE_ERROR;
+        goto leave;
+    }
+
+
+    /* FIXME: This cycle stops with: Missing action on KSBA_CT_SIGNED_DATA
+     * I don't know how to program the KSBA cycle.
+     * TODO: Use gpgme's verify call to extract data. The only problem is it
+     * gpgme verifies signature always. We don't need it now and it's slow.
+     * We should find out how to use KSBA. */
+    do {
+        gerr = ksba_cms_parse(cms_handler, &stop_reason);
+        if (gerr) {
+            gpg_strerror_r(gerr, gpg_error_string, sizeof(gpg_error_string));
+            gpg_error_string[sizeof(gpg_error_string)/sizeof(char) - 1] = '\0';
+            isds_printf_message(context,
+                    _("Error while parsing PKCS#7 structure: %s"),
+                    gpg_error_string);
+            return IE_ERROR;
+        }
+        if (stop_reason == KSBA_SR_BEGIN_DATA) {
+            isds_log(ILF_SEC, ILL_DEBUG, _("CMS: Data begining found\n"));
+        }
+        if (stop_reason == KSBA_SR_GOT_CONTENT) {
+            char *type;
+            switch (ksba_cms_get_content_type(cms_handler, 0)) {
+                case KSBA_CT_NONE: type = _("uknown data"); break;
+                case KSBA_CT_DATA: type = _("plain data"); break;
+                case KSBA_CT_SIGNED_DATA: type = _("signed data"); break;
+                case KSBA_CT_ENVELOPED_DATA:
+                        type = _("encypted data by session key"); break;
+                case KSBA_CT_DIGESTED_DATA: type = _("digest data"); break;
+                case KSBA_CT_ENCRYPTED_DATA: type = _("encryoted data"); break;
+                case KSBA_CT_AUTH_DATA: type = _("auth data"); break;
+                default: type = _("other data");
+            }
+            isds_log(ILF_SEC, ILL_DEBUG, _("CMS: Data type: %s\n"), type);
+        }
+        if (stop_reason == KSBA_SR_END_DATA) {
+            isds_log(ILF_SEC, ILL_DEBUG, _("CMS: Data end found\n"));
+        }
+    } while (stop_reason != KSBA_SR_READY);
+
+    *data = ksba_writer_snatch_mem(cms_writer, data_length);
+    if (!*data) {
+        isds_log_message(context, _("Getting CMS writer buffer failed"));
+        err = IE_ERROR;
+        goto leave;
+    }
+
+leave:
+    ksba_cms_release(cms_handler);
+    ksba_writer_release(cms_writer);
+    ksba_reader_release(cms_reader);
+    return err;
+}
+

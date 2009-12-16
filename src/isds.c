@@ -9,6 +9,7 @@
 #include "soap.h"
 #include "validator.h"
 #include "crypto.h"
+#include "gpg-error.h" /* Because of ksba */
 
 
 /* Free isds_list with all member data.
@@ -193,9 +194,12 @@ isds_error isds_init(void) {
     log_level = ILL_NONE;
 
     /* Initialize CURL */
-    if (curl_global_init(CURL_GLOBAL_ALL)) {
+    if (curl_global_init(CURL_GLOBAL_ALL)) 
         return IE_ERROR;
-    }
+
+    /* Inicialize gpg-error because of ksba */
+    if (gpg_err_init())
+        return IE_ERROR;
 
     /* This can _exit() current program. Find not so assertive check. */
     LIBXML_TEST_VERSION;
@@ -207,6 +211,7 @@ isds_error isds_init(void) {
         return IE_ERROR;
     if (!(isds_ns = xmlNewNs(NULL, BAD_CAST ISDS_NS, BAD_CAST "isds")))
         return IE_ERROR;
+
 
     return IE_SUCCESS;
 }
@@ -3901,6 +3906,8 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     char *encoded_structure = NULL;
+    void *xml_stream = NULL;
+    size_t xml_stream_length = 0;
 
     if (!context) return IE_INVALID_CONTEXT;
    
@@ -3970,12 +3977,15 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
     (*message)->raw_length = b64decode(encoded_structure, &((*message)->raw));
     if ((*message)->raw_length == (size_t) -1) {
         isds_log_message(context,
-                _("Error while Base64-decoding signed message"));
+                _("Error while Base64-decoding PKCS#7 structure"));
         err = IE_ERROR;
         goto leave;
     }
    
     /* TODO: Extract message from PKCS#7 structure */
+    err = extract_cms_data(context, (*message)->raw, (*message)->raw_length,
+            &xml_stream, &xml_stream_length);
+    if (err) goto leave;
 
     /* Extract the message */
     /*err = extract_TReturnedMessage(context, message, xpath_ctx);*/
@@ -3985,6 +3995,7 @@ leave:
         isds_message_free(message);
     }
 
+    free(xml_stream);
     free(encoded_structure);
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);

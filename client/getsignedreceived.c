@@ -85,8 +85,6 @@ int main(int argc, char **argv) {
             printf("isds_get_list_of_received_messages() succeeded: "
                     "number of messages = %lu:\n", number);
             for(item = messages; item; item = item->next) {
-                printf("List item:\n");
-                print_message(item->data);
                 last_message = (struct isds_message *) (item->data);
             }
 
