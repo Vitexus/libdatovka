@@ -2,6 +2,7 @@
 #include "isds_priv.h"
 #include "utils.h"
 #include "gcrypt.h"
+#include "ksba.h"
 
 /* Computes hash from @input with @length and store it into @hash.
  * The hash algoritm is defined inside @hash.
