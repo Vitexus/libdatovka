@@ -3886,6 +3886,122 @@ leave:
 }
 
 
+/* Download signed incoming message identified by ID.
+ * @context is session context
+ * @message_id is message identifier (you can get them from
+ * isds_get_list_of_received_messages())
+ * @message is automatically reallocated message retrieved from ISDS. The raw
+ * memeber will be filled with PKCS#7 structure in DER format. */
+isds_error isds_get_signed_received_message(struct isds_ctx *context,
+        const char *message_id, struct isds_message **message) {
+
+    isds_error err = IE_SUCCESS;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *status_message = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    char *encoded_structure = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+   
+    /* Free former message if any */
+    if (message) isds_message_free(message);
+
+    /* Do request and check for success */
+    err = build_send_check_message_request(context, SERVICE_DM_OPERATIONS,
+            BAD_CAST "SignedMessageDownload", message_id,
+            &response, &code, &status_message);
+    if (err) goto leave;
+
+    /* Extract data */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(
+            BAD_CAST "/isds:SignedMessageDownloadResponse/isds:dmSignature",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* Empty response */
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        char *message_id_locale = utf82locale((char*) message_id);
+        isds_printf_message(context,
+                _("Server did not return any message for ID `%s' "
+                    "on SignedMessageDownload request"), message_id_locale);
+        free(message_id_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* More reponses */
+    if (result->nodesetval->nodeNr > 1) {
+        char *message_id_locale = utf82locale((char*) message_id);
+        isds_printf_message(context,
+                _("Server did return more messages for ID `%s' "
+                    "on SignedMessageDownload request"), message_id_locale);
+        free(message_id_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* One response */
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+
+    /* Extract PKCS#7 structure */
+    EXTRACT_STRING(".", encoded_structure);
+    if (!encoded_structure) {
+        isds_log_message(context, _("dmSignature element is empty"));
+    }
+
+    /* Allocate message */
+    *message = calloc(1, sizeof(**message));
+    if (!*message) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    /* Decode PKCS#7 to DER format */
+    (*message)->raw_length = b64decode(encoded_structure, &((*message)->raw));
+    if ((*message)->raw_length == (size_t) -1) {
+        isds_log_message(context,
+                _("Error while Base64-decoding signed message"));
+        err = IE_ERROR;
+        goto leave;
+    }
+   
+    /* TODO: Extract message from PKCS#7 structure */
+
+    /* Extract the message */
+    /*err = extract_TReturnedMessage(context, message, xpath_ctx);*/
+
+leave:
+    if (err) {
+        isds_message_free(message);
+    }
+
+    free(encoded_structure);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(status_message);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("SignedMessageDownload request processed by server "
+                        "successfully.\n")
+                );
+    return err;
+}
+
+
 /* Retrieve hash of message identified by ID stored in ISDS.
  * @context is session context
  * @message_id is message identifier
