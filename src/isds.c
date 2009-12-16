@@ -900,6 +900,72 @@ leave:
 }
 
 
+/* Dump XML subtree to buffer as literral string, not valid XML possibly.
+ * @context is session context
+ * @document is original document where @nodeset points to
+ * @nodeset is XPath node set to dump (recursively)
+ * @buffer is automarically reallocated buffer where serialize to
+ * @length is size of serialized stream in bytes
+ * @return standard error code, free @buffer in case of error */
+static isds_error dump_nodeset(struct isds_ctx *context,
+        const xmlDocPtr document, const xmlNodeSetPtr nodeset,
+        void **buffer, size_t *length) {
+    isds_error err = IE_SUCCESS;
+    xmlBufferPtr xml_buffer = NULL;
+    void *new_buffer;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!buffer) return IE_INVAL;
+    zfree(*buffer); 
+    if (!document || !nodeset || !length) return IE_INVAL;
+    *length = 0;
+
+    /* Empty node set results into NULL buffer */
+    if (xmlXPathNodeSetIsEmpty(nodeset)) {
+        goto leave;
+    }
+
+    /* Resuling the document into buffer */
+    xml_buffer = xmlBufferCreate();
+    if (!xml_buffer) {
+        isds_log_message(context, _("Could not create xmlBuffer"));
+        err = IE_ERROR;
+        goto leave;
+    }
+   
+    /* Itearate over all nodes */
+    for (int i = 0; i < nodeset->nodeNr; i++) {
+        /* Serialize node.
+         * XXX: xmlNodeDump() appends to xml_buffer. */
+        if (-1 ==
+                xmlNodeDump(xml_buffer, document, nodeset->nodeTab[i], 0, 0)) {
+            isds_log_message(context, _("Could not dump XML node"));
+            err = IE_ERROR;
+            goto leave;
+        }
+    }
+
+    /* Store and detach buffer from xml_buffer */
+    *buffer = xml_buffer->content;
+    *length = xml_buffer->use;
+    xmlBufferSetAllocationScheme(xml_buffer, XML_BUFFER_ALLOC_IMMUTABLE);
+
+    /* Shrink buffer */
+    new_buffer = realloc(*buffer, *length);
+    if (new_buffer) *buffer = new_buffer;
+
+
+leave:
+    if (err) {
+        zfree(*buffer);
+        *length = 0;
+    }
+
+    xmlBufferFree(xml_buffer);
+    return err;
+}
+
+
 /* Convert UTF-8 @string represantion of ISDS dbType to enum @type */
 static isds_error string2isds_DbType(xmlChar *string, isds_DbType *type) {
     if (!string || !type) return IE_INVAL;
@@ -3985,9 +4051,18 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
         err = IE_XML;
         goto leave;
     }
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
 
-    /* Extract dmDM element as bit stream */
-    err = serialize_subtree(context, result->nodesetval->nodeTab[0],
+    /* XXX: We need all childern of isds:dmDm: elements, text nodes, PIs,
+     * CDATA, comments. Is asterisk sufficient? */
+    result = xmlXPathEvalExpression(BAD_CAST "*", xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    /* Extract dmDM content as bit stream */
+    err = dump_nodeset(context, message_doc, result->nodesetval,
             (void**) &buffer, &length);
     if (err) goto leave;
 
