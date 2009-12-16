@@ -109,7 +109,7 @@ document is removed, message state is set to value 3 (from point of view of
 recipient) and sender get new message originated by server.
 
 
-DownloadMessage
+MessageDownload
 ===============
 
 Retrieve incoming message identified by message ID.
@@ -118,6 +118,18 @@ Error codes:
     0000    Message sent successfully
 Non-normative error codes:
     1219    Message with ID does not exist in ISDS in current box.
+
+
+SignedMessageDownload
+=====================
+
+Download incoming message with digital signature of ministery of interiors
+identified by message ID.
+
+Return PKCS#7 structure containing data as defined in MessageDownload and
+digital signature of the message by ministery.
+
+The data has different ISDS namespace. It's `isds.czebox.cz/v20/message'.
 
 
 GetListOfRecievedMessages
