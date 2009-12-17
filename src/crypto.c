@@ -2,7 +2,13 @@
 #include "isds_priv.h"
 #include "utils.h"
 #include "gcrypt.h"
-#include "ksba.h"
+
+#ifdef ISDS_USE_KSBA
+    #include <ksba.h>
+#else
+    #include <gpgme.h>
+#endif
+
 
 /* Computes hash from @input with @length and store it into @hash.
  * The hash algoritm is defined inside @hash.
@@ -51,6 +57,7 @@ _hidden isds_error extract_cms_data(struct isds_ctx *context,
         const void *cms, const size_t cms_length,
         void **data, size_t *data_length) {
     isds_error err = IE_SUCCESS;
+#ifdef ISDS_USE_KSBA
     ksba_cms_t cms_handler = NULL;
     ksba_reader_t cms_reader = NULL;
     ksba_writer_t cms_writer = NULL;
@@ -147,6 +154,9 @@ leave:
     ksba_cms_release(cms_handler);
     ksba_writer_release(cms_writer);
     ksba_reader_release(cms_reader);
+#else
+    err = IE_NOTSUP;
+#endif
     return err;
 }
 

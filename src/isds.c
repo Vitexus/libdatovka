@@ -9,7 +9,7 @@
 #include "soap.h"
 #include "validator.h"
 #include "crypto.h"
-#include "gpg-error.h" /* Because of ksba */
+#include <gpg-error.h> /* Because of ksba or gpgme */
 
 
 /* Free isds_list with all member data.

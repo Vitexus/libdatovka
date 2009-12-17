@@ -1,5 +1,7 @@
 LIBDIR=../src
 CFLAGS=-std=c99 -Wall -Werror -g
+# Large files needed by GPGME
+CFLAGS += -D_FILE_OFFSET_BITS=64 -DLARGEFILE_SOURCE=1
 CFLAGS+=-I$(LIBDIR)
 LDFLAGS=-L$(LIBDIR) -lisds
 BINS=isdsclient getsent getreceived getsignedreceived verifyreceivedhash
