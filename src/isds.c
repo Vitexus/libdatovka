@@ -3906,7 +3906,7 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
         const char *message_id, struct isds_message **message) {
 
     isds_error err = IE_SUCCESS;
-    xmlDocPtr response = NULL;
+    xmlDocPtr response = NULL, message_doc = NULL;
     xmlChar *code = NULL, *status_message = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
@@ -3971,6 +3971,16 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
         isds_log_message(context, _("dmSignature element is empty"));
     }
 
+    /* Here we have message as standalone CMS in encoded_structure.
+     * We don't need any other data, free them: */
+    xmlXPathFreeObject(result); result = NULL;
+    xmlXPathFreeContext(xpath_ctx); xpath_ctx = NULL;
+    zfree(code);
+    zfree(status_message);
+    xmlFreeDoc(response); response = NULL;
+
+
+
     /* Allocate message */
     *message = calloc(1, sizeof(**message));
     if (!*message) {
@@ -3986,20 +3996,76 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
+    zfree(encoded_structure);
    
-    /* TODO: Extract message from PKCS#7 structure */
+    /* Extract message from PKCS#7 structure */
     err = extract_cms_data(context, (*message)->raw, (*message)->raw_length,
             &xml_stream, &xml_stream_length);
     if (err) goto leave;
 
+    /* Convert extracted messages XML stream into XPath context */
+    message_doc = xmlParseMemory(xml_stream, xml_stream_length);
+    if (!message_doc) {
+        err = IE_XML;
+        goto leave;
+    }
+    xpath_ctx = xmlXPathNewContext(message_doc);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* XXX: Name spaces mangled: http://isds.czechpoint.cz/v20/message:
+     *
+     * <q:MessageDownloadResponse
+     *      xmlns:q="http://isds.czechpoint.cz/v20/message">
+     *   <q:dmReturnedMessage>
+     *      <p:dmDm xmlns:p="http://isds.czechpoint.cz/v20">
+     *          <p:dmID>151916</p:dmID>
+     *          ...
+     *      </p:dmDm>
+     *   </q:dmReturnedMessage>
+     * </q:MessageDownloadResponse>
+     *
+     * Stupidity of ISDS developers is unlimited */
+    result = xmlXPathEvalExpression(
+            BAD_CAST "/isds:MessageDownloadResponse/isds:dmReturnedMessage",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* Empty embedded message */
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_printf_message(context,
+                _("Embeded XML document into PKCS#7 structure is not "
+                    "isds:dmReturnedMessage document"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* More embedded messages */
+    if (result->nodesetval->nodeNr > 1) {
+        isds_printf_message(context,
+                _("Embeded XML document into PKCS#7 structure has more "
+                    "root isds:dmReturnedMessage elements"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* One embedded message */
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+
     /* Extract the message */
-    /*err = extract_TReturnedMessage(context, message, xpath_ctx);*/
+    err = extract_TReturnedMessage(context, message, xpath_ctx);
 
 leave:
     if (err) {
         isds_message_free(message);
     }
 
+    xmlFreeDoc(message_doc);
     cms_data_free(xml_stream);
     free(encoded_structure);
     xmlXPathFreeObject(result);
