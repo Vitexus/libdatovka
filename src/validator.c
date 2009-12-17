@@ -54,7 +54,7 @@ _hidden isds_error isds_response_status(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx)) {
+    if (register_namespaces(xpath_ctx, 0)) {
         err = IE_ERROR;
         goto leave;
     }

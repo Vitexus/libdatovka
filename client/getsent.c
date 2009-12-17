@@ -78,10 +78,10 @@ int main(int argc, char **argv) {
         err = isds_get_list_of_sent_messages(ctx, &from_time, NULL, NULL,
                 MESSAGESTATE_ANY, 0, &number, &messages);
         if (err)
-            printf("isds_isds_get_list_of_sent_messages() failed: %s: %s\n",
+            printf("isds_get_list_of_sent_messages() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
         else {
-            printf("isds_isds_get_list_of_sent_messages() succeeded: "
+            printf("isds_get_list_of_sent_messages() succeeded: "
                     "number of messages = %lu:\n", number);
             for(item = messages; item; item = item->next) {
                 printf("List item:\n");

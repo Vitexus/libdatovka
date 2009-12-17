@@ -64,7 +64,11 @@ isds_error isds_printf_message(struct isds_ctx *context,
 isds_error isds_log(const isds_log_facility facility,
         const isds_log_level level, const char *message, ...);
 
-/* Makes known all relevant namespaces to give @xpat_ctx */
-isds_error register_namespaces(xmlXPathContextPtr xpath_ctx);
+/* Makes known all relevant namespaces to given XPath context
+ * @xpat_ctx is XPath context
+ * @distinguish_sisds == false means to make `sisds' prefix equalled to `isds'
+ * prefix and to URI ISDS_NS */
+isds_error register_namespaces(xmlXPathContextPtr xpath_ctx,
+        const _Bool distinguish_sisds);
 
 #endif

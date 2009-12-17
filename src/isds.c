@@ -1885,7 +1885,13 @@ static isds_error append_status_size_times(struct isds_ctx *context,
 
     
     /* dmMessageStatus element is mandatory */
-    EXTRACT_ULONGINT("isds:dmMessageStatus", unumber, 0);
+    EXTRACT_ULONGINT("sisds:dmMessageStatus", unumber, 0);
+    if (!unumber) {
+        isds_log_message(context,
+                _("Missing mandatory sisds:dmMessageStatus integer"));
+        err = IE_ISDS;
+        goto leave;
+    }
     err = uint2isds_message_status(context, unumber,
             &((*envelope)->dmMessageStatus));
     if (err) {
@@ -1894,9 +1900,10 @@ static isds_error append_status_size_times(struct isds_ctx *context,
     }
     free(unumber); unumber = NULL;
     
-    EXTRACT_ULONGINT("isds:dmAttachmentSize", (*envelope)->dmAttachmentSize, 0);
+    EXTRACT_ULONGINT("sisds:dmAttachmentSize", (*envelope)->dmAttachmentSize,
+            0);
 
-    EXTRACT_STRING("isds:dmDeliveryTime", string);
+    EXTRACT_STRING("sisds:dmDeliveryTime", string);
     if (string) {
         err = timestring2timeval((xmlChar *) string,
                 &((*envelope)->dmDeliveryTime));
@@ -1911,7 +1918,7 @@ static isds_error append_status_size_times(struct isds_ctx *context,
         }
     }
 
-    EXTRACT_STRING("isds:dmAcceptanceTime", string);
+    EXTRACT_STRING("sisds:dmAcceptanceTime", string);
     if (string) {
         err = timestring2timeval((xmlChar *) string,
                 &((*envelope)->dmAcceptanceTime));
@@ -2197,7 +2204,7 @@ static isds_error find_and_extract_DmHash(struct isds_ctx *context,
     old_ctx_node = xpath_ctx->node;
 
     /* Locate dmHash */
-    err = move_xpathctx_to_child(context, BAD_CAST "isds:dmHash", xpath_ctx);
+    err = move_xpathctx_to_child(context, BAD_CAST "sisds:dmHash", xpath_ctx);
     if (err == IE_NOEXIST || err == IE_NOTUNIQ) {
         err = IE_ISDS;
         goto leave;
@@ -2276,7 +2283,7 @@ static isds_error find_and_append_DmQTimestamp(struct isds_ctx *context,
     }
 
     /* Get dmQTimestamp */
-    EXTRACT_STRING("isds:dmQTimestamp", string);
+    EXTRACT_STRING("sisds:dmQTimestamp", string);
     if (!string) {
         isds_printf_message(context, _("Missing dmQTimestamp element content"));
         err = IE_ISDS;
@@ -2299,7 +2306,8 @@ leave:
 }
 
 
-/* Convert XSD tReturnedMessage XML tree into message structure
+/* Convert XSD tReturnedMessage XML tree into message structure.
+ * It doea not store XML tree into message->raw.
  * @context is ISDS context
  * @message is automically reallocated message structure
  * @xpath_ctx is XPath context with current node as tReturnedMessage element
@@ -2359,10 +2367,6 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
     err = append_status_size_times(context, &((*message)->envelope), xpath_ctx);
     if (err) goto leave;
     
-     /* Save XML blob */
-    err = serialize_subtree(context, message_node, &(*message)->raw,
-            &(*message)->raw_length);
-
 leave:
     if (err) isds_message_free(message);
     return err;
@@ -2564,7 +2568,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx)) {
+    if (register_namespaces(xpath_ctx, 0)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -2805,7 +2809,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx)) {
+    if (register_namespaces(xpath_ctx, 0)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -2979,7 +2983,7 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx)) {
+    if (register_namespaces(xpath_ctx, 0)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -3250,7 +3254,7 @@ isds_error isds_send_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx)) {
+    if (register_namespaces(xpath_ctx, 0)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -3529,7 +3533,7 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx)) {
+    if (register_namespaces(xpath_ctx, 0)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -3838,7 +3842,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx)) {
+    if (register_namespaces(xpath_ctx, 0)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -3874,6 +3878,11 @@ isds_error isds_get_received_message(struct isds_ctx *context,
 
     /* Extract the message */
     err = extract_TReturnedMessage(context, message, xpath_ctx);
+    if (err) goto leave;
+
+     /* Save XML blob */
+    err = serialize_subtree(context, xpath_ctx->node, &(*message)->raw,
+            &(*message)->raw_length);
 
 leave:
     if (err) {
@@ -3911,8 +3920,8 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     char *encoded_structure = NULL;
-    void *xml_stream = NULL;
-    size_t xml_stream_length = 0;
+    void *raw = NULL, *xml_stream = NULL;
+    size_t raw_length = 0, xml_stream_length = 0;
 
     if (!context) return IE_INVALID_CONTEXT;
    
@@ -3931,7 +3940,7 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx)) {
+    if (register_namespaces(xpath_ctx, 0)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -3981,16 +3990,9 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
 
 
 
-    /* Allocate message */
-    *message = calloc(1, sizeof(**message));
-    if (!*message) {
-        err = IE_NOMEM;
-        goto leave;
-    }
-
     /* Decode PKCS#7 to DER format */
-    (*message)->raw_length = b64decode(encoded_structure, &((*message)->raw));
-    if ((*message)->raw_length == (size_t) -1) {
+    raw_length = b64decode(encoded_structure, &raw);
+    if (raw_length == (size_t) -1) {
         isds_log_message(context,
                 _("Error while Base64-decoding PKCS#7 structure"));
         err = IE_ERROR;
@@ -3999,7 +4001,7 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
     zfree(encoded_structure);
    
     /* Extract message from PKCS#7 structure */
-    err = extract_cms_data(context, (*message)->raw, (*message)->raw_length,
+    err = extract_cms_data(context, raw, raw_length,
             &xml_stream, &xml_stream_length);
     if (err) goto leave;
 
@@ -4015,10 +4017,6 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
     }
     xpath_ctx = xmlXPathNewContext(message_doc);
     if (!xpath_ctx) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (register_namespaces(xpath_ctx)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -4038,6 +4036,10 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
      * </q:MessageDownloadResponse>
      *
      * Stupidity of ISDS developers is unlimited */
+    if (register_namespaces(xpath_ctx, 1)) {
+        err = IE_ERROR;
+        goto leave;
+    }
     result = xmlXPathEvalExpression(
             BAD_CAST "/sisds:MessageDownloadResponse/sisds:dmReturnedMessage",
             xpath_ctx);
@@ -4066,6 +4068,13 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
 
     /* Extract the message */
     err = extract_TReturnedMessage(context, message, xpath_ctx);
+    if (err) goto leave;
+
+    /* Append raw CMS structure into message */
+    (*message)->raw = raw;
+    (*message)->raw_length = raw_length;
+    raw = NULL;
+
 
 leave:
     if (err) {
@@ -4077,6 +4086,7 @@ leave:
     free(encoded_structure);
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
+    free(raw);
 
     free(code);
     free(status_message);
@@ -4123,7 +4133,7 @@ isds_error isds_download_message_hash(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx)) {
+    if (register_namespaces(xpath_ctx, 0)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -4234,7 +4244,7 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx)) {
+    if (register_namespaces(xpath_ctx, 0)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -4347,15 +4357,20 @@ int isds_address_free(struct isds_address **address);
 */
 
 
-/* Makes known all relevant namespaces to give @xpat_ctx */
-_hidden isds_error register_namespaces(xmlXPathContextPtr xpath_ctx) {
+/* Makes known all relevant namespaces to given XPath context
+ * @xpat_ctx is XPath context
+ * @distinguish_sisds == false means to make `sisds' prefix equalled to `isds'
+ * prefix and to URI ISDS_NS */
+_hidden isds_error register_namespaces(xmlXPathContextPtr xpath_ctx,
+        const _Bool distinguish_sisds) {
     if (!xpath_ctx) return IE_ERROR;
 
     if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "soap", BAD_CAST SOAP_NS))
         return IE_ERROR;
     if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "isds", BAD_CAST ISDS_NS))
         return IE_ERROR;
-    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "sisds", BAD_CAST SISDS_NS))
+    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "sisds", 
+                (distinguish_sisds) ? BAD_CAST SISDS_NS : BAD_CAST ISDS_NS))
         return IE_ERROR;
     if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "xs", BAD_CAST SCHEMA_NS))
         return IE_ERROR;
