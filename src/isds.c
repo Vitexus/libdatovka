@@ -4000,7 +4000,7 @@ leave:
         isds_message_free(message);
     }
 
-    free(xml_stream);
+    cms_data_free(xml_stream);
     free(encoded_structure);
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);

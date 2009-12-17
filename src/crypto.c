@@ -76,12 +76,24 @@ _hidden isds_error init_gpgme(void) {
     return IE_SUCCESS;
 }
 
+/* Free CMS data buffer allocated inside extract_cms_data().
+ * This is necesary because GPGME.
+ * @buffer is pointer to memory to free */
+_hidden void cms_data_free(void *buffer) {
+#ifdef ISDS_USE_KSBA
+    free(buffer);
+#else
+    if (buffer) gpgme_free(buffer);
+#endif
+}
+
 
 /* Extract data from CMS (successor of PKCS#7)
  * @context is session context
  * @cms is input block with CMS structure
  * @cms_length is @cms block length in bytes
- * @data is automatically reallocated bit stream with data found in @cms
+ * @data are automatically reallocated bit stream with data found in @cms
+ * You must free them with cms_data_free().
  * @data_length is length of @data in bytes */
 _hidden isds_error extract_cms_data(struct isds_ctx *context,
         const void *cms, const size_t cms_length,
