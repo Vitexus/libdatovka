@@ -11,6 +11,10 @@
 isds_error compute_hash(const void *input, const size_t length,
         struct isds_hash *hash);
 
+/* Inicialize GPGME.
+ * @return IE_SUCCESS if everything is O.k. */
+isds_error init_gpgme(void);
+
 /* Extract data from CMS (successor of PKCS#7)
  * @context is session context
  * @cms is input block with CMS structure

@@ -5,10 +5,10 @@
 
 #ifdef ISDS_USE_KSBA
     #include <ksba.h>
-#else
-    #include <gpgme.h>
 #endif
 
+#include <gpgme.h>
+#include <locale.h>
 
 /* Computes hash from @input with @length and store it into @hash.
  * The hash algoritm is defined inside @hash.
@@ -47,6 +47,29 @@ _hidden isds_error compute_hash(const void *input, const size_t length,
 }
 
 
+/* Inicialize GPGME.
+ * @return IE_SUCCESS if everything is O.k. */
+_hidden isds_error init_gpgme(void) {
+    const char *gpgme_version;
+    
+    gpgme_version = gpgme_check_version(NULL);
+    if (!gpgme_version)  {
+        isds_log(ILF_SEC, ILL_CRIT, _("GPGME initialization failed\n"));
+        return IE_ERROR;
+    }
+
+    isds_log(ILF_SEC, ILL_INFO, _("GPGME version in use: %s\n"),
+            gpgme_version);
+    /* Needed to propagate locale to remote processes like pinentry */
+    gpgme_set_locale (NULL, LC_CTYPE, setlocale(LC_CTYPE, NULL));
+#ifdef LC_MESSAGES
+    gpgme_set_locale (NULL, LC_MESSAGES, setlocale(LC_MESSAGES, NULL));
+#endif
+
+    return IE_SUCCESS;
+}
+
+
 /* Extract data from CMS (successor of PKCS#7)
  * @context is session context
  * @cms is input block with CMS structure
@@ -57,6 +80,12 @@ _hidden isds_error extract_cms_data(struct isds_ctx *context,
         const void *cms, const size_t cms_length,
         void **data, size_t *data_length) {
     isds_error err = IE_SUCCESS;
+
+    if (!cms || !data || !data_length) return IE_INVAL;
+
+    zfree(*data);
+    *data_length = 0;
+
 #ifdef ISDS_USE_KSBA
     ksba_cms_t cms_handler = NULL;
     ksba_reader_t cms_reader = NULL;
@@ -64,11 +93,6 @@ _hidden isds_error extract_cms_data(struct isds_ctx *context,
     gpg_error_t gerr;
     char gpg_error_string[128];
     ksba_stop_reason_t stop_reason;
-
-    if (!cms || !data || !data_length) return IE_INVAL;
-
-    zfree(*data);
-    *data_length = 0;
 
     if (ksba_cms_new(&cms_handler)) {
         isds_log_message(context, _("Could not allocate CMS parser handler"));
@@ -154,9 +178,32 @@ leave:
     ksba_cms_release(cms_handler);
     ksba_writer_release(cms_writer);
     ksba_reader_release(cms_reader);
-#else
+#else /* ndef ISDS_USE_KSBA */
+    gpgme_ctx_t gctx = NULL;
+    gpgme_error_t gerr;
+    char gpgme_error_string[128];
+
+#define GET_GPGME_ERROR_STRING \
+    gpgme_strerror_r(gerr, gpgme_error_string, sizeof(gpgme_error_string)); \
+    gpgme_error_string[sizeof(gpgme_error_string)/sizeof(char) - 1] = '\0'; \
+
+    gerr = gpgme_new(&gctx);
+    if (gerr) {
+        GET_GPGME_ERROR_STRING;
+        err = IE_ERROR;
+        isds_printf_message(context, _("Could not create GPGME context: %s"),
+                gpgme_error_string);
+        goto leave;
+    }
+
+
+
+
     err = IE_NOTSUP;
-#endif
+leave:
+    if (gctx) gpgme_release(gctx);
+#undef GET_GPGME_ERROR_STRING
+#endif /* ndef ISDS_USE_KSBA */
     return err;
 }
 

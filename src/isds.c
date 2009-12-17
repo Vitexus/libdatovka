@@ -190,16 +190,21 @@ isds_error isds_init(void) {
     /* NULL global variables */
     xml_node = NULL;
     soap_ns = NULL;
-    log_facilities = ILF_NONE;
-    log_level = ILL_NONE;
+    log_facilities = ILF_ALL;
+    log_level = ILL_WARNING;
 
     /* Initialize CURL */
     if (curl_global_init(CURL_GLOBAL_ALL)) 
         return IE_ERROR;
 
-    /* Inicialize gpg-error because of ksba */
+    /* Inicialize gpg-error because of gpgme and ksba */
     if (gpg_err_init())
         return IE_ERROR;
+
+    /* Initialize GPGME */
+    if (init_gpgme()) {
+        return IE_ERROR;
+    }
 
     /* This can _exit() current program. Find not so assertive check. */
     LIBXML_TEST_VERSION;

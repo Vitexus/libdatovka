@@ -19,6 +19,7 @@ int main(int argc, char **argv) {
     err = isds_init();
     if (err) {
         printf("isds_init() failed: %s\n", isds_strerror(err));
+        exit(EXIT_FAILURE);
     }
 
     isds_set_logging(ILF_ALL & ~ILF_HTTP, ILL_ALL);
