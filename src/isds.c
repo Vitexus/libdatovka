@@ -4039,7 +4039,7 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
      *
      * Stupidity of ISDS developers is unlimited */
     result = xmlXPathEvalExpression(
-            BAD_CAST "/isds:MessageDownloadResponse/isds:dmReturnedMessage",
+            BAD_CAST "/sisds:MessageDownloadResponse/sisds:dmReturnedMessage",
             xpath_ctx);
     if (!result) {
         err = IE_ERROR;
@@ -4049,7 +4049,7 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
     if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
         isds_printf_message(context,
                 _("XML document embedded into PKCS#7 structure is not "
-                    "isds:dmReturnedMessage document"));
+                    "sisds:dmReturnedMessage document"));
         err = IE_ISDS;
         goto leave;
     }
@@ -4354,6 +4354,8 @@ _hidden isds_error register_namespaces(xmlXPathContextPtr xpath_ctx) {
     if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "soap", BAD_CAST SOAP_NS))
         return IE_ERROR;
     if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "isds", BAD_CAST ISDS_NS))
+        return IE_ERROR;
+    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "sisds", BAD_CAST SISDS_NS))
         return IE_ERROR;
     if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "xs", BAD_CAST SCHEMA_NS))
         return IE_ERROR;
