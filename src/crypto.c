@@ -52,6 +52,7 @@ _hidden isds_error compute_hash(const void *input, const size_t length,
 _hidden isds_error init_gpgme(void) {
     const char *gpgme_version;
     
+    /* Check version and initialize GPGME */
     gpgme_version = gpgme_check_version(NULL);
     if (!gpgme_version)  {
         isds_log(ILF_SEC, ILL_CRIT, _("GPGME initialization failed\n"));
@@ -65,6 +66,12 @@ _hidden isds_error init_gpgme(void) {
 #ifdef LC_MESSAGES
     gpgme_set_locale (NULL, LC_MESSAGES, setlocale(LC_MESSAGES, NULL));
 #endif
+
+    /* Check for engines */
+    if (gpgme_engine_check_version(GPGME_PROTOCOL_CMS)) {
+        isds_log(ILF_SEC, ILL_CRIT, _("GPGME does not support CMS\n"));
+        return IE_ERROR;
+    }
 
     return IE_SUCCESS;
 }
@@ -182,26 +189,71 @@ leave:
     gpgme_ctx_t gctx = NULL;
     gpgme_error_t gerr;
     char gpgme_error_string[128];
+    gpgme_data_t cms_handler = NULL, plain_handler = NULL;
 
 #define GET_GPGME_ERROR_STRING \
     gpgme_strerror_r(gerr, gpgme_error_string, sizeof(gpgme_error_string)); \
     gpgme_error_string[sizeof(gpgme_error_string)/sizeof(char) - 1] = '\0'; \
 
+#define FAIL_ON_GPGME_ERROR(code, message) \
+    if (code) { \
+        GET_GPGME_ERROR_STRING; \
+        isds_printf_message(context, message, gpgme_error_string); \
+        if ((code) == GPG_ERR_ENOMEM) err = IE_NOMEM; \
+        else err = IE_ERROR; \
+        goto leave; \
+    }
+
+    /* Create GPGME context */
     gerr = gpgme_new(&gctx);
+    FAIL_ON_GPGME_ERROR(gerr, _("Could not create GPGME context: %s"));
+
+    gerr = gpgme_set_protocol(gctx, GPGME_PROTOCOL_CMS);
+    FAIL_ON_GPGME_ERROR(gerr, 
+                _("Could not set CMS protocol for GPGME context: %s"));
+
+    /* Create data handlers */
+    gerr = gpgme_data_new_from_mem(&cms_handler, cms, cms_length, 0);
+    FAIL_ON_GPGME_ERROR(gerr, _("Could not create data handler for "
+                "signed message in CMS structure: %s"));
+    gerr = gpgme_data_set_encoding(cms_handler, GPGME_DATA_ENCODING_BINARY);
+    FAIL_ON_GPGME_ERROR(gerr, _("Could not explain to GPGME "
+                "that CMS structure was packed in DER binary format: %s"));
+
+    gerr = gpgme_data_new(&plain_handler);
+    FAIL_ON_GPGME_ERROR(gerr, _("Could not create data handler for "
+                "plain message extracted from CMS structure: %s"));
+
+    /* Verify signature */
+    gerr = gpgme_op_verify(gctx, cms_handler, NULL, plain_handler);
     if (gerr) {
         GET_GPGME_ERROR_STRING;
-        err = IE_ERROR;
-        isds_printf_message(context, _("Could not create GPGME context: %s"),
+        isds_printf_message(context,
+                _("CMS verification failed: %s"),
                 gpgme_error_string);
+        err = IE_ERROR;
         goto leave;
     }
 
+    /* Get extracted plain message
+     * XXX: One must free *data with gpgme_free() because of clashing
+     * possibly different allocators. */
+    *data = gpgme_data_release_and_get_mem(plain_handler, data_length);
+    plain_handler = NULL;
+    if (!*data) {
+        /* No data or error occured */
+        isds_printf_message(context,
+                _("Could not get plain data from GPGME "
+                    "after verifying CMS structure"));
+        err = IE_ERROR;
+        goto leave;
+    }
 
-
-
-    err = IE_NOTSUP;
 leave:
     if (gctx) gpgme_release(gctx);
+    if (plain_handler) gpgme_data_release(plain_handler);
+    if (cms_handler) gpgme_data_release(cms_handler);
+#undef FAIL_ON_GPGME_ERROR
 #undef GET_GPGME_ERROR_STRING
 #endif /* ndef ISDS_USE_KSBA */
     return err;
