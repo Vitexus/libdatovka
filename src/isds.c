@@ -4003,6 +4003,10 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
             &xml_stream, &xml_stream_length);
     if (err) goto leave;
 
+    isds_log(ILF_ISDS, ILL_DEBUG,
+            _("Signed incoming message content:\n%.*s\nEnd of message\n"),
+            xml_stream_length, xml_stream);
+
     /* Convert extracted messages XML stream into XPath context */
     message_doc = xmlParseMemory(xml_stream, xml_stream_length);
     if (!message_doc) {
@@ -4027,6 +4031,9 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
      *          <p:dmID>151916</p:dmID>
      *          ...
      *      </p:dmDm>
+     *      <q:dmHash algorithm="SHA-1">...</q:dmHash>
+     *      ...
+     *      <q:dmAttachmentSize>260</q:dmAttachmentSize>
      *   </q:dmReturnedMessage>
      * </q:MessageDownloadResponse>
      *
@@ -4041,7 +4048,7 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
     /* Empty embedded message */
     if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
         isds_printf_message(context,
-                _("Embeded XML document into PKCS#7 structure is not "
+                _("XML document embedded into PKCS#7 structure is not "
                     "isds:dmReturnedMessage document"));
         err = IE_ISDS;
         goto leave;

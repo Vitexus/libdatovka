@@ -129,7 +129,21 @@ identified by message ID.
 Return PKCS#7 structure containing data as defined in MessageDownload and
 digital signature of the message by ministery.
 
-The data has different ISDS namespace. It's `isds.czebox.cz/v20/message'.
+The data are XML document with mangled ISDS name space:
+http://isds.czechpoint.cz/v20/ vs. http://isds.czechpoint.cz/v20/message:
+
+<q:MessageDownloadResponse
+     xmlns:q="http://isds.czechpoint.cz/v20/message">
+  <q:dmReturnedMessage>
+     <p:dmDm xmlns:p="http://isds.czechpoint.cz/v20">
+         <p:dmID>151916</p:dmID>
+         ...
+     </p:dmDm>
+     <q:dmHash algorithm="SHA-1">...</q:dmHash>
+     ...
+     <q:dmAttachmentSize>260</q:dmAttachmentSize>
+  </q:dmReturnedMessage>
+</q:MessageDownloadResponse>
 
 
 GetListOfRecievedMessages
