@@ -82,6 +82,9 @@ void switch_tz_to_utc(void);
 void switch_tz_to_native(void);
 
 /* Free() and set to NULL pointed memory */
-void zfree(void *memory);
+#define zfree(memory) { \
+    free(memory); \
+    (memory) = NULL; \
+}
 
 #endif
