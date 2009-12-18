@@ -27,7 +27,7 @@ void cms_data_free(void *buffer);
  * @data are automatically reallocated bit stream with data found in @cms
  * You must free them with cms_data_free().
  * @data_length is length of @data in bytes */
-_hidden isds_error extract_cms_data(struct isds_ctx *context,
+isds_error extract_cms_data(struct isds_ctx *context,
         const void *cms, const size_t cms_length,
         void **data, size_t *data_length);
 
