@@ -15,8 +15,8 @@ test: $(TESTS)
 	@FAILED=0; \
 	for T in $^; do "./$$T" || FAILED=$$((FAILED+1)); done; \
 	if [ "$$FAILED" -gt "0" ]; then \
-		UNIT="tests"; \
-		test "$$FAILED" == "1" && UNIT="test"; \
+		UNIT="unit tests"; \
+		test "$$FAILED" == "1" && UNIT="unit test"; \
 		echo "*** $$FAILED $$UNIT failed. Please tell developers about it."; \
 		echo "Your report can make this world better!"; \
 		exit 1; \
