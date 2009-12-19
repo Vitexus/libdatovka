@@ -18,7 +18,7 @@ unsigned int passed, failed;
 }
 
 #define SUM_TEST() { \
-    printf("Test results: unit = %s, passed = %u, failed = %u\n", \
+    printf("Test results: unit = %s, passed = %u, failed = %u\n\n", \
             unit_name, passed, failed); \
     exit(failed ? EXIT_FAILURE : EXIT_SUCCESS ); \
 }

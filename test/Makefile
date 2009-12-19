@@ -12,7 +12,18 @@ TESTS := $(SRCS:%.c=%.test)
 all: $(TESTS)
 
 test: $(TESTS)
-	for T in $^; do "./$$T" ; done
+	@FAILED=0; \
+	for T in $^; do "./$$T" || FAILED=$$((FAILED+1)); done; \
+	if [ "$$FAILED" -gt "0" ]; then \
+		UNIT="tests"; \
+		test "$$FAILED" == "1" && UNIT="test"; \
+		echo "*** $$FAILED $$UNIT failed. Please tell developers about it."; \
+		echo "Your report can make this world better!"; \
+		exit 1; \
+	else \
+		echo "*** All tests passed. Today's your lucky day :)"; \
+		exit 0; \
+	fi
 
 clean:
 	-rm *.test *.o
