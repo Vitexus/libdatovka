@@ -14,7 +14,8 @@
  * The hash algoritm is defined inside @hash.
  * @input is input block to hash
  * @length is @input block length in bytes
- * @hash input algoritm, output hash value and hash length */
+ * @hash input algoritm, output hash value and hash length; hash value will be
+ * reallocated, it's always valid pointer or NULL (before and after call) */
 _hidden isds_error compute_hash(const void *input, const size_t length,
         struct isds_hash *hash) {
     int g_algorithm;
