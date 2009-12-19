@@ -20,8 +20,6 @@
 
 /* Global variables.
  * Allocated in isds_init() and deallocated in isds_cleanup(). */
-xmlNodePtr xml_node;
-xmlNsPtr soap_ns, isds_ns;
 unsigned int log_facilities;
 isds_log_level log_level;
 

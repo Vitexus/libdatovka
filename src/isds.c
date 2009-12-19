@@ -188,21 +188,25 @@ void isds_document_free(struct isds_document **document) {
  * free partially inititialized global variables. */
 isds_error isds_init(void) {
     /* NULL global variables */
-    xml_node = NULL;
-    soap_ns = NULL;
     log_facilities = ILF_ALL;
     log_level = ILL_WARNING;
 
     /* Initialize CURL */
-    if (curl_global_init(CURL_GLOBAL_ALL)) 
+    if (curl_global_init(CURL_GLOBAL_ALL)) {
+        isds_log(ILF_ISDS, ILL_CRIT, _("CURL library initialization failed\n"));
         return IE_ERROR;
+    }
 
     /* Inicialize gpg-error because of gpgme and ksba */
-    if (gpg_err_init())
+    if (gpg_err_init()) {
+        isds_log(ILF_ISDS, ILL_CRIT,
+                _("gpg-error library initialization failed\n"));
         return IE_ERROR;
+    }
 
     /* Initialize GPGME */
     if (init_gpgme()) {
+        isds_log(ILF_ISDS, ILL_CRIT, _("GPGME library initialization failed\n"));
         return IE_ERROR;
     }
 
@@ -210,12 +214,6 @@ isds_error isds_init(void) {
     LIBXML_TEST_VERSION;
 
     /* Allocate global variables */
-    if (!(xml_node = xmlNewNode(NULL, BAD_CAST "global-element")))
-        return IE_ERROR;
-    if (!(soap_ns = xmlNewNs(NULL, BAD_CAST SOAP_NS, BAD_CAST "soap")))
-        return IE_ERROR;
-    if (!(isds_ns = xmlNewNs(NULL, BAD_CAST ISDS_NS, BAD_CAST "isds")))
-        return IE_ERROR;
 
 
     return IE_SUCCESS;
@@ -226,9 +224,6 @@ isds_error isds_init(void) {
  * Global function, must be called as last library function. */
 isds_error isds_cleanup(void) {
     /* XML */
-    xmlFreeNs(isds_ns);
-    xmlFreeNs(soap_ns);
-    xmlFreeNode(xml_node);
     xmlCleanupParser();
     
     /* Curl */
