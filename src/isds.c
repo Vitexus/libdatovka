@@ -452,7 +452,7 @@ isds_error isds_set_timeout(struct isds_ctx *context,
 
 
 /* Change SSL/TLS settings.
- * @context is context which setting vill be applied to
+ * @context is context which setting will be applied to
  * @option is name of option. It determines the type of last argument. See
  * isds_tls_option definition for more info.
  * @... is value of new setting. Type is determined by @option
