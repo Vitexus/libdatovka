@@ -41,7 +41,7 @@ _hidden isds_error compute_hash(const void *input, const size_t length,
     hash->value = buffer;
 
     /* Compute the hash */
-    gcry_md_hash_buffer(g_algorithm, hash->value, (length)?buffer:"", length);
+    gcry_md_hash_buffer(g_algorithm, hash->value, (length)?input:"", length);
 
     return IE_SUCCESS;
 }
