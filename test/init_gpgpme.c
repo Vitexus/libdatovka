@@ -1,6 +1,5 @@
 #include "test.h"
 #include "crypto.h"
-#include <string.h>
 
 static int test_init_gpgme(const isds_error error) {
     isds_error err;
