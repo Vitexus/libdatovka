@@ -248,13 +248,6 @@ static isds_error http(struct isds_ctx *context, const char *url,
         curl_err = curl_easy_getinfo(context->curl, CURLINFO_CONTENT_TYPE,
             &content_type);
 
-    isds_log(ILF_HTTP, ILL_DEBUG, _("Received final response to %s\n"), url);
-    isds_log(ILF_HTTP, ILL_DEBUG,
-            _("Response body length: %zu, content follows:\n"),
-            body.length);
-    isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n", body.length, body.data);
-    isds_log(ILF_HTTP, ILL_DEBUG, _("End of response body\n"));
-
     if (curl_err) {
         /* TODO: CURL is not internationalized yet. Collect CURL messages for
          * I18N. */
@@ -263,6 +256,14 @@ static isds_error http(struct isds_ctx *context, const char *url,
         err = IE_NETWORK;
         goto leave;
     }
+
+    isds_log(ILF_HTTP, ILL_DEBUG, _("Final response to %s received\n"), url);
+    isds_log(ILF_HTTP, ILL_DEBUG,
+            _("Response body length: %zu, content follows:\n"),
+            body.length);
+    isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n", body.length, body.data);
+    isds_log(ILF_HTTP, ILL_DEBUG, _("End of response body\n"));
+
 
     /* Extract MIME type and charset */
     if (content_type) {

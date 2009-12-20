@@ -13,6 +13,20 @@ static int test_login(const isds_error error, struct isds_ctx *context,
     PASS_TEST;
 }
 
+static int test_login2(const isds_error error1, const isds_error error2,
+        struct isds_ctx *context,
+        const char *url, const char *username, const char *password,
+        const char *certificate, const char *key) {
+    
+    isds_error err =
+            isds_login(context, url, username, password, certificate, key);
+    if (err != error1 && err != error2)
+        FAIL_TEST("Wrong return code");
+
+    isds_logout(context);
+    PASS_TEST;
+}
+
 
 int main(int argc, char **argv) {
     INIT_TEST("login");
@@ -44,8 +58,11 @@ int main(int argc, char **argv) {
 
     TEST("invalid URL", test_login, IE_NETWORK, context,
             "invalid://", username, password, NULL, NULL);
-    TEST("unresolvable host name", test_login, IE_NETWORK, context,
-            "http://example.com/", username, password, NULL, NULL);
+    /* Direct connection fails on local resolution, connection trough proxy
+     * failes on HTTP code */
+    TEST("unresolvable host name", test_login2, IE_NETWORK, IE_SOAP, context,
+            "http://unresolvable.example.com/", username, password,
+            NULL, NULL);
 
     TEST("invalid credentials", test_login, IE_NOT_LOGGED_IN, context,
             url, "7777777", "nbuusr1", NULL, NULL);
