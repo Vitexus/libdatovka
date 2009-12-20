@@ -31,10 +31,8 @@ int main(int argc, char **argv) {
     
     struct isds_ctx *context = NULL;
 
-    if (isds_init()) {
-        printf("isds_init() failed\n");
-        exit(EXIT_FAILURE);
-    }
+    if (isds_init())
+        ABORT_UNIT("isds_init() failed\n");
 
     TEST("create", test_create, &context);
     TEST("free valid context", test_free, IE_SUCCESS, &context);

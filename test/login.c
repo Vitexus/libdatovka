@@ -36,15 +36,11 @@ int main(int argc, char **argv) {
     char username[] = "jrfh7i";
     char password[] = "Ab123456";
 
-    if (isds_init()) {
-        printf("isds_init() failed\n");
-        exit(EXIT_FAILURE);
-    }
+    if (isds_init())
+        ABORT_UNIT("isds_init() failed\n");
     context = isds_ctx_create();
-    if (!context) {
-        printf("isds_ctx_create() failed\n");
-        exit(EXIT_FAILURE);
-    }
+    if (!context)
+        ABORT_UNIT("isds_ctx_create() failed\n");
 
 
     TEST("invalid context", test_login, IE_INVALID_CONTEXT, NULL,
