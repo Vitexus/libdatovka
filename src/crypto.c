@@ -10,6 +10,34 @@
 #include <gpgme.h>
 #include <locale.h>
 
+/* Inicialize libgrcypt if not yet done by application or other library.
+ * @return IE_SUCCESS if everything is O.k. */
+_hidden isds_error init_gcrypt(void) {
+    const char *gcrypt_version;
+    
+    /* Check version and initialize gcrypt */
+    gcrypt_version = gcry_check_version(NULL);
+    if (!gcrypt_version)  {
+        isds_log(ILF_SEC, ILL_CRIT, _("Could not check gcrypt version\n"));
+        return IE_ERROR;
+    }
+
+    /* Finalize initialization if not yet done */
+    if (!gcry_control(GCRYCTL_INITIALIZATION_FINISHED_P)) {
+        /* Disable secure memory */
+        /* TODO: Allow it when implementing key authentication */
+        gcry_control (GCRYCTL_DISABLE_SECMEM, 0);
+        /* Finish initialization */
+        gcry_control(GCRYCTL_INITIALIZATION_FINISHED, 0);
+    }
+
+    isds_log(ILF_SEC, ILL_INFO, _("gcrypt version in use: %s\n"),
+            gcrypt_version);
+
+    return IE_SUCCESS;
+}
+
+
 /* Computes hash from @input with @length and store it into @hash.
  * The hash algoritm is defined inside @hash.
  * @input is input block to hash

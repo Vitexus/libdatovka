@@ -46,6 +46,9 @@ int main(int argc, char **argv) {
 
     INIT_TEST("compute_hash");
 
+    if (init_gcrypt())
+        ABORT_UNIT("init_gcrypt() failed");
+
     char input[] = "42";
     struct isds_hash test = {
         .algorithm = HASH_ALGORITHM_SHA_1,

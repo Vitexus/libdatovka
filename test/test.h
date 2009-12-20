@@ -31,6 +31,12 @@ unsigned int passed, failed;
     return 1; \
 }
 
+#define ABORT_UNIT(message) { \
+    printf("Unit %s procedure aborted: %s\n", unit_name, (message)); \
+    exit(EXIT_FAILURE); \
+}
+
+
 #define TEST(name, function, ...) { \
     const char *message; \
     reason = NULL; \

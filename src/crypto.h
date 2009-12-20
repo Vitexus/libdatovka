@@ -3,6 +3,10 @@
 
 #include "isds.h"
 
+/* Inicialize libgrcypt if not yet done by application or other library.
+ * @return IE_SUCCESS if everything is O.k. */
+isds_error init_gcrypt(void);
+
 /* Computes hash from @input with @length and store it into @hash.
  * The hash algoritm is defined inside @hash.
  * @input is input block to hash

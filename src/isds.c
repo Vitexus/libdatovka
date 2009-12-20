@@ -206,9 +206,18 @@ isds_error isds_init(void) {
 
     /* Initialize GPGME */
     if (init_gpgme()) {
-        isds_log(ILF_ISDS, ILL_CRIT, _("GPGME library initialization failed\n"));
+        isds_log(ILF_ISDS, ILL_CRIT,
+                _("GPGME library initialization failed\n"));
         return IE_ERROR;
     }
+
+    /* Initialize gcrypt */
+    if (init_gcrypt()) {
+        isds_log(ILF_ISDS, ILL_CRIT,
+                _("gcrypt library initialization failed\n"));
+        return IE_ERROR;
+    }
+
 
     /* This can _exit() current program. Find not so assertive check. */
     LIBXML_TEST_VERSION;
