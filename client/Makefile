@@ -4,7 +4,8 @@ CFLAGS=-std=c99 -Wall -Werror -g
 CFLAGS += -D_FILE_OFFSET_BITS=64 -DLARGEFILE_SOURCE=1
 CFLAGS+=-I$(LIBDIR)
 LDFLAGS=-L$(LIBDIR) -lisds
-BINS=isdsclient getsent getreceived getsignedreceived verifyreceivedhash
+BINS=isdsclient getsent getsignedsent getreceived getsignedreceived \
+	 verifyreceivedhash
 
 .PHONY: libisds depend
 
@@ -20,6 +21,9 @@ isdsclient: isdsclient.o common.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 getsent: getsent.o common.o
+	$(CC) $(LDFLAGS) -o $@ $^
+
+getsignedsent: getsignedsent.o common.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 getreceived: getreceived.o common.o
