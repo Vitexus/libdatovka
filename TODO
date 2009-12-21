@@ -28,7 +28,6 @@
     Solve UTF-8 vs. locale-encoded logging schism
 * Implement all necessary web services
     VerifyMessage
-    SignedSentMessageDownload
     MessageEnvelopeDownload
     MarkMessageAsDownloaded
     GetDeliveryInfo
