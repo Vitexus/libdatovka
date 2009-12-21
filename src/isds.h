@@ -350,19 +350,6 @@ struct isds_list {
  * @list list to free, on return will be NULL */
 void isds_list_free(struct isds_list **list);
 
-/*struct isds_address {
-    struct isds_address *next;
-    char *box_id;
-    char *name;
-};
-
-struct isds_message {
-    struct isds_message *next;
-    struct isds_address *sender;
-    struct isds_address *recipient;
-    char *subject;
-};*/
-
 
 /* Initialize ISDS library.
  * Global function, must be called before other functions.
@@ -393,7 +380,8 @@ char *isds_long_message(const struct isds_ctx *context);
 /* Set logging up.
  * @facilities is bitmask of isds_log_facility values,
  * @level is verbosity level. */
-void isds_set_logging(const unsigned int facilities, const isds_log_level level);
+void isds_set_logging(const unsigned int facilities,
+        const isds_log_level level);
 
 /* Connect to given url.
  * It just makes TCP connection to ISDS server found in @url hostname part. */
@@ -592,17 +580,6 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
 /* Send bogus request to ISDS.
  * Just for test purposes */
 isds_error isds_bogus_request(struct isds_ctx *context);
-
-/*int isds_get_message(struct isds_ctx *context, const unsigned int id,
-        struct isds_message **message);
-int isds_send_message(struct isds_ctx *context, struct isds_message *message);
-int isds_list_messages(struct isds_ctx *context, struct isds_message **message);
-int isds_find_recipient(struct isds_ctx *context, const struct address *pattern,
-        struct isds_address **address);
-
-int isds_message_free(struct isds_message **message);
-int isds_address_free(struct isds_address **address);
-*/
 
 /* Search for document by document ID in list of documents. IDs are compared
  * as UTF-8 string.
