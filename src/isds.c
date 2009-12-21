@@ -2313,12 +2313,16 @@ leave:
 /* Convert XSD tReturnedMessage XML tree into message structure.
  * It doea not store XML tree into message->raw.
  * @context is ISDS context
+ * @include_documents Use true if documents must be extracted
+ * (tReturnedMessage XSD type), use false if documents shall be ommited
+ * (tReturnedMessageEnvelope).
  * @message is automically reallocated message structure
  * @xpath_ctx is XPath context with current node as tReturnedMessage element
  * type
  * In case of error @message will be freed. */
 static isds_error extract_TReturnedMessage(struct isds_ctx *context,
-        struct isds_message **message, xmlXPathContextPtr xpath_ctx) {
+        const _Bool include_documents, struct isds_message **message,
+        xmlXPathContextPtr xpath_ctx) {
     isds_error err = IE_SUCCESS;
     xmlNodePtr message_node;
 
@@ -2345,12 +2349,17 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
     err = append_GMessageEnvelope(context, &((*message)->envelope), xpath_ctx);
     if (err) goto leave;
 
-    /* Extract dmFiles */
-    err = move_xpathctx_to_child(context, BAD_CAST "isds:dmFiles", xpath_ctx);
-    if (err == IE_NOEXIST || err == IE_NOTUNIQ) { err = IE_ISDS; goto leave; }
-    if (err) { err = IE_ERROR; goto leave; }
-    err = extract_documents(context, &((*message)->documents), xpath_ctx);
-    if (err) goto leave;
+    if (include_documents) {
+        /* Extract dmFiles */
+        err = move_xpathctx_to_child(context, BAD_CAST "isds:dmFiles",
+                xpath_ctx);
+        if (err == IE_NOEXIST || err == IE_NOTUNIQ) {
+            err = IE_ISDS; goto leave;
+        }
+        if (err) { err = IE_ERROR; goto leave; }
+        err = extract_documents(context, &((*message)->documents), xpath_ctx);
+        if (err) goto leave;
+    }
 
 
     /* Restore context to message */
@@ -3812,6 +3821,103 @@ leave:
 }
 
 
+/* Download incoming message envelope identified by ID.
+ * @context is session context
+ * @message_id is message identifier (you can get them from
+ * isds_get_list_of_received_messages())
+ * @message is automatically reallocated message retrieved from ISDS.
+ * It will miss documents per se. Use isds_get_received_message(), if you are
+ * interrested in documents (content) too.
+ * Returned hash and timestamp require documents to be verifiable. */
+isds_error isds_get_received_envelope(struct isds_ctx *context,
+        const char *message_id, struct isds_message **message) {
+
+    isds_error err = IE_SUCCESS;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *status_message = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+   
+    /* Free former message if any */
+    if (message) isds_message_free(message);
+
+    /* Do request and check for success */
+    err = build_send_check_message_request(context, SERVICE_DM_INFO,
+            BAD_CAST "MessageEnvelopeDownload", message_id,
+            &response, &code, &status_message);
+    if (err) goto leave;
+
+    /* Extract data */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(
+            BAD_CAST "/isds:MessageEnvelopeDownloadResponse/"
+                "isds:dmReturnedMessageEnvelope",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* Empty response */
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        char *message_id_locale = utf82locale((char*) message_id);
+        isds_printf_message(context,
+                _("Server did not return any envelope for ID `%s' "
+                    "on MessageEnvelopeDownload request"), message_id_locale);
+        free(message_id_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* More envelops */
+    if (result->nodesetval->nodeNr > 1) {
+        char *message_id_locale = utf82locale((char*) message_id);
+        isds_printf_message(context,
+                _("Server did return more envelopes for ID `%s' "
+                    "on MessageEnvelopeDownload request"), message_id_locale);
+        free(message_id_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* One message */
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+
+    /* Extract the envelope (= message without documents, hence 0) */
+    err = extract_TReturnedMessage(context, 0, message, xpath_ctx);
+    if (err) goto leave;
+
+     /* Save XML blob */
+    err = serialize_subtree(context, xpath_ctx->node, &(*message)->raw,
+            &(*message)->raw_length);
+
+leave:
+    if (err) {
+        isds_message_free(message);
+    }
+
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(status_message);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("MessageEnvelopeDownload request processed by server "
+                        "successfully.\n")
+                );
+    return err;
+}
+
 
 /* Dwwnload incoming message identified by ID.
  * @context is session context
@@ -3881,7 +3987,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
     xpath_ctx->node = result->nodesetval->nodeTab[0];
 
     /* Extract the message */
-    err = extract_TReturnedMessage(context, message, xpath_ctx);
+    err = extract_TReturnedMessage(context, 1, message, xpath_ctx);
     if (err) goto leave;
 
      /* Save XML blob */
@@ -4105,7 +4211,7 @@ _hidden isds_error isds_get_signed_message(struct isds_ctx *context,
     xpath_ctx->node = result->nodesetval->nodeTab[0];
 
     /* Extract the message */
-    err = extract_TReturnedMessage(context, message, xpath_ctx);
+    err = extract_TReturnedMessage(context, 1, message, xpath_ctx);
     if (err) goto leave;
 
     /* Append raw CMS structure into message */

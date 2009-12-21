@@ -536,6 +536,17 @@ isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
         const unsigned long int offset, unsigned long int *number,
         struct isds_list **messages);
 
+/* Download incoming message envelope identified by ID.
+ * @context is session context
+ * @message_id is message identifier (you can get them from
+ * isds_get_list_of_received_messages())
+ * @message is automatically reallocated message retrieved from ISDS.
+ * It will miss documents per se. Use isds_get_received_message(), if you are
+ * interrested in documents (content) too.
+ * Returned hash and timestamp require documents to be verifiable. */
+isds_error isds_get_received_envelope(struct isds_ctx *context,
+        const char *message_id, struct isds_message **message);
+
 /* Download incoming message identified by ID.
  * @context is session context
  * @message_id is message identifier (you can get them from
