@@ -3720,8 +3720,6 @@ static isds_error build_send_check_message_request(struct isds_ctx *context,
         const isds_service service, const xmlChar *service_name,
         const char *message_id,
         xmlDocPtr *response, xmlChar **code, xmlChar **status_message) {
-    /* ???: XSD allows list of @message_id's and list of @message's, but
-     * documentation talks only about `a message' */
 
     isds_error err = IE_SUCCESS;
     char *service_name_locale = NULL, *message_id_locale = NULL;
@@ -3926,8 +3924,6 @@ leave:
  * @message is automatically reallocated message retrieved from ISDS */
 isds_error isds_get_received_message(struct isds_ctx *context,
         const char *message_id, struct isds_message **message) {
-    /* ???: XSD allows list of @message_id's and list of @message's, but
-     * documentation talks only about `a message' */
 
     isds_error err = IE_SUCCESS;
     xmlDocPtr response = NULL;
@@ -4280,8 +4276,6 @@ isds_error isds_get_signed_sent_message(struct isds_ctx *context,
  * Message must exist in system and must not be deleted. */
 isds_error isds_download_message_hash(struct isds_ctx *context,
         const char *message_id, struct isds_hash **hash) {
-    /* ???: XSD allows list of @message_id's and list of @message's, but
-     * documentation talks only about `a message' */
 
     isds_error err = IE_SUCCESS;
     xmlDocPtr response = NULL;
@@ -4369,8 +4363,6 @@ leave:
  * @message_id is message identifier. */
 isds_error isds_mark_message_read(struct isds_ctx *context,
         const char *message_id) {
-    /* ???: XSD allows list of @message_id's, but
-     * documentation talks only about `a message' */
 
     isds_error err = IE_SUCCESS;
     xmlDocPtr response = NULL;
