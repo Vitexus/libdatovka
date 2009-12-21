@@ -525,7 +525,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
 
-    if (register_namespaces(xpath_ctx, 0)) {
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }

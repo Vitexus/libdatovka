@@ -15,8 +15,17 @@
 #define SOAP_NS "http://schemas.xmlsoap.org/soap/envelope/"
 #define SOAP2_NS "http://www.w3.org/2003/05/soap-envelope"
 #define ISDS_NS "http://isds.czechpoint.cz/v20"
-#define SISDS_NS "http://isds.czechpoint.cz/v20/message"
+#define SISDS_INCOMING_NS "http://isds.czechpoint.cz/v20/message"
+#define SISDS_OUTGOING_NS "http://isds.czechpoint.cz/v20/SentMessage"
 #define SCHEMA_NS "http://www.w3.org/2001/XMLSchema"
+
+/* Used to choose proper name space for message elements.
+ * See register_namespaces(). */
+typedef enum {
+    MESSAGE_NS_UNSIGNED,
+    MESSAGE_NS_SIGNED_INCOMING,
+    MESSAGE_NS_SIGNED_OUTGOING
+} message_ns_type;
 
 /* Global variables.
  * Allocated in isds_init() and deallocated in isds_cleanup(). */
@@ -64,9 +73,10 @@ isds_error isds_log(const isds_log_facility facility,
 
 /* Makes known all relevant namespaces to given XPath context
  * @xpat_ctx is XPath context
- * @distinguish_sisds == false means to make `sisds' prefix equalled to `isds'
+ * @message_ns selects propper message name space. Unsisnged and signed
+ * messages differs.
  * prefix and to URI ISDS_NS */
 isds_error register_namespaces(xmlXPathContextPtr xpath_ctx,
-        const _Bool distinguish_sisds);
+        const message_ns_type message_ns);
 
 #endif

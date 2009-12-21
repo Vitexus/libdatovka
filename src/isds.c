@@ -2572,7 +2572,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, 0)) {
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -2813,7 +2813,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, 0)) {
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -2987,7 +2987,7 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, 0)) {
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -3258,7 +3258,7 @@ isds_error isds_send_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, 0)) {
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -3537,7 +3537,7 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, 0)) {
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -3846,7 +3846,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, 0)) {
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -3947,7 +3947,7 @@ _hidden isds_error isds_get_signed_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, 0)) {
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -4072,7 +4072,8 @@ _hidden isds_error isds_get_signed_message(struct isds_ctx *context,
      *
      * Stupidity of ISDS developers is unlimited */
     /* FIXME: Tristate name space */
-    if (register_namespaces(xpath_ctx, 1)) {
+    if (register_namespaces(xpath_ctx, (outgoing) ?
+                MESSAGE_NS_SIGNED_OUTGOING : MESSAGE_NS_SIGNED_INCOMING)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -4178,7 +4179,7 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, 0)) {
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -4274,7 +4275,7 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
      * </q:MessageDownloadResponse>
      *
      * Stupidity of ISDS developers is unlimited */
-    if (register_namespaces(xpath_ctx, 1)) {
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_SIGNED_INCOMING)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -4383,7 +4384,7 @@ isds_error isds_download_message_hash(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, 0)) {
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -4494,7 +4495,7 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, 0)) {
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -4609,18 +4610,31 @@ int isds_address_free(struct isds_address **address);
 
 /* Makes known all relevant namespaces to given XPath context
  * @xpat_ctx is XPath context
- * @distinguish_sisds == false means to make `sisds' prefix equalled to `isds'
+ * @message_ns selects propper message name space. Unsisnged and signed
+ * messages differs.
  * prefix and to URI ISDS_NS */
 _hidden isds_error register_namespaces(xmlXPathContextPtr xpath_ctx,
-        const _Bool distinguish_sisds) {
+        const message_ns_type message_ns) {
+    const xmlChar *message_namespace = NULL;
+
     if (!xpath_ctx) return IE_ERROR;
+
+    switch(message_ns) {
+        case MESSAGE_NS_UNSIGNED:
+            message_namespace = BAD_CAST ISDS_NS; break;
+        case MESSAGE_NS_SIGNED_INCOMING:
+            message_namespace = BAD_CAST SISDS_INCOMING_NS; break;
+        case MESSAGE_NS_SIGNED_OUTGOING:
+            message_namespace = BAD_CAST SISDS_OUTGOING_NS; break;
+        default:
+            return IE_ENUM;
+    }
 
     if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "soap", BAD_CAST SOAP_NS))
         return IE_ERROR;
     if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "isds", BAD_CAST ISDS_NS))
         return IE_ERROR;
-    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "sisds", 
-                (distinguish_sisds) ? BAD_CAST SISDS_NS : BAD_CAST ISDS_NS))
+    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "sisds", message_namespace))
         return IE_ERROR;
     if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "xs", BAD_CAST SCHEMA_NS))
         return IE_ERROR;
