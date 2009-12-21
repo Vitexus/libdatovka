@@ -389,7 +389,8 @@ void isds_set_logging(const unsigned int facilities,
 
 /* Set timeout in miliseconds for each network job like connecting to server
  * or sending message. Use 0 to disable timeout limits. */
-isds_error isds_set_timeout(struct isds_ctx *context, const unsigned int timeout);
+isds_error isds_set_timeout(struct isds_ctx *context,
+        const unsigned int timeout);
 
 
 /* Change SSL/TLS settings.
@@ -410,8 +411,9 @@ isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
  * @key is private key for client's certificate as (base64 encoded?) NULL
  * terminated string. Use NULL if only password autentication is desired.
  * */
-isds_error isds_login(struct isds_ctx *context, const char *url, const char *username,
-        const char *password, const char *certificate, const char* key);
+isds_error isds_login(struct isds_ctx *context, const char *url,
+        const char *username, const char *password,
+        const char *certificate, const char* key);
 
 /* Log out from ISDS server and close connection. */
 isds_error isds_logout(struct isds_ctx *context);
