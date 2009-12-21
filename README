@@ -11,7 +11,7 @@ later version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 details.
 
 
@@ -24,6 +24,6 @@ curl-7.19.6, libgcrypt-1.4.4, gpgme-1.2.0, and ksba-1.0.7.
 Latest code can be obtained from GIT repository
 <http://repo.or.cz/w/libisds.git>.
 
-ISDS documentation is located under doc directory, user documentation can
-be found in header files. See client directory for examples how to use this
-library.
+ISDS documentation is located under `doc' directory, user documentation can be
+found in header files. See `client' directory for examples how to use this
+library. Preliminary library self-tests are located in `test' directory.
