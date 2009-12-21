@@ -3813,7 +3813,7 @@ leave:
 
 
 
-/* Dwwnload incomping message identified by ID.
+/* Dwwnload incoming message identified by ID.
  * @context is session context
  * @message_id is message identifier (you can get them from
  * isds_get_list_of_received_messages())
