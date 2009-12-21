@@ -579,6 +579,13 @@ isds_error isds_download_message_hash(struct isds_ctx *context,
 isds_error isds_compute_message_hash(struct isds_ctx *context,
         struct isds_message *message, const isds_hash_algorithm algorithm);
 
+/* Mark message as read. This is a transactional commit function to acknoledge
+ * to ISDS the message has been downloaded and processed by client properly.
+ * @context is session context
+ * @message_id is message identifier. */
+isds_error isds_mark_message_read(struct isds_ctx *context,
+        const char *message_id);
+
 /* Send bogus request to ISDS.
  * Just for test purposes */
 isds_error isds_bogus_request(struct isds_ctx *context);

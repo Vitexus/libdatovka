@@ -217,6 +217,15 @@ Returend hash and timestamp are computed from whole message. You must get
 complete message inluding documents to be able to verify them.
 
 
+MarkMessageAsDownloaded
+=======================
+
+Change status of a message identidied by its ID as read.
+
+That means next GetListOfRecievedMessages service can exclude such message if
+only unread messages requested.
+
+
 FindDataBox (*)
 ===========
 

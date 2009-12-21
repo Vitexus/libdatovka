@@ -4363,6 +4363,39 @@ leave:
 }
 
 
+/* Mark message as read. This is a transactional commit function to acknoledge
+ * to ISDS the message has been downloaded and processed by client properly.
+ * @context is session context
+ * @message_id is message identifier. */
+isds_error isds_mark_message_read(struct isds_ctx *context,
+        const char *message_id) {
+    /* ???: XSD allows list of @message_id's, but
+     * documentation talks only about `a message' */
+
+    isds_error err = IE_SUCCESS;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *status_message = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+   
+    /* Do request and check for success */
+    err = build_send_check_message_request(context, SERVICE_DM_INFO,
+            BAD_CAST "MarkMessageAsDownloaded", message_id,
+            &response, &code, &status_message);
+
+    free(code);
+    free(status_message);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("MarkMessageAsDownloaded request processed by server "
+                        "successfully.\n")
+                );
+    return err;
+}
+
+
 #undef INSERT_STRING_ATTRIBUTE
 #undef INSERT_ULONGINTNOPTR
 #undef INSERT_ULONGINT
