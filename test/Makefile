@@ -9,6 +9,9 @@ TESTS := $(SRCS:%.c=%.test)
 %.test: %.o
 	$(CC) $(LDFLAGS) $< $(OBJS) -o $@
 
+dbtype.test: dbtype.o
+	$(CC) $(LDFLAGS) $< $(filter-out ../src/isds.o,$(OBJS)) -o $@
+
 all: $(TESTS)
 
 test: $(TESTS)
