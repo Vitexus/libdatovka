@@ -1021,7 +1021,7 @@ static const xmlChar *isds_DbType2string(const isds_DbType type) {
             case DBTYPE_FO: return(BAD_CAST "FO"); break;
             case DBTYPE_PFO: return(BAD_CAST "PFO"); break;
             case DBTYPE_PFO_ADVOK: return(BAD_CAST "PFO_ADVOK"); break;
-            case DBTYPE_PFO_DANPOR: return(BAD_CAST "PFO_DAPOR"); break;
+            case DBTYPE_PFO_DANPOR: return(BAD_CAST "PFO_DANPOR"); break;
             case DBTYPE_PFO_INSSPR: return(BAD_CAST "PFO_INSSPR"); break;
             case DBTYPE_PO: return(BAD_CAST "PO"); break;
             case DBTYPE_PO_ZAK: return(BAD_CAST "PO_ZAK"); break;
