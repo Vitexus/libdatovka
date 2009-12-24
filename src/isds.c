@@ -4098,7 +4098,7 @@ isds_error isds_load_signed_message(struct isds_ctx *context,
         goto leave;
     }
     /* XXX: Embeded message XML document is always rooted as
-     * /sisds:MessageDownloadResponse (even outgoind message). */
+     * /sisds:MessageDownloadResponse (even outgoing message). */
     result = xmlXPathEvalExpression( 
             BAD_CAST "/sisds:MessageDownloadResponse/sisds:dmReturnedMessage",
             xpath_ctx);
