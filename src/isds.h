@@ -135,10 +135,20 @@ typedef enum {
     HASH_ALGORITHM_SHA_512,
 } isds_hash_algorithm;
 
+/* Buffer storage strategy.
+ * How function should embed application provided buffer into raw element of
+ * output structure. */
+typedef enum {
+    BUFFER_DONT_STORE,      /* Don't fill raw memeber */
+    BUFFER_COPY,            /* Copy buffer content into newly allocated raw */
+    BUFFER_MOVE             /* Just copy pointer.
+                               But leave deallocation to isds_*_free(). */
+} isds_buffer_strategy;
+
 /* Hash value storage */
 struct isds_hash {
     isds_hash_algorithm algorithm;      /* Hash algoritgm */
-    size_t length;                 /* Hash value lenght in bytes */
+    size_t length;                      /* Hash value lenght in bytes */
     void *value;                        /* Hash value */
 };
 
@@ -544,6 +554,20 @@ isds_error isds_get_received_envelope(struct isds_ctx *context,
  * @message is automatically reallocated message retrieved from ISDS */
 isds_error isds_get_received_message(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
+
+/* Load signed message from buffer.
+ * @context is session context
+ * @outgoing is true if message is outgoing, false if message is incoming
+ * @buffer is DER encoded PKCS#7 structure with signed message. You can
+ * retrieve such data from message->raw after calling
+ * isds_get_signed{received,sent}_message().
+ * @length is length of @raw buffer in bytes.
+ * @message is automatically reallocated message parsed from @buffer.
+ * @strategy selects how buffer will be attached into raw isds_message member.
+ * */
+isds_error isds_load_signed_message(struct isds_ctx *context,
+        const _Bool outgoing, const void *buffer, const size_t length,
+        struct isds_message **message, const isds_buffer_strategy strategy);
 
 /* Download signed incoming message identified by ID.
  * @context is session context
