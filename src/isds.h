@@ -561,7 +561,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
  * @buffer is DER encoded PKCS#7 structure with signed message. You can
  * retrieve such data from message->raw after calling
  * isds_get_signed{received,sent}_message().
- * @length is length of @raw buffer in bytes.
+ * @length is length of buffer in bytes.
  * @message is automatically reallocated message parsed from @buffer.
  * @strategy selects how buffer will be attached into raw isds_message member.
  * */

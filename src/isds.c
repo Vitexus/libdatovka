@@ -4016,8 +4016,8 @@ leave:
  * @outgoing is true if message is outgoing, false if message is incoming
  * @buffer is DER encoded PKCS#7 structure with signed message. You can
  * retrieve such data from message->raw after calling
- * isds_get_signed{received,sent}_message().
- * @length is length of @raw buffer in bytes.
+ * isds_get_signed_{received,sent}_message().
+ * @length is length of buffer in bytes.
  * @message is automatically reallocated message parsed from @buffer.
  * @strategy selects how buffer will be attached into raw isds_message member.
  * */
@@ -4182,13 +4182,13 @@ _hidden isds_error isds_get_signed_message(struct isds_ctx *context,
         struct isds_message **message) {
 
     isds_error err = IE_SUCCESS;
-    xmlDocPtr response = NULL, message_doc = NULL;
+    xmlDocPtr response = NULL;
     xmlChar *code = NULL, *status_message = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     char *encoded_structure = NULL;
-    void *raw = NULL, *xml_stream = NULL;
-    size_t raw_length = 0, xml_stream_length = 0;
+    void *raw = NULL;
+    size_t raw_length = 0;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!message) return IE_INVAL;
@@ -4266,7 +4266,6 @@ _hidden isds_error isds_get_signed_message(struct isds_ctx *context,
     xmlFreeDoc(response); response = NULL;
 
 
-
     /* Decode PKCS#7 to DER format */
     raw_length = b64decode(encoded_structure, &raw);
     if (raw_length == (size_t) -1) {
@@ -4276,111 +4275,19 @@ _hidden isds_error isds_get_signed_message(struct isds_ctx *context,
         goto leave;
     }
     zfree(encoded_structure);
-   
-    /* Extract message from PKCS#7 structure */
-    err = extract_cms_data(context, raw, raw_length,
-            &xml_stream, &xml_stream_length);
+  
+    /* Parse message */
+    err = isds_load_signed_message(context, outgoing, raw, raw_length,
+            message, BUFFER_MOVE);
     if (err) goto leave;
 
-    isds_log(ILF_ISDS, ILL_DEBUG, (outgoing) ?
-                _("Signed outgoing message content:\n%.*s\nEnd of message\n") :
-                _("Signed incoming message content:\n%.*s\nEnd of message\n"),
-            xml_stream_length, xml_stream);
-
-    /* Convert extracted messages XML stream into XPath context */
-    message_doc = xmlParseMemory(xml_stream, xml_stream_length);
-    if (!message_doc) {
-        err = IE_XML;
-        goto leave;
-    }
-    xpath_ctx = xmlXPathNewContext(message_doc);
-    if (!xpath_ctx) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    /* XXX: Name spaces mangled for outgoing direction:
-     * http://isds.czechpoint.cz/v20/SentMessage:
-     *
-     * <q:MessageDownloadResponse
-     *      xmlns:q="http://isds.czechpoint.cz/v20/SentMessage">
-     *   <q:dmReturnedMessage>
-     *      <p:dmDm xmlns:p="http://isds.czechpoint.cz/v20">
-     *          <p:dmID>151916</p:dmID>
-     *          ...
-     *      </p:dmDm>
-     *      <q:dmHash algorithm="SHA-1">...</q:dmHash>
-     *      ...
-     *      <q:dmAttachmentSize>260</q:dmAttachmentSize>
-     *   </q:dmReturnedMessage>
-     * </q:MessageDownloadResponse>
-     *
-     * XXX: Name spaces mangled for incoming direction:
-     * http://isds.czechpoint.cz/v20/message:
-     *
-     * <q:MessageDownloadResponse
-     *      xmlns:q="http://isds.czechpoint.cz/v20/message">
-     *   <q:dmReturnedMessage>
-     *      <p:dmDm xmlns:p="http://isds.czechpoint.cz/v20">
-     *          <p:dmID>151916</p:dmID>
-     *          ...
-     *      </p:dmDm>
-     *      <q:dmHash algorithm="SHA-1">...</q:dmHash>
-     *      ...
-     *      <q:dmAttachmentSize>260</q:dmAttachmentSize>
-     *   </q:dmReturnedMessage>
-     * </q:MessageDownloadResponse>
-     *
-     * Stupidity of ISDS developers is unlimited */
-    if (register_namespaces(xpath_ctx, (outgoing) ?
-                MESSAGE_NS_SIGNED_OUTGOING : MESSAGE_NS_SIGNED_INCOMING)) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    /* XXX: Embeded message XML document is always rooted as
-     * /sisds:MessageDownloadResponse (even outgoind message). */
-    result = xmlXPathEvalExpression( 
-            BAD_CAST "/sisds:MessageDownloadResponse/sisds:dmReturnedMessage",
-            xpath_ctx);
-    if (!result) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    /* Empty embedded message */
-    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-        isds_printf_message(context,
-                _("XML document embedded into PKCS#7 structure is not "
-                    "sisds:dmReturnedMessage document"));
-        err = IE_ISDS;
-        goto leave;
-    }
-    /* More embedded messages */
-    if (result->nodesetval->nodeNr > 1) {
-        isds_printf_message(context,
-                _("Embeded XML document into PKCS#7 structure has more "
-                    "root isds:dmReturnedMessage elements"));
-        err = IE_ISDS;
-        goto leave;
-    }
-    /* One embedded message */
-    xpath_ctx->node = result->nodesetval->nodeTab[0];
-
-    /* Extract the message */
-    err = extract_TReturnedMessage(context, 1, message, xpath_ctx);
-    if (err) goto leave;
-
-    /* Append raw CMS structure into message */
-    (*message)->raw = raw;
-    (*message)->raw_length = raw_length;
     raw = NULL;
-
 
 leave:
     if (err) {
         isds_message_free(message);
     }
 
-    xmlFreeDoc(message_doc);
-    cms_data_free(xml_stream);
     free(encoded_structure);
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
@@ -4400,7 +4307,6 @@ leave:
                 );
     return err;
 }
-
 
 
 /* Download signed incoming message identified by ID.
