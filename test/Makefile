@@ -12,6 +12,9 @@ TESTS := $(SRCS:%.c=%.test)
 dbtype.test: dbtype.o
 	$(CC) $(LDFLAGS) $< $(filter-out ../src/isds.o,$(OBJS)) -o $@
 
+isds-%.test: isds-%.o
+	$(CC) $(LDFLAGS) $< $(filter-out ../src/isds.o,$(OBJS)) -o $@
+
 all: $(TESTS)
 
 test: $(TESTS)
