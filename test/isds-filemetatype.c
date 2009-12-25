@@ -25,7 +25,7 @@ static int test_string2filemetatype_must_fail(const xmlChar *string) {
 static int test_filemetatype(const isds_FileMetaType type) {
     xmlChar *string;
     isds_error err;
-    isds_DbType new_type;
+    isds_FileMetaType new_type;
 
     string = (xmlChar *) isds_FileMetaType2string(type);
     if (!string) 

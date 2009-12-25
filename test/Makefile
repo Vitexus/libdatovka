@@ -6,14 +6,14 @@ TESTS := $(SRCS:%.c=%.test)
 
 %.o: %.c test.h
 	$(CC) $(CFLAGS) $< -c -o $@
-%.test: %.o
-	$(CC) $(LDFLAGS) $< $(OBJS) -o $@
 
-dbtype.test: dbtype.o
-	$(CC) $(LDFLAGS) $< $(filter-out ../src/isds.o,$(OBJS)) -o $@
-
+# First specific tests
 isds-%.test: isds-%.o
 	$(CC) $(LDFLAGS) $< $(filter-out ../src/isds.o,$(OBJS)) -o $@
+
+# Then generic rule. Order is important.
+%.test: %.o
+	$(CC) $(LDFLAGS) $< $(OBJS) -o $@
 
 all: $(TESTS)
 
