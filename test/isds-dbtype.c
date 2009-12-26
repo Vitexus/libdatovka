@@ -22,7 +22,7 @@ static int test_string2dbtype_must_fail(const xmlChar *string) {
     PASS_TEST;
 }
 
-static int test_dbtype(const isds_DbType type) {
+static int test_dbtype(const isds_DbType type, const xmlChar *name) {
     xmlChar *string;
     isds_error err;
     isds_DbType new_type;
@@ -30,6 +30,9 @@ static int test_dbtype(const isds_DbType type) {
     string = (xmlChar *) isds_DbType2string(type);
     if (!string) 
         FAIL_TEST("conversion from isds_DbType to string failed");
+
+    if (xmlStrcmp(name, string))
+            FAIL_TEST("Wrong to string conversion result");
 
     err = string2isds_DbType(string, &new_type);
     if (err)
@@ -59,10 +62,25 @@ int main(int argc, char **argv) {
         DBTYPE_FO
     };
 
+    const xmlChar *names[] = {
+        BAD_CAST "OVM",
+        BAD_CAST "OVM_NOTAR",
+        BAD_CAST "OVM_EXEKUT",
+        BAD_CAST "OVM_REQ",
+        BAD_CAST "PO",
+        BAD_CAST "PO_ZAK",
+        BAD_CAST "PO_REQ",
+        BAD_CAST "PFO",
+        BAD_CAST "PFO_ADVOK",
+        BAD_CAST "PFO_DANPOR",
+        BAD_CAST "PFO_INSSPR",
+        BAD_CAST "FO"
+    };
+
     TEST("DBTYPE_SYSTEM", test_dbtype2string_must_fail, DBTYPE_SYSTEM); 
 
     for (int i = 0; i < sizeof(types)/sizeof(types[0]); i++)
-        TEST(isds_DbType2string(types[i]), test_dbtype, types[i]);
+        TEST(isds_DbType2string(types[i]), test_dbtype, types[i], names[i]);
 
     TEST("1234", test_dbtype2string_must_fail, 1234); 
     
