@@ -3917,7 +3917,118 @@ leave:
 }
 
 
-/* Dwwnload incoming message identified by ID.
+/* Load incoming message from buffer.
+ * @context is session context
+ * @buffer XML stream with unsigned message. You can retrieve such data from
+ * message->raw after calling isds_get_received_message().
+ * @length is length of buffer in bytes.
+ * @message is automatically reallocated message parsed from @buffer.
+ * @strategy selects how buffer will be attached into raw isds_message member.
+ * */
+isds_error isds_load_received_message(struct isds_ctx *context,
+        const void *buffer, const size_t length,
+        struct isds_message **message, const isds_buffer_strategy strategy) {
+
+    isds_error err = IE_SUCCESS;
+    xmlDocPtr message_doc = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!message) return IE_INVAL;
+    isds_message_free(message);
+    if (!buffer) return IE_INVAL;
+
+
+    isds_log(ILF_ISDS, ILL_DEBUG, 
+            _("Outgoing message content:\n%.*s\nEnd of message\n"),
+            length, buffer);
+
+    /* Convert extracted messages XML stream into XPath context */
+    message_doc = xmlParseMemory(buffer, length);
+    if (!message_doc) {
+        err = IE_XML;
+        goto leave;
+    }
+    xpath_ctx = xmlXPathNewContext(message_doc);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* XXX: Standard name space */
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(
+            BAD_CAST "/isds:dmReturnedMessage", xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* Bad root element */
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_printf_message(context,
+                _("XML document is not isds:dmReturnedMessage document"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* More root elements. This should never happen. */
+    if (result->nodesetval->nodeNr > 1) {
+        isds_printf_message(context,
+                _("XML document has more "
+                    "root isds:dmReturnedMessage elements"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* One message */
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+
+    /* Extract the message */
+    err = extract_TReturnedMessage(context, 1, message, xpath_ctx);
+    if (err) goto leave;
+
+    /* Append XML stream into message */
+    switch (strategy) {
+        case BUFFER_DONT_STORE:
+            break;
+        case BUFFER_COPY:
+            (*message)->raw = malloc(length);
+            if (!(*message)->raw) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+            memcpy((*message)->raw, buffer, length);
+            (*message)->raw_length = length;
+            break;
+        case BUFFER_MOVE:
+            (*message)->raw = (void *) buffer;
+            (*message)->raw_length = length;
+            break;
+        default:
+            err = IE_ENUM;
+            goto leave;
+    }
+
+
+leave:
+    if (err) {
+        if (*message && strategy == BUFFER_MOVE) (*message)->raw = NULL;
+        isds_message_free(message);
+    }
+
+    xmlFreeDoc(message_doc);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Outgoing message loaded successfully.\n"));
+    return err;
+}
+
+
+/* Download incoming message identified by ID.
  * @context is session context
  * @message_id is message identifier (you can get them from
  * isds_get_list_of_received_messages())
@@ -4118,7 +4229,7 @@ isds_error isds_load_signed_message(struct isds_ctx *context,
     if (result->nodesetval->nodeNr > 1) {
         isds_printf_message(context,
                 _("Embeded XML document into PKCS#7 structure has more "
-                    "root isds:dmReturnedMessage elements"));
+                    "root sisds:dmReturnedMessage elements"));
         err = IE_ISDS;
         goto leave;
     }
