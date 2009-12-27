@@ -201,7 +201,7 @@ Only SHA-1 algorithm is in use currently. SHA-2 family is expected after
 
 Hash input is isds:dmDM subtree procesed as raw bit stream without XML
 canonicalization. Authoritative isds:dmDM element can be get via
-MessageDownload service. God bless ISDS developers not change XML
+MessageDownload service. God bless ISDS developers to not change XML
 serialization.
 
 Non-normative error codes:
