@@ -54,9 +54,9 @@ MessageEnvelopeDownload
 MarkMessageAsDownloaded
     Mark message as read
 GetDeliveryInfo
-    Dowload infosheet about message post and delivery
+    Download infosheet about message post and delivery
 GetSignedDeliveryInfo
-    Dowload infosheet about message post and delivery with signature of
+    Download infosheet about message post and delivery with signature of
     ministery of interiors
 GetListOfRecievedMessages
     Download list of incoming messages
@@ -224,6 +224,44 @@ Change status of a message identidied by its ID as read.
 
 That means next GetListOfRecievedMessages service can exclude such message if
 only unread messages requested.
+
+
+GetDeliveryInfo
+===============
+
+Download infosheet about incoming or outgoing message post and delivery or
+deliver impossibility. The message is specified by message ID.
+
+It returns complete message envelope, hash, timestamp. Delivery time and
+acceptance time only if message has been delivered to recipient box or
+accepted by recipient. Precise status of message is returned too.
+
+In addition, non-empty list of events is attached. Each event compounds of
+ISO time and text description. The text description has well-known prefix to
+distinguishe the event meaning. Following prefixes are defined:
+
+    Prefix  Meaning
+    -----------------------------------------------------
+    EV1:    Message has been accepted by recipient action
+    EV2:    Message has been delivered to box and is considered as accepted by
+            no-user-action time out (through fiction)
+    EV3:    Recipient box has been made unaccessible retrospectively
+            (even after successful delivery or acceptance,
+            this event is retroactive). In this case special system-generated
+            message is sent to sender in addition.
+
+
+GetSignedDeliveryInfo
+=====================
+
+Download infosheet about incoming or outgoing message post and delivery or
+deliver impossibility as signed PKCS#7 structure. See GetDeliveryInfo for
+details about returned data.
+
+The PKCS#7 structure carry digital signature made by ministery of interiours.
+
+There is mangled namespace again: http://isds.czechpoint.cz/v20/ vs.
+http://isds.czechpoint.cz/v20/delivery
 
 
 FindDataBox (*)
