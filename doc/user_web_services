@@ -261,8 +261,20 @@ details about returned data.
 The PKCS#7 structure carry digital signature made by ministery of interiours.
 
 There is mangled namespace again: http://isds.czechpoint.cz/v20/ vs.
-http://isds.czechpoint.cz/v20/delivery
+http://isds.czechpoint.cz/v20/delivery:
 
+<q:GetDeliveryInfoResponse xmlns:q="http://isds.czechpoint.cz/v20/delivery">
+  <q:dmDelivery>
+    <p:dmDm xmlns:p="http://isds.czechpoint.cz/v20">
+      <p:dmID>170272</p:dmID>
+      ...
+    </p:dmDm>
+    <q:dmHash algorithm="SHA-1">...</q:dmHash>
+    ...
+    </q:dmEvents>...</q:dmEvents>
+  </q:dmDelivery>
+</q:GetDeliveryInfoResponse>
+             
 
 FindDataBox (*)
 ===========
