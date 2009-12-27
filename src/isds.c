@@ -106,7 +106,18 @@ void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info) {
 }
 
 
-/* Deallocate struct isds_envelope recurisvely and NULL it */
+/* Deallocate struct isds_event recursively and NULL it */
+void isds_event_free(struct isds_event **event) {
+    if (!event || !*event) return;
+
+    free((*event)->time);
+    free((*event)->type);
+    free((*event)->description);
+    zfree(*event);
+}
+
+
+/* Deallocate struct isds_envelope recursively and NULL it */
 void isds_envelope_free(struct isds_envelope **envelope) {
     if (!envelope || !*envelope) return;
 
@@ -125,6 +136,7 @@ void isds_envelope_free(struct isds_envelope **envelope) {
     free((*envelope)->dmAcceptanceTime);
     isds_hash_free(&(*envelope)->hash);
     free((*envelope)->timestamp);
+    isds_list_free(&(*envelope)->events);
 
     free((*envelope)->dmSenderOrgUnit);
     free((*envelope)->dmSenderOrgUnitNum);
@@ -153,7 +165,7 @@ void isds_envelope_free(struct isds_envelope **envelope) {
 }
 
 
-/* Deallocate struct isds_message recurisvely and NULL it */
+/* Deallocate struct isds_message recursively and NULL it */
 void isds_message_free(struct isds_message **message) {
     if (!message || !*message) return;
 
@@ -166,7 +178,7 @@ void isds_message_free(struct isds_message **message) {
 }
 
 
-/* Deallocate struct isds_document recurisvely and NULL it */
+/* Deallocate struct isds_document recursively and NULL it */
 void isds_document_free(struct isds_document **document) {
     if (!document || !*document) return;
 
@@ -1920,6 +1932,7 @@ static isds_error append_status_size_times(struct isds_ctx *context,
             free(string_locale);
             goto leave;
         }
+        zfree(string);
     }
 
     EXTRACT_STRING("sisds:dmAcceptanceTime", string);
@@ -1935,6 +1948,7 @@ static isds_error append_status_size_times(struct isds_ctx *context,
             free(string_locale);
             goto leave;
         }
+        zfree(string);
     }
 
 leave:
@@ -2081,7 +2095,6 @@ static isds_error extract_documents(struct isds_ctx *context,
         struct isds_list **documents, xmlXPathContextPtr xpath_ctx) {
     isds_error err = IE_SUCCESS;
     xmlXPathObjectPtr result = NULL;
-    xmlNodePtr file;
     xmlNodePtr files_node = xpath_ctx->node;
     struct isds_list *document, *prev_document;
 
@@ -2108,7 +2121,6 @@ static isds_error extract_documents(struct isds_ctx *context,
 
     /* Iterate over documents */
     for (int i = 0; i < result->nodesetval->nodeNr; i++) {
-        file = result->nodesetval->nodeTab[i];
 
         /* Allocate and append list item */
         document = calloc(1, sizeof(*document));
@@ -2382,6 +2394,128 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
     
 leave:
     if (err) isds_message_free(message);
+    return err;
+}
+
+
+/* Extract message event into reallocated isds_event structure
+ * @context is ISDS context
+ * @event is automically reallocated message event structure
+ * @xpath_ctx is XPath context with current node as isds:dmEvent
+ * In case of error @event will be freed. */
+static isds_error extract_event(struct isds_ctx *context,
+        struct isds_event **event, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    xmlNodePtr event_node = xpath_ctx->node;
+    char *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!event) return IE_INVAL;
+    isds_event_free(event);
+    if (!xpath_ctx) return IE_INVAL;
+
+    *event = calloc(1, sizeof(**event));
+    if (!*event) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    /* Extract event data.
+     * All elements are optional according XSD. That's funny. */
+    EXTRACT_STRING("isds:dmEventTime", string);
+    if (string) {
+        err = timestring2timeval((xmlChar *) string, &((*event)->time));
+        if (err) {
+            char *string_locale = utf82locale(string);
+            if (err == IE_DATE) err = IE_ISDS;
+            isds_printf_message(context,
+                    _("Could not convert dmEventTime as ISO time: %s"),
+                    string_locale);
+            free(string_locale);
+            goto leave;
+        }
+        zfree(string);
+    }
+    
+    /* dmEventDescr element has prefix and the rest */
+    EXTRACT_STRING("isds:dmEventDescr", string);
+    if (string) {
+        /*xmlStrncmp(string, BAD_CAST "EV1:", 4)*/
+        zfree(string);
+    }
+
+leave:
+    if (err) isds_event_free(event);
+    free(string);
+    xmlXPathFreeObject(result);
+    xpath_ctx->node = event_node;
+    return err;
+}
+
+
+/* Convert element of XSD tEventsArray type from XML tree into
+ * isds_list of isds_event's structure. The list is automatically reallocated.
+ * @context is ISDS context
+ * @events is automically reallocated list of event structures
+ * @xpath_ctx is XPath context with current node as tEventsArray
+ * In case of error @evnets will be freed. */
+static isds_error extract_events(struct isds_ctx *context,
+        struct isds_list **events, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    xmlNodePtr events_node = xpath_ctx->node;
+    struct isds_list *event, *prev_event;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!events) return IE_INVAL;
+    if (!xpath_ctx) return IE_INVAL;
+
+    /* Free old list */
+    isds_list_free(events);
+
+    /* Find events */
+    result = xmlXPathEvalExpression(BAD_CAST "isds:dmEvent", xpath_ctx);
+    if (!result) {
+        err = IE_XML;
+        goto leave;
+    }
+
+    /* No match */
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_printf_message(context,
+                _("Delivery info does not contain any event"));
+        err = IE_ISDS;
+        goto leave;
+    }
+
+
+    /* Iterate over events */
+    for (int i = 0; i < result->nodesetval->nodeNr; i++) {
+
+        /* Allocate and append list item */
+        event = calloc(1, sizeof(*event));
+        if (!event) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+        event->destructor = (void (*)(void **))isds_event_free;
+        if (i == 0) *events = event;
+        else prev_event->next = event;
+        prev_event = event;
+
+        /* Extract event */
+        xpath_ctx->node = result->nodesetval->nodeTab[i];
+        err = extract_event(context,
+                (struct isds_event **) &(event->data), xpath_ctx);
+        if (err) goto leave;
+    }
+
+
+leave:
+    if (err) isds_list_free(events);
+    xmlXPathFreeObject(result);
+    xpath_ctx->node = events_node;
     return err;
 }
 
@@ -3934,6 +4068,7 @@ isds_error isds_get_delivery_info(struct isds_ctx *context,
     xmlChar *code = NULL, *status_message = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
+    xmlNodePtr delivery_node = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
    
@@ -3985,18 +4120,20 @@ isds_error isds_get_delivery_info(struct isds_ctx *context,
         goto leave;
     }
     /* One delivery info */
-    xpath_ctx->node = result->nodesetval->nodeTab[0];
+    xpath_ctx->node = delivery_node = result->nodesetval->nodeTab[0];
 
-    /* Extract the envelope (= message without documents, hence 0) */
+    /* Extract the envelope (= message without documents, hence 0).
+     * XXX: extract_TReturnedMessage() can obtain attachments size, but delivery info
+     * carries none. It's coded as option elements, so it should work. */
     err = extract_TReturnedMessage(context, 0, message, xpath_ctx);
     if (err) goto leave;
 
-    /* FIXME: Append dmEvents element (events).
-     * Add this functionality inside extract_TReturnedMessage() or make
-     * similar function.
-     * FIXME: isds_envelope must be extended to involve dmEvents data.
-     * XXX: extract_TReturnedMessage() can obtain attachments size, but delivery info
-     * carries none. It's coded as option elements, so it should work. */
+    /* Extract events */
+    err = move_xpathctx_to_child(context, BAD_CAST "isds:dmEvents", xpath_ctx);
+    if (err == IE_NOEXIST || err == IE_NOTUNIQ) { err = IE_ISDS; goto leave; }
+    if (err) { err = IE_ERROR; goto leave; }
+    err = extract_events(context, &(*message)->envelope->events, xpath_ctx);
+    if (err) goto leave;
 
      /* Save XML blob */
     err = serialize_subtree(context, xpath_ctx->node, &(*message)->raw,
