@@ -3839,7 +3839,8 @@ isds_error isds_get_received_envelope(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
    
     /* Free former message if any */
-    if (message) isds_message_free(message);
+    if (!message) return IE_INVAL;
+    isds_message_free(message);
 
     /* Do request and check for success */
     err = build_send_check_message_request(context, SERVICE_DM_INFO,
@@ -3911,6 +3912,111 @@ leave:
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
                     _("MessageEnvelopeDownload request processed by server "
+                        "successfully.\n")
+                );
+    return err;
+}
+
+
+/* Download delivery infosheet of given message identified by ID.
+ * @context is session context
+ * @message_id is message identifier (you can get them from
+ * isds_get_list_of_{sent,received}_messages())
+ * @message is automatically reallocated message retrieved from ISDS.
+ * It will miss documents per se. Use isds_get_received_message(), if you are
+ * interrested in documents (content). OTOH, only this function can get list
+ * events message has gone through. */
+isds_error isds_get_delivery_info(struct isds_ctx *context,
+        const char *message_id, struct isds_message **message) {
+
+    isds_error err = IE_SUCCESS;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *status_message = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+   
+    /* Free former message if any */
+    if (!message) return IE_INVAL;
+    isds_message_free(message);
+
+    /* Do request and check for success */
+    err = build_send_check_message_request(context, SERVICE_DM_INFO,
+            BAD_CAST "GetDeliveryInfo", message_id,
+            &response, &code, &status_message);
+    if (err) goto leave;
+
+    /* Extract data */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(
+            BAD_CAST "/isds:GetDeliveryInfoResponse/isds:dmDelivery",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* Empty response */
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        char *message_id_locale = utf82locale((char*) message_id);
+        isds_printf_message(context,
+                _("Server did not return any delivery info for ID `%s' "
+                    "on GetDeliveryInfo request"), message_id_locale);
+        free(message_id_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* More delivery infos */
+    if (result->nodesetval->nodeNr > 1) {
+        char *message_id_locale = utf82locale((char*) message_id);
+        isds_printf_message(context,
+                _("Server did return more delivery infos for ID `%s' "
+                    "on GetDeliveryInfo request"), message_id_locale);
+        free(message_id_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* One delivery info */
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+
+    /* Extract the envelope (= message without documents, hence 0) */
+    err = extract_TReturnedMessage(context, 0, message, xpath_ctx);
+    if (err) goto leave;
+
+    /* FIXME: Append dmEvents element (events).
+     * Add this functionality inside extract_TReturnedMessage() or make
+     * similar function.
+     * FIXME: isds_envelope must be extended to involve dmEvents data.
+     * XXX: extract_TReturnedMessage() can obtain attachments size, but delivery info
+     * carries none. It's coded as option elements, so it should work. */
+
+     /* Save XML blob */
+    err = serialize_subtree(context, xpath_ctx->node, &(*message)->raw,
+            &(*message)->raw_length);
+
+leave:
+    if (err) {
+        isds_message_free(message);
+    }
+
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(status_message);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("GetDeliveryInfo request processed by server "
                         "successfully.\n")
                 );
     return err;

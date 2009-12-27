@@ -438,7 +438,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
 
 /* Find boxes suiting given criteria.
  * @context is ISDS session context.
- * @criteria is filter. You should fill in at least some memebers.
+ * @criteria is filter. You should fill in at least some members.
  * @boxes is automatically reallocated list of isds_DbOwnerInfo structures,
  * possibly empty. Input NULL or valid old structure.
  * @return:
@@ -545,6 +545,17 @@ isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
  * interrested in documents (content) too.
  * Returned hash and timestamp require documents to be verifiable. */
 isds_error isds_get_received_envelope(struct isds_ctx *context,
+        const char *message_id, struct isds_message **message);
+
+/* Download delivery infosheet of given message identified by ID.
+ * @context is session context
+ * @message_id is message identifier (you can get them from
+ * isds_get_list_of_{sent,received}_messages())
+ * @message is automatically reallocated message retrieved from ISDS.
+ * It will miss documents per se. Use isds_get_received_message(), if you are
+ * interrested in documents (content). OTOH, only this function can get list
+ * events message has gone through. */
+isds_error isds_get_delivery_info(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
 
 /* Load incoming message from buffer.
