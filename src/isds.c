@@ -1282,6 +1282,68 @@ static isds_error uint2isds_message_status(struct isds_ctx *context,
 }
 
 
+/* Convert event description string into isds_event memebers type and
+ * description
+ * @string is raw event decsription starting with event prefix
+ * @event is structure where to store type and stripped description to
+ * @return standard error code, unkown prefix is not classified as an error. */
+static isds_error eventstring2event(const xmlChar *string,
+        struct isds_event* event) {
+    const xmlChar *known_prefixes[] = {
+        BAD_CAST "EV1:",
+        BAD_CAST "EV2:",
+        BAD_CAST "EV3:"
+    };
+    const isds_event_type types[] = {
+        EVENT_ACCEPTED_BY_RECIPIENT,
+        EVENT_DELIVERED_BY_FICTION,
+        EVENT_UNDELIVERABLE
+    };
+    unsigned int index;
+    size_t length;
+
+    if (!string || !event) return IE_INVAL;
+
+    if (!event->type) {
+        event->type = malloc(sizeof(*event->type));
+        if (!(event->type)) return IE_NOMEM;
+    }
+    zfree(event->description);
+
+    for (index = 0; index < sizeof(known_prefixes)/sizeof(known_prefixes[0]);
+            index++) {
+        length = xmlUTF8Strlen(known_prefixes[index]);
+
+        if (xmlStrncmp(string, known_prefixes[index], length)) {
+            /* Prefix is known */
+            *event->type = types[index];
+
+            /* Strip prefix from description and spaces */
+            /* TODO: Recognize all wite spaces from UCS blank class and
+             * operate on UTF-8 chars. */
+            for (; string[length] != '\0' && string[length] == ' '; length++);
+            event->description = strdup((char *) (string + length));
+            if (!(event->description)) return IE_NOMEM;
+
+            return IE_SUCCESS;
+        }
+    }
+    
+    /* Unknown event prefix.
+     * XSD allows any string */
+    char *string_locale = utf82locale((char *) string);
+    isds_log(ILF_ISDS, ILL_WARNING,
+            _("Uknown delivery info event prefix: %s\n"), string_locale);
+    free(string_locale);
+
+    *event->type = EVENT_UKNOWN;
+    event->description = strdup((char *) string);
+    if (!(event->description)) return IE_NOMEM;
+
+    return IE_SUCCESS;
+}
+
+
 /* Following EXTRACT_* macros expects @result, @xpath_ctx, @err, @context
  * and leave lable */
 #define EXTRACT_STRING(element, string) \
@@ -2441,7 +2503,8 @@ static isds_error extract_event(struct isds_ctx *context,
     /* dmEventDescr element has prefix and the rest */
     EXTRACT_STRING("isds:dmEventDescr", string);
     if (string) {
-        /*xmlStrncmp(string, BAD_CAST "EV1:", 4)*/
+        err = eventstring2event((xmlChar *) string, *event);
+        if (err) goto leave;
         zfree(string);
     }
 
