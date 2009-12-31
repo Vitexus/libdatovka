@@ -17,6 +17,7 @@
 #define ISDS_NS "http://isds.czechpoint.cz/v20"
 #define SISDS_INCOMING_NS "http://isds.czechpoint.cz/v20/message"
 #define SISDS_OUTGOING_NS "http://isds.czechpoint.cz/v20/SentMessage"
+#define SISDS_DELIVERY_NS "http://isds.czechpoint.cz/v20/delivery"
 #define SCHEMA_NS "http://www.w3.org/2001/XMLSchema"
 
 /* Used to choose proper name space for message elements.
@@ -24,7 +25,8 @@
 typedef enum {
     MESSAGE_NS_UNSIGNED,
     MESSAGE_NS_SIGNED_INCOMING,
-    MESSAGE_NS_SIGNED_OUTGOING
+    MESSAGE_NS_SIGNED_OUTGOING,
+    MESSAGE_NS_SIGNED_DELIVERY
 } message_ns_type;
 
 /* Global variables.

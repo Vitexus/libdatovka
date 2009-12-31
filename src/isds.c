@@ -2485,7 +2485,7 @@ static isds_error extract_event(struct isds_ctx *context,
 
     /* Extract event data.
      * All elements are optional according XSD. That's funny. */
-    EXTRACT_STRING("isds:dmEventTime", string);
+    EXTRACT_STRING("sisds:dmEventTime", string);
     if (string) {
         err = timestring2timeval((xmlChar *) string, &((*event)->time));
         if (err) {
@@ -2501,7 +2501,7 @@ static isds_error extract_event(struct isds_ctx *context,
     }
     
     /* dmEventDescr element has prefix and the rest */
-    EXTRACT_STRING("isds:dmEventDescr", string);
+    EXTRACT_STRING("sisds:dmEventDescr", string);
     if (string) {
         err = eventstring2event((xmlChar *) string, *event);
         if (err) goto leave;
@@ -2538,7 +2538,7 @@ static isds_error extract_events(struct isds_ctx *context,
     isds_list_free(events);
 
     /* Find events */
-    result = xmlXPathEvalExpression(BAD_CAST "isds:dmEvent", xpath_ctx);
+    result = xmlXPathEvalExpression(BAD_CAST "sisds:dmEvent", xpath_ctx);
     if (!result) {
         err = IE_XML;
         goto leave;
@@ -4115,6 +4115,151 @@ leave:
 }
 
 
+/* Load signed delivery info from buffer.
+ * @context is session context
+ * @buffer is DER encoded PKCS#7 structure with signed delivery info. You can
+ * retrieve such data from message->raw after calling
+ * isds_get_signed_delivery_info().
+ * @length is length of buffer in bytes.
+ * @message is automatically reallocated message parsed from @buffer.
+ * @strategy selects how buffer will be attached into raw isds_message member.
+ * */
+isds_error isds_load_signed_delivery_info(struct isds_ctx *context,
+        const void *buffer, const size_t length,
+        struct isds_message **message, const isds_buffer_strategy strategy) {
+
+    isds_error err = IE_SUCCESS;
+    xmlDocPtr message_doc = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    void *xml_stream = NULL;
+    size_t xml_stream_length = 0;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!message) return IE_INVAL;
+    isds_message_free(message);
+    if (!buffer) return IE_INVAL;
+
+
+    /* Extract delivery info from PKCS#7 structure */
+    err = extract_cms_data(context, buffer, length,
+            &xml_stream, &xml_stream_length);
+    if (err) goto leave;
+
+    isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Signed delivery info content:\n%.*s\nEnd of delivery info\n"),
+            xml_stream_length, xml_stream);
+
+    /* Convert extracted delivery info XML stream into XPath context */
+    message_doc = xmlParseMemory(xml_stream, xml_stream_length);
+    if (!message_doc) {
+        err = IE_XML;
+        goto leave;
+    }
+    xpath_ctx = xmlXPathNewContext(message_doc);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* XXX: Name spaces mangled for signed delivery info:
+     * http://isds.czechpoint.cz/v20/delivery:
+     *
+     * <q:GetDeliveryInfoResponse xmlns:q="http://isds.czechpoint.cz/v20/delivery">
+     *   <q:dmDelivery>
+     *     <p:dmDm xmlns:p="http://isds.czechpoint.cz/v20">
+     *       <p:dmID>170272</p:dmID>
+     *       ...
+     *     </p:dmDm>
+     *     <q:dmHash algorithm="SHA-1">...</q:dmHash>
+     *     ...
+     *     </q:dmEvents>...</q:dmEvents>
+     *   </q:dmDelivery>
+     * </q:GetDeliveryInfoResponse>
+     * */
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_SIGNED_DELIVERY)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression( 
+            BAD_CAST "/sisds:GetDeliveryInfoResponse/sisds:dmDelivery",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* Empty embedded delivery info */
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_printf_message(context,
+                _("XML document embedded into PKCS#7 structure is not "
+                    "sisds:dmDelivery document"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* More embedded delivery infos */
+    if (result->nodesetval->nodeNr > 1) {
+        isds_printf_message(context,
+                _("Embeded XML document into PKCS#7 structure has more "
+                    "root sisds:dmDelivery elements"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* One embedded delivery info */
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+
+    /* Extract the envelope (= message without documents, hence 0).
+     * XXX: extract_TReturnedMessage() can obtain attachments size, but delivery info
+     * carries none. It's coded as option elements, so it should work. */
+    err = extract_TReturnedMessage(context, 0, message, xpath_ctx);
+    if (err) goto leave;
+
+    /* Extract events */
+    err = move_xpathctx_to_child(context, BAD_CAST "isds:dmEvents", xpath_ctx);
+    if (err == IE_NOEXIST || err == IE_NOTUNIQ) { err = IE_ISDS; goto leave; }
+    if (err) { err = IE_ERROR; goto leave; }
+    err = extract_events(context, &(*message)->envelope->events, xpath_ctx);
+    if (err) goto leave;
+
+    /* Append raw CMS structure into message */
+    switch (strategy) {
+        case BUFFER_DONT_STORE:
+            break;
+        case BUFFER_COPY:
+            (*message)->raw = malloc(length);
+            if (!(*message)->raw) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+            memcpy((*message)->raw, buffer, length);
+            (*message)->raw_length = length;
+            break;
+        case BUFFER_MOVE:
+            (*message)->raw = (void *) buffer;
+            (*message)->raw_length = length;
+            break;
+        default:
+            err = IE_ENUM;
+            goto leave;
+    }
+
+
+leave:
+    if (err) {
+        if (*message && strategy == BUFFER_MOVE) (*message)->raw = NULL;
+        isds_message_free(message);
+    }
+
+    xmlFreeDoc(message_doc);
+    cms_data_free(xml_stream);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Signed message loaded successfully.\n"));
+    return err;
+}
+
+
 /* Download delivery infosheet of given message identified by ID.
  * @context is session context
  * @message_id is message identifier (you can get them from
@@ -5053,6 +5198,8 @@ _hidden isds_error register_namespaces(xmlXPathContextPtr xpath_ctx,
             message_namespace = BAD_CAST SISDS_INCOMING_NS; break;
         case MESSAGE_NS_SIGNED_OUTGOING:
             message_namespace = BAD_CAST SISDS_OUTGOING_NS; break;
+        case MESSAGE_NS_SIGNED_DELIVERY:
+            message_namespace = BAD_CAST SISDS_DELIVERY_NS; break;
         default:
             return IE_ENUM;
     }
