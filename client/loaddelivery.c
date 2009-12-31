@@ -40,7 +40,8 @@ int main(int argc, char **argv) {
         struct stat file_info;
         size_t pages;
 
-        fd = open("server/messages/signed_delivered-DD_170272.zfo", O_RDONLY);
+        fd = open("../server/messages/signed_delivered-DD_170272.zfo",
+                O_RDONLY);
         if (fd == -1) {
             perror("Could not open file with signed delivery info");
             isds_ctx_free(&ctx);
