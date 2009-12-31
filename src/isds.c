@@ -4016,6 +4016,117 @@ leave:
 }
 
 
+/* Find dmSignature in ISDS response, extract decoded CMS structure, extract
+ * signed data and free ISDS response.
+ * @context is session context
+ * @message_id is UTF-8 encoded message ID for loging purpose
+ * @response is parsed XML document. It will be freed and NULLed in the middle
+ * of function run to save memmory. This is not guaranted in case of error.
+ * @request_name is name of ISDS request used to construct response root
+ * element name and for logging purpose.
+ * @raw is reallocated output buffer with DER encoded CMS data
+ * @raw_length is size of @raw buffer in bytes
+ * @returns standard error codes, in case of error, @raw will be freed and
+ * NULLed, @response sometimes. */
+static isds_error find_extract_signed_data_free_response(
+        struct isds_ctx *context, const xmlChar *message_id,
+        xmlDocPtr *response, const xmlChar *request_name,
+        void **raw, size_t *raw_length) {
+
+    isds_error err = IE_SUCCESS;
+    char *xpath_expression = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    char *encoded_structure = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!raw) return IE_INVAL;
+    zfree(*raw);
+    if (!message_id || !response || !*response || !request_name || !raw_length)
+        return IE_INVAL;
+
+    /* Build XPath expression */
+    xpath_expression = astrcat3("/isds:", (char *) request_name,
+            "Response/isds:dmSignature");
+    if (!xpath_expression) return IE_NOMEM;
+   
+    /* Extract data */
+    xpath_ctx = xmlXPathNewContext(*response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(BAD_CAST xpath_expression, xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* Empty response */
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        char *message_id_locale = utf82locale((char*) message_id);
+        isds_printf_message(context,
+                _("Server did not return any signed data for mesage ID `%s' "
+                    "on %s request"),
+                message_id_locale, request_name);
+        free(message_id_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* More reponses */
+    if (result->nodesetval->nodeNr > 1) {
+        char *message_id_locale = utf82locale((char*) message_id);
+        isds_printf_message(context,
+                _("Server did return more signed data for message ID `%s' "
+                    "on %s request"),
+                message_id_locale, request_name);
+        free(message_id_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* One response */
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+
+    /* Extract PKCS#7 structure */
+    EXTRACT_STRING(".", encoded_structure);
+    if (!encoded_structure) {
+        isds_log_message(context, _("dmSignature element is empty"));
+    }
+
+    /* Here we have delivery info as standalone CMS in encoded_structure.
+     * We don't need any other data, free them: */
+    xmlXPathFreeObject(result); result = NULL;
+    xmlXPathFreeContext(xpath_ctx); xpath_ctx = NULL;
+    xmlFreeDoc(*response); *response = NULL;
+
+
+    /* Decode PKCS#7 to DER format */
+    *raw_length = b64decode(encoded_structure, raw);
+    if (*raw_length == (size_t) -1) {
+        isds_log_message(context,
+                _("Error while Base64-decoding PKCS#7 structure"));
+        err = IE_ERROR;
+        goto leave;
+    }
+  
+leave:
+    if (err) {
+        zfree(*raw);
+        raw_length = 0;
+    }
+
+    free(encoded_structure);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+    free(xpath_expression);
+
+    return err;
+}
+
+
 /* Download incoming message envelope identified by ID.
  * @context is session context
  * @message_id is message identifier (you can get them from
@@ -4274,9 +4385,6 @@ isds_error isds_get_signed_delivery_info(struct isds_ctx *context,
     isds_error err = IE_SUCCESS;
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *status_message = NULL;
-    xmlXPathContextPtr xpath_ctx = NULL;
-    xmlXPathObjectPtr result = NULL;
-    char *encoded_structure = NULL;
     void *raw = NULL;
     size_t raw_length = 0;
 
@@ -4292,73 +4400,12 @@ isds_error isds_get_signed_delivery_info(struct isds_ctx *context,
             &response, &code, &status_message);
     if (err) goto leave;
 
-
-    /* Extract data */
-    xpath_ctx = xmlXPathNewContext(response);
-    if (!xpath_ctx) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    result = xmlXPathEvalExpression(
-            BAD_CAST "/isds:SignedDeliveryInfoResponse/isds:dmSignature",
-            xpath_ctx);
-    if (!result) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    /* Empty response */
-    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-        char *message_id_locale = utf82locale((char*) message_id);
-        isds_printf_message(context,
-                _("Server did not return any delivery info for mesage ID `%s' "
-                    "on GetSignedDeliveryInfo request"),
-                message_id_locale);
-        free(message_id_locale);
-        err = IE_ISDS;
-        goto leave;
-    }
-    /* More reponses */
-    if (result->nodesetval->nodeNr > 1) {
-        char *message_id_locale = utf82locale((char*) message_id);
-        isds_printf_message(context,
-                _("Server did return more delivery infos for message ID `%s' "
-                    "on GetSignedDeliveryInfo request"),
-                message_id_locale);
-        free(message_id_locale);
-        err = IE_ISDS;
-        goto leave;
-    }
-    /* One response */
-    xpath_ctx->node = result->nodesetval->nodeTab[0];
-
-    /* Extract PKCS#7 structure */
-    EXTRACT_STRING(".", encoded_structure);
-    if (!encoded_structure) {
-        isds_log_message(context, _("dmSignature element is empty"));
-    }
-
-    /* Here we have delivery info as standalone CMS in encoded_structure.
-     * We don't need any other data, free them: */
-    xmlXPathFreeObject(result); result = NULL;
-    xmlXPathFreeContext(xpath_ctx); xpath_ctx = NULL;
-    zfree(code);
-    zfree(status_message);
-    xmlFreeDoc(response); response = NULL;
-
-
-    /* Decode PKCS#7 to DER format */
-    raw_length = b64decode(encoded_structure, &raw);
-    if (raw_length == (size_t) -1) {
-        isds_log_message(context,
-                _("Error while Base64-decoding PKCS#7 structure"));
-        err = IE_ERROR;
-        goto leave;
-    }
-    zfree(encoded_structure);
+    /* Find signed delivery info, extract it into raw and maybe free
+     * response */
+    err = find_extract_signed_data_free_response(context,
+            (xmlChar *)message_id, &response,
+            BAD_CAST "GetSignedDeliveryInfo", &raw, &raw_length);
+    if (err) goto leave;
   
     /* Parse message */
     err = isds_load_signed_delivery_info(context, raw, raw_length,
@@ -4372,11 +4419,7 @@ leave:
         isds_message_free(message);
     }
 
-    free(encoded_structure);
-    xmlXPathFreeObject(result);
-    xmlXPathFreeContext(xpath_ctx);
     free(raw);
-
     free(code);
     free(status_message);
     xmlFreeDoc(response);
@@ -4893,80 +4936,14 @@ _hidden isds_error isds_get_signed_message(struct isds_ctx *context,
             message_id, &response, &code, &status_message);
     if (err) goto leave;
 
-    /* Extract data */
-    xpath_ctx = xmlXPathNewContext(response);
-    if (!xpath_ctx) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    result = xmlXPathEvalExpression(
-            (outgoing) ? BAD_CAST
-                "/isds:SignedSentMessageDownloadResponse/isds:dmSignature" :
-                BAD_CAST "/isds:SignedMessageDownloadResponse/isds:dmSignature",
-            xpath_ctx);
-    if (!result) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    /* Empty response */
-    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-        char *message_id_locale = utf82locale((char*) message_id);
-        isds_printf_message(context,
-                (outgoing) ?
-                    _("Server did not return any message for ID `%s' "
-                        "on SignedSentMessageDownload request") :
-                    _("Server did not return any message for ID `%s' "
-                        "on SignedMessageDownload request"),
-                message_id_locale);
-        free(message_id_locale);
-        err = IE_ISDS;
-        goto leave;
-    }
-    /* More reponses */
-    if (result->nodesetval->nodeNr > 1) {
-        char *message_id_locale = utf82locale((char*) message_id);
-        isds_printf_message(context,
-                (outgoing) ?
-                    _("Server did return more messages for ID `%s' "
-                        "on SignedSentMessageDownload request") :
-                    _("Server did return more messages for ID `%s' "
-                        "on SignedMessageDownload request"),
-                message_id_locale);
-        free(message_id_locale);
-        err = IE_ISDS;
-        goto leave;
-    }
-    /* One response */
-    xpath_ctx->node = result->nodesetval->nodeTab[0];
-
-    /* Extract PKCS#7 structure */
-    EXTRACT_STRING(".", encoded_structure);
-    if (!encoded_structure) {
-        isds_log_message(context, _("dmSignature element is empty"));
-    }
-
-    /* Here we have message as standalone CMS in encoded_structure.
-     * We don't need any other data, free them: */
-    xmlXPathFreeObject(result); result = NULL;
-    xmlXPathFreeContext(xpath_ctx); xpath_ctx = NULL;
-    zfree(code);
-    zfree(status_message);
-    xmlFreeDoc(response); response = NULL;
-
-
-    /* Decode PKCS#7 to DER format */
-    raw_length = b64decode(encoded_structure, &raw);
-    if (raw_length == (size_t) -1) {
-        isds_log_message(context,
-                _("Error while Base64-decoding PKCS#7 structure"));
-        err = IE_ERROR;
-        goto leave;
-    }
-    zfree(encoded_structure);
+    /* Find signed message, extract it into raw and maybe free
+     * response */
+    err = find_extract_signed_data_free_response(context,
+            (xmlChar *)message_id, &response,
+            (outgoing) ? BAD_CAST "SignedSentMessageDownload" :
+                BAD_CAST "SignedMessageDownload",
+            &raw, &raw_length);
+    if (err) goto leave;
   
     /* Parse message */
     err = isds_load_signed_message(context, outgoing, raw, raw_length,
