@@ -581,6 +581,17 @@ isds_error isds_load_signed_delivery_info(struct isds_ctx *context,
         const void *buffer, const size_t length,
         struct isds_message **message, const isds_buffer_strategy strategy);
 
+/* Download signed delivery infosheet of given message identified by ID.
+ * @context is session context
+ * @message_id is message identifier (you can get them from
+ * isds_get_list_of_{sent,received}_messages())
+ * @message is automatically reallocated message retrieved from ISDS.
+ * It will miss documents per se. Use isds_get_signed_received_message(),
+ * if you are interrested in documents (content). OTOH, only this function
+ * can get list events message has gone through. */
+isds_error isds_get_signed_delivery_info(struct isds_ctx *context,
+        const char *message_id, struct isds_message **message);
+
 /* Download delivery infosheet of given message identified by ID.
  * @context is session context
  * @message_id is message identifier (you can get them from
