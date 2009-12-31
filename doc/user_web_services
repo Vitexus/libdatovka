@@ -258,7 +258,7 @@ Download infosheet about incoming or outgoing message post and delivery or
 deliver impossibility as signed PKCS#7 structure. See GetDeliveryInfo for
 details about returned data.
 
-The PKCS#7 structure carry digital signature made by ministery of interiours.
+The PKCS#7 structure carries digital signature made by ministery of interiours.
 
 There is mangled namespace again: http://isds.czechpoint.cz/v20/ vs.
 http://isds.czechpoint.cz/v20/delivery:
