@@ -4679,7 +4679,7 @@ isds_error isds_load_received_message(struct isds_ctx *context,
 
 
     isds_log(ILF_ISDS, ILL_DEBUG, 
-            _("Outgoing message content:\n%.*s\nEnd of message\n"),
+            _("Incoming message content:\n%.*s\nEnd of message\n"),
             length, buffer);
 
     /* Convert extracted messages XML stream into XPath context */
@@ -4761,7 +4761,7 @@ leave:
 
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Outgoing message loaded successfully.\n"));
+                _("Incoming message loaded successfully.\n"));
     return err;
 }
 
@@ -5082,11 +5082,11 @@ leave:
 
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
-                    (outgoing) ?
-                        _("SignedSentMessageDownload request processed by server "
-                            "successfully.\n") :
-                        _("SignedMessageDownload request processed by server "
-                            "successfully.\n")
+                (outgoing) ?
+                    _("SignedSentMessageDownload request processed by server "
+                        "successfully.\n") :
+                    _("SignedMessageDownload request processed by server "
+                        "successfully.\n")
                 );
     return err;
 }
