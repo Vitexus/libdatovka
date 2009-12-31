@@ -223,7 +223,7 @@ void print_events(const struct isds_list *events) {
             printf("\t\t\t\ttime = ");
             print_timeval(event->time);
             
-            printf("\t\t\t}");
+            printf("\t\t\t}\n");
         }
     }
 

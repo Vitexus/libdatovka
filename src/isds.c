@@ -1314,7 +1314,7 @@ static isds_error eventstring2event(const xmlChar *string,
             index++) {
         length = xmlUTF8Strlen(known_prefixes[index]);
 
-        if (xmlStrncmp(string, known_prefixes[index], length)) {
+        if (!xmlStrncmp(string, known_prefixes[index], length)) {
             /* Prefix is known */
             *event->type = types[index];
 
@@ -4207,13 +4207,14 @@ isds_error isds_load_signed_delivery_info(struct isds_ctx *context,
     xpath_ctx->node = result->nodesetval->nodeTab[0];
 
     /* Extract the envelope (= message without documents, hence 0).
-     * XXX: extract_TReturnedMessage() can obtain attachments size, but delivery info
-     * carries none. It's coded as option elements, so it should work. */
+     * XXX: extract_TReturnedMessage() can obtain attachments size,
+     * but delivery info carries none. It's coded as option elements,
+     * so it should work. */
     err = extract_TReturnedMessage(context, 0, message, xpath_ctx);
     if (err) goto leave;
 
     /* Extract events */
-    err = move_xpathctx_to_child(context, BAD_CAST "isds:dmEvents", xpath_ctx);
+    err = move_xpathctx_to_child(context, BAD_CAST "sisds:dmEvents", xpath_ctx);
     if (err == IE_NOEXIST || err == IE_NOTUNIQ) { err = IE_ISDS; goto leave; }
     if (err) { err = IE_ERROR; goto leave; }
     err = extract_events(context, &(*message)->envelope->events, xpath_ctx);
@@ -4240,7 +4241,6 @@ isds_error isds_load_signed_delivery_info(struct isds_ctx *context,
             err = IE_ENUM;
             goto leave;
     }
-
 
 leave:
     if (err) {
