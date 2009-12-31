@@ -5,7 +5,7 @@ CFLAGS += -D_FILE_OFFSET_BITS=64 -DLARGEFILE_SOURCE=1
 CFLAGS+=-I$(LIBDIR)
 LDFLAGS=-L$(LIBDIR) -lisds
 BINS=isdsclient getsent getsignedsent getreceived getsignedreceived \
-	 getreceivedenvelope verifyreceivedhash markasread
+	 getreceivedenvelope verifyreceivedhash markasread loaddelivery
 
 .PHONY: libisds depend
 
@@ -39,6 +39,9 @@ verifyreceivedhash: verifyreceivedhash.o common.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 markasread: markasread.o common.o
+	$(CC) $(LDFLAGS) -o $@ $^
+
+loaddelivery: loaddelivery.o common.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 clean:

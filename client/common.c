@@ -179,6 +179,58 @@ error:
 }
 
 
+void print_event_type(const isds_event_type *type) {
+    if (!type) {
+        printf("NULL");
+        return;
+    }
+    switch (*type) {
+        case EVENT_UKNOWN: printf("UNKNOWN\n"); break;
+        case EVENT_ACCEPTED_BY_RECIPIENT:
+                           printf("ACCEPTED_BY_RECIPIENT\n"); break;
+        case EVENT_DELIVERED_BY_FICTION:
+                           printf("DELIVERED_BY_FICTION\n"); break;
+        case EVENT_UNDELIVERABLE:
+                           printf("UNDELIVERABLE\n"); break;
+        default: printf("<unknown type %zd>\n", *type);
+    }
+}
+
+
+void print_events(const struct isds_list *events) {
+    const struct isds_list *item;
+    const struct isds_event *event;
+
+    if (!events) {
+        printf("NULL\n");
+        return;
+    }
+
+    printf("{\n");
+
+    for (item = events; item; item = item->next) {
+        event = (struct isds_event *) item->data;
+        printf("\t\t\tevent = ");
+        if (!event) printf("NULL");
+        else {
+            printf("{\n");
+
+            printf("\t\t\t\ttype = ");
+            print_event_type(event->type);
+
+            printf("\t\t\t\tdescription = %s\n", event->description);
+
+            printf("\t\t\t\ttime = ");
+            print_timeval(event->time);
+            
+            printf("\t\t\t}");
+        }
+    }
+
+    printf("\t\t}\n");
+}
+    
+
 void print_envelope(const struct isds_envelope *envelope) {
     printf("\tenvelope = ");
 
@@ -264,6 +316,9 @@ void print_envelope(const struct isds_envelope *envelope) {
 
     printf("\t\ttimestamp = %p\n", envelope->timestamp);
     printf("\t\ttimestamp_length = %zu\n", envelope->timestamp_length);
+
+    printf("\t\tevents = ");
+    print_events(envelope->events);
 
     printf("\t}\n");
 }
