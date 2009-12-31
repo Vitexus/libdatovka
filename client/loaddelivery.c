@@ -33,7 +33,9 @@ int main(int argc, char **argv) {
     }
 
 
+    
     {
+        /* Load signed delivery info */
         struct isds_message *message = NULL;
         void *buffer;
         int fd;
@@ -87,6 +89,64 @@ int main(int argc, char **argv) {
         munmap(buffer, pages);
         close(fd);
     }
+
+
+    {
+        /* Load plain delivery info */
+        struct isds_message *message = NULL;
+        void *buffer;
+        int fd;
+        struct stat file_info;
+        size_t pages;
+
+        fd = open("../server/messages/signed_delivered-DD_170272.xml",
+                O_RDONLY);
+        if (fd == -1) {
+            perror("Could not open file with delivery info");
+            isds_ctx_free(&ctx);
+            isds_cleanup();
+            exit(EXIT_FAILURE);
+        }
+
+        if (-1 == fstat(fd, &file_info)) {
+            perror("Could not get file size");
+            close(fd);
+            isds_ctx_free(&ctx);
+            isds_cleanup();
+            exit(EXIT_FAILURE);
+        }
+
+        buffer = mmap(NULL, file_info.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+        if (buffer == MAP_FAILED) {
+            perror("Could not map delivery info from file to memmory");
+            close(fd);
+            isds_ctx_free(&ctx);
+            isds_cleanup();
+            exit(EXIT_FAILURE);
+        }
+
+        printf("Loading plain delivery info\n");
+        err = isds_load_delivery_info(ctx, buffer, file_info.st_size,
+                &message, BUFFER_DONT_STORE);
+        if (err)
+            printf("isds_load_delivery_info() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        else {
+            printf("isds_load_delivery_info() succeeded:\n");
+            print_envelope(message->envelope);
+        }
+
+        isds_message_free(&message);
+        {
+            long int page_size = sysconf(_SC_PAGE_SIZE);
+            pages = (file_info.st_size % page_size) ?
+                ((file_info.st_size / page_size) + 1) * page_size:
+                file_info.st_size;
+        }
+        munmap(buffer, pages);
+        close(fd);
+    }
+
 
 
     err = isds_ctx_free(&ctx);

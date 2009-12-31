@@ -592,6 +592,18 @@ isds_error isds_load_signed_delivery_info(struct isds_ctx *context,
 isds_error isds_get_signed_delivery_info(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
 
+/* Load delivery info from buffer.
+ * @context is session context
+ * @buffer is XML document stream with delivery info. You can retrieve such
+ * data from message->raw after calling isds_get_delivery_info().
+ * @length is length of buffer in bytes.
+ * @message is automatically reallocated message parsed from @buffer.
+ * @strategy selects how buffer will be attached into raw isds_message member.
+ * */
+isds_error isds_load_delivery_info(struct isds_ctx *context,
+        const void *buffer, const size_t length,
+        struct isds_message **message, const isds_buffer_strategy strategy);
+
 /* Download delivery infosheet of given message identified by ID.
  * @context is session context
  * @message_id is message identifier (you can get them from

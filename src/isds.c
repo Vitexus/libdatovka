@@ -4433,6 +4433,119 @@ leave:
 }
 
 
+/* Load delivery info from buffer.
+ * @context is session context
+ * @buffer is XML document stream with delivery info. You can retrieve such
+ * data from message->raw after calling isds_get_delivery_info().
+ * @length is length of buffer in bytes.
+ * @message is automatically reallocated message parsed from @buffer.
+ * @strategy selects how buffer will be attached into raw isds_message member.
+ * */
+isds_error isds_load_delivery_info(struct isds_ctx *context,
+        const void *buffer, const size_t length,
+        struct isds_message **message, const isds_buffer_strategy strategy) {
+
+    isds_error err = IE_SUCCESS;
+    xmlDocPtr message_doc = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!message) return IE_INVAL;
+    isds_message_free(message);
+    if (!buffer) return IE_INVAL;
+
+    /* Convert delivery info XML stream into XPath context */
+    message_doc = xmlParseMemory(buffer, length);
+    if (!message_doc) {
+        err = IE_XML;
+        goto leave;
+    }
+    xpath_ctx = xmlXPathNewContext(message_doc);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(BAD_CAST "/isds:dmDelivery", xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* Empty delivery info */
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_printf_message(context,
+                _("XML document is not isds:dmDelivery document"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* More delivery infos
+     * This should never happen */
+    if (result->nodesetval->nodeNr > 1) {
+        isds_printf_message(context,
+                _("XML document has more root isds:dmDelivery elements"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* One delivery info */
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+
+    /* Extract the envelope (= message without documents, hence 0).
+     * XXX: extract_TReturnedMessage() can obtain attachments size,
+     * but delivery info carries none. It's coded as option elements,
+     * so it should work. */
+    err = extract_TReturnedMessage(context, 0, message, xpath_ctx);
+    if (err) goto leave;
+
+    /* Extract events */
+    err = move_xpathctx_to_child(context, BAD_CAST "isds:dmEvents", xpath_ctx);
+    if (err == IE_NOEXIST || err == IE_NOTUNIQ) { err = IE_ISDS; goto leave; }
+    if (err) { err = IE_ERROR; goto leave; }
+    err = extract_events(context, &(*message)->envelope->events, xpath_ctx);
+    if (err) goto leave;
+
+    /* Append raw CMS structure into message */
+    switch (strategy) {
+        case BUFFER_DONT_STORE:
+            break;
+        case BUFFER_COPY:
+            (*message)->raw = malloc(length);
+            if (!(*message)->raw) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+            memcpy((*message)->raw, buffer, length);
+            (*message)->raw_length = length;
+            break;
+        case BUFFER_MOVE:
+            (*message)->raw = (void *) buffer;
+            (*message)->raw_length = length;
+            break;
+        default:
+            err = IE_ENUM;
+            goto leave;
+    }
+
+leave:
+    if (err) {
+        if (*message && strategy == BUFFER_MOVE) (*message)->raw = NULL;
+        isds_message_free(message);
+    }
+
+    xmlFreeDoc(message_doc);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Delivery info loaded successfully.\n"));
+    return err;
+}
+
+
 /* Download delivery infosheet of given message identified by ID.
  * @context is session context
  * @message_id is message identifier (you can get them from
@@ -4504,8 +4617,9 @@ isds_error isds_get_delivery_info(struct isds_ctx *context,
     xpath_ctx->node = delivery_node = result->nodesetval->nodeTab[0];
 
     /* Extract the envelope (= message without documents, hence 0).
-     * XXX: extract_TReturnedMessage() can obtain attachments size, but delivery info
-     * carries none. It's coded as option elements, so it should work. */
+     * XXX: extract_TReturnedMessage() can obtain attachments size,
+     * but delivery info carries none. It's coded as option elements,
+     * so it should work. */
     err = extract_TReturnedMessage(context, 0, message, xpath_ctx);
     if (err) goto leave;
 
@@ -4517,7 +4631,7 @@ isds_error isds_get_delivery_info(struct isds_ctx *context,
     if (err) goto leave;
 
      /* Save XML blob */
-    err = serialize_subtree(context, xpath_ctx->node, &(*message)->raw,
+    err = serialize_subtree(context, delivery_node, &(*message)->raw,
             &(*message)->raw_length);
 
 leave:
