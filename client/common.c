@@ -188,7 +188,7 @@ void print_event_type(const isds_event_type *type) {
         case EVENT_UKNOWN: printf("UNKNOWN\n"); break;
         case EVENT_ACCEPTED_BY_RECIPIENT:
                            printf("ACCEPTED_BY_RECIPIENT\n"); break;
-        case EVENT_DELIVERED_BY_FICTION:
+        case EVENT_ACCEPTED_BY_FICTION:
                            printf("DELIVERED_BY_FICTION\n"); break;
         case EVENT_UNDELIVERABLE:
                            printf("UNDELIVERABLE\n"); break;

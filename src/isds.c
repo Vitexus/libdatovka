@@ -1296,7 +1296,7 @@ static isds_error eventstring2event(const xmlChar *string,
     };
     const isds_event_type types[] = {
         EVENT_ACCEPTED_BY_RECIPIENT,
-        EVENT_DELIVERED_BY_FICTION,
+        EVENT_ACCEPTED_BY_FICTION,
         EVENT_UNDELIVERABLE
     };
     unsigned int index;
