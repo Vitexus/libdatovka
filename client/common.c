@@ -54,7 +54,7 @@ void print_hash(const struct isds_hash *hash) {
         case HASH_ALGORITHM_SHA_1: printf("SHA-1 "); break;
         case HASH_ALGORITHM_SHA_256: printf("SHA-256 "); break;
         case HASH_ALGORITHM_SHA_512: printf("SHA-512 "); break;
-        default: printf("<Unknown hash algorithm %zd> ", hash->algorithm);
+        default: printf("<Unknown hash algorithm %d> ", hash->algorithm);
                  break;
     }
 
@@ -192,7 +192,7 @@ void print_event_type(const isds_event_type *type) {
                            printf("DELIVERED_BY_FICTION\n"); break;
         case EVENT_UNDELIVERABLE:
                            printf("UNDELIVERABLE\n"); break;
-        default: printf("<unknown type %zd>\n", *type);
+        default: printf("<unknown type %d>\n", *type);
     }
 }
 
