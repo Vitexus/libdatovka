@@ -695,6 +695,21 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
  *  IE_ERROR    if internal error occurs */
 isds_error isds_hash_cmp(const struct isds_hash *h1, const struct isds_hash *h2);
 
+/* Check message has gone through ISDS by comparing message hash stored in
+ * ISDS and locally computed hash. You must provide message with valid raw
+ * member (do not use isds_load_*_message(..., BUFFER_DONT_STORE)).
+ * This is convenient wrapper for isds_download_message_hash(),
+ * isds_compute_message_hash(), and isds_hash_cmp() sequence.
+ * @context is session context
+ * @message is message with valid raw and envelope member; envelope->hash
+ * member will be changed during funcion run. Use envelope on heap only.
+ * @return
+ *  IE_SUCCESS  if message originates in ISDS
+ *  IE_NOTEQUAL if message is unknown to ISDS
+ *  other code  for other errors */
+isds_error isds_verify_message_hash(struct isds_ctx *context,
+        struct isds_message *message);
+
 /* Mark message as read. This is a transactional commit function to acknoledge
  * to ISDS the message has been downloaded and processed by client properly.
  * @context is session context

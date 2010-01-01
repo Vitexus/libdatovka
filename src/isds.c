@@ -5345,7 +5345,7 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
         goto leave;
     }
 
-    /* Save cumputed hash */
+    /* Save computed hash */
     if (!message->envelope) {
         message->envelope = calloc(1, sizeof(*message->envelope));
         if (!message->envelope) {
@@ -5390,6 +5390,53 @@ isds_error isds_hash_cmp(const struct isds_hash *h1, const struct isds_hash *h2)
             return IE_NOTEQUAL;
     }
     return IE_SUCCESS;
+}
+
+
+/* Check message has gone through ISDS by comparing message hash stored in
+ * ISDS and locally computed hash. You must provide message with valid raw
+ * member (do not use isds_load_*_message(..., BUFFER_DONT_STORE)).
+ * This is convenient wrapper for isds_download_message_hash(),
+ * isds_compute_message_hash(), and isds_hash_cmp() sequence.
+ * @context is session context
+ * @message is message with valid raw and envelope member; envelope->hash
+ * member will be changed during funcion run. Use envelope on heap only.
+ * @return
+ *  IE_SUCCESS  if message originates in ISDS
+ *  IE_NOTEQUAL if message is unknown to ISDS
+ *  other code  for other errors */
+isds_error isds_verify_message_hash(struct isds_ctx *context,
+        struct isds_message *message) {
+    isds_error err = IE_SUCCESS;
+    struct isds_hash *downloaded_hash = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!message) return IE_INVAL;
+
+    if (!message->envelope) {
+        isds_log_message(context,
+                _("Given message structure is missing envelope"));
+        return IE_INVAL;
+    }
+    if (!message->raw) {
+        isds_log_message(context,
+                _("Given message structure is missing raw representation"));
+        return IE_INVAL;
+    }
+
+    err = isds_download_message_hash(context, message->envelope->dmID,
+            &downloaded_hash);
+    if (err) goto leave;
+
+    err = isds_compute_message_hash(context, message,
+            downloaded_hash->algorithm);
+    if (err) goto leave;
+
+    err = isds_hash_cmp(downloaded_hash, message->envelope->hash);
+
+leave:
+    isds_hash_free(&downloaded_hash);
+    return err;
 }
 
 
