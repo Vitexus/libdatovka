@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <stdint.h>
 #include "isds_priv.h"
 #include "utils.h"
 #include "soap.h"
