@@ -683,6 +683,15 @@ isds_error isds_download_message_hash(struct isds_ctx *context,
 isds_error isds_compute_message_hash(struct isds_ctx *context,
         struct isds_message *message, const isds_hash_algorithm algorithm);
 
+/* Compare two hashes.
+ * @h1 is first hash
+ * @h2 is another hash
+ * @return
+ *  -1  if hashes are uncomparable
+ *  0   if hashes equal
+ *  1   if hashes are comparable, but they don't equal */
+int isds_hash_cmp(const struct isds_hash *h1, const struct isds_hash *h2);
+
 /* Mark message as read. This is a transactional commit function to acknoledge
  * to ISDS the message has been downloaded and processed by client properly.
  * @context is session context

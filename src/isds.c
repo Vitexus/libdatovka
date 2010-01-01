@@ -5366,6 +5366,25 @@ leave:
     return err;
 }
 
+/* Compare two hashes.
+ * @h1 is first hash
+ * @h2 is another hash
+ * @return
+ *  -1  if hashes are uncomparable
+ *  0   if hashes equal
+ *  1   if hashes are comparable, but they don't equal */
+int isds_hash_cmp(const struct isds_hash *h1, const struct isds_hash *h2) {
+    if (h1 == NULL || h2 == NULL) return -1;
+    if (h1->algorithm != h2->algorithm) return -1;
+    if (h1->length != h2->length) return -1;
+
+    for (int i = 0; i < h1->length; i++) {
+        if (((uint8_t *) (h1->value))[i] != ((uint8_t *) (h2->value))[i])
+            return 1;
+    }
+    return 0;
+}
+
 
 /* Search for document by document ID in list of documents. IDs are compared
  * as UTF-8 string.
