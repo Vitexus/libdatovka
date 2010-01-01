@@ -295,6 +295,8 @@ char *isds_strerror(const isds_error error) {
             return(_("Too big")); break;
         case IE_NOTUNIQ:
             return(_("Value not unique")); break;
+        case IE_NOTEQUAL:
+            return(_("Values not uqual")); break;
         default:
             return(_("Unknown error"));
     }
@@ -5366,23 +5368,28 @@ leave:
     return err;
 }
 
+
 /* Compare two hashes.
  * @h1 is first hash
  * @h2 is another hash
  * @return
- *  -1  if hashes are uncomparable
- *  0   if hashes equal
- *  1   if hashes are comparable, but they don't equal */
-int isds_hash_cmp(const struct isds_hash *h1, const struct isds_hash *h2) {
-    if (h1 == NULL || h2 == NULL) return -1;
-    if (h1->algorithm != h2->algorithm) return -1;
-    if (h1->length != h2->length) return -1;
+ *  IE_SUCCESS  if hashes equal
+ *  IE_NOTUNIQ  if hashes are comparable, but they don't equal
+ *  IE_ENUM     if not comparable, but both structures defined
+ *  IE_INVAL    if some of the structures are undefined (NULL)
+ *  IE_ERROR    if internal error occurs */
+isds_error isds_hash_cmp(const struct isds_hash *h1, const struct isds_hash *h2) {
+    if (h1 == NULL || h2 == NULL) return IE_INVAL;
+    if (h1->algorithm != h2->algorithm) return IE_ENUM;
+    if (h1->length != h2->length) return IE_ERROR;
+    if (h1->length > 0 && !h1->value) return IE_ERROR;
+    if (h2->length > 0 && !h2->value) return IE_ERROR;
 
     for (int i = 0; i < h1->length; i++) {
         if (((uint8_t *) (h1->value))[i] != ((uint8_t *) (h2->value))[i])
-            return 1;
+            return IE_NOTEQUAL;
     }
-    return 0;
+    return IE_SUCCESS;
 }
 
 

@@ -28,7 +28,8 @@ typedef enum {
     IE_ENUM,
     IE_DATE,
     IE_2BIG,
-    IE_NOTUNIQ
+    IE_NOTUNIQ,
+    IE_NOTEQUAL
 } isds_error;
 
 typedef enum {
@@ -687,10 +688,12 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
  * @h1 is first hash
  * @h2 is another hash
  * @return
- *  -1  if hashes are uncomparable
- *  0   if hashes equal
- *  1   if hashes are comparable, but they don't equal */
-int isds_hash_cmp(const struct isds_hash *h1, const struct isds_hash *h2);
+ *  IE_SUCCESS  if hashes equal
+ *  IE_NOTUNIQ  if hashes are comparable, but they don't equal
+ *  IE_ENUM     if not comparable, but both structures defined
+ *  IE_INVAL    if some of the structures are undefined (NULL)
+ *  IE_ERROR    if internal error occurs */
+isds_error isds_hash_cmp(const struct isds_hash *h1, const struct isds_hash *h2);
 
 /* Mark message as read. This is a transactional commit function to acknoledge
  * to ISDS the message has been downloaded and processed by client properly.
