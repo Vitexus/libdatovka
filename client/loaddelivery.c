@@ -4,11 +4,6 @@
 #include <locale.h>
 #include <time.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/mman.h>
 #include <isds.h>
 #include "common.h"
 
@@ -39,37 +34,18 @@ int main(int argc, char **argv) {
         struct isds_message *message = NULL;
         void *buffer;
         int fd;
-        struct stat file_info;
-        size_t pages;
+        size_t length;
 
-        fd = open("../server/messages/signed_delivered-DD_170272.zfo",
-                O_RDONLY);
-        if (fd == -1) {
-            perror("Could not open file with signed delivery info");
-            isds_ctx_free(&ctx);
-            isds_cleanup();
-            exit(EXIT_FAILURE);
-        }
-
-        if (-1 == fstat(fd, &file_info)) {
-            perror("Could not get file size");
-            close(fd);
-            isds_ctx_free(&ctx);
-            isds_cleanup();
-            exit(EXIT_FAILURE);
-        }
-
-        buffer = mmap(NULL, file_info.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-        if (buffer == MAP_FAILED) {
-            perror("Could not map signed delivery info from file to memmory");
-            close(fd);
+        if (mmap_file("../server/messages/signed_delivered-DD_170272.zfo",
+                &fd, &buffer, &length)) {
+            fprintf(stderr, "Could not open map file with signed delivery info\n");
             isds_ctx_free(&ctx);
             isds_cleanup();
             exit(EXIT_FAILURE);
         }
 
         printf("Loading signed delivery info\n");
-        err = isds_load_signed_delivery_info(ctx, buffer, file_info.st_size,
+        err = isds_load_signed_delivery_info(ctx, buffer, length,
                 &message, BUFFER_DONT_STORE);
         if (err)
             printf("isds_load_signed_delivery_info() failed: %s: %s\n",
@@ -80,14 +56,7 @@ int main(int argc, char **argv) {
         }
 
         isds_message_free(&message);
-        {
-            long int page_size = sysconf(_SC_PAGE_SIZE);
-            pages = (file_info.st_size % page_size) ?
-                ((file_info.st_size / page_size) + 1) * page_size:
-                file_info.st_size;
-        }
-        munmap(buffer, pages);
-        close(fd);
+        munmap_file(fd, buffer, length);
     }
 
 
@@ -96,37 +65,18 @@ int main(int argc, char **argv) {
         struct isds_message *message = NULL;
         void *buffer;
         int fd;
-        struct stat file_info;
-        size_t pages;
+        size_t length;
 
-        fd = open("../server/messages/signed_delivered-DD_170272.xml",
-                O_RDONLY);
-        if (fd == -1) {
-            perror("Could not open file with delivery info");
-            isds_ctx_free(&ctx);
-            isds_cleanup();
-            exit(EXIT_FAILURE);
-        }
-
-        if (-1 == fstat(fd, &file_info)) {
-            perror("Could not get file size");
-            close(fd);
-            isds_ctx_free(&ctx);
-            isds_cleanup();
-            exit(EXIT_FAILURE);
-        }
-
-        buffer = mmap(NULL, file_info.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-        if (buffer == MAP_FAILED) {
-            perror("Could not map delivery info from file to memmory");
-            close(fd);
+        if (mmap_file("../server/messages/signed_delivered-DD_170272.xml",
+                &fd, &buffer, &length)) {
+            fprintf(stderr, "Could not map file with delivery info");
             isds_ctx_free(&ctx);
             isds_cleanup();
             exit(EXIT_FAILURE);
         }
 
         printf("Loading plain delivery info\n");
-        err = isds_load_delivery_info(ctx, buffer, file_info.st_size,
+        err = isds_load_delivery_info(ctx, buffer, length,
                 &message, BUFFER_DONT_STORE);
         if (err)
             printf("isds_load_delivery_info() failed: %s: %s\n",
@@ -137,14 +87,7 @@ int main(int argc, char **argv) {
         }
 
         isds_message_free(&message);
-        {
-            long int page_size = sysconf(_SC_PAGE_SIZE);
-            pages = (file_info.st_size % page_size) ?
-                ((file_info.st_size / page_size) + 1) * page_size:
-                file_info.st_size;
-        }
-        munmap(buffer, pages);
-        close(fd);
+        munmap_file(fd, buffer, length);
     }
 
 

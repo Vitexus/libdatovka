@@ -1,7 +1,10 @@
 common.o: common.c ../src/isds.h
+computemessagehash.o: computemessagehash.c ../src/isds.h common.h
 getreceived.o: getreceived.c ../src/isds.h common.h
 getreceiveddelivery.o: getreceiveddelivery.c ../src/isds.h common.h
 getreceivedenvelope.o: getreceivedenvelope.c ../src/isds.h common.h
+getreceivedsigneddelivery.o: getreceivedsigneddelivery.c ../src/isds.h \
+  common.h
 getsent.o: getsent.c ../src/isds.h common.h
 getsignedreceived.o: getsignedreceived.c ../src/isds.h common.h
 getsignedsent.o: getsignedsent.c ../src/isds.h common.h
