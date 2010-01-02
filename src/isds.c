@@ -823,7 +823,7 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
 /* Serialize XML subtree to buffer preserving XML indentatition.
  * @context is session context
  * @subtree is XML element to be serialized (with childern)
- * @buffer is automarically reallocated buffer where serialize to
+ * @buffer is automatically reallocated buffer where serialize to
  * @length is size of serialized stream in bytes
  * @return standard error code, free @buffer in case of error */
 static isds_error serialize_subtree(struct isds_ctx *context,
@@ -928,7 +928,7 @@ leave:
     return err;
 }
 
-
+#if 0
 /* Dump XML subtree to buffer as literral string, not valid XML possibly.
  * @context is session context
  * @document is original document where @nodeset points to
@@ -990,6 +990,91 @@ leave:
         *length = 0;
     }
 
+    xmlBufferFree(xml_buffer);
+    return err;
+}
+#endif
+
+/* Dump XML subtree to buffer as literral string, not valid XML possibly.
+ * @context is session context
+ * @document is original document where @nodeset points to
+ * @nodeset is XPath node set to dump (recursively)
+ * @buffer is automarically reallocated buffer where serialize to
+ * @length is size of serialized stream in bytes
+ * @return standard error code, free @buffer in case of error */
+static isds_error dump_nodeset(struct isds_ctx *context,
+        const xmlDocPtr document, const xmlNodeSetPtr nodeset,
+        void **buffer, size_t *length) {
+    isds_error err = IE_SUCCESS;
+    xmlBufferPtr xml_buffer = NULL;
+    xmlSaveCtxtPtr save_ctx = NULL;
+    void *new_buffer;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!buffer) return IE_INVAL;
+    zfree(*buffer); 
+    if (!document || !nodeset || !length) return IE_INVAL;
+    *length = 0;
+
+    /* Empty node set results into NULL buffer */
+    if (xmlXPathNodeSetIsEmpty(nodeset)) {
+        goto leave;
+    }
+
+    /* Resuling the document into buffer */
+    xml_buffer = xmlBufferCreate();
+    if (!xml_buffer) {
+        isds_log_message(context, _("Could not create xmlBuffer"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* Last argument 0 means to not format the XML tree */
+    save_ctx = xmlSaveToBuffer(xml_buffer, "UTF-8",
+            XML_SAVE_NO_DECL|XML_SAVE_NO_XHTML);
+    if (!save_ctx) {
+        isds_log_message(context, _("Could not create XML serializer"));
+        err = IE_ERROR;
+        goto leave;
+    }
+   
+    /* Itearate over all nodes */
+    for (int i = 0; i < nodeset->nodeNr; i++) {
+        /* Serialize node.
+         * XXX: xmlNodeDump() appends to xml_buffer. */
+        /*if (-1 ==
+                xmlNodeDump(xml_buffer, document, nodeset->nodeTab[i], 0, 0)) {
+                */
+        /* XXX: According LibXML documentation, this function does not return
+         * meaningfull value yet */
+        xmlSaveTree(save_ctx, nodeset->nodeTab[i]);
+        if (-1 == xmlSaveFlush(save_ctx)) {
+            isds_log_message(context,
+                    _("Could not serialize XML subtree"));
+            err = IE_ERROR;
+            goto leave;
+        }
+    }
+
+    /* XXX: libxml-2.7.4 complains when xmlSaveClose() on immutable buffer
+     * even after xmlSaveFlush(). Thus close it here */
+    xmlSaveClose(save_ctx); save_ctx = NULL;
+
+    /* Store and detach buffer from xml_buffer */
+    *buffer = xml_buffer->content;
+    *length = xml_buffer->use;
+    xmlBufferSetAllocationScheme(xml_buffer, XML_BUFFER_ALLOC_IMMUTABLE);
+
+    /* Shrink buffer */
+    new_buffer = realloc(*buffer, *length);
+    if (new_buffer) *buffer = new_buffer;
+
+leave:
+    if (err) {
+        zfree(*buffer);
+        *length = 0;
+    }
+
+    xmlSaveClose(save_ctx);
     xmlBufferFree(xml_buffer);
     return err;
 }
@@ -5315,15 +5400,14 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
     }
     xpath_ctx->node = result->nodesetval->nodeTab[0];
 
-    /* XXX: We need all childern of isds:dmDm: elements, text nodes, PIs,
-     * CDATA, comments. Is asterisk sufficient? */
-    result = xmlXPathEvalExpression(BAD_CAST "*", xpath_ctx);
-    if (!result) {
-        err = IE_ERROR;
-        goto leave;
-    }
+    /* XXX: Hash is computed from original string represinting isds:dmDm
+     * subtree. That means no encoding, white space, xmlns attributes changes.
+     * In other words, input for hash can be invalid XML stream. */
 
     /* Extract dmDM content as bit stream */
+    /* FIXME: dump_nodeset() shorts empty elements
+     * FIXME: dump_nodeset() replaces non-ASCII attribute values with
+     * entities */
     err = dump_nodeset(context, message_doc, result->nodesetval,
             (void**) &buffer, &length);
     if (err) goto leave;
