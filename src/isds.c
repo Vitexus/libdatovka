@@ -1028,14 +1028,27 @@ static isds_error dump_nodeset(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    /* Last argument 0 means to not format the XML tree */
+    if (xmlSubstituteEntitiesDefault(1)) {
+        isds_log_message(context, _("Could not disable attribute escaping"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* Last argument means:
+     * 0                    to not format the XML tree
+     * XML_SAVE_NO_EMPTY    ISDS does not produce shorten tags */
     save_ctx = xmlSaveToBuffer(xml_buffer, "UTF-8",
-            XML_SAVE_NO_DECL|XML_SAVE_NO_XHTML);
+            XML_SAVE_NO_DECL|XML_SAVE_NO_EMPTY|XML_SAVE_NO_XHTML);
     if (!save_ctx) {
         isds_log_message(context, _("Could not create XML serializer"));
         err = IE_ERROR;
         goto leave;
     }
+    /*if (xmlSaveSetAttrEscape(save_ctx, NULL)) {
+        isds_log_message(context, _("Could not disable attribute escaping"));
+        err = IE_ERROR;
+        goto leave;
+    }*/
+
    
     /* Itearate over all nodes */
     for (int i = 0; i < nodeset->nodeNr; i++) {
