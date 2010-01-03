@@ -51,6 +51,10 @@ _hidden isds_error compute_hash(const void *input, const size_t length,
 
     if ((length != 0 && !input) || !hash) return IE_INVAL;
 
+    isds_log(ILF_SEC, ILL_DEBUG,
+            _("Data hash requested, length=%zu, content:\n%*s\n"
+                "End of data to hash\n"), length, length, input);
+
     /* Select algorithm */
     switch (hash->algorithm) {
         case HASH_ALGORITHM_MD5:        g_algorithm = GCRY_MD_MD5; break;
