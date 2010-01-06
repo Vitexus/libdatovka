@@ -2,9 +2,6 @@
 #include "isds_priv.h"
 #include "utils.h"
 
-/*#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>*/
 #include <string.h>
 #include <expat.h>
 #include <inttypes.h>

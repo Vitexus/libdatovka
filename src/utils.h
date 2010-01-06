@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 /* _hidden macro marks library private symbols. GCC can exclude them from global
  * symbols table */
