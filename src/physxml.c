@@ -1,13 +1,12 @@
 #define _POSIX_SOURCE   /* For strtok_r */
 #include "isds_priv.h"
+#include "physxml.h"
 #include "utils.h"
 
 #include <string.h>
 #include <expat.h>
 #include <inttypes.h>
 
-#define PHYSXML_ELEMENT_SEPARATOR "|"
-#define PHYSXML_NS_SEPARATOR ">"
 #define NS_CHAR_SEPARATOR '>'
 
 struct expat_data {

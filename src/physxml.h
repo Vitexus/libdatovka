@@ -3,6 +3,9 @@
 
 #include "isds.h"
 
+#define PHYSXML_ELEMENT_SEPARATOR "|"
+#define PHYSXML_NS_SEPARATOR ">"
+
 /* Check for expat compile-time configuration */
 isds_error init_expat(void);
 
