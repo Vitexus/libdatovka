@@ -398,6 +398,21 @@ void print_message(const struct isds_message *message) {
 }
 
 
+void compare_hashes(const struct isds_hash *hash1,
+        const struct isds_hash *hash2) {
+    isds_error err;
+
+    printf("Comparing hashes... ");
+    err = isds_hash_cmp(hash1, hash2);
+    if (err == IE_SUCCESS)
+        printf("Hashes equal\n");
+    else if
+        (err == IE_NOTEQUAL) printf("Hashes differ\n");
+    else
+        printf("isds_hash_cmp() failed: %s\n", isds_strerror(err));
+}
+
+
 int mmap_file(const char *file, int *fd, void **buffer, size_t *length) {
     struct stat file_info;
 

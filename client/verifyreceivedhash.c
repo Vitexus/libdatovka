@@ -142,6 +142,8 @@ int main(int argc, char **argv) {
             print_hash(message->envelope->hash);
         }
 
+        /* Compare hashes */
+        compare_hashes(message->envelope->hash, hash);
 
         isds_hash_free(&hash);
         isds_message_free(&message);

@@ -77,15 +77,7 @@ int main(int argc, char **argv) {
         print_hash(message->envelope->hash);
 
         /* Compare hashes */
-        printf("Comparing message hashes\n");
-        err = isds_hash_cmp(old_hash, message->envelope->hash);
-        if (err == IE_SUCCESS)
-            printf("Hashes equal\n");
-        else if
-            (err == IE_NOTEQUAL) printf("Hashes differ\n");
-        else
-            printf("isds_hash_cmp() failed: %s: %s\n",
-                    isds_strerror(err), isds_long_message(ctx));
+        compare_hashes(old_hash, message->envelope->hash);
         
 
         isds_hash_free(&old_hash);
