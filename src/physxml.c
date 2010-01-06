@@ -23,7 +23,7 @@ struct expat_data {
 
 
 /* Check for expat compile-time configuration */
-_hidden isds_error expat_init(void) {
+_hidden isds_error init_expat(void) {
     XML_Expat_Version current;
     const int min_major = 1;
     const int min_minor = 95;

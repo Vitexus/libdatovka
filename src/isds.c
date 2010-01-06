@@ -11,6 +11,7 @@
 #include "validator.h"
 #include "crypto.h"
 #include <gpg-error.h> /* Because of ksba or gpgme */
+#include "physxml.h"
 
 
 /* Free isds_list with all member data.
@@ -231,9 +232,15 @@ isds_error isds_init(void) {
         return IE_ERROR;
     }
 
-
     /* This can _exit() current program. Find not so assertive check. */
     LIBXML_TEST_VERSION;
+
+    /* Check expat */
+    if (init_expat()) {
+        isds_log(ILF_ISDS, ILL_CRIT,
+                _("expat library initialization failed\n"));
+        return IE_ERROR;
+    }
 
     /* Allocate global variables */
 

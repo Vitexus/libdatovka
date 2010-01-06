@@ -4,7 +4,7 @@
 #include "isds.h"
 
 /* Check for expat compile-time configuration */
-isds_error expat_init(void);
+isds_error init_expat(void);
 
 /* Locate element specified by element path in XML stream.
  * TODO: Support other encodings than UTF-8
