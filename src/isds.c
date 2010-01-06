@@ -5369,9 +5369,8 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
     xmlDocPtr message_doc = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
-    char *buffer = 0;
-    /*size_t length;*/
     size_t phys_start, phys_end;
+    char *phys_path = NULL;
     struct isds_hash *new_hash = NULL;
     
 
@@ -5428,13 +5427,8 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
      * In other words, input for hash can be invalid XML stream. */
 
     /* Extract dmDM content as bit stream */
-    /* FIXME: dump_nodeset() shorts empty elements
-     * FIXME: dump_nodeset() replaces non-ASCII attribute values with
-     * entities */
-    /*err = dump_nodeset(context, message_doc, result->nodesetval,
-            (void**) &buffer, &length);*/
     /* FIXME: Signed messages has mangled namespace */
-    char *phys_path = strdup(
+    phys_path = strdup(
             ISDS_NS PHYSXML_NS_SEPARATOR "dmReturnedMessage"
                 PHYSXML_ELEMENT_SEPARATOR
                 ISDS_NS PHYSXML_NS_SEPARATOR "dmDm");
@@ -5447,7 +5441,8 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
     zfree(phys_path);
     if (err) {
         isds_log_message(context,
-                _("Substring with isds:dmDM could not be located"));
+                _("Substring with isds:dmDM could not be located "
+                    "in raw message"));
         goto leave;
     }
 
@@ -5456,14 +5451,13 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
     xmlXPathFreeContext(xpath_ctx); xpath_ctx = NULL;
     xmlFreeDoc(message_doc); message_doc = NULL;
 
-    /* TODO: Compute hash */
+    /* Compute hash */
     new_hash = calloc(1, sizeof(*new_hash));
     if (!new_hash) {
         err = IE_NOMEM;
         goto leave;
     }
     new_hash->algorithm = algorithm;
-    /*err = compute_hash(buffer, length, new_hash);*/
     err = compute_hash(message->raw + phys_start, phys_end - phys_start + 1,
             new_hash);
     if (err) {
@@ -5487,7 +5481,7 @@ leave:
         isds_hash_free(&new_hash);
     }
 
-    free(buffer);
+    free(phys_path);
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
     xmlFreeDoc(message_doc);
