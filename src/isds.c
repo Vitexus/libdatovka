@@ -4993,7 +4993,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
         err = IE_NOMEM;
         goto leave;
     }
-    memcpy((*message)->raw, xml_stream, (*message)->raw_length);
+    memcpy((*message)->raw, xml_stream + phys_start, (*message)->raw_length);
 
 
 leave:
