@@ -509,7 +509,7 @@ static int save_data_to_file(const char *file, const void *data,
     if (!file) return -1;
     if (length > 0 && !data) return -1;
 
-    fd = open(file, O_WRONLY|O_TRUNC|O_CREAT, S_IRWXU|S_IRWXG|S_IRWXO);
+    fd = open(file, O_WRONLY|O_TRUNC|O_CREAT, 0666);
     if (fd == -1) {
         fprintf(stderr, "%s: Could not open file for writing: %s\n",
                 file, strerror(errno));
