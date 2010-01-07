@@ -15,14 +15,14 @@ clean:
 	-rm -f libisds.so $(SONAME) *.o
 
 install: all
-	install -d $(LIBDIR) $(INCLUDEDIR)
-	install -t $(LIBDIR) $(SONAME)
-	ln -s $(SONAME) $(LIBDIR)/libisds.so
-	install -m 644 -t $(INCLUDEDIR) isds.h
+	install -d $(DESTDIR)$(LIBDIR) $(INCLUDEDIR)
+	install -t $(DESTDIR)$(LIBDIR) $(SONAME)
+	ln -s $(SONAME) $(DESTDIR)$(LIBDIR)/libisds.so
+	install -m 644 -t $(DESTDIR)$(INCLUDEDIR) isds.h
 
 uninstall:
-	-rm $(LIBDIR)/$(SONAME) $(LIBDIR)/libisds.so
-	-rm $(INCLUDEDIR)/isds.h
+	-rm $(DESTDIR)$(LIBDIR)/$(SONAME) $(DESTDIR)$(LIBDIR)/libisds.so
+	-rm $(DESTDIR)$(INCLUDEDIR)/isds.h
 
 depend:
 	#makedepend -- $(CFLAGS) -- $(SOURCES)
