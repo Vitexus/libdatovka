@@ -4442,6 +4442,7 @@ isds_error isds_load_signed_delivery_info(struct isds_ctx *context,
     if (err) goto leave;
 
     /* Append raw CMS structure into message */
+    (*message)->raw_type = RAWTYPE_CMS_SIGNED_DELIVERYINFO;
     switch (strategy) {
         case BUFFER_DONT_STORE:
             break;
@@ -4618,6 +4619,7 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
     if (err) goto leave;
 
     /* Append raw CMS structure into message */
+    (*message)->raw_type = RAWTYPE_DELIVERYINFO;
     switch (strategy) {
         case BUFFER_DONT_STORE:
             break;
@@ -5089,6 +5091,8 @@ isds_error isds_load_signed_message(struct isds_ctx *context,
     if (err) goto leave;
 
     /* Append raw CMS structure into message */
+    (*message)->raw_type = (outgoing) ?  RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE :
+        RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE;
     switch (strategy) {
         case BUFFER_DONT_STORE:
             break;
