@@ -15,7 +15,7 @@ clean:
 	-rm -f libisds.so $(SONAME) *.o
 
 install: all
-	install -d $(DESTDIR)$(LIBDIR) $(INCLUDEDIR)
+	install -d $(DESTDIR)$(LIBDIR) $(DESTDIR)$(INCLUDEDIR)
 	install -t $(DESTDIR)$(LIBDIR) $(SONAME)
 	ln -s $(SONAME) $(DESTDIR)$(LIBDIR)/libisds.so
 	install -m 644 -t $(DESTDIR)$(INCLUDEDIR) isds.h
