@@ -124,22 +124,22 @@ static void XMLCALL element_start(void *userData, const XML_Char *name,
     data->depth++;
 
     const XML_Index index = XML_GetCurrentByteIndex(data->parser);
-    /*const int count = XML_GetCurrentByteCount(data->parser);*/
     /* XXX: Because document length is stored as size_t, index always fits
      * size_t. */
     const size_t boundary = index; 
 
-    /*printf("Start: name=%s, depth=%zd, offset=%#jx "
-            "count=%u => boundary=%#zx\n",
-            name, data->depth, (uintmax_t)index, count, boundary); */
+    isds_log(ILF_XML, ILL_DEBUG, _("Start: name=%s, depth=%zd, offset=%#jx "
+            "=> boundary=%#zx\n"),
+            name, data->depth, (uintmax_t)index, boundary);
 
     if ((!data->found) &&
             (data->depth == data->element_depth + 1) &&
             (!strcmp(data->elements[data->element_depth + 1], name))) {
         data->element_depth++;
 
-        /*printf("! Start tag for element `%s' found\n",
-                data->elements[data->element_depth]);*/
+        isds_log(ILF_XML, ILL_DEBUG,
+                _("\tStart tag for element `%s' found\n"),
+                data->elements[data->element_depth]);
         
         if (!data->elements[data->element_depth + 1]) {
             data->found = 1;
@@ -162,21 +162,22 @@ static void XMLCALL element_end(void *userData, const XML_Char *name) {
      * fits size_t. */
     const size_t boundary = index + count - 1; 
 
-    /*printf("End:   name=%s, depth=%zd, offset=%#jx "
-            "count=%u => boundary=%#zx\n",
-            name, data->depth, (uintmax_t)index, count, boundary);*/
+    isds_log(ILF_XML, ILL_DEBUG, _("End:   name=%s, depth=%zd, offset=%#jx "
+            "count=%u => boundary=%#zx\n"),
+            name, data->depth, (uintmax_t)index, count, boundary);
 
     if (data->element_depth == data->depth) {
         if (data->found) {
-            /*printf("! End tag for element `%s' found\n",
-                    data->elements[data->element_depth]);*/
+            isds_log(ILF_XML, ILL_DEBUG,
+                    _("\tEnd tag for element `%s' found\n"),
+                    data->elements[data->element_depth]);
             *data->end = boundary;
 
             /* Here we can stop parser
              * XXX: requires Expat 1.95.8 */
             xerr = XML_StopParser(data->parser, XML_FALSE);
             if (xerr != XML_STATUS_OK) {
-                PANIC(_("Error while stopping parser\n"));
+                PANIC("Error while stopping parser");
             }
 
         }

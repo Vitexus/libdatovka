@@ -5428,8 +5428,6 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
     /* XXX: Hash is computed from original string represinting isds:dmDm
      * subtree. That means no encoding, white space, xmlns attributes changes.
      * In other words, input for hash can be invalid XML stream. */
-
-    /* Extract dmDM content as bit stream */
     phys_path = astrcat(nsuri,
             PHYSXML_NS_SEPARATOR "dmReturnedMessage"
                 PHYSXML_ELEMENT_SEPARATOR

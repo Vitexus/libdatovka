@@ -49,6 +49,7 @@ typedef enum {
     ILF_ISDS = 0x4,
     ILF_FILE = 0x8,
     ILF_SEC  = 0x10,
+    ILF_XML  = 0x20,
     ILF_ALL  = 0xFF
 } isds_log_facility;
 
