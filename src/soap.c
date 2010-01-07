@@ -628,7 +628,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     if (raw_response) {
         *raw_response = http_response;
         *raw_response_length = response_length;
-        raw_response = NULL;
+        http_response = NULL;
     }
 
 
