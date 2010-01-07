@@ -212,6 +212,9 @@ _hidden isds_error find_element_boundary(void *document, size_t length,
     if (!document || !path || !start || !end || length <= 0)
         return IE_INVAL;
 
+    isds_log(ILF_XML, ILL_DEBUG, _("Searching boundary of element: %s\n"),
+            path);
+
     /* Parse XPath */
     user_data.elements = path2elements(path);
     if (!user_data.elements) return IE_NOMEM;

@@ -5428,11 +5428,12 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
     /* XXX: Hash is computed from original string represinting isds:dmDm
      * subtree. That means no encoding, white space, xmlns attributes changes.
      * In other words, input for hash can be invalid XML stream. */
-    phys_path = astrcat(nsuri,
-            PHYSXML_NS_SEPARATOR "dmReturnedMessage"
+    if (-1 == isds_asprintf(&phys_path, "%s%s%s%s",
+            nsuri, PHYSXML_NS_SEPARATOR "MessageDownloadResponse"
+                PHYSXML_ELEMENT_SEPARATOR,
+            nsuri, PHYSXML_NS_SEPARATOR "dmReturnedMessage"
                 PHYSXML_ELEMENT_SEPARATOR
-                ISDS_NS PHYSXML_NS_SEPARATOR "dmDm");
-    if (!phys_path) {
+                ISDS_NS PHYSXML_NS_SEPARATOR "dmDm")) {
         err = IE_NOMEM;
         goto leave;
     }
