@@ -137,14 +137,16 @@ int main(int argc, char **argv) {
         if (!err) {
             printf("isds_verify_message_hash() succeeded: "
                     "message is genuine\n");
+            printf("Computed hash: ");
             print_hash(message->envelope->hash);
         } else if (err == IE_NOTEQUAL) {
             printf("isds_verify_message_hash() failed: message is a fake\n");
+            printf("Computed hash: ");
             print_hash(message->envelope->hash);
+            printf("This should not happen\n");
         } else {
             printf("isds_verify_message_hash() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
-            printf("This should not happen\n");
         }
 
         isds_message_free(&message);
