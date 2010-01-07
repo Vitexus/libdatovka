@@ -4896,9 +4896,13 @@ isds_error isds_get_received_message(struct isds_ctx *context,
 
     isds_error err = IE_SUCCESS;
     xmlDocPtr response = NULL;
+    void *xml_stream = NULL;
+    size_t xml_stream_length;
     xmlChar *code = NULL, *status_message = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
+    char *phys_path = NULL;
+    size_t phys_start, phys_end;
 
     if (!context) return IE_INVALID_CONTEXT;
    
@@ -4908,7 +4912,8 @@ isds_error isds_get_received_message(struct isds_ctx *context,
     /* Do request and check for success */
     err = build_send_check_message_request(context, SERVICE_DM_OPERATIONS,
             BAD_CAST "MessageDownload", message_id,
-            &response, NULL, NULL, &code, &status_message);
+            &response, &xml_stream, &xml_stream_length,
+            &code, &status_message);
     if (err) goto leave;
 
     /* Extract data */
@@ -4955,20 +4960,55 @@ isds_error isds_get_received_message(struct isds_ctx *context,
     err = extract_TReturnedMessage(context, 1, message, xpath_ctx);
     if (err) goto leave;
 
+    /* Locate raw XML blob */
+    phys_path = strdup(
+            SOAP_NS PHYSXML_NS_SEPARATOR "Envelope"
+            PHYSXML_ELEMENT_SEPARATOR
+            SOAP_NS PHYSXML_NS_SEPARATOR "Body"
+            PHYSXML_ELEMENT_SEPARATOR
+            ISDS_NS PHYSXML_NS_SEPARATOR "MessageDownloadResponse"
+    );
+    if (!phys_path) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+    err = find_element_boundary(xml_stream, xml_stream_length,
+            phys_path, &phys_start, &phys_end);
+    zfree(phys_path);
+    if (err) {
+        isds_log_message(context,
+                _("Substring with isds:MessageDownloadResponse element "
+                    "could not be located in raw SOAP message"));
+        goto leave;
+    }
      /* Save XML blob */
-    err = serialize_subtree(context, xpath_ctx->node, &(*message)->raw,
-            &(*message)->raw_length);
+    /*err = serialize_subtree(context, xpath_ctx->node, &(*message)->raw,
+            &(*message)->raw_length);*/
+    /* TODO: Store name space declarations from ancestors */
+    /* TODO: Handle non-UTF-8 encoding (XML prologue) */
+    (*message)->raw_type = RAWTYPE_INCOMING_MESSAGE;
+    (*message)->raw_length = phys_end - phys_start + 1;
+    (*message)->raw = malloc((*message)->raw_length);
+    if (!(*message)->raw) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+    memcpy((*message)->raw, xml_stream, (*message)->raw_length);
+
 
 leave:
     if (err) {
         isds_message_free(message);
     }
 
+    free(phys_path);
+
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
 
     free(code);
     free(status_message);
+    free(xml_stream);
     xmlFreeDoc(response);
 
     if (!err)
