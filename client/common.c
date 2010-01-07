@@ -75,6 +75,31 @@ void print_hash(const struct isds_hash *hash) {
 }
 
 
+void print_raw_type(isds_raw_type type) {
+    switch(type) {
+        case RAWTYPE_INCOMING_MESSAGE:
+            printf("INCOMING_MESSAGE\n"); break;
+        case RAWTYPE_PLAIN_SIGNED_INCOMING_MESSAGE:
+            printf("PLAIN_SIGNED_INCOMING_MESSAGE\n"); break;
+        case RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE:
+            printf("CMS_SIGNED_INCOMING_MESSAGE\n"); break;
+        case RAWTYPE_PLAIN_SIGNED_OUTGOING_MESSAGE:
+            printf("PLAIN_SIGNED_OUTGOING_MESSAGE\n"); break;
+        case RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE:
+            printf("CMS_SIGNED_OUTGOING_MESSAGE\n"); break;
+        case RAWTYPE_DELIVERYINFO:
+            printf("DELIVERYINFO\n"); break;
+        case RAWTYPE_PLAIN_SIGNED_DELIVERYINFO:
+            printf("PLAIN_SIGNED_DELIVERYINFO\n"); break;
+        case RAWTYPE_CMS_SIGNED_DELIVERYINFO:
+            printf("CMS_SIGNED_DELIVERYINFO\n"); break;
+        default:
+            printf("<Unknown raw type %d> ", type);
+            break;
+    }
+}
+
+
 void print_bool(const _Bool *boolean) {
     printf("%s\n", (!boolean) ? "NULL" : ((*boolean)? "true" : "false") );
 }
@@ -391,6 +416,8 @@ void print_message(const struct isds_message *message) {
 
     printf("\traw = %p\n", message->raw);
     printf("\traw_length = %zu\n", message->raw_length);
+    printf("\traw_type = ");
+    print_raw_type(message->raw_type);
     print_envelope(message->envelope);
     print_documents(message->documents);
 

@@ -4837,6 +4837,7 @@ isds_error isds_load_received_message(struct isds_ctx *context,
     if (err) goto leave;
 
     /* Append XML stream into message */
+    (*message)->raw_type = RAWTYPE_INCOMING_MESSAGE; 
     switch (strategy) {
         case BUFFER_DONT_STORE:
             break;
@@ -4857,7 +4858,6 @@ isds_error isds_load_received_message(struct isds_ctx *context,
             err = IE_ENUM;
             goto leave;
     }
-
 
 leave:
     if (err) {
@@ -5366,9 +5366,7 @@ isds_error isds_mark_message_read(struct isds_ctx *context,
 isds_error isds_compute_message_hash(struct isds_ctx *context,
         struct isds_message *message, const isds_hash_algorithm algorithm) {
     isds_error err = IE_SUCCESS;
-    xmlDocPtr message_doc = NULL;
-    xmlXPathContextPtr xpath_ctx = NULL;
-    xmlXPathObjectPtr result = NULL;
+    const char *nsuri;
     size_t phys_start, phys_end;
     char *phys_path = NULL;
     struct isds_hash *new_hash = NULL;
@@ -5379,48 +5377,28 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
     
     if (!message->raw) {
         isds_log_message(context,
-                _("Message does not carry raw XML representation"));
+                _("Message does not carry raw representation"));
         return IE_INVAL;
     }
 
-    /* Parse raw message */
-    message_doc = xmlParseMemory(message->raw, message->raw_length);
-    if (!message_doc) {
-        isds_log_message(context,
-                _("Message does not carry well-formed XML representation"));
-        err = IE_XML;
-        goto leave;
+    switch (message->raw_type) {
+        case RAWTYPE_INCOMING_MESSAGE:
+            nsuri = ISDS_NS;
+            break;
+        case RAWTYPE_PLAIN_SIGNED_INCOMING_MESSAGE:
+        case RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE:
+            nsuri = SISDS_INCOMING_NS;
+            break;
+        case RAWTYPE_PLAIN_SIGNED_OUTGOING_MESSAGE:
+        case RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE:
+            nsuri = SISDS_OUTGOING_NS;
+            break;
+        default:
+            isds_log_message(context, _("Bad raw representation type"));
+            return IE_INVAL;
+            break;
     }
 
-    /* Find dmDM element */
-    xpath_ctx = xmlXPathNewContext(message_doc);
-    if (!xpath_ctx) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    result = xmlXPathEvalExpression(
-            BAD_CAST "/isds:dmReturnedMessage/isds:dmDm", xpath_ctx);
-    if (!result) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-        isds_log_message(context,
-                _("Raw message does not contain isds:dmDm element"));
-        err = IE_XML;
-        goto leave;
-    }
-    if (result->nodesetval->nodeNr > 1) {
-        isds_log_message(context,
-                _("Raw message contains more isds:dmDm elements"));
-        err = IE_XML;
-        goto leave;
-    }
-    xpath_ctx->node = result->nodesetval->nodeTab[0];
 
     /* XXX: Hash is computed from original string represinting isds:dmDm
      * subtree. That means no encoding, white space, xmlns attributes changes.
@@ -5428,8 +5406,8 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
 
     /* Extract dmDM content as bit stream */
     /* FIXME: Signed messages has mangled namespace and are stored in CMS */
-    phys_path = strdup(
-            ISDS_NS PHYSXML_NS_SEPARATOR "dmReturnedMessage"
+    phys_path = astrcat(nsuri,
+            PHYSXML_NS_SEPARATOR "dmReturnedMessage"
                 PHYSXML_ELEMENT_SEPARATOR
                 ISDS_NS PHYSXML_NS_SEPARATOR "dmDm");
     if (!phys_path) {
@@ -5446,10 +5424,6 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
         goto leave;
     }
 
-    /* Free memory */
-    xmlXPathFreeObject(result); result = NULL;
-    xmlXPathFreeContext(xpath_ctx); xpath_ctx = NULL;
-    xmlFreeDoc(message_doc); message_doc = NULL;
 
     /* Compute hash */
     new_hash = calloc(1, sizeof(*new_hash));
@@ -5482,9 +5456,6 @@ leave:
     }
 
     free(phys_path);
-    xmlXPathFreeObject(result);
-    xmlXPathFreeContext(xpath_ctx);
-    xmlFreeDoc(message_doc);
     return err;
 }
 
