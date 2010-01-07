@@ -117,20 +117,6 @@ int main(int argc, char **argv) {
         }
 
 
-        /* Download last message hash */
-        struct isds_hash *hash = NULL;
-
-        printf("Getting last received message hash with ID: %s\n",
-                last_message_id);
-        err = isds_download_message_hash(ctx, last_message_id, &hash);
-        if (err)
-            printf("isds_download_message_hash() failed: %s: %s\n",
-                    isds_strerror(err), isds_long_message(ctx));
-        else {
-            printf("isds_download_message_hash() succeeded: ");
-            print_hash(hash);
-        }
-
         /* Verify message hash */
         printf("Verifying last received message hash against server\n");
         err = isds_verify_message_hash(ctx, message);
@@ -148,6 +134,38 @@ int main(int argc, char **argv) {
             printf("isds_verify_message_hash() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
         }
+
+
+        /* Download last signed message */
+        printf("Getting last signed received message with ID: %s\n",
+                last_message_id);
+        err = isds_get_signed_received_message(ctx, last_message_id, &message);
+        if (err)
+            printf("isds_get_signed_received_message() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        else {
+            printf("isds_get_signed_received_message() succeeded:\n");
+            printf("\tMessage should have the same content ;)\n");
+        }
+
+        /* Verify signed message hash */
+        printf("Verifying last signed received message hash against server\n");
+        err = isds_verify_message_hash(ctx, message);
+        if (!err) {
+            printf("isds_verify_message_hash() succeeded: "
+                    "message is genuine\n");
+            printf("Computed hash: ");
+            print_hash(message->envelope->hash);
+        } else if (err == IE_NOTEQUAL) {
+            printf("isds_verify_message_hash() failed: message is a fake\n");
+            printf("Computed hash: ");
+            print_hash(message->envelope->hash);
+            printf("This should not happen\n");
+        } else {
+            printf("isds_verify_message_hash() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        }
+
 
         isds_message_free(&message);
         free(last_message_id);
