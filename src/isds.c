@@ -5390,6 +5390,8 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
     switch (message->raw_type) {
         case RAWTYPE_INCOMING_MESSAGE:
             nsuri = ISDS_NS;
+            xml_stream = message->raw;
+            xml_stream_length = message->raw_length;
             break;
 
         case RAWTYPE_PLAIN_SIGNED_INCOMING_MESSAGE:
