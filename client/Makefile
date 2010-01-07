@@ -60,7 +60,7 @@ getreceivedsigneddelivery: getreceivedsigneddelivery.o common.o
 
 
 clean:
-	-rm -f $(BINS) *.o
+	-rm -f $(BINS) *.o output
 
 test-%: %
 	LD_LIBRARY_PATH=$(LIBDIR) ./$<

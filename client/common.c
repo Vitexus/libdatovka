@@ -499,3 +499,48 @@ int munmap_file(int fd, void *buffer, size_t length) {
 
     return err;
 }
+
+
+static int save_data_to_file(const char *file, const void *data,
+        const size_t length) {
+    int fd;
+    ssize_t written, left = length;
+    
+    if (!file) return -1;
+    if (length > 0 && !data) return -1;
+
+    fd = open(file, O_WRONLY|O_TRUNC|O_CREAT, S_IRWXU|S_IRWXG|S_IRWXO);
+    if (fd == -1) {
+        fprintf(stderr, "%s: Could not open file for writing: %s\n",
+                file, strerror(errno));
+        return -1;
+    }
+
+    printf("Writing %zu bytes to file `%s'...\n", length, file);
+    while (left) {
+        written = write(fd, data + length - left, left);
+        if (written == -1) {
+            fprintf(stderr, "%s: Could not save file: %s\n",
+                    file, strerror(errno));
+            close(fd);
+            return -1;
+        }
+        left-=written;
+    }
+
+    if (-1 == close(fd)) {
+        fprintf(stderr, "%s: Closing file failed: %s\n",
+                file, strerror(errno));
+        return -1;
+    }
+
+    printf("Done.\n");
+    return 0;
+}
+
+
+int save_data(const char *message, const void *data, const size_t length) {
+    if (message)
+        printf("%s\n", message);
+    return save_data_to_file("output", data, length);
+}
