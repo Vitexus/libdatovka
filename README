@@ -16,10 +16,10 @@ details.
 
 
 This code is written in ISO99 C language and requires libxml2, cURL,
-libgcrypt, GPGME, and KSBA libraries.
+libgcrypt, GPGME, KSBA and >=expat-1.95.8 libraries.
 
 It has been tested on GNU/Linux (Linux 2.6.32, glibc-2.9) with libxml2-2.7.4,
-curl-7.19.6, libgcrypt-1.4.4, gpgme-1.2.0, and ksba-1.0.7.
+curl-7.19.6, libgcrypt-1.4.4, gpgme-1.2.0, ksba-1.0.7, and expat-2.0.1.
 
 Latest code can be obtained from GIT repository
 <http://repo.or.cz/w/libisds.git>.
