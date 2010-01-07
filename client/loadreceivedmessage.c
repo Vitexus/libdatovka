@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
                     isds_strerror(err), isds_long_message(ctx));
         else {
             printf("isds_load_received_message() succeeded:\n");
-            print_envelope(message->envelope);
+            print_message(message);
         }
 
         isds_message_free(&message);

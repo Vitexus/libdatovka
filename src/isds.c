@@ -4819,23 +4819,24 @@ isds_error isds_load_received_message(struct isds_ctx *context,
         goto leave;
     }
     result = xmlXPathEvalExpression(
-            BAD_CAST "/isds:dmReturnedMessage", xpath_ctx);
+            BAD_CAST "/isds:MessageDownloadResponse/isds:dmReturnedMessage",
+            xpath_ctx);
     if (!result) {
         err = IE_ERROR;
         goto leave;
     }
-    /* Bad root element */
+    /* Missing dmReturnedMessage */
     if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
         isds_printf_message(context,
-                _("XML document is not isds:dmReturnedMessage document"));
+                _("XML document does not contain isds:dmReturnedMessage "
+                    "element"));
         err = IE_ISDS;
         goto leave;
     }
-    /* More root elements. This should never happen. */
+    /* More elements. This should never happen. */
     if (result->nodesetval->nodeNr > 1) {
         isds_printf_message(context,
-                _("XML document has more "
-                    "root isds:dmReturnedMessage elements"));
+                _("XML document has more isds:dmReturnedMessage elements"));
         err = IE_ISDS;
         goto leave;
     }
