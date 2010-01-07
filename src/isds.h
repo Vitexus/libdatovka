@@ -378,7 +378,9 @@ struct isds_message {
                                        from the ISDS. You can use it to store
                                        local copy. This is binary buffer. */
     size_t raw_length;              /* Lenght of raw message in bytes */
-    isds_raw_type raw_type;         /* Content type of raw representation */
+    isds_raw_type raw_type;         /* Content type of raw representation
+                                       Meaningfull only with non-NULL raw
+                                       member */
     struct isds_envelope *envelope; /* Message envelope */
     struct isds_list *documents;    /* List of isds_document's.
                                        Valid message must contain exactly one
