@@ -5427,7 +5427,7 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
      * In other words, input for hash can be invalid XML stream. */
 
     /* Extract dmDM content as bit stream */
-    /* FIXME: Signed messages has mangled namespace */
+    /* FIXME: Signed messages has mangled namespace and are stored in CMS */
     phys_path = strdup(
             ISDS_NS PHYSXML_NS_SEPARATOR "dmReturnedMessage"
                 PHYSXML_ELEMENT_SEPARATOR

@@ -355,12 +355,30 @@ struct isds_document {
                                        Optional. */
 };
 
+/* Raw message representation content type.
+ * This is necessary to distinguish between different representations without
+ * expensive repated detection.
+ * Infix explanation:
+ *  PLAIN_SIGNED  data are XML with namespace mangled to signed alternative
+ *  CMS_SIGNED    data are XML with signed namespace encapsulated in CMS */
+typedef enum {
+    RAWTYPE_INCOMING_MESSAGE,
+    RAWTYPE_PLAIN_SIGNED_INCOMING_MESSAGE,
+    RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE,
+    RAWTYPE_PLAIN_SIGNED_OUTGOING_MESSAGE,
+    RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE,
+    RAWTYPE_DELIVERYINFO,
+    RAWTYPE_PLAIN_SIGNED_DELIVERYINFO,
+    RAWTYPE_CMS_SIGNED_DELIVERYINFO
+} isds_raw_type;
+
 /* Message */
 struct isds_message {
     void *raw;                      /* Raw message in XML format as send to or
                                        from the ISDS. You can use it to store
                                        local copy. This is binary buffer. */
     size_t raw_length;              /* Lenght of raw message in bytes */
+    isds_raw_type raw_type;         /* Content type of raw representation */
     struct isds_envelope *envelope; /* Message envelope */
     struct isds_list *documents;    /* List of isds_document's.
                                        Valid message must contain exactly one
