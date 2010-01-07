@@ -5371,6 +5371,8 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
         struct isds_message *message, const isds_hash_algorithm algorithm) {
     isds_error err = IE_SUCCESS;
     const char *nsuri;
+    void *xml_stream = NULL;
+    size_t xml_stream_length;
     size_t phys_start, phys_end;
     char *phys_path = NULL;
     struct isds_hash *new_hash = NULL;
@@ -5378,7 +5380,7 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!message) return IE_INVAL;
-    
+   
     if (!message->raw) {
         isds_log_message(context,
                 _("Message does not carry raw representation"));
@@ -5389,14 +5391,33 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
         case RAWTYPE_INCOMING_MESSAGE:
             nsuri = ISDS_NS;
             break;
+
         case RAWTYPE_PLAIN_SIGNED_INCOMING_MESSAGE:
+            nsuri = SISDS_INCOMING_NS;
+            xml_stream = message->raw;
+            xml_stream_length = message->raw_length;
+            break;
+
         case RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE:
             nsuri = SISDS_INCOMING_NS;
+            err = extract_cms_data(context, message->raw, message->raw_length,
+                    &xml_stream, &xml_stream_length);
+            if (err) goto leave;
             break;
+
         case RAWTYPE_PLAIN_SIGNED_OUTGOING_MESSAGE:
+            nsuri = SISDS_OUTGOING_NS;
+            xml_stream = message->raw;
+            xml_stream_length = message->raw_length;
+            break;
+
         case RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE:
             nsuri = SISDS_OUTGOING_NS;
+            err = extract_cms_data(context, message->raw, message->raw_length,
+                    &xml_stream, &xml_stream_length);
+            if (err) goto leave;
             break;
+
         default:
             isds_log_message(context, _("Bad raw representation type"));
             return IE_INVAL;
@@ -5409,7 +5430,6 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
      * In other words, input for hash can be invalid XML stream. */
 
     /* Extract dmDM content as bit stream */
-    /* FIXME: Signed messages has mangled namespace and are stored in CMS */
     phys_path = astrcat(nsuri,
             PHYSXML_NS_SEPARATOR "dmReturnedMessage"
                 PHYSXML_ELEMENT_SEPARATOR
@@ -5418,12 +5438,12 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
         err = IE_NOMEM;
         goto leave;
     }
-    err = find_element_boundary(message->raw, message->raw_length,
+    err = find_element_boundary(xml_stream, xml_stream_length,
             phys_path, &phys_start, &phys_end);
     zfree(phys_path);
     if (err) {
         isds_log_message(context,
-                _("Substring with isds:dmDM could not be located "
+                _("Substring with isds:dmDM element could not be located "
                     "in raw message"));
         goto leave;
     }
@@ -5436,7 +5456,7 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
         goto leave;
     }
     new_hash->algorithm = algorithm;
-    err = compute_hash(message->raw + phys_start, phys_end - phys_start + 1,
+    err = compute_hash(xml_stream + phys_start, phys_end - phys_start + 1,
             new_hash);
     if (err) {
         isds_log_message(context, _("Could not compute message hash"));
@@ -5460,6 +5480,7 @@ leave:
     }
 
     free(phys_path);
+    if (xml_stream != message->raw) free(xml_stream);
     return err;
 }
 
