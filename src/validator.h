@@ -27,16 +27,22 @@ isds_error isds_response_status(struct isds_ctx *context,
         xmlChar **code, xmlChar **message, xmlChar **refnumber);
 
 /* Send @request to ISDS and return ISDS @response as XML document.
- * The returned @response is guaranted to be valid ISDS message as defined in
- * ISDS XML Schemata.
+ * Be ware the @response can be invalid (in sense of XML Schema).
+ * (And it is because current ISDS server does not follow its own
+ * specification. Please appology my government, its herd of imcompetent
+ * creatures.)
  * @context is ISDS session context,
  * @service identifies ISDS web service
  * @request is tree with ISDS message, can be NULL
  * @response is automatically allocated response from server as XML Document
- * In case of error, @response will be dealocated.
+ * @raw_response is automatically allocated bitstream with response body. Use
+ * NULL if you don't care
+ * @raw_response_length is size of @raw_response in bytes
+ * In case of error, @response and @raw_response will be dealocated.
  * */
 isds_error isds(struct isds_ctx *context, const isds_service service,
-        const xmlNodePtr request, xmlDocPtr *response);
+        const xmlNodePtr request, xmlDocPtr *response,
+        void **raw_response, size_t *raw_response_length);
 
 /* Walk through list of isds_documents and check for their types and
  * references.

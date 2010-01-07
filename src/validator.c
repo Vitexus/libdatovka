@@ -133,16 +133,21 @@ leave:
  * @service identifies ISDS web service
  * @request is tree with ISDS message, can be NULL
  * @response is automatically allocated response from server as XML Document
- * In case of error, @response will be dealocated.
+ * @raw_response is automatically allocated bitstream with response body. Use
+ * NULL if you don't care
+ * @raw_response_length is size of @raw_response in bytes
+ * In case of error, @response and @raw_response will be dealocated.
  * */
 _hidden isds_error isds(struct isds_ctx *context, const isds_service service,
-        const xmlNodePtr request, xmlDocPtr *response) {
+        const xmlNodePtr request, xmlDocPtr *response,
+        void **raw_response, size_t *raw_response_length) {
     isds_error err = IE_SUCCESS;
     xmlNodePtr response_body = NULL, isds_node;
     char *file = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!response) return IE_INVAL;
+    if (!raw_response_length && raw_response) return IE_INVAL;
 
     switch (service) {
         case SERVICE_DM_OPERATIONS:     file = "dz"; break;
@@ -152,7 +157,8 @@ _hidden isds_error isds(struct isds_ctx *context, const isds_service service,
         default: return (IE_INVAL);
     }
 
-    err = soap(context, file, request, &response_body);
+    err = soap(context, file, request, &response_body,
+            raw_response, raw_response_length);
 
     if (err) goto leave;
 
@@ -196,6 +202,7 @@ _hidden isds_error isds(struct isds_ctx *context, const isds_service service,
 leave:
     if (err) {
         xmlFreeDoc(*response);
+        if (raw_response) zfree(*raw_response);
     }
     xmlFreeNodeList(response_body);
 

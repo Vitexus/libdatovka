@@ -348,10 +348,14 @@ leave:
  * @reponse is automatically allocated() node set with SOAP response body.
  * You must xmlFreeNodeList() it. This is literal body, empty (NULL), one node
  * or more nodes can be returned.
+ * @raw_response is automatically allocated bitstream with response body. Use
+ * NULL if you don't care
+ * @raw_response_length is size of @raw_response in bytes
  * In case of error the response will be deallocated automatically.
  * Side effect: message buffer */
 _hidden isds_error soap(struct isds_ctx *context, const char *file,
-        const xmlNodePtr request, xmlNodePtr *response) {
+        const xmlNodePtr request, xmlNodePtr *response,
+        void **raw_response, size_t *raw_response_length) {
 
     isds_error err = IE_SUCCESS;
     char *url = NULL;
@@ -373,9 +377,11 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!response) return IE_INVAL;
+    if (!raw_response_length && raw_response) return IE_INVAL;
 
     xmlFreeNodeList(*response);
     *response = NULL;
+    if (raw_response) *raw_response = NULL;
 
     url = astrcat(context->url, file);
     if (!url) return IE_NOMEM;
@@ -406,7 +412,8 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     request_soap_body = xmlNewChild(request_soap_envelope, NULL,
             BAD_CAST "Body", NULL);
     if (!request_soap_body) {
-        isds_log_message(context, _("Could not add Body to SOAP request envelope"));
+        isds_log_message(context,
+                _("Could not add Body to SOAP request envelope"));
         err = IE_ERROR;
         goto leave;
     }
@@ -425,7 +432,8 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         if (!xmlAddChildList(request_soap_body, request_copy)) {
             xmlFreeNodeList(request_copy);
             isds_log_message(context,
-                    _("Could not add request content to SOAP request envelope"));
+                    _("Could not add request content to SOAP "
+                        "request envelope"));
             err = IE_ERROR;
             goto leave;
         }
@@ -615,7 +623,13 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
             goto leave;
         }
     } else *response = NULL;
-    
+
+    /* Save raw response */
+    if (raw_response) {
+        *raw_response = http_response;
+        *raw_response_length = response_length;
+        raw_response = NULL;
+    }
 
 
 leave:

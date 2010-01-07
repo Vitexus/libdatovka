@@ -629,7 +629,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
             username, url);
 
     /* Send login request */
-    soap_err = soap(context, "dz", request, &response);
+    soap_err = soap(context, "dz", request, &response, NULL, NULL);
    
     /* Remove credentials */
     discard_credentials(context);
@@ -710,7 +710,7 @@ isds_error isds_ping(struct isds_ctx *context) {
     isds_log(ILF_ISDS, ILL_DEBUG, _("Pinging ISDS server\n"));
 
     /* Sent dummy request */
-    soap_err = soap(context, "dz", request, &response);
+    soap_err = soap(context, "dz", request, &response, NULL, NULL);
    
     /* Destroy login request */
     xmlFreeNode(request);
@@ -773,7 +773,7 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending bogus request to ISDS\n"));
 
     /* Sent bogus request */
-    err = isds(context, SERVICE_DM_OPERATIONS, request, &response);
+    err = isds(context, SERVICE_DM_OPERATIONS, request, &response, NULL, NULL);
    
     /* Destroy request */
     xmlFreeNode(request);
@@ -2835,7 +2835,8 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
             _("Sending GetOwnerInfoFromLogin request to ISDS\n"));
 
     /* Sent request */
-    err = isds(context, SERVICE_DB_SUPPLEMENTARY, request, &response);
+    err = isds(context, SERVICE_DB_SUPPLEMENTARY, request, &response,
+            NULL, NULL);
    
     /* Destroy request */
     xmlFreeNode(request);
@@ -3061,7 +3062,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending FindDataBox request to ISDS\n"));
 
     /* Sent request */
-    err = isds(context, SERVICE_DB_SEARCH, request, &response);
+    err = isds(context, SERVICE_DB_SEARCH, request, &response, NULL, NULL);
    
     /* Destroy request */
     xmlFreeNode(request); request = NULL;
@@ -3245,7 +3246,7 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending CheckDataBox request to ISDS\n"));
 
     /* Sent request */
-    err = isds(context, SERVICE_DB_SEARCH, request, &response);
+    err = isds(context, SERVICE_DB_SEARCH, request, &response, NULL, NULL);
    
     /* Destroy request */
     xmlFreeNode(request);
@@ -3528,7 +3529,7 @@ isds_error isds_send_message(struct isds_ctx *context,
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending CreateMessage request to ISDS\n"));
 
     /* Sent request */
-    err = isds(context, SERVICE_DM_OPERATIONS, request, &response);
+    err = isds(context, SERVICE_DM_OPERATIONS, request, &response, NULL, NULL);
    
     /* Dont' destroy request, we want to privode it to application later */
 
@@ -3800,7 +3801,7 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
             );
 
     /* Sent request */
-    err = isds(context, SERVICE_DM_INFO, request, &response);
+    err = isds(context, SERVICE_DM_INFO, request, &response, NULL, NULL);
     xmlFreeNode(request); request = NULL;
     
     if (err) {
@@ -4082,7 +4083,7 @@ static isds_error build_send_check_message_request(struct isds_ctx *context,
                 service_name_locale, message_id_locale);
 
     /* Send request */
-    err = isds(context, service, request, response);
+    err = isds(context, service, request, response, NULL, NULL);
     xmlFreeNode(request); request = NULL;
     
     if (err) {
