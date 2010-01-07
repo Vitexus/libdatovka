@@ -4020,6 +4020,9 @@ isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
  * @service_name is name of SERVICE_DM_OPERATIONS
  * @message_id is message ID to send as service argument to ISDS
  * @response is server SOAP body response as XML document
+ * @raw_response is automatically reallocated bitstream with response body. Use
+ * NULL if you don't care
+ * @raw_response_length is size of @raw_response in bytes
  * @code is ISDS status code
  * @status_message is ISDS status message
  * @return error coded from lower layer, context message will be set up
@@ -4027,7 +4030,8 @@ isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
 static isds_error build_send_check_message_request(struct isds_ctx *context,
         const isds_service service, const xmlChar *service_name,
         const char *message_id,
-        xmlDocPtr *response, xmlChar **code, xmlChar **status_message) {
+        xmlDocPtr *response, void **raw_response, size_t *raw_response_length,
+        xmlChar **code, xmlChar **status_message) {
 
     isds_error err = IE_SUCCESS;
     char *service_name_locale = NULL, *message_id_locale = NULL;
@@ -4037,9 +4041,11 @@ static isds_error build_send_check_message_request(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     if (!service_name || !message_id) return IE_INVAL;
     if (!response || !code || !status_message) return IE_INVAL;
+    if (!raw_response_length && raw_response) return IE_INVAL;
 
     /* Free output argument */
-    xmlFreeDoc(*response);
+    xmlFreeDoc(*response); *response = NULL;
+    if (raw_response) zfree(*raw_response);
     free(*code);
     free(*status_message);
 
@@ -4083,7 +4089,8 @@ static isds_error build_send_check_message_request(struct isds_ctx *context,
                 service_name_locale, message_id_locale);
 
     /* Send request */
-    err = isds(context, service, request, response, NULL, NULL);
+    err = isds(context, service, request, response,
+            raw_response, raw_response_length);
     xmlFreeNode(request); request = NULL;
     
     if (err) {
@@ -4264,7 +4271,7 @@ isds_error isds_get_received_envelope(struct isds_ctx *context,
     /* Do request and check for success */
     err = build_send_check_message_request(context, SERVICE_DM_INFO,
             BAD_CAST "MessageEnvelopeDownload", message_id,
-            &response, &code, &status_message);
+            &response, NULL, NULL, &code, &status_message);
     if (err) goto leave;
 
     /* Extract data */
@@ -4509,7 +4516,7 @@ isds_error isds_get_signed_delivery_info(struct isds_ctx *context,
     /* Do request and check for success */
     err = build_send_check_message_request(context, SERVICE_DM_INFO,
             BAD_CAST "GetSignedDeliveryInfo", message_id,
-            &response, &code, &status_message);
+            &response, NULL, NULL, &code, &status_message);
     if (err) goto leave;
 
     /* Find signed delivery info, extract it into raw and maybe free
@@ -4686,7 +4693,7 @@ isds_error isds_get_delivery_info(struct isds_ctx *context,
     /* Do request and check for success */
     err = build_send_check_message_request(context, SERVICE_DM_INFO,
             BAD_CAST "GetDeliveryInfo", message_id,
-            &response, &code, &status_message);
+            &response, NULL, NULL, &code, &status_message);
     if (err) goto leave;
 
     /* Extract data */
@@ -4901,7 +4908,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
     /* Do request and check for success */
     err = build_send_check_message_request(context, SERVICE_DM_OPERATIONS,
             BAD_CAST "MessageDownload", message_id,
-            &response, &code, &status_message);
+            &response, NULL, NULL, &code, &status_message);
     if (err) goto leave;
 
     /* Extract data */
@@ -5162,7 +5169,7 @@ _hidden isds_error isds_get_signed_message(struct isds_ctx *context,
     err = build_send_check_message_request(context, SERVICE_DM_OPERATIONS,
             (outgoing) ? BAD_CAST "SignedSentMessageDownload" :
                 BAD_CAST "SignedMessageDownload",
-            message_id, &response, &code, &status_message);
+            message_id, &response, NULL, NULL, &code, &status_message);
     if (err) goto leave;
 
     /* Find signed message, extract it into raw and maybe free
@@ -5251,7 +5258,7 @@ isds_error isds_download_message_hash(struct isds_ctx *context,
 
     err = build_send_check_message_request(context, SERVICE_DM_INFO,
             BAD_CAST "VerifyMessage", message_id,
-            &response, &code, &status_message);
+            &response, NULL, NULL, &code, &status_message);
     if (err) goto leave;
 
 
@@ -5335,7 +5342,7 @@ isds_error isds_mark_message_read(struct isds_ctx *context,
     /* Do request and check for success */
     err = build_send_check_message_request(context, SERVICE_DM_INFO,
             BAD_CAST "MarkMessageAsDownloaded", message_id,
-            &response, &code, &status_message);
+            &response, NULL, NULL, &code, &status_message);
 
     free(code);
     free(status_message);
