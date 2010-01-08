@@ -27,7 +27,7 @@
     Use gettext and define _()
     Solve UTF-8 vs. locale-encoded logging schism
 * Implement all necessary web services
-    VerifyMessage
+    Services for requesting user add/remove/change
 * Test message is system generated
 * Make high logic checks optional
 * Validate XML trees (optional)
