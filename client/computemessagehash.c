@@ -53,42 +53,36 @@ int main(int argc, char **argv) {
         else {
             printf("isds_load_received_message() succeeded:\n");
             print_message(message);
+
+            /* Detach original hash */
+            old_hash = message->envelope->hash;
+            message->envelope->hash = NULL;
+
+            /* Recalculate hash */
+            printf("Calculating message hash\n");
+            err = isds_compute_message_hash(ctx, message, old_hash->algorithm);
+            if (err) 
+                printf("isds_compute_message_hash() failed: %s: %s\n",
+                        isds_strerror(err), isds_long_message(ctx));
+            else {
+                printf("isds_compute_message_hash() succeeded:\n");
+                print_message(message);
+
+                printf("Stored hash   = ");
+                print_hash(old_hash);
+
+                printf("Computed hash = ");
+                print_hash(message->envelope->hash);
+
+                /* Compare hashes */
+                compare_hashes(old_hash, message->envelope->hash);
+            }
+
+            isds_hash_free(&old_hash);
         }
 
-        /* Detach original hash */
-        old_hash = message->envelope->hash;
-        message->envelope->hash = NULL;
-
-        /* Recalculate hash */
-        printf("Calculating message hash\n");
-        err = isds_compute_message_hash(ctx, message, old_hash->algorithm);
-        if (err) 
-            printf("isds_compute_message_hash() failed: %s: %s\n",
-                    isds_strerror(err), isds_long_message(ctx));
-        else {
-            printf("isds_compute_message_hash() succeeded:\n");
-            print_message(message);
-        }
-
-        printf("Stored hash   = ");
-        print_hash(old_hash);
-
-        printf("Computed hash = ");
-        print_hash(message->envelope->hash);
-
-        /* Compare hashes */
-        compare_hashes(old_hash, message->envelope->hash);
-        
-
-        isds_hash_free(&old_hash);
         isds_message_free(&message);
         munmap_file(fd, buffer, length);
-    }
-
-
-    err = isds_logout(ctx);
-    if (err) {
-        printf("isds_logout() failed: %s\n", isds_strerror(err));
     }
 
 
