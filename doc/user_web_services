@@ -17,7 +17,7 @@ SOAP web services defined in: dm_operations.wsdl, dm_info.wsdl, db_search.wsdl
 
 Data types: dmBaseTypes.xsd (Appendix 1)
 
-Documentation: DataMessage_ws.pdf, DBSeatch_ws.pdf (Appendix 2)
+Documentation: DataMessage_ws.pdf, DBSearch_ws.pdf (Appendix 2)
 
 List of SOAP requests follows. Those marked with asterisk DOES NOT MARK
 incoming messages as delivered.
@@ -31,6 +31,8 @@ Constraints: Client must be autenticated in Access Manager
 
 CreateMessage (*)
     Create and send a message
+CreateMultipleMessage (*)
+    Create and send a message to multiple recipients
 MessageDownload
     Download incoming message
 SignedMessageDownload
