@@ -1,7 +1,7 @@
 Log in specification
 =====================
 
-Source: Provozní řád ISDS, version 2009-30-10, Pages 10–12
+Source: Provozní řád ISDS, version 2009-30-10, Pages 10–12, 15–16
 Source: Vyhláška o stanovení podrobností užívání a provozování ISDS (194/2009
     Coll.)
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
@@ -44,3 +44,6 @@ Login HTTP request must not be larger than 50 KB because server implementation
 uses weird HTTP redirects etc. Therefore SOAP DummyOperation is available for
 login purposes that is small enough (other SOAP requests can be much bigger).
 
+Desktop applications accesing ISDS must log in only on manual request of
+a user. Daemon implementations can log in automatically, but they are forbiden
+to abuse ISDS (e.g. redownloading old messages).
