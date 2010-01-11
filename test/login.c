@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
     struct isds_ctx *context = NULL;
     char url[] = "https://www.czebox.cz/DS/";
     char username[] = "jrfh7i";
-    char password[] = "Ab123456";
+    char password[] = "Ac123456";
 
     if (isds_init())
         ABORT_UNIT("isds_init() failed\n");
