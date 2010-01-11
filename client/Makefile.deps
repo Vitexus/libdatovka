@@ -12,5 +12,6 @@ getsignedsent.o: getsignedsent.c ../src/isds.h common.h
 isdsclient.o: isdsclient.c ../src/isds.h common.h
 loaddelivery.o: loaddelivery.c ../src/isds.h common.h
 loadreceivedmessage.o: loadreceivedmessage.c ../src/isds.h common.h
+login.o: login.c ../src/isds.h common.h
 markasread.o: markasread.c ../src/isds.h common.h
 verifyreceivedhash.o: verifyreceivedhash.c ../src/isds.h common.h

@@ -4,7 +4,7 @@ CFLAGS=-std=c99 -Wall -Werror -g
 CFLAGS += -D_FILE_OFFSET_BITS=64 -DLARGEFILE_SOURCE=1
 CFLAGS+=-I$(LIBDIR)
 LDFLAGS=-L$(LIBDIR) -lisds
-BINS=isdsclient getsent getsignedsent \
+BINS=isdsclient login getsent getsignedsent \
 	 loadreceivedmessage getreceived getsignedreceived \
 	 getreceivedenvelope markasread \
 	 downloadmessagehash verifyreceivedhash computemessagehash \
@@ -21,6 +21,9 @@ libisds:
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 isdsclient: isdsclient.o common.o
+	$(CC) $(LDFLAGS) -o $@ $^
+
+login: login.o common.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 getsent: getsent.o common.o
