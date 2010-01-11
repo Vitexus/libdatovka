@@ -256,6 +256,18 @@ GetListOfSentMessages
 
 Download list of outgoing messages matching search criteria.
 
+Criteria are: delivery time not before, not after, organisation unit number of
+sender, message status filter, offset of first message in a list and limit on 
+number of messages to get.
+
+Message status filter is union of distinct message states expressed as
+exponents of 2. Effectively it's a polynom \sum_{x \in message_statux} 2^x.
+Special value -1 means all messages. Meaning for value 1 or 0 is undefined.
+
+Messages are sorted in order of delivery time.
+
+Offset starts on 1. Limit defaults to 1000.
+
 Non-normative error codes:
     2017    Syntax error in date-time
 
