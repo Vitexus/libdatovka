@@ -115,6 +115,8 @@ int main(int argc, char **argv) {
         else {
             printf("isds_get_signed_sent_message() succeeded:\n");
             print_message(message);
+            save_data("Saving signed message",
+                    message->raw, message->raw_length);
         }
 
         isds_message_free(&message);
