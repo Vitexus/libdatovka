@@ -78,13 +78,13 @@ int main(int argc, char **argv) {
         }
 
         printf("Loading plain received message\n");
-        err = isds_load_received_message(ctx, buffer, length,
+        err = isds_load_message(ctx, RAWTYPE_INCOMING_MESSAGE, buffer, length,
                 &message, BUFFER_DONT_STORE);
         if (err)
-            printf("isds_load_received_message() failed: %s: %s\n",
+            printf("isds_load_message() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
         else {
-            printf("isds_load_received_message() succeeded:\n");
+            printf("isds_load_message() succeeded:\n");
             print_message(message);
         }
 

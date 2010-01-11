@@ -7,6 +7,15 @@
 #include <stdlib.h> /* For size_t */
 #include <sys/time.h> /* For struct timeval */
 
+/* _deprecated macro marks library symbols as deprecated. Application should
+ * avoid using such function as soon as possible. */
+#if defined(__GNUC__) 
+#define _deprecated __attribute__((deprecated))
+#else
+#define _deprecated
+#endif
+
+
 struct isds_ctx;    /* Context for specific ISDS box */
 
 typedef enum {
@@ -637,6 +646,7 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
 isds_error isds_get_delivery_info(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
 
+/* Deprecated: Use isds_load_message() instead. */
 /* Load incoming message from buffer.
  * @context is session context
  * @buffer XML stream with unsigned message. You can retrieve such data from
@@ -647,7 +657,8 @@ isds_error isds_get_delivery_info(struct isds_ctx *context,
  * */
 isds_error isds_load_received_message(struct isds_ctx *context,
         const void *buffer, const size_t length,
-        struct isds_message **message, const isds_buffer_strategy strategy);
+        struct isds_message **message, const isds_buffer_strategy strategy)
+    _deprecated;
 
 /* Download incoming message identified by ID.
  * @context is session context
