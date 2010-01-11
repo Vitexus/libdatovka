@@ -1,7 +1,7 @@
 Message specification
 =====================
 
-Source: Provozní řád ISDS, version 2008-30-06, Page 12
+Source: Provozní řád ISDS, version 2009-10-30, Page 13
 Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2
 (2009-06-25) [DataMessage_ws.pdf]
 
@@ -50,7 +50,9 @@ ISDS.
 
 Message with `malicious code' will be refused by ISDS.
 
-Maximal Message size is 10 MB.
+Maximal total size of Documents in a Message is 10 MB.
+
+A Message can be addressed to 50 recipients at maximum.
 
 Life time of Message:
 
