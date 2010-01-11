@@ -5416,8 +5416,10 @@ _hidden isds_error isds_get_signed_message(struct isds_ctx *context,
     if (err) goto leave;
   
     /* Parse message */
-    err = isds_load_signed_message(context, outgoing, raw, raw_length,
-            message, BUFFER_MOVE);
+    err = isds_load_message(context,
+            (outgoing) ? RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE :
+                RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE,
+            raw, raw_length, message, BUFFER_MOVE);
     if (err) goto leave;
 
     raw = NULL;
@@ -5754,7 +5756,7 @@ isds_error isds_hash_cmp(const struct isds_hash *h1, const struct isds_hash *h2)
 
 /* Check message has gone through ISDS by comparing message hash stored in
  * ISDS and locally computed hash. You must provide message with valid raw
- * member (do not use isds_load_*_message(..., BUFFER_DONT_STORE)).
+ * member (do not use isds_load_message(..., BUFFER_DONT_STORE)).
  * This is convenient wrapper for isds_download_message_hash(),
  * isds_compute_message_hash(), and isds_hash_cmp() sequence.
  * @context is session context

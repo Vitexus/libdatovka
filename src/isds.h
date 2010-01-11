@@ -668,6 +668,7 @@ isds_error isds_load_received_message(struct isds_ctx *context,
 isds_error isds_get_received_message(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
 
+/* Deprecated: Use isds_load_message() instead. */
 /* Load signed message from buffer.
  * @context is session context
  * @outgoing is true if message is outgoing, false if message is incoming
@@ -680,7 +681,8 @@ isds_error isds_get_received_message(struct isds_ctx *context,
  * */
 isds_error isds_load_signed_message(struct isds_ctx *context,
         const _Bool outgoing, const void *buffer, const size_t length,
-        struct isds_message **message, const isds_buffer_strategy strategy);
+        struct isds_message **message, const isds_buffer_strategy strategy)
+    _deprecated;
 
 /* Load message of any type from buffer.
  * @context is session context
@@ -739,11 +741,12 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
  *  IE_ENUM     if not comparable, but both structures defined
  *  IE_INVAL    if some of the structures are undefined (NULL)
  *  IE_ERROR    if internal error occurs */
-isds_error isds_hash_cmp(const struct isds_hash *h1, const struct isds_hash *h2);
+isds_error isds_hash_cmp(const struct isds_hash *h1,
+        const struct isds_hash *h2);
 
 /* Check message has gone through ISDS by comparing message hash stored in
  * ISDS and locally computed hash. You must provide message with valid raw
- * member (do not use isds_load_*_message(..., BUFFER_DONT_STORE)).
+ * member (do not use isds_load_message(..., BUFFER_DONT_STORE)).
  * This is convenient wrapper for isds_download_message_hash(),
  * isds_compute_message_hash(), and isds_hash_cmp() sequence.
  * @context is session context
