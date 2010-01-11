@@ -111,6 +111,64 @@ document is removed, message state is set to value 3 (from point of view of
 recipient) and sender get new message originated by server.
 
 
+CreateMultipleMessage (*)
+=====================
+
+Create and send a message to multiple recipients.
+
+Input composes of nonempty list of recipients (maximal count is 50),
+one envelope (different from envelope for CreateMessage, misses elements from
+dmRecipient) and list of documents to send to all of them to each recipient.
+
+Only dmRecipient and dmToHands are mandatory. Other dmRecipient childs are
+optional.
+
+Structure:
+CreateMultipleMessage
+    + dmRecipients
+    |   + dmRecipient
+    |   |   + dbIDRecipient – recipient box ID
+    |   |   + dmRecipientOrgUnit
+    |   |   + dmRecipientOrgUnitNum
+    |   |   + dmRecipientOrgUnitNum
+    |   |   + dmToHands – can be empty, but must not missing
+    |   + dmRecipient
+    |   ⋮ 
+    + dmEnvelope
+    |   + <other elements, usually empty>: dmSenderOrgUnit, dmSenderOrgUnitNum,
+    |   |   dmAnnotation, dmRecipientRefNumber, dmSenderRefNumber,
+    |   |   dmRecipientIdent, dmSenderIdent, dmLegalTitleLaw,
+    |   |   dmLegalTitleYear, dmLegalTitleSect, dmLegalTitlePar,
+    |   |   dmLegalTitlePoint, dmPersonalDelivery, dmAllowSubstDelivery
+    |   + dmOVM – optional
+    + dmFiles
+
+ISDS outputs list of assigned message IDs (each copy gets independent ID),
+list of sent status for each message ID and one cumulative status of
+whole CreateMultipleMessage operation.
+
+If operation failes before replicating messages for each recipient
+(i.e. sending), global error code will be non-zero. If operation fails on some
+message copies (i.e. while sending) special global error code 0004 will be
+returned and errornous recipients can be gather by recipient specific error
+code (failed ones will have non-zero code). If all messages are sent
+successfully, global error code will be 0000.
+
+Structure:
+CreateMultipleMessageResponse
+    + dmMultipleStatus
+    |   + dmSingleStatus
+    |   |   + dmID – assigned message ID, optional, missing if error occured
+    |   |   + dmStatus – message local error code and textual desciption
+    |   + dmSingleStatus
+    |   ⋮
+    + dmStatus – global error code and textual description
+
+Global error codes:
+    0000    Messages sent successfully
+    0004    Some message failed while sending
+
+
 MessageDownload
 ===============
 
