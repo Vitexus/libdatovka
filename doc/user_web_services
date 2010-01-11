@@ -3,7 +3,7 @@ User web services specification
 
 Source: Provozní řád ISDS, version 2009-10-30, Pages 13–14
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
-    version 2 (2009-06-25)
+    version 2.1 (2009-10-30)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
     version 2 (2009-06-26)
 
@@ -76,6 +76,13 @@ FindDataBox (*)
 CheckDataBox (*)
     Return state of given box
 
+
+Unsorted operations
+===================
+
+ConfirmDelivery
+    Mark commercial message as accepted by recipient
+    
 
 CreateMessage (*)
 =============
@@ -174,6 +181,8 @@ MessageDownload
 
 Retrieve incoming message identified by message ID.
 
+Commercial message must be accepted manually by ConfirmDelivery before.
+
 Error codes:
     0000    Message sent successfully
 Non-normative error codes:
@@ -204,6 +213,8 @@ http://isds.czechpoint.cz/v20/ vs. http://isds.czechpoint.cz/v20/message:
      <q:dmAttachmentSize>260</q:dmAttachmentSize>
   </q:dmReturnedMessage>
 </q:MessageDownloadResponse>
+
+Commercial message must be accepted manually by ConfirmDelivery before.
 
 
 SignedSentMessageDownload
@@ -380,3 +391,17 @@ Error codes:
     5001    Box does not exist
 Non-normative:
     2011    Box ID malformed
+
+
+ConfirmDelivery
+===============
+
+Mark commercial message as accepted by recipient.
+
+Changes message state from delivered (4) to accepted (6). Appliable only to
+commercial messages. Messages from public offices (municipalities, government
+etc.) are accepted automatically by login on interactive web portal or by
+triggering most of SOAP operations.
+
+Must be called before downloading (signed or unsigned) incoming message
+[Signed]MessageDownload.

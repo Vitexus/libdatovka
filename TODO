@@ -28,6 +28,7 @@
     Solve UTF-8 vs. locale-encoded logging schism
 * Implement all necessary web services
     CreateMultipleMessage
+    ConfirmDelivery
     Services for requesting user add/remove/change
 * Test message is system generated
 * Make high logic checks optional
