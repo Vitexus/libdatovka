@@ -1,15 +1,19 @@
+Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2.1
+(2009-10-30) [DataMessage_ws.pdf], Page 4
+
+
 Production ISDS instance:
     https://www.mojedatovaschranka.cz/DS/
 
 Testing ISDS instance:
     https://www.czebox.cz/DS/
 
-According <http://www.abclinuxu.cz/datove-schranky/wiki/poznatky> different
-login methods requires different URLs:
+Different login methods requires different URL infixes:
 
     /DS/
-        HTTP basic authentication
+        HTTP basic authentication (and client commercial certificate)
     /cert/DS/
-        Client certificate authentication
+        System certificate authentication
     /hspis/DS/
-        Login via hosted third party solution
+        Login from hosted third party solution by system certificate and
+        box ID
