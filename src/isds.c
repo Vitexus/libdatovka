@@ -1378,7 +1378,7 @@ static isds_error uint2isds_message_status(struct isds_ctx *context,
     free(*status); *status = NULL;
     if (!number) return IE_INVAL;
 
-    if (*number < 1 || *number > 9) {
+    if (*number < 1 || *number > 10) {
         isds_printf_message(context, _("Invalid messsage status value: %lu"),
                 *number);
         return IE_ENUM;

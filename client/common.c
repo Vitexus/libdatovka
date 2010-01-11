@@ -329,6 +329,7 @@ void print_envelope(const struct isds_envelope *envelope) {
             case MESSAGESTATE_READ: printf("READ\n"); break;
             case MESSAGESTATE_UNDELIVERABLE: printf("UNDELIVERABLE\n"); break;
             case MESSAGESTATE_REMOVED: printf("REMOVED\n"); break;
+            case MESSAGESTATE_IN_SAFE: printf("IN_SAFE\n"); break;
             default: printf("<unknown type %d>\n",
                              *(envelope->dmMessageStatus));
         }

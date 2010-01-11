@@ -133,10 +133,11 @@ typedef enum {
     MESSAGESTATE_UNDELIVERABLE = 0x100, /* Message could not been delivered
                                            (e.g. recipent box has been made
                                            unaccessible meantime) */
-    MESSAGESTATE_REMOVED = 0x200        /* Message content deleted */
+    MESSAGESTATE_REMOVED = 0x200,       /* Message content deleted */
+    MESSAGESTATE_IN_SAFE = 0x400        /* Message stored in data safe */
 
 } isds_message_status;
-#define MESSAGESTATE_ANY 0x3FE          /* Union of all isds_message_status
+#define MESSAGESTATE_ANY 0x7FE          /* Union of all isds_message_status
                                            values */
 
 /* Hash algoritm types */
