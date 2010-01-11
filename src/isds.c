@@ -5182,6 +5182,199 @@ leave:
 }
 
 
+/* Load message of any type from buffer.
+ * @context is session context
+ * @raw_type defines content type of @buffer. Only message types are allowed.
+ * @buffer is message raw representation. Format (CMS, plain signed,
+ * message direction) is defined in @raw_type. You can retrieve such data
+ * from message->raw after calling isds_get_[signed]{received,sent}_message().
+ * @length is length of buffer in bytes.
+ * @message is automatically reallocated message parsed from @buffer.
+ * @strategy selects how buffer will be attached into raw isds_message member.
+ * */
+isds_error isds_load_message(struct isds_ctx *context,
+        const isds_raw_type raw_type, const void *buffer, const size_t length,
+        struct isds_message **message, const isds_buffer_strategy strategy) {
+
+    isds_error err = IE_SUCCESS;
+    void *xml_stream = NULL;
+    size_t xml_stream_length = 0;
+    message_ns_type message_ns;
+    xmlDocPtr message_doc = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!message) return IE_INVAL;
+    isds_message_free(message);
+    if (!buffer) return IE_INVAL;
+
+
+    /* Select buffer format and extract XML from CMS*/
+    switch (raw_type) {
+        case RAWTYPE_INCOMING_MESSAGE:
+            message_ns = MESSAGE_NS_UNSIGNED;
+            xml_stream = (void *) buffer;
+            xml_stream_length = length;
+            break;
+
+        case RAWTYPE_PLAIN_SIGNED_INCOMING_MESSAGE:
+            message_ns = MESSAGE_NS_SIGNED_INCOMING;
+            xml_stream = (void *) buffer;
+            xml_stream_length = length;
+            break;
+
+        case RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE:
+            message_ns = MESSAGE_NS_SIGNED_INCOMING;
+            err = extract_cms_data(context, buffer, length,
+                    &xml_stream, &xml_stream_length);
+            if (err) goto leave;
+            break;
+
+        case RAWTYPE_PLAIN_SIGNED_OUTGOING_MESSAGE:
+            message_ns = MESSAGE_NS_SIGNED_OUTGOING;
+            xml_stream = (void *) buffer;
+            xml_stream_length = length;
+            break;
+
+        case RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE:
+            message_ns = MESSAGE_NS_SIGNED_OUTGOING;
+            err = extract_cms_data(context, buffer, length,
+                    &xml_stream, &xml_stream_length);
+            if (err) goto leave;
+            break;
+
+        default:
+            isds_log_message(context, _("Bad raw message representation type"));
+            return IE_INVAL;
+            break;
+    }
+
+    isds_log(ILF_ISDS, ILL_DEBUG,
+        _("Loading message:\n%.*s\nEnd of message\n"),
+        xml_stream_length, xml_stream);
+
+    /* Convert messages XML stream into XPath context */
+    message_doc = xmlParseMemory(xml_stream, xml_stream_length);
+    if (!message_doc) {
+        err = IE_XML;
+        goto leave;
+    }
+    xpath_ctx = xmlXPathNewContext(message_doc);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* XXX: Standard name space for unsigned icoming direction:
+     * http://isds.czechpoint.cz/v20/SentMessage
+     *
+     * XXX: Name spaces mangled for signed outgoing direction:
+     * http://isds.czechpoint.cz/v20/SentMessage:
+     *
+     * <q:MessageDownloadResponse
+     *      xmlns:q="http://isds.czechpoint.cz/v20/SentMessage">
+     *   <q:dmReturnedMessage>
+     *      <p:dmDm xmlns:p="http://isds.czechpoint.cz/v20">
+     *          <p:dmID>151916</p:dmID>
+     *          ...
+     *      </p:dmDm>
+     *      <q:dmHash algorithm="SHA-1">...</q:dmHash>
+     *      ...
+     *      <q:dmAttachmentSize>260</q:dmAttachmentSize>
+     *   </q:dmReturnedMessage>
+     * </q:MessageDownloadResponse>
+     *
+     * XXX: Name spaces mangled for signed incoming direction:
+     * http://isds.czechpoint.cz/v20/message:
+     *
+     * <q:MessageDownloadResponse
+     *      xmlns:q="http://isds.czechpoint.cz/v20/message">
+     *   <q:dmReturnedMessage>
+     *      <p:dmDm xmlns:p="http://isds.czechpoint.cz/v20">
+     *          <p:dmID>151916</p:dmID>
+     *          ...
+     *      </p:dmDm>
+     *      <q:dmHash algorithm="SHA-1">...</q:dmHash>
+     *      ...
+     *      <q:dmAttachmentSize>260</q:dmAttachmentSize>
+     *   </q:dmReturnedMessage>
+     * </q:MessageDownloadResponse>
+     *
+     * Stupidity of ISDS developers is unlimited */
+    if (register_namespaces(xpath_ctx, message_ns)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression( 
+            BAD_CAST "/sisds:MessageDownloadResponse/sisds:dmReturnedMessage",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* Empty message */
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_printf_message(context,
+                _("XML document does not contain "
+                    "sisds:dmReturnedMessage element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* More messages */
+    if (result->nodesetval->nodeNr > 1) {
+        isds_printf_message(context,
+                _("XML document has more sisds:dmReturnedMessage elements"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* One message */
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+
+    /* Extract the message */
+    err = extract_TReturnedMessage(context, 1, message, xpath_ctx);
+    if (err) goto leave;
+
+    /* Append raw buffer into message */
+    (*message)->raw_type = raw_type;
+    switch (strategy) {
+        case BUFFER_DONT_STORE:
+            break;
+        case BUFFER_COPY:
+            (*message)->raw = malloc(length);
+            if (!(*message)->raw) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+            memcpy((*message)->raw, buffer, length);
+            (*message)->raw_length = length;
+            break;
+        case BUFFER_MOVE:
+            (*message)->raw = (void *) buffer;
+            (*message)->raw_length = length;
+            break;
+        default:
+            err = IE_ENUM;
+            goto leave;
+    }
+
+
+leave:
+    if (err) {
+        if (*message && strategy == BUFFER_MOVE) (*message)->raw = NULL;
+        isds_message_free(message);
+    }
+
+    if (xml_stream != buffer) cms_data_free(xml_stream);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(message_doc);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG, _("Message loaded successfully.\n"));
+    return err;
+}
+
+
 /* Download signed incoming/outgoing message identified by ID.
  * @context is session context
  * @output is true for outging message, false for incoming message

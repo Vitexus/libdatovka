@@ -671,6 +671,20 @@ isds_error isds_load_signed_message(struct isds_ctx *context,
         const _Bool outgoing, const void *buffer, const size_t length,
         struct isds_message **message, const isds_buffer_strategy strategy);
 
+/* Load message of any type from buffer.
+ * @context is session context
+ * @raw_type defines content type of @buffer. Only message types are allowed.
+ * @buffer is message raw representation. Format (CMS, plain signed,
+ * message direction) is defined in @raw_type. You can retrieve such data
+ * from message->raw after calling isds_get_[signed]{received,sent}_message().
+ * @length is length of buffer in bytes.
+ * @message is automatically reallocated message parsed from @buffer.
+ * @strategy selects how buffer will be attached into raw isds_message member.
+ * */
+isds_error isds_load_message(struct isds_ctx *context,
+        const isds_raw_type raw_type, const void *buffer, const size_t length,
+        struct isds_message **message, const isds_buffer_strategy strategy);
+
 /* Download signed incoming message identified by ID.
  * @context is session context
  * @message_id is message identifier (you can get them from
