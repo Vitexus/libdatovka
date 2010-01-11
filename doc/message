@@ -2,8 +2,8 @@ Message specification
 =====================
 
 Source: Provozní řád ISDS, version 2009-10-30, Page 13
-Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2
-(2009-06-25) [DataMessage_ws.pdf]
+Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2.1
+(2009-10-30) [DataMessage_ws.pdf]
 
 Message ::= Envelope, Content
 
@@ -85,3 +85,21 @@ following cases defined:
 2   You, administrator, deleted other user
 3   Outgoing message could not been delivered because recipeient box had been
     made unaccessible
+
+
+Message states
+==============
+
+Value   Meaning
+1       Message has been put into ISDS
+2       Message stamped by TSA
+3       Message included virues, infected document has been removed
+4       Message delivered (dmDeliveryTime stored)
+5       Message delivered through fiction (dmAcceptanceTime stored)
+6       Message delivered by user login or user explicit request (in case of
+        commercial message) (dmAcceptanceTime stored)
+7       Message has been read by user
+8       Message could not been delivered (e.g. recipent box has been made
+        unaccessible meantime)
+9       Message content deleted (thus can not be obtained on-line)
+10      Message stored into data safe (this is optional commercial service)
