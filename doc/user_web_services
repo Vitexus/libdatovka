@@ -122,7 +122,7 @@ Input composes of nonempty list of recipients (maximal count is 50),
 one envelope (different from envelope for CreateMessage, misses elements from
 dmRecipient) and list of documents to send to all of them to each recipient.
 
-Only dmRecipient and dmToHands are mandatory. Other dmRecipient childs are
+Only dbIDRecipient and dmToHands are mandatory. Other dmRecipient childs are
 optional.
 
 Structure:
@@ -131,7 +131,6 @@ CreateMultipleMessage
     |   + dmRecipient
     |   |   + dbIDRecipient – recipient box ID
     |   |   + dmRecipientOrgUnit
-    |   |   + dmRecipientOrgUnitNum
     |   |   + dmRecipientOrgUnitNum
     |   |   + dmToHands – can be empty, but must not missing
     |   + dmRecipient
