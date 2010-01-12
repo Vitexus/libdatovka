@@ -55,6 +55,8 @@ MessageEnvelopeDownload
     Download envelope of incoming message
 MarkMessageAsDownloaded
     Mark message as read
+ConfirmDelivery
+    Mark commercial message as accepted by recipient
 GetDeliveryInfo
     Download infosheet about message post and delivery
 GetSignedDeliveryInfo
@@ -76,13 +78,6 @@ FindDataBox (*)
 CheckDataBox (*)
     Return state of given box
 
-
-Unsorted operations
-===================
-
-ConfirmDelivery
-    Mark commercial message as accepted by recipient
-    
 
 CreateMessage (*)
 =============
