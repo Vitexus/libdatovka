@@ -7,7 +7,7 @@ LDFLAGS=-L$(LIBDIR) -lisds
 BINS=isdsclient login getsent getsignedsent \
 	 loadreceivedmessage loadcmssignedsentmessage \
 	 getreceived getsignedreceived \
-	 getreceivedenvelope markasread \
+	 getreceivedenvelope markasread markasreceived \
 	 downloadmessagehash verifyreceivedhash computemessagehash \
 	 loaddelivery getreceiveddelivery getreceivedsigneddelivery
 
@@ -58,6 +58,9 @@ computemessagehash: computemessagehash.o common.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 markasread: markasread.o common.o
+	$(CC) $(LDFLAGS) -o $@ $^
+
+markasreceived: markasreceived.o common.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 loaddelivery: loaddelivery.o common.o

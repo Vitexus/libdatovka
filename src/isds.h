@@ -768,6 +768,15 @@ isds_error isds_verify_message_hash(struct isds_ctx *context,
 isds_error isds_mark_message_read(struct isds_ctx *context,
         const char *message_id);
 
+/* Mark message as received by recipient. This is applicable only to
+ * commercial message. There is no specified way how to distinguishe
+ * commercial message from government message yet. Government message is
+ * received automatically (by law), commenrcial message on recipient request.
+ * @context is session context
+ * @message_id is message identifier. */
+isds_error isds_mark_message_received(struct isds_ctx *context,
+        const char *message_id);
+
 /* Send bogus request to ISDS.
  * Just for test purposes */
 isds_error isds_bogus_request(struct isds_ctx *context);

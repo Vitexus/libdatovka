@@ -5592,6 +5592,38 @@ isds_error isds_mark_message_read(struct isds_ctx *context,
     return err;
 }
 
+/* Mark message as received by recipient. This is applicable only to
+ * commercial message. There is no specified way how to distinguishe
+ * commercial message from government message yet. Government message is
+ * received automatically (by law), commenrcial message on recipient request.
+ * @context is session context
+ * @message_id is message identifier. */
+isds_error isds_mark_message_received(struct isds_ctx *context,
+        const char *message_id) {
+
+    isds_error err = IE_SUCCESS;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *status_message = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+   
+    /* Do request and check for success */
+    err = build_send_check_message_request(context, SERVICE_DM_INFO,
+            BAD_CAST "ConfirmDelivery", message_id,
+            &response, NULL, NULL, &code, &status_message);
+
+    free(code);
+    free(status_message);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("ConfirmDelivery request processed by server "
+                        "successfully.\n")
+                );
+    return err;
+}
+
 
 #undef INSERT_STRING_ATTRIBUTE
 #undef INSERT_ULONGINTNOPTR
