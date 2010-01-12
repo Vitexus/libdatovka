@@ -2806,6 +2806,67 @@ leave:
 }
 
 
+/* Append XSD tMStatus XML tree into isds_message_copy structure.
+ * The copy must pre prealocated, the date are just appended into structure.
+ * @context is ISDS context
+ * @copy is message copy struture
+ * @xpath_ctx is XPath context with current node as tMStatus */
+static isds_error append_TMStatus(struct isds_ctx *context,
+        struct isds_message_copy *copy, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    char *code = NULL, *message = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!copy || !xpath_ctx) return IE_INVAL;
+
+    /* Free old values */
+    zfree(copy->dmStatus);
+    zfree(copy->dmID);
+
+    /* Get error specific to this copy */
+    EXTRACT_STRING("isds:dmStatus/isds:dmStatusCode", code);
+    if (!code) {
+        isds_log_message(context,
+                _("Missing dmStatusCode under XSD:tMStatus type element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+
+    if (xmlStrcmp((const xmlChar *)code, BAD_CAST "0000")) {
+        /* This copy failed */
+        copy->error = IE_ISDS;
+        EXTRACT_STRING("isds:dmStatus/isds:dmStatusMessage", message);
+        if (message) {
+            copy->dmStatus = astrcat3(code, ": ", message);
+            if (!copy->dmStatus) {
+                copy->dmStatus = code;
+                code = NULL;
+            }
+        } else {
+            copy->dmStatus = code;
+            code = NULL;
+        }
+    } else {
+        /* This copy succeeded. In this case only, message ID is valid */
+        copy->error = IE_SUCCESS;
+
+        EXTRACT_STRING("isds:dmID", copy->dmID);
+        if (!copy->dmID) {
+            isds_log(ILF_ISDS, ILL_ERR, _("Server accepted sent message, "
+                        "but did not returned assigned message ID\n"));
+            err = IE_ISDS;
+        }
+    }
+
+leave:
+    free(code);
+    free(message);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
 /* Get data about logged in user and his box. */
 isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         struct isds_DbOwnerInfo **db_owner_info) {
@@ -3365,6 +3426,160 @@ leave:
 }
 
 
+/* Insert struct isds_message data into XML tree
+ * @context is sesstion context
+ * @outgoing_message is libsids structure with message data
+ * @create_message is XML CreateMessage or CreateMultipleMessage element
+ * @process_recipient true for recipient data serialization, false for no
+ * serialization */
+static isds_error insert_envelope_files(struct isds_ctx *context,
+        const struct isds_message *outgoing_message, xmlNodePtr create_message,
+        const _Bool process_recipient) {
+
+    isds_error err = IE_SUCCESS;
+    xmlNodePtr envelope, dm_files, node;
+    xmlChar *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!outgoing_message || !create_message) return IE_INVAL;
+
+
+    /* Build envelope */
+    envelope = xmlNewChild(create_message, NULL, BAD_CAST "dmEnvelope", NULL);
+    if (!envelope) {
+        isds_printf_message(context, _("Could not add dmEnvelope child to "
+                    "%s element"), create_message->name);
+        return IE_ERROR;
+    }
+
+    if (!outgoing_message->envelope) {
+        isds_log_message(context, _("Outgoing message is missing envelope"));
+        err = IE_INVAL;
+        goto leave;
+    }
+
+    INSERT_STRING(envelope, "dmSenderOrgUnit",
+            outgoing_message->envelope->dmSenderOrgUnit);
+    INSERT_LONGINT(envelope, "dmSenderOrgUnitNum",
+            outgoing_message->envelope->dmSenderOrgUnitNum, string);
+
+    if (process_recipient) {
+        if (!outgoing_message->envelope->dbIDRecipient) {
+            isds_log_message(context,
+                    _("Outgoing message is missing recipient box identifier"));
+            err = IE_INVAL;
+            goto leave;
+        }
+        INSERT_STRING(envelope, "dbIDRecipient",
+                outgoing_message->envelope->dbIDRecipient);
+
+        INSERT_STRING(envelope, "dmRecipientOrgUnit",
+                outgoing_message->envelope->dmRecipientOrgUnit);
+        INSERT_LONGINT(envelope, "dmRecipientOrgUnitNum",
+                outgoing_message->envelope->dmRecipientOrgUnitNum, string);
+        INSERT_STRING(envelope, "dmToHands",
+                outgoing_message->envelope->dmToHands);
+    }
+
+#define CHECK_FOR_STRING_LENGTH(string, limit, name) \
+    if ((string) && xmlUTF8Strlen((xmlChar *) (string)) > (limit)) { \
+        isds_printf_message(context, \
+                _("%s has more than %d characters"), (name), (limit)); \
+        err = IE_2BIG; \
+        goto leave; \
+    }
+
+    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmAnnotation, 255,
+            "dmAnnotation");
+    INSERT_STRING(envelope, "dmAnnotation",
+            outgoing_message->envelope->dmAnnotation);
+
+    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmRecipientRefNumber,
+            50, "dmRecipientRefNumber");
+    INSERT_STRING(envelope, "dmRecipientRefNumber",
+            outgoing_message->envelope->dmRecipientRefNumber);
+
+    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmSenderRefNumber,
+            50, "dmSenderRefNumber");
+    INSERT_STRING(envelope, "dmSenderRefNumber",
+            outgoing_message->envelope->dmSenderRefNumber);
+
+    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmRecipientIdent,
+            50, "dmRecipientIdent");
+    INSERT_STRING(envelope, "dmRecipientIdent",
+            outgoing_message->envelope->dmRecipientIdent);
+
+    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmSenderIdent,
+            50, "dmSenderIdent");
+    INSERT_STRING(envelope, "dmSenderIdent",
+            outgoing_message->envelope->dmSenderIdent);
+
+    INSERT_LONGINT(envelope, "dmLegalTitleLaw",
+            outgoing_message->envelope->dmLegalTitleLaw, string);
+    INSERT_LONGINT(envelope, "dmLegalTitleYear",
+            outgoing_message->envelope->dmLegalTitleYear, string);
+    INSERT_STRING(envelope, "dmLegalTitleSect",
+            outgoing_message->envelope->dmLegalTitleSect);
+    INSERT_STRING(envelope, "dmLegalTitlePar",
+            outgoing_message->envelope->dmLegalTitlePar);
+    INSERT_STRING(envelope, "dmLegalTitlePoint",
+            outgoing_message->envelope->dmLegalTitlePoint);
+
+    INSERT_BOOLEAN(envelope, "dmPersonalDelivery",
+            outgoing_message->envelope->dmPersonalDelivery);
+    INSERT_BOOLEAN(envelope, "dmAllowSubstDelivery",
+            outgoing_message->envelope->dmAllowSubstDelivery);
+
+#undef CHECK_FOR_STRING_LENGTH
+
+    /* ???: Should we require value for dbEffectiveOVM sender?
+     * ISDS has default as true */
+    INSERT_BOOLEAN(envelope, "dmOVM", outgoing_message->envelope->dmOVM);
+
+
+    /* Append dmFiles */
+    if (!outgoing_message->documents) {
+        isds_log_message(context,
+                _("Outgoing message is missing list of documents"));
+        err = IE_INVAL;
+        goto leave;
+    }
+    dm_files = xmlNewChild(create_message, NULL, BAD_CAST "dmFiles", NULL);
+    if (!dm_files) {
+        isds_printf_message(context, _("Could not add dmFiles child to "
+                    "%s element"), create_message->name);
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    /* Check for document hieararchy */
+    err = check_documents_hierarchy(context, outgoing_message->documents);
+    if (err) goto leave;
+
+    /* Process each document */
+    for (struct isds_list *item =
+            (struct isds_list *) outgoing_message->documents;
+            item; item = item->next) {
+        if (!item->data) {
+            isds_log_message(context,
+                    _("List of documents contains empty item"));
+            err = IE_INVAL;
+            goto leave;
+        }
+        /* FIXME: Check for dmFileMetaType and for document references.
+         * Only first document can be of MAIN type */
+        err = insert_document(context, (struct isds_document*) item->data,
+                dm_files);
+
+        if (err) goto leave;
+    }
+    
+leave:
+    free(string);
+    return err;
+}
+
+
 /* Send a message via ISDS to a recipent
  * @context is session context
  * @outgoing_message is message to send; Some memebers are mandatory (like
@@ -3549,7 +3764,7 @@ isds_error isds_send_message(struct isds_ctx *context,
     /* Sent request */
     err = isds(context, SERVICE_DM_OPERATIONS, request, &response, NULL, NULL);
    
-    /* Dont' destroy request, we want to privode it to application later */
+    /* Dont' destroy request, we want to provide it to application later */
 
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
@@ -3709,7 +3924,210 @@ serialization_failed:
 isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
         const struct isds_message *outgoing_message,
         struct isds_list *copies) {
-    return IE_NOTSUP;
+
+    isds_error err = IE_SUCCESS, append_err;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL, recipients, recipient, node;
+    struct isds_list *item;
+    struct isds_message_copy *copy;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    xmlChar *string = NULL;
+    int i;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!outgoing_message || !copies) return IE_INVAL;
+
+    /* Check if connection is established
+     * TODO: This check should be done donwstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Build CreateMultipleMessage request */
+    request = xmlNewNode(NULL, BAD_CAST "CreateMultipleMessage");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build CreateMultipleMessage request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+
+    /* Build recipients */
+    recipients = xmlNewChild(request, NULL, BAD_CAST "dmRecipients", NULL);
+    if (!recipients) {
+        isds_log_message(context, _("Could not add dmRecipients child to "
+                    "CreateMultipleMessage element"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+
+    /* Insert each recipient */
+    for (item = copies; item; item = item->next) {
+        copy = (struct isds_message_copy *) item->data;
+        if (!copy) {
+            isds_log_message(context,
+                    _("copies list item contains empty data"));
+            err = IE_INVAL;
+            goto leave;
+        }
+
+        recipient = xmlNewChild(recipients, NULL, BAD_CAST "dmRecipient", NULL);
+        if (!recipient) {
+            isds_log_message(context, _("Could not add dmRecipient child to "
+                        "dmRecipient element"));
+            err = IE_ERROR;
+            goto leave;
+        }
+
+        if (!copy->dbIDRecipient) {
+            isds_log_message(context,
+                    _("Message copy is missing recipient box identifier"));
+            err = IE_INVAL;
+            goto leave;
+        }
+        INSERT_STRING(recipient, "dbIDRecipient", copy->dbIDRecipient);
+        INSERT_STRING(recipient, "dmRecipientOrgUnit",
+                copy->dmRecipientOrgUnit);
+        INSERT_LONGINT(recipient, "dmRecipientOrgUnitNum",
+                copy->dmRecipientOrgUnitNum, string);
+        INSERT_STRING(recipient, "dmToHands", copy->dmToHands);
+    }
+
+    /* Append envelope and files */
+    err = insert_envelope_files(context, outgoing_message, request, 0);
+    if (err) goto leave;
+
+
+    isds_log(ILF_ISDS, ILL_DEBUG,
+            _("Sending CreateMultipleMessage request to ISDS\n"));
+
+    /* Sent request */
+    err = isds(context, SERVICE_DM_OPERATIONS, request, &response, NULL, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Processing ISDS response on CreateMultipleMessage "
+                    "request failed\n"));
+        goto leave;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, SERVICE_DM_OPERATIONS, response,
+            &code, &message, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("ISDS response on CreateMultipleMessage request "
+                    "is missing status\n"));
+        goto leave;
+    }
+
+    /* Request processed, but some copies failed */
+    if (!xmlStrcmp(code, BAD_CAST "0004")) {
+        char *box_id_locale =
+            utf82locale((char*)outgoing_message->envelope->dbIDRecipient);
+        char *code_locale = utf82locale((char*)code);
+        char *message_locale = utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server did accept message for multiple recipients "
+                    "on CreateMultipleMessage request but delivery to "
+                    "some of them failed (code=%s, message=%s)\n"),
+                box_id_locale, code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(box_id_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_PARTIAL_SUCCESS;
+    }
+
+    /* Request refused by server as whole */
+    else if (xmlStrcmp(code, BAD_CAST "0000")) {
+        char *box_id_locale =
+            utf82locale((char*)outgoing_message->envelope->dbIDRecipient);
+        char *code_locale = utf82locale((char*)code);
+        char *message_locale = utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server did not accept message for multiple recipients "
+                    "on CreateMultipleMessage request (code=%s, message=%s)\n"),
+                box_id_locale, code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(box_id_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+
+    /* Extract data */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(
+            BAD_CAST "/isds:CreateMultipleMessageResponse/dmMultipleStatus"
+            "/dmSingleStatus",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context, _("Missing dmSingleStatus element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+
+    /* Extract message ID and delivery status for each copy */ 
+    for (item = copies, i = 0; item && i < result->nodesetval->nodeNr;
+            item = item->next, i++) {
+        copy = (struct isds_message_copy *) item->data;
+        xpath_ctx->node = result->nodesetval->nodeTab[i];
+
+        append_err = append_TMStatus(context, copy, xpath_ctx);
+        if (append_err) {
+            err = append_err;
+            goto leave;
+        }
+    }
+    if (item || i >= result->nodesetval->nodeNr) {
+        isds_printf_message(context, _("ISDS returned unexpected number of "
+                    "message copy delivery states: %d"),
+                    result->nodesetval->nodeNr);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+
+leave:
+    /* Clean up */
+    free(string);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+    xmlFreeNode(request);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("CreateMultipleMessageResponse request processed by server "
+                    "successfully.\n"));
+
+    return err;
 }
 
 
