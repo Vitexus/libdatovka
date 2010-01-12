@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
 
         printf("Getting list of unreceived received messages\n");
         err = isds_get_list_of_received_messages(ctx, &from_time, NULL, NULL,
-                MESSAGESTATE_ANY & ~MESSAGESTATE_RECIEVED, 0,
+                MESSAGESTATE_ANY & ~MESSAGESTATE_RECEIVED, 0,
                 &number, &messages);
         if (err)
             printf("isds_get_list_of_received_messages() failed: %s: %s\n",

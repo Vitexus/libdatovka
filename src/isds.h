@@ -126,8 +126,8 @@ typedef enum {
                                            (dmDeliveryTime stored) */
     MESSAGESTATE_SUBSTITUTED = 0x20,    /* Message delivered through fiction,
                                            dmAcceptanceTime stored */
-    MESSAGESTATE_RECIEVED = 0x40,       /* Message devlivered by user login or
-                                           user explicit request,
+    MESSAGESTATE_RECEIVED = 0x40,       /* Message accepted (by user login or
+                                           user explicit request),
                                            dmAcceptanceTime stored */
     MESSAGESTATE_READ = 0x80,           /* Message has been read by user */
     MESSAGESTATE_UNDELIVERABLE = 0x100, /* Message could not been delivered

@@ -325,7 +325,7 @@ void print_envelope(const struct isds_envelope *envelope) {
             case MESSAGESTATE_INFECTED: printf("INFECTED\n"); break;
             case MESSAGESTATE_DELIVERED: printf("DELIVERED\n"); break;
             case MESSAGESTATE_SUBSTITUTED: printf("SUBSTITUTED\n"); break;
-            case MESSAGESTATE_RECIEVED: printf("RECIEVED\n"); break;
+            case MESSAGESTATE_RECEIVED: printf("RECEIVED\n"); break;
             case MESSAGESTATE_READ: printf("READ\n"); break;
             case MESSAGESTATE_UNDELIVERABLE: printf("UNDELIVERABLE\n"); break;
             case MESSAGESTATE_REMOVED: printf("REMOVED\n"); break;
