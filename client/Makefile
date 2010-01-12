@@ -5,7 +5,8 @@ CFLAGS += -D_FILE_OFFSET_BITS=64 -DLARGEFILE_SOURCE=1
 CFLAGS+=-I$(LIBDIR)
 LDFLAGS=-L$(LIBDIR) -lisds
 BINS=isdsclient login getsent getsignedsent \
-	 loadreceivedmessage getreceived getsignedreceived \
+	 loadreceivedmessage loadcmssignedsentmessage \
+	 getreceived getsignedreceived \
 	 getreceivedenvelope markasread \
 	 downloadmessagehash verifyreceivedhash computemessagehash \
 	 loaddelivery getreceiveddelivery getreceivedsigneddelivery
@@ -33,6 +34,9 @@ getsignedsent: getsignedsent.o common.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 loadreceivedmessage: loadreceivedmessage.o common.o
+	$(CC) $(LDFLAGS) -o $@ $^
+
+loadcmssignedsentmessage: loadcmssignedsentmessage.o common.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 getreceived: getreceived.o common.o
