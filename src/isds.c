@@ -196,6 +196,22 @@ void isds_document_free(struct isds_document **document) {
 }
 
 
+/* Deallocate struct isds_message_copy recursively and NULL it */
+void isds_message_copy_free(struct isds_message_copy **copy) {
+    if (!copy || !*copy) return;
+
+    free((*copy)->dbIDRecipient);
+    free((*copy)->dmRecipientOrgUnit);
+    free((*copy)->dmRecipientOrgUnitNum);
+    free((*copy)->dmToHands);
+
+    free((*copy)->dmStatus);
+    free((*copy)->dmID);
+
+    zfree(*copy);
+}
+
+
 /* Initialize ISDS library.
  * Global function, must be called before other functions.
  * If it failes you can not use ISDS library and must call isds_cleanup() to
@@ -305,6 +321,8 @@ char *isds_strerror(const isds_error error) {
             return(_("Value not unique")); break;
         case IE_NOTEQUAL:
             return(_("Values not uqual")); break;
+        case IE_PARTIAL_SUCCESS:
+            return(_("Some suboperations failed")); break;
         default:
             return(_("Unknown error"));
     }
@@ -3670,6 +3688,28 @@ serialization_failed:
                     "successfully.\n"));
 
     return err;
+}
+
+
+/* Send a message via ISDS to a multiple recipents
+ * @context is session context
+ * @outgoing_message is message to send; Some memebers are mandatory,
+ * some are optional and some are irrelevant (especialy data
+ * about sender). Data about recipient will be substituted by ISDS from
+ * @copies. Included pointer to isds_list documents must
+ * contain at least one document of FILEMETATYPE_MAIN.
+ * @copies is list of isds_message_copy structures addressing all desired
+ * recipients. This is read-write structure, some members will be filled with
+ * valid data from ISDS (message IDs, error codes, error descriptions).
+ * @return
+ *  ISDS_SUCCESS if all messages have been sent
+ *  ISDS_PARTIAL_SUCCESS if sending of some messages has failed (failed and
+ *      succesed messages can be identified by copies->data->error),
+ *  or other error code if something other goes wrong. */
+isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
+        const struct isds_message *outgoing_message,
+        struct isds_list *copies) {
+    return IE_NOTSUP;
 }
 
 

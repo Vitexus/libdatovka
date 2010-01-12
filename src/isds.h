@@ -38,7 +38,8 @@ typedef enum {
     IE_DATE,
     IE_2BIG,
     IE_NOTUNIQ,
-    IE_NOTEQUAL
+    IE_NOTEQUAL,
+    IE_PARTIAL_SUCCESS
 } isds_error;
 
 typedef enum {
@@ -402,6 +403,26 @@ struct isds_message {
                                        must not exceed 10 MB. */
 };
 
+/* Message copy recipient and assigned message ID */
+struct isds_message_copy {
+    /* Input members defined by application */
+    char *dbIDRecipient;            /* Box ID of recipient; Mandatory.
+                                       Maximal length is 7 characters. */
+    char *dmRecipientOrgUnit;       /* Organisation unit of recipient as
+                                       string; Optional. */
+    long int *dmRecipientOrgUnitNum;    /* Organisation unit of recipient as
+                                           number; Optional. */
+    char *dmToHands;                /* Person in recipient organisation;
+                                       Optional. */
+
+    /* Output members returned from ISDS */
+    isds_error error;               /* libisds compatible error of delivery to o                                       ne recipient */
+    char *dmStatus;                 /* Error description returned by ISDS;
+                                       Optional. */
+    char *dmID;                     /* Assigned message ID; Meaningfull only
+                                       for error == IE_SUCCESS */
+};
+
 /* General linked list */
 struct isds_list {
     struct isds_list *next;         /* Next list item,
@@ -532,6 +553,25 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
  * @return ISDS_SUCCESS, or other error code if something goes wrong. */
 isds_error isds_send_message(struct isds_ctx *context,
         struct isds_message *outgoing_message);
+
+/* Send a message via ISDS to a multiple recipents
+ * @context is session context
+ * @outgoing_message is message to send; Some memebers are mandatory,
+ * some are optional and some are irrelevant (especialy data
+ * about sender). Data about recipient will be substituted by ISDS from
+ * @copies. Included pointer to isds_list documents must
+ * contain at least one document of FILEMETATYPE_MAIN.
+ * @copies is list of isds_message_copy structures addressing all desired
+ * recipients. This is read-write structure, some members will be filled with
+ * valid data from ISDS (message IDs, error codes, error descriptions).
+ * @return
+ *  ISDS_SUCCESS if all messages have been sent
+ *  ISDS_PARTIAL_SUCCESS if sending of some messages has failed (failed and
+ *      succesed messages can be identified by copies->data->error),
+ *  or other error code if something other goes wrong. */
+isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
+        const struct isds_message *outgoing_message,
+        struct isds_list *copies);
 
 /* Get list of outgoing (already sent) messages.
  * Any criterion argument can be NULL, if you don't care about it.
@@ -807,5 +847,8 @@ void isds_document_free(struct isds_document **document);
 
 /* Deallocate struct isds_message recursively and NULL it */
 void isds_message_free(struct isds_message **message);
+
+/* Deallocate struct isds_message_copy recursively and NULL it */
+void isds_message_copy_free(struct isds_message_copy **copy);
 
 #endif
