@@ -1,0 +1,25 @@
+Box specification
+=================
+
+Source: Webové služby ISDS pro vyhledávání datových schránek, version 2.1
+(2009-10-30) [DataMessage_ws.pdf]
+
+Box types
+=========
+
+Symbol      Number  Description
+--------------------------------------------------------------------------
+OVM         10      Standard government (state or municipality or similar)
+                    office
+OVM_NOTAR   11      Notary
+OVM_EXEKUT  12      Executor
+OVM_REQ     13      Subsidiary office with OVM status assigned on request
+                    (section 6 and 7 of act)
+PO          20      Standard commercial organization (in trade registry)
+PO_ZAK      21      Other organization based on law
+PO_REQ      22      Organization with box assigned on request
+PFO         30      Person in bussiness
+PFO_ADVOK   31      Layer
+PFO_DANPOR  32      Tax consultant
+PFO_INSSPR  33      Administrator of insolvency
+FO          40      Standard person
