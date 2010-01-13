@@ -2,7 +2,6 @@
     Grep for (rentrant|thread) comments
 * Multithreaded interface
     Grep for (rentrant|thread) comments
-* Download/upload progress notification
 * Autotools driven build
     Libtool allows to build SO on many platforms
 * Make CURL (network services) optional

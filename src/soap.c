@@ -56,6 +56,28 @@ static size_t write_body(void *buffer, size_t size, size_t nmemb, void *userp) {
 }
 
 
+/* CURL progress callback proxy to rearrange arguments.
+ * @curl_data is session context  */
+static int progress_proxy(void *curl_data, double download_total,
+        double download_current, double upload_total, double upload_current) {
+    struct isds_ctx *context = (struct isds_ctx *) curl_data;
+    int abort = 0;
+
+    if (context && context->progress_callback) {
+        abort = context->progress_callback(
+                upload_total, upload_current,
+                download_total, download_current,
+                context->progress_callback_data);
+        if (abort) {
+            isds_log(ILF_HTTP, ILL_INFO,
+                    _("Application aborted HTTP transfer"));
+        }
+    }
+
+    return abort;
+}
+
+
 /* Do HTTP request.
  * @context holds the base URL,
  * @url is a (CGI) file of SOAP URL,
@@ -147,6 +169,21 @@ static isds_error http(struct isds_ctx *context, const char *url,
     if (!curl_err && context->timeout) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_TIMEOUT_MS,
                 context->timeout);
+    }
+
+    /* Register callback */
+    if (context->progress_callback) {
+        if (!curl_err) {
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_NOPROGRESS, 0);
+        }
+        if (!curl_err) {
+            curl_err = curl_easy_setopt(context->curl,
+                    CURLOPT_PROGRESSFUNCTION, progress_proxy);
+        }
+        if (!curl_err) {
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_PROGRESSDATA,
+                    context);
+        }
     }
 
     /* Set other CURL features */

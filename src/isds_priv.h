@@ -46,6 +46,11 @@ struct isds_ctx {
     char *private_key;
     CURL *curl;             /* CURL session handle */
     _Bool *tls_verify_server;   /* Verify the server? */
+    isds_progress_callback progress_callback;  /* Call it during
+                                                   communication with server.
+                                                   NULL for nothing */
+    void *progress_callback_data;       /* Application provided argument
+                                           for progress_callback */
     char *tls_ca_file;      /* File name with CA certificates */
     char *tls_ca_dir;       /* Directory name with CA certificates */
     char *long_message;     /* message buffer */

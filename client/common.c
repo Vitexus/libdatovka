@@ -480,6 +480,17 @@ void compare_hashes(const struct isds_hash *hash1,
 }
 
 
+int progressbar(double upload_total, double upload_current,
+    double download_total, double download_current,
+    void *data) {
+
+    printf("Progress: upload %0f/%0f, download %0f/%0f, data=%p\n",
+            upload_current, upload_total, download_current, download_total,
+            data);
+    return 0;
+}
+
+
 int mmap_file(const char *file, int *fd, void **buffer, size_t *length) {
     struct stat file_info;
 

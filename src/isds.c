@@ -474,10 +474,6 @@ _hidden isds_error isds_log(const isds_log_facility facility,
 }
 
 
-/* Connect to given url.
- * It just makes TCP connection to ISDS server found in @url hostname part. */
-/*int isds_connect(struct isds_ctx *context, const char *url);*/
-
 /* Set timeout in miliseconds for each network job like connecting to server
  * or sending message. Use 0 to disable timeout limits. */
 isds_error isds_set_timeout(struct isds_ctx *context,
@@ -495,6 +491,23 @@ isds_error isds_set_timeout(struct isds_ctx *context,
                     context->timeout);
         if (curl_err) return IE_ERROR;
     }
+
+    return IE_SUCCESS;
+}
+
+
+/* Register callback function libisds calls periodocally during HTTP data
+ * transfer.
+ * @context is session context
+ * @callback is function provided by application libsds will call. See type
+ * defition for @callback argument explanation.
+ * @data is application specific data @callback gets as last argument */
+isds_error isds_set_progress_callback(struct isds_ctx *context,
+        isds_progress_callback callback, void *data) {
+    if (!context) return IE_INVALID_CONTEXT;
+
+    context->progress_callback = callback;
+    context->progress_callback_data = data;
 
     return IE_SUCCESS;
 }

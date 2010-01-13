@@ -468,15 +468,34 @@ char *isds_long_message(const struct isds_ctx *context);
 void isds_set_logging(const unsigned int facilities,
         const isds_log_level level);
 
-/* Connect to given url.
- * It just makes TCP connection to ISDS server found in @url hostname part. */
-/*int isds_connect(struct isds_ctx *context, const char *url);*/
 
 /* Set timeout in miliseconds for each network job like connecting to server
  * or sending message. Use 0 to disable timeout limits. */
 isds_error isds_set_timeout(struct isds_ctx *context,
         const unsigned int timeout);
 
+/* Function provided by application libsds will call with
+ * following five arguments. Value zero of any argument means the value is
+ * unknown.
+ * @upload_total is expected total upload,
+ * @upload_current is cumulative current upload progress
+ * @dowload_total is expected total download
+ * @download_current is cumulative current download progress
+ * @data is pointer that will be passed unchanged to this function at run-time
+ * @return 0 to continue HTTP transfaer, or non-zero to abort transfer */
+typedef int (*isds_progress_callback)(
+        double upload_total, double upload_current,
+        double download_total, double download_current,
+        void *data);
+
+/* Register callback function libisds calls periodocally during HTTP data
+ * transfer.
+ * @context is session context
+ * @callback is function provided by application libsds will call. See type
+ * defition for @callback argument explanation.
+ * @data is application specific data @callback gets as last argument */
+isds_error isds_set_progress_callback(struct isds_ctx *context,
+        isds_progress_callback callback, void *data);
 
 /* Change SSL/TLS settings.
  * @context is context which setting vill be applied to
