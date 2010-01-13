@@ -3427,7 +3427,8 @@ leave:
 }
 
 
-/* Insert struct isds_message data into XML tree
+/* Insert struct isds_message data (envelope (recipient data optional) and
+ * documents) into XML tree
  * @context is sesstion context
  * @outgoing_message is libsids structure with message data
  * @create_message is XML CreateMessage or CreateMultipleMessage element
@@ -3595,12 +3596,11 @@ isds_error isds_send_message(struct isds_ctx *context,
 
     isds_error err = IE_SUCCESS;
     xmlNsPtr isds_ns = NULL;
-    xmlNodePtr request = NULL, envelope, dm_files, node;
+    xmlNodePtr request = NULL;
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *message = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
-    xmlChar *string = NULL;
     _Bool message_is_complete = 0;
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -3626,138 +3626,13 @@ isds_error isds_send_message(struct isds_ctx *context,
     }
     xmlSetNs(request, isds_ns);
 
-
-    /* Build envelope */
-    envelope = xmlNewChild(request, NULL, BAD_CAST "dmEnvelope", NULL);
-    if (!envelope) {
-        isds_log_message(context, _("Could not add dmEnvelope child to "
-                    "CreateMessage element"));
-        xmlFreeNode(request);
-        return IE_ERROR;
-    }
-
-    if (!outgoing_message->envelope) {
-        isds_log_message(context, _("outgoing message is missing envelope"));
-        err = IE_INVAL;
-        goto leave;
-    }
-
-    INSERT_STRING(envelope, "dmSenderOrgUnit",
-            outgoing_message->envelope->dmSenderOrgUnit);
-    INSERT_LONGINT(envelope, "dmSenderOrgUnitNum",
-            outgoing_message->envelope->dmSenderOrgUnitNum, string);
-
-    if (!outgoing_message->envelope->dbIDRecipient) {
-        isds_log_message(context,
-                _("outgoing message is missing recipient box identifier"));
-        err = IE_INVAL;
-        goto leave;
-    }
-    INSERT_STRING(envelope, "dbIDRecipient",
-            outgoing_message->envelope->dbIDRecipient);
-
-    INSERT_STRING(envelope, "dmRecipientOrgUnit",
-            outgoing_message->envelope->dmRecipientOrgUnit);
-    INSERT_LONGINT(envelope, "dmRecipientOrgUnitNum",
-            outgoing_message->envelope->dmRecipientOrgUnitNum, string);
-    INSERT_STRING(envelope, "dmToHands", outgoing_message->envelope->dmToHands);
-
-#define CHECK_FOR_STRING_LENGTH(string, limit, name) \
-    if ((string) && xmlUTF8Strlen((xmlChar *) (string)) > (limit)) { \
-        isds_printf_message(context, \
-                _("%s has more than %d characters"), (name), (limit)); \
-        err = IE_2BIG; \
-        goto leave; \
-    }
-
-    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmAnnotation, 255,
-            "dmAnnotation");
-    INSERT_STRING(envelope, "dmAnnotation",
-            outgoing_message->envelope->dmAnnotation);
-
-    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmRecipientRefNumber,
-            50, "dmRecipientRefNumber");
-    INSERT_STRING(envelope, "dmRecipientRefNumber",
-            outgoing_message->envelope->dmRecipientRefNumber);
-
-    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmSenderRefNumber,
-            50, "dmSenderRefNumber");
-    INSERT_STRING(envelope, "dmSenderRefNumber",
-            outgoing_message->envelope->dmSenderRefNumber);
-
-    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmRecipientIdent,
-            50, "dmRecipientIdent");
-    INSERT_STRING(envelope, "dmRecipientIdent",
-            outgoing_message->envelope->dmRecipientIdent);
-
-    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmSenderIdent,
-            50, "dmSenderIdent");
-    INSERT_STRING(envelope, "dmSenderIdent",
-            outgoing_message->envelope->dmSenderIdent);
-
-    INSERT_LONGINT(envelope, "dmLegalTitleLaw",
-            outgoing_message->envelope->dmLegalTitleLaw, string);
-    INSERT_LONGINT(envelope, "dmLegalTitleYear",
-            outgoing_message->envelope->dmLegalTitleYear, string);
-    INSERT_STRING(envelope, "dmLegalTitleSect",
-            outgoing_message->envelope->dmLegalTitleSect);
-    INSERT_STRING(envelope, "dmLegalTitlePar",
-            outgoing_message->envelope->dmLegalTitlePar);
-    INSERT_STRING(envelope, "dmLegalTitlePoint",
-            outgoing_message->envelope->dmLegalTitlePoint);
-
-    INSERT_BOOLEAN(envelope, "dmPersonalDelivery",
-            outgoing_message->envelope->dmPersonalDelivery);
-    INSERT_BOOLEAN(envelope, "dmAllowSubstDelivery",
-            outgoing_message->envelope->dmAllowSubstDelivery);
-
-#undef CHECK_FOR_STRING_LENGTH
-
-    /* ???: Should we require value for dbEffectiveOVM sender?
-     * ISDS has default as true */
-    INSERT_BOOLEAN(envelope, "dmOVM", outgoing_message->envelope->dmOVM);
-
-
-    /* Append dmFiles */
-    if (!outgoing_message->documents) {
-        isds_log_message(context,
-                _("outgoing message is missing list of documents"));
-        err = IE_INVAL;
-        goto leave;
-    }
-    dm_files = xmlNewChild(request, NULL, BAD_CAST "dmFiles", NULL);
-    if (!dm_files) {
-        isds_log_message(context, _("Could not add dmFiles child to "
-                    "CreateMessage element"));
-        err = IE_ERROR;
-        goto leave;
-    }
-
-    /* Check for document hieararchy */
-    err = check_documents_hierarchy(context, outgoing_message->documents);
+    /* Append envelope and files */
+    err = insert_envelope_files(context, outgoing_message, request, 1);
     if (err) goto leave;
 
-    /* Process each document */
-    for (struct isds_list *item =
-            (struct isds_list *) outgoing_message->documents;
-            item; item = item->next) {
-        if (!item->data) {
-            isds_log_message(context,
-                    _("list of documents contains empty item"));
-            err = IE_INVAL;
-            goto leave;
-        }
-        /* FIXME: Check for dmFileMetaType and for document references.
-         * Only first document can be of MAIN type */
-        err = insert_document(context, (struct isds_document*) item->data,
-                dm_files);
-
-        if (err) goto leave;
-    }
 
     /* Signal we can serilize message since now */
     message_is_complete = 1;
-
     
 
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending CreateMessage request to ISDS\n"));
@@ -3784,7 +3659,7 @@ isds_error isds_send_message(struct isds_ctx *context,
         goto leave;
     }
 
-    /* Request processed, but nothing found */
+    /* Request processed, but refused by server or server failed */
     if (xmlStrcmp(code, BAD_CAST "0000")) {
         char *box_id_locale =
             utf82locale((char*)outgoing_message->envelope->dbIDRecipient);
@@ -3884,12 +3759,10 @@ leave:
 /*        }
 
 serialization_failed:
-        
 
     }*/
 
     /* Clean up */
-    free(string);
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
 
