@@ -2828,7 +2828,8 @@ static isds_error append_TMStatus(struct isds_ctx *context,
     EXTRACT_STRING("isds:dmStatus/isds:dmStatusCode", code);
     if (!code) {
         isds_log_message(context,
-                _("Missing dmStatusCode under XSD:tMStatus type element"));
+                _("Missing isds:dmStatusCode under "
+                    "XSD:tMStatus type element"));
         err = IE_ISDS;
         goto leave;
     }
@@ -4077,15 +4078,15 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
         goto leave;
     }
     result = xmlXPathEvalExpression(
-            BAD_CAST "/isds:CreateMultipleMessageResponse/dmMultipleStatus"
-            "/dmSingleStatus",
+            BAD_CAST "/isds:CreateMultipleMessageResponse"
+            "/isds:dmMultipleStatus/isds:dmSingleStatus",
             xpath_ctx);
     if (!result) {
         err = IE_ERROR;
         goto leave;
     }
     if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-        isds_log_message(context, _("Missing dmSingleStatus element"));
+        isds_log_message(context, _("Missing isds:dmSingleStatus element"));
         err = IE_ISDS;
         goto leave;
     }
@@ -4102,7 +4103,7 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
             goto leave;
         }
     }
-    if (item || i >= result->nodesetval->nodeNr) {
+    if (item || i < result->nodesetval->nodeNr) {
         isds_printf_message(context, _("ISDS returned unexpected number of "
                     "message copy delivery states: %d"),
                     result->nodesetval->nodeNr);
