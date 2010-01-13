@@ -5,7 +5,7 @@ Source: Provozní řád ISDS, version 2009-10-30, Pages 13–14
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
     version 2.1 (2009-10-30)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
-    version 2 (2009-06-26)
+    version 2.1 (2009-10-30)
 
 
 
@@ -362,11 +362,30 @@ Find boxes conforming to serch criteria or exact ID and returns corresponding
 Returned boxes exist, but it does not mean they can recieve messages. Use
 CheckDataBox to figure out.
 
-If dbID filled in request, search only to exact box.
-If identifier and registryCode filled, search only to exact box.
-Otherwise search against other criteria.
+There are three different search cases distinguished in this order:
+
+    – If dbID is filled in request, will search only for exact box, other
+    criteria will be ignored.
+
+    – If identifier and registryCode are filled, will search only for exact
+    box, other criteria will be ignored.
+
+    – Otherwise search against other criteria.
 
 Returns list of boxes (possibly empty).
+
+List can be truncated or search request refused because of not enought
+specific criteria to protect user privacy. There are following contrains
+differentiated by box type now:
+
+Gross Box type  Constraints (requried search criteria)
+------------------------------------------------------
+FO              pnLastName or pnLastNameAtBirth
+PFO             ic or pnLastName or pnLastNameAtBirth
+PO              ic or prefix (at least 3 characters) of firmName
+OVM             ic or prefix of firmName
+
+String search criteria are matched case insensitive.
 
 Error codes:
     0002    No box suits to search request (by other criteria)
