@@ -444,6 +444,7 @@ void print_copies(const struct isds_list *copies) {
         if (!copy)
             printf("<NULL>\n");
         else {
+            printf("{\n");
             printf("\t\tdbIDRecipient = %s\n", copy->dbIDRecipient);
             printf("\t\tdmRecipientOrgUnit = %s\n", copy->dmRecipientOrgUnit);
 
@@ -457,8 +458,10 @@ void print_copies(const struct isds_list *copies) {
             printf("\t\terror = %s\n", isds_strerror(copy->error));
             printf("\t\tdmStatus = %s\n", copy->dmStatus);
             printf("\t\tdmID = %s\n", copy->dmID);
+            printf("\t}\n");
         }
     }
+    printf("}\n");
 }
 
 
