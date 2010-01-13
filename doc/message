@@ -107,6 +107,18 @@ following cases defined:
     made unaccessible
 
 
+Commercial messages
+===================
+
+Users can allow commercial message receiving explicitelly. Commercial message
+are not considered as accepted by recipient automatically (in opposite to
+standard messages), recipient must call ConfirmDelivery to move message from
+state Delivered (4) to state Received (6).
+
+Commercial message can be recognised by dbOpenAddressing/@dbOAType attribute
+in message envelope.
+
+
 Message states
 ==============
 
