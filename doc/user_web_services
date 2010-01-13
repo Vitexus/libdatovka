@@ -303,6 +303,20 @@ That means next GetListOfRecievedMessages service can exclude such message if
 only unread messages requested.
 
 
+ConfirmDelivery
+===============
+
+Mark commercial message as accepted by recipient.
+
+Changes message state from delivered (4) to accepted (6). Appliable only to
+commercial messages. Messages from public offices (municipalities, government
+etc.) are accepted automatically by login on interactive web portal or by
+triggering most of SOAP operations.
+
+Must be called before downloading (signed or unsigned) incoming message
+[Signed]MessageDownload.
+
+
 GetDeliveryInfo
 ===============
 
@@ -416,17 +430,3 @@ Error codes:
     5001    Box does not exist
 Non-normative:
     2011    Box ID malformed
-
-
-ConfirmDelivery
-===============
-
-Mark commercial message as accepted by recipient.
-
-Changes message state from delivered (4) to accepted (6). Appliable only to
-commercial messages. Messages from public offices (municipalities, government
-etc.) are accepted automatically by login on interactive web portal or by
-triggering most of SOAP operations.
-
-Must be called before downloading (signed or unsigned) incoming message
-[Signed]MessageDownload.
