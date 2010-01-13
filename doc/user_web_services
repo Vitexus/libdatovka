@@ -401,6 +401,10 @@ OVM             ic or prefix of firmName
 
 String search criteria are matched case insensitive.
 
+Search results depends or logged-in user type. Users of boxes with open
+addressing can search other open-addressing boxes, otherwise only OVM type
+boxes can be searched. Search based on exact box identifier finder unlimited.
+
 Error codes:
     0002    No box suits to search request (by other criteria)
     0003    To much boxes suit to search request (by other criteria),
