@@ -426,6 +426,41 @@ void print_message(const struct isds_message *message) {
     printf("}\n");
 }
 
+void print_copies(const struct isds_list *copies) {
+    const struct isds_list *item;
+    struct isds_message_copy *copy;
+
+    printf("Copies = ");
+    if (!copies) {
+        printf("<NULL>\n");
+        return;
+    }
+
+    printf("{\n");
+    for (item = copies; item; item = item->next) {
+        copy = (struct isds_message_copy *) item->data;
+        printf("\tCopy = ");
+
+        if (!copy)
+            printf("<NULL>\n");
+        else {
+            printf("\t\tdbIDRecipient = %s\n", copy->dbIDRecipient);
+            printf("\t\tdmRecipientOrgUnit = %s\n", copy->dmRecipientOrgUnit);
+
+            printf("\t\tdmRecipientOrgUnitNum = ");
+            if (copy->dmRecipientOrgUnitNum)
+                printf("%ld\n", *copy->dmRecipientOrgUnitNum);
+            else
+                printf("<NULL>\n");
+            printf("\t\tdmToHands = %s\n", copy->dmToHands);
+
+            printf("\t\terror = %s\n", isds_strerror(copy->error));
+            printf("\t\tdmStatus = %s\n", copy->dmStatus);
+            printf("\t\tdmID = %s\n", copy->dmID);
+        }
+    }
+}
+
 
 void compare_hashes(const struct isds_hash *hash1,
         const struct isds_hash *hash2) {

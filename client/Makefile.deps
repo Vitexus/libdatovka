@@ -17,4 +17,5 @@ loadreceivedmessage.o: loadreceivedmessage.c ../src/isds.h common.h
 login.o: login.c ../src/isds.h common.h
 markasread.o: markasread.c ../src/isds.h common.h
 markasreceived.o: markasreceived.c ../src/isds.h common.h
+sendmultiple.o: sendmultiple.c ../src/isds.h common.h
 verifyreceivedhash.o: verifyreceivedhash.c ../src/isds.h common.h
