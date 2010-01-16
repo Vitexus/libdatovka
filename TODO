@@ -30,7 +30,7 @@
 * Test message is system generated
 * Make high logic checks optional
 * Validate XML trees (optional)
-* Upgrade to ISDS specification version >= 2
+* Upgrade to ISDS specification version 2.6 once it will be released
 * Check for minimal dependency library versions
 * Distinguish processing errors by different isds_error values instead of
   generic IE_ERROR
