@@ -4689,8 +4689,10 @@ leave:
 }
 
 
-/* Load signed delivery info from buffer.
+/* Load delivery info of any format from buffer.
  * @context is session context
+ * @raw_type advertises format of @buffer content. Only delivery info types
+ * are accepted.
  * @buffer is DER encoded PKCS#7 structure with signed delivery info. You can
  * retrieve such data from message->raw after calling
  * isds_get_signed_delivery_info().
@@ -4698,11 +4700,13 @@ leave:
  * @message is automatically reallocated message parsed from @buffer.
  * @strategy selects how buffer will be attached into raw isds_message member.
  * */
-isds_error isds_load_signed_delivery_info(struct isds_ctx *context,
+isds_error isds_load_delivery_info(struct isds_ctx *context,
+        const isds_raw_type raw_type,
         const void *buffer, const size_t length,
         struct isds_message **message, const isds_buffer_strategy strategy) {
 
     isds_error err = IE_SUCCESS;
+    message_ns_type message_ns;
     xmlDocPtr message_doc = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
@@ -4715,16 +4719,38 @@ isds_error isds_load_signed_delivery_info(struct isds_ctx *context,
     if (!buffer) return IE_INVAL;
 
 
-    /* Extract delivery info from PKCS#7 structure */
-    err = extract_cms_data(context, buffer, length,
-            &xml_stream, &xml_stream_length);
-    if (err) goto leave;
+    /* Select buffer format and extract XML from CMS*/
+    switch (raw_type) {
+        case RAWTYPE_DELIVERYINFO:
+            message_ns = MESSAGE_NS_UNSIGNED;
+            xml_stream = (void *) buffer;
+            xml_stream_length = length;
+            break;
+
+        case RAWTYPE_PLAIN_SIGNED_DELIVERYINFO:
+            message_ns = MESSAGE_NS_SIGNED_DELIVERY;
+            xml_stream = (void *) buffer;
+            xml_stream_length = length;
+            break;
+
+        case RAWTYPE_CMS_SIGNED_DELIVERYINFO:
+            message_ns = MESSAGE_NS_SIGNED_DELIVERY;
+            err = extract_cms_data(context, buffer, length,
+                    &xml_stream, &xml_stream_length);
+            if (err) goto leave;
+            break;
+
+        default:
+            isds_log_message(context, _("Bad raw delivery representation type"));
+            return IE_INVAL;
+            break;
+    }
 
     isds_log(ILF_ISDS, ILL_DEBUG,
-            _("Signed delivery info content:\n%.*s\nEnd of delivery info\n"),
+            _("Delivery info content:\n%.*s\nEnd of delivery info\n"),
             xml_stream_length, xml_stream);
 
-    /* Convert extracted delivery info XML stream into XPath context */
+    /* Convert delivery info XML stream into XPath context */
     message_doc = xmlParseMemory(xml_stream, xml_stream_length);
     if (!message_doc) {
         err = IE_XML;
@@ -4750,7 +4776,7 @@ isds_error isds_load_signed_delivery_info(struct isds_ctx *context,
      *   </q:dmDelivery>
      * </q:GetDeliveryInfoResponse>
      * */
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_SIGNED_DELIVERY)) {
+    if (register_namespaces(xpath_ctx, message_ns)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -4761,23 +4787,21 @@ isds_error isds_load_signed_delivery_info(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    /* Empty embedded delivery info */
+    /* Empty delivery info */
     if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
         isds_printf_message(context,
-                _("XML document embedded into PKCS#7 structure is not "
-                    "sisds:dmDelivery document"));
+                _("XML document ss not sisds:dmDelivery document"));
         err = IE_ISDS;
         goto leave;
     }
-    /* More embedded delivery infos */
+    /* More delivery infos */
     if (result->nodesetval->nodeNr > 1) {
         isds_printf_message(context,
-                _("Embeded XML document into PKCS#7 structure has more "
-                    "root sisds:dmDelivery elements"));
+                _("XML document has more sisds:dmDelivery elements"));
         err = IE_ISDS;
         goto leave;
     }
-    /* One embedded delivery info */
+    /* One delivery info */
     xpath_ctx->node = result->nodesetval->nodeTab[0];
 
     /* Extract the envelope (= message without documents, hence 0).
@@ -4795,7 +4819,7 @@ isds_error isds_load_signed_delivery_info(struct isds_ctx *context,
     if (err) goto leave;
 
     /* Append raw CMS structure into message */
-    (*message)->raw_type = RAWTYPE_CMS_SIGNED_DELIVERYINFO;
+    (*message)->raw_type = raw_type;
     switch (strategy) {
         case BUFFER_DONT_STORE:
             break;
@@ -4823,14 +4847,14 @@ leave:
         isds_message_free(message);
     }
 
-    xmlFreeDoc(message_doc);
-    cms_data_free(xml_stream);
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(message_doc);
+    if (xml_stream != buffer) cms_data_free(xml_stream);
 
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Signed message loaded successfully.\n"));
+                _("Delivery info loaded successfully.\n"));
     return err;
 }
 
@@ -4871,8 +4895,9 @@ isds_error isds_get_signed_delivery_info(struct isds_ctx *context,
             BAD_CAST "GetSignedDeliveryInfo", &raw, &raw_length);
     if (err) goto leave;
   
-    /* Parse message */
-    err = isds_load_signed_delivery_info(context, raw, raw_length,
+    /* Parse delivery info */
+    err = isds_load_delivery_info(context,
+            RAWTYPE_CMS_SIGNED_DELIVERYINFO, raw, raw_length,
             message, BUFFER_MOVE);
     if (err) goto leave;
 
@@ -4893,120 +4918,6 @@ leave:
                 _("GetSignedDeliveryInfo request processed by server "
                         "successfully.\n")
                 );
-    return err;
-}
-
-
-/* Load delivery info from buffer.
- * @context is session context
- * @buffer is XML document stream with delivery info. You can retrieve such
- * data from message->raw after calling isds_get_delivery_info().
- * @length is length of buffer in bytes.
- * @message is automatically reallocated message parsed from @buffer.
- * @strategy selects how buffer will be attached into raw isds_message member.
- * */
-isds_error isds_load_delivery_info(struct isds_ctx *context,
-        const void *buffer, const size_t length,
-        struct isds_message **message, const isds_buffer_strategy strategy) {
-
-    isds_error err = IE_SUCCESS;
-    xmlDocPtr message_doc = NULL;
-    xmlXPathContextPtr xpath_ctx = NULL;
-    xmlXPathObjectPtr result = NULL;
-
-    if (!context) return IE_INVALID_CONTEXT;
-    if (!message) return IE_INVAL;
-    isds_message_free(message);
-    if (!buffer) return IE_INVAL;
-
-    /* Convert delivery info XML stream into XPath context */
-    message_doc = xmlParseMemory(buffer, length);
-    if (!message_doc) {
-        err = IE_XML;
-        goto leave;
-    }
-    xpath_ctx = xmlXPathNewContext(message_doc);
-    if (!xpath_ctx) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    result = xmlXPathEvalExpression(BAD_CAST "/isds:dmDelivery", xpath_ctx);
-    if (!result) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    /* Empty delivery info */
-    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-        isds_printf_message(context,
-                _("XML document is not isds:dmDelivery document"));
-        err = IE_ISDS;
-        goto leave;
-    }
-    /* More delivery infos
-     * This should never happen */
-    if (result->nodesetval->nodeNr > 1) {
-        isds_printf_message(context,
-                _("XML document has more root isds:dmDelivery elements"));
-        err = IE_ISDS;
-        goto leave;
-    }
-    /* One delivery info */
-    xpath_ctx->node = result->nodesetval->nodeTab[0];
-
-    /* Extract the envelope (= message without documents, hence 0).
-     * XXX: extract_TReturnedMessage() can obtain attachments size,
-     * but delivery info carries none. It's coded as option elements,
-     * so it should work. */
-    err = extract_TReturnedMessage(context, 0, message, xpath_ctx);
-    if (err) goto leave;
-
-    /* Extract events */
-    err = move_xpathctx_to_child(context, BAD_CAST "isds:dmEvents", xpath_ctx);
-    if (err == IE_NOEXIST || err == IE_NOTUNIQ) { err = IE_ISDS; goto leave; }
-    if (err) { err = IE_ERROR; goto leave; }
-    err = extract_events(context, &(*message)->envelope->events, xpath_ctx);
-    if (err) goto leave;
-
-    /* Append raw CMS structure into message */
-    (*message)->raw_type = RAWTYPE_DELIVERYINFO;
-    switch (strategy) {
-        case BUFFER_DONT_STORE:
-            break;
-        case BUFFER_COPY:
-            (*message)->raw = malloc(length);
-            if (!(*message)->raw) {
-                err = IE_NOMEM;
-                goto leave;
-            }
-            memcpy((*message)->raw, buffer, length);
-            (*message)->raw_length = length;
-            break;
-        case BUFFER_MOVE:
-            (*message)->raw = (void *) buffer;
-            (*message)->raw_length = length;
-            break;
-        default:
-            err = IE_ENUM;
-            goto leave;
-    }
-
-leave:
-    if (err) {
-        if (*message && strategy == BUFFER_MOVE) (*message)->raw = NULL;
-        isds_message_free(message);
-    }
-
-    xmlFreeDoc(message_doc);
-    xmlXPathFreeObject(result);
-    xmlXPathFreeContext(xpath_ctx);
-
-    if (!err)
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Delivery info loaded successfully.\n"));
     return err;
 }
 

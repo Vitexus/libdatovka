@@ -45,13 +45,13 @@ int main(int argc, char **argv) {
         }
 
         printf("Loading signed delivery info\n");
-        err = isds_load_signed_delivery_info(ctx, buffer, length,
-                &message, BUFFER_DONT_STORE);
+        err = isds_load_delivery_info(ctx, RAWTYPE_CMS_SIGNED_DELIVERYINFO,
+                buffer, length, &message, BUFFER_DONT_STORE);
         if (err)
-            printf("isds_load_signed_delivery_info() failed: %s: %s\n",
+            printf("isds_load_delivery_info() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
         else {
-            printf("isds_load_signed_delivery_info() succeeded:\n");
+            printf("isds_load_delivery_info() succeeded:\n");
             print_envelope(message->envelope);
         }
 
@@ -75,9 +75,9 @@ int main(int argc, char **argv) {
             exit(EXIT_FAILURE);
         }
 
-        printf("Loading plain delivery info\n");
-        err = isds_load_delivery_info(ctx, buffer, length,
-                &message, BUFFER_DONT_STORE);
+        printf("Loading plain signed delivery info\n");
+        err = isds_load_delivery_info(ctx, RAWTYPE_PLAIN_SIGNED_DELIVERYINFO,
+                buffer, length, &message, BUFFER_DONT_STORE);
         if (err)
             printf("isds_load_delivery_info() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
