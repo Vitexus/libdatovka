@@ -2413,14 +2413,13 @@ static isds_error find_and_extract_DmHash(struct isds_ctx *context,
     isds_hash_free(hash);
     if (!xpath_ctx) return IE_INVAL;
 
+    old_ctx_node = xpath_ctx->node;
 
     *hash = calloc(1, sizeof(**hash));
     if (!*hash) {
         err = IE_NOMEM;
         goto leave;
     }
-
-    old_ctx_node = xpath_ctx->node;
 
     /* Locate dmHash */
     err = move_xpathctx_to_child(context, BAD_CAST "sisds:dmHash", xpath_ctx);
@@ -2669,7 +2668,7 @@ static isds_error extract_events(struct isds_ctx *context,
     isds_error err = IE_SUCCESS;
     xmlXPathObjectPtr result = NULL;
     xmlNodePtr events_node = xpath_ctx->node;
-    struct isds_list *event, *prev_event;
+    struct isds_list *event, *prev_event = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!events) return IE_INVAL;
