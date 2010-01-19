@@ -3,6 +3,8 @@ Maintanance web services specification
 
 Source: Provozní řád ISDS, version 2009-10-30, Pages 14–15
 Source: Webové služby ISDS pro podporu procesů, version 2009-06-26
+Source: Webové služby rozhraní ISDS pro správu dativých schránek,
+    version 2.1, 2009-10-30
 
 
 These services are intended for administration of box as such. NONE of the
@@ -27,12 +29,14 @@ URL postfix: DsManage
 
 CreateDataBox
     Create box
+CreateDataBoxPFOInfo
+    Report PFO/FO insert into registry
 DeleteDataBox
-    Remove box
+    Remove box permanently
 UpdateDataBoxDescr
     Change data about box owner
 AddDataBoxUser
-    Add person permitted access to the box
+    Add person permitted to access to the box
 DeleteDataBoxUser
     Remove person permitted to access to the box
 UpdateDataBoxUser
