@@ -12,7 +12,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_PROG_CC
 AC_PROG_CPP
 #AC_PROG_MAKE_SET
-AC_PROG_LIBTOOL
+LT_INIT
 
 # Checks for libraries.
 #TODO: Verify minimal version. libxml2-2.6.26 is just a guess.
