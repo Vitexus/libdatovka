@@ -39,6 +39,6 @@ AC_FUNC_MKTIME
 AC_FUNC_MMAP
 AC_CHECK_FUNCS([localtime_r memset munmap setlocale strdup strerror])
 
-AC_CONFIG_FILES([Makefile src/Makefile client/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile client/Makefile test/Makefile])
 #AC_CONFIG_SUBDIRS([src])
 AC_OUTPUT
