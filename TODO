@@ -7,7 +7,7 @@
     Clean context message buffer on function entry point
     Allow formated message appeding, preserve deep messages
 * Make function tests
-    Test static functions
+    Cover all functions
     Simulate server?
 * Make release tools
     Changelog/NEWS
