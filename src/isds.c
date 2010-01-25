@@ -1500,7 +1500,7 @@ static isds_error eventstring2event(const xmlChar *string,
     } \
     if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) { \
         if (result->nodesetval->nodeNr > 1) { \
-            isds_log_message(context, _("Multiple " element " element")); \
+            isds_printf_message(context, _("Multiple %s element"), element); \
             err = IE_ERROR; \
             goto leave; \
         } \
@@ -1534,8 +1534,8 @@ static isds_error eventstring2event(const xmlChar *string,
             else { \
                 char *string_locale = utf82locale((char*)string); \
                 isds_printf_message(context, \
-                        _(element " value is not valid boolean: "), \
-                        string_locale); \
+                        _("%s value is not valid boolean: "), \
+                        element, string_locale); \
                 free(string_locale); \
                 free(string); \
                 err = IE_ERROR; \
@@ -1559,8 +1559,8 @@ static isds_error eventstring2event(const xmlChar *string,
             if (*endptr != '\0') { \
                 char *string_locale = utf82locale((char *)string); \
                 isds_printf_message(context, \
-                        _(element" is not valid integer: %s"), \
-                        string_locale); \
+                        _("%s is not valid integer: %s"), \
+                        element, string_locale); \
                 free(string_locale); \
                 free(string); \
                 err = IE_ISDS; \
@@ -1570,8 +1570,8 @@ static isds_error eventstring2event(const xmlChar *string,
             if (number == LONG_MIN || number == LONG_MAX) { \
                 char *string_locale = utf82locale((char *)string); \
                 isds_printf_message(context, \
-                        _(element " value out of range of long int: %s"), \
-                        string_locale); \
+                        _("%s value out of range of long int: %s"), \
+                        element, string_locale); \
                 free(string_locale); \
                 free(string); \
                 err = IE_ERROR; \
@@ -1604,8 +1604,8 @@ static isds_error eventstring2event(const xmlChar *string,
             if (*endptr != '\0') { \
                 char *string_locale = utf82locale((char *)string); \
                 isds_printf_message(context, \
-                        _(element" is not valid integer: %s"), \
-                        string_locale); \
+                        _("%s is not valid integer: %s"), \
+                        element, string_locale); \
                 free(string_locale); \
                 free(string); \
                 err = IE_ISDS; \
@@ -1615,8 +1615,8 @@ static isds_error eventstring2event(const xmlChar *string,
             if (number == LONG_MIN || number == LONG_MAX) { \
                 char *string_locale = utf82locale((char *)string); \
                 isds_printf_message(context, \
-                        _(element " value out of range of long int: %s"), \
-                        string_locale); \
+                        _("%s value out of range of long int: %s"), \
+                        element, string_locale); \
                 free(string_locale); \
                 free(string); \
                 err = IE_ERROR; \
@@ -1626,7 +1626,7 @@ static isds_error eventstring2event(const xmlChar *string,
             free(string); string = NULL; \
             if (number < 0) { \
                 isds_printf_message(context, \
-                        _(element " value is negative: %ld"), number); \
+                        _("%s value is negative: %ld"), element, number); \
                 err = IE_ERROR; \
                 goto leave; \
             } \
@@ -1662,8 +1662,9 @@ static isds_error eventstring2event(const xmlChar *string,
     node = xmlNewTextChild(parent, NULL, BAD_CAST (element), \
             (xmlChar *) (string)); \
     if (!node) { \
-        isds_printf_message(context, _("Could not add " element " child to " \
-                    "%s element"), (parent)->name); \
+        isds_printf_message(context, \
+                _("Could not add %s child to %s element"), \
+                element, (parent)->name); \
         err = IE_ERROR; \
         goto leave; \
     }
@@ -1709,8 +1710,8 @@ static isds_error eventstring2event(const xmlChar *string,
     attribute_node = xmlNewProp((parent), BAD_CAST (attribute), \
             (xmlChar *) (string)); \
     if (!attribute_node) { \
-        isds_printf_message(context, _("Could not add " attribute \
-                    " attribute to %s element"), (parent)->name); \
+        isds_printf_message(context, _("Could not add %s " \
+                    "attribute to %s element"), (attribute), (parent)->name); \
         err = IE_ERROR; \
         goto leave; \
     }
