@@ -221,8 +221,10 @@ isds_error isds_init(void) {
     log_facilities = ILF_ALL;
     log_level = ILL_WARNING;
 
+#if ENABLE_NLS
     /* Initialize gettext */
     bindtextdomain(PACKAGE, LOCALEDIR);
+#endif
 
     /* Initialize CURL */
     if (curl_global_init(CURL_GLOBAL_ALL)) {
@@ -282,7 +284,7 @@ isds_error isds_cleanup(void) {
 
 
 /* Return text description of ISDS error */
-char *isds_strerror(const isds_error error) {
+const char *isds_strerror(const isds_error error) {
     switch (error) {
         case IE_SUCCESS:
             return(_("Success")); break;

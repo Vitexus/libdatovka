@@ -64,7 +64,7 @@ typedef enum {
 } isds_log_facility;
 
 /* Return text description of ISDS error */
-char *isds_strerror(const isds_error error);
+const char *isds_strerror(const isds_error error);
 
 /* TLS libisds options */
 typedef enum {

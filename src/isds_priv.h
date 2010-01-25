@@ -12,7 +12,7 @@
 #include <libxml/xmlsave.h>
 #include "gettext.h"
 
-#define _(x) dgettext(PACKAGE, (x))
+#define _(x) ((const char *) dgettext(PACKAGE, (x)))
 
 #define SOAP_NS "http://schemas.xmlsoap.org/soap/envelope/"
 #define SOAP2_NS "http://www.w3.org/2003/05/soap-envelope"
