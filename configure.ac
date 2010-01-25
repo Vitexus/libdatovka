@@ -38,6 +38,7 @@ AM_PATH_LIBGCRYPT([1:1.4.0])
 #TODO: Determine minimal version
 AM_PATH_GPGME()
 #AC_CHECK_LIB([expat])
+AM_GNU_GETTEXT([external])
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h locale.h stdint.h stdlib.h string.h unistd.h])
@@ -54,7 +55,7 @@ AC_FUNC_MMAP
 AC_CHECK_FUNCS([localtime_r memset munmap setlocale strdup strerror])
 
 
-AC_CONFIG_FILES([Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile po/Makefile.in])
 
 #AC_CONFIG_SUBDIRS([src])
 AC_OUTPUT

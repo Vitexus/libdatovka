@@ -221,6 +221,9 @@ isds_error isds_init(void) {
     log_facilities = ILF_ALL;
     log_level = ILL_WARNING;
 
+    /* Initialize gettext */
+    bindtextdomain(PACKAGE, LOCALEDIR);
+
     /* Initialize CURL */
     if (curl_global_init(CURL_GLOBAL_ALL)) {
         isds_log(ILF_ISDS, ILL_CRIT, _("CURL library initialization failed\n"));

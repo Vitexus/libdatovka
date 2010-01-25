@@ -2,7 +2,7 @@
 #define __ISDS_ISDS_PRIV_H__
 
 /* Structures not to export outside library */
-
+#include "gettext.h"
 #include "isds.h"
 #include <curl/curl.h>
 #include <libxml/parser.h>
@@ -10,8 +10,10 @@
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 #include <libxml/xmlsave.h>
+#include <libintl.h>
 
-#define _(x) (x)
+#define _(x) dgettext(PACKAGE, (x))
+
 #define SOAP_NS "http://schemas.xmlsoap.org/soap/envelope/"
 #define SOAP2_NS "http://www.w3.org/2003/05/soap-envelope"
 #define ISDS_NS "http://isds.czechpoint.cz/v20"
