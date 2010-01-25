@@ -1,1 +1,20 @@
-See README to check dependecies, run `make && make install' in src directory.
+See README for dependecies.
+
+If you get code from VCS, you will need Autotools (automake, autoconf,
+libtool) in addition and you must prepare build system with `autoreconf
+--install'.
+
+Then run `./configure && make && make install' to build and install library
+into your system.
+
+If you want to change installation directory use appropriate configure
+argument (see `./configure --help' for more details).
+
+If you want build example clients, add `--enable-example' to configure. You
+can run and study example clients in `client' subdirectory.
+
+If you want build and run library internal tests, add `--enable-test' to
+configure. You can run tests by `make check'. You can run and study each test
+in `test' subdirectory.
+
+Example clients and tests are not installed by `make install'.
