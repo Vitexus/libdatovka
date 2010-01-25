@@ -1,2 +1,6 @@
 # List of source files which contain translatable strings.
+src/crypto.c
 src/isds.c
+src/physxml.c
+src/soap.c
+src/validator.c
