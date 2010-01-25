@@ -27,6 +27,10 @@ AC_ARG_ENABLE(test, [AS_HELP_STRING([--enable-test],
 AM_CONDITIONAL([BUILD_TEST], [test "$enable_test" = "yes"])
 AS_IF([test "$enable_test" = "yes"], AC_CONFIG_FILES([test/Makefile]))
 
+# Enable gettext
+AM_GNU_GETTEXT_VERSION([0.17])
+AM_GNU_GETTEXT([external])
+
 
 # Checks for libraries.
 #TODO: Verify minimal version. libxml2-2.6.26 is just a guess.
@@ -38,7 +42,6 @@ AM_PATH_LIBGCRYPT([1:1.4.0])
 #TODO: Determine minimal version
 AM_PATH_GPGME()
 #AC_CHECK_LIB([expat])
-AM_GNU_GETTEXT([external])
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h locale.h stdint.h stdlib.h string.h unistd.h])
