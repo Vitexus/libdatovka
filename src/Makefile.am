@@ -13,4 +13,4 @@ libisds_la_CPPFLAGS = -D_FILE_OFFSET_BITS=64 -DLARGEFILE_SOURCE=1 \
 libisds_la_CFLAGS = -std=c99 -Wall -Werror \
 					@LIBGCRYPT_CFLAGS@ @GPGME_CFLAGS@
 libisds_la_LDFLAGS = -version-info 1:0:0 @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ \
-	@GPGME_LIBS@ -lexpat
+	@GPGME_LIBS@ -lexpat @LTLIBINTL@

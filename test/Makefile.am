@@ -8,7 +8,7 @@ AM_CPPFLAGS += -D_FILE_OFFSET_BITS=64 -DLARGEFILE_SOURCE=1 \
 					  -DLOCALEDIR=\"$(localedir)\"
 AM_CFLAGS = -std=c99 -Wall -Werror \
 					@LIBGCRYPT_CFLAGS@ @GPGME_CFLAGS@
-LDADD = @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ @GPGME_LIBS@ -lexpat
+LDADD = @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ @GPGME_LIBS@ -lexpat @LTLIBINTL@
 
 TESTS = compute_hash context init_gpgpme isds_init login \
 		isds-dbtype isds-filemetatype isds-hash_algorithm
