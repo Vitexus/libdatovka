@@ -2,7 +2,7 @@
 #define __ISDS_ISDS_PRIV_H__
 
 /* Structures not to export outside library */
-#include "gettext.h"
+#include "../config.h"
 #include "isds.h"
 #include <curl/curl.h>
 #include <libxml/parser.h>
@@ -10,7 +10,7 @@
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 #include <libxml/xmlsave.h>
-#include <libintl.h>
+#include "gettext.h"
 
 #define _(x) dgettext(PACKAGE, (x))
 

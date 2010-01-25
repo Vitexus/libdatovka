@@ -1,4 +1,6 @@
 libisds_ladir = $(includedir)
+localedir = $(datadir)/locale
+
 lib_LTLIBRARIES = libisds.la
 libisds_la_SOURCES = cdecode.c cencode.c crypto.c isds.c physxml.c soap.c \
 					 utils.c validator.c \
@@ -6,7 +8,8 @@ libisds_la_SOURCES = cdecode.c cencode.c crypto.c isds.c physxml.c soap.c \
 					 soap.h utils.h validator.h
 libisds_la_HEADERS = isds.h
 libisds_la_CPPFLAGS = -D_FILE_OFFSET_BITS=64 -DLARGEFILE_SOURCE=1 \
-					  @XML_CPPFLAGS@ @LIBCURL_CPPFLAGS@
+					  @XML_CPPFLAGS@ @LIBCURL_CPPFLAGS@ \
+					  -DLOCALEDIR=\"$(localedir)\"
 libisds_la_CFLAGS = -std=c99 -Wall -Werror \
 					@LIBGCRYPT_CFLAGS@ @GPGME_CFLAGS@
 libisds_la_LDFLAGS = -version-info 1:0:0 @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ \

@@ -10,3 +10,4 @@ SUBDIRS += test
 endif
 
 EXTRA_DIST = config.rpath
+
