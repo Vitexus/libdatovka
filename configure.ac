@@ -14,6 +14,20 @@ AC_PROG_CPP
 #AC_PROG_MAKE_SET
 LT_INIT
 
+
+# Enable example clients
+AC_ARG_ENABLE(example, [AS_HELP_STRING([--enable-example],
+                              [Build library usage examples])])
+AM_CONDITIONAL([BUILD_EXAMPLE], [test "$enable_example" = "yes"])
+AS_IF([test "$enable_example" = "yes"], AC_CONFIG_FILES([client/Makefile]))
+
+# Enable tests
+AC_ARG_ENABLE(test, [AS_HELP_STRING([--enable-test],
+                              [Enable internal library tests])])
+AM_CONDITIONAL([BUILD_TEST], [test "$enable_test" = "yes"])
+AS_IF([test "$enable_test" = "yes"], AC_CONFIG_FILES([test/Makefile]))
+
+
 # Checks for libraries.
 #TODO: Verify minimal version. libxml2-2.6.26 is just a guess.
 AM_PATH_XML2([2.6.26])
@@ -39,6 +53,8 @@ AC_FUNC_MKTIME
 AC_FUNC_MMAP
 AC_CHECK_FUNCS([localtime_r memset munmap setlocale strdup strerror])
 
-AC_CONFIG_FILES([Makefile src/Makefile client/Makefile test/Makefile])
+
+AC_CONFIG_FILES([Makefile src/Makefile])
+
 #AC_CONFIG_SUBDIRS([src])
 AC_OUTPUT
