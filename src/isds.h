@@ -264,7 +264,10 @@ struct isds_envelope {
                                        Maximal length is 100 characters. */
     char *dmRecipientAddress;       /* Postal address of recipient;
                                        Maximal length is 100 characters. */
-    _Bool *dmAmbiguousRecipient;    /* Recipient has OVM role */ 
+    _Bool *dmAmbiguousRecipient;    /* Recipient has OVM role */
+    char *dmType;                   /* Message type:
+                                       "V" is public message
+                                       "K" is commercial message */
 
     /* Following memebers are assigned by ISDS in different phases of message
      * life cycle. */

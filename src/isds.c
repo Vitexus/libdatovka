@@ -131,6 +131,7 @@ void isds_envelope_free(struct isds_envelope **envelope) {
     free((*envelope)->dmRecipient);
     free((*envelope)->dmRecipientAddress);
     free((*envelope)->dmAmbiguousRecipient);
+    free((*envelope)->dmType);
 
     free((*envelope)->dmOrdinal);
     free((*envelope)->dmMessageStatus);
@@ -2169,6 +2170,64 @@ leave:
 }
 
 
+/* Convert message type attribute of current element into isds_envelope
+ * structure.
+ * The envelope is automatically allocated but not reallocated.
+ * The data are just appended into envelope structure.
+ * @context is ISDS context
+ * @envelope is automically allocated message envelope structure
+ * @xpath_ctx is XPath context with current node as parent of attribute
+ * carrying message type
+ * In case of error @envelope will be freed. */
+static isds_error append_message_type(struct isds_ctx *context,
+        struct isds_envelope **envelope, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!envelope) return IE_INVAL;
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    if (!*envelope) {
+        /* Allocate new */
+        *envelope = calloc(1, sizeof(**envelope));
+        if (!*envelope) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+    } else {
+        /* Free old data */
+        zfree((*envelope)->dmType);
+    }
+
+
+    EXTRACT_STRING_ATTRIBUTE("dmType", (*envelope)->dmType, 0);
+
+    if (!(*envelope)->dmType) {
+        /* Use default value */
+        (*envelope)->dmType = strdup("V");
+        if (!(*envelope)->dmType) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+    } else if (1 != xmlUTF8Strlen((xmlChar *) (*envelope)->dmType)) {
+        char *type_locale = utf82locale((*envelope)->dmType);
+        isds_printf_message(context,
+                _("Message type in dmType attribute is not 1 character long: "
+                    "%s"),
+                type_locale);
+        free(type_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+leave:
+    if (err) isds_envelope_free(envelope);
+    return err;
+}
+
+
+
 /* Extract message document into reallocated document structure
  * @context is ISDS context
  * @document is automically reallocated message documents structure
@@ -2598,6 +2657,10 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
     /* Get dmMessageStatus, dmAttachmentSize, dmDeliveryTime,
      * dmAcceptanceTime. */
     err = append_status_size_times(context, &((*message)->envelope), xpath_ctx);
+    if (err) goto leave;
+
+    /* Get message type */
+    err = append_message_type(context, &((*message)->envelope), xpath_ctx);
     if (err) goto leave;
     
 leave:
