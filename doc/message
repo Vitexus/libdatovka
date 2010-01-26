@@ -128,7 +128,9 @@ User can request to assign permission to send commercial messages. Permission
 can be assigned by Czech Post. Commecial recipient can not be searched. Sender
 must know exact box ID.
 
-Commercial message can be recognised by @dmType="K" in message envelope.
+Commercial message can be recognised by @dmType="K" in message envelope. If
+@dmType is "V" or attribute is missing, message is so called public (i.e.
+standard noncommercial with acceptence time outs etc.).
 
 
 Message states

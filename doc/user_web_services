@@ -176,6 +176,7 @@ MessageDownload
 Retrieve incoming message identified by message ID.
 
 Commercial message must be accepted manually by ConfirmDelivery before.
+Commetcial message has set dmReturnedMessage/@dmType="K".
 
 Error codes:
     0000    Message sent successfully
