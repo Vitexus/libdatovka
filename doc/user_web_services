@@ -259,7 +259,8 @@ Message status filter is union of distinct message states expressed as
 exponents of 2. Effectively it's a polynom \sum_{x \in message_statux} 2^x.
 Special value -1 means all messages. Meaning for value 1 or 0 is undefined.
 
-Messages are sorted in order of delivery time.
+Messages are sorted in order of delivery time. Message type is stored in
+dmRecord/@dmType.
 
 Offset starts on 1. Limit defaults to 1000.
 

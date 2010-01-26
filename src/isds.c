@@ -2174,6 +2174,8 @@ leave:
 
 /* Convert message type attribute of current element into isds_envelope
  * structure.
+ * TODO: This function can be incorporated into append_status_size_times() as
+ * they are called always together.
  * The envelope is automatically allocated but not reallocated.
  * The data are just appended into envelope structure.
  * @context is ISDS context
@@ -2455,6 +2457,11 @@ static isds_error extract_DmRecord(struct isds_ctx *context,
     err = append_GMessageEnvelope(context, envelope, xpath_ctx);
     if (err) goto leave;
     /* dmOVM can not be obtained from ISDS */
+
+    /* Get message type */
+    err = append_message_type(context, envelope, xpath_ctx);
+    if (err) goto leave;
+    
     
 leave:
     if (err) isds_envelope_free(envelope);
