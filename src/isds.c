@@ -1813,16 +1813,17 @@ static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
         }
         err = string2isds_DbType((xmlChar *)string, (*db_owner_info)->dbType);
         if (err) {
-            free((*db_owner_info)->dbType);
-            (*db_owner_info)->dbType = NULL;
+            zfree((*db_owner_info)->dbType);
             if (err == IE_ENUM) {
                 err = IE_ISDS;
+                char *string_locale = utf82locale(string);
                 isds_printf_message(context, _("Unknown isds:dbType: %s"), 
-                    (char *)string);
+                    string_locale);
+                free(string_locale);
             }
             goto leave;
         }
-        free(string); string = NULL;
+        zfree(string);
     }
 
     EXTRACT_STRING("isds:ic", (*db_owner_info)->ic);
@@ -1866,16 +1867,16 @@ static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
         err = datestring2tm((xmlChar *)string,
                 (*db_owner_info)->birthInfo->biDate);
         if (err) {
-            free((*db_owner_info)->birthInfo->biDate);
-            (*db_owner_info)->birthInfo->biDate = NULL;
+            zfree((*db_owner_info)->birthInfo->biDate);
             if (err == IE_NOTSUP) {
                 err = IE_ISDS;
+                char *string_locale = utf82locale(string);
                 isds_printf_message(context,
-                        _("Invalid isds:biDate value: %s"), (char *)string);
+                        _("Invalid isds:biDate value: %s"), string_locale);
             }
             goto leave;
         }
-        free(string); string = NULL;
+        zfree(string);
     }
     EXTRACT_STRING("isds:biCity", (*db_owner_info)->birthInfo->biCity);
     EXTRACT_STRING("isds:biCounty", (*db_owner_info)->birthInfo->biCounty);
@@ -2994,7 +2995,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
     xmlSetNs(request, isds_ns);
     node = xmlNewChild(request, NULL, BAD_CAST "dbDummy", NULL);
     if (!node) {
-        isds_log_message(context, _("Could nod add dbDummy Child to "
+        isds_log_message(context, _("Could not add dbDummy Child to "
                     "GetOwnerInfoFromLogin element"));
         xmlFreeNode(request);
         return IE_ERROR;
@@ -3004,7 +3005,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
     isds_log(ILF_ISDS, ILL_DEBUG,
             _("Sending GetOwnerInfoFromLogin request to ISDS\n"));
 
-    /* Sent request */
+    /* Send request */
     err = isds(context, SERVICE_DB_ACCESS, request, &response,
             NULL, NULL);
    
