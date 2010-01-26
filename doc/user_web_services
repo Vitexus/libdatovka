@@ -1,7 +1,7 @@
 User web services specification
 ===============================
 
-Source: Provozní řád ISDS, version 2009-10-30, Pages 13–14
+Source: Provozní řád ISDS, version 2010-01-22, Pages 14–15
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
     version 2.6 (2010-01-18)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
@@ -20,7 +20,7 @@ Data types: dmBaseTypes.xsd (Appendix 1)
 Documentation: DataMessage_ws.pdf, DBSearch_ws.pdf (Appendix 2)
 
 List of SOAP requests follows. Those marked with asterisk DOES NOT MARK
-incoming messages as delivered.
+noncommercial incoming messages as delivered.
 
 
 dm_operations.wsdl
