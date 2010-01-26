@@ -76,3 +76,82 @@ GetPasswordInfo
     Get data about password expiration
 ChangeISDSPassword
     Change password
+
+
+GetOwnerInfoFromLogin
+=====================
+
+Get details about current box that user is logged in.
+
+Input is empty dummy request.
+
+Result is returned in tDbOwnerInfo structure. Some structrure memebers are
+undefined or unknown for particular box type.
+
+
+GetUserInfoFromLogin
+====================
+
+Get details about currently logged in user.
+
+Input is empty dummy request.
+
+Output is returned in tDbUserInfo. Some members can be irrelevant (and thus
+undefined) for particular user. Service can fail if user has logged into box
+with system certificate.
+
+
+GetPasswordInfo
+===============
+
+Inquire expiration time of current user password.
+
+By default password expires in 90 days. ISDS can force password change sooner.
+
+Non-normative: If user does not change password after expiration, SOAP server
+will return non-SOAP response and client could not continue in work.
+
+Input is empty dummy request.
+
+Output is ISO time of password expiration. Service has no sense if client
+autenticates with certifacate only.
+
+
+ChangeISDSPassword
+==================
+
+Change user password.
+
+Input is current password and new password. Supplied new password must match
+password stored in ISDS, otherwise system refuse password update.
+
+Password must meet formal syntax rules assuring strong complexity:
+
+    – 8 ≤ length ≤ 32 characters
+
+    – Must contains:
+
+        * at least 1 upper case letter
+
+        * at least 1 lower case letter
+
+        * at least 1 digit
+
+    – Allowed alphabet is [a-z], [A-Z], [0-9], and "!#$%&()*+,-.:=?@[]_{}|~"
+    (delimited with double quotations).
+
+    – Must differ from last 255 password
+
+    – Must not equal to user ID, user's last name and phone number
+
+Service is meaningful only when use logs in with password.
+
+After successfull password update, client continue in current sessesion.
+Password change takes effect after propagation into whole ISDS cluster (about
+15 seconds).
+
+Error codes:
+    0000    Password chaned successfully
+    1066    Empty password
+    1067    New password same as current one
+    9204    Generic error
