@@ -1,6 +1,13 @@
-Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2.1
-(2009-10-30) [DataMessage_ws.pdf], Page 4
+Server locators
+===============
 
+Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2.6
+    (2010-01-18) [DataMessage_ws.pdf], Page 4
+Souce: Provozní řád ISDS, version 2010-01-22, Page 13
+
+
+Coockie-tracked session
+=======================
 
 Production ISDS instance:
     https://www.mojedatovaschranka.cz/DS/
@@ -15,5 +22,24 @@ Different login methods requires different URL infixes:
     /cert/DS/
         System certificate authentication
     /hspis/DS/
+        Login from hosted third party solution by system certificate and
+        box ID
+
+
+Stateless communication
+=======================
+
+Production ISDS instance:
+    https://ws1.mojedatovaschranka.cz/DS/
+
+Different login methods requires different URL infixes:
+
+    https://ws1.mojedatovaschranka.cz/DS/
+        HTTP basic authentication
+    https://ws1c.mojedatovaschranka.cz/cert/DS/
+        System certificate authentication
+    https://ws1c.mojedatovaschranka.cz/certds/DS/
+        Commercial certificate with HTTP basic authentication
+    https://ws1c.mojedatovaschranka.cz/hspis/DS/
         Login from hosted third party solution by system certificate and
         box ID

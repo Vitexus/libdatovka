@@ -1,14 +1,16 @@
 Log in specification
 =====================
 
-Source: Provozní řád ISDS, version 2009-30-10, Pages 10–12, 15–16
+Source: Provozní řád ISDS, version 2010-01-22, Pages 10–13, 16
 Source: Vyhláška o stanovení podrobností užívání a provozování ISDS (194/2009
     Coll.)
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
     version 2 (2009-06-25)
 
 
-Connection tracking of web services is done via HTTP Cookie.
+Connection tracking of web services is done via HTTP Cookie, or HTTP client
+must attach authentication data to each request. These two different
+connection trackings are differentiated on base URL clients connect to.
 
 Allowed log in methods:
 
