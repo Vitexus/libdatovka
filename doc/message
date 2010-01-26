@@ -2,8 +2,8 @@ Message specification
 =====================
 
 Source: Provozní řád ISDS, version 2009-10-30, Page 13
-Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2.1
-(2009-10-30) [DataMessage_ws.pdf]
+Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2.6
+    (2010-01-18) [DataMessage_ws.pdf]
 
 Message ::= Envelope, Content
 
@@ -105,6 +105,9 @@ following cases defined:
 2   You, administrator, deleted other user
 3   Outgoing message could not been delivered because recipeient box had been
     made unaccessible
+4   Outgoing commercial message has not been accepted by recipient
+5   User has been added to the box
+6   User permissions has been changed
 
 
 Commercial messages
@@ -115,8 +118,11 @@ are not considered as accepted by recipient automatically (in opposite to
 standard messages), recipient must call ConfirmDelivery to move message from
 state Delivered (4) to state Received (6).
 
-Commercial message can be recognised by dbOpenAddressing/@dbOAType attribute
-in message envelope.
+User can request to assign permission to send commercial messages. Permission
+can be assigned by Czech Post. Commecial recipient can not be searched. Sender
+must know exact box ID.
+
+Commercial message can be recognised by @dmType="K" in message envelope.
 
 
 Message states
