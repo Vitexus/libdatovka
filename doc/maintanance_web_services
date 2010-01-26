@@ -1,21 +1,22 @@
 Maintanance web services specification
 ======================================
 
-Source: Provozní řád ISDS, version 2009-10-30, Pages 14–15
-Source: Webové služby ISDS pro podporu procesů, version 2009-06-26
+Source: Provozní řád ISDS, version 2010-01-22, Pages 14–15
 Source: Webové služby rozhraní ISDS pro správu datových schránek,
-    version 2.1, 2009-10-30
+    version 2.6 (2009-11-18)
+Source: Webové služby související s přístupem do ISDS, version 1.0
+    (2010-01-18)
 
 
 These services are intended for administration of box as such. NONE of the
 services MARK incoming messages as delivered.
 
-SOAP web services defined in: db_manipulations.wsdl, db_supplementary.wsdl
-(Appendix 3 of Provozní řád ISDS)
+SOAP web services defined in: db_manipulations.wsdl (Appendix 3),
+db_access.wsdl (Appendix 2)
 
 Data types: dbTypes.xsd (Appendix 3)
 
-Documentation: DataBox_ws.pdf, System_ws.doc (Appendix 3)
+Documentation: DataBox_ws.pdf (Appendix 3), GetInfo_ws.pdf (Appendix 2)
 
 Note: OVM mode is defined in paragraph 5a of Czech ISDS Act (300/2008 Coll.)
 
@@ -42,7 +43,7 @@ DeleteDataBoxUser
 UpdateDataBoxUser
     Change data about permitted person
 NewAccessData
-    Reset access data (remove old ones and generates new ones)
+    Reset user credentials (remove old ones and generates new ones)
 DisableDataBoxExternally
     Make box unaccessible because owner lost ability to use the box for legal
     reasons (prisoned person, person with no or weak legal rights)
@@ -53,17 +54,25 @@ EnableOwnDataBox
 SetEffectiveOVM
     Switch box into OVM mode
 CleareEffectiveOVM
-    Set box of OVM mode
+    Set box off OVM mode
+SetOpenAddressing
+    Switch box into commercial message acceptance mode
+ClearOpenAddressing 
+    Set box off commercial message acceptance mode
+GetDataBoxUsers
+    Get list of users permitted to access the box.
 
 
-db_supplementary.wsdl
-=====================
+db_access.wsdl
+==============
 
 URL postfix: DsManage
 
-GetDataBoxUsers
-    Get list of users permitted to access the box.
 GetOwnerInfoFromLogin
-    Get data about logged in user and his (current) box.
-StoreAccessDataDeliveryInfo
-    Save date when credentials has been (out-of-band) delivered to user.
+    Get data about box of logged in user.
+GetUserInfoFromLogin
+    Get data about logged in user
+GetPasswordInfo
+    Get data about password expiration
+ChangeISDSPassword
+    Change password
