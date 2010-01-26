@@ -1439,12 +1439,14 @@ static isds_error eventstring2event(const xmlChar *string,
     const xmlChar *known_prefixes[] = {
         BAD_CAST "EV1:",
         BAD_CAST "EV2:",
-        BAD_CAST "EV3:"
+        BAD_CAST "EV3:",
+        BAD_CAST "EV4:"
     };
     const isds_event_type types[] = {
         EVENT_ACCEPTED_BY_RECIPIENT,
         EVENT_ACCEPTED_BY_FICTION,
-        EVENT_UNDELIVERABLE
+        EVENT_UNDELIVERABLE,
+        EVENT_COMMERCIAL_ACCEPTED
     };
     unsigned int index;
     size_t length;

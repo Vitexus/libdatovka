@@ -225,10 +225,12 @@ typedef enum {
     EVENT_UKNOWN,                   /* Event unknown to this library */
     EVENT_ACCEPTED_BY_RECIPIENT,    /* Message has been delivered and accepted
                                        by recipeint action */
-    EVENT_ACCEPTED_BY_FICTION,     /* Message has been delivered, acceptance
+    EVENT_ACCEPTED_BY_FICTION,      /* Message has been delivered, acceptance
                                        timed out, considered as accepted */
-    EVENT_UNDELIVERABLE             /* Recipient box made unaccessible,
+    EVENT_UNDELIVERABLE,            /* Recipient box made unaccessible,
                                        thus message is undelivarable */
+    EVENT_COMMERCIAL_ACCEPTED       /* Recipient confirmed acceptace of
+                                       commercial message */
 } isds_event_type;
 
 /* Message event

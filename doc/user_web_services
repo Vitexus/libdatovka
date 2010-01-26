@@ -342,6 +342,7 @@ distinguishe the event meaning. Following prefixes are defined:
             (even after successful delivery or acceptance,
             this event is retroactive). In this case special system-generated
             message is sent to sender in addition.
+    EV4:    Commercial message has been accepted by recipient confirmation
 
 
 GetSignedDeliveryInfo
