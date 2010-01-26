@@ -1,14 +1,17 @@
 Box specification
 =================
 
-Source: Webové služby ISDS pro vyhledávání datových schránek, version 2.1
-(2009-10-30) [DataMessage_ws.pdf]
+Source: Webové služby ISDS pro vyhledávání datových schránek, version 2.7
+    (2009-12-18) [DBSearch_ws.pdf]
+Source: Webové služby ISDS pro manipulaci s datovými schránkami, verzion 2.6
+    (2010-01-18) [DataMessage_ws.pdf], Page 6
 
 Box types
 =========
 
 Symbol      Number  Description
 --------------------------------------------------------------------------
+            0       ISDS system
 OVM         10      Standard government (state or municipality or similar)
                     office
 OVM_NOTAR   11      Notary
