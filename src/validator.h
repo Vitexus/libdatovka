@@ -7,7 +7,7 @@ typedef enum {
     SERVICE_DM_OPERATIONS,
     SERVICE_DM_INFO,
     SERVICE_DB_SEARCH,
-    SERVICE_DB_SUPPLEMENTARY
+    SERVICE_DB_ACCESS
 } isds_service;
 
 /* Get ISDS status info from ISDS @response XML document.

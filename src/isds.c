@@ -3005,7 +3005,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
             _("Sending GetOwnerInfoFromLogin request to ISDS\n"));
 
     /* Sent request */
-    err = isds(context, SERVICE_DB_SUPPLEMENTARY, request, &response,
+    err = isds(context, SERVICE_DB_ACCESS, request, &response,
             NULL, NULL);
    
     /* Destroy request */
@@ -3020,7 +3020,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
     }
 
     /* Check for response status */
-    err = isds_response_status(context, SERVICE_DB_SUPPLEMENTARY, response,
+    err = isds_response_status(context, SERVICE_DB_ACCESS, response,
             &code, &message, NULL);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
