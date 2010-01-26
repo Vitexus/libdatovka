@@ -290,6 +290,7 @@ MessageEnvelopeDownload
 =======================
 
 Download envelope of incoming message. That is message without documents.
+Message type is stored in dmReturnedMessageEnvelope/@dmType.
 
 Returend hash and timestamp are computed from whole message. You must get
 complete message inluding documents to be able to verify them.
