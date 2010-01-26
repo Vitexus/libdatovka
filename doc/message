@@ -44,16 +44,22 @@ Document format declaration inside Document and conformace checks change
 during time. XML Schemas provide attribute for Document MIME type and Document
 annotation.
 
+Attrimbute dmMimeType must present, but may be empty, may contain file name
+extension, or may contain official MIME type. If MIME type is declared, ISDS
+checks Document content for conformance to the MIME type.
+
 There is MIME type blacklist: application/x-zip-compressed,
 application/x-msdownload.
 
-Annotation defined as plain text description has been
-misdefined/misinterpreted as file name.
+Attribute dmFileDescr (so called annotation) must present and must containt
+file name of the Document. Even if dmMimeType exists, ISDS uses THIS attribute
+to detect Document format (according file name extension) and checks content
+for format conformance.
 
-There is white list of file name extensions: pdf, xml, fo, zfo, html, htm,
+There is list of allowed file name extensions: pdf, xml, fo, zfo, html, htm,
 odt, ods, odp, txt, rtf, doc, xls, ppt, jpg, jpeg, jfif, png, tiff, gif, mpeg1
-mpeg2, wav, mp2, mp3. cer, crt, der, pk7, p7b, p7c, p7f, p7m, p7s, tst (time
-stamp).
+mpeg2, wav, mp2, mp3, isdoc, isdocx, cer, crt, der, pk7, p7b, p7c, p7f, p7m,
+p7s, tst (time stamp).
 
 Document ::= Binary_Document | XML_Document
 
