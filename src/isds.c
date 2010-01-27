@@ -3260,6 +3260,135 @@ leave:
 }
 
 
+/* Change user password in ISDS.
+ * User must supply old password, new password will takes effect after some
+ * time, current session can continue. Password must fulfill some constraints.
+ * @context is session context
+ * @old_password is current password.
+ * @new_password is requested new password */
+isds_error isds_change_password(struct isds_ctx *context,
+        const char *old_password, const char *new_password) {
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL, node;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!old_password || !new_password) return IE_INVAL;
+
+    /* Check if connection is established
+     * TODO: This check should be done donwstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Build ChangeISDSPassword request */
+    request = xmlNewNode(NULL, BAD_CAST "ChangeISDSPassword");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build ChangeISDSPassword request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    INSERT_STRING(request, "dbOldPassword", old_password);
+    INSERT_STRING(request, "dbNewPassword", new_password);
+
+
+    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending CheckDataBox request to ISDS\n"));
+
+    /* Sent request */
+    err = isds(context, SERVICE_DB_ACCESS, request, &response, NULL, NULL);
+   
+    /* Destroy request */
+    xmlFreeNode(request); request = NULL;
+
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Processing ISDS response on ChangeISDSPassword "
+                    "request failed\n"));
+        goto leave;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, SERVICE_DB_ACCESS, response,
+            &code, &message, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("ISDS response on ChangeISDSPassword request is missing "
+                    "status\n"));
+        goto leave;
+    }
+
+    /* Request processed, but empty password refused */
+    if (!xmlStrcmp(code, BAD_CAST "1066")) {
+        char *code_locale = utf82locale((char*)code);
+        char *message_locale = utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server refused empty password on ChangeISDSPassword "
+                    "request (code=%s, message=%s)\n"),
+                code_locale, message_locale);
+        isds_log_message(context, _("Password must not be empty"));
+        free(code_locale);
+        free(message_locale);
+        err = IE_INVAL;
+        goto leave;
+    }
+
+    /* Request processed, but new password was reused */
+    else if (!xmlStrcmp(code, BAD_CAST "1067")) {
+        char *code_locale = utf82locale((char*)code);
+        char *message_locale = utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server refused the same new password on ChangeISDSPassword "
+                    "request (code=%s, message=%s)\n"),
+                code_locale, message_locale);
+        isds_log_message(context,
+                _("New password must differ from the current one"));
+        free(code_locale);
+        free(message_locale);
+        err = IE_INVAL;
+        goto leave;
+    }
+
+    /* Other error */
+    else if (xmlStrcmp(code, BAD_CAST "0000")) {
+        char *code_locale = utf82locale((char*)code);
+        char *message_locale = utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server refused to change password on ChangeISDSPassword "
+                    "request (code=%s, message=%s)\n"),
+                code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+    
+    /* Otherwise password changed successfully */
+
+leave:
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+    xmlFreeNode(request);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Password changed successfully on ChangeISDSPassword "
+                    "request.\n"));
+
+    return err;
+}
+
+
 /* Find boxes suiting given criteria.
  * @criteria is filter. You should fill in at least some memebers.
  * @boxes is automatically reallocated list of isds_DbOwnerInfo structures,

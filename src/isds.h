@@ -542,6 +542,15 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
 isds_error isds_get_password_expiration(struct isds_ctx *context,
         struct timeval **expiration);
 
+/* Change user password in ISDS.
+ * User must supply old password, new password will takes effect after some
+ * time, current session can continue. Password must fulfill some constraints.
+ * @context is session context
+ * @old_password is current password.
+ * @new_password is requested new password */
+isds_error isds_change_password(struct isds_ctx *context,
+        const char *old_password, const char *new_password);
+
 /* Find boxes suiting given criteria.
  * @context is ISDS session context.
  * @criteria is filter. You should fill in at least some members.

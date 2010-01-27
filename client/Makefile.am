@@ -5,7 +5,7 @@ AM_CFLAGS += -D_FILE_OFFSET_BITS=64 -DLARGEFILE_SOURCE=1
 AM_CFLAGS +=-I$(LIBDIR)
 LDADD = $(LIBDIR)/libisds.la -L$(LIBDIR)
 
-noinst_PROGRAMS = isdsclient login progressbar getuserboxinfo \
+noinst_PROGRAMS = isdsclient login progressbar getuserboxinfo changepassword \
 	sendmultiple getsent  getsignedsent \
 	loadreceivedmessage loadcmssignedsentmessage \
 	getreceived getsignedreceived \
@@ -19,6 +19,7 @@ isdsclient_SOURCES = isdsclient.c $(common)
 login_SOURCES = login.c $(common)
 progressbar_SOURCES = progressbar.c $(common)
 getuserboxinfo_SOURCES = getuserboxinfo.c $(common)
+changepassword_SOURCES = changepassword.c $(common)
 sendmultiple_SOURCES = sendmultiple.c $(common)
 getsent_SOURCES = getsent.c $(common)
 getsignedsent_SOURCES = getsignedsent.c $(common)
