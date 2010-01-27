@@ -190,7 +190,7 @@ void print_Address(const struct isds_Address *address) {
 
 void print_BiDate(const struct tm *biDate) {
     if (!biDate) printf("NULL\n");
-    else printf("%s\n", asctime(biDate));
+    else printf("%s", asctime(biDate));
 }
 
 
