@@ -92,6 +92,7 @@ int main(int argc, char **argv) {
     }
 
 
+    /* Get box delivery info */
     if (db_owner_info) {
         long int box_status = 0;
         printf("Getting status of my box with ID `%s'\n", db_owner_info->dbID);
@@ -107,6 +108,21 @@ int main(int argc, char **argv) {
 
     isds_DbOwnerInfo_free(&db_owner_info);
 
+    {
+        /* Get password expiration time */
+        struct timeval *expiration = NULL;
+        printf("Getting password expiration time\n");
+        err = isds_get_password_expiration(ctx, &expiration);
+        if (err)
+            printf("isds_get_password_expiration() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        else {
+            printf("isds_get_password_expiration() succeeded: "
+                    "Password expires at: ");
+            print_timeval(expiration);
+        }
+        free(expiration);
+    }
 
 
     err = isds_logout(ctx);

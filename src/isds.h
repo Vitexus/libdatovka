@@ -535,6 +535,13 @@ isds_error isds_ping(struct isds_ctx *context);
 isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         struct isds_DbOwnerInfo **db_owner_info);
 
+/* Get expiration time of current password
+ * @context is session context
+ * @expiration is automatically reallocated time when password expires, In
+ * case of error will be nulled. */
+isds_error isds_get_password_expiration(struct isds_ctx *context,
+        struct timeval **expiration);
+
 /* Find boxes suiting given criteria.
  * @context is ISDS session context.
  * @criteria is filter. You should fill in at least some members.

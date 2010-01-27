@@ -9,6 +9,7 @@ extern char password[];
 
 void print_DbState(const long int state);
 void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info);
+void print_timeval(const struct timeval *time);
 void print_hash(const struct isds_hash *hash);
 void print_envelope(const struct isds_envelope *envelope);
 void print_message(const struct isds_message *message);
