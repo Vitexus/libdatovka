@@ -2959,15 +2959,123 @@ leave:
 }
 
 
+/* Build ISDS request of XSD tDummyInput type, sent it and check for error
+ * code
+ * @context is session context
+ * @service_name is name of SERVICE_DB_ACCESS
+ * @response is server SOAP body response as XML document
+ * @raw_response is automatically reallocated bitstream with response body. Use
+ * NULL if you don't care
+ * @raw_response_length is size of @raw_response in bytes
+ * @code is ISDS status code
+ * @status_message is ISDS status message
+ * @return error coded from lower layer, context message will be set up
+ * appropriately. */
+static isds_error build_send_check_dbdummy_request(struct isds_ctx *context,
+        const xmlChar *service_name,
+        xmlDocPtr *response, void **raw_response, size_t *raw_response_length,
+        xmlChar **code, xmlChar **status_message) {
+
+    isds_error err = IE_SUCCESS;
+    char *service_name_locale = NULL;
+    xmlNodePtr request = NULL, node;
+    xmlNsPtr isds_ns = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!service_name) return IE_INVAL;
+    if (!response || !code || !status_message) return IE_INVAL;
+    if (!raw_response_length && raw_response) return IE_INVAL;
+
+    /* Free output argument */
+    xmlFreeDoc(*response); *response = NULL;
+    if (raw_response) zfree(*raw_response);
+    free(*code);
+    free(*status_message);
+
+
+    /* Check if connection is established
+     * TODO: This check should be done donwstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+    service_name_locale = utf82locale((char*)service_name);
+    if (!service_name_locale) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    /* Build request */
+    request = xmlNewNode(NULL, service_name);
+    if (!request) {
+        isds_printf_message(context,
+                _("Could not build %s request"), service_name_locale);
+        err = IE_ERROR;
+        goto leave;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    xmlSetNs(request, isds_ns);
+
+
+    /* Add XSD:tDummyInput child */
+    INSERT_STRING(request, "dbDummy", NULL);
+
+
+    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending %s request to ISDS\n"),
+            service_name_locale);
+
+    /* Send request */
+    err = isds(context, SERVICE_DB_ACCESS, request, response,
+            raw_response, raw_response_length);
+    xmlFreeNode(request); request = NULL;
+    
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("Processing ISDS response on %s request failed\n"),
+                    service_name_locale);
+        goto leave;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, SERVICE_DB_ACCESS, *response,
+            code, status_message, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("ISDS response on %s request is missing status\n"),
+                    service_name_locale);
+        goto leave;
+    }
+
+    /* Request processed, but nothing found */
+    if (xmlStrcmp(*code, BAD_CAST "0000")) {
+        char *code_locale = utf82locale((char*) *code);
+        char *status_message_locale = utf82locale((char*) *status_message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("Server refused %s request (code=%s, message=%s)\n"),
+                service_name_locale, code_locale, status_message_locale);
+        isds_log_message(context, status_message_locale);
+        free(code_locale);
+        free(status_message_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+leave:
+    free(service_name_locale);
+    xmlFreeNode(request);
+    return err;
+}
+
+
 /* Get data about logged in user and his box. */
 isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         struct isds_DbOwnerInfo **db_owner_info) {
     isds_error err = IE_SUCCESS;
-    xmlNsPtr isds_ns = NULL;
-    xmlNodePtr request = NULL;
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *message = NULL;
-    xmlNodePtr node;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     char *string = NULL;
@@ -2979,73 +3087,12 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
     if (!context->curl) return IE_CONNECTION_CLOSED;
 
 
-    /* Build GetOwnerInfoFromLogin request */
-    request = xmlNewNode(NULL, BAD_CAST "GetOwnerInfoFromLogin");
-    if (!request) {
-        isds_log_message(context,
-                _("Could build GetOwnerInfoFromLogin request"));
-        return IE_ERROR;
-    }
-    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
-    if(!isds_ns) {
-        isds_log_message(context, _("Could not create ISDS name space"));
-        xmlFreeNode(request);
-        return IE_ERROR;
-    }
-    xmlSetNs(request, isds_ns);
-    node = xmlNewChild(request, NULL, BAD_CAST "dbDummy", NULL);
-    if (!node) {
-        isds_log_message(context, _("Could not add dbDummy Child to "
-                    "GetOwnerInfoFromLogin element"));
-        xmlFreeNode(request);
-        return IE_ERROR;
-    }
+    /* Do request and check for success */
+    err = build_send_check_dbdummy_request(context,
+            BAD_CAST "GetOwnerInfoFromLogin",
+            &response, NULL, NULL, &code, &message);
+    if (err) goto leave;
 
-
-    isds_log(ILF_ISDS, ILL_DEBUG,
-            _("Sending GetOwnerInfoFromLogin request to ISDS\n"));
-
-    /* Send request */
-    err = isds(context, SERVICE_DB_ACCESS, request, &response,
-            NULL, NULL);
-   
-    /* Destroy request */
-    xmlFreeNode(request);
-
-    if (err) {
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Processing ISDS response on GetOwnerInfoFromLogin "
-                    "request failed\n"));
-        xmlFreeDoc(response);
-        return err;
-    }
-
-    /* Check for response status */
-    err = isds_response_status(context, SERVICE_DB_ACCESS, response,
-            &code, &message, NULL);
-    if (err) {
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("ISDS response on GetOwnerInfoFromLogin request is "
-                    "missing status\n"));
-        free(code);
-        free(message);
-        xmlFreeDoc(response);
-        return err;
-    }
-    if (xmlStrcmp(code, BAD_CAST "0000")) {
-        char *code_locale = utf82locale((char*)code);
-        char *message_locale = utf82locale((char*)message);
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Server refused GetOwnerInfoFromLogin request "
-                    "(code=%s, message=%s)\n"), code_locale, message_locale);
-        isds_log_message(context, message_locale);
-        free(code_locale);
-        free(message_locale);
-        free(code);
-        free(message);
-        xmlFreeDoc(response);
-        return IE_ISDS;
-    }
 
     /* Extract data */
     /* Prepare stucture */
