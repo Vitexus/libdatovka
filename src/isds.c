@@ -467,7 +467,7 @@ _hidden isds_error isds_log(const isds_log_facility facility,
     if (!(log_facilities & facility)) return IE_SUCCESS;
     if (!message) return IE_INVAL;
 
-    /* TODO: Allow to register output function privided by application
+    /* TODO: Allow to register output function provided by application
      * (e.g. fprintf to stderr or copy to text area GUI widget). */
 
     va_start(ap, message);

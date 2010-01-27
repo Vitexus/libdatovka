@@ -101,7 +101,7 @@ typedef enum {
 } isds_DbState;
 
 /* User permissions from point of view of ISDS.
- * Instances can be bitmas of any discrete values. */
+ * Instances can be bitmaps of any discrete values. */
 typedef enum {
     PRIVIL_READ_NON_PERSONAL = 0x1, /* Can download and read messages with
                                        dmPersonalDelivery == false */
@@ -112,9 +112,11 @@ typedef enum {
     PRIVIL_VIEW_INFO = 0x8,         /* Can list messages and data about
                                        post and delivery */
     PRIVIL_SEARCH_DB = 0x10,        /* Can search for boxes */
-    PRIVIL_OWNER_ADM = 0x20         /* Can administer his box (add/remove
+    PRIVIL_OWNER_ADM = 0x20,        /* Can administer his box (add/remove
                                        permitted users and theirs
                                        permissions) */
+    PRIVIL_READ_VAULT = 0x40,       /* Cen read message stored in data safe */
+    PRIVIL_ERASE_VAULT = 0x80       /* Can delete messages from data safe */ 
 } isds_priviledges;
 
 /* Message status */
