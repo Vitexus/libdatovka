@@ -1828,162 +1828,6 @@ leave:
 
 
 
-/* Convert isds:dBOwnerInfo XML tree into structure
- * @context is ISDS context
- * @db_owner_info is automically reallocated box owner info structure
- * @xpath_ctx is XPath context with current node as isds:dBOwnerInfo element
- * In case of error @db_owner_info will be freed. */
-static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
-        struct isds_DbOwnerInfo **db_owner_info,
-        xmlXPathContextPtr xpath_ctx) {
-    isds_error err = IE_SUCCESS;
-    xmlXPathObjectPtr result = NULL;
-    char *string = NULL;
-
-    if (!context) return IE_INVALID_CONTEXT;
-    if (!db_owner_info) return IE_INVAL;
-    isds_DbOwnerInfo_free(db_owner_info);
-    if (!xpath_ctx) return IE_INVAL;
-
-
-    *db_owner_info = calloc(1, sizeof(**db_owner_info));
-    if (!*db_owner_info) {
-        err = IE_NOMEM;
-        goto leave;
-    }
-
-    EXTRACT_STRING("isds:dbID", (*db_owner_info)->dbID);
-    
-    EXTRACT_STRING("isds:dbType", string);
-    if (string) {
-        (*db_owner_info)->dbType =
-            calloc(1, sizeof(*((*db_owner_info)->dbType)));
-        if (!(*db_owner_info)->dbType) {
-            err = IE_NOMEM;
-            goto leave;
-        }
-        err = string2isds_DbType((xmlChar *)string, (*db_owner_info)->dbType);
-        if (err) {
-            zfree((*db_owner_info)->dbType);
-            if (err == IE_ENUM) {
-                err = IE_ISDS;
-                char *string_locale = utf82locale(string);
-                isds_printf_message(context, _("Unknown isds:dbType: %s"), 
-                    string_locale);
-                free(string_locale);
-            }
-            goto leave;
-        }
-        zfree(string);
-    }
-
-    EXTRACT_STRING("isds:ic", (*db_owner_info)->ic);
-
-    (*db_owner_info)->personName =
-        calloc(1, sizeof(*((*db_owner_info)->personName)));
-    if (!(*db_owner_info)->personName) {
-        err = IE_NOMEM;
-        goto leave;
-    }
-    EXTRACT_STRING("isds:pnFirstName",
-            (*db_owner_info)->personName->pnFirstName);
-    EXTRACT_STRING("isds:pnMiddleName",
-            (*db_owner_info)->personName->pnMiddleName);
-    EXTRACT_STRING("isds:pnLastName",
-            (*db_owner_info)->personName->pnLastName);
-    EXTRACT_STRING("isds:pnLastNameAtBirth",
-            (*db_owner_info)->personName->pnLastNameAtBirth);
-    if (!(*db_owner_info)->personName->pnFirstName &&
-            !(*db_owner_info)->personName->pnMiddleName &&
-            !(*db_owner_info)->personName->pnLastName &&
-            !(*db_owner_info)->personName->pnLastNameAtBirth)
-        isds_PersonName_free(&(*db_owner_info)->personName);
-
-    EXTRACT_STRING("isds:firmName", (*db_owner_info)->firmName);
-
-    (*db_owner_info)->birthInfo =
-        calloc(1, sizeof(*((*db_owner_info)->birthInfo)));
-    if (!(*db_owner_info)->birthInfo) {
-        err = IE_NOMEM;
-        goto leave;
-    }
-    EXTRACT_STRING("isds:biDate", string);
-    if (string) {
-        (*db_owner_info)->birthInfo->biDate =
-            calloc(1, sizeof(*((*db_owner_info)->birthInfo->biDate)));
-        if (!(*db_owner_info)->birthInfo->biDate) {
-            err = IE_NOMEM;
-            goto leave;
-        }
-        err = datestring2tm((xmlChar *)string,
-                (*db_owner_info)->birthInfo->biDate);
-        if (err) {
-            zfree((*db_owner_info)->birthInfo->biDate);
-            if (err == IE_NOTSUP) {
-                err = IE_ISDS;
-                char *string_locale = utf82locale(string);
-                isds_printf_message(context,
-                        _("Invalid isds:biDate value: %s"), string_locale);
-            }
-            goto leave;
-        }
-        zfree(string);
-    }
-    EXTRACT_STRING("isds:biCity", (*db_owner_info)->birthInfo->biCity);
-    EXTRACT_STRING("isds:biCounty", (*db_owner_info)->birthInfo->biCounty);
-    EXTRACT_STRING("isds:biState", (*db_owner_info)->birthInfo->biState);
-    if (!(*db_owner_info)->birthInfo->biDate &&
-            !(*db_owner_info)->birthInfo->biCity &&
-            !(*db_owner_info)->birthInfo->biCounty &&
-            !(*db_owner_info)->birthInfo->biState)
-        isds_BirthInfo_free(&(*db_owner_info)->birthInfo);
-
-    (*db_owner_info)->address =
-        calloc(1, sizeof(*((*db_owner_info)->address)));
-    if (!(*db_owner_info)->address) {
-        err = IE_NOMEM;
-        goto leave;
-    }
-    EXTRACT_STRING("isds:adCity",
-            (*db_owner_info)->address->adCity);
-    EXTRACT_STRING("isds:adStreet",
-            (*db_owner_info)->address->adStreet);
-    EXTRACT_STRING("isds:adNumberInStreet",
-            (*db_owner_info)->address->adNumberInStreet);
-    EXTRACT_STRING("isds:adNumberInMunicipality",
-            (*db_owner_info)->address->adNumberInMunicipality);
-    EXTRACT_STRING("isds:adZipCode",
-            (*db_owner_info)->address->adZipCode);
-    EXTRACT_STRING("isds:adState",
-            (*db_owner_info)->address->adState);
-    if (!(*db_owner_info)->address->adCity &&
-            !(*db_owner_info)->address->adStreet &&
-            !(*db_owner_info)->address->adNumberInStreet &&
-            !(*db_owner_info)->address->adNumberInMunicipality &&
-            !(*db_owner_info)->address->adZipCode &&
-            !(*db_owner_info)->address->adState)
-        isds_Address_free(&(*db_owner_info)->address);
-
-    EXTRACT_STRING("isds:nationality", (*db_owner_info)->nationality);
-    EXTRACT_STRING("isds:email", (*db_owner_info)->email);
-    EXTRACT_STRING("isds:telNumber", (*db_owner_info)->telNumber);
-    EXTRACT_STRING("isds:identifier", (*db_owner_info)->identifier);
-    EXTRACT_STRING("isds:registryCode", (*db_owner_info)->registryCode);
-    
-    EXTRACT_LONGINT("isds:dbState", (*db_owner_info)->dbState, 0);
-
-    EXTRACT_BOOLEAN("isds:dbEffectiveOVM", (*db_owner_info)->dbEffectiveOVM);
-    EXTRACT_BOOLEAN("isds:dbOpenAddressing",
-            (*db_owner_info)->dbOpenAddressing);
-
-leave:
-    if (err) isds_DbOwnerInfo_free(db_owner_info);
-    free(string);
-    xmlXPathFreeObject(result);
-    return err;
-}
-
-
 /* Find and convert XSD:gPersonName group in current node into structure
  * @context is ISDS context
  * @personName is automically reallocated person name structure. If no member
@@ -2109,6 +1953,104 @@ static isds_error extract_BiDate(struct isds_ctx *context,
 
 leave:
     if (err) zfree(*biDate);
+    free(string);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
+/* Convert isds:dBOwnerInfo XML tree into structure
+ * @context is ISDS context
+ * @db_owner_info is automically reallocated box owner info structure
+ * @xpath_ctx is XPath context with current node as isds:dBOwnerInfo element
+ * In case of error @db_owner_info will be freed. */
+static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
+        struct isds_DbOwnerInfo **db_owner_info,
+        xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!db_owner_info) return IE_INVAL;
+    isds_DbOwnerInfo_free(db_owner_info);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *db_owner_info = calloc(1, sizeof(**db_owner_info));
+    if (!*db_owner_info) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    EXTRACT_STRING("isds:dbID", (*db_owner_info)->dbID);
+    
+    EXTRACT_STRING("isds:dbType", string);
+    if (string) {
+        (*db_owner_info)->dbType =
+            calloc(1, sizeof(*((*db_owner_info)->dbType)));
+        if (!(*db_owner_info)->dbType) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+        err = string2isds_DbType((xmlChar *)string, (*db_owner_info)->dbType);
+        if (err) {
+            zfree((*db_owner_info)->dbType);
+            if (err == IE_ENUM) {
+                err = IE_ISDS;
+                char *string_locale = utf82locale(string);
+                isds_printf_message(context, _("Unknown isds:dbType: %s"), 
+                    string_locale);
+                free(string_locale);
+            }
+            goto leave;
+        }
+        zfree(string);
+    }
+
+    EXTRACT_STRING("isds:ic", (*db_owner_info)->ic);
+
+    err = extract_gPersonName(context, &(*db_owner_info)->personName,
+            xpath_ctx);
+    if (err) goto leave;
+
+    EXTRACT_STRING("isds:firmName", (*db_owner_info)->firmName);
+
+    (*db_owner_info)->birthInfo =
+        calloc(1, sizeof(*((*db_owner_info)->birthInfo)));
+    if (!(*db_owner_info)->birthInfo) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+    err = extract_BiDate(context, &(*db_owner_info)->birthInfo->biDate,
+            xpath_ctx);
+    if (err) goto leave;
+    EXTRACT_STRING("isds:biCity", (*db_owner_info)->birthInfo->biCity);
+    EXTRACT_STRING("isds:biCounty", (*db_owner_info)->birthInfo->biCounty);
+    EXTRACT_STRING("isds:biState", (*db_owner_info)->birthInfo->biState);
+    if (!(*db_owner_info)->birthInfo->biDate &&
+            !(*db_owner_info)->birthInfo->biCity &&
+            !(*db_owner_info)->birthInfo->biCounty &&
+            !(*db_owner_info)->birthInfo->biState)
+        isds_BirthInfo_free(&(*db_owner_info)->birthInfo);
+
+    err = extract_gAddress(context, &(*db_owner_info)->address, xpath_ctx);
+    if (err) goto leave;
+
+    EXTRACT_STRING("isds:nationality", (*db_owner_info)->nationality);
+    EXTRACT_STRING("isds:email", (*db_owner_info)->email);
+    EXTRACT_STRING("isds:telNumber", (*db_owner_info)->telNumber);
+    EXTRACT_STRING("isds:identifier", (*db_owner_info)->identifier);
+    EXTRACT_STRING("isds:registryCode", (*db_owner_info)->registryCode);
+    
+    EXTRACT_LONGINT("isds:dbState", (*db_owner_info)->dbState, 0);
+
+    EXTRACT_BOOLEAN("isds:dbEffectiveOVM", (*db_owner_info)->dbEffectiveOVM);
+    EXTRACT_BOOLEAN("isds:dbOpenAddressing",
+            (*db_owner_info)->dbOpenAddressing);
+
+leave:
+    if (err) isds_DbOwnerInfo_free(db_owner_info);
     free(string);
     xmlXPathFreeObject(result);
     return err;
