@@ -107,6 +107,25 @@ void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info) {
     *db_owner_info = NULL;
 }
 
+/* Deallocate structure isds_DbUserInfo recursively and NULL it */
+void isds_DbUserInfo_free(struct isds_DbUserInfo **db_user_info) {
+    if (!db_user_info || !*db_user_info) return;
+
+    free((*db_user_info)->userID);
+    free((*db_user_info)->userType);
+    free((*db_user_info)->userPrivils);
+    isds_PersonName_free(&((*db_user_info)->personName));
+    isds_Address_free(&((*db_user_info)->address));
+    free((*db_user_info)->biDate);
+    free((*db_user_info)->ic);
+    free((*db_user_info)->firmName);
+    free((*db_user_info)->caStreet);
+    free((*db_user_info)->caCity);
+    free((*db_user_info)->caZipCode);
+    
+    zfree(*db_user_info);
+}
+
 
 /* Deallocate struct isds_event recursively and NULL it */
 void isds_event_free(struct isds_event **event) {
@@ -1194,6 +1213,38 @@ static const xmlChar *isds_DbType2string(const isds_DbType type) {
 }
 
 
+/* Convert UTF-8 @string represantion of ISDS userType to enum @type */
+static isds_error string2isds_UserType(xmlChar *string, isds_UserType *type) {
+    if (!string || !type) return IE_INVAL;
+
+    if (!xmlStrcmp(string, BAD_CAST "PRIMARY_USER"))
+        *type = USERTYPE_PRIMARY;
+    else if (!xmlStrcmp(string, BAD_CAST "ENTRUSTED_USER"))
+        *type = USERTYPE_ENTRUSTED;
+    else if (!xmlStrcmp(string, BAD_CAST "ADMINISTRATOR"))
+        *type = USERTYPE_ADMINISTRATOR;
+    else if (!xmlStrcmp(string, BAD_CAST "OFFICIAL"))
+        *type = USERTYPE_OFFICIAL;
+    else
+        return IE_ENUM;
+    return IE_SUCCESS;
+}
+
+#if 0 /* Not yet used */
+/* Convert ISDS userType enum @type to UTF-8 string.
+ * @Return pointer to static string, or NULL if unkwnow enum value */
+static const xmlChar *isds_UserType2string(const isds_UserType type) {
+    switch(type) {
+        case USERTYPE_PRIMARY: return(BAD_CAST "PRIMARY_USER"); break;
+        case USERTYPE_ENTRUSTED: return(BAD_CAST "ENTRUSTED_USER"); break;
+        case USERTYPE_ADMINISTRATOR: return(BAD_CAST "ADMINISTRATOR"); break;
+        case USERTYPE_OFFICIAL: return(BAD_CAST "OFFICIAL"); break;
+        default: return NULL; break;
+    }
+}
+#endif
+
+
 /* Convert ISDS dmFileMetaType enum @type to UTF-8 string.
  * @Return pointer to static string, or NULL if unkwnow enum value */
 static const xmlChar *isds_FileMetaType2string(const isds_FileMetaType type) {
@@ -1927,6 +1978,220 @@ static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
 
 leave:
     if (err) isds_DbOwnerInfo_free(db_owner_info);
+    free(string);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
+/* Find and convert XSD:gPersonName group in current node into structure
+ * @context is ISDS context
+ * @personName is automically reallocated person name structure. If no member
+ * value is found, will be freed.
+ * @xpath_ctx is XPath context with current node as parent for XSD:gPersonName
+ * elements
+ * In case of error @personName will be freed. */
+static isds_error extract_gPersonName(struct isds_ctx *context,
+        struct isds_PersonName **personName, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!personName) return IE_INVAL;
+    isds_PersonName_free(personName);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *personName = calloc(1, sizeof(**personName));
+    if (!*personName) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    EXTRACT_STRING("isds:pnFirstName", (*personName)->pnFirstName);
+    EXTRACT_STRING("isds:pnMiddleName", (*personName)->pnMiddleName);
+    EXTRACT_STRING("isds:pnLastName", (*personName)->pnLastName);
+    EXTRACT_STRING("isds:pnLastNameAtBirth", (*personName)->pnLastNameAtBirth);
+
+    if (!(*personName)->pnFirstName && !(*personName)->pnMiddleName &&
+            !(*personName)->pnLastName && !(*personName)->pnLastNameAtBirth)
+        isds_PersonName_free(personName);
+
+leave:
+    if (err) isds_PersonName_free(personName);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
+/* Find and convert XSD:gAddress group in current node into structure
+ * @context is ISDS context
+ * @address is automically reallocated address structure. If no member
+ * value is found, will be freed.
+ * @xpath_ctx is XPath context with current node as parent for XSD:gAddress
+ * elements
+ * In case of error @address will be freed. */
+static isds_error extract_gAddress(struct isds_ctx *context,
+        struct isds_Address **address, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!address) return IE_INVAL;
+    isds_Address_free(address);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *address = calloc(1, sizeof(**address));
+    if (!*address) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    EXTRACT_STRING("isds:adCity", (*address)->adCity);
+    EXTRACT_STRING("isds:adStreet", (*address)->adStreet);
+    EXTRACT_STRING("isds:adNumberInStreet", (*address)->adNumberInStreet);
+    EXTRACT_STRING("isds:adNumberInMunicipality",
+            (*address)->adNumberInMunicipality);
+    EXTRACT_STRING("isds:adZipCode", (*address)->adZipCode);
+    EXTRACT_STRING("isds:adState", (*address)->adState);
+
+    if (!(*address)->adCity && !(*address)->adStreet &&
+            !(*address)->adNumberInStreet &&
+            !(*address)->adNumberInMunicipality &&
+            !(*address)->adZipCode && !(*address)->adState)
+        isds_Address_free(address);
+
+leave:
+    if (err) isds_Address_free(address);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
+/* Find and convert isds:biDate element in current node into structure
+ * @context is ISDS context
+ * @biDate is automically reallocated birth date structure. If no member
+ * value is found, will be freed.
+ * @xpath_ctx is XPath context with current node as parent for isds:biDate
+ * element
+ * In case of error @biDate will be freed. */
+static isds_error extract_BiDate(struct isds_ctx *context,
+        struct tm **biDate, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!biDate) return IE_INVAL;
+    zfree(*biDate);
+    if (!xpath_ctx) return IE_INVAL;
+
+    EXTRACT_STRING("isds:biDate", string);
+    if (string) {
+        *biDate = calloc(1, sizeof(**biDate));
+        if (!*biDate) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+        err = datestring2tm((xmlChar *)string, *biDate);
+        if (err) {
+            if (err == IE_NOTSUP) {
+                err = IE_ISDS;
+                char *string_locale = utf82locale(string);
+                isds_printf_message(context,
+                        _("Invalid isds:biDate value: %s"), string_locale);
+                free(string_locale);
+            }
+            goto leave;
+        }
+    }
+
+leave:
+    if (err) zfree(*biDate);
+    free(string);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
+/* Convert XSD:tDbUserInfo XML tree into structure
+ * @context is ISDS context
+ * @db_user_info is automically reallocated user info structure
+ * @xpath_ctx is XPath context with current node as XSD:tDbUserInfo element
+ * In case of error @db_user_info will be freed. */
+static isds_error extract_DbUserInfo(struct isds_ctx *context,
+        struct isds_DbUserInfo **db_user_info, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!db_user_info) return IE_INVAL;
+    isds_DbUserInfo_free(db_user_info);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *db_user_info = calloc(1, sizeof(**db_user_info));
+    if (!*db_user_info) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    EXTRACT_STRING("isds:userID", (*db_user_info)->userID);
+    
+    EXTRACT_STRING("isds:userType", string);
+    if (string) {
+        (*db_user_info)->userType =
+            calloc(1, sizeof(*((*db_user_info)->userType)));
+        if (!(*db_user_info)->userType) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+        err = string2isds_UserType((xmlChar *)string,
+                (*db_user_info)->userType);
+        if (err) {
+            zfree((*db_user_info)->userType);
+            if (err == IE_ENUM) {
+                err = IE_ISDS;
+                char *string_locale = utf82locale(string);
+                isds_printf_message(context, _("Unknown isds:userType: %s"), 
+                    string_locale);
+                free(string_locale);
+            }
+            goto leave;
+        }
+        zfree(string);
+    }
+
+    EXTRACT_LONGINT("isds:userPrivils", (*db_user_info)->userPrivils, 0); 
+
+    (*db_user_info)->personName =
+        calloc(1, sizeof(*((*db_user_info)->personName)));
+    if (!(*db_user_info)->personName) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    err = extract_gPersonName(context, &(*db_user_info)->personName,
+            xpath_ctx);
+    if (err) goto leave;
+
+    err = extract_gAddress(context, &(*db_user_info)->address, xpath_ctx);
+    if (err) goto leave;
+
+    err = extract_BiDate(context, &(*db_user_info)->biDate, xpath_ctx);
+    if (err) goto leave;
+
+    EXTRACT_STRING("isds:ic", (*db_user_info)->ic);
+    EXTRACT_STRING("isds:firmName", (*db_user_info)->firmName);
+
+    EXTRACT_STRING("isds:caStreet", (*db_user_info)->caStreet);
+    EXTRACT_STRING("isds:caCity", (*db_user_info)->caCity);
+    EXTRACT_STRING("isds:caZipCode", (*db_user_info)->caZipCode);
+
+leave:
+    if (err) isds_DbUserInfo_free(db_user_info);
     free(string);
     xmlXPathFreeObject(result);
     return err;
@@ -3151,6 +3416,93 @@ leave:
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("GetOwnerInfoFromLogin request processed by server "
+                    "successfully.\n"));
+
+    return err;
+}
+
+
+/* Get data about logged in user. */
+isds_error isds_GetUserInfoFromLogin(struct isds_ctx *context,
+        struct isds_DbUserInfo **db_user_info) {
+    isds_error err = IE_SUCCESS;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!db_user_info) return IE_INVAL;
+
+    /* Check if connection is established */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Do request and check for success */
+    err = build_send_check_dbdummy_request(context,
+            BAD_CAST "GetUserInfoFromLogin",
+            &response, NULL, NULL, &code, &message);
+    if (err) goto leave;
+
+
+    /* Extract data */
+    /* Prepare stucture */
+    isds_DbUserInfo_free(db_user_info);
+    *db_user_info = calloc(1, sizeof(**db_user_info));
+    if (!*db_user_info) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    /* Set context node */
+    result = xmlXPathEvalExpression(BAD_CAST
+            "/isds:GetUserInfoFromLoginResponse/isds:dbUserInfo", xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context, _("Missing dbUserInfo element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    if (result->nodesetval->nodeNr > 1) {
+        isds_log_message(context, _("Multiple dbUserInfo element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+    xmlXPathFreeObject(result); result = NULL;
+
+    /* Extract it */
+    err = extract_DbUserInfo(context, db_user_info, xpath_ctx);
+
+leave:
+    if (err) {
+        isds_DbUserInfo_free(db_user_info);
+    }
+
+    free(string);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("GetUserInfoFromLogin request processed by server "
                     "successfully.\n"));
 
     return err;

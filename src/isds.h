@@ -224,10 +224,10 @@ struct isds_DbOwnerInfo {
 
 /* User type */
 typedef enum {
-    PRIMARY_USER,           /* Owner of the box */
-    ENTRUSTED_USER,         /* User with limited access to the box */
-    ADMINISTRATOR,          /* User to manage ENTRUSTED_USERs */
-    OFFICIAL                /* ??? */
+    USERTYPE_PRIMARY,               /* Owner of the box */
+    USERTYPE_ENTRUSTED,             /* User with limited access to the box */
+    USERTYPE_ADMINISTRATOR,         /* User to manage ENTRUSTED_USERs */
+    USERTYPE_OFFICIAL               /* ??? */
 } isds_UserType;
 
 /* Data about user.
@@ -246,7 +246,7 @@ struct isds_DbUserInfo {
                                    [Max. 100 chars] */
     char *caStreet;             /* Street and number of contact address */
     char *caCity;               /* Czech City of contact address */
-    char caZipCode;             /* Post office code of contact address */
+    char *caZipCode;            /* Post office code of contact address */
 };
 
 /* Message event type */
@@ -563,6 +563,10 @@ isds_error isds_ping(struct isds_ctx *context);
 /* Get data about logged in user and his box. */
 isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         struct isds_DbOwnerInfo **db_owner_info);
+
+/* Get data about logged in user. */
+isds_error isds_GetUserInfoFromLogin(struct isds_ctx *context,
+        struct isds_DbUserInfo **db_user_info);
 
 /* Get expiration time of current password
  * @context is session context
@@ -895,6 +899,9 @@ void isds_hash_free(struct isds_hash **hash);
 
 /* Deallocate structure isds_DbOwnerInfo recursively and NULL it */
 void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info);
+
+/* Deallocate structure isds_DbUserInfo recursively and NULL it */
+void isds_DbUserInfo_free(struct isds_DbUserInfo **db_user_info);
 
 /* Deallocate struct isds_event recursively and NULL it */
 void isds_event_free(struct isds_event **event);

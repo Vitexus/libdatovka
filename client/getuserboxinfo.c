@@ -108,6 +108,22 @@ int main(int argc, char **argv) {
 
     isds_DbOwnerInfo_free(&db_owner_info);
 
+
+    {
+        struct isds_DbUserInfo *db_user_info = NULL;
+
+        printf("Getting info about my account:\n");
+        err = isds_GetUserInfoFromLogin(ctx, &db_user_info);
+        if (err) {
+            printf("isds_GetUserInfoFromLogin() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        } else {
+            printf("isds_GetUserInfoFromLogin() succeeded\n");
+        }
+        print_DbUserInfo(db_user_info);
+
+    }
+
     {
         /* Get password expiration time */
         struct timeval *expiration = NULL;

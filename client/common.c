@@ -50,6 +50,51 @@ void print_DbType(const long int *type) {
         }
 }
 
+
+void print_UserType(const long int *type) {
+    if (!type) printf("NULL\n");
+    else
+        switch(*type) {
+            case USERTYPE_PRIMARY: printf("PRIMARY\n"); break;
+            case USERTYPE_ENTRUSTED: printf("ENTRUSTED\n"); break;
+            case USERTYPE_ADMINISTRATOR: printf("ADMINISTRATOR\n"); break;
+            case USERTYPE_OFFICIAL: printf("OFFICIAL\n"); break;
+            default: printf("<unknown type %ld>\n", *type);
+        }
+}
+
+
+void print_UserPrivils(const long int *privils) {
+
+    const char *priviledges[] = {
+        "READ_NON_PERSONAL",
+        "READ_ALL",
+        "CREATE_DM",
+        "VIEW_INFO",
+        "SEARCH_DB",
+        "OWNER_ADM",
+        "READ_VAULT",
+        "ERASE_VAULT"
+    };
+    const int priviledges_count = sizeof(priviledges)/sizeof(priviledges[0]);
+
+    if (!privils) printf("NULL\n");
+    else {
+        printf("%ld (", *privils);
+
+        for (int i = 0; i < priviledges_count; i++) {
+            if (*privils & (1<<i)) {
+                printf(
+                        ((i + 1) == priviledges_count) ? "%s" : "%s|",
+                        priviledges[i]);
+            }
+        }
+
+        printf(")\n");
+    }
+}
+
+
 void print_hash(const struct isds_hash *hash) {
     if (!hash) {
         printf("NULL\n");
@@ -76,7 +121,7 @@ void print_hash(const struct isds_hash *hash) {
 }
 
 
-void print_raw_type(isds_raw_type type) {
+void print_raw_type(const isds_raw_type type) {
     switch(type) {
         case RAWTYPE_INCOMING_MESSAGE:
             printf("INCOMING_MESSAGE\n"); break;
@@ -112,6 +157,43 @@ void print_longint(const long int *number) {
 }
 
 
+void print_PersonName(const struct isds_PersonName *personName) {
+    printf("\tpersonName = ");
+    if (!personName) printf("NULL\n");
+    else {
+        printf("{\n");
+        printf("\t\tpnFirstName = %s\n", personName->pnFirstName);
+        printf("\t\tpnMiddleName = %s\n", personName->pnMiddleName);
+        printf("\t\tpnLastName = %s\n", personName->pnLastName);
+        printf("\t\tpnLastNameAtBirth = %s\n", personName->pnLastNameAtBirth);
+        printf("\t}\n");
+    }
+}
+
+
+void print_Address(const struct isds_Address *address) {
+    printf("\taddress = ");
+    if (!address) printf("NULL\n");
+    else {
+        printf("{\n");
+        printf("\t\tadCity = %s\n", address->adCity);
+        printf("\t\tadStreet = %s\n", address->adStreet);
+        printf("\t\tadNumberInStreet = %s\n", address->adNumberInStreet);
+        printf("\t\tadNumberInMunicipality = %s\n",
+                address->adNumberInMunicipality);
+        printf("\t\tadZipCode = %s\n", address->adZipCode);
+        printf("\t\tadState = %s\n", address->adState);
+        printf("\t}\n");
+    }
+}
+
+
+void print_BiDate(const struct tm *biDate) {
+    if (!biDate) printf("NULL\n");
+    else printf("%s\n", asctime(biDate));
+}
+
+
 void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info) {
     printf("dbOwnerInfo = ");
 
@@ -127,16 +209,7 @@ void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info) {
     print_DbType((long int *) (info->dbType));
     printf("\tic = %s\n", info->ic);
 
-    printf("\tpersonName = ");
-    if (!info->personName) printf("NULL\n");
-    else {
-        printf("{\n");
-        printf("\t\tpnFirstName = %s\n", info->personName->pnFirstName);
-        printf("\t\tpnMiddleName = %s\n", info->personName->pnMiddleName);
-        printf("\t\tpnLastName = %s\n", info->personName->pnLastName);
-        printf("\t\tpnLastNameAtBirth = %s\n", info->personName->pnLastNameAtBirth);
-        printf("\t}\n");
-    }
+    print_PersonName(info->personName);
         
     printf("\tfirmName = %s\n", info->firmName);
     
@@ -146,8 +219,7 @@ void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info) {
         printf("{\n");
         
         printf("\t\tbiDate = ");
-        if (!info->birthInfo->biDate) printf("NULL\n");
-        else printf("%s\n", asctime(info->birthInfo->biDate));
+        print_BiDate(info->birthInfo->biDate);
 
         printf("\t\tbiCity = %s\n", info->birthInfo->biCity);
         printf("\t\tbiCounty = %s\n", info->birthInfo->biCounty);
@@ -155,19 +227,7 @@ void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info) {
         printf("\t}\n");
     }
     
-    printf("\taddress = ");
-    if (!info->address) printf("NULL\n");
-    else {
-        printf("{\n");
-        printf("\t\tadCity = %s\n", info->address->adCity);
-        printf("\t\tadStreet = %s\n", info->address->adStreet);
-        printf("\t\tadNumberInStreet = %s\n", info->address->adNumberInStreet);
-        printf("\t\tadNumberInMunicipality = %s\n",
-                info->address->adNumberInMunicipality);
-        printf("\t\tadZipCode = %s\n", info->address->adZipCode);
-        printf("\t\tadState = %s\n", info->address->adState);
-        printf("\t}\n");
-    }
+    print_Address(info->address);
 
     printf("\tnationality = %s\n", info->nationality);
     printf("\temail = %s\n", info->email);
@@ -187,6 +247,40 @@ void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info) {
 
     printf("}\n");
 
+}
+
+
+void print_DbUserInfo(const struct isds_DbUserInfo *info) {
+    printf("dbUserInfo = ");
+
+    if (!info) {
+        printf("NULL\n");
+        return;
+    }
+
+    printf("{\n");
+    printf("\tuserID = %s\n", info->userID);
+
+    printf("\tuserType = ");
+    print_UserType((long int *) (info->userType));
+
+    printf("\tuserPrivils = ");
+    print_UserPrivils(info->userPrivils);
+
+    print_PersonName(info->personName);
+    print_Address(info->address);
+
+    printf("\tbiDate = ");
+    print_BiDate(info->biDate);
+        
+    printf("\tic = %s\n", info->ic);
+    printf("\tfirmName = %s\n", info->firmName);
+    
+    printf("\tcaStreet = %s\n", info->caStreet);
+    printf("\tcaCity = %s\n", info->caCity);
+    printf("\tcaZipCode = %s\n", info->caZipCode);
+
+    printf("}\n");
 }
 
 
