@@ -220,6 +220,33 @@ struct isds_DbOwnerInfo {
                                        messages from anybody */  
 };
 
+/* User type */
+typedef enum {
+    PRIMARY_USER,           /* Owner of the box */
+    ENTRUSTED_USER,         /* User with limited access to the box */
+    ADMINISTRATOR,          /* User to manage ENTRUSTED_USERs */
+    OFFICIAL                /* ??? */
+} isds_UserType;
+
+/* Data about user.
+ * NULL pointer means undefined value */
+struct isds_DbUserInfo {
+    char *userID;               /* User ID [Min. 6, max. 12 characters] */
+    isds_UserType *userType;    /* User type */
+    long int *userPrivils;      /* Set of user permissions */
+    struct isds_PersonName *personName;     /* Name of the person */
+    struct isds_Address *address;   /* Post address */
+    struct tm *biDate;          /* Date of birth in local time,
+                                   only tm_year, tm_mon and tm_mday carry sane
+                                   value */
+    char *ic;                   /* ID of a supervising firm [Max. 8 chars] */
+    char *firmName;             /* Name of a supervising firm
+                                   [Max. 100 chars] */
+    char *caStreet;             /* Street and number of contact address */
+    char *caCity;               /* Czech City of contact address */
+    char caZipCode;             /* Post office code of contact address */
+};
+
 /* Message event type */
 typedef enum {
     EVENT_UKNOWN,                   /* Event unknown to this library */

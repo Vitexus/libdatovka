@@ -37,23 +37,3 @@ POST https://www.czebox.cz/DS/dz
 200
 <?xml version='1.0' encoding='utf-8'?><SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><SOAP-ENV:Body><q:X-BogusOperationResponse xmlns:q="http://isds.czechpoint.cz/v20" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><q:dmStatus><q:dmStatusCode>2006</q:dmStatusCode><q:dmStatusMessage>Unknown operation: X-BogusOperation</q:dmStatusMessage></q:dmStatus></q:X-BogusOperationResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>
 
-
-User authorizations
-===================
-
-PRIVIL_READ_NON_PERSONAL    1   Permission to read incoming messages 
-PRIVIL_READ_ALL             2   Permission to read messages addresses only to
-                                concrete person
-PRIVIL_CREATE_DM            4   Permission to sent mesages, to download outgoing
-                                messages
-PRIVIL_VIEW_INFO            8   Permission to download list of messages, to
-                                download data about post (`Dodejka') and
-                                deliviery (`Doručenka')
-PRIVIL_SEARCH_DB            16  Permission to search boxes
-PRIVIL_OWNER_ADM            32  Permission to maintane a box (add users etc.)
-PRIVIL_READ_VAULT           64  Permission to read messages from data safe
-PRIVIL_ERASE_VAULT          128 Permission to delete messages from data safe
-
-User type adminstrator has implicit non-revokable permission PRIVIL_OWNER_ADM.
-Administrator can add other permissions to anybody, even to himselv.
-

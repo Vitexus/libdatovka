@@ -1,0 +1,77 @@
+User specification
+=================
+
+Source: Webové služby rozhraní ISDS pro správu datových schránkek, verzion 2.6
+    (2009-11-18) [DataBox_ws.pdf]
+
+
+User types
+==========
+
+Symbol              Description
+--------------------------------------------------------------------------
+PRIMARY_USER        User who owns the box (FO and PFO type boxes have one
+                    owner, OVM box one or none owners, PO box any number)
+ENTRUSTED_USER      User with limited access to the box. Such user is
+                    delegated by primary user or administrator for the
+                    purpose of message reading or sending.
+ADMINISTRATOR       User who can add/remove/update other users to a box, but
+                    who is not a owner of the box.
+OFFICIAL
+
+
+User authorizations
+===================
+
+Each user has set of permissions to operate on given box.
+
+Symbol                      Num Description
+--------------------------------------------------------------------------
+PRIVIL_READ_NON_PERSONAL    1   Permission to read incoming messages 
+PRIVIL_READ_ALL             2   Permission to read messages addresses only to
+                                concrete person
+PRIVIL_CREATE_DM            4   Permission to sent mesages, to download outgoing
+                                messages
+PRIVIL_VIEW_INFO            8   Permission to download list of messages, to
+                                download data about delivery (`Dodejka') and
+                                acceptance (`Doručenka')
+PRIVIL_SEARCH_DB            16  Permission to search boxes
+PRIVIL_OWNER_ADM            32  Permission to maintane a box (add users etc.)
+PRIVIL_READ_VAULT           64  Permission to read messages from data safe
+PRIVIL_ERASE_VAULT          128 Permission to delete messages from data safe
+
+User type ADMINSTRATOR has implicit non-revokable permission PRIVIL_OWNER_ADM.
+Administrator can add other permissions to anybody, even to himselv.
+
+User type PRIMARY_USER has implicit (non-revokable?) permissions 1–32.
+
+In addition, internal users can have following permissions (to manage
+(= create, update) boxes or request for box updates):
+
+Symbol                  Num         Description
+-------------------------------------------------------------------------
+PRIVIL_OR               256         Manage PO type boxes
+PRIVIL_INSSPR           512         Manage PFO_INSSPR type boxes
+PRIVIL_NOTAR            1024        Manage OVM_NOTAR type boxes
+PRIVIL_EXEKUT           2048        Manage OVM_EXEK type boxes
+PRIVIL_ADVOK            4096        Manage PFO_ADVOK type boxes
+PRIVIL_DANPOR           8192        Manage PFO_DANPOR type boxes
+PRIVIL_PFO              16384       Manage PFO* type boxes
+PRIVIL_OVMPOZAK         65536       Manage OVM, PO_ZAK and OVM_REQ type boxes
+PRIVIL_VAZBA            131072      Report imprisoning of a person etc.
+PRIVIL_MV               32768       Ministery of interiors officer
+                                    who processes request (Service module)
+PRIVIL_CZP              262144      Czech POINT officer who processes requests
+                                    (only for FO, PFO, PO_REQ box types)
+PRIVIL_ADMADM           1048576     Manage internal users
+PRIVIL_AD_DELIV         2097152     Store timestamp about credentials delivery
+                                    by off-line chanel
+PRIVIL_ACTIVATE         8388608     Activate credentials on-line
+PRIVIL_POST             524288      Access to help desk IS of Czech POST
+PRIVIL_VAULT            33554432    Manage safe and commercial message switcher
+PRIVIL_BILLING          67108864    Access to billing data
+PRIVIL_CONFIG           4194304     Low level configuration allowed (see
+                                    `Administrator manual for ISDS application
+                                    server' for more details)
+PRIVIL_SUPERVISOR       16777216    Permission to start and stop application
+
