@@ -78,6 +78,27 @@ ChangeISDSPassword
     Change password
 
 
+GetDataBoxUsers
+===============
+
+Get list of users permitted to access the box.
+
+Note: This request is not specified in any verbose document. Following info
+has been obtained from XML Schma file [dbTypes.xsd].
+
+Input is empty dummy request.
+
+Output is list of box users. Structure:
+
+EnableOwnDataBoxResponse
+    + dbUsers – optional
+    |   + dbUserInfo – at least one must present. Type of XSD:tDbUserInfo. See
+        |           GetUserInfoFromLogin request for more details.
+    |   + dbUserInfo
+    |   ⋮ 
+    + dbStatus
+
+
 GetOwnerInfoFromLogin
 =====================
 
