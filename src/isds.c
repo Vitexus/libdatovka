@@ -1547,7 +1547,7 @@ static isds_error eventstring2event(const xmlChar *string,
 
 /* Following EXTRACT_* macros expects @result, @xpath_ctx, @err, @context
  * and leave lable */
-#define EXTRACT_STRING(element, string) \
+#define EXTRACT_STRING(element, string) { \
     result = xmlXPathEvalExpression(BAD_CAST element "/text()", xpath_ctx); \
     if (!result) { \
         err = IE_ERROR; \
@@ -1565,7 +1565,8 @@ static isds_error eventstring2event(const xmlChar *string,
             err = IE_ERROR; \
             goto leave; \
         } \
-    }
+    } \
+}
 
 #define EXTRACT_BOOLEAN(element, booleanPtr) \
     { \
@@ -1697,7 +1698,7 @@ static isds_error eventstring2event(const xmlChar *string,
         } \
     }
 
-#define EXTRACT_STRING_ATTRIBUTE(attribute, string, required) \
+#define EXTRACT_STRING_ATTRIBUTE(attribute, string, required) { \
     (string) = (char *) xmlGetNsProp(xpath_ctx->node, ( BAD_CAST attribute), \
             NULL); \
     if ((required) && (!string)) { \
@@ -1710,7 +1711,8 @@ static isds_error eventstring2event(const xmlChar *string,
         free(attribute_locale); \
         err = IE_ERROR; \
         goto leave; \
-    }
+    } \
+}
 
 
 #define INSERT_STRING(parent, element, string) \
@@ -1727,12 +1729,14 @@ static isds_error eventstring2event(const xmlChar *string,
     }
 
 #define INSERT_BOOLEAN(parent, element, booleanPtr) \
-    if ((booleanPtr)) { \
-        if (*(booleanPtr)) { INSERT_STRING(parent, element, "true"); } \
-        else { INSERT_STRING(parent, element, "false") } \
-    } else { INSERT_STRING(parent, element, NULL) }
+    { \
+        if ((booleanPtr)) { \
+            if (*(booleanPtr)) { INSERT_STRING(parent, element, "true"); } \
+            else { INSERT_STRING(parent, element, "false") } \
+        } else { INSERT_STRING(parent, element, NULL) } \
+    }
 
-#define INSERT_LONGINT(parent, element, longintPtr, buffer) \
+#define INSERT_LONGINT(parent, element, longintPtr, buffer) { \
     if ((longintPtr)) { \
         /* FIXME: locale sensitive */ \
         if (-1 == isds_asprintf((char **)&(buffer), "%ld", *(longintPtr))) { \
@@ -1741,9 +1745,10 @@ static isds_error eventstring2event(const xmlChar *string,
         } \
         INSERT_STRING(parent, element, buffer) \
         free(buffer); (buffer) = NULL; \
-    } else { INSERT_STRING(parent, element, NULL) }
+    } else { INSERT_STRING(parent, element, NULL) } \
+}
 
-#define INSERT_ULONGINT(parent, element, ulongintPtr, buffer) \
+#define INSERT_ULONGINT(parent, element, ulongintPtr, buffer) { \
     if ((ulongintPtr)) { \
         /* FIXME: locale sensitive */ \
         if (-1 == isds_asprintf((char **)&(buffer), "%lu", *(ulongintPtr))) { \
@@ -1752,28 +1757,34 @@ static isds_error eventstring2event(const xmlChar *string,
         } \
         INSERT_STRING(parent, element, buffer) \
         free(buffer); (buffer) = NULL; \
-    } else { INSERT_STRING(parent, element, NULL) }
+    } else { INSERT_STRING(parent, element, NULL) } \
+}
 
 #define INSERT_ULONGINTNOPTR(parent, element, ulongint, buffer) \
-    /* FIXME: locale sensitive */ \
-    if (-1 == isds_asprintf((char **)&(buffer), "%lu", ulongint)) { \
-        err = IE_NOMEM; \
-        goto leave; \
-    } \
-    INSERT_STRING(parent, element, buffer) \
-    free(buffer); (buffer) = NULL; \
-
-#define INSERT_STRING_ATTRIBUTE(parent, attribute, string) \
-    attribute_node = xmlNewProp((parent), BAD_CAST (attribute), \
-            (xmlChar *) (string)); \
-    if (!attribute_node) { \
-        isds_printf_message(context, _("Could not add %s " \
-                    "attribute to %s element"), (attribute), (parent)->name); \
-        err = IE_ERROR; \
-        goto leave; \
+    { \
+        /* FIXME: locale sensitive */ \
+        if (-1 == isds_asprintf((char **)&(buffer), "%lu", ulongint)) { \
+            err = IE_NOMEM; \
+            goto leave; \
+        } \
+        INSERT_STRING(parent, element, buffer) \
+        free(buffer); (buffer) = NULL; \
     }
 
-#define CHECK_FOR_STRING_LENGTH(string, minimum, maximum, name) \
+#define INSERT_STRING_ATTRIBUTE(parent, attribute, string) \
+    { \
+        attribute_node = xmlNewProp((parent), BAD_CAST (attribute), \
+                (xmlChar *) (string)); \
+        if (!attribute_node) { \
+            isds_printf_message(context, _("Could not add %s " \
+                        "attribute to %s element"), \
+                    (attribute), (parent)->name); \
+            err = IE_ERROR; \
+            goto leave; \
+        } \
+    }
+
+#define CHECK_FOR_STRING_LENGTH(string, minimum, maximum, name) { \
     if (string) { \
         int length = xmlUTF8Strlen((xmlChar *) (string)); \
         if (length > (maximum)) { \
@@ -1788,7 +1799,8 @@ static isds_error eventstring2event(const xmlChar *string,
             err = IE_2SMALL; \
             goto leave; \
         } \
-    }
+    } \
+}
 
 
 /* Find child element by name in given XPath context and switch context onto
@@ -4117,13 +4129,15 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
     xmlSetNs(request, isds_ns);
 
 #define INSERT_ELEMENT(child, parent, element) \
-    (child) = xmlNewChild((parent), NULL, BAD_CAST (element), NULL); \
-    if (!(child)) { \
-        isds_printf_message(context, \
-                _("Could not add %s child to %s element"), \
-                (element), (parent)->name); \
-        err = IE_ERROR; \
-        goto leave; \
+    { \
+        (child) = xmlNewChild((parent), NULL, BAD_CAST (element), NULL); \
+        if (!(child)) { \
+            isds_printf_message(context, \
+                    _("Could not add %s child to %s element"), \
+                    (element), (parent)->name); \
+            err = IE_ERROR; \
+            goto leave; \
+        } \
     }
 
     INSERT_ELEMENT(node, request, "dbOwnerInfo");
