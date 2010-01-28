@@ -3870,7 +3870,8 @@ leave:
 /* Build ISDS request of XSD tIdDbInput type, sent it and check for error
  * code
  * @context is session context
- * @service_name is name of SERVICE_DB_ACCESS
+ * @service is SOAP service
+ * @service_name is name of request in @service
  * @box_id is box ID of interrest
  * @response is server SOAP body response as XML document
  * @raw_response is automatically reallocated bitstream with response body. Use
@@ -3881,7 +3882,8 @@ leave:
  * @return error coded from lower layer, context message will be set up
  * appropriately. */
 static isds_error build_send_check_dbid_request(struct isds_ctx *context,
-        const xmlChar *service_name, const xmlChar *box_id,
+        const isds_service service, const xmlChar *service_name,
+        const xmlChar *box_id,
         xmlDocPtr *response, void **raw_response, size_t *raw_response_length,
         xmlChar **code, xmlChar **status_message) {
 
@@ -3944,7 +3946,7 @@ static isds_error build_send_check_dbid_request(struct isds_ctx *context,
             service_name_locale, box_id_locale);
 
     /* Send request */
-    err = isds(context, SERVICE_DB_ACCESS, request, response,
+    err = isds(context, service, request, response,
             raw_response, raw_response_length);
     xmlFreeNode(request); request = NULL;
     
@@ -3956,7 +3958,7 @@ static isds_error build_send_check_dbid_request(struct isds_ctx *context,
     }
 
     /* Check for response status */
-    err = isds_response_status(context, SERVICE_DB_ACCESS, *response,
+    err = isds_response_status(context, service, *response,
             code, status_message, NULL);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
@@ -4011,7 +4013,7 @@ isds_error isds_GetDataBoxUsers(struct isds_ctx *context, const char *box_id,
 
 
     /* Do request and check for success */
-    err = build_send_check_dbid_request(context,
+    err = build_send_check_dbid_request(context, SERVICE_DB_MANIPULATION,
             BAD_CAST "GetDataBoxUsers", BAD_CAST box_id,
             &response, NULL, NULL, &code, &message);
     if (err) goto leave;
@@ -4569,7 +4571,7 @@ leave:
  * @context is ISDS session context.
  * @service_name is name of SERVICE_DB_ACCESS service
  * @box_id is UTF-8 encoded box identifier as zero terminated string */
-isds_error build_send_check_dbid_request_drop_response(
+isds_error build_send_check_manipulationdbid_request_drop_response(
         struct isds_ctx *context, const xmlChar *service_name, 
         const xmlChar *box_id) {
     isds_error err = IE_SUCCESS;
@@ -4583,7 +4585,8 @@ isds_error build_send_check_dbid_request_drop_response(
     if (!context->curl) return IE_CONNECTION_CLOSED;
 
     /* Do request and check for success */
-    err = build_send_check_dbid_request(context, service_name, box_id,
+    err = build_send_check_dbid_request(context,
+            SERVICE_DB_MANIPULATION, service_name, box_id,
             &response, NULL, NULL, &code, &message);
     free(code);
     free(message);
@@ -4608,7 +4611,7 @@ isds_error build_send_check_dbid_request_drop_response(
  * @allow is true for enable, false for disable commercial messages income */
 isds_error isds_switch_commercial_receiving(struct isds_ctx *context,
         const char *box_id, const _Bool allow) {
-    return build_send_check_dbid_request_drop_response(context, 
+    return build_send_check_manipulationdbid_request_drop_response(context, 
             (allow) ? BAD_CAST "SetOpenAddressing" :
                 BAD_CAST "ClearOpenAddressing",
             BAD_CAST box_id);
@@ -4623,7 +4626,7 @@ isds_error isds_switch_commercial_receiving(struct isds_ctx *context,
  * @allow is true for enable, false for disable OVM role permission */
 isds_error isds_switch_effective_ovm(struct isds_ctx *context,
         const char *box_id, const _Bool allow) {
-    return build_send_check_dbid_request_drop_response(context, 
+    return build_send_check_manipulationdbid_request_drop_response(context, 
             (allow) ? BAD_CAST "SetEffectiveOVM" :
                 BAD_CAST "ClearEffectiveOVM",
             BAD_CAST box_id);
