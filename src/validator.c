@@ -39,6 +39,7 @@ _hidden isds_error isds_response_status(struct isds_ctx *context,
             break;
         case SERVICE_DB_SEARCH:
         case SERVICE_DB_ACCESS:
+        case SERVICE_DB_MANIPULATION:
             status_code_expr = BAD_CAST
                 "/*/isds:dbStatus/isds:dbStatusCode/text()";
             status_message_expr = BAD_CAST
@@ -154,6 +155,7 @@ _hidden isds_error isds(struct isds_ctx *context, const isds_service service,
         case SERVICE_DM_INFO:           file = "dx"; break;
         case SERVICE_DB_SEARCH:         file = "df"; break;
         case SERVICE_DB_ACCESS:         file = "DsManage"; break;
+        case SERVICE_DB_MANIPULATION:   file = "DsManage"; break;
         default: return (IE_INVAL);
     }
 

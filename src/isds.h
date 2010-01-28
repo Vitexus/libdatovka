@@ -37,6 +37,7 @@ typedef enum {
     IE_ENUM,
     IE_DATE,
     IE_2BIG,
+    IE_2SMALL,
     IE_NOTUNIQ,
     IE_NOTEQUAL,
     IE_PARTIAL_SUCCESS
@@ -199,7 +200,7 @@ struct isds_Address {
 /* Data about box and his owner.
  * NULL pointer means undefined value */
 struct isds_DbOwnerInfo {
-    char *dbID;                     /* Box ID */
+    char *dbID;                     /* Box ID [Max. 7 chars] */
     isds_DbType *dbType;            /* Box Type */
     char *ic;                       /* ID */
     struct isds_PersonName *personName;     /* Name of person */
@@ -590,6 +591,16 @@ isds_error isds_change_password(struct isds_ctx *context,
  * @users is automatically reallocated list of struct isds_DbUserInfo */
 isds_error isds_GetDataBoxUsers(struct isds_ctx *context, const char *box_id,
         struct isds_list **users);
+
+/* Update data about user assigned to given box.
+ * @context is session context
+ * @box is box identification
+ * @old_user identifies user to update
+ * @new_user are updated data about @old_user */
+isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *box,
+        const struct isds_DbUserInfo *old_user,
+        const struct isds_DbUserInfo *new_user);
 
 /* Find boxes suiting given criteria.
  * @context is ISDS session context.

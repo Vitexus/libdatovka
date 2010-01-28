@@ -342,6 +342,8 @@ const char *isds_strerror(const isds_error error) {
             return(_("Invalid date value")); break;
         case IE_2BIG:
             return(_("Too big")); break;
+        case IE_2SMALL:
+            return(_("Too small")); break;
         case IE_NOTUNIQ:
             return(_("Value not unique")); break;
         case IE_NOTEQUAL:
@@ -1230,7 +1232,7 @@ static isds_error string2isds_UserType(xmlChar *string, isds_UserType *type) {
     return IE_SUCCESS;
 }
 
-#if 0 /* Not yet used */
+
 /* Convert ISDS userType enum @type to UTF-8 string.
  * @Return pointer to static string, or NULL if unkwnow enum value */
 static const xmlChar *isds_UserType2string(const isds_UserType type) {
@@ -1242,7 +1244,6 @@ static const xmlChar *isds_UserType2string(const isds_UserType type) {
         default: return NULL; break;
     }
 }
-#endif
 
 
 /* Convert ISDS dmFileMetaType enum @type to UTF-8 string.
@@ -1713,14 +1714,16 @@ static isds_error eventstring2event(const xmlChar *string,
 
 
 #define INSERT_STRING(parent, element, string) \
-    node = xmlNewTextChild(parent, NULL, BAD_CAST (element), \
-            (xmlChar *) (string)); \
-    if (!node) { \
-        isds_printf_message(context, \
-                _("Could not add %s child to %s element"), \
-                element, (parent)->name); \
-        err = IE_ERROR; \
-        goto leave; \
+    { \
+        node = xmlNewTextChild(parent, NULL, BAD_CAST (element), \
+                (xmlChar *) (string)); \
+        if (!node) { \
+            isds_printf_message(context, \
+                    _("Could not add %s child to %s element"), \
+                    element, (parent)->name); \
+            err = IE_ERROR; \
+            goto leave; \
+        } \
     }
 
 #define INSERT_BOOLEAN(parent, element, booleanPtr) \
@@ -1768,6 +1771,23 @@ static isds_error eventstring2event(const xmlChar *string,
                     "attribute to %s element"), (attribute), (parent)->name); \
         err = IE_ERROR; \
         goto leave; \
+    }
+
+#define CHECK_FOR_STRING_LENGTH(string, minimum, maximum, name) \
+    if (string) { \
+        int length = xmlUTF8Strlen((xmlChar *) (string)); \
+        if (length > (maximum)) { \
+            isds_printf_message(context, \
+                    _("%s has more than %d characters"), (name), (maximum)); \
+            err = IE_2BIG; \
+            goto leave; \
+        } \
+        if (length < (minimum)) { \
+            isds_printf_message(context, \
+                    _("%s has less than %d characters"), (name), (minimum)); \
+            err = IE_2SMALL; \
+            goto leave; \
+        } \
     }
 
 
@@ -2057,6 +2077,90 @@ leave:
 }
 
 
+/* Insert struct isds_DbOwnerInfo data (box description) into XML tree
+ * @context is sesstion context
+ * @owner is libsids structure with box description
+ * @db_owner_info is XML element of XSD:tDbOwnerInfo */
+static isds_error insert_DbOwnerInfo(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *owner, xmlNodePtr db_owner_info) {
+
+    isds_error err = IE_SUCCESS;
+    xmlNodePtr node;
+    xmlChar *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!owner || !db_owner_info) return IE_INVAL;
+
+
+    /* Build XSD:tDbOwnerInfo */
+    CHECK_FOR_STRING_LENGTH(owner->dbID, 0, 7, "dbID")
+    INSERT_STRING(db_owner_info, "dbID", owner->dbID);
+
+    /* dbType */
+    if (owner->dbType) {
+        const xmlChar *type_string = isds_DbType2string(*(owner->dbType));
+        if (!type_string) {
+            isds_printf_message(context, _("Invalid dbType value: %d"),
+                    *(owner->dbType));
+            err = IE_ENUM;
+            goto leave;
+        }
+        INSERT_STRING(db_owner_info, "dbType", type_string);
+    }
+    INSERT_STRING(db_owner_info, "ic", owner->ic);
+    if (owner->personName) {
+        INSERT_STRING(db_owner_info, "pnFirstName",
+                owner->personName->pnFirstName);
+        INSERT_STRING(db_owner_info, "pnMiddleName",
+                owner->personName->pnMiddleName);
+        INSERT_STRING(db_owner_info, "pnLastName",
+                owner->personName->pnLastName);
+        INSERT_STRING(db_owner_info, "pnLastNameAtBirth",
+                owner->personName->pnLastNameAtBirth);
+    }
+    INSERT_STRING(db_owner_info, "firmName", owner->firmName);
+    if (owner->birthInfo) {
+        if (owner->birthInfo->biDate) {
+            if (!tm2datestring(owner->birthInfo->biDate, &string))
+                INSERT_STRING(db_owner_info, "biDate", string);
+            free(string); string = NULL;
+        }
+        INSERT_STRING(db_owner_info, "biCity", owner->birthInfo->biCity);
+        INSERT_STRING(db_owner_info, "biCounty", owner->birthInfo->biCounty);
+        INSERT_STRING(db_owner_info, "biState", owner->birthInfo->biState);
+    }
+    if (owner->address) {
+        INSERT_STRING(db_owner_info, "adCity", owner->address->adCity);
+        INSERT_STRING(db_owner_info, "adStreet", owner->address->adStreet);
+        INSERT_STRING(db_owner_info, "adNumberInStreet",
+                owner->address->adNumberInStreet);
+        INSERT_STRING(db_owner_info, "adNumberInMunicipality",
+                owner->address->adNumberInMunicipality);
+        INSERT_STRING(db_owner_info, "adZipCode", owner->address->adZipCode);
+        INSERT_STRING(db_owner_info, "adState", owner->address->adState);
+    }
+    INSERT_STRING(db_owner_info, "nationality", owner->nationality);
+    INSERT_STRING(db_owner_info, "email", owner->email);
+    INSERT_STRING(db_owner_info, "telNumber", owner->telNumber);
+
+    CHECK_FOR_STRING_LENGTH(owner->identifier, 0, 20, "identifier")
+    INSERT_STRING(db_owner_info, "identifier", owner->identifier);
+
+    CHECK_FOR_STRING_LENGTH(owner->registryCode, 0, 5, "registryCode")
+    INSERT_STRING(db_owner_info, "registryCode", owner->registryCode);
+
+    INSERT_LONGINT(db_owner_info, "dbState", owner->dbState, string);
+
+    INSERT_BOOLEAN(db_owner_info, "dbEffectiveOVM", owner->dbEffectiveOVM);
+    INSERT_BOOLEAN(db_owner_info, "dbOpenAddressing",
+            owner->dbOpenAddressing);
+
+leave:
+    free(string);
+    return err;
+}
+
+
 /* Convert XSD:tDbUserInfo XML tree into structure
  * @context is ISDS context
  * @db_user_info is automically reallocated user info structure
@@ -2136,6 +2240,76 @@ leave:
     if (err) isds_DbUserInfo_free(db_user_info);
     free(string);
     xmlXPathFreeObject(result);
+    return err;
+}
+
+
+/* Insert struct isds_DbUserInfo data (user description) into XML tree
+ * @context is sesstion context
+ * @user is libsids structure with user description
+ * @db_user_info is XML element of XSD:tDbUserInfo */
+static isds_error insert_DbUserInfo(struct isds_ctx *context,
+        const struct isds_DbUserInfo *user, xmlNodePtr db_user_info) {
+
+    isds_error err = IE_SUCCESS;
+    xmlNodePtr node;
+    xmlChar *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!user || !db_user_info) return IE_INVAL;
+
+    /* Build XSD:tDbUserInfo */
+    if (user->personName) {
+        INSERT_STRING(db_user_info, "pnFirstName",
+                user->personName->pnFirstName);
+        INSERT_STRING(db_user_info, "pnMiddleName",
+                user->personName->pnMiddleName);
+        INSERT_STRING(db_user_info, "pnLastName",
+                user->personName->pnLastName);
+        INSERT_STRING(db_user_info, "pnLastNameAtBirth",
+                user->personName->pnLastNameAtBirth);
+    }
+    if (user->address) {
+        INSERT_STRING(db_user_info, "adCity", user->address->adCity);
+        INSERT_STRING(db_user_info, "adStreet", user->address->adStreet);
+        INSERT_STRING(db_user_info, "adNumberInStreet",
+                user->address->adNumberInStreet);
+        INSERT_STRING(db_user_info, "adNumberInMunicipality",
+                user->address->adNumberInMunicipality);
+        INSERT_STRING(db_user_info, "adZipCode", user->address->adZipCode);
+        INSERT_STRING(db_user_info, "adState", user->address->adState);
+    }
+    if (user->biDate) {
+        if (!tm2datestring(user->biDate, &string))
+            INSERT_STRING(db_user_info, "biDate", string);
+        zfree(string);
+    }
+    CHECK_FOR_STRING_LENGTH(user->userID, 6, 12, "userID");
+    INSERT_STRING(db_user_info, "userID", user->userID);
+
+    /* userType */
+    if (user->userType) {
+        const xmlChar *type_string = isds_UserType2string(*(user->userType));
+        if (!type_string) {
+            isds_printf_message(context, _("Invalid userType value: %d"),
+                    *(user->userType));
+            err = IE_ENUM;
+            goto leave;
+        }
+        INSERT_STRING(db_user_info, "userType", type_string);
+    }
+
+    INSERT_LONGINT(db_user_info, "userPrivils", user->userPrivils, string);
+    CHECK_FOR_STRING_LENGTH(user->ic, 0, 8, "ic")
+    INSERT_STRING(db_user_info, "ic", user->ic);
+    CHECK_FOR_STRING_LENGTH(user->firmName, 0, 100, "firmName")
+    INSERT_STRING(db_user_info, "firmName", user->firmName);
+    INSERT_STRING(db_user_info, "caStreet", user->caStreet);
+    INSERT_STRING(db_user_info, "caCity", user->caCity);
+    INSERT_STRING(db_user_info, "caZipCode", user->caZipCode);
+
+leave:
+    free(string);
     return err;
 }
 
@@ -3900,6 +4074,130 @@ leave:
 }
 
 
+/* Update data about user assigned to given box.
+ * @context is session context
+ * @box is box identification
+ * @old_user identifies user to update
+ * @new_user are updated data about @old_user */
+isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *box,
+        const struct isds_DbUserInfo *old_user,
+        const struct isds_DbUserInfo *new_user) {
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+    xmlNodePtr node;
+    xmlChar *string = NULL;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!box || !old_user || !new_user) return IE_INVAL;
+
+
+    /* Check if connection is established
+     * TODO: This check should be done donwstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Build UpdateDataBoxUser request */
+    request = xmlNewNode(NULL, BAD_CAST "UpdateDataBoxUser");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build UpdateDataBoxUser request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+#define INSERT_ELEMENT(child, parent, element) \
+    (child) = xmlNewChild((parent), NULL, BAD_CAST (element), NULL); \
+    if (!(child)) { \
+        isds_printf_message(context, \
+                _("Could not add %s child to %s element"), \
+                (element), (parent)->name); \
+        err = IE_ERROR; \
+        goto leave; \
+    }
+
+    INSERT_ELEMENT(node, request, "dbOwnerInfo");
+    err = insert_DbOwnerInfo(context, box, node);
+    if (err) goto leave;
+
+    INSERT_ELEMENT(node, request, "dbOldUserInfo");
+    err = insert_DbUserInfo(context, old_user, node);
+    if (err) goto leave;
+
+    INSERT_ELEMENT(node, request, "dbNewUserInfo");
+    err = insert_DbUserInfo(context, new_user, node);
+    if (err) goto leave;
+
+#undef INSERT_ELEMENT
+
+    isds_log(ILF_ISDS, ILL_DEBUG,
+            _("Sending UpdateDataBoxUser request to ISDS\n"));
+
+    /* Sent request */
+    err = isds(context, SERVICE_DB_MANIPULATION, request, &response,
+            NULL, NULL);
+   
+    /* Destroy request */
+    xmlFreeNode(request); request = NULL;
+
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Processing ISDS response on UpdateDataBoxUser "
+                    "request failed\n"));
+        goto leave;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, SERVICE_DB_MANIPULATION, response,
+            &code, &message, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("ISDS response on UpdateDataBoxUser request is "
+                    "missing status\n"));
+        goto leave;
+    }
+
+    /* Other error */
+    if (xmlStrcmp(code, BAD_CAST "0000")) {
+        char *code_locale = utf82locale((char*)code);
+        char *message_locale = utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server refused UpdateDataBoxUser request "
+                    "(code=%s, message=%s)\n"), code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+leave:
+    free(string);
+    xmlFreeNode(request);
+
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("UpdateDataBoxUser request processed by server "
+                    "successfully.\n"));
+
+    return err;
+}
+
+
 /* Find boxes suiting given criteria.
  * @criteria is filter. You should fill in at least some memebers.
  * @boxes is automatically reallocated list of isds_DbOwnerInfo structures,
@@ -3919,7 +4217,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
     xmlNodePtr request = NULL;
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *message = NULL;
-    xmlNodePtr db_owner_info, node;
+    xmlNodePtr db_owner_info;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     xmlChar *string = NULL;
@@ -3960,64 +4258,8 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         return IE_ERROR;
     }
 
-
-    INSERT_STRING(db_owner_info, "dbID", criteria->dbID);
-
-    /* dbType */
-    if (criteria->dbType) {
-        const xmlChar *type_string = isds_DbType2string(*(criteria->dbType));
-        if (!type_string) {
-            isds_printf_message(context, _("Invalid dbType value: %d"),
-                    *(criteria->dbType));
-            err = IE_ENUM;
-            goto leave;
-        }
-        INSERT_STRING(db_owner_info, "dbType", type_string);
-    }
-
-    INSERT_STRING(db_owner_info, "firmName", criteria->firmName);
-    INSERT_STRING(db_owner_info, "ic", criteria->ic);
-    if (criteria->personName) {
-        INSERT_STRING(db_owner_info, "pnFirstName",
-                criteria->personName->pnFirstName);
-        INSERT_STRING(db_owner_info, "pnMiddleName",
-                criteria->personName->pnMiddleName);
-        INSERT_STRING(db_owner_info, "pnLastName",
-                criteria->personName->pnLastName);
-        INSERT_STRING(db_owner_info, "pnLastNameAtBirth",
-                criteria->personName->pnLastNameAtBirth);
-    }
-    if (criteria->birthInfo) {
-        if (criteria->birthInfo->biDate) {
-            if (!tm2datestring(criteria->birthInfo->biDate, &string))
-                INSERT_STRING(db_owner_info, "biDate", string);
-            free(string); string = NULL;
-        }
-        INSERT_STRING(db_owner_info, "biCity", criteria->birthInfo->biCity);
-        INSERT_STRING(db_owner_info, "biCounty", criteria->birthInfo->biCounty);
-        INSERT_STRING(db_owner_info, "biState", criteria->birthInfo->biState);
-    }
-    if (criteria->address) {
-        INSERT_STRING(db_owner_info, "adCity", criteria->address->adCity);
-        INSERT_STRING(db_owner_info, "adStreet", criteria->address->adStreet);
-        INSERT_STRING(db_owner_info, "adNumberInStreet",
-                criteria->address->adNumberInStreet);
-        INSERT_STRING(db_owner_info, "adNumberInMunicipality",
-                criteria->address->adNumberInMunicipality);
-        INSERT_STRING(db_owner_info, "adZipCode", criteria->address->adZipCode);
-        INSERT_STRING(db_owner_info, "adState", criteria->address->adState);
-    }
-    INSERT_STRING(db_owner_info, "nationality", criteria->nationality);
-    INSERT_STRING(db_owner_info, "email", criteria->email);
-    INSERT_STRING(db_owner_info, "telNumber", criteria->telNumber);
-    INSERT_STRING(db_owner_info, "identifier", criteria->identifier);
-    INSERT_STRING(db_owner_info, "registryCode", criteria->registryCode);
-
-    INSERT_LONGINT(db_owner_info, "dbState", criteria->dbState, string);
-
-    INSERT_BOOLEAN(db_owner_info, "dbEffectiveOVM", criteria->dbEffectiveOVM);
-    INSERT_BOOLEAN(db_owner_info, "dbOpenAddressing",
-            criteria->dbOpenAddressing);
+    err = insert_DbOwnerInfo(context, criteria, db_owner_info);
+    if (err) goto leave;
 
 
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending FindDataBox request to ISDS\n"));
@@ -4430,36 +4672,28 @@ static isds_error insert_envelope_files(struct isds_ctx *context,
                 outgoing_message->envelope->dmToHands);
     }
 
-#define CHECK_FOR_STRING_LENGTH(string, limit, name) \
-    if ((string) && xmlUTF8Strlen((xmlChar *) (string)) > (limit)) { \
-        isds_printf_message(context, \
-                _("%s has more than %d characters"), (name), (limit)); \
-        err = IE_2BIG; \
-        goto leave; \
-    }
-
-    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmAnnotation, 255,
+    CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmAnnotation, 0, 255,
             "dmAnnotation");
     INSERT_STRING(envelope, "dmAnnotation",
             outgoing_message->envelope->dmAnnotation);
 
     CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmRecipientRefNumber,
-            50, "dmRecipientRefNumber");
+            0, 50, "dmRecipientRefNumber");
     INSERT_STRING(envelope, "dmRecipientRefNumber",
             outgoing_message->envelope->dmRecipientRefNumber);
 
     CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmSenderRefNumber,
-            50, "dmSenderRefNumber");
+            0, 50, "dmSenderRefNumber");
     INSERT_STRING(envelope, "dmSenderRefNumber",
             outgoing_message->envelope->dmSenderRefNumber);
 
     CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmRecipientIdent,
-            50, "dmRecipientIdent");
+            0, 50, "dmRecipientIdent");
     INSERT_STRING(envelope, "dmRecipientIdent",
             outgoing_message->envelope->dmRecipientIdent);
 
     CHECK_FOR_STRING_LENGTH(outgoing_message->envelope->dmSenderIdent,
-            50, "dmSenderIdent");
+            0, 50, "dmSenderIdent");
     INSERT_STRING(envelope, "dmSenderIdent",
             outgoing_message->envelope->dmSenderIdent);
 
@@ -4478,8 +4712,6 @@ static isds_error insert_envelope_files(struct isds_ctx *context,
             outgoing_message->envelope->dmPersonalDelivery);
     INSERT_BOOLEAN(envelope, "dmAllowSubstDelivery",
             outgoing_message->envelope->dmAllowSubstDelivery);
-
-#undef CHECK_FOR_STRING_LENGTH
 
     /* ???: Should we require value for dbEffectiveOVM sender?
      * ISDS has default as true */
@@ -6815,6 +7047,7 @@ isds_error isds_mark_message_received(struct isds_ctx *context,
 }
 
 
+#undef CHECK_FOR_STRING_LENGTH
 #undef INSERT_STRING_ATTRIBUTE
 #undef INSERT_ULONGINTNOPTR
 #undef INSERT_ULONGINT

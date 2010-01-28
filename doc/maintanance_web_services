@@ -78,6 +78,19 @@ ChangeISDSPassword
     Change password
 
 
+UpdateDataBoxUser
+=================
+
+Change data about user assigned to given box.
+
+Input is box description (box ID or other criteria), old user data (to
+identify user to changed) and new user data.
+
+One can change any data (even user permissions) except user type of PRIMARY
+user. However PRIMARY user assigned to PO or OVM box can be removed
+(DeleteDataBoxUser) and reacreated (AddDataBoxUser).
+
+
 SetEffectiveOVM
 ===============
 
