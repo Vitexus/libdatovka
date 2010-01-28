@@ -60,7 +60,7 @@ SetOpenAddressing
 ClearOpenAddressing 
     Set box off commercial message acceptance mode
 GetDataBoxUsers
-    Get list of users permitted to access the box.
+    Get list of users permitted to access a box.
 
 
 db_access.wsdl
