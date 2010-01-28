@@ -106,13 +106,11 @@ int main(int argc, char **argv) {
         }
     }
 
-    isds_DbOwnerInfo_free(&db_owner_info);
-
-    {
-        /* Get info all users of this box */
+    /* Get info all users of this box */
+    if (db_owner_info) {
         struct isds_list *users = NULL, *item;
-        printf("Getting my box users:\n");
-        err = isds_GetDataBoxUsers(ctx, &users);
+        printf("Getting users of my box with ID `%s':\n", db_owner_info->dbID);
+        err = isds_GetDataBoxUsers(ctx, db_owner_info->dbID, &users);
         if (err) {
             printf("isds_GetDataBoxUsers() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
@@ -125,6 +123,8 @@ int main(int argc, char **argv) {
         }
         isds_list_free(&users);
     }
+
+    isds_DbOwnerInfo_free(&db_owner_info);
 
     {
         /* Get info about my account */

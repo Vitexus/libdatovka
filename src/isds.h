@@ -568,12 +568,6 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
 isds_error isds_GetUserInfoFromLogin(struct isds_ctx *context,
         struct isds_DbUserInfo **db_user_info);
 
-/* Get data about all users with access to your box.
- * @context is session context
- * @users is automatically reallocated list of struct isds_DbUserInfo */
-isds_error isds_GetDataBoxUsers(struct isds_ctx *context,
-        struct isds_list **users);
-
 /* Get expiration time of current password
  * @context is session context
  * @expiration is automatically reallocated time when password expires, In
@@ -589,6 +583,13 @@ isds_error isds_get_password_expiration(struct isds_ctx *context,
  * @new_password is requested new password */
 isds_error isds_change_password(struct isds_ctx *context,
         const char *old_password, const char *new_password);
+
+/* Get data about all users assigned to given box.
+ * @context is session context
+ * @box_id is box ID
+ * @users is automatically reallocated list of struct isds_DbUserInfo */
+isds_error isds_GetDataBoxUsers(struct isds_ctx *context, const char *box_id,
+        struct isds_list **users);
 
 /* Find boxes suiting given criteria.
  * @context is ISDS session context.

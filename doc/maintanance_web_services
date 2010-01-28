@@ -81,12 +81,12 @@ ChangeISDSPassword
 GetDataBoxUsers
 ===============
 
-Get list of users permitted to access the box.
+Get list of users permitted to access given box.
 
 Note: This request is not specified in any verbose document. Following info
 has been obtained from XML Schma file [dbTypes.xsd].
 
-Input is empty dummy request.
+Input is type of XSD:tIdDbInput. Only box ID is sufficient probably.
 
 Output is list of box users. Structure:
 
