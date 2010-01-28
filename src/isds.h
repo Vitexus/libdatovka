@@ -568,6 +568,12 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
 isds_error isds_GetUserInfoFromLogin(struct isds_ctx *context,
         struct isds_DbUserInfo **db_user_info);
 
+/* Get data about all users with access to your box.
+ * @context is session context
+ * @users is automatically reallocated list of struct isds_DbUserInfo */
+isds_error isds_GetDataBoxUsers(struct isds_ctx *context,
+        struct isds_list **users);
+
 /* Get expiration time of current password
  * @context is session context
  * @expiration is automatically reallocated time when password expires, In

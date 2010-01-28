@@ -108,10 +108,27 @@ int main(int argc, char **argv) {
 
     isds_DbOwnerInfo_free(&db_owner_info);
 
+    {
+        /* Get info all users of this box */
+        struct isds_list *users = NULL, *item;
+        printf("Getting my box users:\n");
+        err = isds_GetDataBoxUsers(ctx, &users);
+        if (err) {
+            printf("isds_GetDataBoxUsers() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        } else {
+            printf("isds_GetDataBoxUsers() succeeded\n");
+            for(item = users; item; item = item->next) {
+                printf("List item:\n");
+                print_DbUserInfo(item->data);
+            }
+        }
+        isds_list_free(&users);
+    }
 
     {
+        /* Get info about my account */
         struct isds_DbUserInfo *db_user_info = NULL;
-
         printf("Getting info about my account:\n");
         err = isds_GetUserInfoFromLogin(ctx, &db_user_info);
         if (err) {
@@ -119,9 +136,9 @@ int main(int argc, char **argv) {
                     isds_strerror(err), isds_long_message(ctx));
         } else {
             printf("isds_GetUserInfoFromLogin() succeeded\n");
+            print_DbUserInfo(db_user_info);
         }
-        print_DbUserInfo(db_user_info);
-
+        isds_DbUserInfo_free(&db_user_info);
     }
 
     {

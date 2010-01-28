@@ -3372,7 +3372,6 @@ isds_error isds_GetUserInfoFromLogin(struct isds_ctx *context,
     xmlChar *code = NULL, *message = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
-    char *string = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!db_user_info) return IE_INVAL;
@@ -3434,7 +3433,102 @@ leave:
         isds_DbUserInfo_free(db_user_info);
     }
 
-    free(string);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("GetUserInfoFromLogin request processed by server "
+                    "successfully.\n"));
+
+    return err;
+}
+
+
+/* Get data about all users with access to your box.
+ * @context is session context
+ * @users is automatically reallocated list of struct isds_DbUserInfo */
+isds_error isds_GetDataBoxUsers(struct isds_ctx *context,
+        struct isds_list **users) {
+    isds_error err = IE_SUCCESS;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    int i;
+    struct isds_list *item, *prev_item = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!users) return IE_INVAL;
+
+    /* Check if connection is established */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Do request and check for success */
+    err = build_send_check_dbdummy_request(context,
+            BAD_CAST "GetDataBoxUsers",
+            &response, NULL, NULL, &code, &message);
+    if (err) goto leave;
+
+
+    /* Extract data */
+    /* Prepare stucture */
+    isds_list_free(users);
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    /* Set context node */
+    result = xmlXPathEvalExpression(BAD_CAST
+            "/isds:EnableOwnDataBoxResponse/isds:dbUsers/isds:dbUserInfo",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context, _("Missing dbUserInfo element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+
+    /* Iterate over all users */
+    for (i = 0; i < result->nodesetval->nodeNr; i++) {
+
+        /* Prepare structure */
+        item = calloc(1, sizeof(*item));
+        if (!item) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+        item->destructor = (void(*)(void**))isds_DbUserInfo_free;
+        if (i == 0) *users = item;
+        else prev_item->next = item;
+        prev_item = item;
+
+        /* Extract it */
+        xpath_ctx->node = result->nodesetval->nodeTab[i];
+        err = extract_DbUserInfo(context,
+                (struct isds_DbUserInfo **) (&item->data), xpath_ctx);
+        if (err) goto leave;
+    }
+
+leave:
+    if (err) {
+        isds_list_free(users);
+    }
+
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
 
