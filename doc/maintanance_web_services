@@ -78,6 +78,24 @@ ChangeISDSPassword
     Change password
 
 
+SetEffectiveOVM
+===============
+
+Switch box into mode where the box can on explicit request sent messages as
+OVM boxes can. This is suitable for private organisations or persons that
+have government delegations.
+
+Input is box ID.
+
+
+CleareEffectiveOVM
+==================
+
+Remove box priviledge to act as a government or municpality (OVM role).
+
+Input is box ID.
+
+
 SetOpenAddressing
 =================
 

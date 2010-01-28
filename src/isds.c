@@ -4359,6 +4359,21 @@ isds_error isds_switch_commercial_receiving(struct isds_ctx *context,
 }
 
 
+/* Switch box into / out of state where non-OVM box can act as OVM (e.g. force
+ * message acceptance). This is just a box permission. Sender must apply
+ * such role by sending each message.
+ * @context is ISDS session context.
+ * @box_id is UTF-8 encoded box identifier as zero terminated string
+ * @allow is true for enable, false for disable OVM role permission */
+isds_error isds_switch_effective_ovm(struct isds_ctx *context,
+        const char *box_id, const _Bool allow) {
+    return build_send_check_dbid_request_drop_response(context, 
+            (allow) ? BAD_CAST "SetEffectiveOVM" :
+                BAD_CAST "ClearEffectiveOVM",
+            BAD_CAST box_id);
+}
+
+
 /* Insert struct isds_message data (envelope (recipient data optional) and
  * documents) into XML tree
  * @context is sesstion context
