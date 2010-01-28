@@ -56,9 +56,9 @@ SetEffectiveOVM
 CleareEffectiveOVM
     Set box off OVM mode
 SetOpenAddressing
-    Switch box into commercial message acceptance mode
+    Switch box into commercial message receivinge mode
 ClearOpenAddressing 
-    Set box off commercial message acceptance mode
+    Set box off commercial message receiving mode
 GetDataBoxUsers
     Get list of users permitted to access a box.
 
@@ -76,6 +76,25 @@ GetPasswordInfo
     Get data about password expiration
 ChangeISDSPassword
     Change password
+
+
+SetOpenAddressing
+=================
+
+Switch box into commercial message receiving mode.
+
+Box will be capable to receive commercial messages. This does not imply
+permission to send commercial messages.
+
+Input is box ID.
+
+
+ClearOpenAddressing
+===================
+
+Switch box out of commercial message receiving mode.
+
+Input is box ID.
 
 
 GetDataBoxUsers
