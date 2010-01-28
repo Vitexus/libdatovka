@@ -622,6 +622,14 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
 isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
         long int *box_status);
 
+/* Switch box into state where box can receive commercial messages (off by
+ * default)
+ * @context is ISDS session context.
+ * @box_id is UTF-8 encoded box identifier as zero terminated string
+ * @allow is true for enable, false for disable commercial messages income */
+isds_error isds_switch_commercial_receiving(struct isds_ctx *context,
+        const char *box_id, const _Bool allow);
+
 /* Send a message via ISDS to a recipent
  * @context is session context
  * @outgoing_message is message to send; Some memebers are mandatory (like

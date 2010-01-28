@@ -7,6 +7,7 @@ extern char url[];
 extern char username[];
 extern char password[];
 
+void print_bool(const _Bool *boolean);
 void print_DbState(const long int state);
 void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info);
 void print_DbUserInfo(const struct isds_DbUserInfo *info);

@@ -4308,6 +4308,57 @@ leave:
 }
 
 
+/* Build ISDS request of XSD tIdDbInput type, sent it, check for error
+ * code, destroy response and log success.
+ * @context is ISDS session context.
+ * @service_name is name of SERVICE_DB_ACCESS service
+ * @box_id is UTF-8 encoded box identifier as zero terminated string */
+isds_error build_send_check_dbid_request_drop_response(
+        struct isds_ctx *context, const xmlChar *service_name, 
+        const xmlChar *box_id) {
+    isds_error err = IE_SUCCESS;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!service_name || *service_name == '\0' || !box_id) return IE_INVAL;
+
+    /* Check if connection is established */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+    /* Do request and check for success */
+    err = build_send_check_dbid_request(context, service_name, box_id,
+            &response, NULL, NULL, &code, &message);
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+
+    if (!err) {
+        char *service_name_locale = utf82locale((char *) service_name);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("%s request processed by server successfully.\n"),
+                service_name_locale);
+        free(service_name_locale);
+    }
+
+    return err;
+}
+
+
+/* Switch box into state where box can receive commercial messages (off by
+ * default)
+ * @context is ISDS session context.
+ * @box_id is UTF-8 encoded box identifier as zero terminated string
+ * @allow is true for enable, false for disable commercial messages income */
+isds_error isds_switch_commercial_receiving(struct isds_ctx *context,
+        const char *box_id, const _Bool allow) {
+    return build_send_check_dbid_request_drop_response(context, 
+            (allow) ? BAD_CAST "SetOpenAddressing" :
+                BAD_CAST "ClearOpenAddressing",
+            BAD_CAST box_id);
+}
+
+
 /* Insert struct isds_message data (envelope (recipient data optional) and
  * documents) into XML tree
  * @context is sesstion context
