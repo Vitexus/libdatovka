@@ -93,13 +93,8 @@ int main(int argc, char **argv) {
     if (db_user_info && db_owner_info) {
         /* Update user info */
         struct isds_DbUserInfo *old_user_info = NULL;
-        old_user_info = calloc(1, sizeof(*old_user_info));
+        old_user_info = isds_DbUserInfo_duplicate(db_user_info);
         if (!old_user_info) {
-            fprintf(stderr, "No enough memory\n");
-            exit(EXIT_FAILURE);
-        }
-        old_user_info->userID = strdup(db_user_info->userID);
-        if (!old_user_info->userID) {
             fprintf(stderr, "No enough memory\n");
             exit(EXIT_FAILURE);
         }

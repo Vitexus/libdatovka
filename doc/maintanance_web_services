@@ -83,8 +83,13 @@ UpdateDataBoxUser
 
 Change data about user assigned to given box.
 
-Input is box description (box ID or other criteria), old user data (to
-identify user to changed) and new user data.
+Input is box description (box ID or other criteria), old user data and new
+user data.
+
+Non-normative: old user data are used not only to identify user in ISDS, they
+are used by ISDS to recognise data changes. Permission to change data are
+tested against these differences. In other words, client must supply complete
+old user data, not only user ID.
 
 One can change any data (even user permissions) except user type of PRIMARY
 user. However PRIMARY user assigned to PO or OVM box can be removed
