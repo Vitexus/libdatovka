@@ -232,6 +232,117 @@ void isds_message_copy_free(struct isds_message_copy **copy) {
 }
 
 
+/* *DUP_OR_ERROR macros needs error label */
+#define STRDUP_OR_ERROR(new, template) { \
+    if (!template) { \
+        (new) = NULL; \
+    } else { \
+        (new) = strdup(template); \
+        if (!new) goto error; \
+    } \
+}
+
+#define FLATDUP_OR_ERROR(new, template) { \
+    if (!template) { \
+        (new) = NULL; \
+    } else { \
+        (new) = malloc(sizeof(*(new))); \
+        if (!new) goto error; \
+        memcpy((new), (template), sizeof(*(template))); \
+    } \
+}
+
+
+/* Copy structure isds_PersonName recursively */
+struct isds_PersonName *isds_PersonName_duplicate(
+        struct isds_PersonName *template) {
+    struct isds_PersonName *new = NULL;
+
+    if (!template) return NULL;
+
+    new = calloc(1, sizeof(*new));
+    if (!new) return NULL;
+
+    STRDUP_OR_ERROR(new->pnFirstName, template->pnFirstName);
+    STRDUP_OR_ERROR(new->pnMiddleName, template->pnMiddleName);
+    STRDUP_OR_ERROR(new->pnLastName, template->pnLastName);
+    STRDUP_OR_ERROR(new->pnLastNameAtBirth, template->pnLastNameAtBirth);
+
+    return new;
+    
+error:
+    isds_PersonName_free(&new);
+    return NULL;
+}
+
+    
+/* Copy structure isds_Address recursively */
+struct isds_Address *isds_Address_duplicate(struct isds_Address *template) {
+    struct isds_Address *new = NULL;
+
+    if (!template) return NULL;
+
+    new = calloc(1, sizeof(*new));
+    if (!new) return NULL;
+
+    STRDUP_OR_ERROR(new->adCity, template->adCity);
+    STRDUP_OR_ERROR(new->adStreet, template->adStreet);
+    STRDUP_OR_ERROR(new->adNumberInStreet, template->adNumberInStreet);
+    STRDUP_OR_ERROR(new->adNumberInMunicipality,
+            template->adNumberInMunicipality);
+    STRDUP_OR_ERROR(new->adZipCode, template->adZipCode);
+    STRDUP_OR_ERROR(new->adState, template->adState);
+    
+    return new;
+    
+error:
+    isds_Address_free(&new);
+    return NULL;
+}
+
+
+/* Copy structure isds_DbUserInfo recursively */
+struct isds_DbUserInfo *isds_DbUserInfo_duplicate(
+        const struct isds_DbUserInfo *template) {
+    struct isds_DbUserInfo *new = NULL;
+    if (!template) return NULL;
+
+    new = calloc(1, sizeof(*new));
+    if (!new) return NULL;
+
+    STRDUP_OR_ERROR(new->userID, template->userID);
+    FLATDUP_OR_ERROR(new->userType, template->userType);
+    FLATDUP_OR_ERROR(new->userPrivils, template->userPrivils);
+
+    if (template->personName) {
+        if (!(new->personName =
+                    isds_PersonName_duplicate(template->personName)))
+            goto error;
+    }
+
+    if (template->address) {
+        if (!(new->address = isds_Address_duplicate(template->address)))
+            goto error;
+    }
+    
+    FLATDUP_OR_ERROR(new->biDate, template->biDate);
+    STRDUP_OR_ERROR(new->ic, template->ic);
+    STRDUP_OR_ERROR(new->firmName, template->firmName);
+    STRDUP_OR_ERROR(new->caStreet, template->caStreet);
+    STRDUP_OR_ERROR(new->caCity, template->caCity);
+    STRDUP_OR_ERROR(new->caZipCode, template->caZipCode);
+
+    return new;
+    
+error:
+    isds_DbUserInfo_free(&new);
+    return NULL;
+}
+
+#undef FLATDUP_OR_ERROR
+#undef STRDUP_OR_ERROR 
+
+
 /* Initialize ISDS library.
  * Global function, must be called before other functions.
  * If it failes you can not use ISDS library and must call isds_cleanup() to

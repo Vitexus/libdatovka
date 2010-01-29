@@ -953,4 +953,15 @@ void isds_message_free(struct isds_message **message);
 /* Deallocate struct isds_message_copy recursively and NULL it */
 void isds_message_copy_free(struct isds_message_copy **copy);
 
+/* Copy structure isds_PersonName recursively */
+struct isds_PersonName *isds_PersonName_duplicate(
+        struct isds_PersonName *template);
+
+/* Copy structure isds_Address recursively */
+struct isds_Address *isds_Address_duplicate(struct isds_Address *template);
+
+/* Copy structure isds_DbUserInfo recursively */
+struct isds_DbUserInfo *isds_DbUserInfo_duplicate(
+        const struct isds_DbUserInfo *template);
+
 #endif
