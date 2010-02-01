@@ -20,6 +20,9 @@ Documentation: DataBox_ws.pdf (Appendix 3), GetInfo_ws.pdf (Appendix 2)
 
 Note: OVM mode is defined in paragraph 5a of Czech ISDS Act (300/2008 Coll.)
 
+Non-normative: [dbTypes.xsd] augments XSD:gDbReqStatus type with optional
+dbStatusRefNumber element carying request serial number assigned by ISDS.
+
 List of SOAP requests follows.
 
 
