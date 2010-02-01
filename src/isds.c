@@ -4203,11 +4203,14 @@ leave:
  * @context is session context
  * @box is box identification
  * @old_user identifies user to update
- * @new_user are updated data about @old_user */
+ * @new_user are updated data about @old_user
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
 isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box,
         const struct isds_DbUserInfo *old_user,
-        const struct isds_DbUserInfo *new_user) {
+        const struct isds_DbUserInfo *new_user,
+        char **refnumber) {
     isds_error err = IE_SUCCESS;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
@@ -4286,7 +4289,7 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
 
     /* Check for response status */
     err = isds_response_status(context, SERVICE_DB_MANIPULATION, response,
-            &code, &message, NULL);
+            &code, &message, (xmlChar **) refnumber);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("ISDS response on UpdateDataBoxUser request is "

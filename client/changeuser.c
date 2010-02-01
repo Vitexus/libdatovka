@@ -93,6 +93,8 @@ int main(int argc, char **argv) {
     if (db_user_info && db_owner_info) {
         /* Update user info */
         struct isds_DbUserInfo *old_user_info = NULL;
+        char *refnumber = NULL;
+
         old_user_info = isds_DbUserInfo_duplicate(db_user_info);
         if (!old_user_info) {
             fprintf(stderr, "No enough memory\n");
@@ -101,17 +103,19 @@ int main(int argc, char **argv) {
 
         printf("Updating info about my account: with no change\n");
         err = isds_UpdateDataBoxUser(ctx, db_owner_info,
-                old_user_info, db_user_info);
+                old_user_info, db_user_info, &refnumber);
         if (err) {
             printf("isds_UpdateDataBoxUser() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
         } else {
-            printf("isds_UpdateDataBoxUser() succeeded\n");
+            printf("isds_UpdateDataBoxUser() succeeded as request #%s\n",
+                    refnumber);
 
             /* Verify info about my account */
             get_my_account(ctx, &db_user_info);
         }
 
+        free(refnumber);
         isds_DbUserInfo_free(&old_user_info);
     }
 
