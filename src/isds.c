@@ -1913,6 +1913,18 @@ static isds_error eventstring2event(const xmlChar *string,
     } \
 }
 
+#define INSERT_ELEMENT(child, parent, element) \
+    { \
+        (child) = xmlNewChild((parent), NULL, BAD_CAST (element), NULL); \
+        if (!(child)) { \
+            isds_printf_message(context, \
+                    _("Could not add %s child to %s element"), \
+                    (element), (parent)->name); \
+            err = IE_ERROR; \
+            goto leave; \
+        } \
+    }
+
 
 /* Find child element by name in given XPath context and switch context onto
  * it. The child must be uniq and must exist. Otherwise failes.
@@ -4246,18 +4258,6 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
     }
     xmlSetNs(request, isds_ns);
 
-#define INSERT_ELEMENT(child, parent, element) \
-    { \
-        (child) = xmlNewChild((parent), NULL, BAD_CAST (element), NULL); \
-        if (!(child)) { \
-            isds_printf_message(context, \
-                    _("Could not add %s child to %s element"), \
-                    (element), (parent)->name); \
-            err = IE_ERROR; \
-            goto leave; \
-        } \
-    }
-
     INSERT_ELEMENT(node, request, "dbOwnerInfo");
     err = insert_DbOwnerInfo(context, box, node);
     if (err) goto leave;
@@ -4269,8 +4269,6 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
     INSERT_ELEMENT(node, request, "dbNewUserInfo");
     err = insert_DbUserInfo(context, new_user, node);
     if (err) goto leave;
-
-#undef INSERT_ELEMENT
 
     isds_log(ILF_ISDS, ILL_DEBUG,
             _("Sending UpdateDataBoxUser request to ISDS\n"));
@@ -4685,7 +4683,7 @@ leave:
 /* Build ISDS request of XSD tIdDbInput type, sent it, check for error
  * code, destroy response and log success.
  * @context is ISDS session context.
- * @service_name is name of SERVICE_DB_ACCESS service
+ * @service_name is name of SERVICE_DB_MANIPULATION service
  * @box_id is UTF-8 encoded box identifier as zero terminated string 
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
@@ -4752,6 +4750,137 @@ isds_error isds_switch_effective_ovm(struct isds_ctx *context,
             (allow) ? BAD_CAST "SetEffectiveOVM" :
                 BAD_CAST "ClearEffectiveOVM",
             BAD_CAST box_id, (xmlChar **) refnumber);
+}
+
+
+/* Build ISDS request of XSD tOwnerInfoInput type, sent it, check for error
+ * code, destroy response and log success.
+ * @context is ISDS session context.
+ * @service_name is name of SERVICE_DB_MANIPULATION service
+ * @owner is structure describing box
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+static isds_error build_send_check_manipulationdbowner_request_drop_response(
+        struct isds_ctx *context, const xmlChar *service_name, 
+        const struct isds_DbOwnerInfo *owner, xmlChar **refnumber) {
+    isds_error err = IE_SUCCESS;
+    char *service_name_locale = NULL;
+    xmlNodePtr request = NULL, db_owner_info;
+    xmlNsPtr isds_ns = NULL;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!service_name || *service_name == '\0' || !owner) return IE_INVAL;
+
+    /* Check if connection is established
+     * TODO: This check should be done donwstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+    service_name_locale = utf82locale((char*)service_name);
+    if (!service_name_locale) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    /* Build request */
+    request = xmlNewNode(NULL, service_name);
+    if (!request) {
+        isds_printf_message(context,
+                _("Could not build %s request"), service_name_locale);
+        err = IE_ERROR;
+        goto leave;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    xmlSetNs(request, isds_ns);
+
+
+    /* Add XSD:tOwnerInfoInput child*/
+    INSERT_ELEMENT(db_owner_info, request, "dbOwnerInfo");
+    err = insert_DbOwnerInfo(context, owner, db_owner_info);
+    if (err) goto leave;
+    /* TODO: XSD:gExtApproval*/
+
+
+    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending %s request to ISDS\n"),
+            service_name_locale);
+
+    /* Send request */
+    err = isds(context, SERVICE_DB_MANIPULATION, request, &response,
+            NULL, NULL);
+    xmlFreeNode(request); request = NULL;
+    
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("Processing ISDS response on %s request failed\n"),
+                    service_name_locale);
+        goto leave;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, SERVICE_DB_MANIPULATION, response,
+            &code, &message, refnumber);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("ISDS response on %s request is missing status\n"),
+                    service_name_locale);
+        goto leave;
+    }
+
+    /* Request processed, but nothing found */
+    if (xmlStrcmp(code, BAD_CAST "0000")) {
+        char *code_locale = utf82locale((char*) code);
+        char *message_locale = utf82locale((char*) message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("Server refused %s request (code=%s, message=%s)\n"),
+                service_name_locale, code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+
+leave:
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+    xmlFreeNode(request);
+
+    if (!err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("%s request processed by server successfully.\n"),
+                service_name_locale);
+    }
+
+    free(service_name_locale);
+
+    return err;
+}
+
+
+/* Switch box accessibility state on request of box owner.
+ * Despite the name, owner must do the requst off-line. This function is
+ * designed for such off-line meeting points (e.g. Czech POINT).
+ * @context is ISDS session context.
+ * @box identifies box to swith accesibilty state.
+ * @allow is true for making accesibale, false to disallow access.
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+isds_error isds_switch_box_accessibility_on_owner_request(
+        struct isds_ctx *context, const struct isds_DbOwnerInfo *box,
+        const _Bool allow, char **refnumber) {
+    return build_send_check_manipulationdbowner_request_drop_response(context,
+            (allow) ? BAD_CAST "EnableOwnDataBox" :
+                BAD_CAST "DisableOwnDataBox",
+            box, (xmlChar **) refnumber);
 }
 
 
@@ -7186,6 +7315,7 @@ isds_error isds_mark_message_received(struct isds_ctx *context,
 }
 
 
+#undef INSERT_ELEMENT
 #undef CHECK_FOR_STRING_LENGTH
 #undef INSERT_STRING_ATTRIBUTE
 #undef INSERT_ULONGINTNOPTR

@@ -81,6 +81,28 @@ ChangeISDSPassword
     Change password
 
 
+DisableOwnDataBox
+=================
+
+Make box unaccessable on request of its owner.
+
+Despite name, this does not disable access to the box of currently logged in
+user. The box owner must apply for making his box unaccassible off-line on
+special off-line meeting point and officer (with permission PRIVIL_OVMPOZAK
+| PRIVIL_CZP) call this SOAP service. Result is box state changed to value 2.
+
+Input is box description (box ID ot other criteria).
+
+
+EnableOwnDataBox
+================
+
+Renew access to box made unaccessible previously.
+
+Disable/enable access period is limited by law and can be charged. See
+DisableOwnDataBox for more detail.s
+
+
 UpdateDataBoxUser
 =================
 

@@ -657,6 +657,18 @@ isds_error isds_switch_commercial_receiving(struct isds_ctx *context,
 isds_error isds_switch_effective_ovm(struct isds_ctx *context,
         const char *box_id, const _Bool allow, char **refnumber);
 
+/* Switch box accessibility state on request of box owner.
+ * Despite the name, owner must do the requst off-line. This function is
+ * designed for such off-line meeting points (e.g. Czech POINT).
+ * @context is ISDS session context.
+ * @box identifies box to swith accesibilty state.
+ * @allow is true for making accesibale, false to disallow access.
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+isds_error isds_switch_box_accessibility_on_owner_request(
+        struct isds_ctx *context, const struct isds_DbOwnerInfo *box,
+        const _Bool allow, char **refnumber);
+
 /* Send a message via ISDS to a recipent
  * @context is session context
  * @outgoing_message is message to send; Some memebers are mandatory (like
