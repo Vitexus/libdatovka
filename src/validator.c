@@ -13,8 +13,9 @@
  * @code is automatically allocated status code of the response
  * @message is automatically allocated status message. Returned NULL means no
  * message was delivered by server. Use NULL if you don't care.
- * @refnumber is automatically allocated status reference number. Returned
- * NULL means no referce was delivered by server. Use NULL if you don't care.
+ * @refnumber is automatically allocated request serial number assigned by
+ * ISDS. Returned *NULL means no number was delivered by server.
+ * Use NULL if you don't care.
  * */
 _hidden isds_error isds_response_status(struct isds_ctx *context,
         const isds_service service, xmlDocPtr response,
@@ -99,7 +100,7 @@ _hidden isds_error isds_response_status(struct isds_ctx *context,
     }
 
     if (refnumber) {
-        /* Get status reference number */
+        /* Get reference number of client request */
         xmlXPathFreeObject(result);
         result = xmlXPathEvalExpression(
                 BAD_CAST "/*/isds:dbStatus/isds:dbStatusRefNumber/text()",
