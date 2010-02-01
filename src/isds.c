@@ -4006,9 +4006,9 @@ leave:
  * NULL, if you don't care.
  * @return error coded from lower layer, context message will be set up
  * appropriately. */
-static isds_error build_send_check_dbid_request(struct isds_ctx *context,
-        const isds_service service, const xmlChar *service_name,
-        const xmlChar *box_id,
+static isds_error build_send_dbid_request_check_response(
+        struct isds_ctx *context, const isds_service service,
+        const xmlChar *service_name, const xmlChar *box_id,
         xmlDocPtr *response, void **raw_response, size_t *raw_response_length,
         xmlChar **code, xmlChar **status_message, xmlChar **refnumber) {
 
@@ -4138,7 +4138,8 @@ isds_error isds_GetDataBoxUsers(struct isds_ctx *context, const char *box_id,
 
 
     /* Do request and check for success */
-    err = build_send_check_dbid_request(context, SERVICE_DB_MANIPULATION,
+    err = build_send_dbid_request_check_response(context,
+            SERVICE_DB_MANIPULATION,
             BAD_CAST "GetDataBoxUsers", BAD_CAST box_id,
             &response, NULL, NULL, &code, &message, NULL);
     if (err) goto leave;
@@ -4687,7 +4688,7 @@ leave:
  * @box_id is UTF-8 encoded box identifier as zero terminated string 
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
-static isds_error build_send_check_manipulationdbid_request_drop_response(
+static isds_error build_send_manipulationdbid_request_check_drop_response(
         struct isds_ctx *context, const xmlChar *service_name, 
         const xmlChar *box_id, xmlChar **refnumber) {
     isds_error err = IE_SUCCESS;
@@ -4701,7 +4702,7 @@ static isds_error build_send_check_manipulationdbid_request_drop_response(
     if (!context->curl) return IE_CONNECTION_CLOSED;
 
     /* Do request and check for success */
-    err = build_send_check_dbid_request(context,
+    err = build_send_dbid_request_check_response(context,
             SERVICE_DB_MANIPULATION, service_name, box_id,
             &response, NULL, NULL, &code, &message, refnumber);
     free(code);
@@ -4729,7 +4730,7 @@ static isds_error build_send_check_manipulationdbid_request_drop_response(
  * NULL, if you don't care. */
 isds_error isds_switch_commercial_receiving(struct isds_ctx *context,
         const char *box_id, const _Bool allow, char **refnumber) {
-    return build_send_check_manipulationdbid_request_drop_response(context, 
+    return build_send_manipulationdbid_request_check_drop_response(context, 
             (allow) ? BAD_CAST "SetOpenAddressing" :
                 BAD_CAST "ClearOpenAddressing",
             BAD_CAST box_id, (xmlChar **) refnumber);
@@ -4746,10 +4747,103 @@ isds_error isds_switch_commercial_receiving(struct isds_ctx *context,
  * NULL, if you don't care. */
 isds_error isds_switch_effective_ovm(struct isds_ctx *context,
         const char *box_id, const _Bool allow, char **refnumber) {
-    return build_send_check_manipulationdbid_request_drop_response(context, 
+    return build_send_manipulationdbid_request_check_drop_response(context, 
             (allow) ? BAD_CAST "SetEffectiveOVM" :
                 BAD_CAST "ClearEffectiveOVM",
             BAD_CAST box_id, (xmlChar **) refnumber);
+}
+
+
+/* Generic bottom half with request sending.
+ * It sends prepared request, checks for error code, destroys response and
+ * request and log success or failure.
+ * @context is ISDS session context.
+ * @service is ISDS service handler
+ * @service_name is name in scope of given @service
+ * @request is XML tree with request. Will be freed to save memory.
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+static isds_error send_request_check_drop_response(
+        struct isds_ctx *context,
+        const isds_service service, const xmlChar *service_name, 
+        xmlNodePtr *request, xmlChar **refnumber) {
+    isds_error err = IE_SUCCESS;
+    char *service_name_locale = NULL;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!service_name || *service_name == '\0' || !request || !*request)
+        return IE_INVAL;
+
+    /* Check if connection is established
+     * TODO: This check should be done donwstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+    service_name_locale = utf82locale((char*) service_name);
+    if (!service_name_locale) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending %s request to ISDS\n"),
+            service_name_locale);
+
+    /* Send request */
+    err = isds(context, service, *request, &response, NULL, NULL);
+    xmlFreeNode(*request); *request = NULL;
+    
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("Processing ISDS response on %s request failed\n"),
+                    service_name_locale);
+        goto leave;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, service, response,
+            &code, &message, refnumber);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("ISDS response on %s request is missing status\n"),
+                    service_name_locale);
+        goto leave;
+    }
+
+    /* Request processed, but server failed */
+    if (xmlStrcmp(code, BAD_CAST "0000")) {
+        char *code_locale = utf82locale((char*) code);
+        char *message_locale = utf82locale((char*) message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("Server refused %s request (code=%s, message=%s)\n"),
+                service_name_locale, code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+
+leave:
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+    if (*request) {
+        xmlFreeNode(*request);
+        *request = NULL;
+    }
+
+    if (!err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("%s request processed by server successfully.\n"),
+                service_name_locale);
+    }
+
+    free(service_name_locale);
+
+    return err;
 }
 
 
@@ -4760,15 +4854,13 @@ isds_error isds_switch_effective_ovm(struct isds_ctx *context,
  * @owner is structure describing box
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
-static isds_error build_send_check_manipulationdbowner_request_drop_response(
+static isds_error build_send_manipulationdbowner_request_check_drop_response(
         struct isds_ctx *context, const xmlChar *service_name, 
         const struct isds_DbOwnerInfo *owner, xmlChar **refnumber) {
     isds_error err = IE_SUCCESS;
     char *service_name_locale = NULL;
     xmlNodePtr request = NULL, db_owner_info;
     xmlNsPtr isds_ns = NULL;
-    xmlDocPtr response = NULL;
-    xmlChar *code = NULL, *message = NULL;
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -4807,59 +4899,12 @@ static isds_error build_send_check_manipulationdbowner_request_drop_response(
     if (err) goto leave;
     /* TODO: XSD:gExtApproval*/
 
-
-    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending %s request to ISDS\n"),
-            service_name_locale);
-
-    /* Send request */
-    err = isds(context, SERVICE_DB_MANIPULATION, request, &response,
-            NULL, NULL);
-    xmlFreeNode(request); request = NULL;
-    
-    if (err) {
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                    _("Processing ISDS response on %s request failed\n"),
-                    service_name_locale);
-        goto leave;
-    }
-
-    /* Check for response status */
-    err = isds_response_status(context, SERVICE_DB_MANIPULATION, response,
-            &code, &message, refnumber);
-    if (err) {
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                    _("ISDS response on %s request is missing status\n"),
-                    service_name_locale);
-        goto leave;
-    }
-
-    /* Request processed, but nothing found */
-    if (xmlStrcmp(code, BAD_CAST "0000")) {
-        char *code_locale = utf82locale((char*) code);
-        char *message_locale = utf82locale((char*) message);
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                    _("Server refused %s request (code=%s, message=%s)\n"),
-                service_name_locale, code_locale, message_locale);
-        isds_log_message(context, message_locale);
-        free(code_locale);
-        free(message_locale);
-        err = IE_ISDS;
-        goto leave;
-    }
-
+    /* Send it to server and process response */
+    err = send_request_check_drop_response(context, SERVICE_DB_MANIPULATION,
+            service_name, &request, refnumber);
 
 leave:
-    free(code);
-    free(message);
-    xmlFreeDoc(response);
     xmlFreeNode(request);
-
-    if (!err) {
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("%s request processed by server successfully.\n"),
-                service_name_locale);
-    }
-
     free(service_name_locale);
 
     return err;
@@ -4877,7 +4922,7 @@ leave:
 isds_error isds_switch_box_accessibility_on_owner_request(
         struct isds_ctx *context, const struct isds_DbOwnerInfo *box,
         const _Bool allow, char **refnumber) {
-    return build_send_check_manipulationdbowner_request_drop_response(context,
+    return build_send_manipulationdbowner_request_check_drop_response(context,
             (allow) ? BAD_CAST "EnableOwnDataBox" :
                 BAD_CAST "DisableOwnDataBox",
             box, (xmlChar **) refnumber);
