@@ -4866,10 +4866,6 @@ static isds_error build_send_manipulationdbowner_request_check_drop_response(
     if (!context) return IE_INVALID_CONTEXT;
     if (!service_name || *service_name == '\0' || !owner) return IE_INVAL;
 
-    /* Check if connection is established
-     * TODO: This check should be done donwstairs. */
-    if (!context->curl) return IE_CONNECTION_CLOSED;
-
     service_name_locale = utf82locale((char*)service_name);
     if (!service_name_locale) {
         err = IE_NOMEM;
@@ -4926,6 +4922,75 @@ isds_error isds_switch_box_accessibility_on_owner_request(
             (allow) ? BAD_CAST "EnableOwnDataBox" :
                 BAD_CAST "DisableOwnDataBox",
             box, (xmlChar **) refnumber);
+}
+
+
+/* Disable box accessibility on law enforcement (e.g. by prison) since exact
+ * date.
+ * @context is ISDS session context.
+ * @box identifies box to swith accesibilty state.
+ * @since is date since accesseibility has been denied. This can be past too.
+ * Only tm_year, tm_mon and tm_mday carry sane value.
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+isds_error isds_disable_box_accessibility_externaly(
+        struct isds_ctx *context, const struct isds_DbOwnerInfo *box,
+        const struct tm *since,  char **refnumber) {
+    isds_error err = IE_SUCCESS;
+    char *service_name_locale = NULL;
+    xmlNodePtr request = NULL, node;
+    xmlNsPtr isds_ns = NULL;
+    xmlChar *string = NULL;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!box || !since) return IE_INVAL;
+
+    /* Build request */
+    request = xmlNewNode(NULL, BAD_CAST "DisableDataBoxExternally");
+    if (!request) {
+        isds_printf_message(context,
+                _("Could not build %s request"), "DisableDataBoxExternally");
+        err = IE_ERROR;
+        goto leave;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    xmlSetNs(request, isds_ns);
+
+
+    /* Add @box identification */
+    INSERT_ELEMENT(node, request, "dbOwnerInfo");
+    err = insert_DbOwnerInfo(context, box, node);
+    if (err) goto leave;
+
+    /* Add @since date */
+    err = tm2datestring(since, &string);
+    if(err) {
+        isds_log_message(context,
+                _("Could not convert `since' argument to ISO date string"));
+        goto leave;
+    }
+    INSERT_STRING(request, "dbOwnerDisableDate", string);
+    zfree(string);
+
+    /* TODO: XSD:gExtApproval*/
+
+    /* Send it to server and process response */
+    err = send_request_check_drop_response(context, SERVICE_DB_MANIPULATION,
+            BAD_CAST "DisableDataBoxExternally", &request,
+            (xmlChar **) refnumber);
+
+leave:
+    free(string);
+    xmlFreeNode(request);
+    free(service_name_locale);
+
+    return err;
 }
 
 

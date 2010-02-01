@@ -6,7 +6,8 @@ AM_CFLAGS +=-I$(LIBDIR)
 LDADD = $(LIBDIR)/libisds.la -L$(LIBDIR)
 
 noinst_PROGRAMS = isdsclient login progressbar getuserboxinfo changepassword \
-	changeuser switchcommercial switchaccessibility\
+	changeuser switchcommercial switchaccessibility \
+	disableaccesibilityexternaly \
 	sendmultiple getsent  getsignedsent \
 	loadreceivedmessage loadcmssignedsentmessage \
 	getreceived getsignedreceived \
@@ -24,6 +25,7 @@ changepassword_SOURCES = changepassword.c $(common)
 changeuser_SOURCES = changeuser.c $(common)
 switchcommercial_SOURCES = switchcommercial.c $(common)
 switchaccessibility_SOURCES = switchaccessibility.c $(common)
+disableaccesibilityexternaly_SOURCES = disableaccesibilityexternaly.c $(common)
 sendmultiple_SOURCES = sendmultiple.c $(common)
 getsent_SOURCES = getsent.c $(common)
 getsignedsent_SOURCES = getsignedsent.c $(common)

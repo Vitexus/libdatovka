@@ -81,6 +81,21 @@ ChangeISDSPassword
     Change password
 
 
+DisableDataBoxExternally
+========================
+
+Make box unaccessible because owner lost ability to use the box for legal
+reasons (prisoned person, person with no or weak legal rights).
+
+Input is box description and date when the ability to access box has became
+impossible. This can be retroactive.
+
+After success, box changes state to state 2.
+
+Non-normative error codes:
+    1004    Operation not permitted
+
+
 DisableOwnDataBox
 =================
 

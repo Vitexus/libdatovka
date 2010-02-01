@@ -188,9 +188,9 @@ void print_Address(const struct isds_Address *address) {
 }
 
 
-void print_BiDate(const struct tm *biDate) {
-    if (!biDate) printf("NULL\n");
-    else printf("%s", asctime(biDate));
+void print_date(const struct tm *date) {
+    if (!date) printf("NULL\n");
+    else printf("%s", asctime(date));
 }
 
 
@@ -219,7 +219,7 @@ void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info) {
         printf("{\n");
         
         printf("\t\tbiDate = ");
-        print_BiDate(info->birthInfo->biDate);
+        print_date(info->birthInfo->biDate);
 
         printf("\t\tbiCity = %s\n", info->birthInfo->biCity);
         printf("\t\tbiCounty = %s\n", info->birthInfo->biCounty);
@@ -271,7 +271,7 @@ void print_DbUserInfo(const struct isds_DbUserInfo *info) {
     print_Address(info->address);
 
     printf("\tbiDate = ");
-    print_BiDate(info->biDate);
+    print_date(info->biDate);
         
     printf("\tic = %s\n", info->ic);
     printf("\tfirmName = %s\n", info->firmName);

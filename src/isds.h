@@ -669,6 +669,18 @@ isds_error isds_switch_box_accessibility_on_owner_request(
         struct isds_ctx *context, const struct isds_DbOwnerInfo *box,
         const _Bool allow, char **refnumber);
 
+/* Disable box accessibility on law enforcement (e.g. by prison) since exact
+ * date.
+ * @context is ISDS session context.
+ * @box identifies box to swith accesibilty state.
+ * @since is date since accesseibility has been denied. This can be past too.
+ * Only tm_year, tm_mon and tm_mday carry sane value.
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+isds_error isds_disable_box_accessibility_externaly(
+        struct isds_ctx *context, const struct isds_DbOwnerInfo *box,
+        const struct tm *since,  char **refnumber);
+
 /* Send a message via ISDS to a recipent
  * @context is session context
  * @outgoing_message is message to send; Some memebers are mandatory (like

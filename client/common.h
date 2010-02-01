@@ -10,6 +10,7 @@ extern char password[];
 void print_bool(const _Bool *boolean);
 void print_longint(const long int *number);
 void print_DbState(const long int state);
+void print_date(const struct tm *date);
 void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info);
 void print_DbUserInfo(const struct isds_DbUserInfo *info);
 void print_timeval(const struct timeval *time);
