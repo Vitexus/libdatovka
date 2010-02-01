@@ -26,3 +26,18 @@ PFO_ADVOK   31      Layer
 PFO_DANPOR  32      Tax consultant
 PFO_INSSPR  33      Administrator of insolvency
 FO          40      Standard person
+
+
+Box states
+==========
+
+Value       Description 
+-----------------------------------------------------
+0 or empty  Error occurred while retrieving box state
+1           Box is accessible.
+2           Temporarily unaccesible
+3           Not yet active
+4           Permanently unaccesible
+5           Box has been removed
+
+Only state 1 means box is capable of receiving messages.
