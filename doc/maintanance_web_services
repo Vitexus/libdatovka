@@ -59,7 +59,7 @@ SetEffectiveOVM
 CleareEffectiveOVM
     Set box off OVM mode
 SetOpenAddressing
-    Switch box into commercial message receivinge mode
+    Switch box into commercial message receiving mode
 ClearOpenAddressing 
     Set box off commercial message receiving mode
 GetDataBoxUsers
