@@ -71,6 +71,7 @@ int main(int argc, char **argv) {
     if (db_owner_info) {
         _Bool allow;
         struct isds_DbOwnerInfo *new_db_owner_info = NULL;
+        char *refnumber = NULL;
 
         if (db_owner_info->dbOpenAddressing)
             allow = !*db_owner_info->dbOpenAddressing;
@@ -79,13 +80,16 @@ int main(int argc, char **argv) {
 
         printf("Switching commerical receiving status to: %s\n",
                 (allow) ? "true" : "false");
-        err = isds_switch_commercial_receiving(ctx, db_owner_info->dbID, allow);
+        err = isds_switch_commercial_receiving(ctx, db_owner_info->dbID, allow,
+                &refnumber);
         if (err)
             printf("isds_switch_commercial_receiving() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
         else {
-            printf("isds_switch_commercial_receiving() succeeded\n");
+            printf("isds_switch_commercial_receiving() succeeded "
+                    "as request #%s\n", refnumber);
         }
+        free(refnumber);
 
         printf("Verifying info about my box:\n");
         err = isds_GetOwnerInfoFromLogin(ctx, &new_db_owner_info);

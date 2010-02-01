@@ -640,18 +640,22 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
  * default)
  * @context is ISDS session context.
  * @box_id is UTF-8 encoded box identifier as zero terminated string
- * @allow is true for enable, false for disable commercial messages income */
+ * @allow is true for enable, false for disable commercial messages income 
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
 isds_error isds_switch_commercial_receiving(struct isds_ctx *context,
-        const char *box_id, const _Bool allow);
+        const char *box_id, const _Bool allow, char **refnumber);
 
 /* Switch box into / out of state where non-OVM box can act as OVM (e.g. force
  * message acceptance). This is just a box permission. Sender must apply
  * such role by sending each message.
  * @context is ISDS session context.
  * @box_id is UTF-8 encoded box identifier as zero terminated string
- * @allow is true for enable, false for disable OVM role permission */
+ * @allow is true for enable, false for disable OVM role permission
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
 isds_error isds_switch_effective_ovm(struct isds_ctx *context,
-        const char *box_id, const _Bool allow);
+        const char *box_id, const _Bool allow, char **refnumber);
 
 /* Send a message via ISDS to a recipent
  * @context is session context

@@ -3990,13 +3990,15 @@ leave:
  * @raw_response_length is size of @raw_response in bytes
  * @code is ISDS status code
  * @status_message is ISDS status message
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.
  * @return error coded from lower layer, context message will be set up
  * appropriately. */
 static isds_error build_send_check_dbid_request(struct isds_ctx *context,
         const isds_service service, const xmlChar *service_name,
         const xmlChar *box_id,
         xmlDocPtr *response, void **raw_response, size_t *raw_response_length,
-        xmlChar **code, xmlChar **status_message) {
+        xmlChar **code, xmlChar **status_message, xmlChar **refnumber) {
 
     isds_error err = IE_SUCCESS;
     char *service_name_locale = NULL, *box_id_locale = NULL;
@@ -4070,7 +4072,7 @@ static isds_error build_send_check_dbid_request(struct isds_ctx *context,
 
     /* Check for response status */
     err = isds_response_status(context, service, *response,
-            code, status_message, NULL);
+            code, status_message, refnumber);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                     _("ISDS response on %s request for %s box is missing "
@@ -4126,7 +4128,7 @@ isds_error isds_GetDataBoxUsers(struct isds_ctx *context, const char *box_id,
     /* Do request and check for success */
     err = build_send_check_dbid_request(context, SERVICE_DB_MANIPULATION,
             BAD_CAST "GetDataBoxUsers", BAD_CAST box_id,
-            &response, NULL, NULL, &code, &message);
+            &response, NULL, NULL, &code, &message, NULL);
     if (err) goto leave;
 
 
@@ -4684,10 +4686,12 @@ leave:
  * code, destroy response and log success.
  * @context is ISDS session context.
  * @service_name is name of SERVICE_DB_ACCESS service
- * @box_id is UTF-8 encoded box identifier as zero terminated string */
-isds_error build_send_check_manipulationdbid_request_drop_response(
+ * @box_id is UTF-8 encoded box identifier as zero terminated string 
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+static isds_error build_send_check_manipulationdbid_request_drop_response(
         struct isds_ctx *context, const xmlChar *service_name, 
-        const xmlChar *box_id) {
+        const xmlChar *box_id, xmlChar **refnumber) {
     isds_error err = IE_SUCCESS;
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *message = NULL;
@@ -4701,7 +4705,7 @@ isds_error build_send_check_manipulationdbid_request_drop_response(
     /* Do request and check for success */
     err = build_send_check_dbid_request(context,
             SERVICE_DB_MANIPULATION, service_name, box_id,
-            &response, NULL, NULL, &code, &message);
+            &response, NULL, NULL, &code, &message, refnumber);
     free(code);
     free(message);
     xmlFreeDoc(response);
@@ -4722,13 +4726,15 @@ isds_error build_send_check_manipulationdbid_request_drop_response(
  * default)
  * @context is ISDS session context.
  * @box_id is UTF-8 encoded box identifier as zero terminated string
- * @allow is true for enable, false for disable commercial messages income */
+ * @allow is true for enable, false for disable commercial messages income 
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
 isds_error isds_switch_commercial_receiving(struct isds_ctx *context,
-        const char *box_id, const _Bool allow) {
+        const char *box_id, const _Bool allow, char **refnumber) {
     return build_send_check_manipulationdbid_request_drop_response(context, 
             (allow) ? BAD_CAST "SetOpenAddressing" :
                 BAD_CAST "ClearOpenAddressing",
-            BAD_CAST box_id);
+            BAD_CAST box_id, (xmlChar **) refnumber);
 }
 
 
@@ -4737,13 +4743,15 @@ isds_error isds_switch_commercial_receiving(struct isds_ctx *context,
  * such role by sending each message.
  * @context is ISDS session context.
  * @box_id is UTF-8 encoded box identifier as zero terminated string
- * @allow is true for enable, false for disable OVM role permission */
+ * @allow is true for enable, false for disable OVM role permission
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
 isds_error isds_switch_effective_ovm(struct isds_ctx *context,
-        const char *box_id, const _Bool allow) {
+        const char *box_id, const _Bool allow, char **refnumber) {
     return build_send_check_manipulationdbid_request_drop_response(context, 
             (allow) ? BAD_CAST "SetEffectiveOVM" :
                 BAD_CAST "ClearEffectiveOVM",
-            BAD_CAST box_id);
+            BAD_CAST box_id, (xmlChar **) refnumber);
 }
 
 
