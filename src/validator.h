@@ -20,10 +20,9 @@ typedef enum {
  * @code is automatically allocated status code of the response
  * @message is automatically allocated status message. Returned NULL means no
  * message was delivered by server. Use NULL if you don't care.
- * @refnumber is automatically allocated request serial number assigned by
+ * @refnumber is automatically reallocated request serial number assigned by
  * ISDS. Returned *NULL means no number was delivered by server.
- * Use NULL if you don't care.
- * */
+ * Use NULL if you don't care. */
 isds_error isds_response_status(struct isds_ctx *context,
         const isds_service service, xmlDocPtr response,
         xmlChar **code, xmlChar **message, xmlChar **refnumber);
