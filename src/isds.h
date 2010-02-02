@@ -622,6 +622,26 @@ isds_error isds_reset_password(struct isds_ctx *context,
         const _Bool fee_paid,
         char **token, char **refnumber);
 
+/* Assign new user to given box.
+ * @context is session context
+ * @box is box identification
+ * @user defines new user to add
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_add_user(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
+        char **refnumber);
+
+/* Remove user assigned to given box.
+ * @context is session context
+ * @box is box identification
+ * @user identifies user to removve
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_delete_user(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
+        char **refnumber);
+
 /* Find boxes suiting given criteria.
  * @context is ISDS session context.
  * @criteria is filter. You should fill in at least some members.

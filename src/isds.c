@@ -4381,10 +4381,6 @@ isds_error isds_reset_password(struct isds_ctx *context,
 
     if (token) zfree(*token);
 
-    /* Check if connection is established
-     * TODO: This check should be done donwstairs. */
-    if (!context->curl) return IE_CONNECTION_CLOSED;
-
 
     /* Build NewAccessData request */
     request = xmlNewNode(NULL, BAD_CAST "NewAccessData");
@@ -4453,6 +4449,93 @@ leave:
                     "successfully.\n"));
 
     return err;
+}
+
+
+/* Build ISDS request of XSD tAddDBUserInput type, sent it, check for error
+ * code, destroy response and log success.
+ * @context is ISDS session context.
+ * @service_name is name of SERVICE_DB_MANIPULATION service
+ * @box is box identification
+ * @user identifies user to removve
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+static isds_error build_send_manipulationboxuser_request_check_drop_response(
+        struct isds_ctx *context, const xmlChar *service_name,
+        const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
+        xmlChar **refnumber) {
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL, node;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!service_name || service_name[0] == '\0' || !box || !user)
+        return IE_INVAL;
+
+
+    /* Build NewAccessData request */
+    request = xmlNewNode(NULL, service_name);
+    if (!request) {
+        char *service_name_locale = utf82locale((char *) service_name);
+        isds_printf_message(context, _("Could build %s request"),
+                service_name_locale);
+        free(service_name_locale);
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    INSERT_ELEMENT(node, request, "dbOwnerInfo");
+    err = insert_DbOwnerInfo(context, box, node);
+    if (err) goto leave;
+
+    INSERT_ELEMENT(node, request, "dbUserInfo");
+    err = insert_DbUserInfo(context, user, node);
+    if (err) goto leave;
+
+    /* TODO: gExtApproval */
+
+    /* Send request and check reposne*/
+    err = send_request_check_drop_response (context,
+            SERVICE_DB_MANIPULATION, service_name, &request, refnumber);
+
+leave:
+    xmlFreeNode(request);
+    return err;
+}
+
+
+/* Assign new user to given box.
+ * @context is session context
+ * @box is box identification
+ * @user defines new user to add
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_add_user(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
+        char **refnumber){
+    return build_send_manipulationboxuser_request_check_drop_response(context,
+            BAD_CAST "AddDataBoxUser", box, user, (xmlChar **) refnumber);
+}
+
+
+/* Remove user assigned to given box.
+ * @context is session context
+ * @box is box identification
+ * @user identifies user to removve
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_delete_user(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
+        char **refnumber) {
+    return build_send_manipulationboxuser_request_check_drop_response(context,
+            BAD_CAST "DeleteDataBoxUser", box, user, (xmlChar **) refnumber);
 }
 
 

@@ -81,6 +81,28 @@ ChangeISDSPassword
     Change password
 
 
+AddDataBoxUser
+==============
+
+Add person permitted to access to the box
+
+Different user types can be added only by users with specific priviledges
+(PRIMARY_USER can add only PRIVIL_CZP user).
+
+Input is box description and new user definition.
+
+
+DeleteDataBoxUser
+=================
+
+Remove person permitted to access to the box.
+
+Different user types can be removed only by users with specific priviledges
+(PRIMARY_USER can be removed only by PRIVIL_CZP user).
+
+Input is box description and user description.
+
+
 UpdateDataBoxUser
 =================
 
