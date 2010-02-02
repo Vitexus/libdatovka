@@ -4221,121 +4221,6 @@ leave:
 }
 
 
-/* Update data about user assigned to given box.
- * @context is session context
- * @box is box identification
- * @old_user identifies user to update
- * @new_user are updated data about @old_user
- * @refnumber is reallocated serial number of request assigned by ISDS. Use
- * NULL, if you don't care.*/
-isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
-        const struct isds_DbOwnerInfo *box,
-        const struct isds_DbUserInfo *old_user,
-        const struct isds_DbUserInfo *new_user,
-        char **refnumber) {
-    isds_error err = IE_SUCCESS;
-    xmlNsPtr isds_ns = NULL;
-    xmlNodePtr request = NULL;
-    xmlDocPtr response = NULL;
-    xmlChar *code = NULL, *message = NULL;
-    xmlNodePtr node;
-    xmlChar *string = NULL;
-
-
-    if (!context) return IE_INVALID_CONTEXT;
-    if (!box || !old_user || !new_user) return IE_INVAL;
-
-
-    /* Check if connection is established
-     * TODO: This check should be done donwstairs. */
-    if (!context->curl) return IE_CONNECTION_CLOSED;
-
-
-    /* Build UpdateDataBoxUser request */
-    request = xmlNewNode(NULL, BAD_CAST "UpdateDataBoxUser");
-    if (!request) {
-        isds_log_message(context,
-                _("Could build UpdateDataBoxUser request"));
-        return IE_ERROR;
-    }
-    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
-    if(!isds_ns) {
-        isds_log_message(context, _("Could not create ISDS name space"));
-        xmlFreeNode(request);
-        return IE_ERROR;
-    }
-    xmlSetNs(request, isds_ns);
-
-    INSERT_ELEMENT(node, request, "dbOwnerInfo");
-    err = insert_DbOwnerInfo(context, box, node);
-    if (err) goto leave;
-
-    INSERT_ELEMENT(node, request, "dbOldUserInfo");
-    err = insert_DbUserInfo(context, old_user, node);
-    if (err) goto leave;
-
-    INSERT_ELEMENT(node, request, "dbNewUserInfo");
-    err = insert_DbUserInfo(context, new_user, node);
-    if (err) goto leave;
-
-    isds_log(ILF_ISDS, ILL_DEBUG,
-            _("Sending UpdateDataBoxUser request to ISDS\n"));
-
-    /* Sent request */
-    err = isds(context, SERVICE_DB_MANIPULATION, request, &response,
-            NULL, NULL);
-   
-    /* Destroy request */
-    xmlFreeNode(request); request = NULL;
-
-    if (err) {
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Processing ISDS response on UpdateDataBoxUser "
-                    "request failed\n"));
-        goto leave;
-    }
-
-    /* Check for response status */
-    err = isds_response_status(context, SERVICE_DB_MANIPULATION, response,
-            &code, &message, (xmlChar **) refnumber);
-    if (err) {
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("ISDS response on UpdateDataBoxUser request is "
-                    "missing status\n"));
-        goto leave;
-    }
-
-    /* Other error */
-    if (xmlStrcmp(code, BAD_CAST "0000")) {
-        char *code_locale = utf82locale((char*)code);
-        char *message_locale = utf82locale((char*)message);
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Server refused UpdateDataBoxUser request "
-                    "(code=%s, message=%s)\n"), code_locale, message_locale);
-        isds_log_message(context, message_locale);
-        free(code_locale);
-        free(message_locale);
-        err = IE_ISDS;
-        goto leave;
-    }
-
-leave:
-    free(string);
-    xmlFreeNode(request);
-
-    free(code);
-    free(message);
-    xmlFreeDoc(response);
-
-    if (!err)
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("UpdateDataBoxUser request processed by server "
-                    "successfully.\n"));
-
-    return err;
-}
-
-
 /* Generic middle part with request sending and response check.
  * It sends prepared request and checks for error code.
  * @context is ISDS session context.
@@ -4420,6 +4305,110 @@ leave:
         *request = NULL;
     }
     free(service_name_locale);
+
+    return err;
+}
+
+
+/* Generic bottom half with request sending.
+ * It sends prepared request, checks for error code, destroys response and
+ * request and log success or failure.
+ * @context is ISDS session context.
+ * @service is ISDS service handler
+ * @service_name is name in scope of given @service
+ * @request is XML tree with request. Will be freed to save memory.
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+static isds_error send_request_check_drop_response(
+        struct isds_ctx *context,
+        const isds_service service, const xmlChar *service_name, 
+        xmlNodePtr *request, xmlChar **refnumber) {
+    isds_error err = IE_SUCCESS;
+    char *service_name_locale = NULL;
+    xmlDocPtr response = NULL;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!service_name || *service_name == '\0' || !request || !*request)
+        return IE_INVAL;
+
+    /* Send request and check response*/
+    err = send_destroy_request_check_response(context,
+            service, service_name, request, &response, refnumber);
+
+    xmlFreeDoc(response);
+
+    if (*request) {
+        xmlFreeNode(*request);
+        *request = NULL;
+    }
+
+    if (!err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("%s request processed by server successfully.\n"),
+                service_name_locale);
+    }
+    free(service_name_locale);
+
+    return err;
+}
+
+
+/* Update data about user assigned to given box.
+ * @context is session context
+ * @box is box identification
+ * @old_user identifies user to update
+ * @new_user are updated data about @old_user
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *box,
+        const struct isds_DbUserInfo *old_user,
+        const struct isds_DbUserInfo *new_user,
+        char **refnumber) {
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlNodePtr node;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!box || !old_user || !new_user) return IE_INVAL;
+
+
+    /* Build UpdateDataBoxUser request */
+    request = xmlNewNode(NULL, BAD_CAST "UpdateDataBoxUser");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build UpdateDataBoxUser request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    INSERT_ELEMENT(node, request, "dbOwnerInfo");
+    err = insert_DbOwnerInfo(context, box, node);
+    if (err) goto leave;
+
+    INSERT_ELEMENT(node, request, "dbOldUserInfo");
+    err = insert_DbUserInfo(context, old_user, node);
+    if (err) goto leave;
+
+    INSERT_ELEMENT(node, request, "dbNewUserInfo");
+    err = insert_DbUserInfo(context, new_user, node);
+    if (err) goto leave;
+
+    /* Send it to server and process response */
+    err = send_request_check_drop_response(context, SERVICE_DB_MANIPULATION,
+            BAD_CAST "UpdateDataBoxUser", &request, (xmlChar **) refnumber);
+
+leave:
+    xmlFreeNode(request);
 
     return err;
 }
@@ -4951,50 +4940,6 @@ isds_error isds_switch_effective_ovm(struct isds_ctx *context,
             (allow) ? BAD_CAST "SetEffectiveOVM" :
                 BAD_CAST "ClearEffectiveOVM",
             BAD_CAST box_id, (xmlChar **) refnumber);
-}
-
-
-/* Generic bottom half with request sending.
- * It sends prepared request, checks for error code, destroys response and
- * request and log success or failure.
- * @context is ISDS session context.
- * @service is ISDS service handler
- * @service_name is name in scope of given @service
- * @request is XML tree with request. Will be freed to save memory.
- * @refnumber is reallocated serial number of request assigned by ISDS. Use
- * NULL, if you don't care. */
-static isds_error send_request_check_drop_response(
-        struct isds_ctx *context,
-        const isds_service service, const xmlChar *service_name, 
-        xmlNodePtr *request, xmlChar **refnumber) {
-    isds_error err = IE_SUCCESS;
-    char *service_name_locale = NULL;
-    xmlDocPtr response = NULL;
-
-
-    if (!context) return IE_INVALID_CONTEXT;
-    if (!service_name || *service_name == '\0' || !request || !*request)
-        return IE_INVAL;
-
-    /* Send request and check reposne*/
-    err = send_destroy_request_check_response(context,
-            service, service_name, request, &response, refnumber);
-
-    xmlFreeDoc(response);
-
-    if (*request) {
-        xmlFreeNode(*request);
-        *request = NULL;
-    }
-
-    if (!err) {
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("%s request processed by server successfully.\n"),
-                service_name_locale);
-    }
-    free(service_name_locale);
-
-    return err;
 }
 
 
