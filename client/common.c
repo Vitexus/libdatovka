@@ -14,7 +14,11 @@
 #include <isds.h>
 
 char url[] = "https://www.czebox.cz/DS/";
-char username[] = "jrfh7i";
+/*char username[] = "jrfh7i";*/
+/*char password[] = "Ab123456";*/
+/*char password[] = "Ac123456";*/
+
+char username[] = "5s59sd";
 /*char password[] = "Ab123456";*/
 char password[] = "Ac123456";
 
