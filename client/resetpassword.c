@@ -103,9 +103,13 @@ int main(int argc, char **argv) {
     if (db_owner_info && db_user_info) {
         char *token = NULL;
         /* Try some invalid invocation that should fail */
+#if 0
         reset_password(ctx, db_owner_info, db_user_info, 0, NULL);
         reset_password(ctx, db_owner_info, db_user_info, 1, NULL);
         reset_password(ctx, db_owner_info, db_user_info, 1, &token);
+#endif
+        fprintf(stderr, "This function can lose current user credentials. "
+                "DO NOT TRY IT!\n");
         free(token);
     }
 
