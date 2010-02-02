@@ -4203,6 +4203,69 @@ static isds_error send_request_check_drop_response(
 }
 
 
+/* Remove given given box permanetly.
+ * @context is session context
+ * @box is box description to delete
+ * @since is date of box owner cancalation. Only tm_year, tm_mon and tm_mday
+ * carry sane value.
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_delete_box(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *box, const struct tm *since,
+        char **refnumber) {
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlNodePtr node;
+    xmlChar *string = NULL;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!box || !since) return IE_INVAL;
+
+
+    /* Build DeleteDataBox request */
+    request = xmlNewNode(NULL, BAD_CAST "DeleteDataBox");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build DeleteDataBox request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    INSERT_ELEMENT(node, request, "dbOwnerInfo");
+    err = insert_DbOwnerInfo(context, box, node);
+    if (err) goto leave;
+
+    err = tm2datestring(since, &string);
+    if (err) {
+        isds_log_message(context,
+                _("Could not convert `since' argument to ISO date string"));
+        goto leave;
+    }
+    INSERT_STRING(request, "dbOwnerTerminationDate", string);
+    zfree(string);
+
+    /* TODO: gExtApproval */
+
+
+    /* Send it to server and process response */
+    err = send_request_check_drop_response(context, SERVICE_DB_MANIPULATION,
+            BAD_CAST "DeleteDataBox", &request, (xmlChar **) refnumber);
+
+leave:
+    xmlFreeNode(request);
+    free(string);
+    return err;
+}
+
+
 /* Update data about given box.
  * @context is session context
  * @old_box current box description
@@ -4223,7 +4286,7 @@ isds_error isds_UpdateDataBoxDescr(struct isds_ctx *context,
     if (!old_box || !new_box) return IE_INVAL;
 
 
-    /* Build UpdateDataBoxUser request */
+    /* Build UpdateDataBoxDescr request */
     request = xmlNewNode(NULL, BAD_CAST "UpdateDataBoxDescr");
     if (!request) {
         isds_log_message(context,

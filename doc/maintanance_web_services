@@ -81,13 +81,25 @@ ChangeISDSPassword
     Change password
 
 
+DeleteDataBox
+=============
+
+Remove box permanently.
+
+If request succeeds, box will moves to state 4, and three years after that to
+state 5.
+
+Input is box description and ISO date of owner cancelation
+(dbOwnerTerminationDate element).
+
+
 UpdateDataBoxDescr
 ==================
 
 Change data about box or its owner.
 
 Input is current box description and new description. Different fields can
-(nor) be changed in box of different types.
+(not) be changed by different box types and differenlty privileged user.
 
 
 AddDataBoxUser

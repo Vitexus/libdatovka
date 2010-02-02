@@ -585,6 +585,17 @@ isds_error isds_get_password_expiration(struct isds_ctx *context,
 isds_error isds_change_password(struct isds_ctx *context,
         const char *old_password, const char *new_password);
 
+/* Remove given given box permanetly.
+ * @context is session context
+ * @box is box description to delete
+ * @since is date of box owner cancalation. Only tm_year, tm_mon and tm_mday
+ * carry sane value.
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_delete_box(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *box, const struct tm *since,
+        char **refnumber);
+
 /* Update data about given box.
  * @context is session context
  * @old_box current box description
