@@ -81,6 +81,42 @@ ChangeISDSPassword
     Change password
 
 
+CreateDataBox
+=============
+
+Create box of any type with complete set of PRIMARY users (i.e. box owners).
+Additional users can be assigned by AddDataBoxUser.
+
+Freshly created box has state 3, after first login (or first login time out),
+box changes moves to standard state 1.
+
+Credentials will be sent to each PRIMARY user by paper mail. Credentials
+postal address is supplied contact address or address obtained from external
+government registers (supplied person or firm address must match them).
+
+Different box types can created by users with specific priviledges.
+
+Input structure is:
+CreateDataBox
+    + dbOwnerInfo – describe box and its owner, if only one owner exists (e.g.
+    |   FO box type)
+    + dbPrimaryUsers – list of primary users (box type FO has empty list,
+    |   |   PFO has only one which carries contact address only,
+    |   |   OVM has only one which describes office manager,
+    |   |   PO has one or more, even other PO user type is applicable
+    |   + dbUserInfo – primary user description (not all fields has meaning)
+    |   + dbUserInfo
+    |   ⋮
+    + dbFormerNames – optional, undocumented
+    + dbUpperDBId – ID of supper box, optional
+    + dbCEOLabel – title of OVM manager (required for OVM box, optional
+    |       otherise)
+    + dbApproved – optional
+    + dbExternRefNumber – optional
+
+Returns ID of new box.
+
+
 DeleteDataBox
 =============
 
