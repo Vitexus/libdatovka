@@ -4140,9 +4140,6 @@ isds_error isds_GetDataBoxUsers(struct isds_ctx *context, const char *box_id,
     if (!context) return IE_INVALID_CONTEXT;
     if (!users || !box_id) return IE_INVAL;
 
-    /* Check if connection is established */
-    if (!context->curl) return IE_CONNECTION_CLOSED;
-
 
     /* Do request and check for success */
     err = build_send_dbid_request_check_response(context,
