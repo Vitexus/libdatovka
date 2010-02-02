@@ -1034,10 +1034,11 @@ void isds_message_copy_free(struct isds_message_copy **copy);
 
 /* Copy structure isds_PersonName recursively */
 struct isds_PersonName *isds_PersonName_duplicate(
-        struct isds_PersonName *template);
+        const struct isds_PersonName *template);
 
 /* Copy structure isds_Address recursively */
-struct isds_Address *isds_Address_duplicate(struct isds_Address *template);
+struct isds_Address *isds_Address_duplicate(
+        const struct isds_Address *template);
 
 /* Copy structure isds_DbOwnerInfo recursively */
 struct isds_DbOwnerInfo *isds_DbOwnerInfo_duplicate(
