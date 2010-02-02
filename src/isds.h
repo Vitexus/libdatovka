@@ -585,6 +585,17 @@ isds_error isds_get_password_expiration(struct isds_ctx *context,
 isds_error isds_change_password(struct isds_ctx *context,
         const char *old_password, const char *new_password);
 
+/* Update data about given box.
+ * @context is session context
+ * @old_box current box description
+ * @new_box are updated data about @old_box
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_UpdateDataBoxDescr(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *old_box,
+        const struct isds_DbOwnerInfo *new_box,
+        char **refnumber);
+
 /* Get data about all users assigned to given box.
  * @context is session context
  * @box_id is box ID
@@ -1027,6 +1038,10 @@ struct isds_PersonName *isds_PersonName_duplicate(
 
 /* Copy structure isds_Address recursively */
 struct isds_Address *isds_Address_duplicate(struct isds_Address *template);
+
+/* Copy structure isds_DbOwnerInfo recursively */
+struct isds_DbOwnerInfo *isds_DbOwnerInfo_duplicate(
+        const struct isds_DbOwnerInfo *template);
 
 /* Copy structure isds_DbUserInfo recursively */
 struct isds_DbUserInfo *isds_DbUserInfo_duplicate(

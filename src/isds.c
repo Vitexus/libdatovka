@@ -276,6 +276,29 @@ error:
 }
 
     
+/* Copy structure isds_BirthInfo recursively */
+static struct isds_BirthInfo *isds_BirthInfo_duplicate(
+        const struct isds_BirthInfo *template) {
+    struct isds_BirthInfo *new = NULL;
+
+    if (!template) return NULL;
+
+    new = calloc(1, sizeof(*new));
+    if (!new) return NULL;
+
+    FLATDUP_OR_ERROR(new->biDate, template->biDate);
+    STRDUP_OR_ERROR(new->biCity, template->biCity);
+    STRDUP_OR_ERROR(new->biCounty, template->biCounty);
+    STRDUP_OR_ERROR(new->biState, template->biState);
+    
+    return new;
+    
+error:
+    isds_BirthInfo_free(&new);
+    return NULL;
+}
+
+
 /* Copy structure isds_Address recursively */
 struct isds_Address *isds_Address_duplicate(struct isds_Address *template) {
     struct isds_Address *new = NULL;
@@ -297,6 +320,55 @@ struct isds_Address *isds_Address_duplicate(struct isds_Address *template) {
     
 error:
     isds_Address_free(&new);
+    return NULL;
+}
+
+
+/* Copy structure isds_DbOwnerInfo recursively */
+struct isds_DbOwnerInfo *isds_DbOwnerInfo_duplicate(
+        const struct isds_DbOwnerInfo *template) {
+    struct isds_DbOwnerInfo *new = NULL;
+    if (!template) return NULL;
+
+    new = calloc(1, sizeof(*new));
+    if (!new) return NULL;
+
+    STRDUP_OR_ERROR(new->dbID, template->dbID);
+    FLATDUP_OR_ERROR(new->dbType, template->dbType);
+    STRDUP_OR_ERROR(new->ic, template->ic);
+
+    if (template->personName) {
+        if (!(new->personName =
+                    isds_PersonName_duplicate(template->personName)))
+            goto error;
+    }
+
+    STRDUP_OR_ERROR(new->firmName, template->firmName);
+
+    if (template->birthInfo) {
+        if (!(new->birthInfo =
+                    isds_BirthInfo_duplicate(template->birthInfo)))
+            goto error;
+    }
+
+    if (template->address) {
+        if (!(new->address = isds_Address_duplicate(template->address)))
+            goto error;
+    }
+    
+    STRDUP_OR_ERROR(new->nationality, template->nationality);
+    STRDUP_OR_ERROR(new->email, template->email);
+    STRDUP_OR_ERROR(new->telNumber, template->telNumber);
+    STRDUP_OR_ERROR(new->identifier, template->identifier);
+    STRDUP_OR_ERROR(new->registryCode, template->registryCode);
+    FLATDUP_OR_ERROR(new->dbState, template->dbState);
+    FLATDUP_OR_ERROR(new->dbEffectiveOVM, template->dbEffectiveOVM);
+    FLATDUP_OR_ERROR(new->dbOpenAddressing, template->dbOpenAddressing);
+
+    return new;
+    
+error:
+    isds_DbOwnerInfo_free(&new);
     return NULL;
 }
 
@@ -4086,6 +4158,107 @@ leave:
 }
 
 
+/* Generic bottom half with request sending.
+ * It sends prepared request, checks for error code, destroys response and
+ * request and log success or failure.
+ * @context is ISDS session context.
+ * @service is ISDS service handler
+ * @service_name is name in scope of given @service
+ * @request is XML tree with request. Will be freed to save memory.
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+static isds_error send_request_check_drop_response(
+        struct isds_ctx *context,
+        const isds_service service, const xmlChar *service_name, 
+        xmlNodePtr *request, xmlChar **refnumber) {
+    isds_error err = IE_SUCCESS;
+    char *service_name_locale = NULL;
+    xmlDocPtr response = NULL;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!service_name || *service_name == '\0' || !request || !*request)
+        return IE_INVAL;
+
+    /* Send request and check response*/
+    err = send_destroy_request_check_response(context,
+            service, service_name, request, &response, refnumber);
+
+    xmlFreeDoc(response);
+
+    if (*request) {
+        xmlFreeNode(*request);
+        *request = NULL;
+    }
+
+    if (!err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("%s request processed by server successfully.\n"),
+                service_name_locale);
+    }
+    free(service_name_locale);
+
+    return err;
+}
+
+
+/* Update data about given box.
+ * @context is session context
+ * @old_box current box description
+ * @new_box are updated data about @old_box
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_UpdateDataBoxDescr(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *old_box,
+        const struct isds_DbOwnerInfo *new_box,
+        char **refnumber) {
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlNodePtr node;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!old_box || !new_box) return IE_INVAL;
+
+
+    /* Build UpdateDataBoxUser request */
+    request = xmlNewNode(NULL, BAD_CAST "UpdateDataBoxDescr");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build UpdateDataBoxDescr request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    INSERT_ELEMENT(node, request, "dbOldOwnerInfo");
+    err = insert_DbOwnerInfo(context, old_box, node);
+    if (err) goto leave;
+
+    INSERT_ELEMENT(node, request, "dbNewOwnerInfo");
+    err = insert_DbOwnerInfo(context, new_box, node);
+    if (err) goto leave;
+
+    /* TODO: gExtApproval */
+
+
+    /* Send it to server and process response */
+    err = send_request_check_drop_response(context, SERVICE_DB_MANIPULATION,
+            BAD_CAST "UpdateDataBoxDescr", &request, (xmlChar **) refnumber);
+
+leave:
+    xmlFreeNode(request);
+
+    return err;
+}
+
+
 /* Build ISDS request of XSD tIdDbInput type, sent it and check for error
  * code
  * @context is session context
@@ -4243,50 +4416,6 @@ leave:
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("GetDataBoxUsers request processed by server "
                     "successfully.\n"));
-
-    return err;
-}
-
-
-/* Generic bottom half with request sending.
- * It sends prepared request, checks for error code, destroys response and
- * request and log success or failure.
- * @context is ISDS session context.
- * @service is ISDS service handler
- * @service_name is name in scope of given @service
- * @request is XML tree with request. Will be freed to save memory.
- * @refnumber is reallocated serial number of request assigned by ISDS. Use
- * NULL, if you don't care. */
-static isds_error send_request_check_drop_response(
-        struct isds_ctx *context,
-        const isds_service service, const xmlChar *service_name, 
-        xmlNodePtr *request, xmlChar **refnumber) {
-    isds_error err = IE_SUCCESS;
-    char *service_name_locale = NULL;
-    xmlDocPtr response = NULL;
-
-
-    if (!context) return IE_INVALID_CONTEXT;
-    if (!service_name || *service_name == '\0' || !request || !*request)
-        return IE_INVAL;
-
-    /* Send request and check response*/
-    err = send_destroy_request_check_response(context,
-            service, service_name, request, &response, refnumber);
-
-    xmlFreeDoc(response);
-
-    if (*request) {
-        xmlFreeNode(*request);
-        *request = NULL;
-    }
-
-    if (!err) {
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("%s request processed by server successfully.\n"),
-                service_name_locale);
-    }
-    free(service_name_locale);
 
     return err;
 }
