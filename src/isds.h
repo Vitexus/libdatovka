@@ -605,6 +605,23 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
         const struct isds_DbUserInfo *new_user,
         char **refnumber);
 
+/* Reset credentials of user assigned to given box.
+ * @context is session context
+ * @box is box identification
+ * @user identifies user to reset password
+ * @fee_paid is true if fee has been paid, false otherwise
+ * @token is NULL if new password should be delivered off-line to the user.
+ * It is valid pointer if user should obtain new password on-line on dedicated
+ * web server. Then it output automatically reallocated token user needs to
+ * use to athtorize on the web server to view his new password. 
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_reset_password(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *box,
+        const struct isds_DbUserInfo *user,
+        const _Bool fee_paid,
+        char **token, char **refnumber);
+
 /* Find boxes suiting given criteria.
  * @context is ISDS session context.
  * @criteria is filter. You should fill in at least some members.

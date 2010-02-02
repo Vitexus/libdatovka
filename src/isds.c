@@ -1839,12 +1839,19 @@ static isds_error eventstring2event(const xmlChar *string,
         } \
     }
 
+#define INSERT_SCALAR_BOOLEAN(parent, element, boolean) \
+    { \
+        if (boolean) { INSERT_STRING(parent, element, "true"); } \
+        else { INSERT_STRING(parent, element, "false"); } \
+    }
+
 #define INSERT_BOOLEAN(parent, element, booleanPtr) \
     { \
-        if ((booleanPtr)) { \
-            if (*(booleanPtr)) { INSERT_STRING(parent, element, "true"); } \
-            else { INSERT_STRING(parent, element, "false") } \
-        } else { INSERT_STRING(parent, element, NULL) } \
+        if (booleanPtr) { \
+            INSERT_SCALAR_BOOLEAN(parent, element, (*(booleanPtr))); \
+        } else { \
+            INSERT_STRING(parent, element, NULL); \
+        } \
     }
 
 #define INSERT_LONGINT(parent, element, longintPtr, buffer) { \
@@ -4329,6 +4336,199 @@ leave:
 }
 
 
+/* Generic middle part with request sending and response check.
+ * It sends prepared request and checks for error code.
+ * @context is ISDS session context.
+ * @service is ISDS service handler
+ * @service_name is name in scope of given @service
+ * @request is XML tree with request. Will be freed to save memory.
+ * @response is XML document ouputing ISDS response.
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+static isds_error send_destroy_request_check_response(
+        struct isds_ctx *context,
+        const isds_service service, const xmlChar *service_name, 
+        xmlNodePtr *request, xmlDocPtr *response, xmlChar **refnumber) {
+    isds_error err = IE_SUCCESS;
+    char *service_name_locale = NULL;
+    xmlChar *code = NULL, *message = NULL;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!service_name || *service_name == '\0' || !request || !*request ||
+            !response)
+        return IE_INVAL;
+
+    /* Check if connection is established
+     * TODO: This check should be done donwstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+    service_name_locale = utf82locale((char*) service_name);
+    if (!service_name_locale) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending %s request to ISDS\n"),
+            service_name_locale);
+
+    /* Send request */
+    err = isds(context, service, *request, response, NULL, NULL);
+    xmlFreeNode(*request); *request = NULL;
+    
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("Processing ISDS response on %s request failed\n"),
+                    service_name_locale);
+        goto leave;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, service, *response,
+            &code, &message, refnumber);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("ISDS response on %s request is missing status\n"),
+                    service_name_locale);
+        goto leave;
+    }
+
+    /* Request processed, but server failed */
+    if (xmlStrcmp(code, BAD_CAST "0000")) {
+        char *code_locale = utf82locale((char*) code);
+        char *message_locale = utf82locale((char*) message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("Server refused %s request (code=%s, message=%s)\n"),
+                service_name_locale, code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+
+leave:
+    free(code);
+    free(message);
+    if (err && *response) {
+        xmlFreeDoc(*response);
+        *response = NULL;
+    }
+    if (*request) {
+        xmlFreeNode(*request);
+        *request = NULL;
+    }
+    free(service_name_locale);
+
+    return err;
+}
+
+
+/* Reset credentials of user assigned to given box.
+ * @context is session context
+ * @box is box identification
+ * @user identifies user to reset password
+ * @fee_paid is true if fee has been paid, false otherwise
+ * @token is NULL if new password should be delivered off-line to the user.
+ * It is valid pointer if user should obtain new password on-line on dedicated
+ * web server. Then it output automatically reallocated token user needs to
+ * use to athtorize on the web server to view his new password. 
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_reset_password(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *box,
+        const struct isds_DbUserInfo *user,
+        const _Bool fee_paid,
+        char **token, char **refnumber) {
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL, node;
+    xmlDocPtr response = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!box || !user) return IE_INVAL;
+
+    if (token) zfree(*token);
+
+    /* Check if connection is established
+     * TODO: This check should be done donwstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Build NewAccessData request */
+    request = xmlNewNode(NULL, BAD_CAST "NewAccessData");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build NewAccessData request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    INSERT_ELEMENT(node, request, "dbOwnerInfo");
+    err = insert_DbOwnerInfo(context, box, node);
+    if (err) goto leave;
+
+    INSERT_ELEMENT(node, request, "dbUserInfo");
+    err = insert_DbUserInfo(context, user, node);
+    if (err) goto leave;
+
+    INSERT_SCALAR_BOOLEAN(request, "dbFeePaid", fee_paid);
+
+    if (token) {
+        INSERT_SCALAR_BOOLEAN(request, "dbVirtual", 1);
+    } else {
+        INSERT_SCALAR_BOOLEAN(request, "dbVirtual", 0);
+    }
+
+    /* TODO: gExtApproval */
+
+    /* Send request and check reposne*/
+    err = send_destroy_request_check_response(context,
+            SERVICE_DB_MANIPULATION, BAD_CAST "NewAccessData", &request,
+            &response, (xmlChar **) refnumber);
+    if (err) goto leave;
+
+
+    /* Extract optional token */
+    if (token) {
+        xpath_ctx = xmlXPathNewContext(response);
+        if (!xpath_ctx) {
+            err = IE_ERROR;
+            goto leave;
+        }
+        if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+            err = IE_ERROR;
+            goto leave;
+        }
+
+        EXTRACT_STRING("/isds:NewAccessDataResponse/dbAccessDataId", *token);
+    }
+
+leave:
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(response);
+    xmlFreeNode(request);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("NewAccessData request processed by server "
+                    "successfully.\n"));
+
+    return err;
+}
+
+
 /* Find boxes suiting given criteria.
  * @criteria is filter. You should fill in at least some memebers.
  * @boxes is automatically reallocated list of isds_DbOwnerInfo structures,
@@ -4770,66 +4970,18 @@ static isds_error send_request_check_drop_response(
     isds_error err = IE_SUCCESS;
     char *service_name_locale = NULL;
     xmlDocPtr response = NULL;
-    xmlChar *code = NULL, *message = NULL;
 
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!service_name || *service_name == '\0' || !request || !*request)
         return IE_INVAL;
 
-    /* Check if connection is established
-     * TODO: This check should be done donwstairs. */
-    if (!context->curl) return IE_CONNECTION_CLOSED;
+    /* Send request and check reposne*/
+    err = send_destroy_request_check_response(context,
+            service, service_name, request, &response, refnumber);
 
-    service_name_locale = utf82locale((char*) service_name);
-    if (!service_name_locale) {
-        err = IE_NOMEM;
-        goto leave;
-    }
-
-    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending %s request to ISDS\n"),
-            service_name_locale);
-
-    /* Send request */
-    err = isds(context, service, *request, &response, NULL, NULL);
-    xmlFreeNode(*request); *request = NULL;
-    
-    if (err) {
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                    _("Processing ISDS response on %s request failed\n"),
-                    service_name_locale);
-        goto leave;
-    }
-
-    /* Check for response status */
-    err = isds_response_status(context, service, response,
-            &code, &message, refnumber);
-    if (err) {
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                    _("ISDS response on %s request is missing status\n"),
-                    service_name_locale);
-        goto leave;
-    }
-
-    /* Request processed, but server failed */
-    if (xmlStrcmp(code, BAD_CAST "0000")) {
-        char *code_locale = utf82locale((char*) code);
-        char *message_locale = utf82locale((char*) message);
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                    _("Server refused %s request (code=%s, message=%s)\n"),
-                service_name_locale, code_locale, message_locale);
-        isds_log_message(context, message_locale);
-        free(code_locale);
-        free(message_locale);
-        err = IE_ISDS;
-        goto leave;
-    }
-
-
-leave:
-    free(code);
-    free(message);
     xmlFreeDoc(response);
+
     if (*request) {
         xmlFreeNode(*request);
         *request = NULL;
@@ -4840,7 +4992,6 @@ leave:
                 _("%s request processed by server successfully.\n"),
                 service_name_locale);
     }
-
     free(service_name_locale);
 
     return err;
@@ -7432,6 +7583,7 @@ isds_error isds_mark_message_received(struct isds_ctx *context,
 #undef INSERT_ULONGINT
 #undef INSERT_LONGINT
 #undef INSERT_BOOLEAN
+#undef INSERT_SCALAR_BOOLEAN
 #undef INSERT_STRING
 #undef EXTRACT_STRING_ATTRIBUTE
 #undef EXTRACT_ULONGINT
