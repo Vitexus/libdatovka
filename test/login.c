@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
     
     struct isds_ctx *context = NULL;
     char url[] = "https://www.czebox.cz/DS/";
-    char username[] = "jrfh7i";
+    char username[] = "5s59sd";
     char password[] = "Ac123456";
 
     if (isds_init())
