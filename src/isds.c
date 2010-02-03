@@ -4208,7 +4208,6 @@ static isds_error send_request_check_drop_response(
         const isds_service service, const xmlChar *service_name, 
         xmlNodePtr *request, xmlChar **refnumber) {
     isds_error err = IE_SUCCESS;
-    char *service_name_locale = NULL;
     xmlDocPtr response = NULL;
 
 
@@ -4228,11 +4227,12 @@ static isds_error send_request_check_drop_response(
     }
 
     if (!err) {
+        char *service_name_locale = utf82locale((char *) service_name);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("%s request processed by server successfully.\n"),
                 service_name_locale);
+        free(service_name_locale);
     }
-    free(service_name_locale);
 
     return err;
 }
