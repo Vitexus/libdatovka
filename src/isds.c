@@ -232,6 +232,16 @@ void isds_message_copy_free(struct isds_message_copy **copy) {
 }
 
 
+/* Deallocate struct isds_approval recursively and NULL it */
+void isds_approval_free(struct isds_approval **approval) {
+    if (!approval || !*approval) return;
+
+    free((*approval)->refference);
+
+    zfree(*approval);
+}
+
+
 /* *DUP_OR_ERROR macros needs error label */
 #define STRDUP_OR_ERROR(new, template) { \
     if (!template) { \

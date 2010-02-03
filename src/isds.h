@@ -466,9 +466,12 @@ struct isds_list {
     void (*destructor) (void **);   /* Payload deallocator */
 };
 
-/* Free isds_list with all member data.
- * @list list to free, on return will be NULL */
-void isds_list_free(struct isds_list **list);
+/* External box approval */
+struct isds_approval {
+    _Bool approved;                 /* True if request for box has been
+                                       approvedout of ISDS */
+    char *refference;               /* Identifier of the approval */
+};
 
 
 /* Initialize ISDS library.
@@ -1051,6 +1054,10 @@ isds_error isds_bogus_request(struct isds_ctx *context);
 const struct isds_document *isds_find_document_by_id(
         const struct isds_list *documents, const char *id);
 
+/* Free isds_list with all member data.
+ * @list list to free, on return will be NULL */
+void isds_list_free(struct isds_list **list);
+
 /* Deallocate structure isds_hash and NULL it.
  * @hash  hash to to free */
 void isds_hash_free(struct isds_hash **hash);
@@ -1075,6 +1082,9 @@ void isds_message_free(struct isds_message **message);
 
 /* Deallocate struct isds_message_copy recursively and NULL it */
 void isds_message_copy_free(struct isds_message_copy **copy);
+
+/* Deallocate struct isds_approval recursively and NULL it */
+void isds_approval_free(struct isds_approval **approval);
 
 /* Copy structure isds_PersonName recursively */
 struct isds_PersonName *isds_PersonName_duplicate(
