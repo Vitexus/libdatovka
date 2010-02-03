@@ -10,11 +10,20 @@ into your system.
 If you want to change installation directory use appropriate configure
 argument (see `./configure --help' for more details).
 
-If you want build example clients, add `--enable-example' to configure. You
-can run and study example clients in `client' subdirectory.
+Additional configure options:
 
-If you want build and run library internal tests, add `--enable-test' to
-configure. You can run tests by `make check'. You can run and study each test
-in `test' subdirectory.
+    --enable-example
+
+        Build exalpe client. You can run and study example clients in `client'
+        subdirectory.
+
+    --enable-test
+
+        Build and run library internal tests. You can run tests by
+        `make check'. You can run and study each test in `test' subdirectory.
+
+    --enable-debug
+
+        Switch on debbuging mode, compile in debugging code.
 
 Example clients and tests are not installed by `make install'.

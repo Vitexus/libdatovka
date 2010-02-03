@@ -31,6 +31,15 @@ AS_IF([test "$enable_test" = "yes"], AC_CONFIG_FILES([test/Makefile]))
 AM_GNU_GETTEXT_VERSION([0.17])
 AM_GNU_GETTEXT([external])
 
+# Enable debug
+AC_ARG_ENABLE(debug, [AS_HELP_STRING([--enable-debug],
+                        [Compile in debugging mode])])
+AS_IF([test "$enable_debug" = "yes"],
+      CFLAGS="${CFLAGS} -g"
+      dnl AC_SUBST(DEBUG_CFLAGS)
+      AC_DEFINE([ENABLE_DEBUG], [1],
+                [Define if you want include debugging code])
+      )
 
 # Checks for libraries.
 #TODO: Verify minimal version. libxml2-2.6.26 is just a guess.
