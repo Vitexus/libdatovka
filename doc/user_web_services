@@ -26,7 +26,7 @@ dm_operations.wsdl
 ==================
 
 URL postfix: dz
-Constraints: Client must be autenticated in Access Manager
+Constraints: Client must be authenticated in Access Manager
 
 CreateMessage (*)
     Create and send a message
@@ -46,7 +46,7 @@ dm_info.wsdl
 ============
 
 URL postfix: dx
-Constraints: Client must be autenticated in Access Manager
+Constraints: Client must be authenticated in Access Manager
 
 VerifyMessage
     Verify local copy of message with remote original stored in ISDS
