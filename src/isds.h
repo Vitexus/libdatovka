@@ -598,12 +598,14 @@ isds_error isds_change_password(struct isds_ctx *context,
  * @upper_box_id is optional ID of supper box if currently created box is
  * subordinated.
  * @ceo_label is optional title of OVM box owner (e.g. mayor)
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_add_box(struct isds_ctx *context,
         struct isds_DbOwnerInfo *box, const struct isds_list *users,
         const char *former_names, const char *upper_box_id,
-        const char *ceo_label, char **refnumber);
+        const char *ceo_label, const struct isds_approval *approval,
+        char **refnumber);
 
 /* Notify ISDS about new PFO entity.
  * This function has no real effect.
@@ -614,34 +616,38 @@ isds_error isds_add_box(struct isds_ctx *context,
  * @upper_box_id is optional ID of supper box if currently created box is
  * subordinated.
  * @ceo_label is optional title of OVM box owner (e.g. mayor)
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_add_pfoinfo(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box, const struct isds_list *users,
         const char *former_names, const char *upper_box_id,
-        const char *ceo_label, char **refnumber);
+        const char *ceo_label, const struct isds_approval *approval,
+        char **refnumber);
 
 /* Remove given given box permanetly.
  * @context is session context
  * @box is box description to delete
  * @since is date of box owner cancalation. Only tm_year, tm_mon and tm_mday
  * carry sane value.
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_delete_box(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box, const struct tm *since,
-        char **refnumber);
+        const struct isds_approval *approval, char **refnumber);
 
 /* Update data about given box.
  * @context is session context
  * @old_box current box description
  * @new_box are updated data about @old_box
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_UpdateDataBoxDescr(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *old_box,
         const struct isds_DbOwnerInfo *new_box,
-        char **refnumber);
+        const struct isds_approval *approval, char **refnumber);
 
 /* Get data about all users assigned to given box.
  * @context is session context
@@ -668,6 +674,7 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
  * @box is box identification
  * @user identifies user to reset password
  * @fee_paid is true if fee has been paid, false otherwise
+ * @approval is optional external approval of box manipulation
  * @token is NULL if new password should be delivered off-line to the user.
  * It is valid pointer if user should obtain new password on-line on dedicated
  * web server. Then it output automatically reallocated token user needs to
@@ -677,28 +684,30 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
 isds_error isds_reset_password(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box,
         const struct isds_DbUserInfo *user,
-        const _Bool fee_paid,
+        const _Bool fee_paid, const struct isds_approval *approval,
         char **token, char **refnumber);
 
 /* Assign new user to given box.
  * @context is session context
  * @box is box identification
  * @user defines new user to add
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_add_user(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
-        char **refnumber);
+        const struct isds_approval *approval, char **refnumber);
 
 /* Remove user assigned to given box.
  * @context is session context
  * @box is box identification
  * @user identifies user to removve
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_delete_user(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
-        char **refnumber);
+        const struct isds_approval *approval, char **refnumber);
 
 /* Find boxes suiting given criteria.
  * @context is ISDS session context.
@@ -736,10 +745,12 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
  * @context is ISDS session context.
  * @box_id is UTF-8 encoded box identifier as zero terminated string
  * @allow is true for enable, false for disable commercial messages income 
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
 isds_error isds_switch_commercial_receiving(struct isds_ctx *context,
-        const char *box_id, const _Bool allow, char **refnumber);
+        const char *box_id, const _Bool allow,
+        const struct isds_approval *approval, char **refnumber);
 
 /* Switch box into / out of state where non-OVM box can act as OVM (e.g. force
  * message acceptance). This is just a box permission. Sender must apply
@@ -747,22 +758,26 @@ isds_error isds_switch_commercial_receiving(struct isds_ctx *context,
  * @context is ISDS session context.
  * @box_id is UTF-8 encoded box identifier as zero terminated string
  * @allow is true for enable, false for disable OVM role permission
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
 isds_error isds_switch_effective_ovm(struct isds_ctx *context,
-        const char *box_id, const _Bool allow, char **refnumber);
+        const char *box_id, const _Bool allow,
+        const struct isds_approval *approval, char **refnumber);
 
 /* Switch box accessibility state on request of box owner.
- * Despite the name, owner must do the requst off-line. This function is
+ * Despite the name, owner must do the request off-line. This function is
  * designed for such off-line meeting points (e.g. Czech POINT).
  * @context is ISDS session context.
  * @box identifies box to swith accesibilty state.
  * @allow is true for making accesibale, false to disallow access.
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
 isds_error isds_switch_box_accessibility_on_owner_request(
         struct isds_ctx *context, const struct isds_DbOwnerInfo *box,
-        const _Bool allow, char **refnumber);
+        const _Bool allow, const struct isds_approval *approval,
+        char **refnumber);
 
 /* Disable box accessibility on law enforcement (e.g. by prison) since exact
  * date.
@@ -770,11 +785,13 @@ isds_error isds_switch_box_accessibility_on_owner_request(
  * @box identifies box to swith accesibilty state.
  * @since is date since accesseibility has been denied. This can be past too.
  * Only tm_year, tm_mon and tm_mday carry sane value.
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
 isds_error isds_disable_box_accessibility_externaly(
         struct isds_ctx *context, const struct isds_DbOwnerInfo *box,
-        const struct tm *since,  char **refnumber);
+        const struct tm *since, const struct isds_approval *approval,
+        char **refnumber);
 
 /* Send a message via ISDS to a recipent
  * @context is session context

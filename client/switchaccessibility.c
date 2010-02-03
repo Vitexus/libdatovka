@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
 
         printf("Enabling access to my box\n");
         err = isds_switch_box_accessibility_on_owner_request(ctx,
-                db_owner_info, 1, &refnumber);
+                db_owner_info, 1, NULL, &refnumber);
         if (err)
             printf("isds_switch_box_accessibility_on_owner_request() failed: "
                     "%s: %s\n", isds_strerror(err), isds_long_message(ctx));

@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
         printf("Switching commerical receiving status to: %s\n",
                 (allow) ? "true" : "false");
         err = isds_switch_commercial_receiving(ctx, db_owner_info->dbID, allow,
-                &refnumber);
+                NULL, &refnumber);
         if (err)
             printf("isds_switch_commercial_receiving() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));

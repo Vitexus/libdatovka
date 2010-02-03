@@ -3565,6 +3565,31 @@ leave:
 }
 
 
+/* Insert struct isds_approval data (box approval) into XML tree
+ * @context is sesstion context
+ * @approval is libsids structure with approval description. NULL is
+ * acceptible.
+ * @parent is XML element to append @approval to */
+static isds_error insert_GExtApproval(struct isds_ctx *context,
+        const struct isds_approval *approval, xmlNodePtr parent) {
+
+    isds_error err = IE_SUCCESS;
+    xmlNodePtr node;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!parent) return IE_INVAL;
+
+    if (!approval) return IE_SUCCESS;
+
+    /* Build XSD:gExtApproval */
+    INSERT_SCALAR_BOOLEAN(parent, "dbApproved", approval->approved);
+    INSERT_STRING(parent, "dbExternRefNumber", approval->refference);
+
+leave:
+    return err;
+}
+
+
 /* Build ISDS request of XSD tDummyInput type, sent it and check for error
  * code
  * @context is session context
@@ -4224,13 +4249,14 @@ static isds_error send_request_check_drop_response(
  * @former_names is optional undocumented string. Pass NULL if you don't care.
  * @upper_box_id is optional ID of supper box if currently created box is
  * subordinated.
- * @ceo_label is optional title of OVM box owner (e.g. mayor)
- * NULL, if you don't care.*/
+ * @ceo_label is optional title of OVM box owner (e.g. mayor) NULL, if you
+ * don't care.
+ * @approval is optional external approval of box manipulation */
 static isds_error build_CreateDBInput_request(struct isds_ctx *context,
         xmlNodePtr *request, const xmlChar *service_name,
         const struct isds_DbOwnerInfo *box, const struct isds_list *users,
         const xmlChar *former_names, const xmlChar *upper_box_id,
-        const xmlChar *ceo_label) {
+        const xmlChar *ceo_label, const struct isds_approval *approval) {
     isds_error err = IE_SUCCESS;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr node, dbPrimaryUsers;
@@ -4281,7 +4307,8 @@ static isds_error build_CreateDBInput_request(struct isds_ctx *context,
     INSERT_STRING(*request, "dbUpperDBId", upper_box_id);
     INSERT_STRING(*request, "dbCEOLabel", ceo_label);
 
-    /* TODO: gExtApproval */
+    err = insert_GExtApproval(context, approval, *request);
+    if (err) goto leave;
 
 leave:
     if (err) {
@@ -4303,12 +4330,14 @@ leave:
  * @upper_box_id is optional ID of supper box if currently created box is
  * subordinated.
  * @ceo_label is optional title of OVM box owner (e.g. mayor)
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_add_box(struct isds_ctx *context,
         struct isds_DbOwnerInfo *box, const struct isds_list *users,
         const char *former_names, const char *upper_box_id,
-        const char *ceo_label, char **refnumber) {
+        const char *ceo_label, const struct isds_approval *approval,
+        char **refnumber) {
     isds_error err = IE_SUCCESS;
     xmlNodePtr request = NULL;
     xmlDocPtr response = NULL;
@@ -4326,7 +4355,7 @@ isds_error isds_add_box(struct isds_ctx *context,
     err = build_CreateDBInput_request(context,
             &request, BAD_CAST "CreateDataBox",
             box, users, (xmlChar *) former_names, (xmlChar *) upper_box_id,
-            (xmlChar *) ceo_label);
+            (xmlChar *) ceo_label, approval);
     if (err) goto leave;
 
     /* Send it to server and process response */
@@ -4370,12 +4399,14 @@ leave:
  * @upper_box_id is optional ID of supper box if currently created box is
  * subordinated.
  * @ceo_label is optional title of OVM box owner (e.g. mayor)
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_add_pfoinfo(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box, const struct isds_list *users,
         const char *former_names, const char *upper_box_id,
-        const char *ceo_label, char **refnumber) {
+        const char *ceo_label, const struct isds_approval *approval,
+        char **refnumber) {
     isds_error err = IE_SUCCESS;
     xmlNodePtr request = NULL;
 
@@ -4386,7 +4417,7 @@ isds_error isds_add_pfoinfo(struct isds_ctx *context,
     err = build_CreateDBInput_request(context,
             &request, BAD_CAST "CreateDataBoxPFOInfo",
             box, users, (xmlChar *) former_names, (xmlChar *) upper_box_id,
-            (xmlChar *) ceo_label);
+            (xmlChar *) ceo_label, approval);
     if (err) goto leave;
 
     /* Send it to server and process response */
@@ -4404,11 +4435,12 @@ leave:
  * @box is box description to delete
  * @since is date of box owner cancalation. Only tm_year, tm_mon and tm_mday
  * carry sane value.
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_delete_box(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box, const struct tm *since,
-        char **refnumber) {
+        const struct isds_approval *approval, char **refnumber) {
     isds_error err = IE_SUCCESS;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
@@ -4448,7 +4480,8 @@ isds_error isds_delete_box(struct isds_ctx *context,
     INSERT_STRING(request, "dbOwnerTerminationDate", string);
     zfree(string);
 
-    /* TODO: gExtApproval */
+    err = insert_GExtApproval(context, approval, request);
+    if (err) goto leave;
 
 
     /* Send it to server and process response */
@@ -4466,12 +4499,13 @@ leave:
  * @context is session context
  * @old_box current box description
  * @new_box are updated data about @old_box
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_UpdateDataBoxDescr(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *old_box,
         const struct isds_DbOwnerInfo *new_box,
-        char **refnumber) {
+        const struct isds_approval *approval, char **refnumber) {
     isds_error err = IE_SUCCESS;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
@@ -4505,7 +4539,8 @@ isds_error isds_UpdateDataBoxDescr(struct isds_ctx *context,
     err = insert_DbOwnerInfo(context, new_box, node);
     if (err) goto leave;
 
-    /* TODO: gExtApproval */
+    err = insert_GExtApproval(context, approval, request);
+    if (err) goto leave;
 
 
     /* Send it to server and process response */
@@ -4525,6 +4560,7 @@ leave:
  * @service is SOAP service
  * @service_name is name of request in @service
  * @box_id is box ID of interrest
+ * @approval is optional external approval of box manipulation
  * @response is server SOAP body response as XML document
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.
@@ -4533,6 +4569,7 @@ leave:
 static isds_error build_send_dbid_request_check_response(
         struct isds_ctx *context, const isds_service service,
         const xmlChar *service_name, const xmlChar *box_id,
+        const struct isds_approval *approval,
         xmlDocPtr *response, xmlChar **refnumber) {
 
     isds_error err = IE_SUCCESS;
@@ -4577,7 +4614,8 @@ static isds_error build_send_dbid_request_check_response(
 
     /* Add XSD:tIdDbInput childs*/
     INSERT_STRING(request, "dbID", box_id);
-    /* TODO: XSD:gExtApproval*/
+    err = insert_GExtApproval(context, approval, request);
+    if (err) goto leave;
 
     /* Send request and check response*/
     err = send_destroy_request_check_response(context,
@@ -4611,7 +4649,7 @@ isds_error isds_GetDataBoxUsers(struct isds_ctx *context, const char *box_id,
     /* Do request and check for success */
     err = build_send_dbid_request_check_response(context,
             SERVICE_DB_MANIPULATION, BAD_CAST "GetDataBoxUsers",
-            BAD_CAST box_id, &response, NULL);
+            BAD_CAST box_id, NULL, &response, NULL);
     if (err) goto leave;
 
 
@@ -4746,6 +4784,7 @@ leave:
  * @box is box identification
  * @user identifies user to reset password
  * @fee_paid is true if fee has been paid, false otherwise
+ * @approval is optional external approval of box manipulation
  * @token is NULL if new password should be delivered off-line to the user.
  * It is valid pointer if user should obtain new password on-line on dedicated
  * web server. Then it output automatically reallocated token user needs to
@@ -4755,7 +4794,7 @@ leave:
 isds_error isds_reset_password(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box,
         const struct isds_DbUserInfo *user,
-        const _Bool fee_paid,
+        const _Bool fee_paid, const struct isds_approval *approval,
         char **token, char **refnumber) {
     isds_error err = IE_SUCCESS;
     xmlNsPtr isds_ns = NULL;
@@ -4802,7 +4841,8 @@ isds_error isds_reset_password(struct isds_ctx *context,
         INSERT_SCALAR_BOOLEAN(request, "dbVirtual", 0);
     }
 
-    /* TODO: gExtApproval */
+    err = insert_GExtApproval(context, approval, request);
+    if (err) goto leave;
 
     /* Send request and check reposne*/
     err = send_destroy_request_check_response(context,
@@ -4847,12 +4887,13 @@ leave:
  * @service_name is name of SERVICE_DB_MANIPULATION service
  * @box is box identification
  * @user identifies user to removve
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
 static isds_error build_send_manipulationboxuser_request_check_drop_response(
         struct isds_ctx *context, const xmlChar *service_name,
         const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
-        xmlChar **refnumber) {
+        const struct isds_approval *approval, xmlChar **refnumber) {
     isds_error err = IE_SUCCESS;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL, node;
@@ -4888,7 +4929,8 @@ static isds_error build_send_manipulationboxuser_request_check_drop_response(
     err = insert_DbUserInfo(context, user, node);
     if (err) goto leave;
 
-    /* TODO: gExtApproval */
+    err = insert_GExtApproval(context, approval, request);
+    if (err) goto leave;
 
     /* Send request and check reposne*/
     err = send_request_check_drop_response (context,
@@ -4904,13 +4946,15 @@ leave:
  * @context is session context
  * @box is box identification
  * @user defines new user to add
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_add_user(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
-        char **refnumber){
+        const struct isds_approval *approval, char **refnumber) {
     return build_send_manipulationboxuser_request_check_drop_response(context,
-            BAD_CAST "AddDataBoxUser", box, user, (xmlChar **) refnumber);
+            BAD_CAST "AddDataBoxUser", box, user, approval,
+            (xmlChar **) refnumber);
 }
 
 
@@ -4918,13 +4962,15 @@ isds_error isds_add_user(struct isds_ctx *context,
  * @context is session context
  * @box is box identification
  * @user identifies user to removve
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_delete_user(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
-        char **refnumber) {
+        const struct isds_approval *approval, char **refnumber) {
     return build_send_manipulationboxuser_request_check_drop_response(context,
-            BAD_CAST "DeleteDataBoxUser", box, user, (xmlChar **) refnumber);
+            BAD_CAST "DeleteDataBoxUser", box, user, approval,
+            (xmlChar **) refnumber);
 }
 
 
@@ -5285,11 +5331,13 @@ leave:
  * @context is ISDS session context.
  * @service_name is name of SERVICE_DB_MANIPULATION service
  * @box_id is UTF-8 encoded box identifier as zero terminated string 
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
 static isds_error build_send_manipulationdbid_request_check_drop_response(
         struct isds_ctx *context, const xmlChar *service_name, 
-        const xmlChar *box_id, xmlChar **refnumber) {
+        const xmlChar *box_id, const struct isds_approval *approval,
+        xmlChar **refnumber) {
     isds_error err = IE_SUCCESS;
     xmlDocPtr response = NULL;
 
@@ -5301,7 +5349,7 @@ static isds_error build_send_manipulationdbid_request_check_drop_response(
 
     /* Do request and check for success */
     err = build_send_dbid_request_check_response(context,
-            SERVICE_DB_MANIPULATION, service_name, box_id,
+            SERVICE_DB_MANIPULATION, service_name, box_id, approval,
             &response, refnumber);
     xmlFreeDoc(response);
 
@@ -5322,14 +5370,16 @@ static isds_error build_send_manipulationdbid_request_check_drop_response(
  * @context is ISDS session context.
  * @box_id is UTF-8 encoded box identifier as zero terminated string
  * @allow is true for enable, false for disable commercial messages income 
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
 isds_error isds_switch_commercial_receiving(struct isds_ctx *context,
-        const char *box_id, const _Bool allow, char **refnumber) {
+        const char *box_id, const _Bool allow,
+        const struct isds_approval *approval, char **refnumber) {
     return build_send_manipulationdbid_request_check_drop_response(context, 
             (allow) ? BAD_CAST "SetOpenAddressing" :
                 BAD_CAST "ClearOpenAddressing",
-            BAD_CAST box_id, (xmlChar **) refnumber);
+            BAD_CAST box_id, approval, (xmlChar **) refnumber);
 }
 
 
@@ -5339,14 +5389,16 @@ isds_error isds_switch_commercial_receiving(struct isds_ctx *context,
  * @context is ISDS session context.
  * @box_id is UTF-8 encoded box identifier as zero terminated string
  * @allow is true for enable, false for disable OVM role permission
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
 isds_error isds_switch_effective_ovm(struct isds_ctx *context,
-        const char *box_id, const _Bool allow, char **refnumber) {
+        const char *box_id, const _Bool allow,
+        const struct isds_approval *approval, char **refnumber) {
     return build_send_manipulationdbid_request_check_drop_response(context, 
             (allow) ? BAD_CAST "SetEffectiveOVM" :
                 BAD_CAST "ClearEffectiveOVM",
-            BAD_CAST box_id, (xmlChar **) refnumber);
+            BAD_CAST box_id, approval, (xmlChar **) refnumber);
 }
 
 
@@ -5355,11 +5407,13 @@ isds_error isds_switch_effective_ovm(struct isds_ctx *context,
  * @context is ISDS session context.
  * @service_name is name of SERVICE_DB_MANIPULATION service
  * @owner is structure describing box
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
 static isds_error build_send_manipulationdbowner_request_check_drop_response(
         struct isds_ctx *context, const xmlChar *service_name, 
-        const struct isds_DbOwnerInfo *owner, xmlChar **refnumber) {
+        const struct isds_DbOwnerInfo *owner,
+        const struct isds_approval *approval, xmlChar **refnumber) {
     isds_error err = IE_SUCCESS;
     char *service_name_locale = NULL;
     xmlNodePtr request = NULL, db_owner_info;
@@ -5396,7 +5450,10 @@ static isds_error build_send_manipulationdbowner_request_check_drop_response(
     INSERT_ELEMENT(db_owner_info, request, "dbOwnerInfo");
     err = insert_DbOwnerInfo(context, owner, db_owner_info);
     if (err) goto leave;
-    /* TODO: XSD:gExtApproval*/
+
+    /* Add XSD:gExtApproval*/
+    err = insert_GExtApproval(context, approval, request);
+    if (err) goto leave;
 
     /* Send it to server and process response */
     err = send_request_check_drop_response(context, SERVICE_DB_MANIPULATION,
@@ -5411,20 +5468,22 @@ leave:
 
 
 /* Switch box accessibility state on request of box owner.
- * Despite the name, owner must do the requst off-line. This function is
+ * Despite the name, owner must do the request off-line. This function is
  * designed for such off-line meeting points (e.g. Czech POINT).
  * @context is ISDS session context.
  * @box identifies box to swith accesibilty state.
  * @allow is true for making accesibale, false to disallow access.
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
 isds_error isds_switch_box_accessibility_on_owner_request(
         struct isds_ctx *context, const struct isds_DbOwnerInfo *box,
-        const _Bool allow, char **refnumber) {
+        const _Bool allow, const struct isds_approval *approval,
+        char **refnumber) {
     return build_send_manipulationdbowner_request_check_drop_response(context,
             (allow) ? BAD_CAST "EnableOwnDataBox" :
                 BAD_CAST "DisableOwnDataBox",
-            box, (xmlChar **) refnumber);
+            box, approval, (xmlChar **) refnumber);
 }
 
 
@@ -5434,11 +5493,13 @@ isds_error isds_switch_box_accessibility_on_owner_request(
  * @box identifies box to swith accesibilty state.
  * @since is date since accesseibility has been denied. This can be past too.
  * Only tm_year, tm_mon and tm_mday carry sane value.
+ * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
 isds_error isds_disable_box_accessibility_externaly(
         struct isds_ctx *context, const struct isds_DbOwnerInfo *box,
-        const struct tm *since,  char **refnumber) {
+        const struct tm *since, const struct isds_approval *approval,
+        char **refnumber) {
     isds_error err = IE_SUCCESS;
     char *service_name_locale = NULL;
     xmlNodePtr request = NULL, node;
@@ -5481,7 +5542,9 @@ isds_error isds_disable_box_accessibility_externaly(
     INSERT_STRING(request, "dbOwnerDisableDate", string);
     zfree(string);
 
-    /* TODO: XSD:gExtApproval*/
+    /* Add @approval */
+    err = insert_GExtApproval(context, approval, request);
+    if (err) goto leave;
 
     /* Send it to server and process response */
     err = send_request_check_drop_response(context, SERVICE_DB_MANIPULATION,

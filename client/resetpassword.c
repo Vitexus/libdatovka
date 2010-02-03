@@ -13,7 +13,7 @@ void reset_password(struct isds_ctx *ctx,
     char *refnumber = NULL;
 
     printf("Resetting password\n");
-    isds_error err = isds_reset_password(ctx, box, user, paid, token,
+    isds_error err = isds_reset_password(ctx, box, user, paid, NULL, token,
             &refnumber);
     if (err) {
         printf("isds_reset_password() failed: %s: %s\n",

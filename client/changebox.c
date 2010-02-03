@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
 
         printf("Updating info about my box: with no change\n");
         err = isds_UpdateDataBoxDescr(ctx, old_owner_info, db_owner_info,
-                &refnumber);
+                NULL, &refnumber);
         if (err) {
             printf("isds_UpdateDataBoxDescr() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));

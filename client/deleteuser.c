@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
 
         printf("Deleting user\n");
         isds_error err = isds_delete_user(ctx, db_owner_info, db_user_info,
-                &refnumber);
+                NULL, &refnumber);
         if (err) {
             printf("isds_delete_user() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));

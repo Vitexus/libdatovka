@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
         printf("Disabling access to my box externaly since: ");
         print_date(&date);
         err = isds_disable_box_accessibility_externaly(ctx,
-                db_owner_info, &date, &refnumber);
+                db_owner_info, &date, NULL, &refnumber);
         if (err)
             printf("isds_disable_box_accessibility_externaly() failed: "
                     "%s: %s\n", isds_strerror(err), isds_long_message(ctx));
