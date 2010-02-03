@@ -4302,7 +4302,6 @@ isds_error isds_add_box(struct isds_ctx *context,
     isds_error err = IE_SUCCESS;
     xmlNodePtr request = NULL;
     xmlDocPtr response = NULL;
-    xmlChar *string = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
 
@@ -4342,13 +4341,50 @@ leave:
     xmlXPathFreeContext(xpath_ctx);
     xmlFreeDoc(response);
     xmlFreeNode(request);
-    free(string);
 
     if (!err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("CreateDataBox request processed by server successfully.\n"));
     }
 
+    return err;
+}
+
+
+/* Notify ISDS about new PFO entity.
+ * This function has no real effect.
+ * @context is session context
+ * @box is PFO description including single primary user.
+ * @users is list of struct isds_DbUserInfo (contact address of PFO box owner)
+ * @former_names is optional undocumented string. Pass NULL if you don't care.
+ * @upper_box_id is optional ID of supper box if currently created box is
+ * subordinated.
+ * @ceo_label is optional title of OVM box owner (e.g. mayor)
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_add_pfoinfo(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *box, const struct isds_list *users,
+        const char *former_names, const char *upper_box_id,
+        const char *ceo_label, char **refnumber) {
+    isds_error err = IE_SUCCESS;
+    xmlNodePtr request = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!box) return IE_INVAL;
+
+    /* Build CreateDataBoxPFOInfo request */
+    err = build_CreateDBInput_request(context,
+            &request, BAD_CAST "CreateDataBoxPFOInfo",
+            box, users, (xmlChar *) former_names, (xmlChar *) upper_box_id,
+            (xmlChar *) ceo_label);
+    if (err) goto leave;
+
+    /* Send it to server and process response */
+    err = send_request_check_drop_response(context,
+            SERVICE_DB_MANIPULATION, BAD_CAST "CreateDataBox", &request,
+            (xmlChar **) refnumber);
+leave:
+    xmlFreeNode(request);
     return err;
 }
 

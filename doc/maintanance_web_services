@@ -117,6 +117,18 @@ CreateDataBox
 Returns ID of new box.
 
 
+CreateDataBoxPFOInfo
+====================
+
+Report PFO insert into external registry.
+
+This service is only for sake of legislation. ISDS does use provided data
+anyhow.
+
+It does not create a box nor return new box ID. See CreateDataBox for more
+details. 
+
+
 DeleteDataBox
 =============
 

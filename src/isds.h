@@ -602,6 +602,22 @@ isds_error isds_add_box(struct isds_ctx *context,
         const char *former_names, const char *upper_box_id,
         const char *ceo_label, char **refnumber);
 
+/* Notify ISDS about new PFO entity.
+ * This function has no real effect.
+ * @context is session context
+ * @box is PFO description including single primary user.
+ * @users is list of struct isds_DbUserInfo (contact address of PFO box owner)
+ * @former_names is optional undocumented string. Pass NULL if you don't care.
+ * @upper_box_id is optional ID of supper box if currently created box is
+ * subordinated.
+ * @ceo_label is optional title of OVM box owner (e.g. mayor)
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_add_pfoinfo(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *box, const struct isds_list *users,
+        const char *former_names, const char *upper_box_id,
+        const char *ceo_label, char **refnumber);
+
 /* Remove given given box permanetly.
  * @context is session context
  * @box is box description to delete
