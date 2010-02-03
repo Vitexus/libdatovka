@@ -25,14 +25,18 @@ int main(int argc, char **argv) {
     xmlChar *names[] = {
         BAD_CAST "MD5",
         BAD_CAST "SHA-1",
+        BAD_CAST "SHA-224",
         BAD_CAST "SHA-256",
+        BAD_CAST "SHA-384",
         BAD_CAST "SHA-512"
     };
 
     isds_hash_algorithm algos[] =  {
         HASH_ALGORITHM_MD5,
         HASH_ALGORITHM_SHA_1,
+        HASH_ALGORITHM_SHA_224,
         HASH_ALGORITHM_SHA_256,
+        HASH_ALGORITHM_SHA_384,
         HASH_ALGORITHM_SHA_512,
     };
 

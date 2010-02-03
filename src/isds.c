@@ -1483,8 +1483,12 @@ static isds_error string2isds_hash_algorithm(const xmlChar *string,
         *algorithm = HASH_ALGORITHM_MD5;
     else if (!xmlStrcmp(string, BAD_CAST "SHA-1"))
         *algorithm = HASH_ALGORITHM_SHA_1;
+    else if (!xmlStrcmp(string, BAD_CAST "SHA-224"))
+        *algorithm = HASH_ALGORITHM_SHA_224;
     else if (!xmlStrcmp(string, BAD_CAST "SHA-256"))
         *algorithm = HASH_ALGORITHM_SHA_256;
+    else if (!xmlStrcmp(string, BAD_CAST "SHA-384"))
+        *algorithm = HASH_ALGORITHM_SHA_384;
     else if (!xmlStrcmp(string, BAD_CAST "SHA-512"))
         *algorithm = HASH_ALGORITHM_SHA_512;
     else

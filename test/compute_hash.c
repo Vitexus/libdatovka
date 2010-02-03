@@ -86,6 +86,18 @@ int main(int argc, char **argv) {
     TEST("MD5", test_compute_hash, IE_SUCCESS, &correct, &test, input,
             sizeof(input));
 
+    correct.algorithm = HASH_ALGORITHM_SHA_224;
+    correct.length = 28;
+    correct.value = (uint8_t[]) {
+        0x58, 0x8d, 0x39, 0xd2, 0x1a, 0x1f, 0xef, 0x0b,
+        0x89, 0xdf, 0x62, 0x1b, 0x3e, 0xb1, 0x41, 0x62,
+        0x70, 0x22, 0xe5, 0x8f, 0xe9, 0x25, 0x83, 0x06,
+        0x73, 0xcb, 0x2b, 0x03
+    };
+    test.algorithm = HASH_ALGORITHM_SHA_224;
+    TEST("SHA-224", test_compute_hash, IE_SUCCESS, &correct, &test, input,
+            sizeof(input));
+
     correct.algorithm = HASH_ALGORITHM_SHA_256;
     correct.length = 32;
     correct.value = (uint8_t[]) {
@@ -96,6 +108,20 @@ int main(int argc, char **argv) {
     };
     test.algorithm = HASH_ALGORITHM_SHA_256;
     TEST("SHA-256", test_compute_hash, IE_SUCCESS, &correct, &test, input,
+            sizeof(input));
+
+    correct.algorithm = HASH_ALGORITHM_SHA_384;
+    correct.length = 48;
+    correct.value = (uint8_t[]) {
+        0x81, 0x2b, 0x94, 0x0b, 0x9c, 0x58, 0x60, 0x31,
+        0xb8, 0x20, 0x4b, 0xa7, 0xf1, 0x96, 0xdb, 0x5b,
+        0xfe, 0x55, 0xec, 0x87, 0x33, 0x92, 0x78, 0x5a,
+        0x78, 0x0a, 0x38, 0xe4, 0xaa, 0x9e, 0xe0, 0x4d,
+        0x0b, 0xbe, 0x55, 0x43, 0x2c, 0x9a, 0x85, 0x29,
+        0xb4, 0x8d, 0x6b, 0x6f, 0xea, 0xd1, 0x95, 0xa8
+    };
+    test.algorithm = HASH_ALGORITHM_SHA_384;
+    TEST("SHA-384", test_compute_hash, IE_SUCCESS, &correct, &test, input,
             sizeof(input));
 
     correct.algorithm = HASH_ALGORITHM_SHA_512;

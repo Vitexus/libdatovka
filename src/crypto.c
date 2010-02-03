@@ -59,7 +59,9 @@ _hidden isds_error compute_hash(const void *input, const size_t length,
     switch (hash->algorithm) {
         case HASH_ALGORITHM_MD5:        g_algorithm = GCRY_MD_MD5; break;
         case HASH_ALGORITHM_SHA_1:      g_algorithm = GCRY_MD_SHA1; break;
+        case HASH_ALGORITHM_SHA_224:    g_algorithm = GCRY_MD_SHA224; break;
         case HASH_ALGORITHM_SHA_256:    g_algorithm = GCRY_MD_SHA256; break;
+        case HASH_ALGORITHM_SHA_384:    g_algorithm = GCRY_MD_SHA384; break;
         case HASH_ALGORITHM_SHA_512:    g_algorithm = GCRY_MD_SHA512; break;
         default:                        return IE_NOTSUP;
     }

@@ -148,7 +148,9 @@ typedef enum {
 typedef enum {
     HASH_ALGORITHM_MD5,
     HASH_ALGORITHM_SHA_1,
+    HASH_ALGORITHM_SHA_224,
     HASH_ALGORITHM_SHA_256,
+    HASH_ALGORITHM_SHA_384,
     HASH_ALGORITHM_SHA_512,
 } isds_hash_algorithm;
 
