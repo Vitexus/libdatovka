@@ -41,6 +41,7 @@ AS_IF([test "$enable_debug" = "yes"],
                 [Define if you want include debugging code])
       )
 
+
 # Checks for libraries.
 #TODO: Verify minimal version. libxml2-2.6.26 is just a guess.
 AM_PATH_XML2([2.6.26])
@@ -51,6 +52,14 @@ AM_PATH_LIBGCRYPT([1:1.4.0])
 #TODO: Determine minimal version
 AM_PATH_GPGME()
 #AC_CHECK_LIB([expat])
+
+
+# Do not consider compiler warnings as errors
+# This harms libxml confgure test
+AC_ARG_ENABLE(fatalwarnings, [AS_HELP_STRING([--disable-fatalwarnings],
+                        [Do not consider compiler warnings as errors])])
+AS_IF([test "$enable_fatalwarnings" = "no"], , CFLAGS="${CFLAGS} -Werror")
+
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h locale.h stdint.h stdlib.h string.h unistd.h])

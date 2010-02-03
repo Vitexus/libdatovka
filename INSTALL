@@ -26,4 +26,9 @@ Additional configure options:
 
         Switch on debbuging mode, compile in debugging code.
 
+    --disable-fatalwarnings
+
+        Switch off compile mode when compiler raises error on warning. This is
+        enabled to catch all code ambiguities by default.
+
 Example clients and tests are not installed by `make install'.

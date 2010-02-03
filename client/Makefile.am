@@ -1,5 +1,5 @@
 LIBDIR =../src
-AM_CFLAGS =-std=c99 -Wall -Werror
+AM_CFLAGS =-std=c99 -Wall
 # Large files needed by GPGME
 AM_CFLAGS += -D_FILE_OFFSET_BITS=64 -DLARGEFILE_SOURCE=1
 AM_CFLAGS +=-I$(LIBDIR)
