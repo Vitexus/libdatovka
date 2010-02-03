@@ -75,6 +75,8 @@ AC_FUNC_MKTIME
 AC_FUNC_MMAP
 AC_CHECK_FUNCS([localtime_r memset munmap setlocale strdup strerror])
 
+# Default CFLAGS
+CFLAGS="${CFLAGS} -std=c99 -Wall"
 
 AC_CONFIG_FILES([Makefile src/Makefile po/Makefile.in])
 
