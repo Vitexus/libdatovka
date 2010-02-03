@@ -22,8 +22,8 @@
     Write manual page(s)
 * I18N
     Solve UTF-8 vs. locale-encoded logging schism
-* Implement all necessary web services
-    Services for requesting user add/remove/change
+* Find a way how to request for a box creation
+* Find a way how to send document to authorized conversion
 * Test message is system generated
 * Make high logic checks optional
 * Validate XML trees (optional)
