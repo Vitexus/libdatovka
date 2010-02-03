@@ -4203,6 +4203,156 @@ static isds_error send_request_check_drop_response(
 }
 
 
+/* Build XSD:tCreateDBInput request type for box createing.
+ * @context is session context
+ * @request outputs built XML tree
+ * @service_name is request name of SERVICE_DB_MANIPULATION service
+ * @box is box description to create including single primary user (in case of
+ * FO box type)
+ * @users is list of struct isds_DbUserInfo (primary users in case of non-FO
+ * box, or contact address of PFO box owner)
+ * @former_names is optional undocumented string. Pass NULL if you don't care.
+ * @upper_box_id is optional ID of supper box if currently created box is
+ * subordinated.
+ * @ceo_label is optional title of OVM box owner (e.g. mayor)
+ * NULL, if you don't care.*/
+static isds_error build_CreateDBInput_request(struct isds_ctx *context,
+        xmlNodePtr *request, const xmlChar *service_name,
+        const struct isds_DbOwnerInfo *box, const struct isds_list *users,
+        const xmlChar *former_names, const xmlChar *upper_box_id,
+        const xmlChar *ceo_label) {
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr node, dbPrimaryUsers;
+    xmlChar *string = NULL;
+    const struct isds_list *item;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!request || !service_name || service_name[0] == '\0' || !box)
+        return IE_INVAL;
+
+
+    /* Build DeleteDataBox request */
+    *request = xmlNewNode(NULL, service_name);
+    if (!*request) {
+        char *service_name_locale = utf82locale((char*) service_name);
+        isds_printf_message(context, _("Could build %s request"),
+                service_name_locale);
+        free(service_name_locale);
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(*request, BAD_CAST ISDS_NS, NULL);
+    if (!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(*request);
+        return IE_ERROR;
+    }
+    xmlSetNs(*request, isds_ns);
+
+    INSERT_ELEMENT(node, *request, "dbOwnerInfo");
+    err = insert_DbOwnerInfo(context, box, node);
+    if (err) goto leave;
+
+    /* Insert users */
+    /* XXX: There is bug in XSD: XSD says at least one dbUserInfo must exist,
+     * verbose documentatiot allows none dbUserInfo */
+    INSERT_ELEMENT(dbPrimaryUsers, *request, "dbPrimaryUsers");
+    for (item = users; item; item = item->next) {
+        if (item->data) {
+            INSERT_ELEMENT(node, dbPrimaryUsers, "dbUserInfo");
+            err = insert_DbUserInfo(context,
+                    (struct isds_DbUserInfo *) item->data, node);
+            if (err) goto leave;
+        }
+    }
+
+    INSERT_STRING(*request, "dbFormerNames", former_names);
+    INSERT_STRING(*request, "dbUpperDBId", upper_box_id);
+    INSERT_STRING(*request, "dbCEOLabel", ceo_label);
+
+    /* TODO: gExtApproval */
+
+leave:
+    if (err) {
+        xmlFreeNode(*request);
+        *request = NULL;
+    }
+    free(string);
+    return err;
+}
+
+
+/* Create new box.
+ * @context is session context
+ * @box is box description to create including single primary user (in case of
+ * FO box type). It outputs box ID assigned by ISDS in dbID element.
+ * @users is list of struct isds_DbUserInfo (primary users in case of non-FO
+ * box, or contact address of PFO box owner)
+ * @former_names is optional undocumented string. Pass NULL if you don't care.
+ * @upper_box_id is optional ID of supper box if currently created box is
+ * subordinated.
+ * @ceo_label is optional title of OVM box owner (e.g. mayor)
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_add_box(struct isds_ctx *context,
+        struct isds_DbOwnerInfo *box, const struct isds_list *users,
+        const char *former_names, const char *upper_box_id,
+        const char *ceo_label, char **refnumber) {
+    isds_error err = IE_SUCCESS;
+    xmlNodePtr request = NULL;
+    xmlDocPtr response = NULL;
+    xmlChar *string = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!box) return IE_INVAL;
+
+    /* Scratch box ID */
+    zfree(box->dbID);
+
+    /* Build CreateDataBox request */
+    err = build_CreateDBInput_request(context,
+            &request, BAD_CAST "CreateDataBox",
+            box, users, (xmlChar *) former_names, (xmlChar *) upper_box_id,
+            (xmlChar *) ceo_label);
+    if (err) goto leave;
+
+    /* Send it to server and process response */
+    err = send_destroy_request_check_response(context,
+            SERVICE_DB_MANIPULATION, BAD_CAST "CreateDataBox", &request,
+            &response, (xmlChar **) refnumber);
+
+    /* Extract box ID */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    EXTRACT_STRING("/isds:CreateDataBoxResponse/dbID", box->dbID);
+
+leave:
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(response);
+    xmlFreeNode(request);
+    free(string);
+
+    if (!err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("CreateDataBox request processed by server successfully.\n"));
+    }
+
+    return err;
+}
+
+
 /* Remove given given box permanetly.
  * @context is session context
  * @box is box description to delete
