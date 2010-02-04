@@ -9,5 +9,5 @@ if BUILD_TEST
 SUBDIRS += test
 endif
 
-EXTRA_DIST = config.rpath
+EXTRA_DIST = config.rpath doc
 

@@ -4,8 +4,8 @@ localedir = $(datadir)/locale
 lib_LTLIBRARIES = libisds.la
 libisds_la_SOURCES = cdecode.c cencode.c crypto.c isds.c physxml.c soap.c \
 					 utils.c validator.c \
-					 cdecode.h cencode.h crypto.h isds.h isds_priv.h physxml.h \
-					 soap.h utils.h validator.h
+					 cdecode.h cencode.h crypto.h gettext.h isds.h \
+					 isds_priv.h physxml.h soap.h utils.h validator.h
 libisds_la_HEADERS = isds.h
 libisds_la_CPPFLAGS = -D_FILE_OFFSET_BITS=64 -DLARGEFILE_SOURCE=1 \
 					  @XML_CPPFLAGS@ @LIBCURL_CPPFLAGS@ \

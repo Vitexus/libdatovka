@@ -27,6 +27,7 @@ common = test.h \
 	$(LIBDIR)/cdecode.h \
 	$(LIBDIR)/cencode.h \
 	$(LIBDIR)/crypto.h \
+	$(LIBDIR)/gettext.h \
 	$(LIBDIR)/isds.h \
 	$(LIBDIR)/isds_priv.h \
 	$(LIBDIR)/physxml.h \
