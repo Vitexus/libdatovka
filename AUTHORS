@@ -1,2 +1,6 @@
 Core development:
     Petr Písař <petr.pisar@atlas.cz>
+
+Base64 transformation <http://sourceforge.net/projects/libb64>:
+    Chris Venter <chris.venter[anti-spam]gmail.com>
+
