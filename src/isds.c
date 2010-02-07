@@ -1788,7 +1788,7 @@ static isds_error eventstring2event(const xmlChar *string,
             else { \
                 char *string_locale = utf82locale((char*)string); \
                 isds_printf_message(context, \
-                        _("%s value is not valid boolean: "), \
+                        _("%s value is not valid boolean: %s"), \
                         element, string_locale); \
                 free(string_locale); \
                 free(string); \
@@ -1994,13 +1994,17 @@ static isds_error eventstring2event(const xmlChar *string,
         int length = xmlUTF8Strlen((xmlChar *) (string)); \
         if (length > (maximum)) { \
             isds_printf_message(context, \
-                    _("%s has more than %d characters"), (name), (maximum)); \
+                    ngettext("%s has more than %d characters", \
+                        "%s has more than %d characters", (maximum)), \
+                    (name), (maximum)); \
             err = IE_2BIG; \
             goto leave; \
         } \
         if (length < (minimum)) { \
             isds_printf_message(context, \
-                    _("%s has less than %d characters"), (name), (minimum)); \
+                    ngettext("%s has less than %d characters", \
+                        "%s has less than %d characters", (minimum)), \
+                    (name), (minimum)); \
             err = IE_2SMALL; \
             goto leave; \
         } \
@@ -2430,8 +2434,8 @@ static isds_error extract_DbUserInfo(struct isds_ctx *context,
             if (err == IE_ENUM) {
                 err = IE_ISDS;
                 char *string_locale = utf82locale(string);
-                isds_printf_message(context, _("Unknown isds:userType: %s"), 
-                    string_locale);
+                isds_printf_message(context,
+                        _("Unknown isds:userType value: %s"), string_locale);
                 free(string_locale);
             }
             goto leave;
@@ -3134,7 +3138,7 @@ static isds_error find_and_extract_DmHash(struct isds_ctx *context,
     /* Get hash value */
     EXTRACT_STRING(".", string);
     if (!string) {
-        isds_printf_message(context, _("tHash element is missing hash value"));
+        isds_printf_message(context, _("sids:dmHash element is missing hash value"));
         err = IE_ISDS;
         goto leave;
     }
@@ -3494,7 +3498,9 @@ static isds_error insert_document(struct isds_ctx *context,
     base64data = (xmlChar *) b64encode(document->data, document->data_length);
     if (!base64data) {
         isds_printf_message(context,
-                _("Not enought memory to encode %zd bytes into Base64"),
+                ngettext("Not enought memory to encode %zd bytes into Base64",
+                    "Not enought memory to encode %zd bytes into Base64",
+                    document->data_length),
                 document->data_length);
         err = IE_NOMEM;
         goto leave;
@@ -4006,7 +4012,7 @@ isds_error isds_change_password(struct isds_ctx *context,
     request = xmlNewNode(NULL, BAD_CAST "ChangeISDSPassword");
     if (!request) {
         isds_log_message(context,
-                _("Could build ChangeISDSPassword request"));
+                _("Could not build ChangeISDSPassword request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);

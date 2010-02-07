@@ -210,7 +210,7 @@ _hidden isds_error extract_cms_data(struct isds_ctx *context,
                 case KSBA_CT_ENVELOPED_DATA:
                         type = _("encypted data by session key"); break;
                 case KSBA_CT_DIGESTED_DATA: type = _("digest data"); break;
-                case KSBA_CT_ENCRYPTED_DATA: type = _("encryoted data"); break;
+                case KSBA_CT_ENCRYPTED_DATA: type = _("encrypted data"); break;
                 case KSBA_CT_AUTH_DATA: type = _("auth data"); break;
                 default: type = _("other data");
             }
