@@ -6,25 +6,26 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: libisds 0.1\n"
-"Report-Msgid-Bugs-To: petr.pisar@atlas.cz\n"
-"POT-Creation-Date: 2010-02-04 19:08+0100\n"
-"PO-Revision-Date: 2010-02-07 15:16+0100\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2010-02-08 13:06+0100\n"
+"PO-Revision-Date: 2010-02-08 13:25+0100\n"
 "Last-Translator: Petr Pisar <petr.pisar@atlas.cz>\n"
 "Language-Team: Czech <translation-team-cs@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 
-#: src/crypto.c:21
+#: ../src/crypto.c:21
 msgid "Could not check gcrypt version\n"
 msgstr "Nebylo možné zkontrolovat verzi grcypt\n"
 
-#: src/crypto.c:34
+#: ../src/crypto.c:34
 #, c-format
 msgid "gcrypt version in use: %s\n"
 msgstr "Používá se gcrypt ve verzi: %s\n"
 
-#: src/crypto.c:55
+#: ../src/crypto.c:55
 #, c-format
 msgid ""
 "Data hash requested, length=%zu, content:\n"
@@ -35,119 +36,119 @@ msgstr ""
 "%*s\n"
 "Konec dat určených pro výpočet hashe\n"
 
-#: src/crypto.c:93
+#: ../src/crypto.c:93
 msgid "GPGME initialization failed\n"
-msgstr "Inicizalizace GPGME selhala\n"
+msgstr "Inicializace GPGME selhala\n"
 
-#: src/crypto.c:97
+#: ../src/crypto.c:97
 #, c-format
 msgid "GPGME version in use: %s\n"
 msgstr "Používá se GPGME ve verzi: %s\n"
 
-#: src/crypto.c:107
+#: ../src/crypto.c:107
 msgid "GPGME does not support CMS\n"
 msgstr "GPGME nepodporuje CMS\n"
 
-#: src/crypto.c:152
+#: ../src/crypto.c:152
 msgid "Could not allocate CMS parser handler"
 msgstr "Obsluhu parseru CMS nebylo možné alokovat"
 
-#: src/crypto.c:157
+#: ../src/crypto.c:157
 msgid "Could not allocate CMS reader"
 msgstr "Čtečku CMS nebylo možné alokovat"
 
-#: src/crypto.c:163 src/crypto.c:174
+#: ../src/crypto.c:163 ../src/crypto.c:174
 msgid "Could not bind CMS reader to PKCS#7 structure"
 msgstr "Nebylo možné napojit čtečku CMS na strukturu PKCS#7"
 
-#: src/crypto.c:168
+#: ../src/crypto.c:168
 msgid "Could not allocate CMS writer"
 msgstr "Zapisovadlo CMS nebylo možné alokovat"
 
-#: src/crypto.c:180
+#: ../src/crypto.c:180
 msgid "Could not register CMS reader to CMS handler"
 msgstr "Čtečku CMS nebylo možné zaregistrovat k obsluze CMS"
 
-#: src/crypto.c:197
+#: ../src/crypto.c:197
 #, c-format
 msgid "Error while parsing PKCS#7 structure: %s"
 msgstr "Chyba při rozebírání struktury PKCS#7: %s"
 
-#: src/crypto.c:202
+#: ../src/crypto.c:202
 msgid "CMS: Data begining found\n"
 msgstr "CMS: Začátek dat nalezen\n"
 
-#: src/crypto.c:207
+#: ../src/crypto.c:207
 msgid "uknown data"
 msgstr "neznámá data"
 
-#: src/crypto.c:208
+#: ../src/crypto.c:208
 msgid "plain data"
 msgstr "prostá data"
 
-#: src/crypto.c:209
+#: ../src/crypto.c:209
 msgid "signed data"
 msgstr "podepsaná data"
 
-#: src/crypto.c:211
+#: ../src/crypto.c:211
 msgid "encypted data by session key"
 msgstr "data zašifrovaná klíčem relace"
 
-#: src/crypto.c:212
+#: ../src/crypto.c:212
 msgid "digest data"
 msgstr "data kontrolního součtu"
 
-#: src/crypto.c:213
-msgid "encryoted data"
+#: ../src/crypto.c:213
+msgid "encrypted data"
 msgstr "zašifrovaná data"
 
-#: src/crypto.c:214
+#: ../src/crypto.c:214
 msgid "auth data"
 msgstr "autentizační data"
 
-#: src/crypto.c:215
+#: ../src/crypto.c:215
 msgid "other data"
 msgstr "jiná data"
 
-#: src/crypto.c:217
+#: ../src/crypto.c:217
 #, c-format
 msgid "CMS: Data type: %s\n"
 msgstr "CMS: Druh dat: %s\n"
 
-#: src/crypto.c:220
+#: ../src/crypto.c:220
 msgid "CMS: Data end found\n"
 msgstr "CMS: Konec dat nalezen\n"
 
-#: src/crypto.c:226
+#: ../src/crypto.c:226
 msgid "Getting CMS writer buffer failed"
 msgstr "Buffer pro zapisovadlo CMS se nepodařilo získat"
 
-#: src/crypto.c:256
+#: ../src/crypto.c:256
 #, c-format
 msgid "Could not create GPGME context: %s"
 msgstr "Kontext GPGME nebylo možné vytvořit: %s"
 
-#: src/crypto.c:260
+#: ../src/crypto.c:260
 #, c-format
 msgid "Could not set CMS protocol for GPGME context: %s"
 msgstr "Kontextu GPGME nebylo možné nastavit protokol CMS: %s"
 
-#: src/crypto.c:264
+#: ../src/crypto.c:264
 #, c-format
 msgid "Could not create data handler for signed message in CMS structure: %s"
-msgstr "Nebylo možné vytvořit obsluhu dat pro podepsanou zprávu ze struktury "
-"CMS: %s"
+msgstr ""
+"Nebylo možné vytvořit obsluhu dat pro podepsanou zprávu ze struktury CMS: %s"
 
-#: src/crypto.c:267
+#: ../src/crypto.c:267
 #, c-format
 msgid ""
 "Could not explain to GPGME that CMS structure was packed in DER binary "
 "format: %s"
 msgstr ""
-"Nebylo možné vysvětlit GPGME, že skuktura CMS je uložena v binárním formátu "
+"Nebylo možné vysvětlit GPGME, že struktura CMS je uložena v binárním formátu "
 "DER: %s"
 
-#: src/crypto.c:271
+#: ../src/crypto.c:271
 #, c-format
 msgid ""
 "Could not create data handler for plain message extracted from CMS "
@@ -156,1327 +157,1390 @@ msgstr ""
 "Nebylo možné vytvořit obsluhu dat pro prostou zprávu získanou ze struktury "
 "CMS: %s"
 
-#: src/crypto.c:279
+#: ../src/crypto.c:279
 #, c-format
 msgid "CMS verification failed: %s"
-msgstr "Oveření CMS se nezdařilo: %s"
+msgstr "Ověření CMS se nezdařilo: %s"
 
-#: src/crypto.c:293
+#: ../src/crypto.c:293
 msgid "Could not get plain data from GPGME after verifying CMS structure"
-msgstr "Nepodařilo se získat prostá data z GPGME po té, co byla struktura "
-"CMS ověřena"
+msgstr ""
+"Nepodařilo se získat prostá data z GPGME po té, co byla struktura CMS ověřena"
 
-#: src/isds.c:445
+#: ../src/isds.c:445
 msgid "CURL library initialization failed\n"
 msgstr "Inicializace knihovny CMS selhala\n"
 
-#: src/isds.c:452
+#: ../src/isds.c:452
 msgid "gpg-error library initialization failed\n"
-msgstr "Inicializace knihony gpg-error selhala\n"
+msgstr "Inicializace knihovny gpg-error selhala\n"
 
-#: src/isds.c:459
+#: ../src/isds.c:459
 msgid "GPGME library initialization failed\n"
 msgstr "Inicializace knihovny GPGME selhala\n"
 
-#: src/isds.c:466
+#: ../src/isds.c:466
 msgid "gcrypt library initialization failed\n"
 msgstr "Inicializace knihovny gcrypt selhala\n"
 
-#: src/isds.c:476
+#: ../src/isds.c:476
 msgid "expat library initialization failed\n"
 msgstr "Inicializace knihovny expat selhala\n"
 
-#: src/isds.c:504
+#: ../src/isds.c:504
 msgid "Success"
 msgstr "Úspěch"
 
-#: src/isds.c:506
+#: ../src/isds.c:506
 msgid "Unspecified error"
 msgstr "Blíže neurčená chyba"
 
-#: src/isds.c:508
+#: ../src/isds.c:508
 msgid "Not supported"
 msgstr "Není podporováno"
 
-#: src/isds.c:510
+#: ../src/isds.c:510
 msgid "Invalid value"
 msgstr "Neplatná hodnota"
 
-#: src/isds.c:512
+#: ../src/isds.c:512
 msgid "Invalid context"
 msgstr "Neplatný kontext"
 
-#: src/isds.c:514
+#: ../src/isds.c:514
 msgid "Not logged in"
 msgstr "Nepřihlášeno"
 
-#: src/isds.c:516
+#: ../src/isds.c:516
 msgid "Connection closed"
 msgstr "Spojení uzavřeno"
 
-#: src/isds.c:518
+#: ../src/isds.c:518
 msgid "Timed out"
 msgstr "Čas vypršel"
 
-#: src/isds.c:520
+#: ../src/isds.c:520
 msgid "Not exist"
 msgstr "Neexistuje"
 
-#: src/isds.c:522
+#: ../src/isds.c:522
 msgid "Out of memory"
 msgstr "Nedostatek paměti"
 
-#: src/isds.c:524
+#: ../src/isds.c:524
 msgid "Network problem"
 msgstr "Problém se sítí"
 
-#: src/isds.c:526
+#: ../src/isds.c:526
 msgid "HTTP problem"
 msgstr "Problém HTTP"
 
-#: src/isds.c:528
+#: ../src/isds.c:528
 msgid "SOAP problem"
 msgstr "Problém v SOAP"
 
-#: src/isds.c:530
+#: ../src/isds.c:530
 msgid "XML problem"
 msgstr "Problém s XML"
 
-#: src/isds.c:532
+#: ../src/isds.c:532
 msgid "ISDS server problem"
 msgstr "Problém serveru ISDS"
 
-#: src/isds.c:534
+#: ../src/isds.c:534
 msgid "Invalid enum value"
 msgstr "Neplatní výčtová hodnota"
 
-#: src/isds.c:536
+#: ../src/isds.c:536
 msgid "Invalid date value"
 msgstr "Neplatná hodnota data"
 
-#: src/isds.c:538
+#: ../src/isds.c:538
 msgid "Too big"
 msgstr "Příliš velké"
 
-#: src/isds.c:540
+#: ../src/isds.c:540
 msgid "Too small"
 msgstr "Příliš malé"
 
-#: src/isds.c:542
+#: ../src/isds.c:542
 msgid "Value not unique"
 msgstr "Hodnota není jedinečná"
 
-#: src/isds.c:544
+#: ../src/isds.c:544
 msgid "Values not uqual"
 msgstr "Hodnoty se nerovnají"
 
-#: src/isds.c:546
+#: ../src/isds.c:546
 msgid "Some suboperations failed"
 msgstr "Některé podoperace selhaly"
 
-#: src/isds.c:548
+#: ../src/isds.c:548
 msgid "Unknown error"
 msgstr "Neznámá chyba"
 
-#: src/isds.c:857
+#: ../src/isds.c:857
 msgid "Could build ISDS login request"
 msgstr "Požadavek na přihlášení do ISDS nebylo možné sestavit"
 
-#: src/isds.c:862 src/isds.c:956 src/isds.c:1019 src/isds.c:1134
-#: src/isds.c:3651 src/isds.c:4014 src/isds.c:4287 src/isds.c:4468
-#: src/isds.c:4532 src/isds.c:4613 src/isds.c:4757 src/isds.c:4826
-#: src/isds.c:4922 src/isds.c:5028 src/isds.c:5215 src/isds.c:5446
-#: src/isds.c:5527 src/isds.c:5750 src/isds.c:5958 src/isds.c:6205
-#: src/isds.c:6533
+#: ../src/isds.c:862 ../src/isds.c:956 ../src/isds.c:1019 ../src/isds.c:1134
+#: ../src/isds.c:3657 ../src/isds.c:4020 ../src/isds.c:4293 ../src/isds.c:4474
+#: ../src/isds.c:4538 ../src/isds.c:4619 ../src/isds.c:4763 ../src/isds.c:4832
+#: ../src/isds.c:4928 ../src/isds.c:5034 ../src/isds.c:5221 ../src/isds.c:5452
+#: ../src/isds.c:5533 ../src/isds.c:5756 ../src/isds.c:5964 ../src/isds.c:6211
+#: ../src/isds.c:6539
 msgid "Could not create ISDS name space"
 msgstr "Nebylo možné vytvořit jmenný prostor ISDS"
 
-#: src/isds.c:880
+#: ../src/isds.c:880
 #, c-format
 msgid "Logging user %s into server %s\n"
-msgstr "Probíhá přihlašování uživetele %s na server %s\n"
+msgstr "Probíhá přihlašování uživatele %s na server %s\n"
 
-#: src/isds.c:906
+#: ../src/isds.c:906
 #, c-format
 msgid "User %s has been logged into server %s successfully\n"
 msgstr "Uživatele %s byl úspěšně přihlášen na server %s\n"
 
-#: src/isds.c:926
+#: ../src/isds.c:926
 msgid "Logged out from ISDS server\n"
 msgstr "Odhlášeno ze serveru ISDS\n"
 
-#: src/isds.c:951
+#: ../src/isds.c:951
 msgid "Could build ISDS dummy request"
 msgstr "Nebylo možné sestavit prostoduchý požadavek na ISDS"
 
-#: src/isds.c:962
+#: ../src/isds.c:962
 msgid "Pinging ISDS server\n"
 msgstr "Pinkám do serveru ISDS\n"
 
-#: src/isds.c:972
+#: ../src/isds.c:972
 msgid "ISDS server could not be contacted\n"
 msgstr "Server ISDS nebylo možné kontaktovat\n"
 
-#: src/isds.c:986
+#: ../src/isds.c:986
 msgid "ISDS server alive\n"
 msgstr "Server ISDS je na živu\n"
 
-#: src/isds.c:1006
+#. Testing printf message
+#: ../src/isds.c:1006
 msgid "I said connection closed"
 msgstr "Řekl jsem, že spojení je uzavřeno"
 
-#: src/isds.c:1014
+#: ../src/isds.c:1014
 msgid "Could build ISDS bogus request"
 msgstr "Nebylo možné sestavit rozbitý požadavek na ISDS"
 
-#: src/isds.c:1025
+#: ../src/isds.c:1025
 msgid "Sending bogus request to ISDS\n"
-msgstr "Do ISDS se odesílá poškozený požadevk\n"
+msgstr "Do ISDS se odesílá poškozený požadavek\n"
 
-#: src/isds.c:1035
+#: ../src/isds.c:1035
 msgid "Processing ISDS response on bogus request failed\n"
-msgstr "Zpracování odpovědi ISDS na pošekozený požadavek selhalo\n"
+msgstr "Zpracování odpovědi ISDS na poškozený požadavek selhalo\n"
 
-#: src/isds.c:1045
+#: ../src/isds.c:1045
 msgid "ISDS response on bogus request is missing status\n"
 msgstr "Odpověď ISDS na poškozený požadavek postrádá status\n"
 
-#: src/isds.c:1055
+#: ../src/isds.c:1055
 #, c-format
 msgid "Server refused bogus request (code=%s, message=%s)\n"
 msgstr "Server odmítl poškozený požadavek (kód=%s, zpráva=%s)\n"
 
-#: src/isds.c:1076
+#: ../src/isds.c:1076
 msgid "Bogus message accepted by server. This should not happen.\n"
 msgstr "Poškozená zpráva přijata severem. Toto by se stát nemělo.\n"
 
-#: src/isds.c:1111
+#: ../src/isds.c:1111
 msgid "Could not build temporary document"
 msgstr "Nebylo možné sestavit dočasný dokument"
 
-#: src/isds.c:1123
+#: ../src/isds.c:1123
 msgid "Could not copy subtree"
 msgstr "Nebylo možné zkopírovat podstrom"
 
-#: src/isds.c:1144 src/isds.c:1219 src/isds.c:1287
+#: ../src/isds.c:1144 ../src/isds.c:1219 ../src/isds.c:1287
 msgid "Could not create xmlBuffer"
 msgstr "Nebylo možné vytvořit xmlBuffer"
 
-#: src/isds.c:1151 src/isds.c:1302 src/soap.c:493
+#: ../src/isds.c:1151 ../src/isds.c:1302 ../src/soap.c:493
 msgid "Could not create XML serializer"
 msgstr "Nebylo možné vytvořit serializátor XML"
 
-#: src/isds.c:1160 src/isds.c:1325
+#: ../src/isds.c:1160 ../src/isds.c:1325
 msgid "Could not serialize XML subtree"
 msgstr "Podstrom XML nebylo možné zapsat jako řetězec"
 
-#: src/isds.c:1230
+#: ../src/isds.c:1230
 msgid "Could not dump XML node"
 msgstr "Uzel XML nebylo možné vypsat"
 
-#: src/isds.c:1292
+#: ../src/isds.c:1292
 msgid "Could not disable attribute escaping"
 msgstr "Nebylo možné zakázat escapování atributů"
 
-#: src/isds.c:1669
+#: ../src/isds.c:1669
 #, c-format
 msgid "Invalid messsage status value: %lu"
 msgstr "Neplatná hodnota stavu zprávy: %lu"
 
-#: src/isds.c:1735
+#: ../src/isds.c:1735
 #, c-format
 msgid "Uknown delivery info event prefix: %s\n"
 msgstr "Neznámá předpona informace o události doručení: %s\n"
 
-#: src/isds.c:1756
+#. Following EXTRACT_* macros expects @result, @xpath_ctx, @err, @context
+#. * and leave lable
+#: ../src/isds.c:1756
 #, c-format
 msgid "Multiple %s element"
 msgstr "Násobný element %s"
 
-#: src/isds.c:1791
+#: ../src/isds.c:1791
 #, c-format
-msgid "%s value is not valid boolean: "
-msgstr "Hodnota %s není platnou pravdivostní hodnotou: "
+msgid "%s value is not valid boolean: %s"
+msgstr "Hodnota %s není platnou pravdivostní hodnotou: %s"
 
-#: src/isds.c:1816 src/isds.c:1861
+#: ../src/isds.c:1816 ../src/isds.c:1861
 #, c-format
 msgid "%s is not valid integer: %s"
 msgstr "%s není platné celé číslo: %s"
 
-#: src/isds.c:1827 src/isds.c:1872
+#: ../src/isds.c:1827 ../src/isds.c:1872
 #, c-format
 msgid "%s value out of range of long int: %s"
 msgstr "Hodnota %s je mimo rozsah platnosti long int: %s"
 
-#: src/isds.c:1883
+#: ../src/isds.c:1883
 #, c-format
 msgid "%s value is negative: %ld"
 msgstr "Hodnota %s je záporná: %ld"
 
-#: src/isds.c:1906
+#: ../src/isds.c:1906
 #, c-format
 msgid "Could not extract required %s attribute value from %s element"
 msgstr "Hodnotu požadovaného atributu %s elementu %s nebylo možné získat"
 
-#: src/isds.c:1922 src/isds.c:2015
+#: ../src/isds.c:1922 ../src/isds.c:2019
 #, c-format
 msgid "Could not add %s child to %s element"
 msgstr "K elementu %s nebylo možné přidat potomka %s"
 
-#: src/isds.c:1984
+#. FIXME: locale sensitive
+#. FIXME: locale sensitive
+#. FIXME: locale sensitive
+#: ../src/isds.c:1984
 #, c-format
 msgid "Could not add %s attribute to %s element"
 msgstr "K elementu %s nebylo možné přidat atribut %s"
 
-#: src/isds.c:1997
+#: ../src/isds.c:1997
 #, c-format
 msgid "%s has more than %d characters"
-msgstr "%s má více než %d znaků"
+msgid_plural "%s has more than %d characters"
+msgstr[0] "%s má více než %d znak"
+msgstr[1] "%s má více než %d znaky"
+msgstr[2] "%s má více než %d znaků"
 
-#: src/isds.c:2003
+#: ../src/isds.c:2005
 #, c-format
 msgid "%s has less than %d characters"
-msgstr "%s má méně než %d znaků"
+msgid_plural "%s has less than %d characters"
+msgstr[0] "%s má méně než %d znak"
+msgstr[1] "%s má méně než %d znaky"
+msgstr[2] "%s má méně než %d znaků"
 
-#: src/isds.c:2049
+#: ../src/isds.c:2053
 #, c-format
 msgid "%s element does not contain %s child"
 msgstr "Element %s neobsahuje potomka %s"
 
-#: src/isds.c:2062
+#: ../src/isds.c:2066
 #, c-format
 msgid "%s element contains multiple %s childs"
 msgstr "Element %s obsahuje více potomků %s"
 
-#: src/isds.c:2196
+#: ../src/isds.c:2200
 #, c-format
 msgid "Invalid isds:biDate value: %s"
-msgstr "Neplatní hotnota isds:biDate: %s"
+msgstr "Neplatná hodnota isds:biDate: %s"
 
-#: src/isds.c:2251
+#: ../src/isds.c:2255
 #, c-format
 msgid "Unknown isds:dbType: %s"
-msgstr "Neznámá hotnota isds:dbType: %s"
+msgstr "Neznámá hodnota isds:dbType: %s"
 
-#: src/isds.c:2332
+#: ../src/isds.c:2336
 #, c-format
 msgid "Invalid dbType value: %d"
-msgstr "Neplatná hotnota dbType: %d"
+msgstr "Neplatná hodnota dbType: %d"
 
-#: src/isds.c:2433
+#: ../src/isds.c:2438
 #, c-format
-msgid "Unknown isds:userType: %s"
-msgstr "Neznámý isds:userType: %s"
+msgid "Unknown isds:userType value: %s"
+msgstr "Neznámá hodnota isds:userType: %s"
 
-#: src/isds.c:2523
+#: ../src/isds.c:2527
 #, c-format
 msgid "Invalid userType value: %d"
 msgstr "Neplatná hodnota userType: %d"
 
-#: src/isds.c:2730
+#: ../src/isds.c:2734
 msgid "Missing mandatory sisds:dmMessageStatus integer"
 msgstr "Chybí povinné celé číslo sisds:dmMessageStatus"
 
-#: src/isds.c:2753
+#: ../src/isds.c:2757
 #, c-format
 msgid "Could not convert dmDeliveryTime as ISO time: %s"
 msgstr "dmDeliveryTime nebylo možné převést jako ISO čas: %s"
 
-#: src/isds.c:2769
+#: ../src/isds.c:2773
 #, c-format
 msgid "Could not convert dmAcceptanceTime as ISO time: %s"
 msgstr "dmAcceptanceTime nebylo možné převést jako ISO čas: %s"
 
-#: src/isds.c:2831
+#: ../src/isds.c:2835
 #, c-format
 msgid "Message type in dmType attribute is not 1 character long: %s"
 msgstr "Druh zprávy v atributu dmType není dlouhý jeden znak: %s"
 
-#: src/isds.c:2878
+#: ../src/isds.c:2882
 #, c-format
 msgid "Document has invalid dmFileMetaType attribute value: %s"
 msgstr "Dokument má neplatnou hodnotu atributu dmFileMetaType: %s"
 
-#: src/isds.c:2908
+#: ../src/isds.c:2912
 msgid "Document has more dmEncodedContent elements"
 msgstr "Dokument má více elementů dmEncodedContent"
 
-#: src/isds.c:2921
+#: ../src/isds.c:2925
 msgid "Error while Base64-decoding document content"
 msgstr "Chyba při dekódování obsahu dokumentu z Base64"
 
-#: src/isds.c:2941
+#: ../src/isds.c:2945
 msgid "Document has more dmXMLContent elements"
 msgstr "Dokument má více elementů dmXMLContent"
 
-#: src/isds.c:2948
+#: ../src/isds.c:2952
 msgid "XML documents not yet supported"
 msgstr "Dokumenty XML ještě nejsou podporovány"
 
-#: src/isds.c:2954
+#: ../src/isds.c:2958
 msgid "Document has no dmEncodedContent, nor dmXMLContent element"
 msgstr "Dokument nemá ani element dmEncodedContent, ani dmXMLContent"
 
-#: src/isds.c:2999
+#: ../src/isds.c:3003
 msgid "Message does not contain any document"
 msgstr "Zpráva neobsahuje žádný dokument"
 
-#: src/isds.c:3126
+#: ../src/isds.c:3130
 #, c-format
 msgid "Unsported hash algorithm: %s"
 msgstr "Nepodporovaný hashovací algoritmus: %s"
 
-#: src/isds.c:3137
-msgid "tHash element is missing hash value"
-msgstr "Element tHash postrádá hodnotu hashe"
+#: ../src/isds.c:3141
+msgid "sids:dmHash element is missing hash value"
+msgstr "Element sids:dmHash postrádá hodnotu hashe"
 
-#: src/isds.c:3144
+#: ../src/isds.c:3148
 msgid "Error while Base64-decoding hash value"
-msgstr "Chyba při dokódování hodnoty hashe z Base64"
+msgstr "Chyba při dekódování hodnoty hashe z Base64"
 
-#: src/isds.c:3191
+#: ../src/isds.c:3195
 msgid "Missing dmQTimestamp element content"
 msgstr "Element dmQTimestamp postrádá obsah"
 
-#: src/isds.c:3199
+#: ../src/isds.c:3203
 msgid "Error while Base64-decoding timestamp value"
 msgstr "Chyba při dekódování hodnoty časového razítka z Base64"
 
-#: src/isds.c:3324
+#: ../src/isds.c:3328
 #, c-format
 msgid "Could not convert dmEventTime as ISO time: %s"
-msgstr "dmEventTime nebylo možné prevést jako ISO čas: %s"
+msgstr "dmEventTime nebylo možné převést jako ISO čas: %s"
 
-#: src/isds.c:3379
+#: ../src/isds.c:3383
 msgid "Delivery info does not contain any event"
-msgstr "Informace o doruční neobsahují žádnou událost"
+msgstr "Informace o doručení neobsahují žádnou událost"
 
-#: src/isds.c:3433
+#: ../src/isds.c:3437
 msgid "Could not allocate main dmFile"
 msgstr "Nebylo možné alokovat hlavní dmFile"
 
-#: src/isds.c:3446
+#: ../src/isds.c:3450
 #, c-format
 msgid "Could not add dmFile child to %s element"
 msgstr "K elementu %s nebylo možné přidat potomka dmFile"
 
-#: src/isds.c:3455
+#: ../src/isds.c:3459
 msgid "Document is missing mandatory MIME type definition"
-msgstr "Dokument postrádá povinnou deifinici typu MIME"
+msgstr "Dokument postrádá povinnou definici typu MIME"
 
-#: src/isds.c:3464
+#: ../src/isds.c:3468
 #, c-format
 msgid "Document has unkown dmFileMetaType: %ld"
 msgstr "Dokument má neznámý dmFileMetaType: %ld"
 
-#: src/isds.c:3481
+#: ../src/isds.c:3485
 msgid "Document is missing mandatory description (title)"
 msgstr "Dokument postrádá povinný popis (název)"
 
-#: src/isds.c:3497
+#: ../src/isds.c:3501
 #, c-format
 msgid "Not enought memory to encode %zd bytes into Base64"
-msgstr "Nedostatek paměti na zakódování %zd bajtů do Base64"
+msgid_plural "Not enought memory to encode %zd bytes into Base64"
+msgstr[0] "Nedostatek paměti na zakódování %zd bajtu do Base64"
+msgstr[1] "Nedostatek paměti na zakódování %zd bajtů do Base64"
+msgstr[2] "Nedostatek paměti na zakódování %zd bajtů do Base64"
 
-#: src/isds.c:3532
+#: ../src/isds.c:3538
 msgid "Missing isds:dmStatusCode under XSD:tMStatus type element"
 msgstr "Pod elementem typu XSD:tMStatus chybí isds:dmStatusCode"
 
-#: src/isds.c:3558
+#: ../src/isds.c:3564
 msgid ""
 "Server accepted sent message, but did not returned assigned message ID\n"
 msgstr ""
-"Server přijal odeslanou zprávu, ale nevrátil přiřazený identifikátor "
-"zprávy\n"
+"Server přijal odeslanou zprávu, ale nevrátil přiřazený identifikátor zprávy\n"
 
-#: src/isds.c:3645 src/isds.c:4607 src/isds.c:5440 src/isds.c:5521
-#: src/isds.c:6527
+#: ../src/isds.c:3651 ../src/isds.c:4613 ../src/isds.c:5446 ../src/isds.c:5527
+#: ../src/isds.c:6533
 #, c-format
 msgid "Could not build %s request"
 msgstr "Požadavek %s nebylo možné sestavit"
 
-#: src/isds.c:3662 src/isds.c:4145
+#: ../src/isds.c:3668 ../src/isds.c:4151
 #, c-format
 msgid "Sending %s request to ISDS\n"
 msgstr "Odesílá se požadavek %s do ISDS\n"
 
-#: src/isds.c:3672 src/isds.c:4154 src/isds.c:6557
+#: ../src/isds.c:3678 ../src/isds.c:4160 ../src/isds.c:6563
 #, c-format
 msgid "Processing ISDS response on %s request failed\n"
 msgstr "Zpracování odpovědi ISDS na požadavek %s selhalo\n"
 
-#: src/isds.c:3682 src/isds.c:4164 src/isds.c:6567
+#: ../src/isds.c:3688 ../src/isds.c:4170 ../src/isds.c:6573
 #, c-format
 msgid "ISDS response on %s request is missing status\n"
 msgstr "Odpověď ISDS na požadavek %s postrádá status\n"
 
-#: src/isds.c:3692 src/isds.c:4174
+#: ../src/isds.c:3698 ../src/isds.c:4180
 #, c-format
 msgid "Server refused %s request (code=%s, message=%s)\n"
-msgstr "Server odmítnul požadavek %s (kód=%s, zpráva=%s)\n"
+msgstr "Server odmítl požadavek %s (kód=%s, zpráva=%s)\n"
 
-#: src/isds.c:3758
+#: ../src/isds.c:3764
 msgid "Missing dbOwnerInfo element"
 msgstr "Chybí element dbOwnerInfo"
 
-#: src/isds.c:3763
+#: ../src/isds.c:3769
 msgid "Multiple dbOwnerInfo element"
 msgstr "Násobný element dbOwnerInfo"
 
-#: src/isds.c:3788
+#: ../src/isds.c:3794
 msgid "GetOwnerInfoFromLogin request processed by server successfully.\n"
 msgstr "Požadavek GetOwnerInfoFromLogin úspěšně zpracován serverem.\n"
 
-#: src/isds.c:3844 src/isds.c:4682
+#: ../src/isds.c:3850 ../src/isds.c:4688
 msgid "Missing dbUserInfo element"
 msgstr "Chybí element dbUserInfo"
 
-#: src/isds.c:3849
+#: ../src/isds.c:3855
 msgid "Multiple dbUserInfo element"
 msgstr "Násobný element dbUserInfo"
 
-#: src/isds.c:3873
+#: ../src/isds.c:3879
 msgid "GetUserInfoFromLogin request processed by server successfully.\n"
 msgstr "Požadavek GetUserInfoFromLogin úspěšně zpracován serverem.\n"
 
-#: src/isds.c:3927
+#: ../src/isds.c:3933
 msgid "Missing GetPasswordInfoResponse element"
 msgstr "Chybí element GetPasswordInfoResponse"
 
-#: src/isds.c:3933
+#: ../src/isds.c:3939
 msgid "Multiple GetPasswordInfoResponse element"
 msgstr "Násobný element GetPasswordInfoResponse"
 
-#: src/isds.c:3943
+#: ../src/isds.c:3949
 msgid "Missing pswExpDate element"
 msgstr "Chybí element pswExpDate"
 
-#: src/isds.c:3953
+#: ../src/isds.c:3959
 #, c-format
 msgid "Could not convert pswExpDate as ISO time: %s"
-msgstr "pswExpDate nebylo možné prevést jako ISO čas: %s"
+msgstr "pswExpDate nebylo možné převést jako ISO čas: %s"
 
-#: src/isds.c:3976
+#: ../src/isds.c:3982
 msgid "GetPasswordInfo request processed by server successfully.\n"
-msgstr "Požadavel GetPasswordInfo úspěšně zpracován serverem.\n"
+msgstr "Požadavek GetPasswordInfo úspěšně zpracován serverem.\n"
 
-#: src/isds.c:4009
-msgid "Could build ChangeISDSPassword request"
-msgstr ""
+#: ../src/isds.c:4015
+msgid "Could not build ChangeISDSPassword request"
+msgstr "Požadavek ChangeISDSPassword nebylo možné sestavit"
 
-#: src/isds.c:4024 src/isds.c:5229
+#: ../src/isds.c:4030 ../src/isds.c:5235
 msgid "Sending CheckDataBox request to ISDS\n"
-msgstr "Požadavek CheckDataBox se odesálá do ISDS\n"
+msgstr "Požadavek CheckDataBox se odesílá do ISDS\n"
 
-#: src/isds.c:4034
+#: ../src/isds.c:4040
 msgid "Processing ISDS response on ChangeISDSPassword request failed\n"
-msgstr "Zpracování odpovědi ISDS na požadavek ChangeISDSPassword seůhalo\n"
+msgstr "Zpracování odpovědi ISDS na požadavek ChangeISDSPassword selhalo\n"
 
-#: src/isds.c:4044
+#: ../src/isds.c:4050
 msgid "ISDS response on ChangeISDSPassword request is missing status\n"
 msgstr "Odpověď ISDS na požadavek ChangeISDSPassword postrádá status\n"
 
-#: src/isds.c:4054
+#: ../src/isds.c:4060
 #, c-format
 msgid ""
 "Server refused empty password on ChangeISDSPassword request (code=%s, "
 "message=%s)\n"
 msgstr ""
-"Server odmítnul prázdné heslo v požadavku ChangeISDSPassword (kód=%s, "
-"zpráva=%s)\n"
+"Server odmítl prázdné heslo v požadavku ChangeISDSPassword (kód=%s, zpráva=%"
+"s)\n"
 
-#: src/isds.c:4057
+#: ../src/isds.c:4063
 msgid "Password must not be empty"
 msgstr "Heslo nesmí být prázdné"
 
-#: src/isds.c:4069
+#: ../src/isds.c:4075
 #, c-format
 msgid ""
 "Server refused the same new password on ChangeISDSPassword request (code=%s, "
 "message=%s)\n"
 msgstr ""
-"Server odmítnul v požadavku ChangeISDSPassword shodné nové heslo (kód=%s, "
+"Server odmítl v požadavku ChangeISDSPassword shodné nové heslo (kód=%s, "
 "zpráva=%s)\n"
 
-#: src/isds.c:4073
+#: ../src/isds.c:4079
 msgid "New password must differ from the current one"
 msgstr "Nové heslo se musí lišit od hesla současného"
 
-#: src/isds.c:4085
+#: ../src/isds.c:4091
 #, c-format
 msgid ""
 "Server refused to change password on ChangeISDSPassword request (code=%s, "
 "message=%s)\n"
 msgstr ""
+"Při požadavku ChangeISDSPassword odmítl server změnit heslo (kód=%s, zpráva=%"
+"s)\n"
 
-#: src/isds.c:4105
+#: ../src/isds.c:4111
 msgid "Password changed successfully on ChangeISDSPassword request.\n"
-msgstr ""
+msgstr "Heslo úspěšně změněno požadavkem ChangeISDSPassword.\n"
 
-#: src/isds.c:4236 src/isds.c:5363
+#: ../src/isds.c:4242 ../src/isds.c:5369
 #, c-format
 msgid "%s request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek %s úspěšně zpracován serverem.\n"
 
-#: src/isds.c:4280 src/isds.c:4915
+#: ../src/isds.c:4286 ../src/isds.c:4921
 #, c-format
 msgid "Could build %s request"
-msgstr ""
+msgstr "Požadavek %s nebylo možné sestavit"
 
-#: src/isds.c:4390
+#: ../src/isds.c:4396
 msgid "CreateDataBox request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek CreateDataBox úspěšně zpracován serverem.\n"
 
-#: src/isds.c:4463
+#: ../src/isds.c:4469
 msgid "Could build DeleteDataBox request"
-msgstr ""
+msgstr "Požadavek DeleteDataBox nebylo možné sestavit"
 
-#: src/isds.c:4481 src/isds.c:5543
+#: ../src/isds.c:4487 ../src/isds.c:5549
 msgid "Could not convert `since' argument to ISO date string"
-msgstr ""
+msgstr "Argument „since“ nebylo možné převést na ISO datum"
 
-#: src/isds.c:4527
+#: ../src/isds.c:4533
 msgid "Could build UpdateDataBoxDescr request"
-msgstr ""
+msgstr "Požadavek UpdateDataBoxDescr nebylo možné sestavit"
 
-#: src/isds.c:4719
+#: ../src/isds.c:4725
 msgid "GetDataBoxUsers request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek GetDataBoxUsers úspěšně zpracován serverem.\n"
 
-#: src/isds.c:4752
+#: ../src/isds.c:4758
 msgid "Could build UpdateDataBoxUser request"
-msgstr ""
+msgstr "Požadavek UpdateDataBoxUser nebylo možné sestavit"
 
-#: src/isds.c:4821
+#: ../src/isds.c:4827
 msgid "Could build NewAccessData request"
-msgstr ""
+msgstr "Požadavek NewAccessData nebylo možné sestavit"
 
-#: src/isds.c:4881
+#: ../src/isds.c:4887
 msgid "NewAccessData request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek NewAccessData úspěšně zpracován serverem.\n"
 
-#: src/isds.c:5023
+#: ../src/isds.c:5029
 msgid "Could build FindDataBox request"
-msgstr ""
+msgstr "Požadavek FindDataBox nebylo možné sestavit"
 
-#: src/isds.c:5035
-msgid "Could not add dbOwnerInfo Child to FindDataBox element"
-msgstr ""
+#: ../src/isds.c:5041
+msgid "Could not add dbOwnerInfo child to FindDataBox element"
+msgstr "Do elementu FindDataBox nebylo možné přidat potomka dbOwnerInfo"
 
-#: src/isds.c:5045
+#: ../src/isds.c:5051
 msgid "Sending FindDataBox request to ISDS\n"
-msgstr ""
+msgstr "Požadavek FindDataBox se odesílá do ISDS\n"
 
-#: src/isds.c:5055
+#: ../src/isds.c:5061
 msgid "Processing ISDS response on FindDataBox request failed\n"
-msgstr ""
+msgstr "Zpracování odpovědi ISDS na požadavek FindDataBox selhalo\n"
 
-#: src/isds.c:5065
+#: ../src/isds.c:5071
 msgid "ISDS response on FindDataBox request is missing status\n"
-msgstr ""
+msgstr "Odpověď ISDS na požadavek FindDataBox postrádá status\n"
 
-#: src/isds.c:5075
+#: ../src/isds.c:5081
 #, c-format
 msgid ""
 "Server did not found any box on FindDataBox request (code=%s, message=%s)\n"
 msgstr ""
+"Server při požadavku FindDataBox nenalezl žádnou schránku (kód=%s, zpráva=%"
+"s)\n"
 
-#: src/isds.c:5089
+#: ../src/isds.c:5095
 #, c-format
 msgid ""
 "Server truncated response on FindDataBox request (code=%s, message=%s)\n"
-msgstr ""
+msgstr "Server zkrátil odpověď na požadavek FindDataBox (kód=%s, zpráva=%s)\n"
 
-#: src/isds.c:5102
+#: ../src/isds.c:5108
 #, c-format
 msgid "Server refused FindDataBox request (code=%s, message=%s)\n"
-msgstr ""
+msgstr "Server odmítl požadavek FindDataBox (kód=%s, zpráva=%s)\n"
 
-#: src/isds.c:5168
+#: ../src/isds.c:5174
 msgid "FindDataBox request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek FindDataBox úspěšně zpracován serverem.\n"
 
-#: src/isds.c:5210
+#: ../src/isds.c:5216
 msgid "Could build CheckDataBox request"
-msgstr ""
+msgstr "Požadavek CheckDataBox nebylo možné sestavit"
 
-#: src/isds.c:5222
-msgid "Could not add dbId Child to CheckDataBox element"
-msgstr ""
+#: ../src/isds.c:5228
+msgid "Could not add dbID child to CheckDataBox element"
+msgstr "Do elementu CheckDataBox nebylo možné přidat potomka dbID"
 
-#: src/isds.c:5239
+#: ../src/isds.c:5245
 msgid "Processing ISDS response on CheckDataBox request failed\n"
-msgstr ""
+msgstr "Zpracování odpovědi ISDS na požadavek CheckDataBox selhalo\n"
 
-#: src/isds.c:5249
+#: ../src/isds.c:5255
 msgid "ISDS response on CheckDataBox request is missing status\n"
-msgstr ""
+msgstr "Odpověď ISDS na požadavek CheckDataBox postrádá status\n"
 
-#: src/isds.c:5259
+#: ../src/isds.c:5265
 #, c-format
 msgid ""
 "Server did not found box %s on CheckDataBox request (code=%s, message=%s)\n"
 msgstr ""
+"Server při požadavku CheckDataBox nenalezl schránku %s (kód=%s, zpráva=%s)\n"
 
-#: src/isds.c:5275
+#: ../src/isds.c:5281
 #, c-format
 msgid "Server refused CheckDataBox request (code=%s, message=%s)\n"
-msgstr ""
+msgstr "Server odmítl požadavek CheckDataBox (kód=%s, zpráva=%s)\n"
 
-#: src/isds.c:5301
+#: ../src/isds.c:5307
 msgid "Missing CheckDataBoxResponse element"
-msgstr ""
+msgstr "Chybí element CheckDataBoxResponse"
 
-#: src/isds.c:5306
+#: ../src/isds.c:5312
 msgid "Multiple CheckDataBoxResponse element"
-msgstr ""
+msgstr "Násobný element CheckDataBoxResponse"
 
-#: src/isds.c:5327
+#: ../src/isds.c:5333
 msgid "CheckDataBox request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek CheckDataBox úspěšně zpracován serverem.\n"
 
-#: src/isds.c:5589
+#: ../src/isds.c:5595
 #, c-format
 msgid "Could not add dmEnvelope child to %s element"
-msgstr ""
+msgstr "Do elementu %s nebylo možné přidat potomka dmEnvelope"
 
-#: src/isds.c:5595
+#: ../src/isds.c:5601
 msgid "Outgoing message is missing envelope"
-msgstr ""
+msgstr "Odchozí zpráva postrádá obálku"
 
-#: src/isds.c:5608
+#: ../src/isds.c:5614
 msgid "Outgoing message is missing recipient box identifier"
-msgstr ""
+msgstr "Odchozí zpráva postrádá identifikátor schránky příjemce"
 
-#: src/isds.c:5672
+#: ../src/isds.c:5678
 msgid "Outgoing message is missing list of documents"
-msgstr ""
+msgstr "Odchozí zpráva postrádá seznam dokumentů"
 
-#: src/isds.c:5678
+#: ../src/isds.c:5684
 #, c-format
 msgid "Could not add dmFiles child to %s element"
-msgstr ""
+msgstr "Do elementu %s nebylo možné přidat potomka dmFiles"
 
-#: src/isds.c:5694
+#: ../src/isds.c:5700
 msgid "List of documents contains empty item"
-msgstr ""
+msgstr "Seznam dokumentů obsahuje prázdnou položku"
 
-#: src/isds.c:5745
+#: ../src/isds.c:5751
 msgid "Could build CreateMessage request"
-msgstr ""
+msgstr "Požadavek CreateMessage nebyl možné sestavit"
 
-#: src/isds.c:5765
+#: ../src/isds.c:5771
 msgid "Sending CreateMessage request to ISDS\n"
-msgstr ""
+msgstr "Požadavek CreateMessage se odesílá do ISDS\n"
 
-#: src/isds.c:5774
+#: ../src/isds.c:5780
 msgid "Processing ISDS response on CreateMessage request failed\n"
-msgstr ""
+msgstr "Zpracování odpovědi ISDS na požadavek CreateMessage selhalo\n"
 
-#: src/isds.c:5784
+#: ../src/isds.c:5790
 msgid "ISDS response on CreateMessage request is missing status\n"
-msgstr ""
+msgstr "Odpověď ISDS na požadavek CreateMessage postrádá status\n"
 
-#: src/isds.c:5796
+#: ../src/isds.c:5802
 #, c-format
 msgid ""
 "Server did not accept message for %s on CreateMessage request (code=%s, "
 "message=%s)\n"
 msgstr ""
+"Server nepřijal zprávu z požadavku CreateMessage pro %s (kód=%s, zpráva=%s)\n"
 
-#: src/isds.c:5825
+#: ../src/isds.c:5831
 msgid "Missing CreateMessageResponse element"
-msgstr ""
+msgstr "Chybí element CreateMessageResponse"
 
-#: src/isds.c:5830
+#: ../src/isds.c:5836
 msgid "Multiple CreateMessageResponse element"
-msgstr ""
+msgstr "Násobný element CreateMessageResponse"
 
-#: src/isds.c:5843
-msgid "Server accepted sent message, but did not returen assigned message ID\n"
+#: ../src/isds.c:5849
+msgid "Server accepted sent message, but did not return assigned message ID\n"
 msgstr ""
+"Server přijal odeslanou zprávu, ale nevrátil identifikátor přidělený zprávě\n"
 
-#: src/isds.c:5903
+#: ../src/isds.c:5909
 msgid "CreateMessage request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek CreateMessage úspěšně zpracován serverem.\n"
 
-#: src/isds.c:5953
-msgid "Could build CreateMultipleMessage request"
-msgstr ""
+#: ../src/isds.c:5959
+msgid "Could not build CreateMultipleMessage request"
+msgstr "Požadavek CreateMultipleMessage nebylo možné sestavit"
 
-#: src/isds.c:5968
+#: ../src/isds.c:5974
 msgid "Could not add dmRecipients child to CreateMultipleMessage element"
 msgstr ""
+"Do elementu CreateMultipleMessage nebylo možné přidat potomka dmRecipients"
 
-#: src/isds.c:5979
-msgid "copies list item contains empty data"
-msgstr ""
+#: ../src/isds.c:5985
+msgid "`copies' list item contains empty data"
+msgstr "Položka seznamu „copies“ obsahuje prázdná data"
 
-#: src/isds.c:5986
-msgid "Could not add dmRecipient child to dmRecipient element"
-msgstr ""
+#: ../src/isds.c:5992
+msgid "Could not add dmRecipient child to dmRecipients element"
+msgstr "Do elementu dmRecipients nebylo možné přidat potomka dmRecipient"
 
-#: src/isds.c:5994
+#: ../src/isds.c:6000
 msgid "Message copy is missing recipient box identifier"
-msgstr ""
+msgstr "V kopii zprávy chybí identifikátor schránky příjemce"
 
-#: src/isds.c:6012
+#: ../src/isds.c:6018
 msgid "Sending CreateMultipleMessage request to ISDS\n"
-msgstr ""
+msgstr "Požadavek CreateMultipleMessage se odesílá do ISDS\n"
 
-#: src/isds.c:6018
+#: ../src/isds.c:6024
 msgid "Processing ISDS response on CreateMultipleMessage request failed\n"
-msgstr ""
+msgstr "Zpracování odpovědi ISDS na požadavek CreateMultipleMessage selhalo\n"
 
-#: src/isds.c:6028
+#: ../src/isds.c:6034
 msgid "ISDS response on CreateMultipleMessage request is missing status\n"
-msgstr ""
+msgstr "Odpověď ISDS na požadavek CreateMultipleMessage postrádá status\n"
 
-#: src/isds.c:6040
+#: ../src/isds.c:6046
 #, c-format
 msgid ""
 "Server did accept message for multiple recipients on CreateMultipleMessage "
 "request but delivery to some of them failed (code=%s, message=%s)\n"
 msgstr ""
+"Server přijal zprávu pro více příjemců v požadavku CreateMultipleMessage, "
+"ale doručení některému z nich se nezdařilo (kód=%s, zpráva=%s)\n"
 
-#: src/isds.c:6058
+#: ../src/isds.c:6064
 #, c-format
 msgid ""
 "Server did not accept message for multiple recipients on "
 "CreateMultipleMessage request (code=%s, message=%s)\n"
 msgstr ""
+"Server nepřijal v požadavku CreateMultipleMessage zprávu pro více příjemců "
+"(kód=%s, zpráva=%s)\n"
 
-#: src/isds.c:6089
+#: ../src/isds.c:6095
 msgid "Missing isds:dmSingleStatus element"
-msgstr ""
+msgstr "Chybí element isds:dmSingleStatus"
 
-#: src/isds.c:6107
+#: ../src/isds.c:6113
 #, c-format
 msgid "ISDS returned unexpected number of message copy delivery states: %d"
-msgstr ""
+msgstr "ISDS vrátil neočekávaný počet stavů doručení kopie zprávy: %d"
 
-#: src/isds.c:6128
+#: ../src/isds.c:6134
 msgid ""
 "CreateMultipleMessageResponse request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek CreateMultipleMessageResponse úspěšně zpracován serverem.\n"
 
-#: src/isds.c:6198
+#: ../src/isds.c:6204
 msgid "Could not build GetListOfSentMessages request"
-msgstr ""
+msgstr "Požadavek GetListOfSentMessages nebylo možné sestavit"
 
-#: src/isds.c:6199
+#: ../src/isds.c:6205
 msgid "Could not build GetListOfReceivedMessages request"
-msgstr ""
+msgstr "Požadavek GetListOfReceivedMessages nebylo možné sestavit"
 
-#: src/isds.c:6236
+#: ../src/isds.c:6242
 #, c-format
 msgid "Invalid message state filter value: %ld"
-msgstr ""
+msgstr "Neplatní hodnota filtru stavů: %ld"
 
-#: src/isds.c:6258
+#: ../src/isds.c:6264
 msgid "Sending GetListOfSentMessages request to ISDS\n"
-msgstr ""
+msgstr "Požadavek GetListOfSentMessages se odesílá do ISDS\n"
 
-#: src/isds.c:6259
+#: ../src/isds.c:6265
 msgid "Sending GetListOfReceivedMessages request to ISDS\n"
-msgstr ""
+msgstr "Požadavek GetListOfReceivedMessages se odesílá do ISDS\n"
 
-#: src/isds.c:6269
+#: ../src/isds.c:6275
 msgid "Processing ISDS response on GetListOfSentMessages request failed\n"
-msgstr ""
+msgstr "Zpracování odpovědi ISDS na požadavek GetListOfSentMessages selhal\n"
 
-#: src/isds.c:6271
+#: ../src/isds.c:6277
 msgid "Processing ISDS response on GetListOfReceivedMessages request failed\n"
 msgstr ""
+"Zpracování odpovědi ISDS na požadavek GetListOfReceivedMessages selhal\n"
 
-#: src/isds.c:6283
+#: ../src/isds.c:6289
 msgid "ISDS response on GetListOfSentMessages request is missing status\n"
-msgstr ""
+msgstr "Odpověď ISDS na požadavek GetListOfSentMessages postrádá status\n"
 
-#: src/isds.c:6285
+#: ../src/isds.c:6291
 msgid "ISDS response on GetListOfReceivedMessages request is missing status\n"
-msgstr ""
+msgstr "Odpověď ISDS na požadavek GetListOfReceivedMessages postrádá status\n"
 
-#: src/isds.c:6297
+#: ../src/isds.c:6303
 #, c-format
 msgid "Server refused GetListOfSentMessages request (code=%s, message=%s)\n"
-msgstr ""
+msgstr "Server odmítl požadavek GetListOfSentMessages (kód=%s, zpráva=%s)\n"
 
-#: src/isds.c:6299
+#: ../src/isds.c:6305
 #, c-format
 msgid ""
 "Server refused GetListOfReceivedMessages request (code=%s, message=%s)\n"
 msgstr ""
+"Server odmítl požadavek GetListOfReceivedMessages (kód=%s, zpráva=%s)\n"
 
-#: src/isds.c:6392
+#: ../src/isds.c:6398
 msgid "GetListOfSentMessages request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek GetListOfSentMessages úspěšně zpracován serverem.\n"
 
-#: src/isds.c:6394
+#: ../src/isds.c:6400
 msgid "GetListOfReceivedMessages request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek GetListOfReceivedMessages úspěšně zpracován serverem.\n"
 
-#: src/isds.c:6547
+#: ../src/isds.c:6553
 #, c-format
 msgid "Sending %s request for %s message ID to ISDS\n"
-msgstr ""
+msgstr "Odesílá se požadavek %s na zprávu s ID %s do ISDS\n"
 
-#: src/isds.c:6577
+#: ../src/isds.c:6583
 #, c-format
 msgid "Server refused %s request for %s message ID (code=%s, message=%s)\n"
-msgstr ""
+msgstr "Server odmítl požadavek %s na zprávu s ID %s (kód=%s, zpráva=%s)\n"
 
-#: src/isds.c:6649
+#: ../src/isds.c:6655
 #, c-format
 msgid "Server did not return any signed data for mesage ID `%s' on %s request"
 msgstr ""
+"Server nevrátil na požadavek %s žádná podepsaná data pro zprávu s ID „%s“"
 
-#: src/isds.c:6660
+#: ../src/isds.c:6666
 #, c-format
 msgid "Server did return more signed data for message ID `%s' on %s request"
-msgstr ""
+msgstr "Server na požadavek %s o zprávu s ID „%s“ vrátil více podepsaných dat"
 
-#: src/isds.c:6673
+#: ../src/isds.c:6679
 msgid "dmSignature element is empty"
-msgstr ""
+msgstr "Element dmSignature je prázdný"
 
-#: src/isds.c:6687
+#: ../src/isds.c:6693
 msgid "Error while Base64-decoding PKCS#7 structure"
-msgstr ""
+msgstr "Chyba při dekódování struktury PKCS#7 z Base64"
 
-#: src/isds.c:6758
+#: ../src/isds.c:6764
 #, c-format
 msgid ""
 "Server did not return any envelope for ID `%s' on MessageEnvelopeDownload "
 "request"
 msgstr ""
+"Server nevrátil žádnou obálku na požadavek MessageEnvelopeDownload s ID „%s“"
 
-#: src/isds.c:6768
+#: ../src/isds.c:6774
 #, c-format
 msgid ""
 "Server did return more envelopes for ID `%s' on MessageEnvelopeDownload "
 "request"
 msgstr ""
+"Server vrátil více obálek na požadavek MessageEnvelopeDownload s ID „%s“"
 
-#: src/isds.c:6799
+#: ../src/isds.c:6805
 msgid "MessageEnvelopeDownload request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek MessageEnvelopeDownload úspěšně zpracován serverem.\n"
 
-#: src/isds.c:6858
+#: ../src/isds.c:6864
 msgid "Bad raw delivery representation type"
-msgstr ""
+msgstr "Chybný typ surové reprezentace doručenky"
 
-#: src/isds.c:6864
+#: ../src/isds.c:6870
 #, c-format
 msgid ""
 "Delivery info content:\n"
 "%.*s\n"
 "End of delivery info\n"
 msgstr ""
+"Obsah informace o doručení:\n"
+"%.*s\n"
+"Konec informace o doručení\n"
 
-#: src/isds.c:6907
+#: ../src/isds.c:6913
 msgid "XML document ss not sisds:dmDelivery document"
-msgstr ""
+msgstr "Dokument XML není dokumentem sisds:dmDelivery"
 
-#: src/isds.c:6914
+#: ../src/isds.c:6920
 msgid "XML document has more sisds:dmDelivery elements"
-msgstr ""
+msgstr "Dokument XML obsahuje více elementů sisds:dmDelivery"
 
-#: src/isds.c:6971
+#: ../src/isds.c:6977
 msgid "Delivery info loaded successfully.\n"
 msgstr "Informace o doručení úspěšně nahrány.\n"
 
-#: src/isds.c:7032
+#: ../src/isds.c:7038
 msgid "GetSignedDeliveryInfo request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek GetSignedDeliveryInfo úspěšně zpracován serverem.\n"
 
-#: src/isds.c:7090
+#: ../src/isds.c:7096
 #, c-format
 msgid ""
 "Server did not return any delivery info for ID `%s' on GetDeliveryInfo "
 "request"
 msgstr ""
+"Server na požadavek GetDeliveryInfo s ID „%s“ nevrátil žádné informace "
+"o doručení"
 
-#: src/isds.c:7100
+#: ../src/isds.c:7106
 #, c-format
 msgid ""
 "Server did return more delivery infos for ID `%s' on GetDeliveryInfo request"
-msgstr ""
+msgstr "Server na požadavek GetDeliveryInfo s ID „%s“ vrátil více doručenek"
 
-#: src/isds.c:7141
+#: ../src/isds.c:7147
 msgid "GetDeliveryInfo request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek GetDeliveryInfo úspěšně zpracován serverem.\n"
 
-#: src/isds.c:7172
+#: ../src/isds.c:7178
 #, c-format
 msgid ""
 "Incoming message content:\n"
 "%.*s\n"
 "End of message\n"
 msgstr ""
+"Obsah příchozí zprávy:\n"
+"%.*s\n"
+"Konec zprávy\n"
 
-#: src/isds.c:7201
+#: ../src/isds.c:7207
 msgid "XML document does not contain isds:dmReturnedMessage element"
-msgstr ""
+msgstr "Dokument XML neobsahuje element isds:dmReturnedMessage"
 
-#: src/isds.c:7209
+#: ../src/isds.c:7215
 msgid "XML document has more isds:dmReturnedMessage elements"
-msgstr ""
+msgstr "Dokument XML obsahuje více elementů isds:dmReturnedMessage"
 
-#: src/isds.c:7255
+#: ../src/isds.c:7261
 msgid "Incoming message loaded successfully.\n"
-msgstr ""
+msgstr "Příchozí zpráva úspěšně nahrána.\n"
 
-#: src/isds.c:7311
+#: ../src/isds.c:7317
 #, c-format
 msgid ""
 "Server did not return any message for ID `%s' on MessageDownload request"
-msgstr ""
+msgstr "Server na požadavek MessageDownload s ID „%s“ nevrátil žádnou zprávu"
 
-#: src/isds.c:7321
+#: ../src/isds.c:7327
 #, c-format
 msgid "Server did return more messages for ID `%s' on MessageDownload request"
-msgstr ""
+msgstr "Server na požadavek MessageDownload s ID „%s“ vrátil více zpráv"
 
-#: src/isds.c:7351
+#: ../src/isds.c:7357
 msgid ""
 "Substring with isds:MessageDownloadResponse element could not be located in "
 "raw SOAP message"
 msgstr ""
+"Podřetězec s elementem isds:MessageDownloadResponse nemohl být nalezen "
+"v syrové SOAP zprávě"
 
-#: src/isds.c:7387
+#: ../src/isds.c:7393
 msgid "MessageDownload request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek MessageDownload úspěšně zpracován serverem.\n"
 
-#: src/isds.c:7427
+#: ../src/isds.c:7433
 #, c-format
 msgid ""
 "Signed outgoing message content:\n"
 "%.*s\n"
 "End of message\n"
 msgstr ""
+"Obsah podepsané odchozí zprávy:\n"
+"%.*s\n"
+"Konec zprávy\n"
 
-#: src/isds.c:7428
+#: ../src/isds.c:7434
 #, c-format
 msgid ""
 "Signed incoming message content:\n"
 "%.*s\n"
 "End of message\n"
 msgstr ""
+"Obsah podepsané příchozí zprávy:\n"
+"%.*s\n"
+"Konec zprávy\n"
 
-#: src/isds.c:7492
+#: ../src/isds.c:7498
 msgid ""
 "XML document embedded into PKCS#7 structure is not sisds:dmReturnedMessage "
 "document"
 msgstr ""
+"Dokument XML vestavěný do struktury PKCS#7 není dokumentem sids:"
+"dmReturnedMessage"
 
-#: src/isds.c:7500
+#: ../src/isds.c:7506
 msgid ""
-"Embeded XML document into PKCS#7 structure has more root sisds:"
+"XML document embedded into PKCS#7 structure has more root sisds:"
 "dmReturnedMessage elements"
 msgstr ""
+"Dokument XML vestavěný do struktury PKCS#7 má více kořenových elementů "
+"sids:dmReturnedMessage"
 
-#: src/isds.c:7550
+#: ../src/isds.c:7556
 msgid "Signed message loaded successfully.\n"
-msgstr ""
+msgstr "Podepsaná zpráva úspěšně nahrána.\n"
 
-#: src/isds.c:7618
+#: ../src/isds.c:7624
 msgid "Bad raw message representation type"
-msgstr ""
+msgstr "Chybný typ reprezentace syrové zprávy"
 
-#: src/isds.c:7624
+#: ../src/isds.c:7630
 #, c-format
 msgid ""
 "Loading message:\n"
 "%.*s\n"
 "End of message\n"
 msgstr ""
+"Nahrává se zpráva:\n"
+"%.*s\n"
+"Konec zprávy\n"
 
-#: src/isds.c:7688
+#: ../src/isds.c:7694
 msgid "XML document does not contain sisds:dmReturnedMessage element"
-msgstr ""
+msgstr "Dokument XML neobsahuje element sisds:dmReturnedMessage"
 
-#: src/isds.c:7696
+#: ../src/isds.c:7702
 msgid "XML document has more sisds:dmReturnedMessage elements"
-msgstr ""
+msgstr "Dokument XML obsahuje více elementů sisds:dmReturnedMessage"
 
-#: src/isds.c:7743
+#: ../src/isds.c:7749
 msgid "Message loaded successfully.\n"
-msgstr ""
+msgstr "Zpráva úspěšně nahrána.\n"
 
-#: src/isds.c:7814
+#: ../src/isds.c:7820
 msgid "SignedSentMessageDownload request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek SignedSentMessageDownload úspěšně zpracován serverem.\n"
 
-#: src/isds.c:7816
+#: ../src/isds.c:7822
 msgid "SignedMessageDownload request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek SignedMessageDownload úspěšně zpracován serverem.\n"
 
-#: src/isds.c:7892
+#: ../src/isds.c:7898
 #, c-format
 msgid "Server did not return any response for ID `%s' on VerifyMessage request"
-msgstr ""
+msgstr "Server na požadavek VerifyMessage s ID „%s“ nevrátil žádnou odpověď"
 
-#: src/isds.c:7902
+#: ../src/isds.c:7908
 #, c-format
 msgid "Server did return more responses for ID `%s' on VerifyMessage request"
-msgstr ""
+msgstr "Server na požadavek VerifyMessage s ID „%s“ vrátil více odpovědí"
 
-#: src/isds.c:7928
+#: ../src/isds.c:7934
 msgid "VerifyMessage request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek VerifyMessage úspěšně zpracován serverem.\n"
 
-#: src/isds.c:7959
+#: ../src/isds.c:7965
 msgid "MarkMessageAsDownloaded request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek MarkMessageAsDownloaded úspěšně zpracován serverem.\n"
 
-#: src/isds.c:7991
+#: ../src/isds.c:7997
 msgid "ConfirmDelivery request processed by server successfully.\n"
-msgstr ""
+msgstr "Požadavek ConfirmDelivery úspěšně zpracován serverem.\n"
 
-#: src/isds.c:8035
+#: ../src/isds.c:8041
 msgid "Message does not carry raw representation"
-msgstr ""
+msgstr "Zpráva nenese syrovou reprezentaci"
 
-#: src/isds.c:8073
+#: ../src/isds.c:8079
 msgid "Bad raw representation type"
-msgstr ""
+msgstr "Chybný typ syrové reprezentace"
 
-#: src/isds.c:8096
+#: ../src/isds.c:8102
 msgid "Substring with isds:dmDM element could not be located in raw message"
-msgstr ""
+msgstr "V syrové zprávě nebylo možné nalézt podřetězec s elementem isds:dmDM"
 
-#: src/isds.c:8112
+#: ../src/isds.c:8118
 msgid "Could not compute message hash"
-msgstr ""
+msgstr "Nebylo možné spočítat hash zprávy"
 
-#: src/isds.c:8184
+#: ../src/isds.c:8190
 msgid "Given message structure is missing envelope"
-msgstr ""
+msgstr "Zadaná struktura zprávy postrádá obálku"
 
-#: src/isds.c:8189
+#: ../src/isds.c:8195
 msgid "Given message structure is missing raw representation"
-msgstr ""
+msgstr "Zadaná struktura zprávy postrádá syrovou reprezentaci"
 
-#: src/physxml.c:46
+#: ../src/physxml.c:46
 #, c-format
 msgid "Minimal %d.%d.%d Expat version required. Current version is %d.%d.%d\n"
-msgstr ""
+msgstr "Vyžadována alespoň verze %d.%d.%d Expatu. Současná verze je %d.%d.%d\n"
 
-#: src/physxml.c:60
+#: ../src/physxml.c:60
 msgid "Expat compiled with UTF-16 (wide) characters\n"
-msgstr ""
+msgstr "Expat přeložen s podporou (širokých) znaků UTF-16\n"
 
-#: src/physxml.c:81
+#: ../src/physxml.c:81
 msgid "Expat not compiled with name space support\n"
-msgstr ""
+msgstr "Expat nepřeložen s podporou jmenných prostorů\n"
 
-#: src/physxml.c:131
+#: ../src/physxml.c:131
 #, c-format
 msgid "Start: name=%s, depth=%zd, offset=%#jx => boundary=%#zx\n"
-msgstr ""
+msgstr "Začátek: název=%s, hloubka=%zd, pozice=%#jx → hranice=%#zx\n"
 
-#: src/physxml.c:141
+#: ../src/physxml.c:141
 #, c-format
 msgid "\tStart tag for element `%s' found\n"
-msgstr ""
+msgstr "\tNalezena otevírací značka elementu „%s“\n"
 
-#: src/physxml.c:165
+#: ../src/physxml.c:165
 #, c-format
 msgid "End:   name=%s, depth=%zd, offset=%#jx count=%u => boundary=%#zx\n"
-msgstr ""
+msgstr "Konec:   název=%s, hloubka=%zd, pozice=%#jx počet=%u → hranice=%#zx\n"
 
-#: src/physxml.c:172
+#: ../src/physxml.c:172
 #, c-format
 msgid "\tEnd tag for element `%s' found\n"
-msgstr ""
+msgstr "\tNalezena uzavírací značka elementu „%s“\n"
 
-#: src/physxml.c:215
+#: ../src/physxml.c:215
 #, c-format
 msgid "Searching boundary of element: %s\n"
-msgstr ""
+msgstr "Hledá se hranice elementu: %s\n"
 
-#: src/physxml.c:250
+#: ../src/physxml.c:250
 msgid "XML_Parse failed\n"
-msgstr ""
+msgstr "XML_Parse selhala\n"
 
-#: src/soap.c:23
+#: ../src/soap.c:23
 msgid "Connection to server closed"
-msgstr ""
+msgstr "Spojení na server uzavřeno"
 
-#: src/soap.c:73
+#: ../src/soap.c:73
 msgid "Application aborted HTTP transfer"
-msgstr ""
+msgstr "Aplikace zrušila přenos HTTP"
 
-#: src/soap.c:130
+#: ../src/soap.c:130
 msgid "Disabling server identity verification. That was your decision.\n"
-msgstr ""
+msgstr "Vypíná se ověřovaní identity serveru. Toto bylo vaše rozhodnutí.\n"
 
-#: src/soap.c:141
+#: ../src/soap.c:141
 #, c-format
 msgid "CA certificates will be searched in `%s' file since now\n"
-msgstr ""
+msgstr "Certifikáty autorit se budou od teď hledat v souboru „%s“\n"
 
-#: src/soap.c:148
+#: ../src/soap.c:148
 #, c-format
 msgid "CA certificates will be searched in `%s' directory since now\n"
-msgstr ""
+msgstr "Certifikáty autorit se budou od teď hledat v adresáři „%s“\n"
 
-#: src/soap.c:263
+#: ../src/soap.c:263
 #, c-format
 msgid "Sending POST request to %s\n"
-msgstr ""
+msgstr "Odesílá se požadavek POST na %s\n"
 
-#: src/soap.c:265
+#: ../src/soap.c:265
 #, c-format
 msgid "POST body length: %zu, content follows:\n"
-msgstr ""
+msgstr "Délka těla POSTu: %zu, obsah následuje:\n"
 
-#: src/soap.c:267
+#: ../src/soap.c:267
 msgid "End of POST body\n"
-msgstr ""
+msgstr "Konec těla POSTu\n"
 
-#: src/soap.c:292
+#: ../src/soap.c:292
 #, c-format
 msgid "%s: %s"
-msgstr ""
+msgstr "%s: %s"
 
-#: src/soap.c:297
+#: ../src/soap.c:297
 #, c-format
 msgid "Final response to %s received\n"
-msgstr ""
+msgstr "Konečná odpověď na %s přijata\n"
 
-#: src/soap.c:299
+#: ../src/soap.c:299
 #, c-format
 msgid "Response body length: %zu, content follows:\n"
-msgstr ""
+msgstr "Délka těla odpovědi: %zu, obsah následuje:\n"
 
-#: src/soap.c:302
+#: ../src/soap.c:302
 msgid "End of response body\n"
-msgstr ""
+msgstr "Konec těla odpovědi\n"
 
-#: src/soap.c:429
+#: ../src/soap.c:429
 msgid "Could not build SOAP request document"
-msgstr ""
+msgstr "Dokument se SOAP požadavkem nebylo možné sestavit"
 
-#: src/soap.c:435
+#: ../src/soap.c:435
 msgid "Could not build SOAP request envelope"
-msgstr ""
+msgstr "Obálku požadavku SOAP nebylo možné sestavit"
 
-#: src/soap.c:444
+#: ../src/soap.c:444
 msgid "Could not create SOAP name space"
-msgstr ""
+msgstr "Nebylo možné vytvořit jmenný prostor SOAP"
 
-#: src/soap.c:453
+#: ../src/soap.c:453
 msgid "Could not add Body to SOAP request envelope"
-msgstr ""
+msgstr "Do obálky požadavku SOAP nebylo možné vložit tělo"
 
-#: src/soap.c:465
+#: ../src/soap.c:465
 msgid "Could not copy request content"
-msgstr ""
+msgstr "Obsah požadavku nebylo možné zkopírovat"
 
-#: src/soap.c:472
+#: ../src/soap.c:472
 msgid "Could not add request content to SOAP request envelope"
-msgstr ""
+msgstr "Do obálky požadavku SOAP nebylo možné přidat obsah požadavku"
 
-#: src/soap.c:484
+#: ../src/soap.c:484
 msgid "Could not create xmlBuffer for HTTP request body"
-msgstr ""
+msgstr "Pro požadavek HTTP nebylo možné vytvořit xmlBuffer"
 
-#: src/soap.c:502
+#: ../src/soap.c:502
 msgid "Could not serialize SOAP request to HTTP request bddy"
-msgstr ""
+msgstr "Požadavek SOAP nebylo možné zapsat do těla požadavku HTTP"
 
-#: src/soap.c:508
+#: ../src/soap.c:508
 #, c-format
 msgid ""
 "SOAP request to sent to %s:\n"
 "%.*s\n"
 "End of SOAP request\n"
 msgstr ""
+"Požadavek SOAP odeslán na %s:\n"
+"%.*s\n"
+"Konec požadavku SOAP\n"
 
-#: src/soap.c:523
+#. Check for HTTP return code
+#: ../src/soap.c:523
 #, c-format
 msgid "Server returned %ld HTTP code\n"
-msgstr ""
+msgstr "Server vrátil HTTP kód %ld\n"
 
-#: src/soap.c:531
+#: ../src/soap.c:531
 msgid "Authentication failed"
-msgstr ""
+msgstr "Autentizace selhala"
 
-#: src/soap.c:537
+#: ../src/soap.c:537
 msgid "Code 404: Document not found on server"
-msgstr ""
+msgstr "Kód 404: Dokument na serveru nenalezen"
 
-#: src/soap.c:551
+#: ../src/soap.c:551
 #, c-format
 msgid "%s: bad MIME type sent by server: %s"
-msgstr ""
+msgstr "%s: server zaslal chybný typ MIME: %s"
 
-#: src/soap.c:579
+#: ../src/soap.c:579
 #, c-format
 msgid ""
 "SOAP response received:\n"
 "%.*s\n"
 "End of SOAP response\n"
 msgstr ""
+"Přijata odpověď SOAP:\n"
+"%.*s\n"
+"Konec odpovědi SOAP\n"
 
-#: src/soap.c:607
+#: ../src/soap.c:607
 msgid "SOAP response requires unsupported feature"
-msgstr ""
+msgstr "Odpověď SOAP vyžaduje nepodporovanou funkci"
 
-#: src/soap.c:624
+#: ../src/soap.c:624
 msgid "SOAP response does not contain SOAP Body element"
-msgstr ""
+msgstr "Odpověď SOAP neobsahuje SOAP element Body"
 
-#: src/soap.c:630
+#: ../src/soap.c:630
 msgid "SOAP response has more than one Body element"
-msgstr ""
+msgstr "Odpověď SOAP obsahuje více jak jeden element Body"
 
-#: src/soap.c:644
+#. TODO: log the fultcode and faultstring
+#: ../src/soap.c:644
 msgid "SOAP response signals Fault"
-msgstr ""
+msgstr "Odpověď SOAP signalizuje chybu (Fault)"
 
-#: src/validator.c:70
-msgid "ISDS response is missing StatusCode"
-msgstr ""
+#: ../src/validator.c:71
+msgid "ISDS response is missing StatusCode element"
+msgstr "Odpověď ISDS postrádá element StatusCode"
 
-#: src/validator.c:169
+#: ../src/validator.c:170
 msgid "SOAP returned empty body"
-msgstr ""
+msgstr "SOAP vrátil prázdné tělo"
 
-#: src/validator.c:182
-msgid "SOAP response does not contain ISDS elemement"
-msgstr ""
+#: ../src/validator.c:183
+msgid "SOAP response does not contain ISDS element"
+msgstr "Odpověď SOAP neobsahuje ISDS element"
 
-#: src/validator.c:199
+#: ../src/validator.c:200
 msgid "Could not build ISDS response document"
-msgstr ""
+msgstr "Dokument s odpovědí ISDS nebylo možné sestavit"
 
-#: src/validator.c:239
+#: ../src/validator.c:240
 msgid "List contains more main documents"
-msgstr ""
+msgstr "Seznam obsahuje více hlavních dokumentů"
 
-#: src/validator.c:249
+#: ../src/validator.c:250
 #, c-format
 msgid "List contains more documents with the same ID `%s'"
-msgstr ""
+msgstr "Seznam obsahuje více dokumentů se stejným identifikátorem „%s“"
 
-#: src/validator.c:260
+#: ../src/validator.c:261
 #, c-format
 msgid "List contains documents referencing to unexisting document ID `%s'"
 msgstr ""
+"Seznam obsahuje dokumenty odkazující na neexistující identifikátor „%s“"
 
-#: src/validator.c:269
+#: ../src/validator.c:270
 msgid "List does not contain main document"
-msgstr ""
+msgstr "Seznam neobsahuje hlavní dokument"
 
-#: src/validator.c:291
+#: ../src/validator.c:292
 #, c-format
 msgid "Could not check message ID length: %s"
-msgstr ""
+msgstr "Nebylo možné zkontrolovat délku identifikátoru zprávu: %s"
 
-#: src/validator.c:300
+#: ../src/validator.c:301
 #, c-format
 msgid "Message ID must not be longer than 20 characters: %s"
-msgstr ""
+msgstr "Identifikátor zprávy nesmí být delší než 20 znaků: %s"
