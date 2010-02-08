@@ -14,4 +14,4 @@ EXTRA_DIST = config.rpath doc
 
 dist-hook:
 	git log --decorate=full > $(distdir)/ChangeLog
-	git tag "v$(VERSION)" -s -m "Version $(VERSION) released on $(date -Imin)"
+	git tag "v$(VERSION)" -s -m "Version $(VERSION) released on $$(date -Imin)"
