@@ -49,6 +49,10 @@ AM_PATH_XML2([2.6.26])
 LIBCURL_CHECK_CONFIG()
 #TODO: Determine minimal version
 AM_PATH_LIBGCRYPT([1:1.4.0])
+
+# GPGME is compiled with large file support by default. We need to follow not
+# to break ABI.
+AC_SYS_LARGEFILE
 #TODO: Determine minimal version
 AM_PATH_GPGME()
 #AC_CHECK_LIB([expat])

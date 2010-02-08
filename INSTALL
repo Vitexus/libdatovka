@@ -31,4 +31,11 @@ Additional configure options:
         Switch off compile mode when compiler raises error on warning. This is
         enabled to catch all code ambiguities by default.
 
+Large File Support (LFS) Notice: libisds uses GPGME, and GPGME is compiled
+with LFS on usually. You need to keep LFS compatibility on reverse dependecies
+(libisds library, your application using libisds), otherwise strange things
+can happen (e.g. file/messaeg/document sizes can mismatch). libisds switches
+LFS on too. Use --disable-largefile to switch it off if you think it's more
+appropriate. However recall this tweak when building your application.
+
 Example clients and tests are not installed by `make install'.
