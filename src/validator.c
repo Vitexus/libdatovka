@@ -67,7 +67,8 @@ _hidden isds_error isds_response_status(struct isds_ctx *context,
         goto leave;
     }
     if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-        isds_log_message(context, _("ISDS response is missing StatusCode"));
+        isds_log_message(context,
+                _("ISDS response is missing StatusCode element"));
         err = IE_ISDS;
         goto leave;
     }
@@ -179,7 +180,7 @@ _hidden isds_error isds(struct isds_ctx *context, const isds_service service,
     }
     if (!isds_node) {
         isds_log_message(context,
-                _("SOAP response does not contain ISDS elemement"));
+                _("SOAP response does not contain ISDS element"));
         err = IE_ISDS;
         goto leave;
     }

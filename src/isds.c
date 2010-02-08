@@ -5038,7 +5038,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
     xmlSetNs(request, isds_ns);
     db_owner_info = xmlNewChild(request, NULL, BAD_CAST "dbOwnerInfo", NULL);
     if (!db_owner_info) {
-        isds_log_message(context, _("Could not add dbOwnerInfo Child to "
+        isds_log_message(context, _("Could not add dbOwnerInfo child to "
                     "FindDataBox element"));
         xmlFreeNode(request);
         return IE_ERROR;
@@ -5225,7 +5225,7 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
     xmlSetNs(request, isds_ns);
     db_id = xmlNewTextChild(request, NULL, BAD_CAST "dbID", (xmlChar *) box_id);
     if (!db_id) {
-        isds_log_message(context, _("Could not add dbId Child to "
+        isds_log_message(context, _("Could not add dbID child to "
                     "CheckDataBox element"));
         xmlFreeNode(request);
         return IE_ERROR;
@@ -5847,7 +5847,7 @@ isds_error isds_send_message(struct isds_ctx *context,
     EXTRACT_STRING("isds:dmID", outgoing_message->envelope->dmID);
     if (!outgoing_message->envelope->dmID) {
         isds_log(ILF_ISDS, ILL_ERR, _("Server accepted sent message, "
-                    "but did not returen assigned message ID\n"));
+                    "but did not return assigned message ID\n"));
     }
 
 leave:
@@ -5956,7 +5956,7 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
     request = xmlNewNode(NULL, BAD_CAST "CreateMultipleMessage");
     if (!request) {
         isds_log_message(context,
-                _("Could build CreateMultipleMessage request"));
+                _("Could not build CreateMultipleMessage request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
@@ -5982,7 +5982,7 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
         copy = (struct isds_message_copy *) item->data;
         if (!copy) {
             isds_log_message(context,
-                    _("copies list item contains empty data"));
+                    _("`copies' list item contains empty data"));
             err = IE_INVAL;
             goto leave;
         }
@@ -5990,7 +5990,7 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
         recipient = xmlNewChild(recipients, NULL, BAD_CAST "dmRecipient", NULL);
         if (!recipient) {
             isds_log_message(context, _("Could not add dmRecipient child to "
-                        "dmRecipient element"));
+                        "dmRecipients element"));
             err = IE_ERROR;
             goto leave;
         }
@@ -7503,7 +7503,7 @@ isds_error isds_load_signed_message(struct isds_ctx *context,
     /* More embedded messages */
     if (result->nodesetval->nodeNr > 1) {
         isds_printf_message(context,
-                _("Embeded XML document into PKCS#7 structure has more "
+                _("XML document embedded into PKCS#7 structure has more "
                     "root sisds:dmReturnedMessage elements"));
         err = IE_ISDS;
         goto leave;
