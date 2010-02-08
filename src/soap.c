@@ -640,7 +640,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
     if (!xmlXPathNodeSetIsEmpty(response_soap_fault->nodesetval)) {
-        /* TODO: log the fultcode and faultstring */ 
+        /* TODO: log the faultcode and faultstring */ 
         isds_log_message(context, _("SOAP response signals Fault"));
         err = IE_SOAP;
         goto leave;
