@@ -7,6 +7,10 @@
 #include <stdlib.h> /* For size_t */
 #include <sys/time.h> /* For struct timeval */
 
+#ifdef __cplusplus  /* For C++ linker sake */
+extern "C" {
+#endif
+
 /* _deprecated macro marks library symbols as deprecated. Application should
  * avoid using such function as soon as possible. */
 #if defined(__GNUC__) 
@@ -1120,5 +1124,9 @@ struct isds_DbOwnerInfo *isds_DbOwnerInfo_duplicate(
 /* Copy structure isds_DbUserInfo recursively */
 struct isds_DbUserInfo *isds_DbUserInfo_duplicate(
         const struct isds_DbUserInfo *template);
+
+#ifdef __cplusplus  /* For C++ linker sake */
+}
+#endif
 
 #endif
