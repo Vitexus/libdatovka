@@ -1,1 +1,5 @@
-Not yet released code. Here you will see summary of release changes.
+Version 0.1
+===========
+
+• This is first public release. Whole ISDS 2010-01-22 specification is covered
+except: XML documents, X.509 authentication
