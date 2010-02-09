@@ -6,7 +6,8 @@ AM_CPPFLAGS =-I$(LIBDIR)
 AM_CPPFLAGS += @XML_CPPFLAGS@ @LIBCURL_CPPFLAGS@ \
 					  -DLOCALEDIR=\"$(localedir)\"
 AM_CFLAGS = @LIBGCRYPT_CFLAGS@ @GPGME_CFLAGS@
-LDADD = @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ @GPGME_LIBS@ -lexpat @LTLIBINTL@
+LDADD = @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ @GPGME_LIBS@ @EXPAT_LIBS@ \
+		@LTLIBINTL@
 
 TESTS = compute_hash context init_gpgpme isds_init login \
 		isds-dbtype isds-filemetatype isds-hash_algorithm

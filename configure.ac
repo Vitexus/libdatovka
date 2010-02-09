@@ -55,7 +55,12 @@ AM_PATH_LIBGCRYPT([1:1.4.0])
 AC_SYS_LARGEFILE
 #TODO: Determine minimal version
 AM_PATH_GPGME()
-#AC_CHECK_LIB([expat])
+
+# Check for expat
+#TODO: Verify minimal version. See src/phys.c: init_expat()
+AC_CHECK_LIB([expat], [XML_ExpatVersionInfo],
+             EXPAT_LIBS=-lexpat
+             AC_SUBST(EXPAT_LIBS))
 
 
 # Do not consider compiler warnings as errors
