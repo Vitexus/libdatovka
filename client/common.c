@@ -610,7 +610,7 @@ int mmap_file(const char *file, int *fd, void **buffer, size_t *length) {
     }
     if (file_info.st_size < 0) {
         fprintf(stderr, "File `%s' has negative size: %jd\n", file,
-                file_info.st_size);
+                (intmax_t) file_info.st_size);
         close(*fd);
         return -1;
     }
