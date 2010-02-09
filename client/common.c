@@ -618,7 +618,7 @@ int mmap_file(const char *file, int *fd, void **buffer, size_t *length) {
 
     *buffer = mmap(NULL, *length, PROT_READ, MAP_PRIVATE, *fd, 0);
     if (*buffer == MAP_FAILED) {
-        fprintf(stderr, "%s: Could not map file to memmory: %s\n", file,
+        fprintf(stderr, "%s: Could not map file to memory: %s\n", file,
                 strerror(errno));
         close(*fd);
         return -1;
