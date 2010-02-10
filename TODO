@@ -9,12 +9,6 @@
 * Make function tests
     Cover all functions
     Simulate server?
-* Make release tools
-    Changelog/NEWS
-    Version numbering
-    Proper SONAME / symbol versioning
-    Git taging
-    Digital signing
 * Implement X.509 authentication
 * Write high level documentation
     ISDS overview
@@ -34,3 +28,5 @@
     Library error on processing application data
     Library error on processing server data
     Server error
+* Provide pkg-config and M4 scripts for better application building
+    Provide library version check at compile and run time 
