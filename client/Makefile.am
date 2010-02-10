@@ -3,7 +3,7 @@ LIBDIR =../src
 AM_CFLAGS =-I$(LIBDIR)
 LDADD = $(LIBDIR)/libisds.la -L$(LIBDIR)
 
-noinst_PROGRAMS = isdsclient login progressbar \
+noinst_PROGRAMS = isdsclient login progressbar logger \
 	getuserboxinfo addbox changebox \
 	changepassword resetpassword deleteuser changeuser \
 	switchcommercial switchaccessibility disableaccesibilityexternaly \
@@ -19,6 +19,7 @@ common = common.c common.h
 isdsclient_SOURCES = isdsclient.c $(common)
 login_SOURCES = login.c $(common)
 progressbar_SOURCES = progressbar.c $(common)
+logger_SOURCES = logger.c $(common)
 getuserboxinfo_SOURCES = getuserboxinfo.c $(common)
 addbox_SOURCES = addbox.c $(common)
 changebox_SOURCES = changebox.c $(common)

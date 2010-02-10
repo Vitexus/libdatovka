@@ -434,6 +434,8 @@ isds_error isds_init(void) {
     /* NULL global variables */
     log_facilities = ILF_ALL;
     log_level = ILL_WARNING;
+    log_callback = NULL;
+    log_callback_data = NULL;
 
 #if ENABLE_NLS
     /* Initialize gettext */
@@ -671,25 +673,52 @@ void isds_set_logging(const unsigned int facilities,
 }
 
 
+/* Register callback function libisds calls when new global log message is
+ * produced by library. Library logs to stderr by default.
+ * @callback is function provided by application libsds will call. See type
+ * defition for @callback argument explanation. Pass NULL to revert logging to
+ * default behaviour.
+ * @data is application specific data @callback gets as last argument */
+void isds_set_log_callback(isds_log_callback callback, void *data) {
+    log_callback = callback;
+    log_callback_data = data;
+}
+
+
 /* Log @message in class @facility with log @level into global log. @message
  * is printf(3) formating string, variadic arguments may be neccessary.
  * For debugging purposes. */
 _hidden isds_error isds_log(const isds_log_facility facility,
         const isds_log_level level, const char *message, ...) {
     va_list ap;
+    char *buffer = NULL;
+    int length;
 
     if (level > log_level) return IE_SUCCESS;
     if (!(log_facilities & facility)) return IE_SUCCESS;
     if (!message) return IE_INVAL;
 
-    /* TODO: Allow to register output function provided by application
-     * (e.g. fprintf to stderr or copy to text area GUI widget). */
+    if (log_callback) {
+        /* Pass message to application supplied callback function */
+        va_start(ap, message);
+        length = isds_vasprintf(&buffer, message, ap);
+        va_end(ap);
 
-    va_start(ap, message);
-    vfprintf(stderr, message, ap);
-    va_end(ap);
-    /* Line buffered printf is default.
-     * fflush(stderr);*/
+        if (length == -1) {
+            return IE_ERROR;
+        }
+        if (length > 0) {
+            log_callback(facility, level, buffer, length, log_callback_data);
+        }
+        free(buffer);
+    } else {
+        /* Default: Log it to stderr */
+        va_start(ap, message);
+        vfprintf(stderr, message, ap);
+        va_end(ap);
+        /* Line buffered printf is default.
+         * fflush(stderr);*/
+    }
 
     return IE_SUCCESS;
 }

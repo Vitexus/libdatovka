@@ -512,6 +512,32 @@ char *isds_long_message(const struct isds_ctx *context);
 void isds_set_logging(const unsigned int facilities,
         const isds_log_level level);
 
+/* Function provided by application libisds will call to pass log message.
+ * The message is ussually locale encoded, but raw strings (UTF-8 usually) can
+ * occur when logging raw communitication with ISDS servers. Infixed zero byte
+ * is not excluded, but should not present. Use @length argument to get real
+ * length of the message.
+ * TODO: We will try to fix the encoding issue
+ * @facility is log message class
+ * @level is log message severity
+ * @message is string with zero byte terminator. This can be any arbitrary
+ * chunk of a sentence with or without new line, a sentence can be splitted
+ * into more messages. However it should not happen. If you discover message
+ * without new line, report it as a bug.
+ * @length is size of @message string in bytes excluding trailing zero
+ * @data is pointer that will be passed unchanged to this function at run-time
+ * */
+typedef void (*isds_log_callback)(
+        isds_log_facility facility, isds_log_level level,
+        const char *message, int length, void *data);
+
+/* Register callback function libisds calls when new global log message is
+ * produced by library. Library logs to stderr by default.
+ * @callback is function provided by application libsds will call. See type
+ * defition for @callback argument explanation. Pass NULL to revert logging to
+ * default behaviour.
+ * @data is application specific data @callback gets as last argument */
+void isds_set_log_callback(isds_log_callback callback, void *data);
 
 /* Set timeout in miliseconds for each network job like connecting to server
  * or sending message. Use 0 to disable timeout limits. */

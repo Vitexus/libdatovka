@@ -1,3 +1,6 @@
+• Application can catch all global log messages and redirect them whereever it
+needs.
+
 Version 0.1
 ===========
 

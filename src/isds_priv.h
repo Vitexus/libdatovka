@@ -35,6 +35,10 @@ typedef enum {
  * Allocated in isds_init() and deallocated in isds_cleanup(). */
 unsigned int log_facilities;
 isds_log_level log_level;
+isds_log_callback log_callback;     /* Pass global log message to application.
+                                       NULL to log to stderr itself */
+void *log_callback_data;            /* Application specific data to pass to
+                                       registered log_callback function */
 
 /* End of global variables */
 
