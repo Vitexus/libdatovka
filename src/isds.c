@@ -1683,7 +1683,8 @@ static isds_error uint2isds_message_status(struct isds_ctx *context,
  * description
  * @string is raw event decsription starting with event prefix
  * @event is structure where to store type and stripped description to
- * @return standard error code, unkown prefix is not classified as an error. */
+ * @return standard error code, unknown prefix is not classified as an error.
+ * */
 static isds_error eventstring2event(const xmlChar *string,
         struct isds_event* event) {
     const xmlChar *known_prefixes[] = {
@@ -2063,7 +2064,7 @@ static isds_error move_xpathctx_to_child(struct isds_ctx *context,
         char *parent_locale = utf82locale((char*) xpath_ctx->node->name);
         char *child_locale = utf82locale((char*) child);
         isds_printf_message(context,
-                _("%s element contains multiple %s childs"),
+                _("%s element contains multiple %s children"),
                 parent_locale, child_locale);
         free(child_locale);
         free(parent_locale);
@@ -3465,7 +3466,7 @@ static isds_error insert_document(struct isds_ctx *context,
     const xmlChar *string = isds_FileMetaType2string(document->dmFileMetaType);
     if (!string) {
         isds_printf_message(context,
-                _("Document has unkown dmFileMetaType: %ld"),
+                _("Document has unknown dmFileMetaType: %ld"),
                 document->dmFileMetaType);
         err = IE_ENUM;
         goto leave;
@@ -4622,7 +4623,7 @@ static isds_error build_send_dbid_request_check_response(
     }
     xmlSetNs(request, isds_ns);
 
-    /* Add XSD:tIdDbInput childs*/
+    /* Add XSD:tIdDbInput children */
     INSERT_STRING(request, "dbID", box_id);
     err = insert_GExtApproval(context, approval, request);
     if (err) goto leave;
