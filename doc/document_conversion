@@ -30,7 +30,7 @@ Digital to Analogue Direction
 Protocol: SOAP
 URL: https://www.czechpoint.cz/uschovna/services.php
 
-Input for XSLT is document subtree (rooted in p:dmFile)
+Input for XSLT is document subtree (rooted in p:dmFile) of ISDS message
 Request XSLT:
 <xsl:stylesheet xmlns:p="http://isds.czechpoint.cz/v20"
         xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -62,10 +62,58 @@ Request XSLT:
 </xsl:stylesheet>
 
 
-Response is standard SOAP Fault error message or undocumented structure in case of success.
-
-Response returns token. Converting officer uses the token to pick up document
+Response returns token. Converting officer uses the token to pick up a document
 from Czech POINT input storage. Otherwise document expires after 30 days.
+
+According 602XML Filler: Response is standard SOAP Fault error message or
+undocumented structure in case of success
+
+According real test:
+
+In case of failure:
+
+<SOAP-ENV:Envelope
+        xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:ns1="urn:uschovnaWSDL"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+        SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+    <SOAP-ENV:Body>
+        <ns1:saveDocumentResponse>
+            <return xsi:type="ns1:DocumentSaveResponse">
+                <status xsi:type="xsd:int">4</status>
+                <statusMsg xsi:type="xsd:string">Neni dokument typu PDF |-1</statusMsg>
+                <documentID xsi:nil="true"/>
+                <dateInserted xsi:type="xsd:date">2010-02-11</dateInserted>
+            </return>
+        </ns1:saveDocumentResponse>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
+
+In case of success:
+
+<SOAP-ENV:Envelope
+        xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:ns1="urn:uschovnaWSDL"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+        SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+    <SOAP-ENV:Body>
+        <ns1:saveDocumentResponse>
+            <return xsi:type="ns1:DocumentSaveResponse">
+                <status xsi:type="xsd:int">0</status>
+                <statusMsg xsi:type="xsd:string">OK 1</statusMsg>
+                <documentID xsi:type="xsd:string">816236355942291944571</documentID>
+                <dateInserted xsi:type="xsd:date">2010-02-12</dateInserted>
+            </return>
+        </ns1:saveDocumentResponse>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
+
+As you can see the token is returned in
+//ns1:saveDocumentResponse/return/documentID/text().
 
 
 Analogue to Digital Direction
