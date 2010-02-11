@@ -19,13 +19,11 @@ LT_INIT
 AC_ARG_ENABLE(example, [AS_HELP_STRING([--enable-example],
                               [Build library usage examples])])
 AM_CONDITIONAL([BUILD_EXAMPLE], [test "$enable_example" = "yes"])
-AS_IF([test "$enable_example" = "yes"], AC_CONFIG_FILES([client/Makefile]))
 
 # Enable tests
 AC_ARG_ENABLE(test, [AS_HELP_STRING([--enable-test],
                               [Enable internal library tests])])
 AM_CONDITIONAL([BUILD_TEST], [test "$enable_test" = "yes"])
-AS_IF([test "$enable_test" = "yes"], AC_CONFIG_FILES([test/Makefile]))
 
 # Enable gettext
 AM_GNU_GETTEXT_VERSION([0.17])
@@ -87,7 +85,8 @@ AC_CHECK_FUNCS([localtime_r memset munmap setlocale strdup strerror])
 # Default CFLAGS
 CFLAGS="${CFLAGS} -std=c99 -Wall"
 
-AC_CONFIG_FILES([Makefile src/Makefile po/Makefile.in])
+AC_CONFIG_FILES([Makefile src/Makefile po/Makefile.in client/Makefile
+                 test/Makefile])
 
 #AC_CONFIG_SUBDIRS([src])
 AC_OUTPUT
