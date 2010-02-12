@@ -1095,6 +1095,23 @@ isds_error isds_mark_message_received(struct isds_ctx *context,
  * Just for test purposes */
 isds_error isds_bogus_request(struct isds_ctx *context);
 
+/* Send document for authorize conversion into Czech POINT system.
+ * This is public anonymous service, no login necessary. Special context is
+ * used to reuse keep-a-live HTTPS connection.
+ * @context is Czech POINT session context. DO NOT use context connected to
+ * ISDS server. Use new context or context used by this function previously.
+ * @document is document to convert. Only data, data_length and dmFileDescr
+ * memebers are signifact. Be ware that not all document formats can be
+ * converted (signed PDF 1.3 and higher only (2010-02 state)).
+ * @id is reallocated identifier assigned by Czech POINT system to
+ * your document on submit. Use is to tell it to Czech POINT officer.
+ * @date is reallocated document submit date (submitted documents
+ * expires after some period). Only tm_year, tm_mon and tm_mday carry sane
+ * value. */
+isds_error czp_convert_document(struct isds_ctx *context,
+        const struct isds_document *document,
+        char **id, struct tm **date);
+
 /* Search for document by document ID in list of documents. IDs are compared
  * as UTF-8 string.
  * @documents is list of isds_documents

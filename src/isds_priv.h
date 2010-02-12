@@ -21,6 +21,7 @@
 #define SISDS_OUTGOING_NS "http://isds.czechpoint.cz/v20/SentMessage"
 #define SISDS_DELIVERY_NS "http://isds.czechpoint.cz/v20/delivery"
 #define SCHEMA_NS "http://www.w3.org/2001/XMLSchema"
+#define DEPOSIT_NS "urn:uschovnaWSDL"
 
 /* Used to choose proper name space for message elements.
  * See register_namespaces(). */

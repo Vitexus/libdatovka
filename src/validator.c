@@ -308,3 +308,68 @@ isds_error validate_message_id_length(struct isds_ctx *context,
 }
 
 
+/* Send @request to Czech POINT conversion deposit and return response
+ * as XML document.
+ * @context is Czech POINT session context,
+ * @request is tree with deposit message, can be NULL
+ * @response is automatically allocated response from server as XML Document
+ * In case of error, @response will be dealocated.
+ * */
+_hidden isds_error czpdeposit(struct isds_ctx *context,
+        const xmlNodePtr request, xmlDocPtr *response) {
+    isds_error err = IE_SUCCESS;
+    xmlNodePtr response_body = NULL, deposit_node;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!response) return IE_INVAL;
+
+    err = soap(context, NULL, request, &response_body, NULL, NULL);
+
+    if (err) goto leave;
+
+    if (!response_body) {
+        isds_log_message(context, _("SOAP returned empty body"));
+        err = IE_ISDS;
+    }
+
+    /* Find deposit element */
+    for (deposit_node = response_body; deposit_node;
+            deposit_node = deposit_node->next) {
+        if (deposit_node->type == XML_ELEMENT_NODE &&
+                deposit_node->ns &&
+                !xmlStrcmp(deposit_node->ns->href, BAD_CAST DEPOSIT_NS))
+            break;
+    }
+    if (!deposit_node) {
+        isds_log_message(context,
+                _("SOAP response does not contain "
+                    "Czech POINT deposit element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+
+    /* Destroy other nodes */
+    if (deposit_node == response_body)
+        response_body = response_body->next;
+    xmlUnlinkNode(deposit_node);
+    xmlFreeNodeList(response_body);
+    response_body = NULL;
+
+    /* Build XML document */
+    *response = xmlNewDoc(BAD_CAST "1.0");
+    if (!*response) {
+        isds_log_message(context,
+                _("Could not build Czech POINT deposit response document"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    xmlDocSetRootElement(*response, deposit_node);
+
+leave:
+    if (err) {
+        xmlFreeDoc(*response);
+    }
+    xmlFreeNodeList(response_body);
+
+    return err;
+}

@@ -1943,9 +1943,9 @@ static isds_error eventstring2event(const xmlChar *string,
 }
 
 
-#define INSERT_STRING(parent, element, string) \
+#define INSERT_STRING_WITH_NS(parent, ns, element, string) \
     { \
-        node = xmlNewTextChild(parent, NULL, BAD_CAST (element), \
+        node = xmlNewTextChild(parent, ns, BAD_CAST (element), \
                 (xmlChar *) (string)); \
         if (!node) { \
             isds_printf_message(context, \
@@ -1955,6 +1955,9 @@ static isds_error eventstring2event(const xmlChar *string,
             goto leave; \
         } \
     }
+
+#define INSERT_STRING(parent, element, string) \
+    { INSERT_STRING_WITH_NS(parent, NULL, element, string) }
 
 #define INSERT_SCALAR_BOOLEAN(parent, element, boolean) \
     { \
@@ -8031,6 +8034,207 @@ isds_error isds_mark_message_received(struct isds_ctx *context,
 }
 
 
+/* Send document for authorize conversion into Czech POINT system.
+ * This is public anonymous service, no login necessary. Special context is
+ * used to reuse keep-a-live HTTPS connection.
+ * @context is Czech POINT session context. DO NOT use context connected to
+ * ISDS server. Use new context or context used by this function previously.
+ * @document is document to convert. Only data, data_length and dmFileDescr
+ * memebers are signifact. Be ware that not all document formats can be
+ * converted (signed PDF 1.3 and higher only (2010-02 state)).
+ * @id is reallocated identifier assigned by Czech POINT system to
+ * your document on submit. Use is to tell it to Czech POINT officer.
+ * @date is reallocated document submit date (submitted documents
+ * expires after some period). Only tm_year, tm_mon and tm_mday carry sane
+ * value. */
+isds_error czp_convert_document(struct isds_ctx *context,
+        const struct isds_document *document,
+        char **id, struct tm **date) {
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr deposit_ns = NULL, empty_ns = NULL;
+    xmlNodePtr request = NULL, node;
+    xmlDocPtr response = NULL;
+    xmlChar *base64data = NULL;
+    char *url_locale = NULL;
+
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    long int status = -1;
+    long int *status_ptr = &status;
+    char *string = NULL;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!document || !id || !date) return IE_INVAL;
+
+    /* Free output arguments */
+    zfree(*id);
+    zfree(*date);
+
+    /* Store configuration */
+    free(context->url);
+    context->url = strdup("https://www.czechpoint.cz/uschovna/services.php");
+    if (!(context->url))
+        return IE_NOMEM;
+    url_locale = utf82locale((char *) context->url); 
+
+    /* Prepare CURL handle if not yet connected */
+    if (context->curl) {
+        context->curl = curl_easy_init();
+        if (!(context->curl))
+            return IE_ERROR;
+    }
+
+    /* Build conversion request */
+    request = xmlNewNode(NULL, BAD_CAST "saveDocument");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build Czech POINT conversion request"));
+        return IE_ERROR;
+    }
+    deposit_ns = xmlNewNs(request, BAD_CAST DEPOSIT_NS, NULL);
+    if(!deposit_ns) {
+        isds_log_message(context,
+                _("Could not create Czech POINT deposit name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, deposit_ns);
+
+    /* Insert childern. They are in empty namespace! */
+    empty_ns = xmlNewNs(request, NULL, NULL);
+    if(!empty_ns) {
+        isds_log_message(context, _("Could not create empty name space"));
+        err = IE_ERROR;
+        goto leave;
+    } 
+    INSERT_STRING_WITH_NS(request, empty_ns, "conversionID", "0");
+    INSERT_STRING_WITH_NS(request, empty_ns, "fileName",
+            document->dmFileDescr);
+
+    /* Document encoded in Base64 */
+    base64data = (xmlChar *) b64encode(document->data, document->data_length);
+    if (!base64data) {
+        isds_printf_message(context,
+                ngettext("Not enought memory to encode %zd bytes into Base64",
+                    "Not enought memory to encode %zd bytes into Base64",
+                    document->data_length),
+                document->data_length);
+        err = IE_NOMEM;
+        goto leave;
+    }
+    INSERT_STRING_WITH_NS(request, empty_ns, "document", base64data);
+    zfree(base64data);
+
+    isds_log(ILF_ISDS, ILL_DEBUG,
+            _("Submitting document for conversion into server %s\n"),
+            url_locale);
+
+    /* Send conversion request */
+    err = czpdeposit(context, request, &response);
+    xmlFreeNode(request); request = NULL;
+
+    if (err) {
+        close_connection(context);
+        goto leave;
+    }
+
+
+    /* Extract response */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(
+            BAD_CAST "/deposit:saveDocumentResponse/return",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* Empty response */
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_printf_message(context,
+                _("Missing `return' element in Czech POINT deposit response"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* More responses */
+    if (result->nodesetval->nodeNr > 1) {
+        isds_printf_message(context,
+                _("Multiple `return' element in Czech POINT deposit response"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* One response */
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+
+    /* Get status */
+    /* FIXME: Missing status element */
+    EXTRACT_LONGINT("status", status_ptr, 1);
+    if (status) {
+        EXTRACT_STRING("statusMsg", string);
+        char *string_locale = utf82locale(string);
+        isds_printf_message(context,
+                _("Czech POINT deposit refused document for conversion "
+                    "(code=%ld, message=%s)"),
+                status, string_locale);
+        free(string_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+    /* Get docuement ID */
+    EXTRACT_STRING("documentID", *id);
+
+    /* Get submit date */
+    EXTRACT_STRING("dateInserted", string);
+    if (string) {
+        *date = calloc(1, sizeof(**date));
+        if (!*date) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+        err = datestring2tm((xmlChar *)string, *date);
+        if (err) {
+            if (err == IE_NOTSUP) {
+                err = IE_ISDS;
+                char *string_locale = utf82locale(string);
+                isds_printf_message(context,
+                        _("Invalid dateInserted value: %s"), string_locale);
+                free(string_locale);
+            }
+            goto leave;
+        }
+    }
+
+leave:
+    free(string);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    xmlFreeDoc(response);
+    free(base64data);
+    xmlFreeNode(request);
+
+    if (!err) {
+        char *id_locale = utf82locale((char *) id); 
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Document %s has been submitted for conversion "
+                    "to server %s successfully\n"),
+                id_locale, url_locale);
+        free(id_locale);
+    }
+    free(url_locale);
+    return err;
+}
+
+
 #undef INSERT_ELEMENT
 #undef CHECK_FOR_STRING_LENGTH
 #undef INSERT_STRING_ATTRIBUTE
@@ -8040,6 +8244,7 @@ isds_error isds_mark_message_received(struct isds_ctx *context,
 #undef INSERT_BOOLEAN
 #undef INSERT_SCALAR_BOOLEAN
 #undef INSERT_STRING
+#undef INSERT_STRING_WITH_NS
 #undef EXTRACT_STRING_ATTRIBUTE
 #undef EXTRACT_ULONGINT
 #undef EXTRACT_LONGINT
@@ -8307,6 +8512,8 @@ _hidden isds_error register_namespaces(xmlXPathContextPtr xpath_ctx,
     if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "sisds", message_namespace))
         return IE_ERROR;
     if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "xs", BAD_CAST SCHEMA_NS))
+        return IE_ERROR;
+    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "deposit", BAD_CAST DEPOSIT_NS))
         return IE_ERROR;
     return IE_SUCCESS;
 }

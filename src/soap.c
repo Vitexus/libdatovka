@@ -20,7 +20,8 @@ _hidden isds_error close_connection(struct isds_ctx *context) {
     if (context->curl) {
         curl_easy_cleanup(context->curl);
         context->curl = NULL;
-        isds_log(ILF_HTTP, ILL_DEBUG, _("Connection to server closed"));
+        isds_log(ILF_HTTP, ILL_DEBUG, _("Connection to server %s closed\n"),
+                context->url);
         return IE_SUCCESS;
     } else {
         return IE_CONNECTION_CLOSED;

@@ -61,4 +61,14 @@ isds_error check_documents_hierarchy(struct isds_ctx *context,
 isds_error validate_message_id_length(struct isds_ctx *context,
         const xmlChar *message_id);
 
+/* Send @request to Czech POINT conversion deposit and return response
+ * as XML document.
+ * @context is Czech POINT session context,
+ * @request is tree with deposit message, can be NULL
+ * @response is automatically allocated response from server as XML Document
+ * In case of error, @response will be dealocated.
+ * */
+isds_error czpdeposit(struct isds_ctx *context,
+        const xmlNodePtr request, xmlDocPtr *response);
+
 #endif
