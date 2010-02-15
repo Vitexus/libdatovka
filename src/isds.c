@@ -868,6 +868,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     if (certificate || key) return IE_NOTSUP;
 
     /* Store configuration */
+    context->type = CTX_TYPE_ISDS;
     free(context->url);
     context->url = strdup(url);
     if (!(context->url))
@@ -8075,6 +8076,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
     zfree(*date);
 
     /* Store configuration */
+    context->type = CTX_TYPE_CZP;
     free(context->url);
     context->url = strdup("https://www.czechpoint.cz/uschovna/services.php");
     if (!(context->url))
@@ -8082,7 +8084,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
     url_locale = utf82locale((char *) context->url); 
 
     /* Prepare CURL handle if not yet connected */
-    if (context->curl) {
+    if (!context->curl) {
         context->curl = curl_easy_init();
         if (!(context->curl))
             return IE_ERROR;
