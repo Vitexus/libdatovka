@@ -8105,7 +8105,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
     xmlSetNs(request, deposit_ns);
 
     /* Insert childern. They are in empty namespace! */
-    empty_ns = xmlNewNs(request, NULL, NULL);
+    empty_ns = xmlNewNs(request, NULL, BAD_CAST "");
     if(!empty_ns) {
         isds_log_message(context, _("Could not create empty name space"));
         err = IE_ERROR;
