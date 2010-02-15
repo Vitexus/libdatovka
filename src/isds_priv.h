@@ -32,6 +32,12 @@ typedef enum {
     MESSAGE_NS_SIGNED_DELIVERY
 } message_ns_type;
 
+/* Type of a context */
+typedef enum {
+    CTX_TYPE_ISDS,      /* Connection to ISDS */
+    CTX_TYPE_CZP        /* Connection to Czech POINT document deposit */
+} context_type;
+
 /* Global variables.
  * Allocated in isds_init() and deallocated in isds_cleanup(). */
 unsigned int log_facilities;
@@ -45,6 +51,7 @@ void *log_callback_data;            /* Application specific data to pass to
 
 /* Context */
 struct isds_ctx {
+    context_type type;      /* Context type */
     unsigned int timeout;   /* milliseconds */
     char *url;              /* URL of the ISDS web service */
     char *username;

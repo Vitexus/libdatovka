@@ -1112,6 +1112,10 @@ isds_error czp_convert_document(struct isds_ctx *context,
         const struct isds_document *document,
         char **id, struct tm **date);
 
+/* Close possibly opened connection to Czech POINT document deposit.
+ * @context is Czech POINT session context. */
+isds_error czp_close_connection(struct isds_ctx *context);
+
 /* Search for document by document ID in list of documents. IDs are compared
  * as UTF-8 string.
  * @documents is list of isds_documents

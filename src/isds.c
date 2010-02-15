@@ -570,8 +570,11 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
         return IE_INVALID_CONTEXT;
     }
   
-    /* Discard credentials */
-    isds_logout(*context);
+    /* Discard credentials and close connection */
+    switch ((*context)->type) {
+        case CTX_TYPE_ISDS: isds_logout(*context); break;
+        case CTX_TYPE_CZP: czp_close_connection(*context); break;
+    }
 
     /* Free other structures */
     free((*context)->tls_verify_server);
@@ -8233,6 +8236,14 @@ leave:
     return err;
 }
 
+
+/* Close possibly opened connection to Czech POINT document deposit.
+ * @context is Czech POINT session context. */
+isds_error czp_close_connection(struct isds_ctx *context) {
+    if (!context) return IE_INVALID_CONTEXT;
+    close_connection(context);
+    return IE_SUCCESS;
+}
 
 #undef INSERT_ELEMENT
 #undef CHECK_FOR_STRING_LENGTH
