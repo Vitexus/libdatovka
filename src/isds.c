@@ -8059,7 +8059,6 @@ isds_error czp_convert_document(struct isds_ctx *context,
     xmlNodePtr request = NULL, node;
     xmlDocPtr response = NULL;
     xmlChar *base64data = NULL;
-    char *url_locale = NULL;
 
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
@@ -8081,7 +8080,6 @@ isds_error czp_convert_document(struct isds_ctx *context,
     context->url = strdup("https://www.czechpoint.cz/uschovna/services.php");
     if (!(context->url))
         return IE_NOMEM;
-    url_locale = utf82locale((char *) context->url); 
 
     /* Prepare CURL handle if not yet connected */
     if (!context->curl) {
@@ -8132,8 +8130,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
     zfree(base64data);
 
     isds_log(ILF_ISDS, ILL_DEBUG,
-            _("Submitting document for conversion into server %s\n"),
-            url_locale);
+            _("Submitting document for conversion into Czech POINT deposit"));
 
     /* Send conversion request */
     err = czpdeposit(context, request, &response);
@@ -8227,14 +8224,12 @@ leave:
     xmlFreeNode(request);
 
     if (!err) {
-        char *id_locale = utf82locale((char *) id); 
+        char *id_locale = utf82locale((char *) *id); 
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Document %s has been submitted for conversion "
-                    "to server %s successfully\n"),
-                id_locale, url_locale);
+                    "to server successfully\n"), id_locale);
         free(id_locale);
     }
-    free(url_locale);
     return err;
 }
 
