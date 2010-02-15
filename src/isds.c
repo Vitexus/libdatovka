@@ -8095,7 +8095,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
                 _("Could build Czech POINT conversion request"));
         return IE_ERROR;
     }
-    deposit_ns = xmlNewNs(request, BAD_CAST DEPOSIT_NS, NULL);
+    deposit_ns = xmlNewNs(request, BAD_CAST DEPOSIT_NS, BAD_CAST "dep");
     if(!deposit_ns) {
         isds_log_message(context,
                 _("Could not create Czech POINT deposit name space"));
@@ -8105,7 +8105,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
     xmlSetNs(request, deposit_ns);
 
     /* Insert childern. They are in empty namespace! */
-    empty_ns = xmlNewNs(request, NULL, BAD_CAST "");
+    empty_ns = xmlNewNs(request, BAD_CAST "", NULL);
     if(!empty_ns) {
         isds_log_message(context, _("Could not create empty name space"));
         err = IE_ERROR;
