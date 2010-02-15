@@ -12,7 +12,8 @@ noinst_PROGRAMS = isdsclient login progressbar logger \
 	getreceived getsignedreceived \
 	getreceivedenvelope markasread markasreceived \
 	downloadmessagehash verifyreceivedhash computemessagehash \
-	loaddelivery getreceiveddelivery getreceivedsigneddelivery
+	loaddelivery getreceiveddelivery getreceivedsigneddelivery \
+	convertdocument
 
 common = common.c common.h
 
@@ -47,4 +48,5 @@ markasreceived_SOURCES = markasreceived.c $(common)
 loaddelivery_SOURCES = loaddelivery.c $(common)
 getreceiveddelivery_SOURCES = getreceiveddelivery.c $(common)
 getreceivedsigneddelivery_SOURCES = getreceivedsigneddelivery.c $(common)
+convertdocument_SOURCES = convertdocument.c $(common)
 
