@@ -8175,7 +8175,6 @@ isds_error czp_convert_document(struct isds_ctx *context,
     xpath_ctx->node = result->nodesetval->nodeTab[0];
 
     /* Get status */
-    /* FIXME: Missing status element */
     EXTRACT_LONGINT("status", status_ptr, 1);
     if (status) {
         EXTRACT_STRING("statusMsg", string);
