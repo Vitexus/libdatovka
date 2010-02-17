@@ -3175,7 +3175,8 @@ static isds_error find_and_extract_DmHash(struct isds_ctx *context,
     /* Get hash value */
     EXTRACT_STRING(".", string);
     if (!string) {
-        isds_printf_message(context, _("sids:dmHash element is missing hash value"));
+        isds_printf_message(context,
+                _("sisds:dmHash element is missing hash value"));
         err = IE_ISDS;
         goto leave;
     }
@@ -8092,7 +8093,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
     request = xmlNewNode(NULL, BAD_CAST "saveDocument");
     if (!request) {
         isds_log_message(context,
-                _("Could build Czech POINT conversion request"));
+                _("Could not build Czech POINT conversion request"));
         return IE_ERROR;
     }
     deposit_ns = xmlNewNs(request, BAD_CAST DEPOSIT_NS, BAD_CAST "dep");
