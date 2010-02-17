@@ -13,6 +13,13 @@
 #include <gpg-error.h> /* Because of ksba or gpgme */
 #include "physxml.h"
 
+/* Locators */
+/* Base URL of production ISDS instance */
+const char isds_locator[] = "https://www.mojedatovaschranka.cz/DS/";
+
+/* Base URL of production ISDS instance */
+const char isds_testing_locator[] = "https://www.czebox.cz/DS/";
+
 
 /* Free isds_list with all member data.
  * @list list to free, on return will be NULL */
@@ -846,7 +853,9 @@ static isds_error discard_credentials(struct isds_ctx *context) {
 
 
 /* Connect and log in into ISDS server.
- * @url is address of ISDS web service
+ * @url is base address of ISDS web service. Pass NULL or extern isds_locator
+ * variable to use production ISDS instance. You can pass extern
+ * isds_testing_locator variable to select testing instance. 
  * @username is user name of ISDS user
  * @password is user's secret password
  * @certificate is NULL terminated string with PEM formated client's
@@ -864,8 +873,11 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     xmlNodePtr response = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
-    if (!url || !username || !password) return IE_INVAL;
+    if (!username || !password) return IE_INVAL;
     if (certificate || key) return IE_NOTSUP;
+
+    /* Default locator is offical system */
+    if (!url) url = isds_locator;
 
     /* Store configuration */
     context->type = CTX_TYPE_ISDS;

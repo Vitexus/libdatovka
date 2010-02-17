@@ -3,7 +3,7 @@
 
 #include <isds.h>
 
-extern char url[];
+#define url isds_testing_locator
 extern char username[];
 extern char password[];
 

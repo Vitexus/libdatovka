@@ -19,6 +19,10 @@ extern "C" {
 #define _deprecated
 #endif
 
+/* Service locators */
+extern const char isds_locator[];   /* Base URL of production ISDS instance */
+extern const char isds_testing_locator[]; /* B. URL of testing ISDS instance */
+
 
 struct isds_ctx;    /* Context for specific ISDS box */
 
@@ -577,7 +581,9 @@ isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
         ...);
 
 /* Connect and log in into ISDS server.
- * @url is address of ISDS web service
+ * @url is base address of ISDS web service. Pass NULL or extern isds_locator
+ * variable to use production ISDS instance. You can pass extern
+ * isds_testing_locator variable to select testing instance. 
  * @username is user name of ISDS user
  * @password is user's secret password
  * @certificate is NULL terminated string with PEM formated client's

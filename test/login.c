@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
     INIT_TEST("login");
     
     struct isds_ctx *context = NULL;
-    char url[] = "https://www.czebox.cz/DS/";
+    const char *url = isds_testing_locator;
     char username[] = "5s59sd";
     char password[] = "Ac123456";
 
@@ -45,8 +45,8 @@ int main(int argc, char **argv) {
 
     TEST("invalid context", test_login, IE_INVALID_CONTEXT, NULL,
             url, username, password, NULL, NULL);
-    TEST("NULL url", test_login, IE_INVAL, context,
-            NULL, username, password, NULL, NULL);
+    TEST("NULL url with invalid credentials", test_login, IE_NOT_LOGGED_IN,
+            context, NULL, username, password, NULL, NULL);
     TEST("NULL username", test_login, IE_INVAL, context,
             url, NULL, password, NULL, NULL);
     TEST("NULL password", test_login, IE_INVAL, context,

@@ -13,7 +13,6 @@
 #include <sys/mman.h>
 #include <isds.h>
 
-char url[] = "https://www.czebox.cz/DS/";
 /*char username[] = "jrfh7i";*/
 /*char password[] = "Ab123456";*/
 /*char password[] = "Ac123456";*/
