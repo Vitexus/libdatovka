@@ -86,6 +86,7 @@ _hidden isds_error compute_hash(const void *input, const size_t length,
  * @return IE_SUCCESS if everything is O.k. */
 _hidden isds_error init_gpgme(void) {
     const char *gpgme_version;
+    gpgme_error_t err;
     
     /* Check version and initialize GPGME */
     gpgme_version = gpgme_check_version(NULL);
@@ -103,8 +104,38 @@ _hidden isds_error init_gpgme(void) {
 #endif
 
     /* Check for engines */
-    if (gpgme_engine_check_version(GPGME_PROTOCOL_CMS)) {
+    err = gpgme_engine_check_version(GPGME_PROTOCOL_CMS);
+    if (err) {
         isds_log(ILF_SEC, ILL_CRIT, _("GPGME does not support CMS\n"));
+
+        if (gpgme_err_code(err) == GPG_ERR_INV_ENGINE) {
+            gpgme_engine_info_t info; /* Do not free it */
+
+            err = gpgme_get_engine_info (&info);
+            if (!err) {
+                while (info && info->protocol != GPGME_PROTOCOL_CMS)
+                    info = info->next;
+                if (!info)
+                    isds_log(ILF_SEC, ILL_CRIT,
+                                _("GPGME compiled without support for "
+                                    "protocol %s\n"),
+                                gpgme_get_protocol_name(GPGME_PROTOCOL_CMS));
+                else if (info->file_name && !info->version)
+                    isds_log(ILF_SEC, ILL_CRIT,
+                            _("Engine %s not installed properly"),
+                            info->file_name);
+                else if (info->file_name && info->version && info->req_version)
+                    isds_log(ILF_SEC, ILL_CRIT,
+                            _("Engine %s version %s installed, "
+                            "but at least version %s required"),
+                            info->file_name, info->version, info->req_version);
+                else
+                    isds_log(ILF_SEC, ILL_CRIT,
+                        _("Unknown problem with engine for protocol %s"),
+                        gpgme_get_protocol_name(GPGME_PROTOCOL_CMS));
+            }
+        }
+
         return IE_ERROR;
     }
 
