@@ -156,7 +156,7 @@ AddDataBoxUser
 Add person permitted to access to the box
 
 Different user types can be added only by users with specific priviledges
-(PRIMARY_USER can add only PRIVIL_CZP user).
+(PRIMARY_USER can be added only by PRIVIL_CZP user).
 
 Input is box description and new user definition.
 
