@@ -579,8 +579,11 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
   
     /* Discard credentials and close connection */
     switch ((*context)->type) {
+        case CTX_TYPE_NONE: break;
         case CTX_TYPE_ISDS: isds_logout(*context); break;
-        case CTX_TYPE_CZP: czp_close_connection(*context); break;
+        case CTX_TYPE_CZP:
+        case CTX_TYPE_TESTING_REQUEST_COLLECTOR:
+                            czp_close_connection(*context); break;
     }
 
     /* Free other structures */
@@ -8253,6 +8256,95 @@ isds_error czp_close_connection(struct isds_ctx *context) {
     if (!context) return IE_INVALID_CONTEXT;
     close_connection(context);
     return IE_SUCCESS;
+}
+
+
+/* Semd request for new box creation in testing ISDS instance.
+ * It's not possible to requst for a production box currently, as it
+ * communicates via e-mail.
+ * @context is special session context for box creation request. DO NOT use
+ * standard context as it could reveal your password. Use fresh new context or
+ * context previously used by this function.
+ * @box is box description to create including single primary user (in case of
+ * FO box type). It outputs box ID assigned by ISDS in dbID element.
+ * @users is list of struct isds_DbUserInfo (primary users in case of non-FO
+ * box, or contact address of PFO box owner). The email member is mandatory as
+ * it will be used to deliver credentials.
+ * @former_names is optional undocumented string. Pass NULL if you don't care.
+ * @approval is optional external approval of box manipulation
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_request_new_testing_box(struct isds_ctx *context,
+        struct isds_DbOwnerInfo *box, const struct isds_list *users,
+        const char *former_names, const struct isds_approval *approval,
+        char **refnumber) {
+    isds_error err = IE_SUCCESS;
+    xmlNodePtr request = NULL;
+    xmlDocPtr response = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!box) return IE_INVAL;
+
+    if (!box->email || box->email[0] == '\0') {
+        isds_log_message(context, _("E-mail field is mandatory"));
+        return IE_INVAL;
+    }
+
+    /* Scratch box ID */
+    zfree(box->dbID);
+
+    /* Store configuration */
+    context->type = CTX_TYPE_TESTING_REQUEST_COLLECTOR;
+    free(context->url);
+    context->url = strdup("http://78.102.19.203/testbox/request_box.php");
+    if (!(context->url))
+        return IE_NOMEM;
+
+    /* Prepare CURL handle if not yet connected */
+    if (!context->curl) {
+        context->curl = curl_easy_init();
+        if (!(context->curl))
+            return IE_ERROR;
+    }
+
+    /* Build CreateDataBox request */
+    err = build_CreateDBInput_request(context,
+            &request, BAD_CAST "CreateDataBox",
+            box, users, (xmlChar *) former_names, NULL, NULL, approval);
+    if (err) goto leave;
+
+    /* Send it to server and process response */
+    err = send_destroy_request_check_response(context,
+            SERVICE_DB_MANIPULATION, BAD_CAST "CreateDataBox", &request,
+            &response, (xmlChar **) refnumber);
+
+    /* Extract box ID */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    EXTRACT_STRING("/isds:CreateDataBoxResponse/dbID", box->dbID);
+
+leave:
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(response);
+    xmlFreeNode(request);
+
+    if (!err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("CreateDataBox request processed by server successfully.\n"));
+    }
+
+    return err;
 }
 
 #undef INSERT_ELEMENT

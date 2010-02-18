@@ -35,8 +35,11 @@ typedef enum {
 
 /* Type of a context */
 typedef enum {
+    CTX_TYPE_NONE = 0,  /* Not configured for any connection yet */
     CTX_TYPE_ISDS,      /* Connection to ISDS */
-    CTX_TYPE_CZP        /* Connection to Czech POINT document deposit */
+    CTX_TYPE_CZP,       /* Connection to Czech POINT document deposit */
+    CTX_TYPE_TESTING_REQUEST_COLLECTOR /* Connection to server collectiong
+                                          new testing box requests */
 } context_type;
 
 /* Global variables.

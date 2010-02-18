@@ -1122,6 +1122,26 @@ isds_error czp_convert_document(struct isds_ctx *context,
  * @context is Czech POINT session context. */
 isds_error czp_close_connection(struct isds_ctx *context);
 
+/* Semd request for new box creation in testing ISDS instance.
+ * It's not possible to requst for a production box currently, as it
+ * communicates via e-mail.
+ * @context is special session context for box creation request. DO NOT use
+ * standard context as it could reveal your password. Use fresh new context or
+ * context previously used by this function.
+ * @box is box description to create including single primary user (in case of
+ * FO box type). It outputs box ID assigned by ISDS in dbID element.
+ * @users is list of struct isds_DbUserInfo (primary users in case of non-FO
+ * box, or contact address of PFO box owner). The email member is mandatory as
+ * it will be used to deliver credentials.
+ * @former_names is optional undocumented string. Pass NULL if you don't care.
+ * @approval is optional external approval of box manipulation
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_request_new_testing_box(struct isds_ctx *context,
+        struct isds_DbOwnerInfo *box, const struct isds_list *users,
+        const char *former_names, const struct isds_approval *approval,
+        char **refnumber);
+
 /* Search for document by document ID in list of documents. IDs are compared
  * as UTF-8 string.
  * @documents is list of isds_documents

@@ -152,13 +152,17 @@ _hidden isds_error isds(struct isds_ctx *context, const isds_service service,
     if (!response) return IE_INVAL;
     if (!raw_response_length && raw_response) return IE_INVAL;
 
-    switch (service) {
-        case SERVICE_DM_OPERATIONS:     file = "dz"; break;
-        case SERVICE_DM_INFO:           file = "dx"; break;
-        case SERVICE_DB_SEARCH:         file = "df"; break;
-        case SERVICE_DB_ACCESS:         file = "DsManage"; break;
-        case SERVICE_DB_MANIPULATION:   file = "DsManage"; break;
-        default: return (IE_INVAL);
+    /* Effective ISDS URL is build from base URL and suffix.
+     * Other conenction types has specific stable URL. */
+    if (context->type == CTX_TYPE_ISDS) {
+        switch (service) {
+            case SERVICE_DM_OPERATIONS:     file = "dz"; break;
+            case SERVICE_DM_INFO:           file = "dx"; break;
+            case SERVICE_DB_SEARCH:         file = "df"; break;
+            case SERVICE_DB_ACCESS:         file = "DsManage"; break;
+            case SERVICE_DB_MANIPULATION:   file = "DsManage"; break;
+            default: return (IE_INVAL);
+        }
     }
 
     err = soap(context, file, request, &response_body,
@@ -212,6 +216,7 @@ leave:
 
     return err;
 }
+
 
 /* Walk through list of isds_documents and check for their types and
  * references.
