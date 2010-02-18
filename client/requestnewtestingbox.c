@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
         isds_set_logging(ILF_ALL & ~ILF_HTTP, ILL_ALL);
         if (err) {
             printf("isds_request_new_testing_box() failed: %s: %s\n",
-                    isds_strerror(err), isds_long_message(ctx));
+                    isds_strerror(err), isds_long_message(request_ctx));
         } else {
             printf("isds_request_new_testing_box() succeeded as request #%s: "
                     "new box ID: %s\n",
