@@ -1122,9 +1122,13 @@ isds_error czp_convert_document(struct isds_ctx *context,
  * @context is Czech POINT session context. */
 isds_error czp_close_connection(struct isds_ctx *context);
 
-/* Semd request for new box creation in testing ISDS instance.
+/* Send request for new box creation in testing ISDS instance.
  * It's not possible to requst for a production box currently, as it
  * communicates via e-mail.
+ * XXX: This function does not work either. Server complains about invalid
+ * e-mail address.
+ * XXX: Remove context->type hacks in isds.c and validator.c when removing
+ * this function
  * @context is special session context for box creation request. DO NOT use
  * standard context as it could reveal your password. Use fresh new context or
  * context previously used by this function.

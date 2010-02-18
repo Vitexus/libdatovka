@@ -55,7 +55,9 @@ _hidden isds_error isds_response_status(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (register_namespaces(xpath_ctx, 
+                (context->type == CTX_TYPE_TESTING_REQUEST_COLLECTOR) ?
+                    MESSAGE_NS_1 : MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -68,7 +70,9 @@ _hidden isds_error isds_response_status(struct isds_ctx *context,
     }
     if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
         isds_log_message(context,
-                _("ISDS response is missing StatusCode element"));
+                (context->type == CTX_TYPE_TESTING_REQUEST_COLLECTOR) ?
+                    _("ISDS1 response is missing StatusCode element") :
+                    _("ISDS response is missing StatusCode element"));
         err = IE_ISDS;
         goto leave;
     }
@@ -179,12 +183,16 @@ _hidden isds_error isds(struct isds_ctx *context, const isds_service service,
     for (isds_node = response_body; isds_node; isds_node = isds_node->next) {
         if (isds_node->type == XML_ELEMENT_NODE &&
                 isds_node->ns &&
-                !xmlStrcmp(isds_node->ns->href, BAD_CAST ISDS_NS))
+                !xmlStrcmp(isds_node->ns->href,
+                    (context->type == CTX_TYPE_TESTING_REQUEST_COLLECTOR) ?
+                        BAD_CAST ISDS1_NS : BAD_CAST ISDS_NS))
             break;
     }
     if (!isds_node) {
         isds_log_message(context,
-                _("SOAP response does not contain ISDS element"));
+                (context->type == CTX_TYPE_TESTING_REQUEST_COLLECTOR) ?
+                    _("SOAP response does not contain ISDS1 element") :
+                    _("SOAP response does not contain ISDS element"));
         err = IE_ISDS;
         goto leave;
     }
@@ -201,7 +209,10 @@ _hidden isds_error isds(struct isds_ctx *context, const isds_service service,
     /* Build XML document */
     *response = xmlNewDoc(BAD_CAST "1.0");
     if (!*response) {
-        isds_log_message(context, _("Could not build ISDS response document"));
+        isds_log_message(context,
+                (context->type == CTX_TYPE_TESTING_REQUEST_COLLECTOR) ?
+                    _("Could not build ISDS1 response document") :
+                    _("Could not build ISDS response document"));
         err = IE_ERROR;
         goto leave;
     }

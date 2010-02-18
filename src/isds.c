@@ -4341,11 +4341,20 @@ static isds_error build_CreateDBInput_request(struct isds_ctx *context,
         free(service_name_locale);
         return IE_ERROR;
     }
-    isds_ns = xmlNewNs(*request, BAD_CAST ISDS_NS, NULL);
-    if (!isds_ns) {
-        isds_log_message(context, _("Could not create ISDS name space"));
-        xmlFreeNode(*request);
-        return IE_ERROR;
+    if (context->type == CTX_TYPE_TESTING_REQUEST_COLLECTOR) {
+        isds_ns = xmlNewNs(*request, BAD_CAST ISDS1_NS, NULL);
+        if (!isds_ns) {
+            isds_log_message(context, _("Could not create ISDS1 name space"));
+            xmlFreeNode(*request);
+            return IE_ERROR;
+        }
+    } else {
+        isds_ns = xmlNewNs(*request, BAD_CAST ISDS_NS, NULL);
+        if (!isds_ns) {
+            isds_log_message(context, _("Could not create ISDS name space"));
+            xmlFreeNode(*request);
+            return IE_ERROR;
+        }
     }
     xmlSetNs(*request, isds_ns);
 
@@ -8259,9 +8268,13 @@ isds_error czp_close_connection(struct isds_ctx *context) {
 }
 
 
-/* Semd request for new box creation in testing ISDS instance.
+/* Send request for new box creation in testing ISDS instance.
  * It's not possible to requst for a production box currently, as it
  * communicates via e-mail.
+ * XXX: This function does not work either. Server complains about invalid
+ * e-mail address.
+ * XXX: Remove context->type hacks in isds.c and validator.c when removing
+ * this function
  * @context is special session context for box creation request. DO NOT use
  * standard context as it could reveal your password. Use fresh new context or
  * context previously used by this function.
@@ -8605,6 +8618,8 @@ _hidden isds_error register_namespaces(xmlXPathContextPtr xpath_ctx,
     if (!xpath_ctx) return IE_ERROR;
 
     switch(message_ns) {
+        case MESSAGE_NS_1:
+            message_namespace = BAD_CAST ISDS1_NS; break;
         case MESSAGE_NS_UNSIGNED:
             message_namespace = BAD_CAST ISDS_NS; break;
         case MESSAGE_NS_SIGNED_INCOMING:

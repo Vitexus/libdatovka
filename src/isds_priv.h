@@ -16,6 +16,7 @@
 
 #define SOAP_NS "http://schemas.xmlsoap.org/soap/envelope/"
 #define SOAP2_NS "http://www.w3.org/2003/05/soap-envelope"
+#define ISDS1_NS "http://isds.czechpoint.cz"
 #define ISDS_NS "http://isds.czechpoint.cz/v20"
 #define SISDS_INCOMING_NS "http://isds.czechpoint.cz/v20/message"
 #define SISDS_OUTGOING_NS "http://isds.czechpoint.cz/v20/SentMessage"
@@ -27,6 +28,7 @@
 /* Used to choose proper name space for message elements.
  * See register_namespaces(). */
 typedef enum {
+    MESSAGE_NS_1,
     MESSAGE_NS_UNSIGNED,
     MESSAGE_NS_SIGNED_INCOMING,
     MESSAGE_NS_SIGNED_OUTGOING,
