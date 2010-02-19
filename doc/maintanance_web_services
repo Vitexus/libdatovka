@@ -204,6 +204,10 @@ If switch is true, output element dbAccessDataId will contain token that user
 will use to authorize web page revealing new credentials. If switch is false,
 new credentials will be send by paper mail to user.
 
+Non-normative: The special web page revealing new credentials is
+<https://www.czechpoint.cz/aktivacniportal/>. The form requires e-mail address
+to match e-mail address provided on meeting point.
+
 
 DisableDataBoxExternally
 ========================
