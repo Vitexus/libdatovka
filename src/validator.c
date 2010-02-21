@@ -160,11 +160,11 @@ _hidden isds_error isds(struct isds_ctx *context, const isds_service service,
      * Other conenction types has specific stable URL. */
     if (context->type == CTX_TYPE_ISDS) {
         switch (service) {
-            case SERVICE_DM_OPERATIONS:     file = "dz"; break;
-            case SERVICE_DM_INFO:           file = "dx"; break;
-            case SERVICE_DB_SEARCH:         file = "df"; break;
-            case SERVICE_DB_ACCESS:         file = "DsManage"; break;
-            case SERVICE_DB_MANIPULATION:   file = "DsManage"; break;
+            case SERVICE_DM_OPERATIONS:     file = "DS/dz"; break;
+            case SERVICE_DM_INFO:           file = "DS/dx"; break;
+            case SERVICE_DB_SEARCH:         file = "DS/df"; break;
+            case SERVICE_DB_ACCESS:         file = "DS/DsManage"; break;
+            case SERVICE_DB_MANIPULATION:   file = "DS/DsManage"; break;
             default: return (IE_INVAL);
         }
     }

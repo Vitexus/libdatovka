@@ -15,10 +15,10 @@
 
 /* Locators */
 /* Base URL of production ISDS instance */
-const char isds_locator[] = "https://www.mojedatovaschranka.cz/DS/";
+const char isds_locator[] = "https://www.mojedatovaschranka.cz/";
 
 /* Base URL of production ISDS instance */
-const char isds_testing_locator[] = "https://www.czebox.cz/DS/";
+const char isds_testing_locator[] = "https://www.czebox.cz/";
 
 
 /* Free isds_list with all member data.
@@ -929,7 +929,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
             username, url);
 
     /* Send login request */
-    soap_err = soap(context, "dz", request, &response, NULL, NULL);
+    soap_err = soap(context, "DS/dz", request, &response, NULL, NULL);
    
     /* Remove credentials */
     discard_credentials(context);
@@ -1010,7 +1010,7 @@ isds_error isds_ping(struct isds_ctx *context) {
     isds_log(ILF_ISDS, ILL_DEBUG, _("Pinging ISDS server\n"));
 
     /* Sent dummy request */
-    soap_err = soap(context, "dz", request, &response, NULL, NULL);
+    soap_err = soap(context, "DS/dz", request, &response, NULL, NULL);
    
     /* Destroy login request */
     xmlFreeNode(request);
