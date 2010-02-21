@@ -22,6 +22,13 @@ Additional configure options:
         Build and run library internal tests. You can run tests by
         `make check'. You can run and study each test in `test' subdirectory.
 
+    --enable-online-test
+
+        Build and run library internal tests that require Internet access in
+        addition. --enable-test must be supplied too. You can run tests by
+        `make check'. You can run and study each test in `test/online'
+        subdirectory.
+
     --enable-debug
 
         Switch on debbuging mode, compile in debugging code.
@@ -34,7 +41,7 @@ Additional configure options:
 Large File Support (LFS) Notice: libisds uses GPGME, and GPGME is compiled
 with LFS on usually. You need to keep LFS compatibility on reverse dependecies
 (libisds library, your application using libisds), otherwise strange things
-can happen (e.g. file/messaeg/document sizes can mismatch). libisds switches
+can happen (e.g. file/message/document sizes can mismatch). libisds switches
 LFS on too. Use --disable-largefile to switch it off if you think it's more
 appropriate. However recall this tweak when building your application.
 

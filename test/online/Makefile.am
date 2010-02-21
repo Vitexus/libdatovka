@@ -1,8 +1,4 @@
-if BUILD_ONLINE_TEST
-SUBDIRS = online
-endif
-
-LIBDIR =../src
+LIBDIR =../../src
 localedir = $(datadir)/locale
 AM_CPPFLAGS =-I$(LIBDIR)
 
@@ -13,13 +9,11 @@ AM_CFLAGS = @LIBGCRYPT_CFLAGS@ @GPGME_CFLAGS@
 LDADD = @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ @GPGME_LIBS@ @EXPAT_LIBS@ \
 		@LTLIBINTL@
 
-TESTS = compute_hash context init_gpgpme isds_init \
-		isds-dbtype isds-filemetatype isds-hash_algorithm
-
+TESTS = login 
 
 noinst_PROGRAMS = $(TESTS)
 
-common = test.h \
+common = ../test.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/crypto.c \
@@ -40,7 +34,7 @@ common = test.h \
 	$(LIBDIR)/validator.h
 
 # Omit isds.c
-isds_common = test.h \
+isds_common = ../test.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/crypto.c \
@@ -59,22 +53,9 @@ isds_common = test.h \
 	$(LIBDIR)/validator.h
 
 # Access _hidden symbols
-compute_hash_SOURCES 	= compute_hash.c $(common)
-context_SOURCES 		= context.c $(common)
-init_gpgpme_SOURCES 	= init_gpgpme.c $(common)
-isds_init_SOURCES 		= isds_init.c $(common)
+#compute_hash_SOURCES 	= compute_hash.c $(common)
+login_SOURCES 			= login.c $(common)
 
 # Access static symbols from isds.c
-isds_dbtype_SOURCES 		= isds-dbtype.c $(isds_common)
-isds_filemetatype_SOURCES 	= isds-filemetatype.c $(isds_common)
-isds_hash_algorithm_SOURCES = isds-hash_algorithm.c $(isds_common)
-
-## First specific tests
-##isds-%.test: isds-%.o
-##	$(CC) $(LDFLAGS) $< $(filter-out ../src/isds.o,$(OBJS)) -o $@
-
-## Then generic rule. Order is important.
-##%.test: %.o
-##	$(CC) $(LDFLAGS) $< $(OBJS) -o $@
-
+#isds_dbtype_SOURCES 		= isds-dbtype.c $(isds_common)
 

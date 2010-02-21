@@ -25,6 +25,12 @@ AC_ARG_ENABLE(test, [AS_HELP_STRING([--enable-test],
                               [Enable internal library tests])])
 AM_CONDITIONAL([BUILD_TEST], [test "$enable_test" = "yes"])
 
+# Enable on-line test
+AC_ARG_ENABLE(online-test, [AS_HELP_STRING([--enable-online-test],
+                              [Enable on-line internal library tests])])
+AM_CONDITIONAL([BUILD_ONLINE_TEST],
+               [test "$enable_test" = "yes" -a "$enable_online_test" = "yes"])
+
 # Enable gettext
 AM_GNU_GETTEXT_VERSION([0.17])
 AM_GNU_GETTEXT([external])
@@ -86,7 +92,7 @@ AC_CHECK_FUNCS([localtime_r memset munmap setlocale strdup strerror])
 CFLAGS="${CFLAGS} -std=c99 -Wall"
 
 AC_CONFIG_FILES([Makefile src/Makefile po/Makefile.in client/Makefile
-                 test/Makefile])
+                 test/Makefile test/online/Makefile])
 
 #AC_CONFIG_SUBDIRS([src])
 AC_OUTPUT

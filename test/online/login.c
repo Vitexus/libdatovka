@@ -1,4 +1,4 @@
-#include "test.h"
+#include "../test.h"
 #include "isds.h"
 
 static int test_login(const isds_error error, struct isds_ctx *context,
