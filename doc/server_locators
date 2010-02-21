@@ -9,11 +9,11 @@ Souce: Provozní řád ISDS, version 2010-01-22, Page 13
 Coockie-tracked session
 =======================
 
-Production ISDS instance:
-    https://www.mojedatovaschranka.cz/DS/
+Production ISDS instance base URL:
+    https://www.mojedatovaschranka.cz/
 
-Testing ISDS instance:
-    https://www.czebox.cz/DS/
+Testing ISDS instance base URL:
+    https://www.czebox.cz/
 
 Different login methods requires different URL infixes:
 
