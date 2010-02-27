@@ -72,10 +72,26 @@ AC_SYS_LARGEFILE
 AM_PATH_GPGME()
 
 # Check for expat
-#TODO: Verify minimal version. See src/phys.c: init_expat()
 AC_CHECK_LIB([expat], [XML_ExpatVersionInfo],
              EXPAT_LIBS=-lexpat
              AC_SUBST(EXPAT_LIBS))
+# Verify minimal version. See src/phys.c: init_expat()
+AC_MSG_CHECKING([Checking for expat library version >= 1.95.8])
+AC_COMPILE_IFELSE(
+           [[#include <expat.h>
+
+#define MIN_MAJOR 1
+#define MIN_MINOR 95
+#define MIN_MICRO 8
+
+#if (XML_MAJOR_VERSION < MIN_MAJOR) || \
+    (XML_MAJOR_VERSION == MIN_MAJOR && XML_MINOR_VERSION < MIN_MAJOR) || \
+    (XML_MAJOR_VERSION == MIN_MAJOR && XML_MINOR_VERSION == MIN_MAJOR && \
+        XML_MICRO_VERSION < MIN_MICRO)
+#error "At least Expat 1.95.8 is required"
+#endif]],
+        AC_MSG_RESULT([yes]), AC_MSG_FAILURE([Upgrade your expat to 1.95.8])
+)
 
 
 # Do not consider compiler warnings as errors
