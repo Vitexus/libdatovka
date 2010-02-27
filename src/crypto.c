@@ -122,16 +122,16 @@ _hidden isds_error init_gpgme(void) {
                                 gpgme_get_protocol_name(GPGME_PROTOCOL_CMS));
                 else if (info->file_name && !info->version)
                     isds_log(ILF_SEC, ILL_CRIT,
-                            _("Engine %s not installed properly"),
+                            _("Engine %s not installed properly\n"),
                             info->file_name);
                 else if (info->file_name && info->version && info->req_version)
                     isds_log(ILF_SEC, ILL_CRIT,
                             _("Engine %s version %s installed, "
-                            "but at least version %s required"),
+                            "but at least version %s required\n"),
                             info->file_name, info->version, info->req_version);
                 else
                     isds_log(ILF_SEC, ILL_CRIT,
-                        _("Unknown problem with engine for protocol %s"),
+                        _("Unknown problem with engine for protocol %s\n"),
                         gpgme_get_protocol_name(GPGME_PROTOCOL_CMS));
             }
         }
@@ -141,6 +141,7 @@ _hidden isds_error init_gpgme(void) {
 
     return IE_SUCCESS;
 }
+
 
 /* Free CMS data buffer allocated inside extract_cms_data().
  * This is necesary because GPGME.
