@@ -154,6 +154,7 @@ static isds_error http(struct isds_ctx *context, const char *url,
 
 
     /* Set credentials */
+#if HAVE_DECL_CURLOPT_USERNAME /* Since curl-7.19.1 */
     if (!curl_err && context->username) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_USERNAME,
                 context->username);
@@ -162,14 +163,31 @@ static isds_error http(struct isds_ctx *context, const char *url,
         curl_err = curl_easy_setopt(context->curl, CURLOPT_PASSWORD,
                 context->password);
     }
+#else
+    if (!curl_err && (context->username || context->password)) {
+        char *userpwd = astrcat3(context->username, ":", context->password);
+        if (!userpwd) {
+            isds_log_message(context, _("Could not pass credentials to CURL"));
+            err = IE_NOMEM;
+            goto leave;
+        }
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_USERPWD, userpwd);
+        free(userpwd);
+    }
+#endif /* not HAVE_DECL_CURLOPT_USERNAME */
 
     /* Set timeout */
     if (!curl_err) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_NOSIGNAL, 1);
     }
     if (!curl_err && context->timeout) {
+#if HAVE_DECL_CURLOPT_TIMEOUT_MS /* Since curl-7.16.2 */
         curl_err = curl_easy_setopt(context->curl, CURLOPT_TIMEOUT_MS,
                 context->timeout);
+#else
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_TIMEOUT,
+                context->timeout / 1000);
+#endif /* not HAVE_DECL_CURLOPT_TIMEOUT_MS */
     }
 
     /* Register callback */
@@ -275,12 +293,18 @@ static isds_error http(struct isds_ctx *context, const char *url,
     curl_err = curl_easy_perform(context->curl);
 
     /* Wipe credentials out of the handler */
+#if HAVE_DECL_CURLOPT_USERNAME /* Since curl-7.19.1 */
     if (context->username) {
         curl_easy_setopt(context->curl, CURLOPT_USERNAME, NULL);
     }
     if (context->password) {
         curl_easy_setopt(context->curl, CURLOPT_PASSWORD, NULL);
     }
+#else
+    if (context->username || context->password) {
+        curl_easy_setopt(context->curl, CURLOPT_USERPWD, NULL);
+    }
+#endif /* not HAVE_DECL_CURLOPT_USERNAME */
 
     if (!curl_err)
         curl_err = curl_easy_getinfo(context->curl, CURLINFO_CONTENT_TYPE,

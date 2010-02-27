@@ -49,8 +49,19 @@ AS_IF([test "$enable_debug" = "yes"],
 # Checks for libraries.
 #TODO: Verify minimal version. libxml2-2.6.26 is just a guess.
 AM_PATH_XML2([2.6.26])
-#TODO: Determine minimal version
+
+# Checks for CURL 
 LIBCURL_CHECK_CONFIG()
+AC_CHECK_DECLS([CURLOPT_TIMEOUT_MS], [],
+    AC_MSG_WARN([Your libcurl does not support subsecond timeout resolution.
+                 Consider upgrade to 7.16.2 version.]),
+    [[#include <curl/curl.h>]])
+AC_CHECK_DECLS([CURLOPT_USERNAME], [],
+    AC_MSG_WARN([Your libcurl does not support separate username and password.
+                 Your ISDS username could not contain colon.
+                 Consider upgrade to 7.19.1 version.]),
+    [[#include <curl/curl.h>]])
+
 #TODO: Determine minimal version
 AM_PATH_LIBGCRYPT([1:1.4.0])
 
