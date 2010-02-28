@@ -76,21 +76,25 @@ AC_CHECK_LIB([expat], [XML_ExpatVersionInfo],
              EXPAT_LIBS=-lexpat
              AC_SUBST(EXPAT_LIBS))
 # Verify minimal version. See src/phys.c: init_expat()
-AC_MSG_CHECKING([Checking for expat library version >= 1.95.8])
+expat_min_major="1"
+expat_min_minor="95"
+expat_min_micro="8"
+expat_min_version="${expat_min_major}.${expat_min_minor}.${expat_min_micro}"
+AC_MSG_CHECKING([Checking for expat library version >= ${expat_min_version}])
 AC_COMPILE_IFELSE(
-           [[#include <expat.h>
-
-#define MIN_MAJOR 1
-#define MIN_MINOR 95
-#define MIN_MICRO 8
-
+        AC_LANG_PROGRAM(
+            [#define MIN_MAJOR ${expat_min_major}
+            #define MIN_MINOR ${expat_min_minor}
+            #define MIN_MICRO ${expat_min_micro}],
+            [[#include <expat.h>
 #if (XML_MAJOR_VERSION < MIN_MAJOR) || \
     (XML_MAJOR_VERSION == MIN_MAJOR && XML_MINOR_VERSION < MIN_MAJOR) || \
     (XML_MAJOR_VERSION == MIN_MAJOR && XML_MINOR_VERSION == MIN_MAJOR && \
         XML_MICRO_VERSION < MIN_MICRO)
-#error "At least Expat 1.95.8 is required"
-#endif]],
-        AC_MSG_RESULT([yes]), AC_MSG_FAILURE([Upgrade your expat to 1.95.8])
+#error "Expat library is too old"
+#endif]]),
+        AC_MSG_RESULT([yes]),
+        AC_MSG_FAILURE([Upgrade your expat to ${expat_min_version}])
 )
 
 
