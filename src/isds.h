@@ -495,6 +495,10 @@ isds_error isds_init(void);
  * Global function, must be called as last library function. */
 isds_error isds_cleanup(void);
 
+/* Return version string of this library. Version of dependecies can be
+ * embedded. Do no try to parse it. You must free it. */
+char *isds_version(void);
+
 /* Create ISDS context.
  * Each context can be used for different sessions to (possibly) different
  * ISDS server with different credentials.

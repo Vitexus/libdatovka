@@ -11,12 +11,14 @@
 #include <locale.h>
 
 /* Inicialize libgrcypt if not yet done by application or other library.
+ * @current_version is static string describing cerrent gcrypt version
  * @return IE_SUCCESS if everything is O.k. */
-_hidden isds_error init_gcrypt(void) {
+_hidden isds_error init_gcrypt(const char **current_version) {
     const char *gcrypt_version;
     
     /* Check version and initialize gcrypt */
     gcrypt_version = gcry_check_version(NULL);
+    if (current_version) *current_version = gcrypt_version;
     if (!gcrypt_version)  {
         isds_log(ILF_SEC, ILL_CRIT, _("Could not check gcrypt version\n"));
         return IE_ERROR;
@@ -83,13 +85,15 @@ _hidden isds_error compute_hash(const void *input, const size_t length,
 
 
 /* Inicialize GPGME.
+ * @current_version is pointer to static string decribing currnet gpgme
  * @return IE_SUCCESS if everything is O.k. */
-_hidden isds_error init_gpgme(void) {
+_hidden isds_error init_gpgme(const char **current_version) {
     const char *gpgme_version;
     gpgme_error_t err;
     
     /* Check version and initialize GPGME */
     gpgme_version = gpgme_check_version(NULL);
+    if (current_version) *current_version = gpgme_version;
     if (!gpgme_version)  {
         isds_log(ILF_SEC, ILL_CRIT, _("GPGME initialization failed\n"));
         return IE_ERROR;

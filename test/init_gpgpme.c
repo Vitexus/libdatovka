@@ -4,7 +4,7 @@
 static int test_init_gpgme(const isds_error error) {
     isds_error err;
 
-    err = init_gpgme();
+    err = init_gpgme(NULL);
     if (err != error) 
         FAIL_TEST("Wrong return value");
 

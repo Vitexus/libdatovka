@@ -6,8 +6,9 @@
 #define PHYSXML_ELEMENT_SEPARATOR "|"
 #define PHYSXML_NS_SEPARATOR ">"
 
-/* Check for expat compile-time configuration */
-isds_error init_expat(void);
+/* Check for expat compile-time configuration
+ * @current_version is static string describing current expat version */
+isds_error init_expat(const char **current_version);
 
 /* Locate element specified by element path in XML stream.
  * TODO: Support other encodings than UTF-8

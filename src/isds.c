@@ -463,14 +463,14 @@ isds_error isds_init(void) {
     }
 
     /* Initialize GPGME */
-    if (init_gpgme()) {
+    if (init_gpgme(&version_gpgme)) {
         isds_log(ILF_ISDS, ILL_CRIT,
                 _("GPGME library initialization failed\n"));
         return IE_ERROR;
     }
 
     /* Initialize gcrypt */
-    if (init_gcrypt()) {
+    if (init_gcrypt(&version_gcrypt)) {
         isds_log(ILF_ISDS, ILL_CRIT,
                 _("gcrypt library initialization failed\n"));
         return IE_ERROR;
@@ -480,7 +480,7 @@ isds_error isds_init(void) {
     LIBXML_TEST_VERSION;
 
     /* Check expat */
-    if (init_expat()) {
+    if (init_expat(&version_expat)) {
         isds_log(ILF_ISDS, ILL_CRIT,
                 _("expat library initialization failed\n"));
         return IE_ERROR;
@@ -503,6 +503,18 @@ isds_error isds_cleanup(void) {
     curl_global_cleanup();
 
     return IE_SUCCESS;
+}
+
+
+/* Return version string of this library. Version of dependecies can be
+ * embedded. Do no try to parse it. You must free it. */
+char *isds_version(void) {
+    char *buffer = NULL;
+
+    isds_asprintf(&buffer, _("%s (%s, GPGME %s, gcrypt %s, %s, libxml2 %s)"),
+            PACKAGE_VERSION, curl_version(), version_gpgme, version_gcrypt,
+            version_expat, xmlParserVersion);
+    return buffer;
 }
 
 

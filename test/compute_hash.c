@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
 
     INIT_TEST("compute_hash");
 
-    if (init_gcrypt())
+    if (init_gcrypt(NULL))
         ABORT_UNIT("init_gcrypt() failed");
 
     char input[] = "42";

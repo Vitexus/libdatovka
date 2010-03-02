@@ -21,14 +21,17 @@ struct expat_data {
 };
 
 
-/* Check for expat compile-time configuration */
-_hidden isds_error init_expat(void) {
+/* Check for expat compile-time configuration
+ * @current_version is static string describing current expat version */
+_hidden isds_error init_expat(const char **current_version) {
     XML_Expat_Version current;
     const int min_major = 1;
     const int min_minor = 95;
     const int min_micro = 8;
     const XML_Feature *features; /* Static array stored in expat BSS */
     _Bool ns_supported = 0;
+
+    if (current_version) *current_version = XML_ExpatVersion();
 
  /*
  * Max(XML_Size) <= Max(size_t)
