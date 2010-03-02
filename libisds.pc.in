@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: @PACKAGE@
+Version: @VERSION@
+Description: Client library for accessing SOAP services of ISDS 
+Requires.private: libcurl libxml-2.0 
+Libs: -L{libdir} -lisds
+Libs.private: @GPGME_LIBS@ @LIBGCRYPT_LIBS@ @EXPAT_LIBS@
+Cflags: -I${includedir}

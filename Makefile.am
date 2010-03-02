@@ -10,6 +10,9 @@ if BUILD_TEST
 SUBDIRS += test
 endif
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = $(PACKAGE).pc
+
 EXTRA_DIST = config.rpath doc
 
 dist-hook:
