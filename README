@@ -16,10 +16,12 @@ details.
 
 
 This code is written in ISO99 C language and requires libxml2, cURL,
-libgcrypt, GPGME, and >=expat-1.95.8 libraries.
+libgcrypt, GPGME, and >=expat-1.95.8 libraries at compilation time. gnupg2 is
+required at run time (provides gpgsm that uses gpgme to process CMS).
 
 It has been tested on GNU/Linux (Linux 2.6.32, glibc-2.10.1) with
-libxml2-2.7.6, curl-7.19.6, libgcrypt-1.4.5, gpgme-1.2.0, and expat-2.0.1.
+libxml2-2.7.6, curl-7.19.6, libgcrypt-1.4.5, gpgme-1.2.0, expat-2.0.1 and
+gnupg-2.0.14.
 
 Latest code can be obtained from GIT repository
 <http://repo.or.cz/w/libisds.git>.
