@@ -80,14 +80,14 @@ expat_min_major="1"
 expat_min_minor="95"
 expat_min_micro="8"
 expat_min_version="${expat_min_major}.${expat_min_minor}.${expat_min_micro}"
-AC_MSG_CHECKING([Checking for expat library version >= ${expat_min_version}])
+AC_MSG_CHECKING([for expat library version >= ${expat_min_version}])
 AC_COMPILE_IFELSE(
         AC_LANG_PROGRAM(
             [#define MIN_MAJOR ${expat_min_major}
             #define MIN_MINOR ${expat_min_minor}
-            #define MIN_MICRO ${expat_min_micro}],
-            [[#include <expat.h>
-#if (XML_MAJOR_VERSION < MIN_MAJOR) || \
+            #define MIN_MICRO ${expat_min_micro}
+            #include <expat.h>],
+            [[#if (XML_MAJOR_VERSION < MIN_MAJOR) || \
     (XML_MAJOR_VERSION == MIN_MAJOR && XML_MINOR_VERSION < MIN_MAJOR) || \
     (XML_MAJOR_VERSION == MIN_MAJOR && XML_MINOR_VERSION == MIN_MAJOR && \
         XML_MICRO_VERSION < MIN_MICRO)
