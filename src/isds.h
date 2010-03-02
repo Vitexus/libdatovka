@@ -48,7 +48,8 @@ typedef enum {
     IE_2SMALL,
     IE_NOTUNIQ,
     IE_NOTEQUAL,
-    IE_PARTIAL_SUCCESS
+    IE_PARTIAL_SUCCESS,
+    IE_ABORTED
 } isds_error;
 
 typedef enum {

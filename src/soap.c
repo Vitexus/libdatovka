@@ -275,7 +275,10 @@ static isds_error http(struct isds_ctx *context, const char *url,
     /* Check for errors so far */
     if (curl_err) {
         isds_log_message(context, curl_easy_strerror(curl_err));
-        err = IE_NETWORK;
+        if (curl_err == CURLE_ABORTED_BY_CALLBACK)
+            err = IE_ABORTED;
+        else
+            err = IE_NETWORK;
         goto leave;
     }
 
@@ -391,7 +394,7 @@ leave:
             *charset = NULL;
         }
 
-        close_connection(context);
+        if (err != IE_ABORTED) close_connection(context);
     }
 
     *response = body.data;

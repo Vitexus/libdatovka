@@ -553,6 +553,8 @@ const char *isds_strerror(const isds_error error) {
             return(_("Values not uqual")); break;
         case IE_PARTIAL_SUCCESS:
             return(_("Some suboperations failed")); break;
+        case IE_ABORTED:
+            return(_("Operation aborted")); break;
         default:
             return(_("Unknown error"));
     }
