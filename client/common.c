@@ -585,6 +585,10 @@ int progressbar(double upload_total, double upload_current,
     printf("Progress: upload %0f/%0f, download %0f/%0f, data=%p\n",
             upload_current, upload_total, download_current, download_total,
             data);
+    if (data) {
+        printf("Aborting transfer...\n");
+        return 1;
+    }
     return 0;
 }
 

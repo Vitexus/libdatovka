@@ -275,10 +275,7 @@ static isds_error http(struct isds_ctx *context, const char *url,
     /* Check for errors so far */
     if (curl_err) {
         isds_log_message(context, curl_easy_strerror(curl_err));
-        if (curl_err == CURLE_ABORTED_BY_CALLBACK)
-            err = IE_ABORTED;
-        else
-            err = IE_NETWORK;
+        err = IE_NETWORK;
         goto leave;
     }
 
@@ -318,7 +315,10 @@ static isds_error http(struct isds_ctx *context, const char *url,
          * I18N. */
         isds_printf_message(context,
                 _("%s: %s"), url, _(curl_easy_strerror(curl_err)));
-        err = IE_NETWORK;
+        if (curl_err == CURLE_ABORTED_BY_CALLBACK)
+            err = IE_ABORTED;
+        else
+            err = IE_NETWORK;
         goto leave;
     }
 

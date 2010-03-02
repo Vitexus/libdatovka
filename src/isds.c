@@ -1021,7 +1021,6 @@ isds_error isds_ping(struct isds_ctx *context) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("ISDS server could not be contacted\n"));
         xmlFreeNodeList(response);
-        close_connection(context);
         return soap_err;
     }
 

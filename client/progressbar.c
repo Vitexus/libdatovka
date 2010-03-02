@@ -53,13 +53,48 @@ int main(int argc, char **argv) {
         printf("isds_set_progress_callback() succeeded.\n");
     }
 
-
     err = isds_login(ctx, url, username, password, NULL, NULL);
     if (err) {
         printf("isds_login() failed: %s: %s\n", isds_strerror(err),
                 isds_long_message(ctx));
     } else {
         printf("Logged in :)\n");
+    }
+
+
+    /* Register aborting progresbar */
+    printf("\nTesting aborting progress callback\n");
+    err = isds_set_progress_callback(ctx, progressbar, (void *)1);
+    if (err) {
+        printf("isds_set_progress_callback() failed: %s: %s\n",
+                isds_strerror(err), isds_long_message(ctx));
+    } else {
+        printf("isds_set_progress_callback() succeeded.\n");
+    }
+    err = isds_ping(ctx);
+    if (err) {
+        printf("isds_ping() failed: %s: %s\n", isds_strerror(err),
+                isds_long_message(ctx));
+    } else {
+        printf("Ping succeded\n");
+    }
+
+
+    /* Register normal progresbar */
+    printf("\nTesting non-aborting progress callback\n");
+    err = isds_set_progress_callback(ctx, progressbar, NULL);
+    if (err) {
+        printf("isds_set_progress_callback() failed: %s: %s\n",
+                isds_strerror(err), isds_long_message(ctx));
+    } else {
+        printf("isds_set_progress_callback() succeeded.\n");
+    }
+    err = isds_ping(ctx);
+    if (err) {
+        printf("isds_ping() failed: %s: %s\n", isds_strerror(err),
+                isds_long_message(ctx));
+    } else {
+        printf("Ping succeded\n");
     }
 
 
