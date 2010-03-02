@@ -561,8 +561,8 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
             break;
         case 404:
             err = IE_HTTP;
-            isds_log_message(context,
-                    _("Code 404: Document not found on server"));
+            isds_printf_message(context,
+                    _("Code 404: Document (%s) not found on server"), url);
             goto leave;
             break;
         /* 500 should return standard SOAP message */
