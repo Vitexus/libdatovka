@@ -8163,7 +8163,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
     xmlFreeNode(request); request = NULL;
 
     if (err) {
-        close_connection(context);
+        czp_close_connection(context);
         goto leave;
     }
 
