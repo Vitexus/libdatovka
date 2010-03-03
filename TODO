@@ -27,5 +27,3 @@
     Library error on processing application data
     Library error on processing server data
     Server error
-* Provide pkg-config and M4 scripts for better application building
-    Provide library version check at compile and run time 
