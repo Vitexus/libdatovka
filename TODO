@@ -4,7 +4,6 @@
     Grep for (rentrant|thread) comments
 * Make CURL (network services) optional
 * Improve isds_*message() system
-    Clean context message buffer on function entry point
     Allow formated message appeding, preserve deep messages
 * Make function tests
     Cover all functions
