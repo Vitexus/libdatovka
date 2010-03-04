@@ -929,14 +929,14 @@ leave:
 
 
 /* Connect and log in into ISDS server.
+ * All arguments will be copied, you do not have to keep them after that.
  * @url is base address of ISDS web service. Pass NULL or extern isds_locator
  * variable to use production ISDS instance. You can pass extern
  * isds_testing_locator variable to select testing instance. 
  * @username is user name of ISDS user
  * @password is user's secret password
  * @pki_credentials defines public key cryptographic material to use in client
- * authentication. Pass NULL if you want to use plain username and password.
- * */
+ * authentication. Pass NULL if you want to use plain username and password. */
 isds_error isds_login(struct isds_ctx *context, const char *url,
         const char *username, const char *password,
         const struct isds_pki_credentials *pki_credentials) {
@@ -950,7 +950,6 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     zfree(context->long_message);
 
     if (!username || !password) return IE_INVAL;
-    if (pki_credentials) return IE_NOTSUP;
 
     /* Default locator is offical system */
     if (!url) url = isds_locator;
@@ -992,7 +991,9 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     discard_credentials(context);
     context->username = strdup(username);
     context->password = strdup(password);
-    if (!(context->username && context->password)) {
+    context->pki_credentials = isds_pki_credentials_duplicate(pki_credentials);
+    if (!(context->username && context->password) ||
+            (pki_credentials && !context->pki_credentials)) {
         discard_credentials(context);
         xmlFreeNode(request);
         return IE_NOMEM;

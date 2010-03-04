@@ -606,14 +606,14 @@ isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
         ...);
 
 /* Connect and log in into ISDS server.
+ * All arguments will be copied, you do not have to keep them after that.
  * @url is base address of ISDS web service. Pass NULL or extern isds_locator
  * variable to use production ISDS instance. You can pass extern
  * isds_testing_locator variable to select testing instance. 
  * @username is user name of ISDS user
  * @password is user's secret password
  * @pki_credentials defines public key cryptographic material to use in client
- * authentication. Pass NULL if you want to use plain username and password.
- * */
+ * authentication. Pass NULL if you want to use plain username and password. */
 isds_error isds_login(struct isds_ctx *context, const char *url,
         const char *username, const char *password,
         const struct isds_pki_credentials *pki_credentials);

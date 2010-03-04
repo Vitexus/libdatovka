@@ -117,7 +117,7 @@ static isds_error http(struct isds_ctx *context, const char *url,
     if (request_length > 0 && !request) return IE_INVAL;
     if (!response || !response_length) return IE_INVAL;
 
-    /* Set the body here to allow deallocataion in leave block */
+    /* Set the body here to allow deallocatation in leave block */
     body.data = *response;
     body.length = 0;
 
@@ -175,6 +175,52 @@ static isds_error http(struct isds_ctx *context, const char *url,
         free(userpwd);
     }
 #endif /* not HAVE_DECL_CURLOPT_USERNAME */
+
+    /* Set PKI credentials */
+    if (!curl_err && (context->pki_credentials)) {
+        if (context->pki_credentials->certificate) {
+            isds_log(ILF_SEC, ILL_INFO,
+                    _("Client %s certificate will be read from `%s' file\n"),
+                    (context->pki_credentials->certificate_format ==
+                        PKI_FORMAT_DER) ? _("DER") : _("PEM"),
+                    context->pki_credentials->certificate);
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLCERTTYPE,
+                    context->pki_credentials->certificate_format);
+            if (!curl_err)
+                curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLCERT,
+                        context->pki_credentials->certificate);
+        }
+        if (!curl_err && context->pki_credentials->key) {
+            if (context->pki_credentials->engine) {
+                /* Select SSL engine */
+                isds_log(ILF_SEC, ILL_INFO, _("Client private key `%s' "
+                            "from `%s' engine will be used\n"),
+                        context->pki_credentials->key,
+                        context->pki_credentials->engine);
+                curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLKEYTYPE,
+                        "ENG");
+                if (!curl_err)
+                    curl_err = curl_easy_setopt(context->curl,
+                            CURLOPT_SSLENGINE,
+                            context->pki_credentials->engine);
+            } else {
+                /* Select no SSL engine */
+                isds_log(ILF_SEC, ILL_INFO, _("Client %s private key will be "
+                            "read from `%s' file\n"),
+                        (context->pki_credentials->key_format ==
+                            PKI_FORMAT_DER) ? _("DER") : _("PEM"),
+                        context->pki_credentials->key);
+                curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLKEYTYPE,
+                        context->pki_credentials->key_format);
+            }
+            if (!curl_err)
+                curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLKEY,
+                        context->pki_credentials->key);
+            if (!curl_err)
+                curl_err = curl_easy_setopt(context->curl, CURLOPT_KEYPASSWD,
+                        context->pki_credentials->passphrase);
+        }
+    }
 
     /* Set timeout */
     if (!curl_err) {
