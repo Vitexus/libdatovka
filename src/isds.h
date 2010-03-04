@@ -606,14 +606,29 @@ isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
         ...);
 
 /* Connect and log in into ISDS server.
- * All arguments will be copied, you do not have to keep them after that.
+ * All required arguments will be copied, you do not have to keep them after
+ * that.
+ * ISDS supports four different authentication methods. Exact method is
+ * selected on @username, @passwors and @pki_credentials arguments:
+ *   - If @pki_credentials == NULL, @username and @password must be supplied
+ *   - If @pki_credentials != NULL, then
+ *      - If @username == NULL, only certificate will be used
+ *      - If @username != NULL, then
+ *          - If @password == NULL, then certificate will be used and
+ *            @username shifts meaning to box ID. This is used for hosted
+ *            services.
+ *          - Otherwise all three arguments will be used.
+ * Please note, that differen cases requires different certificate type
+ * (system qualified one or commercial non qualified one). This library does
+ * not check such political issues. Please see ISDS Specification for more
+ * details.
  * @url is base address of ISDS web service. Pass NULL or extern isds_locator
  * variable to use production ISDS instance. You can pass extern
  * isds_testing_locator variable to select testing instance. 
- * @username is user name of ISDS user
+ * @username is user name of ISDS user or box ID
  * @password is user's secret password
  * @pki_credentials defines public key cryptographic material to use in client
- * authentication. Pass NULL if you want to use plain username and password. */
+ * authentication. */
 isds_error isds_login(struct isds_ctx *context, const char *url,
         const char *username, const char *password,
         const struct isds_pki_credentials *pki_credentials);

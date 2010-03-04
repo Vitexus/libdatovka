@@ -929,14 +929,29 @@ leave:
 
 
 /* Connect and log in into ISDS server.
- * All arguments will be copied, you do not have to keep them after that.
+ * All required arguments will be copied, you do not have to keep them after
+ * that.
+ * ISDS supports four different authentication methods. Exact method is
+ * selected on @username, @passwors and @pki_credentials arguments:
+ *   - If @pki_credentials == NULL, @username and @password must be supplied
+ *   - If @pki_credentials != NULL, then
+ *      - If @username == NULL, only certificate will be used
+ *      - If @username != NULL, then
+ *          - If @password == NULL, then certificate will be used and
+ *            @username shifts meaning to box ID. This is used for hosted
+ *            services.
+ *          - Otherwise all three arguments will be used.
+ * Please note, that differen cases requires different certificate type
+ * (system qualified one or commercial non qualified one). This library does
+ * not check such political issues. Please see ISDS Specification for more
+ * details.
  * @url is base address of ISDS web service. Pass NULL or extern isds_locator
  * variable to use production ISDS instance. You can pass extern
  * isds_testing_locator variable to select testing instance. 
- * @username is user name of ISDS user
+ * @username is user name of ISDS user or box ID
  * @password is user's secret password
  * @pki_credentials defines public key cryptographic material to use in client
- * authentication. Pass NULL if you want to use plain username and password. */
+ * authentication. */
 isds_error isds_login(struct isds_ctx *context, const char *url,
         const char *username, const char *password,
         const struct isds_pki_credentials *pki_credentials) {
@@ -949,8 +964,6 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
 
-    if (!username || !password) return IE_INVAL;
-
     /* Close connection if already logged in */
     if (context->curl) {
         close_connection(context);
@@ -961,8 +974,40 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 
     /* Store configuration */
     context->type = CTX_TYPE_ISDS;
-    free(context->url);
-    context->url = strdup(url);
+    zfree(context->url);
+
+    /* Mangle base URI according requested authentication method */
+    if (!pki_credentials) {
+        isds_log(ILF_SEC, ILL_INFO,
+                _("Selected authentication method: no certificate, "
+                    "username and password\n"));
+        if (!username || !password) {
+            isds_log_message(context,
+                    _("Both username and password must be supplied"));
+            return IE_INVAL;
+        }
+        context->url = strdup(url);
+    } else {
+        if (!username) {
+            isds_log(ILF_SEC, ILL_INFO,
+                    _("Selected authentication method: system certificate, "
+                        "no username and no password\n"));
+            password = NULL;
+            context->url = astrcat(url, "cert/");
+        } else {
+            if (!password) {
+                isds_log(ILF_SEC, ILL_INFO,
+                        _("Selected authentication method: system certificate, "
+                            "box ID and no password\n"));
+                context->url = astrcat(url, "hspis/");
+            } else {
+                isds_log(ILF_SEC, ILL_INFO,
+                        _("Selected authentication method: commercial "
+                            "certificate, username and password\n"));
+                context->url = astrcat(url, "cert/");
+            }
+        }
+    }
     if (!(context->url))
         return IE_NOMEM;
 
@@ -989,10 +1034,10 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     /* FIXME: mlock password
      * (I have a library) */
     discard_credentials(context);
-    context->username = strdup(username);
-    context->password = strdup(password);
+    if (username) context->username = strdup(username);
+    if (password) context->password = strdup(password);
     context->pki_credentials = isds_pki_credentials_duplicate(pki_credentials);
-    if (!(context->username && context->password) ||
+    if ((username && !context->username) || (password && !context->password) ||
             (pki_credentials && !context->pki_credentials)) {
         discard_credentials(context);
         xmlFreeNode(request);
