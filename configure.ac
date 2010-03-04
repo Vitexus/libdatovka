@@ -61,6 +61,13 @@ AC_CHECK_DECLS([CURLOPT_USERNAME], [],
                  Your ISDS username could not contain colon.
                  Consider upgrade to 7.19.1 version.]),
     [[#include <curl/curl.h>]])
+AC_CHECK_DECLS([CURLOPT_SSLCERTTYPE], [],
+    AC_MSG_WARN([Your libcurl does not support client certificate format
+                 declaration (PEM vs. DER).
+                 Consider upgrade to 7.9.3 version.]),
+    [[#include <curl/curl.h>]])
+AC_CHECK_DECLS([CURLOPT_KEYPASSWD], [], [], [[#include <curl/curl.h>]])
+AC_CHECK_DECLS([CURLOPT_SSLKEYPASSWD], [], [], [[#include <curl/curl.h>]])
 
 #TODO: Determine minimal version
 AM_PATH_LIBGCRYPT([1:1.4.0])

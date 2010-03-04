@@ -184,8 +184,16 @@ static isds_error http(struct isds_ctx *context, const char *url,
                     (context->pki_credentials->certificate_format ==
                         PKI_FORMAT_DER) ? _("DER") : _("PEM"),
                     context->pki_credentials->certificate);
+#if HAVE_DECL_CURLOPT_SSLCERTTYPE /* since curl-7.9.3 */
             curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLCERTTYPE,
                     context->pki_credentials->certificate_format);
+#else
+            isds_log(ILF_SEC, ILL_WARNING,
+                    _("Your curl library cannot distinguish certifcate "
+                        "formats. Make sure your cryptographic library\n"
+                        "understands your certificate file by default, "
+                        "or upgrade curl.\n"));
+#endif /* not HAVE_DECL_CURLOPT_SSLCERTTYPE */
             if (!curl_err)
                 curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLCERT,
                         context->pki_credentials->certificate);
@@ -216,9 +224,21 @@ static isds_error http(struct isds_ctx *context, const char *url,
             if (!curl_err)
                 curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLKEY,
                         context->pki_credentials->key);
-            if (!curl_err)
-                curl_err = curl_easy_setopt(context->curl, CURLOPT_KEYPASSWD,
+            if (!curl_err) {
+#if HAVE_DECL_CURLOPT_KEYPASSWD /* since curl-7.16.5 */
+                curl_err = curl_easy_setopt(context->curl,
+                        CURLOPT_KEYPASSWD,
                         context->pki_credentials->passphrase);
+#elif HAVE_DECL_CURLOPT_SSLKEYPASSWD /* up to curl-7.16.4 */
+                curl_err = curl_easy_setopt(context->curl,
+                        CURLOPT_SSLKEYPASSWD,
+                        context->pki_credentials->passphrase);
+#else /* up to curl-7.9.2 */
+                curl_err = curl_easy_setopt(context->curl,
+                        CURLOPT_SSLCERTPASSWD,
+                        context->pki_credentials->passphrase);
+#endif
+            }
         }
     }
 
