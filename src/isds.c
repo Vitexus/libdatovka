@@ -951,6 +951,11 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 
     if (!username || !password) return IE_INVAL;
 
+    /* Close connection if already logged in */
+    if (context->curl) {
+        close_connection(context);
+    }
+
     /* Default locator is offical system */
     if (!url) url = isds_locator;
 
@@ -960,11 +965,6 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     context->url = strdup(url);
     if (!(context->url))
         return IE_NOMEM;
-
-    /* Close connection if already logged in */
-    if (context->curl) {
-        close_connection(context);
-    }
 
     /* Prepare CURL handle */
     context->curl = curl_easy_init();
