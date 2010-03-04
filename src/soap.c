@@ -186,7 +186,8 @@ static isds_error http(struct isds_ctx *context, const char *url,
                     context->pki_credentials->certificate);
 #if HAVE_DECL_CURLOPT_SSLCERTTYPE /* since curl-7.9.3 */
             curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLCERTTYPE,
-                    context->pki_credentials->certificate_format);
+                    (context->pki_credentials->certificate_format ==
+                        PKI_FORMAT_DER) ? "DER" : "PEM");
 #else
             isds_log(ILF_SEC, ILL_WARNING,
                     _("Your curl library cannot distinguish certifcate "
@@ -219,7 +220,8 @@ static isds_error http(struct isds_ctx *context, const char *url,
                             PKI_FORMAT_DER) ? _("DER") : _("PEM"),
                         context->pki_credentials->key);
                 curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLKEYTYPE,
-                        context->pki_credentials->key_format);
+                        (context->pki_credentials->key_format ==
+                            PKI_FORMAT_DER) ? "DER" : "PEM");
             }
             if (!curl_err)
                 curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLKEY,
