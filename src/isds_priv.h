@@ -65,8 +65,7 @@ struct isds_ctx {
     char *url;              /* URL of the ISDS web service */
     char *username;
     char *password;
-    char *client_certificate;
-    char *private_key;
+    struct isds_pki_credentials *pki_credentials;
     CURL *curl;             /* CURL session handle */
     _Bool *tls_verify_server;   /* Verify the server? */
     isds_progress_callback progress_callback;  /* Call it during

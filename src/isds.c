@@ -21,6 +21,24 @@ const char isds_locator[] = "https://www.mojedatovaschranka.cz/";
 const char isds_testing_locator[] = "https://www.czebox.cz/";
 
 
+/* Deallocate structure isds_pki_credentials and NULL it.
+ * Passphrase is discarded.
+ * @pki  credentials to to free */
+void isds_pki_credentials_free(struct isds_pki_credentials **pki) {
+    if(!pki || !*pki) return;
+    free((*pki)->certificate);
+    free((*pki)->engine);
+    free((*pki)->key);
+
+    if ((*pki)->passphrase) {
+        memset((*pki)->passphrase, 0, strlen((*pki)->passphrase));
+        free((*pki)->passphrase);
+    }
+    
+    zfree((*pki));
+}
+
+
 /* Free isds_list with all member data.
  * @list list to free, on return will be NULL */
 void isds_list_free(struct isds_list **list) {
@@ -267,6 +285,30 @@ void isds_approval_free(struct isds_approval **approval) {
         if (!new) goto error; \
         memcpy((new), (template), sizeof(*(template))); \
     } \
+}
+
+/* Copy structure isds_pki_credentials recursively. */
+struct isds_pki_credentials *isds_pki_credentials_duplicate(
+        const struct isds_pki_credentials *template) {
+    struct isds_pki_credentials *new = NULL;
+
+    if(!template) return NULL;
+
+    new = calloc(1, sizeof(*new));
+    if (!new) return NULL;
+
+    new->certificate_format = template->certificate_format;
+    STRDUP_OR_ERROR(new->certificate, template->certificate);
+    STRDUP_OR_ERROR(new->engine, template->engine);
+    new->key_format = template->key_format;
+    STRDUP_OR_ERROR(new->key, template->key);
+    STRDUP_OR_ERROR(new->passphrase, template->passphrase);
+    
+    return new;
+
+error:
+    isds_pki_credentials_free(&new);
+    return NULL;
 }
 
 
@@ -596,6 +638,25 @@ static isds_error czp_do_close_connection(struct isds_ctx *context) {
 }
 
 
+/* Discard credentials.
+ * Only that. It does not cause log out, connection close or similar. */
+static isds_error discard_credentials(struct isds_ctx *context) {
+    if(!context) return IE_INVALID_CONTEXT;
+
+    if (context->username) {
+        memset(context->username, 0, strlen(context->username));
+        zfree(context->username);
+    }
+    if (context->password) {
+        memset(context->password, 0, strlen(context->password));
+        zfree(context->password);
+    }
+    isds_pki_credentials_free(&context->pki_credentials);
+
+    return IE_SUCCESS;
+}
+
+
 /* Destroy ISDS context and free memmory.
  * @context will be NULLed on success. */
 isds_error isds_ctx_free(struct isds_ctx **context) {
@@ -611,6 +672,9 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
         case CTX_TYPE_TESTING_REQUEST_COLLECTOR:
                             czp_do_close_connection(*context); break;
     }
+
+    /* For sure */
+    discard_credentials(*context);
 
     /* Free other structures */
     free((*context)->tls_verify_server);
@@ -864,40 +928,18 @@ leave:
 }
 
 
-/* Discard credentials.
- * Only that. It does not cause log out, connection close or similar. */
-static isds_error discard_credentials(struct isds_ctx *context) {
-    if(!context) return IE_INVALID_CONTEXT;
-
-    if (context->username) {
-        memset(context->username, 0, strlen(context->username));
-        free(context->username);
-        context->username = NULL;
-    }
-    if (context->password) {
-        memset(context->password, 0, strlen(context->password));
-        free(context->password);
-        context->password = NULL;
-    }
-
-    return IE_SUCCESS;
-}
-
-
 /* Connect and log in into ISDS server.
  * @url is base address of ISDS web service. Pass NULL or extern isds_locator
  * variable to use production ISDS instance. You can pass extern
  * isds_testing_locator variable to select testing instance. 
  * @username is user name of ISDS user
  * @password is user's secret password
- * @certificate is NULL terminated string with PEM formated client's
- * certificate. Use NULL if only password autentication should be performed.
- * @key is private key for client's certificate as (base64 encoded?) NULL
- * terminated string. Use NULL if only password autentication is desired.
+ * @pki_credentials defines public key cryptographic material to use in client
+ * authentication. Pass NULL if you want to use plain username and password.
  * */
 isds_error isds_login(struct isds_ctx *context, const char *url,
         const char *username, const char *password,
-        const char *certificate, const char* key) {
+        const struct isds_pki_credentials *pki_credentials) {
     isds_error err = IE_NOT_LOGGED_IN;
     isds_error soap_err;
     xmlNsPtr isds_ns = NULL;
@@ -908,7 +950,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     zfree(context->long_message);
 
     if (!username || !password) return IE_INVAL;
-    if (certificate || key) return IE_NOTSUP;
+    if (pki_credentials) return IE_NOTSUP;
 
     /* Default locator is offical system */
     if (!url) url = isds_locator;
@@ -1000,8 +1042,7 @@ isds_error isds_logout(struct isds_ctx *context) {
         /* Discard credentials for sure. They should not survive isds_login(),
          * even successful .*/
         discard_credentials(context);
-        free(context->url);
-        context->url = NULL;
+        zfree(context->url);
 
         isds_log(ILF_ISDS, ILL_DEBUG, _("Logged out from ISDS server\n"));
     } else {

@@ -3,10 +3,10 @@
 
 static int test_login(const isds_error error, struct isds_ctx *context,
         const char *url, const char *username, const char *password,
-        const char *certificate, const char *key) {
+        const struct isds_pki_credentials *pki_credentials) {
 
     if (error !=
-            isds_login(context, url, username, password, certificate, key))
+            isds_login(context, url, username, password, pki_credentials))
         FAIL_TEST("Wrong return code");
 
     isds_logout(context);
@@ -16,10 +16,10 @@ static int test_login(const isds_error error, struct isds_ctx *context,
 static int test_login2(const isds_error error1, const isds_error error2,
         struct isds_ctx *context,
         const char *url, const char *username, const char *password,
-        const char *certificate, const char *key) {
+        const struct isds_pki_credentials *pki_credentials) {
     
     isds_error err =
-            isds_login(context, url, username, password, certificate, key);
+            isds_login(context, url, username, password, pki_credentials);
     if (err != error1 && err != error2)
         FAIL_TEST("Wrong return code");
 
@@ -44,27 +44,27 @@ int main(int argc, char **argv) {
 
 
     TEST("invalid context", test_login, IE_INVALID_CONTEXT, NULL,
-            url, username, password, NULL, NULL);
+            url, username, password, NULL);
     TEST("NULL url with invalid credentials", test_login, IE_NOT_LOGGED_IN,
-            context, NULL, username, password, NULL, NULL);
+            context, NULL, username, password, NULL);
     TEST("NULL username", test_login, IE_INVAL, context,
-            url, NULL, password, NULL, NULL);
+            url, NULL, password, NULL);
     TEST("NULL password", test_login, IE_INVAL, context,
-            url, username, NULL, NULL, NULL);
+            url, username, NULL, NULL);
 
     TEST("invalid URL", test_login, IE_NETWORK, context,
-            "invalid://", username, password, NULL, NULL);
+            "invalid://", username, password, NULL);
     /* Direct connection fails on local resolution, connection trough proxy
      * failes on HTTP code */
     TEST("unresolvable host name", test_login2, IE_NETWORK, IE_SOAP, context,
             "http://unresolvable.example.com/", username, password,
-            NULL, NULL);
+            NULL);
 
     TEST("invalid credentials", test_login, IE_NOT_LOGGED_IN, context,
-            url, "7777777", "nbuusr1", NULL, NULL);
+            url, "7777777", "nbuusr1", NULL);
 
     TEST("valid login", test_login, IE_SUCCESS, context,
-            url, username, password, NULL, NULL);
+            url, username, password, NULL);
 
     isds_ctx_free(&context);
     isds_cleanup();

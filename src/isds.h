@@ -83,6 +83,26 @@ typedef enum {
     ITLS_CA_DIRECTORY       /* char *: Directory name with CA certificates */
 } isds_tls_option;
 
+/* Cryptographic material encoding */
+typedef enum {          
+    PKI_FORMAT_PEM,         /* PEM format */
+    PKI_FORMAT_DER          /* DER FORMAT */
+} isds_pki_format;
+
+/* Public key crypto material to authenticate client */
+struct isds_pki_credentials {
+    isds_pki_format certificate_format;     /* Certificate format */
+    char *certificate;      /* Path to client certificate or certificate
+                               nickname in case of NSS as curl backend */
+    char *engine;           /* String identifier of crypto engine to use
+                               (where key is stored). Use NULL for no engine */
+    isds_pki_format key_format;     /* Private key format */
+    char *key;              /* Path to client private key or key identifier
+                               in case of engine used */
+    char *passphrase;       /* Zero terminated string with password for
+                               decrypting private key, or engine PIN */
+};
+
 /* Box type */
 typedef enum {
     DBTYPE_SYSTEM = 0,          /* This is special sender value for messages
@@ -591,14 +611,12 @@ isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
  * isds_testing_locator variable to select testing instance. 
  * @username is user name of ISDS user
  * @password is user's secret password
- * @certificate is NULL terminated string with PEM formated client's
- * certificate. Use NULL if only password autentication should be performed.
- * @key is private key for client's certificate as (base64 encoded?) NULL
- * terminated string. Use NULL if only password autentication is desired.
+ * @pki_credentials defines public key cryptographic material to use in client
+ * authentication. Pass NULL if you want to use plain username and password.
  * */
 isds_error isds_login(struct isds_ctx *context, const char *url,
         const char *username, const char *password,
-        const char *certificate, const char* key);
+        const struct isds_pki_credentials *pki_credentials);
 
 /* Log out from ISDS server and close connection. */
 isds_error isds_logout(struct isds_ctx *context);
