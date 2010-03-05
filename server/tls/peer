@@ -1,0 +1,19 @@
+#!/bin/sh
+PORT=1443
+CA_ARGS="--x509cafile ca.cert"
+
+case "$1" in
+
+server)
+    gnutls-serv --http $CA_ARGS --x509keyfile server.key \
+        --x509certfile server.cert -p "$PORT" -r
+    ;;
+client)
+    gnutls-cli $CA_ARGS --x509keyfile client.key --x509certfile client.cert \
+        -p "$PORT" localhost
+    ;;
+*)
+    echo "Bad invocation"
+    exit 1
+
+esac
