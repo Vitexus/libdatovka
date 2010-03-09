@@ -1,4 +1,4 @@
-#define _XOPEN_SOURCE 500
+#define _XOPEN_SOURCE 600
 #include <stdlib.h>
 #include <stdio.h>
 #include <locale.h>
@@ -7,10 +7,13 @@
 #include <isds.h>
 #include "common.h"
 
+#define NSS_DIR "/home/petr/.mozilla/firefox/4bms6nj4.gpdata"
 
 int main(int argc, char **argv) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
+
+    /* Software: OpenSSL, GnuTLS */
     struct isds_pki_credentials pki_credentials = {
         .engine = NULL,
         .passphrase = NULL,
@@ -19,6 +22,35 @@ int main(int argc, char **argv) {
         .certificate_format = PKI_FORMAT_PEM,
         .certificate = "../server/tls/client.cert"
     };
+    /* Software: NSS */
+    /*struct isds_pki_credentials pki_credentials = {
+        .engine = NULL,
+        .passphrase = NULL,
+        .key_format = PKI_FORMAT_PEM,
+        .key = NULL,
+        .certificate_format = PKI_FORMAT_PEM,
+        .certificate = "The Client Material"
+    };*/
+
+    /* Hardware engine: OpenSSL */
+    /*struct isds_pki_credentials pki_credentials = {
+        .engine = "pkcs11",
+        .passphrase = NULL,
+        .key_format = PKI_FORMAT_ENG,
+        .key = "id_45",
+        .certificate_format = PKI_FORMAT_ENG,
+        .certificate = NULL
+    };*/
+
+    /* Hardware engine: NSS */
+    /*struct isds_pki_credentials pki_credentials = {
+        .engine = NULL,
+        .passphrase = NULL,
+        .key_format = PKI_FORMAT_PEM,
+        .key = NULL,
+        .certificate_format = PKI_FORMAT_PEM,
+        .certificate = "OpenSC Card (Bob Tester):Certificate"
+    };*/
     
     setlocale(LC_ALL, "");
 
@@ -46,11 +78,16 @@ int main(int argc, char **argv) {
                 isds_strerror(err));
     }*/
 
+    /* OpenSSL, GnuTLS */
     err = isds_set_tls(ctx, ITLS_CA_FILE, "../server/tls/ca.cert");
     if (err) {
         printf("isds_set_tls(ITLS_CA_FILE) failed: %s\n",
                 isds_strerror(err));
     }
+    /* NSS */
+    /* if (setenv("SSL_DIR", NSS_DIR, 0)) {
+        printf("setenv(\"SSL_DIR\", \"%s\") failed\n", NSS_DIR);
+    }*/
 
     err = isds_login(ctx, "https://localhost:1443/", username, password,
             &pki_credentials);
