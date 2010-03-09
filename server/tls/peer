@@ -1,19 +1,54 @@
 #!/bin/sh
 PORT=1443
-CA_ARGS="--x509cafile ca.cert"
+
+function usage() {
+    echo "Bad invocation"
+    cat <<EOM
+Usage: peer {gnutls|openssl} {server|client}
+EOM
+    exit 1
+}
+
+function gnutls_impl() {
+    CA_ARGS="--x509cafile ca.cert"
+    case "$1" in
+        server)
+            gnutls-serv --http $CA_ARGS --x509keyfile server.key \
+                --x509certfile server.cert -p "$PORT" -r
+            ;;
+        client)
+            gnutls-cli $CA_ARGS --x509keyfile client.key \
+                --x509certfile client.cert -p "$PORT" localhost
+            ;;
+        *)
+            usage
+    esac
+}
+
+function openssl_impl() {
+    CA_ARGS="-CAfile ca.cert"
+    case "$1" in
+
+    server)
+        openssl s_server -www $CA_ARGS -key server.key \
+            -cert server.cert -accept "$PORT" -Verify client.cert
+        ;;
+    client)
+        openssl s_client $CA_ARGS -key client.key \
+            -cert client.cert -connect "localhost:${PORT}"
+        ;;
+    *)
+        usage
+    esac
+}
 
 case "$1" in
-
-server)
-    gnutls-serv --http $CA_ARGS --x509keyfile server.key \
-        --x509certfile server.cert -p "$PORT" -r
-    ;;
-client)
-    gnutls-cli $CA_ARGS --x509keyfile client.key --x509certfile client.cert \
-        -p "$PORT" localhost
-    ;;
-*)
-    echo "Bad invocation"
-    exit 1
-
+    gnutls)
+        gnutls_impl "$2"
+        ;;
+    openssl)
+        openssl_impl "$2"
+        ;;
+    *)
+        usage
 esac
