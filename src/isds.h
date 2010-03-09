@@ -84,23 +84,29 @@ typedef enum {
 } isds_tls_option;
 
 /* Cryptographic material encoding */
-typedef enum {          
+typedef enum {
     PKI_FORMAT_PEM,         /* PEM format */
-    PKI_FORMAT_DER          /* DER FORMAT */
+    PKI_FORMAT_DER,         /* DER format */
+    PKI_FORMAT_ENG          /* Stored in crypto engine */
 } isds_pki_format;
 
 /* Public key crypto material to authenticate client */
 struct isds_pki_credentials {
-    isds_pki_format certificate_format;     /* Certificate format */
-    char *certificate;      /* Path to client certificate or certificate
-                               nickname in case of NSS as curl backend */
     char *engine;           /* String identifier of crypto engine to use
                                (where key is stored). Use NULL for no engine */
+    isds_pki_format certificate_format;     /* Certificate format */
+    char *certificate;      /* Path to client certificate, or certificate
+                               nickname in case of NSS as curl backend,
+                               or key slot identifier inside crypto engine.
+                               Some crypto engines can pair certificate with
+                               key automatically (NULL value) */
     isds_pki_format key_format;     /* Private key format */
-    char *key;              /* Path to client private key or key identifier
-                               in case of engine used */
+    char *key;              /* Path to client private key, or key identifier
+                               in case of used engine */
     char *passphrase;       /* Zero terminated string with password for
-                               decrypting private key, or engine PIN */
+                               decrypting private key, or engine PIN.
+                               Use NULL for no passhrase or question by
+                               engine. */
 };
 
 /* Box type */

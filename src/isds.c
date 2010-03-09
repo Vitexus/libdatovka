@@ -26,8 +26,9 @@ const char isds_testing_locator[] = "https://www.czebox.cz/";
  * @pki  credentials to to free */
 void isds_pki_credentials_free(struct isds_pki_credentials **pki) {
     if(!pki || !*pki) return;
-    free((*pki)->certificate);
+
     free((*pki)->engine);
+    free((*pki)->certificate);
     free((*pki)->key);
 
     if ((*pki)->passphrase) {
@@ -297,9 +298,9 @@ struct isds_pki_credentials *isds_pki_credentials_duplicate(
     new = calloc(1, sizeof(*new));
     if (!new) return NULL;
 
+    STRDUP_OR_ERROR(new->engine, template->engine);
     new->certificate_format = template->certificate_format;
     STRDUP_OR_ERROR(new->certificate, template->certificate);
-    STRDUP_OR_ERROR(new->engine, template->engine);
     new->key_format = template->key_format;
     STRDUP_OR_ERROR(new->key, template->key);
     STRDUP_OR_ERROR(new->passphrase, template->passphrase);

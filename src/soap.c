@@ -178,42 +178,79 @@ static isds_error http(struct isds_ctx *context, const char *url,
 
     /* Set PKI credentials */
     if (!curl_err && (context->pki_credentials)) {
-        if (context->pki_credentials->certificate) {
+        if (context->pki_credentials->engine) {
+            /* Select SSL engine */
             isds_log(ILF_SEC, ILL_INFO,
-                    _("Client %s certificate will be read from `%s' file\n"),
-                    (context->pki_credentials->certificate_format ==
-                        PKI_FORMAT_DER) ? _("DER") : _("PEM"),
-                    context->pki_credentials->certificate);
+                    _("Cryptograhic engine `%s' will be used for "
+                        "key or certificate\n"),
+                    context->pki_credentials->engine);
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLENGINE,
+                    context->pki_credentials->engine);
+        }
+
+        if (!curl_err) {
+            /* Select certificate format */
 #if HAVE_DECL_CURLOPT_SSLCERTTYPE /* since curl-7.9.3 */
-            curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLCERTTYPE,
-                    (context->pki_credentials->certificate_format ==
-                        PKI_FORMAT_DER) ? "DER" : "PEM");
+            if (context->pki_credentials->certificate_format ==
+                    PKI_FORMAT_ENG) {
+                /* XXX: It's valid to have certificate in engine without name.
+                 * Engines can select certificate according private key and
+                 * vice versa. */
+                if (context->pki_credentials->certificate)
+                    isds_log(ILF_SEC, ILL_INFO, _("Client `%s' certificate "
+                                "will be read from `%s' engine\n"),
+                            context->pki_credentials->certificate,
+                            context->pki_credentials->engine);
+                else
+                    isds_log(ILF_SEC, ILL_INFO, _("Client certificate " 
+                                "will be read from `%s' engine\n"),
+                            context->pki_credentials->engine);
+                curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLCERTTYPE,
+                        "ENG");
+            } else if (context->pki_credentials->certificate) {
+                isds_log(ILF_SEC, ILL_INFO, _("Client %s certificate " 
+                            "will be read from `%s' file\n"),
+                        (context->pki_credentials->certificate_format ==
+                            PKI_FORMAT_DER) ? _("DER") : _("PEM"),
+                        context->pki_credentials->certificate);
+                curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLCERTTYPE,
+                        (context->pki_credentials->certificate_format ==
+                            PKI_FORMAT_DER) ? "DER" : "PEM");
+            }
 #else
-            isds_log(ILF_SEC, ILL_WARNING,
-                    _("Your curl library cannot distinguish certifcate "
-                        "formats. Make sure your cryptographic library\n"
-                        "understands your certificate file by default, "
-                        "or upgrade curl.\n"));
+            if ((context->pki_credentials->certificate_format ==
+                        PKI_FORMAT_ENG ||
+                        context->pki_credentials->certificate))
+                isds_log(ILF_SEC, ILL_WARNING,
+                        _("Your curl library cannot distinguish certifcate "
+                            "formats. Make sure your cryptographic library\n"
+                            "understands your certificate file by default, "
+                            "or upgrade curl.\n"));
 #endif /* not HAVE_DECL_CURLOPT_SSLCERTTYPE */
+        }
+
+        if (!curl_err && context->pki_credentials->certificate) {
+            /* Select certificate */
             if (!curl_err)
                 curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLCERT,
                         context->pki_credentials->certificate);
         }
-        if (!curl_err && context->pki_credentials->key) {
-            if (context->pki_credentials->engine) {
-                /* Select SSL engine */
-                isds_log(ILF_SEC, ILL_INFO, _("Client private key `%s' "
-                            "from `%s' engine will be used\n"),
-                        context->pki_credentials->key,
-                        context->pki_credentials->engine);
+
+        if (!curl_err) {
+            /* Select key format */
+            if (context->pki_credentials->key_format == PKI_FORMAT_ENG) {
+                if (context->pki_credentials->key)
+                    isds_log(ILF_SEC, ILL_INFO, _("Client private key `%s' "
+                                "from `%s' engine will be used\n"),
+                            context->pki_credentials->key,
+                            context->pki_credentials->engine);
+                else 
+                    isds_log(ILF_SEC, ILL_INFO, _("Client private key "
+                                "from `%s' engine will be used\n"),
+                            context->pki_credentials->engine);
                 curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLKEYTYPE,
                         "ENG");
-                if (!curl_err)
-                    curl_err = curl_easy_setopt(context->curl,
-                            CURLOPT_SSLENGINE,
-                            context->pki_credentials->engine);
-            } else {
-                /* Select no SSL engine */
+            } else if (context->pki_credentials->key) {
                 isds_log(ILF_SEC, ILL_INFO, _("Client %s private key will be "
                             "read from `%s' file\n"),
                         (context->pki_credentials->key_format ==
@@ -223,10 +260,14 @@ static isds_error http(struct isds_ctx *context, const char *url,
                         (context->pki_credentials->key_format ==
                             PKI_FORMAT_DER) ? "DER" : "PEM");
             }
+
             if (!curl_err)
+                /* Select key */
                 curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLKEY,
                         context->pki_credentials->key);
+
             if (!curl_err) {
+                /* Pass key passphrase */
 #if HAVE_DECL_CURLOPT_KEYPASSWD /* since curl-7.16.5 */
                 curl_err = curl_easy_setopt(context->curl,
                         CURLOPT_KEYPASSWD,
