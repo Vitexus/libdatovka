@@ -1,3 +1,6 @@
+Version 0.2
+===========
+
 • X.509 client certificate authentication is supported (but not tested yet).
 Underlying HTTPS cURL library supports OpenSSL, GnuTLS and NSS cryptographic
 back ends currently.
