@@ -1,0 +1,7 @@
+Here you can find private keys and certificates of certificate authority, TLS
+server and TLS client used by example clients and `peer' tool.
+
+All private keys, PKCS#12 and NSS storages have empty password.
+
+The `peer' tool allows to start TLS server or client. It uses OpenSSL or
+GnutTLS tools. It utilizes above-mentioned certificates and keys.
