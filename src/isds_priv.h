@@ -75,6 +75,7 @@ struct isds_ctx {
                                            for progress_callback */
     char *tls_ca_file;      /* File name with CA certificates */
     char *tls_ca_dir;       /* Directory name with CA certificates */
+    char *tls_crl_file;     /* File name with CRL in PEM format */
     char *long_message;     /* message buffer */
 };
 

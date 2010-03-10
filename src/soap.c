@@ -151,6 +151,22 @@ static isds_error http(struct isds_ctx *context, const char *url,
         curl_err = curl_easy_setopt(context->curl, CURLOPT_CAPATH,
                 context->tls_ca_dir);
     }
+    if (!curl_err && context->tls_crl_file) {
+#if HAVE_DECL_CURLOPT_CRLFILE /* Since curl-7.19.0 */
+        isds_log(ILF_SEC, ILL_INFO,
+                _("CRLs will be searched in `%s' file since now\n"),
+                context->tls_crl_file);
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_CRLFILE,
+                context->tls_crl_file);
+#else
+        isds_log(ILF_SEC, ILL_WARNING,
+                _("Your curl library cannot pass certificate revocation "
+                    "list to cryptographic library.\n"
+                    "Make sure cryptographic library default setting "
+                    "delivers proper CRLs,\n"
+                    "or upgrade curl.\n"));
+#endif /* not HAVE_DECL_CURLOPT_CRLFILE */
+    }
 
 
     /* Set credentials */

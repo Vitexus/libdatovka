@@ -80,7 +80,8 @@ const char *isds_strerror(const isds_error error);
 typedef enum {
     ITLS_VERIFY_SERVER,     /*  _Bool: Verify server idetity? */
     ITLS_CA_FILE,           /* char *: File name with CA certificates */
-    ITLS_CA_DIRECTORY       /* char *: Directory name with CA certificates */
+    ITLS_CA_DIRECTORY,      /* char *: Directory name with CA certificates */
+    ITLS_CRL_FILE           /* char *: File  name with CRL in PEM format */
 } isds_tls_option;
 
 /* Cryptographic material encoding */

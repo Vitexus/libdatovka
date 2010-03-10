@@ -681,6 +681,7 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
     free((*context)->tls_verify_server);
     free((*context)->tls_ca_file);
     free((*context)->tls_ca_dir);
+    free((*context)->tls_crl_file);
     free((*context)->long_message);
 
     free(*context);
@@ -915,6 +916,15 @@ isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
             break;
         case ITLS_CA_DIRECTORY:
             REPLACE_VA_STRING(context->tls_ca_dir);
+            break;
+        case ITLS_CRL_FILE:
+#if HAVE_DECL_CURLOPT_CRLFILE /* Since curl-7.19.0 */
+            REPLACE_VA_STRING(context->tls_crl_file);
+#else
+            isds_log_message(ILF_SEC, ILL_ERR,
+                    _("Curl library does not support CRL definition"));
+            err = IE_NOTSUP;
+#endif  /* not HAVE_DECL_CURLOPT_CRLFILE */
             break;
 
         default:

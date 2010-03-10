@@ -66,6 +66,11 @@ AC_CHECK_DECLS([CURLOPT_SSLCERTTYPE], [],
                  declaration (PEM vs. DER).
                  Consider upgrade to 7.9.3 version.]),
     [[#include <curl/curl.h>]])
+AC_CHECK_DECLS([CURLOPT_CRLFILE], [],
+    AC_MSG_WARN([Your libcurl does not support certificate revocation list
+                 declaration.
+                 Consider upgrade to 7.19.0 version.]),
+    [[#include <curl/curl.h>]])
 AC_CHECK_DECLS([CURLOPT_KEYPASSWD], [], [], [[#include <curl/curl.h>]])
 AC_CHECK_DECLS([CURLOPT_SSLKEYPASSWD], [], [], [[#include <curl/curl.h>]])
 
