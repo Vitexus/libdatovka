@@ -1,4 +1,41 @@
-• Application can catch all global log messages and redirect them whereever it
+• X.509 client certificate authentication is supported (but not tested yet).
+Underlying HTTPS cURL library supports OpenSSL, GnuTLS and NSS cryptographic
+back ends currently.
+
+Current legislation requires to use cryptographic module with unexportable
+private key. I've tested ASEKey produced by Athena Smartcard Solution
+with OpenSSL back end successfully (a patch for curl-7.20.0 is required).
+
+Example code client/certauth.c and server/tls/peer server and CA, server and
+client cryptographic material are bundled. 
+
+• Application can pass CRL PEM file to cryptographic library.
+
+• Library offers pkg-config integration. Application build scripts can check
+`libisds' pkg-config module and use PKG_CHECK_MODULES() m4 macro.
+
+• Application can get dynamic string describing library version and its
+dependencies at run-time (isds_version()).
+
+• API changed and is not backward compatible. Please adjust and recompile your
+applications.
+
+• Library tests have been splitted to off-line (--enable-test) and on-line
+(--enable-online-test) tests. On-line tests can not be compiled without
+off-line tests. All tests are switched off by default.
+
+• Server base URL for isds_login() does not contain path anymore. Application
+must supply schema and hostname only (e.g. https://localhost/). Undefined base
+URL will be interpreted as official ISDS locator.
+
+• Base URLs of official ISDS server (isds_locator) and testing ISDS server
+(isds_testing_locator) are provided by library. Application can offer them as
+default choices to the user.
+
+• Documents can be submitted for authorize conversion into Czech POINT system
+(czp_convert_document(), requires specific isds_ctx).
+
+• Application can catch all global log messages and redirect them wherever it
 needs.
 
 Version 0.1
