@@ -7,7 +7,7 @@
 #include <isds.h>
 #include "common.h"
 
-#define NSS_DIR "/home/petr/.mozilla/firefox/4bms6nj4.gpdata"
+#define NSS_DIR "../server/tls/client_nss"
 
 int main(int argc, char **argv) {
     struct isds_ctx *ctx = NULL;
@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
                 isds_strerror(err));
     }
     /* NSS */
-    /* if (setenv("SSL_DIR", NSS_DIR, 0)) {
+    /*if (setenv("SSL_DIR", NSS_DIR, 0)) {
         printf("setenv(\"SSL_DIR\", \"%s\") failed\n", NSS_DIR);
     }*/
 
