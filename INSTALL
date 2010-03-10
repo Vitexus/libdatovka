@@ -1,8 +1,8 @@
 See README for dependecies.
 
 If you get code from VCS, you will need Autotools (automake, autoconf,
-libtool) in addition and you must prepare build system with `autoreconf
---install'.
+libtool) and gettext in addition and you must prepare build system with
+`autoreconf --install'.
 
 Then run `./configure && make && make install' to build and install library
 into your system.
