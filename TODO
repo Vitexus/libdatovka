@@ -8,7 +8,7 @@
 * Make function tests
     Cover all functions
     Simulate server?
-* Implement X.509 authentication
+* Test X.509 authentication
 * Write high level documentation
     ISDS overview
     Gather comments from header files
@@ -16,11 +16,10 @@
 * I18N
     Solve UTF-8 vs. locale-encoded logging schism
 * Find a way how to request for a box creation
-* Find a way how to send document to authorized conversion
+* Test document submit for authorized conversion
 * Test message is system generated
 * Make high logic checks optional
 * Validate XML trees (optional)
-* Check for minimal dependency library versions
 * Distinguish processing errors by different isds_error values instead of
   generic IE_ERROR
     Invalid input from application (IE_INVAL?)
