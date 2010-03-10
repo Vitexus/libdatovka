@@ -7,53 +7,85 @@
 #include <isds.h>
 #include "common.h"
 
-#define NSS_DIR "../server/tls/client_nss"
+#define TLS_PREFIX "../server/tls/"
+#define NSS_DIR TLS_PREFIX "client_nss"
+
+void usage(const char *command) {
+    const char *name = NULL;
+    if (command) {
+        name = strrchr(command, '/');
+        if (name) name++;
+    }
+    if (!name) name = command;
+
+    fprintf(stderr, "Usage: %s {openssl|nss} {sw|hw}\n", name);
+    exit(EXIT_FAILURE);
+}
 
 int main(int argc, char **argv) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
+    struct isds_pki_credentials *pki_credentials = NULL;
+    _Bool use_nss;
 
     /* Software: OpenSSL, GnuTLS */
-    struct isds_pki_credentials pki_credentials = {
+    struct isds_pki_credentials pki_software_ossl = {
         .engine = NULL,
         .passphrase = NULL,
         .key_format = PKI_FORMAT_PEM,
-        .key = "../server/tls/client.key",
+        .key = TLS_PREFIX "client.key",
         .certificate_format = PKI_FORMAT_PEM,
-        .certificate = "../server/tls/client.cert"
+        .certificate = TLS_PREFIX "client.cert"
     };
+
     /* Software: NSS */
-    /*struct isds_pki_credentials pki_credentials = {
+    struct isds_pki_credentials pki_software_nss = {
         .engine = NULL,
         .passphrase = NULL,
         .key_format = PKI_FORMAT_PEM,
         .key = NULL,
         .certificate_format = PKI_FORMAT_PEM,
         .certificate = "The Client Material"
-    };*/
+    };
 
     /* Hardware engine: OpenSSL */
-    /*struct isds_pki_credentials pki_credentials = {
+    struct isds_pki_credentials pki_hardware_ossl = {
         .engine = "pkcs11",
         .passphrase = NULL,
         .key_format = PKI_FORMAT_ENG,
         .key = "id_45",
         .certificate_format = PKI_FORMAT_ENG,
         .certificate = NULL
-    };*/
+    };
 
     /* Hardware engine: NSS */
-    /*struct isds_pki_credentials pki_credentials = {
+    struct isds_pki_credentials pki_hardware_nss = {
         .engine = NULL,
         .passphrase = NULL,
         .key_format = PKI_FORMAT_PEM,
         .key = NULL,
         .certificate_format = PKI_FORMAT_PEM,
         .certificate = "OpenSC Card (Bob Tester):Certificate"
-    };*/
+    };
     
     setlocale(LC_ALL, "");
 
+    /* Parse arguments */
+    if (argc != 3 || !argv[1] || !argv[2]) usage(argv[0]);
+    if (!strcmp(argv[1], "openssl")) {
+        use_nss = 0;
+        if (!strcmp(argv[2], "sw")) pki_credentials = &pki_software_ossl;
+        else if (!strcmp(argv[2], "hw")) pki_credentials = &pki_hardware_ossl;
+        else usage(argv[0]);
+    } else if (!strcmp(argv[1], "nss")) {
+        use_nss = 1;
+        if (!strcmp(argv[2], "sw")) pki_credentials = &pki_software_nss;
+        else if (!strcmp(argv[2], "hw")) pki_credentials = &pki_hardware_nss;
+        else usage(argv[0]);
+    } else
+        usage(argv[0]);
+
+    /* ISDS stuff */
     err = isds_init();
     if (err) {
         printf("isds_init() failed: %s\n", isds_strerror(err));
@@ -78,19 +110,21 @@ int main(int argc, char **argv) {
                 isds_strerror(err));
     }*/
 
-    /* OpenSSL, GnuTLS */
-    err = isds_set_tls(ctx, ITLS_CA_FILE, "../server/tls/ca.cert");
-    if (err) {
-        printf("isds_set_tls(ITLS_CA_FILE) failed: %s\n",
-                isds_strerror(err));
+
+    if (use_nss) {
+        if (setenv("SSL_DIR", NSS_DIR, 0)) {
+            printf("setenv(\"SSL_DIR\", \"%s\") failed\n", NSS_DIR);
+        }
+    } else {
+        err = isds_set_tls(ctx, ITLS_CA_FILE, "../server/tls/ca.cert");
+        if (err) {
+            printf("isds_set_tls(ITLS_CA_FILE) failed: %s\n",
+                    isds_strerror(err));
+        }
     }
-    /* NSS */
-    /*if (setenv("SSL_DIR", NSS_DIR, 0)) {
-        printf("setenv(\"SSL_DIR\", \"%s\") failed\n", NSS_DIR);
-    }*/
 
     err = isds_login(ctx, "https://localhost:1443/", username, password,
-            &pki_credentials);
+            pki_credentials);
     if (err) {
         printf("isds_login() failed: %s: %s\n", isds_strerror(err),
                 isds_long_message(ctx));
