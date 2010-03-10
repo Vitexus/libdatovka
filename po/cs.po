@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: libisds 0.1\n"
+"Project-Id-Version: libisds 0.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-03-10 15:47+0100\n"
-"PO-Revision-Date: 2010-02-17 17:25+0100\n"
+"PO-Revision-Date: 2010-03-10 16:17+0100\n"
 "Last-Translator: Petr Pisar <petr.pisar@atlas.cz>\n"
 "Language-Team: Czech <translation-team-cs@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -55,21 +55,21 @@ msgid "GPGME compiled without support for protocol %s\n"
 msgstr "GPGME přeloženo bez podpory protokolu %s\n"
 
 #: ../src/crypto.c:129
-#, fuzzy, c-format
+#, c-format
 msgid "Engine %s not installed properly\n"
-msgstr "Výkonné jádro %s správně nenainstalováno"
+msgstr "Výkonná jednotka %s není správně nainstalována\n"
 
 #: ../src/crypto.c:133
-#, fuzzy, c-format
+#, c-format
 msgid "Engine %s version %s installed, but at least version %s required\n"
 msgstr ""
-"Výkonné jádro %s nainstalováno ve verzi %s, avšak vyžadována je alespoň "
-"verze %s"
+"Výkonná jednotka %s nainstalována ve verzi %s, avšak vyžadována je alespoň "
+"verze %s\n"
 
 #: ../src/crypto.c:138
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown problem with engine for protocol %s\n"
-msgstr "Neznámý problém s výkonným jádrem protokolu %s"
+msgstr "Neznámý problém s výkonnou jednotkou protokolu %s\n"
 
 #: ../src/crypto.c:188
 msgid "Could not allocate CMS parser handler"
@@ -212,7 +212,7 @@ msgstr "Inicializace knihovny expat selhala\n"
 #: ../src/isds.c:557
 #, c-format
 msgid "%s (%s, GPGME %s, gcrypt %s, %s, libxml2 %s)"
-msgstr ""
+msgstr "%s (%s, GPGME %s, gcrypt %s, %s, libxml2 %s)"
 
 #: ../src/isds.c:568
 msgid "Success"
@@ -304,7 +304,7 @@ msgstr "Některé podoperace selhaly"
 
 #: ../src/isds.c:612
 msgid "Operation aborted"
-msgstr ""
+msgstr "Operace zrušena"
 
 #: ../src/isds.c:614
 msgid "Unknown error"
@@ -312,32 +312,37 @@ msgstr "Neznámá chyba"
 
 #: ../src/isds.c:925
 msgid "Curl library does not support CRL definition"
-msgstr ""
+msgstr "Knihovna curl neumožňuje definovat CRL"
 
 #: ../src/isds.c:993
 msgid "Selected authentication method: no certificate, username and password\n"
-msgstr ""
+msgstr "Vybraný způsob autentizace: žádný certifikát, jméno uživatele a "
+"heslo\n"
 
 #: ../src/isds.c:997
 msgid "Both username and password must be supplied"
-msgstr ""
+msgstr "Jak jméno uživatele, tak i heslo musí být zadány"
 
 #: ../src/isds.c:1004
 msgid ""
 "Selected authentication method: system certificate, no username and no "
 "password\n"
 msgstr ""
+"Vybraný způsob autentizace: systémový certifikát, žádné jméno uživatele "
+"a žádné heslo\n"
 
 #: ../src/isds.c:1011
 msgid ""
 "Selected authentication method: system certificate, box ID and no password\n"
 msgstr ""
+"Vybraný způsob autentizace: systémový certifikát, ID schránky a žádné heslo\n"
 
 #: ../src/isds.c:1016
 msgid ""
 "Selected authentication method: commercial certificate, username and "
 "password\n"
 msgstr ""
+"Vybraný způsob autentizace: komerční certifikát, jméno uživatele a heslo\n"
 
 #: ../src/isds.c:1033
 msgid "Could build ISDS login request"
@@ -801,9 +806,8 @@ msgid "Could build %s request"
 msgstr "Požadavek %s nebylo možné sestavit"
 
 #: ../src/isds.c:4482
-#, fuzzy
 msgid "Could not create ISDS1 name space"
-msgstr "Nebylo možné vytvořit jmenný prostor ISDS"
+msgstr "Nebylo možné vytvořit jmenný prostor ISDS1"
 
 #: ../src/isds.c:4594 ../src/isds.c:8522
 msgid "CreateDataBox request processed by server successfully.\n"
@@ -1394,11 +1398,11 @@ msgstr "Neplatná hodnota dateInserted: %s"
 #: ../src/isds.c:8418
 #, c-format
 msgid "Document %s has been submitted for conversion to server successfully\n"
-msgstr "Dokument %s byl úspěšně odseslán serveru za účelem konverze\n"
+msgstr "Dokument %s byl úspěšně odeslán serveru za účelem konverze\n"
 
 #: ../src/isds.c:8470
 msgid "E-mail field is mandatory"
-msgstr ""
+msgstr "Položka E-mail je povinná"
 
 #: ../src/isds.c:8567
 msgid "Message does not carry raw representation"
@@ -1490,9 +1494,9 @@ msgid "CA certificates will be searched in `%s' directory since now\n"
 msgstr "Certifikáty autorit se budou od teď hledat v adresáři „%s“\n"
 
 #: ../src/soap.c:157
-#, fuzzy, c-format
+#, c-format
 msgid "CRLs will be searched in `%s' file since now\n"
-msgstr "Certifikáty autorit se budou od teď hledat v souboru „%s“\n"
+msgstr "CRL se budou od teď hledat v souboru „%s“\n"
 
 #: ../src/soap.c:163
 msgid ""
@@ -1501,38 +1505,42 @@ msgid ""
 "Make sure cryptographic library default setting delivers proper CRLs,\n"
 "or upgrade curl.\n"
 msgstr ""
+"Vaše knihovna curl neumí předat kryptografické knihovně seznam "
+"zneplatněných certifikátů\n"
+"Přesvědčete se, že výchozí nastavení kryptografické knihovny pracuje se\n"
+"správnými CRL, nebo nainstalujte novější verzi knihovny curl.\n"
 
 #: ../src/soap.c:186
 msgid "Could not pass credentials to CURL"
-msgstr ""
+msgstr "Autentizační údaje nebylo možné předat knihovně CURL"
 
 #: ../src/soap.c:200
 #, c-format
 msgid "Cryptograhic engine `%s' will be used for key or certificate\n"
-msgstr ""
+msgstr "Pro klíče a certifikáty se použije kryptografická jednotka „%s“\n"
 
 #: ../src/soap.c:216
-#, fuzzy, c-format
+#, c-format
 msgid "Client `%s' certificate will be read from `%s' engine\n"
-msgstr "Certifikáty autorit se budou od teď hledat v souboru „%s“\n"
+msgstr "Klientský certifikát „%s“ bude načten z jednotky „%s“\n"
 
 #: ../src/soap.c:221
-#, fuzzy, c-format
+#, c-format
 msgid "Client certificate will be read from `%s' engine\n"
-msgstr "Certifikáty autorit se budou od teď hledat v souboru „%s“\n"
+msgstr "Klientský certifikát bude načten z jednotky „%s“\n"
 
 #: ../src/soap.c:227
-#, fuzzy, c-format
+#, c-format
 msgid "Client %s certificate will be read from `%s' file\n"
-msgstr "Certifikáty autorit se budou od teď hledat v souboru „%s“\n"
+msgstr "Klientský certifikát %s bude načten ze souboru „%s“\n"
 
 #: ../src/soap.c:230 ../src/soap.c:273
 msgid "DER"
-msgstr ""
+msgstr "DER"
 
 #: ../src/soap.c:230 ../src/soap.c:273
 msgid "PEM"
-msgstr ""
+msgstr "PEM"
 
 #: ../src/soap.c:241
 msgid ""
@@ -1540,21 +1548,24 @@ msgid ""
 "cryptographic library\n"
 "understands your certificate file by default, or upgrade curl.\n"
 msgstr ""
+"Vaše knihovna curl neumí rozlišit formát certifikátů. Ujistěte se, že vaše\n"
+"kryptografická knihovna souboru s certifikátem standardně rozumí, nebo\n"
+"nainstalujte novější verzi knihovny curl.\n"
 
 #: ../src/soap.c:259
 #, c-format
 msgid "Client private key `%s' from `%s' engine will be used\n"
-msgstr ""
+msgstr "Použije se klientský soukromý klíč „%s“ z jednotky „%s“\n"
 
 #: ../src/soap.c:264
 #, c-format
 msgid "Client private key from `%s' engine will be used\n"
-msgstr ""
+msgstr "Použije se klientský soukromý klíč z jednotky „%s“\n"
 
 #: ../src/soap.c:270
 #, c-format
 msgid "Client %s private key will be read from `%s' file\n"
-msgstr ""
+msgstr "Soukromý %s klienta bude načten ze souboru „%s“\n"
 
 #: ../src/soap.c:407
 #, c-format
@@ -1643,9 +1654,9 @@ msgid "Authentication failed"
 msgstr "Autentizace selhala"
 
 #: ../src/soap.c:690
-#, fuzzy, c-format
+#, c-format
 msgid "Code 404: Document (%s) not found on server"
-msgstr "Kód 404: Dokument na serveru nenalezen"
+msgstr "Kód 404: Dokument (%s) na serveru nenalezen"
 
 #: ../src/soap.c:704
 #, c-format
@@ -1681,9 +1692,8 @@ msgid "SOAP response signals Fault"
 msgstr "Odpověď SOAP signalizuje chybu (Fault)"
 
 #: ../src/validator.c:74
-#, fuzzy
 msgid "ISDS1 response is missing StatusCode element"
-msgstr "Odpověď ISDS postrádá element StatusCode"
+msgstr "Odpověď ISDS1 postrádá element StatusCode"
 
 #: ../src/validator.c:75
 msgid "ISDS response is missing StatusCode element"
@@ -1694,18 +1704,16 @@ msgid "SOAP returned empty body"
 msgstr "SOAP vrátil prázdné tělo"
 
 #: ../src/validator.c:194
-#, fuzzy
 msgid "SOAP response does not contain ISDS1 element"
-msgstr "Odpověď SOAP neobsahuje ISDS element"
+msgstr "Odpověď SOAP neobsahuje ISDS1 element"
 
 #: ../src/validator.c:195
 msgid "SOAP response does not contain ISDS element"
 msgstr "Odpověď SOAP neobsahuje ISDS element"
 
 #: ../src/validator.c:214
-#, fuzzy
 msgid "Could not build ISDS1 response document"
-msgstr "Dokument s odpovědí ISDS nebylo možné sestavit"
+msgstr "Dokument s odpovědí ISDS1 nebylo možné sestavit"
 
 #: ../src/validator.c:215
 msgid "Could not build ISDS response document"
