@@ -6,6 +6,7 @@
 #include <iconv.h>
 #include <langinfo.h>
 #include <time.h>
+#include <errno.h>
 #include "utils.h"
 #include "cencode.h"
 #include "cdecode.h"
@@ -169,7 +170,8 @@ _hidden char *utf82locale(const char *utf) {
         outleft = buffer_length - buffer_used;
         
         /* Convert chunk of data */
-        if ((size_t) -1 == iconv(state, &inbuf, &inleft, &outbuf, &outleft)) {
+        if ((size_t) -1 == iconv(state, &inbuf, &inleft, &outbuf, &outleft) &&
+                errno != E2BIG) {
             free(buffer);
             buffer = NULL;
             goto leave;
