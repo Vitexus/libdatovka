@@ -5,6 +5,7 @@
 * Make CURL (network services) optional
 * Improve isds_*message() system
     Allow formated message appeding, preserve deep messages
+* Catch curl debug messages
 * Make function tests
     Cover all functions
     Simulate server?
@@ -26,3 +27,4 @@
     Library error on processing application data
     Library error on processing server data
     Server error
+* Offer automagic raw representation detection on isds_load_*()
