@@ -396,8 +396,8 @@ static isds_error http(struct isds_ctx *context, const char *url,
     }
     if (!curl_err) {
         /* Set user agent identification */
-        /* TODO: Present library version, curl etc. in User-Agent */
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_USERAGENT, "libisds");
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_USERAGENT,
+                "libisds/" PACKAGE_VERSION);
     }
 
     /* Set POST request body */
