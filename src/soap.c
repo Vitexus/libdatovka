@@ -33,7 +33,7 @@ _hidden isds_error close_connection(struct isds_ctx *context) {
  * @buffer points to new data
  * @size * @nmemb is length of the chunk in bytes. Zero means empty body.
  * @userp is private structure.
- * Must reuturn the length of the chunk, otherwise CURL will signal
+ * Must return the length of the chunk, otherwise CURL will signal
  * CURL_WRITE_ERROR. */
 static size_t write_body(void *buffer, size_t size, size_t nmemb, void *userp) {
     struct soap_body *body = (struct soap_body *) userp;
@@ -76,6 +76,21 @@ static int progress_proxy(void *curl_data, double download_total,
     }
 
     return abort;
+}
+
+
+/* CURL call back function called when curl has something to log.
+ * @curl is cURL context
+ * @type is cURL log facility
+ * @buffer points to log data, XXX: not zero-terminated
+ * @size is length of log data
+ * @userp is private structure.
+ * Must return 0. */
+static int log_curl(CURL *curl, curl_infotype type, char *buffer, size_t size,
+        void *userp) {
+    if (!buffer || 0 == size) return 0;
+    isds_log(ILF_HTTP, ILL_DEBUG, "%*s", size, buffer);
+    return 0;
 }
 
 
@@ -411,6 +426,10 @@ static isds_error http(struct isds_ctx *context, const char *url,
     isds_log(ILF_HTTP, ILL_DEBUG, _("End of POST body\n"));
     if ((log_facilities & ILF_HTTP) && (log_level >= ILL_DEBUG) ) {
         curl_easy_setopt(context->curl, CURLOPT_VERBOSE, 1);
+        curl_easy_setopt(context->curl, CURLOPT_DEBUGFUNCTION, log_curl);
+    } else {
+        curl_easy_setopt(context->curl, CURLOPT_VERBOSE, 0);
+        curl_easy_setopt(context->curl, CURLOPT_DEBUGFUNCTION, NULL);
     }
     
 
