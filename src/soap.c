@@ -89,7 +89,9 @@ static int progress_proxy(void *curl_data, double download_total,
 static int log_curl(CURL *curl, curl_infotype type, char *buffer, size_t size,
         void *userp) {
     if (!buffer || 0 == size) return 0;
-    isds_log(ILF_HTTP, ILL_DEBUG, "%*s", size, buffer);
+    if (type == CURLINFO_TEXT || type == CURLINFO_HEADER_IN ||
+            type == CURLINFO_HEADER_OUT)
+        isds_log(ILF_HTTP, ILL_DEBUG, "%*s", size, buffer);
     return 0;
 }
 
