@@ -26,8 +26,8 @@ int main(int argc, char **argv) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
     struct isds_pki_credentials *pki_credentials = NULL;
-    _Bool use_nss;
-
+    _Bool use_nss = 0;
+ 
     /* Software: OpenSSL, GnuTLS */
     struct isds_pki_credentials pki_software_ossl = {
         .engine = NULL,
