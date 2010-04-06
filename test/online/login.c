@@ -4,10 +4,12 @@
 static int test_login(const isds_error error, struct isds_ctx *context,
         const char *url, const char *username, const char *password,
         const struct isds_pki_credentials *pki_credentials) {
+    isds_error err;
 
-    if (error !=
-            isds_login(context, url, username, password, pki_credentials))
-        FAIL_TEST("Wrong return code");
+    err = isds_login(context, url, username, password, pki_credentials);
+    if (error != err)
+        FAIL_TEST("Wrong return code: expected=%s, returned=%s",
+                isds_strerror(error), isds_strerror(err));
 
     isds_logout(context);
     PASS_TEST;
@@ -21,7 +23,8 @@ static int test_login2(const isds_error error1, const isds_error error2,
     isds_error err =
             isds_login(context, url, username, password, pki_credentials);
     if (err != error1 && err != error2)
-        FAIL_TEST("Wrong return code");
+        FAIL_TEST("Wrong return code: must_differ=%s, must_differ=%s, returned=%s",
+                isds_strerror(error1), isds_strerror(error2), isds_strerror(err));
 
     isds_logout(context);
     PASS_TEST;
