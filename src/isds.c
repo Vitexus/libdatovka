@@ -7972,6 +7972,20 @@ leave:
 }
 
 
+    /* Determine type of raw message or delivery info according some heuristics.
+ * It does not validate the raw blob.
+ * @context is session context
+ * @raw_type returns content type of @buffer. Valid only if exit code of this
+ * function is IE_SUCCESS. The pointer must be valid. This is no automatically
+ * reallocted memory.
+ * @buffer is message raw representation.
+ * @length is length of buffer in bytes. */
+isds_error isds_guess_raw_type(struct isds_ctx *context,
+        isds_raw_type *raw_type, const void *buffer, const size_t length) {
+    return IE_NOTSUP;
+}
+
+
 /* Download signed incoming/outgoing message identified by ID.
  * @context is session context
  * @output is true for outging message, false for incoming message

@@ -1065,6 +1065,17 @@ isds_error isds_load_message(struct isds_ctx *context,
         const isds_raw_type raw_type, const void *buffer, const size_t length,
         struct isds_message **message, const isds_buffer_strategy strategy);
 
+/* Determine type of raw message or delivery info according some heuristics.
+ * It does not validate the raw blob.
+ * @context is session context
+ * @raw_type returns content type of @buffer. Valid only if exit code of this
+ * function is IE_SUCCESS. The pointer must be valid. This is no automatically
+ * reallocted memory.
+ * @buffer is message raw representation.
+ * @length is length of buffer in bytes. */
+isds_error isds_guess_raw_type(struct isds_ctx *context,
+        isds_raw_type *raw_type, const void *buffer, const size_t length);
+
 /* Download signed incoming message identified by ID.
  * @context is session context
  * @message_id is message identifier (you can get them from

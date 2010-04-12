@@ -1,0 +1,61 @@
+#include "test.h"
+#include "crypto.h"
+#include <string.h>
+
+
+struct test {
+    char *name;
+    char *file;
+    isds_raw_type type;
+    isds_error error;
+};
+    
+static int test_guess_raw_type(struct isds_ctx *context,
+        const struct test *test) {
+    isds_error err;
+    void *buffer = NULL;
+    size_t length = 0;
+    isds_raw_type guessed_type;
+
+    if (!test) return 1;
+
+    err = isds_guess_raw_type(context, &guessed_type, buffer, length);
+    if (err != test->error) {
+        FAIL_TEST("Wrong return value: expected=%s, got=%s",
+                isds_strerror(test->error), isds_strerror(err));
+    }
+    if (!err) PASS_TEST;
+
+    if (guessed_type != test->type)
+        FAIL_TEST("Wrong raw type guessed on file %s: expected=%d, got=%d",
+               test->file, test->type, guessed_type);
+
+    PASS_TEST;
+}
+
+
+int main(int argc, char **argv) {
+    struct test tests[] = {
+        {
+            .name = "signed sent message",
+            .file = ",./server/messages/signed_sent_message-151874.zfo",
+            .type = RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE,
+            .error = IE_SUCCESS
+        }
+    };
+    struct isds_ctx *context = NULL;
+
+    INIT_TEST("guess_raw_type");
+
+    if (isds_init())
+        ABORT_UNIT("init_isds() failed");
+
+    context = isds_ctx_create();
+    if (!context)
+        ABORT_UNIT("isds_ctx_create() failed");
+    
+    TEST(tests[0].name, test_guess_raw_type, context, &tests[0]);
+
+    isds_ctx_free(&context);
+    SUM_TEST();
+}

@@ -13,7 +13,7 @@ AM_CFLAGS = @LIBGCRYPT_CFLAGS@ @GPGME_CFLAGS@
 LDADD = @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ @GPGME_LIBS@ @EXPAT_LIBS@ \
 		@LTLIBINTL@
 
-TESTS = compute_hash context init_gpgpme isds_init \
+TESTS = compute_hash context guess_raw_type init_gpgpme isds_init \
 		isds-dbtype isds-filemetatype isds-hash_algorithm
 
 
@@ -61,6 +61,7 @@ isds_common = test.h \
 # Access _hidden symbols
 compute_hash_SOURCES 	= compute_hash.c $(common)
 context_SOURCES 		= context.c $(common)
+guess_raw_type_SOURCES 	= guess_raw_type.c $(common)
 init_gpgpme_SOURCES 	= init_gpgpme.c $(common)
 isds_init_SOURCES 		= isds_init.c $(common)
 
