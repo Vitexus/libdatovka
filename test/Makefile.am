@@ -19,7 +19,7 @@ TESTS = compute_hash context guess_raw_type init_gpgpme isds_init \
 
 noinst_PROGRAMS = $(TESTS)
 
-common = test.h \
+common = test.c test.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/crypto.c \
@@ -40,7 +40,7 @@ common = test.h \
 	$(LIBDIR)/validator.h
 
 # Omit isds.c
-isds_common = test.h \
+isds_common = test.c test.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/crypto.c \
