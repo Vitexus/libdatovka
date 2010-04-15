@@ -88,9 +88,9 @@ AC_CHECK_LIB([expat], [XML_ExpatVersionInfo],
              EXPAT_LIBS=-lexpat
              AC_SUBST(EXPAT_LIBS))
 # Verify minimal version. See src/phys.c: init_expat()
-expat_min_major="1"
-expat_min_minor="95"
-expat_min_micro="8"
+expat_min_major="2"
+expat_min_minor="0"
+expat_min_micro="0"
 expat_min_version="${expat_min_major}.${expat_min_minor}.${expat_min_micro}"
 AC_MSG_CHECKING([for expat library version >= ${expat_min_version}])
 AC_COMPILE_IFELSE(
@@ -100,8 +100,8 @@ AC_COMPILE_IFELSE(
             #define MIN_MICRO ${expat_min_micro}
             #include <expat.h>],
             [[#if (XML_MAJOR_VERSION < MIN_MAJOR) || \
-    (XML_MAJOR_VERSION == MIN_MAJOR && XML_MINOR_VERSION < MIN_MAJOR) || \
-    (XML_MAJOR_VERSION == MIN_MAJOR && XML_MINOR_VERSION == MIN_MAJOR && \
+    (XML_MAJOR_VERSION == MIN_MAJOR && XML_MINOR_VERSION < MIN_MINOR) || \
+    (XML_MAJOR_VERSION == MIN_MAJOR && XML_MINOR_VERSION == MIN_MINOR && \
         XML_MICRO_VERSION < MIN_MICRO)
 #error "Expat library is too old"
 #endif]]),
