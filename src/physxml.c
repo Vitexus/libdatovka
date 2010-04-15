@@ -25,9 +25,9 @@ struct expat_data {
  * @current_version is static string describing current expat version */
 _hidden isds_error init_expat(const char **current_version) {
     XML_Expat_Version current;
-    const int min_major = 1;
-    const int min_minor = 95;
-    const int min_micro = 8;
+    const int min_major = 2;
+    const int min_minor = 0;
+    const int min_micro = 0;
     const XML_Feature *features; /* Static array stored in expat BSS */
     _Bool ns_supported = 0;
 

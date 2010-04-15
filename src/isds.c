@@ -843,8 +843,13 @@ isds_error isds_set_timeout(struct isds_ctx *context,
 
         curl_err = curl_easy_setopt(context->curl, CURLOPT_NOSIGNAL, 1);
         if (!curl_err) 
+#if HAVE_DECL_CURLOPT_TIMEOUT_MS /* Since curl-7.16.2 */
             curl_err = curl_easy_setopt(context->curl, CURLOPT_TIMEOUT_MS,
                     context->timeout);
+#else
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_TIMEOUT,
+                    context->timeout / 1000);
+#endif /* not HAVE_DECL_CURLOPT_TIMEOUT_MS */
         if (curl_err) return IE_ERROR;
     }
 
