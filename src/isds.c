@@ -7977,7 +7977,7 @@ leave:
 }
 
 
-    /* Determine type of raw message or delivery info according some heuristics.
+/* Determine type of raw message or delivery info according some heuristics.
  * It does not validate the raw blob.
  * @context is session context
  * @raw_type returns content type of @buffer. Valid only if exit code of this
