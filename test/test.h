@@ -29,6 +29,10 @@ int test_vasprintf(char **buffer, const char *format, va_list ap);
 int test_asprintf(char **buffer, const char *format, ...);
 
 
+/* I/O. Return 0, in case of error -1. */
+int test_mmap_file(const char *file, int *fd, void **buffer, size_t *length);
+int test_munmap_file(int fd, void *buffer, size_t length);
+
 #define INIT_TEST(name) { \
     setlocale(LC_ALL, "C"); \
     unit_name = name; \
