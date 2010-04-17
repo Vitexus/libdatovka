@@ -13,17 +13,22 @@ struct test {
 static int test_guess_raw_type(struct isds_ctx *context,
         const struct test *test) {
     isds_error err;
+    int fd;
     void *buffer = NULL;
     size_t length = 0;
     isds_raw_type guessed_type;
 
     if (!test) return 1;
 
+    if (test_mmap_file(test->file, &fd, &buffer, &length))
+        FAIL_TEST("Could not load test data from `%s' file", test->file);
+
     err = isds_guess_raw_type(context, &guessed_type, buffer, length);
-    if (err != test->error) {
+    test_munmap_file(fd, buffer, length);
+
+    if (err != test->error)
         FAIL_TEST("Wrong return value: expected=%s, got=%s",
                 isds_strerror(test->error), isds_strerror(err));
-    }
     if (!err) PASS_TEST;
 
     if (guessed_type != test->type)
@@ -38,7 +43,7 @@ int main(int argc, char **argv) {
     struct test tests[] = {
         {
             .name = "signed sent message",
-            .file = ",./server/messages/signed_sent_message-151874.zfo",
+            .file = "../server/messages/signed_sent_message-151874.zfo",
             .type = RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE,
             .error = IE_SUCCESS
         }
