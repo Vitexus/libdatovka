@@ -7867,8 +7867,8 @@ isds_error isds_load_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    /* XXX: Standard name space for unsigned icoming direction:
-     * http://isds.czechpoint.cz/v20/SentMessage
+    /* XXX: Standard name space for unsigned incoming direction:
+     * http://isds.czechpoint.cz/v20/
      *
      * XXX: Name spaces mangled for signed outgoing direction:
      * http://isds.czechpoint.cz/v20/SentMessage:
@@ -7987,7 +7987,91 @@ leave:
  * @length is length of buffer in bytes. */
 isds_error isds_guess_raw_type(struct isds_ctx *context,
         isds_raw_type *raw_type, const void *buffer, const size_t length) {
-    return IE_NOTSUP;
+    isds_error err;
+    void *xml_stream = NULL;
+    size_t xml_stream_length = 0;
+    xmlDocPtr document = NULL;
+    xmlNodePtr root = NULL;
+    
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (length == 0 || !buffer) return IE_INVAL;
+    if (!raw_type) return IE_INVAL;
+
+    /* Try CMS */
+    err = extract_cms_data(context, buffer, length,
+            &xml_stream, &xml_stream_length);
+    if (err) {
+        xml_stream = (void *) buffer;
+        xml_stream_length = (size_t) length;
+        err = IE_SUCCESS;
+    }
+
+    /* Try XML */
+    document = xmlParseMemory(xml_stream, xml_stream_length);
+    if (!document) {
+        isds_printf_message(context,
+                _("Could not parse data as XML document"));
+        err = IE_NOTSUP;
+        goto leave;
+    }
+
+    /* Get root element */
+    root = xmlDocGetRootElement(document);
+    if (!root) {
+        isds_printf_message(context,
+                _("XML document is missing root element"));
+        err = IE_XML;
+        goto leave;
+    }
+
+    if (!root->ns || !root->ns->href) {
+        isds_printf_message(context,
+                _("Root element does not belong to any name space"));
+        err = IE_NOTSUP;
+        goto leave;
+    }
+
+    /* Test name space */
+    if (!xmlStrcmp(root->ns->href, BAD_CAST SISDS_INCOMING_NS)) {
+        if (xml_stream == buffer) 
+            *raw_type = RAWTYPE_PLAIN_SIGNED_INCOMING_MESSAGE;
+        else
+            *raw_type = RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE;
+    } else if (!xmlStrcmp(root->ns->href, BAD_CAST SISDS_OUTGOING_NS)) {
+        if (xml_stream == buffer) 
+            *raw_type = RAWTYPE_PLAIN_SIGNED_OUTGOING_MESSAGE;
+        else
+            *raw_type = RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE;
+    } else if (!xmlStrcmp(root->ns->href, BAD_CAST SISDS_DELIVERY_NS)) {
+        if (xml_stream == buffer) 
+            *raw_type = RAWTYPE_PLAIN_SIGNED_DELIVERYINFO;
+        else
+            *raw_type = RAWTYPE_CMS_SIGNED_DELIVERYINFO;
+    } else if (!xmlStrcmp(root->ns->href, BAD_CAST ISDS_NS)) {
+        if (xml_stream != buffer) {
+            isds_printf_message(context,
+                    _("Document in ISDS name space is encapsulated into CMS" ));
+            err = IE_NOTSUP;
+        } else if (!xmlStrcmp(root->name, BAD_CAST "MessageDownloadResponse"))
+            *raw_type = RAWTYPE_INCOMING_MESSAGE;
+        else if (!xmlStrcmp(root->name, BAD_CAST "GetDeliveryInfoResponse"))
+            *raw_type = RAWTYPE_DELIVERYINFO;
+        else {
+            isds_printf_message(context,
+                    _("Unknown root element in ISDS name space"));
+            err = IE_NOTSUP;
+        }
+    } else {
+        isds_printf_message(context,
+                _("Uknown namespace"));
+        err = IE_NOTSUP;
+    }
+
+leave:
+    if (xml_stream != buffer) cms_data_free(xml_stream);
+    xmlFreeDoc(document);
+    return err;
 }
 
 

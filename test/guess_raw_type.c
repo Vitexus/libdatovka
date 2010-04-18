@@ -29,9 +29,8 @@ static int test_guess_raw_type(struct isds_ctx *context,
     if (err != test->error)
         FAIL_TEST("Wrong return value: expected=%s, got=%s",
                 isds_strerror(test->error), isds_strerror(err));
-    if (!err) PASS_TEST;
 
-    if (guessed_type != test->type)
+    if (!err && guessed_type != test->type)
         FAIL_TEST("Wrong raw type guessed on file %s: expected=%d, got=%d",
                test->file, test->type, guessed_type);
 
@@ -42,10 +41,44 @@ static int test_guess_raw_type(struct isds_ctx *context,
 int main(int argc, char **argv) {
     struct test tests[] = {
         {
-            .name = "signed sent message",
+            .name = "unsigned incoming message",
+            .file = "../server/messages/received_message-151916.xml",
+            .type = RAWTYPE_INCOMING_MESSAGE,
+            .error = IE_SUCCESS
+        },
+        /* FIXME: test plain and CMS signed incoming messages */
+        {
+            .name = "plain signed sent message",
+            .file = "../server/messages/sent_message-206720.xml",
+            .type = RAWTYPE_PLAIN_SIGNED_OUTGOING_MESSAGE,
+            .error = IE_SUCCESS
+        },
+        {
+            .name = "CMS signed sent message",
             .file = "../server/messages/signed_sent_message-151874.zfo",
             .type = RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE,
             .error = IE_SUCCESS
+        },
+        /* FIXME: test unsigned delivery info */
+        {
+            .name = "plain signed delivery info",
+            .file = "../server/messages/signed_delivered-DD_170272.xml",
+            .type = RAWTYPE_PLAIN_SIGNED_DELIVERYINFO,
+            .error = IE_SUCCESS
+        },
+        {
+            .name = "CMS signed delivery info",
+            .file = "../server/messages/signed_delivered-DD_170272.zfo",
+            .type = RAWTYPE_CMS_SIGNED_DELIVERYINFO,
+            .error = IE_SUCCESS
+        },
+        {
+            .name = "text file",
+            .file = "guess_raw_type.c",
+            .error = IE_NOTSUP
+        },
+        {
+            .name = NULL
         }
     };
     struct isds_ctx *context = NULL;
@@ -58,8 +91,9 @@ int main(int argc, char **argv) {
     context = isds_ctx_create();
     if (!context)
         ABORT_UNIT("isds_ctx_create() failed");
-    
-    TEST(tests[0].name, test_guess_raw_type, context, &tests[0]);
+   
+    for (int i = 0; tests[i].name; i++) 
+        TEST(tests[i].name, test_guess_raw_type, context, &tests[i]);
 
     isds_ctx_free(&context);
     SUM_TEST();
