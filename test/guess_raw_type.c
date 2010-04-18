@@ -46,7 +46,13 @@ int main(int argc, char **argv) {
             .type = RAWTYPE_INCOMING_MESSAGE,
             .error = IE_SUCCESS
         },
-        /* FIXME: test plain and CMS signed incoming messages */
+        /* FIXME: test plain signed incoming messages */
+        {
+            .name = "CMS signed incoming message",
+            .file = "../server/messages/received_message-330141.zfo",
+            .type = RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE,
+            .error = IE_SUCCESS
+        },
         {
             .name = "plain signed sent message",
             .file = "../server/messages/sent_message-206720.xml",
