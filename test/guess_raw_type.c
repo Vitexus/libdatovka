@@ -70,7 +70,12 @@ int main(int argc, char **argv) {
             .type = RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE,
             .error = IE_SUCCESS
         },
-        /* FIXME: test unsigned delivery info */
+        {
+            .name = "unsigned delivery info",
+            .file = "../server/messages/delivery_info-316590.xml",
+            .type = RAWTYPE_DELIVERYINFO,
+            .error = IE_SUCCESS
+        },
         {
             .name = "plain signed delivery info",
             .file = "../server/messages/signed_delivered-DD_170272.xml",
