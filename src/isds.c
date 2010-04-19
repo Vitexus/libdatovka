@@ -7130,7 +7130,7 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
     /* Empty delivery info */
     if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
         isds_printf_message(context,
-                _("XML document ss not sisds:dmDelivery document"));
+                _("XML document is not sisds:dmDelivery document"));
         err = IE_ISDS;
         goto leave;
     }
