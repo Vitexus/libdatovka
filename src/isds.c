@@ -7270,16 +7270,16 @@ leave:
  * @message is automatically reallocated message retrieved from ISDS.
  * It will miss documents per se. Use isds_get_received_message(), if you are
  * interrested in documents (content). OTOH, only this function can get list
- * events message has gone through. */
+ * of events message has gone through. */
 isds_error isds_get_delivery_info(struct isds_ctx *context,
         const char *message_id, struct isds_message **message) {
 
     isds_error err = IE_SUCCESS;
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *status_message = NULL;
-    xmlXPathContextPtr xpath_ctx = NULL;
-    xmlXPathObjectPtr result = NULL;
     xmlNodePtr delivery_node = NULL;
+    void *raw = NULL;
+    size_t raw_length = 0;
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
@@ -7294,25 +7294,10 @@ isds_error isds_get_delivery_info(struct isds_ctx *context,
             &response, NULL, NULL, &code, &status_message);
     if (err) goto leave;
 
-    /* Extract data */
-    xpath_ctx = xmlXPathNewContext(response);
-    if (!xpath_ctx) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    result = xmlXPathEvalExpression(
-            BAD_CAST "/isds:GetDeliveryInfoResponse/isds:dmDelivery",
-            xpath_ctx);
-    if (!result) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    /* Empty response */
-    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+
+    /* Serialize delivery info */
+    delivery_node = xmlDocGetRootElement(response);
+    if (!delivery_node) {
         char *message_id_locale = utf82locale((char*) message_id);
         isds_printf_message(context,
                 _("Server did not return any delivery info for ID `%s' "
@@ -7321,45 +7306,26 @@ isds_error isds_get_delivery_info(struct isds_ctx *context,
         err = IE_ISDS;
         goto leave;
     }
-    /* More delivery infos */
-    if (result->nodesetval->nodeNr > 1) {
-        char *message_id_locale = utf82locale((char*) message_id);
-        isds_printf_message(context,
-                _("Server did return more delivery infos for ID `%s' "
-                    "on GetDeliveryInfo request"), message_id_locale);
-        free(message_id_locale);
-        err = IE_ISDS;
-        goto leave;
-    }
-    /* One delivery info */
-    xpath_ctx->node = delivery_node = result->nodesetval->nodeTab[0];
-
-    /* Extract the envelope (= message without documents, hence 0).
-     * XXX: extract_TReturnedMessage() can obtain attachments size,
-     * but delivery info carries none. It's coded as option elements,
-     * so it should work. */
-    err = extract_TReturnedMessage(context, 0, message, xpath_ctx);
+    err = serialize_subtree(context, delivery_node, &raw, &raw_length);
     if (err) goto leave;
 
-    /* Extract events */
-    err = move_xpathctx_to_child(context, BAD_CAST "isds:dmEvents", xpath_ctx);
-    if (err == IE_NOEXIST || err == IE_NOTUNIQ) { err = IE_ISDS; goto leave; }
-    if (err) { err = IE_ERROR; goto leave; }
-    err = extract_events(context, &(*message)->envelope->events, xpath_ctx);
+    /* Parse delivery info */
+    /* TODO: Here we parse the reponse second time. We could single delivery
+     * parser from isds_load_delivery_info() to make things faster. */
+    err = isds_load_delivery_info(context,
+            RAWTYPE_DELIVERYINFO, raw, raw_length,
+            message, BUFFER_MOVE);
     if (err) goto leave;
 
-     /* Save XML blob */
-    err = serialize_subtree(context, delivery_node, &(*message)->raw,
-            &(*message)->raw_length);
+    raw = NULL;
+
 
 leave:
     if (err) {
         isds_message_free(message);
     }
 
-    xmlXPathFreeObject(result);
-    xmlXPathFreeContext(xpath_ctx);
-
+    free(raw);
     free(code);
     free(status_message);
     xmlFreeDoc(response);
