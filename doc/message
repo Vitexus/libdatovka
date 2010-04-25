@@ -44,14 +44,14 @@ Document format declaration inside Document and conformace checks change
 during time. XML Schemas provide attribute for Document MIME type and Document
 annotation.
 
-Attrimbute dmMimeType must present, but may be empty, may contain file name
+Attribute dmMimeType must present, but may be empty, may contain file name
 extension, or may contain official MIME type. If MIME type is declared, ISDS
 checks Document content for conformance to the MIME type.
 
 There is MIME type blacklist: application/x-zip-compressed,
 application/x-msdownload.
 
-Attribute dmFileDescr (so called annotation) must present and must containt
+Attribute dmFileDescr (so called annotation) must present and must contain
 file name of the Document. Even if dmMimeType exists, ISDS uses THIS attribute
 to detect Document format (according file name extension) and checks content
 for format conformance.
@@ -60,6 +60,47 @@ There is list of allowed file name extensions: pdf, xml, fo, zfo, html, htm,
 odt, ods, odp, txt, rtf, doc, xls, ppt, jpg, jpeg, jfif, png, tiff, gif, mpeg1
 mpeg2, wav, mp2, mp3, isdoc, isdocx, cer, crt, der, pk7, p7b, p7c, p7f, p7m,
 p7s, tst (time stamp).
+
+Non-normative: File name extenstion to MIME type map:
+
+Extensions  MIME type           Description
+-------------------------------------------------------------------------------
+pdf         application/pdf     Portable Document Format
+xml         application/xml     Extensible MarkUp Language
+fo          application/fo+xml  (XSL) Format object
+zfo                             602XML form (zipped XML form with XSL-FO styles)
+html, htm   text/html           Hyper Text MarkUp Language
+odt         application/vnd.oasis.opendocument.text
+                                Open Document Format Text
+ods         application/vnd.oasis.opendocument.spreadsheet
+                                Open Document Format Spreadsheet
+odp         application/vnd.oasis.opendocument.presentation
+                                Open Document Format Presentation
+txt         text/plain          Plain text (no charset nor encoding signalled)
+rtf         application/rtf     Rich Text Format
+doc         application/msword  Microsoft Word Document
+xls         application/vnd.ms-excel
+                                Microsoft Excel Document
+ppt         application/vnd.ms-powerpoint
+                                Microsoft PowerPoint Document
+jpg, jpeg, jfif
+            image/jpeg          JFIF/JPEG image
+png         image/png           Portable Network Graphics
+tiff        image/tiff          Tag Image File Format
+gif         image/gif           
+mpeg1       video/mpeg          Motion Joint Picture Expert Group Version 1
+mpeg2       vidoe/mpeg2         Motion Joint Picture Expert Group Version 2
+wav         audio/x-wav         RIFF WAVE PCM Audio
+mp2         audio/mpeg          MPEG Audio Layer 2
+mp3         audio/mpeg          MPEG Audio Layer 3
+isdoc, isdocx
+                                Digital Payment Invoice Format
+cer, crt, der
+                                X.509 Certificate (different serialization)
+pk7, p7b, p7c, p7f, p7m, p7s
+                                Crypto Message Syntax (different serialization)
+tst                             Time Stamp
+
 
 Document ::= Binary_Document | XML_Document
 
