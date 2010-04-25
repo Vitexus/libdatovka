@@ -90,16 +90,16 @@ tiff        image/tiff          Tag Image File Format
 gif         image/gif           
 mpeg1       video/mpeg          Motion Joint Picture Expert Group Version 1
 mpeg2       vidoe/mpeg2         Motion Joint Picture Expert Group Version 2
-wav         audio/x-wav         RIFF WAVE PCM Audio
-mp2         audio/mpeg          MPEG Audio Layer 2
-mp3         audio/mpeg          MPEG Audio Layer 3
+wav         audio/x-wav         RIFF Waveform Audio File Format
+mp2         audio/mpeg          MPEG-1 Audio Layer II
+mp3         audio/mpeg          MPEG-1 Audio Layer III
 isdoc, isdocx
-                                Digital Payment Invoice Format
+                                Information System Document (payment invoice)
 cer, crt, der
                                 X.509 Certificate (different serialization)
 pk7, p7b, p7c, p7f, p7m, p7s
                                 Crypto Message Syntax (different serialization)
-tst                             Time Stamp
+tst                             Time Stamp Token (RFC 3161)
 
 
 Document ::= Binary_Document | XML_Document
