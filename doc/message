@@ -4,6 +4,8 @@ Message specification
 Source: Provozní řád ISDS, version 2009-10-30, Page 13
 Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2.6
     (2010-01-18) [DataMessage_ws.pdf]
+Source: Registration of media type FO and ZFO
+    <http://www.alvestrand.no/pipermail/ietf-types/2008-June/002037.html>
 
 Message ::= Envelope, Content
 

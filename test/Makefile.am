@@ -14,6 +14,7 @@ LDADD = @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ @GPGME_LIBS@ @EXPAT_LIBS@ \
 		@LTLIBINTL@
 
 TESTS = compute_hash context guess_raw_type init_gpgpme isds_init load_raw \
+		normalize_mime_type \
 		isds-dbtype isds-filemetatype isds-hash_algorithm
 
 
@@ -64,7 +65,8 @@ context_SOURCES 		= context.c $(common)
 guess_raw_type_SOURCES 	= guess_raw_type.c $(common)
 init_gpgpme_SOURCES 	= init_gpgpme.c $(common)
 isds_init_SOURCES 		= isds_init.c $(common)
-load_raw_SOURCES 	= load_raw.c $(common)
+load_raw_SOURCES 		= load_raw.c $(common)
+normalize_mime_type_SOURCES 		= normalize_mime_type.c $(common)
 
 # Access static symbols from isds.c
 isds_dbtype_SOURCES 		= isds-dbtype.c $(isds_common)

@@ -20,6 +20,35 @@ const char isds_locator[] = "https://www.mojedatovaschranka.cz/";
 /* Base URL of production ISDS instance */
 const char isds_testing_locator[] = "https://www.czebox.cz/";
 
+/* Extension to MIME type map */
+static xmlChar *extension_map_mime[] = {
+    BAD_CAST "pdf", BAD_CAST "application/pdf",
+    BAD_CAST "xml", BAD_CAST "application/xml",
+    BAD_CAST "fo", BAD_CAST "application/vnd.software602.filler.xml+form",
+    BAD_CAST "zfo", BAD_CAST "application/vnd.software602.filler.xml+zip+form",
+    BAD_CAST "html", BAD_CAST "text/html",
+    BAD_CAST "htm", BAD_CAST "text/html",
+    BAD_CAST "odt", BAD_CAST "application/vnd.oasis.opendocument.text",
+    BAD_CAST "ods", BAD_CAST "application/vnd.oasis.opendocument.spreadsheet",
+    BAD_CAST "odp", BAD_CAST "application/vnd.oasis.opendocument.presentation",
+    BAD_CAST "txt", BAD_CAST "text/plain",
+    BAD_CAST "rtf", BAD_CAST "application/rtf",
+    BAD_CAST "doc", BAD_CAST "application/msword",
+    BAD_CAST "xls", BAD_CAST "application/vnd.ms-excel",
+    BAD_CAST "ppt", BAD_CAST "application/vnd.ms-powerpoint",
+    BAD_CAST "jpg", BAD_CAST "image/jpeg",
+    BAD_CAST "jpeg", BAD_CAST "image/jpeg",
+    BAD_CAST "jfif", BAD_CAST "image/jpeg",
+    BAD_CAST "png", BAD_CAST "image/png",
+    BAD_CAST "tiff", BAD_CAST "image/tiff",
+    BAD_CAST "gif", BAD_CAST "image/gif",
+    BAD_CAST "mpeg1", BAD_CAST "video/mpeg",
+    BAD_CAST "mpeg2", BAD_CAST "video/mpeg2",
+    BAD_CAST "wav", BAD_CAST "audio/x-wav",
+    BAD_CAST "mp2", BAD_CAST "audio/mpeg",
+    BAD_CAST "mp3", BAD_CAST "audio/mpeg",
+    /* TODO: Add MIME types for ISDOC, X.509 certificates, CMS and TST */
+};
 
 /* Deallocate structure isds_pki_credentials and NULL it.
  * Passphrase is discarded.
@@ -8827,6 +8856,26 @@ const struct isds_document *isds_find_document_by_id(
     }
 
     return NULL;
+}
+
+
+/* Normalize @mime_type to be proper MIME type.
+ * ISDS servers passes invalid MIME types (e.g. "pdf"). This function tries to
+ * guess regular MIME type (e.g. "application/pdf").
+ * @mime_type is UTF-8 encoded MIME type to fix
+ * @return original @mime_type if no better interpretation exists, or array to
+ * constant static UTF-8 encoded string with proper MIME type. */
+char *isds_normalize_mime_type(const char* mime_type) {
+    if (!mime_type) return NULL;
+
+    for (int offset = 0;
+            offset < sizeof(extension_map_mime)/sizeof(extension_map_mime[0]);
+            offset += 2) {
+        if (!xmlStrcmp((const xmlChar*) mime_type, extension_map_mime[offset]))
+            return (char *) extension_map_mime[offset + 1];
+    }
+
+    return (char *) mime_type;
 }
 
 

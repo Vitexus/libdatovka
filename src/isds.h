@@ -1210,6 +1210,14 @@ isds_error isds_request_new_testing_box(struct isds_ctx *context,
 const struct isds_document *isds_find_document_by_id(
         const struct isds_list *documents, const char *id);
 
+/* Normalize @mime_type to be proper MIME type.
+ * ISDS servers passes invalid MIME types (e.g. "pdf"). This function tries to
+ * guess regular MIME type (e.g. "application/pdf").
+ * @mime_type is UTF-8 encoded MIME type to fix
+ * @return original @mime_type if no better interpretation exists, or array to
+ * constant static UTF-8 encoded string with proper MIME type. */
+char *isds_normalize_mime_type(const char* mime_type);
+
 /* Free isds_list with all member data.
  * @list list to free, on return will be NULL */
 void isds_list_free(struct isds_list **list);
