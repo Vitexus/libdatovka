@@ -67,9 +67,9 @@ Extensions  MIME type           Description
 -------------------------------------------------------------------------------
 pdf         application/pdf     Portable Document Format
 xml         application/xml     Extensible MarkUp Language
-fo          vnd.software602.filler.xml+form
+fo          application/vnd.software602.filler.xml+form
                                 602XML form (uncompressed)
-zfo         vnd.software602.filler.xml+zip+form
+zfo         application/vnd.software602.filler.xml+zip+form
                                 602XML form (zipped XML form with XSL-FO styles)
 html, htm   text/html           Hyper Text MarkUp Language
 odt         application/vnd.oasis.opendocument.text
