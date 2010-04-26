@@ -28,6 +28,8 @@ static int test_normalize(const char *input, const char *expected) {
 
 
 int main(int argc, char **argv) {
+    INIT_TEST("normalize_mime_type");
+
     TEST("NULL is idempotent", test_normalize, NULL, NULL);
     TEST("X-Invalid is idempotent", test_normalize, "X-Invalid", "X-Invalid");
     TEST("pdf", test_normalize, "pdf", "application/pdf");
