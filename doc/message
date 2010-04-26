@@ -67,8 +67,10 @@ Extensions  MIME type           Description
 -------------------------------------------------------------------------------
 pdf         application/pdf     Portable Document Format
 xml         application/xml     Extensible MarkUp Language
-fo          application/fo+xml  (XSL) Format object
-zfo                             602XML form (zipped XML form with XSL-FO styles)
+fo          vnd.software602.filler.xml+form
+                                602XML form (uncompressed)
+zfo         vnd.software602.filler.xml+zip+form
+                                602XML form (zipped XML form with XSL-FO styles)
 html, htm   text/html           Hyper Text MarkUp Language
 odt         application/vnd.oasis.opendocument.text
                                 Open Document Format Text
@@ -89,7 +91,7 @@ png         image/png           Portable Network Graphics
 tiff        image/tiff          Tag Image File Format
 gif         image/gif           
 mpeg1       video/mpeg          Motion Joint Picture Expert Group Version 1
-mpeg2       vidoe/mpeg2         Motion Joint Picture Expert Group Version 2
+mpeg2       video/mpeg2         Motion Joint Picture Expert Group Version 2
 wav         audio/x-wav         RIFF Waveform Audio File Format
 mp2         audio/mpeg          MPEG-1 Audio Layer II
 mp3         audio/mpeg          MPEG-1 Audio Layer III
