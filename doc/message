@@ -89,7 +89,7 @@ jpg, jpeg, jfif
             image/jpeg          JFIF/JPEG image
 png         image/png           Portable Network Graphics
 tiff        image/tiff          Tag Image File Format
-gif         image/gif           
+gif         image/gif           Graphics Interchange Format
 mpeg1       video/mpeg          Motion Joint Picture Expert Group Version 1
 mpeg2       video/mpeg2         Motion Joint Picture Expert Group Version 2
 wav         audio/x-wav         RIFF Waveform Audio File Format
