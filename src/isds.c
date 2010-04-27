@@ -3089,6 +3089,21 @@ static isds_error extract_document(struct isds_ctx *context,
 
     /* Extract document metadata */
     EXTRACT_STRING_ATTRIBUTE("dmMimeType", (*document)->dmMimeType, 1)
+    if (context->normalize_mime_type) {
+        char *normalized_type =
+            isds_normalize_mime_type((*document)->dmMimeType);
+        if (normalized_type && normalized_type != (*document)->dmMimeType) {
+            char *new_type = strdup(normalized_type);
+            if (!new_type) {
+                isds_printf_message(context,
+                        _("No enough memory to normalize document MIME type"));
+                err = IE_NOMEM;
+                goto leave;
+            }
+            free((*document)->dmMimeType);
+            (*document)->dmMimeType = new_type;
+        }
+    }
 
     EXTRACT_STRING_ATTRIBUTE("dmFileMetaType", string, 1)
     err = string2isds_FileMetaType((xmlChar*)string,
@@ -8876,6 +8891,22 @@ char *isds_normalize_mime_type(const char* mime_type) {
     }
 
     return (char *) mime_type;
+}
+
+
+/* Switch MIME type normalization while message loading. Default state for new
+ * context is no normalization.
+ * @normalize use true to switch normalization on, false to switch off */
+isds_error isds_set_mime_type_normalization(struct isds_ctx *context,
+        _Bool normalize) {
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+
+    context->normalize_mime_type = normalize;
+    isds_log(ILF_FILE, ILL_INFO, (context->normalize_mime_type) ?
+            _("MIME type normalization switched on\n") :
+            _("MIME type normalization switched off\n"));
+    return IE_SUCCESS;
 }
 
 

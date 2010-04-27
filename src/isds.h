@@ -1218,6 +1218,12 @@ const struct isds_document *isds_find_document_by_id(
  * constant static UTF-8 encoded string with proper MIME type. */
 char *isds_normalize_mime_type(const char* mime_type);
 
+/* Switch MIME type normalization while message loading. Default state for new
+ * context is no normalization.
+ * @normalize use true to switch normalization on, false to switch off */
+isds_error isds_set_mime_type_normalization(struct isds_ctx *context,
+        _Bool normalize);
+
 /* Free isds_list with all member data.
  * @list list to free, on return will be NULL */
 void isds_list_free(struct isds_list **list);
