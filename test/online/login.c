@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     struct isds_ctx *context = NULL;
     const char *url = isds_testing_locator;
     char username[] = "5s59sd";
-    char password[] = "Ac123456";
+    char password[] = "Ad123456";
 
     if (isds_init())
         ABORT_UNIT("isds_init() failed\n");
