@@ -955,7 +955,7 @@ isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
 #if HAVE_DECL_CURLOPT_CRLFILE /* Since curl-7.19.0 */
             REPLACE_VA_STRING(context->tls_crl_file);
 #else
-            isds_log_message(ILF_SEC, ILL_ERR,
+            isds_log_message(context,
                     _("Curl library does not support CRL definition"));
             err = IE_NOTSUP;
 #endif  /* not HAVE_DECL_CURLOPT_CRLFILE */
