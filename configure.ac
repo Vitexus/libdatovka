@@ -13,6 +13,9 @@ AC_PROG_CC
 AC_PROG_CPP
 #AC_PROG_MAKE_SET
 LT_INIT
+# For libtool < 1.9b (Debian lenny).
+# AC_PROG_LIBTOOL has been obsoleted by LT_INIT
+AC_PROG_LIBTOOL
 
 
 # Enable example clients
