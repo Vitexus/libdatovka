@@ -286,6 +286,8 @@ struct isds_DbUserInfo {
     char *caStreet;             /* Street and number of contact address */
     char *caCity;               /* Czech City of contact address */
     char *caZipCode;            /* Post office code of contact address */
+    char *caState;              /* Abbreviated country of contact address;
+                                   Implicit value is "CZ"; Optional. */
 };
 
 /* Message event type */

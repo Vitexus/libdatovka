@@ -177,6 +177,7 @@ void isds_DbUserInfo_free(struct isds_DbUserInfo **db_user_info) {
     free((*db_user_info)->caStreet);
     free((*db_user_info)->caCity);
     free((*db_user_info)->caZipCode);
+    free((*db_user_info)->caState);
     
     zfree(*db_user_info);
 }
@@ -493,6 +494,7 @@ struct isds_DbUserInfo *isds_DbUserInfo_duplicate(
     STRDUP_OR_ERROR(new->caStreet, template->caStreet);
     STRDUP_OR_ERROR(new->caCity, template->caCity);
     STRDUP_OR_ERROR(new->caZipCode, template->caZipCode);
+    STRDUP_OR_ERROR(new->caState, template->caState);
 
     return new;
     
@@ -2686,6 +2688,10 @@ static isds_error extract_DbUserInfo(struct isds_ctx *context,
     EXTRACT_STRING("isds:caCity", (*db_user_info)->caCity);
     EXTRACT_STRING("isds:caZipCode", (*db_user_info)->caZipCode);
 
+    /* ???: Default value is "CZ" according specification. Should we provide
+     * it? */
+    EXTRACT_STRING("isds:caState", (*db_user_info)->caState);
+
 leave:
     if (err) isds_DbUserInfo_free(db_user_info);
     free(string);
@@ -2757,6 +2763,7 @@ static isds_error insert_DbUserInfo(struct isds_ctx *context,
     INSERT_STRING(db_user_info, "caStreet", user->caStreet);
     INSERT_STRING(db_user_info, "caCity", user->caCity);
     INSERT_STRING(db_user_info, "caZipCode", user->caZipCode);
+    INSERT_STRING(db_user_info, "caState", user->caState);
 
 leave:
     free(string);
