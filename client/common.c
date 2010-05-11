@@ -283,6 +283,7 @@ void print_DbUserInfo(const struct isds_DbUserInfo *info) {
     printf("\tcaStreet = %s\n", info->caStreet);
     printf("\tcaCity = %s\n", info->caCity);
     printf("\tcaZipCode = %s\n", info->caZipCode);
+    printf("\tcaState = %s\n", info->caState);
 
     printf("}\n");
 }
