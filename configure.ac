@@ -55,6 +55,8 @@ AM_PATH_XML2([2.6.26])
 
 # Checks for CURL 
 LIBCURL_CHECK_CONFIG()
+cppflags_orig="$CPPFLAGS"
+CPPFLAGS="${CPPFLAGS} ${LIBCURL_CPPFLAGS}"
 AC_CHECK_DECLS([CURLOPT_TIMEOUT_MS], [],
     AC_MSG_WARN([Your libcurl does not support subsecond timeout resolution.
                  Consider upgrade to 7.16.2 version.]),
@@ -76,6 +78,7 @@ AC_CHECK_DECLS([CURLOPT_CRLFILE], [],
     [[#include <curl/curl.h>]])
 AC_CHECK_DECLS([CURLOPT_KEYPASSWD], [], [], [[#include <curl/curl.h>]])
 AC_CHECK_DECLS([CURLOPT_SSLKEYPASSWD], [], [], [[#include <curl/curl.h>]])
+CPPFLAGS="$cppflags_orig"
 
 #TODO: Determine minimal version
 AM_PATH_LIBGCRYPT([1:1.4.0])
