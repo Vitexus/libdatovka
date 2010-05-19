@@ -1015,20 +1015,6 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
 isds_error isds_get_delivery_info(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
 
-/* Deprecated: Use isds_load_message() instead. */
-/* Load incoming message from buffer.
- * @context is session context
- * @buffer XML stream with unsigned message. You can retrieve such data from
- * message->raw after calling isds_get_received_message().
- * @length is length of buffer in bytes.
- * @message is automatically reallocated message parsed from @buffer.
- * @strategy selects how buffer will be attached into raw isds_message member.
- * */
-isds_error isds_load_received_message(struct isds_ctx *context,
-        const void *buffer, const size_t length,
-        struct isds_message **message, const isds_buffer_strategy strategy)
-    _deprecated;
-
 /* Download incoming message identified by ID.
  * @context is session context
  * @message_id is message identifier (you can get them from
@@ -1036,22 +1022,6 @@ isds_error isds_load_received_message(struct isds_ctx *context,
  * @message is automatically reallocated message retrieved from ISDS */
 isds_error isds_get_received_message(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
-
-/* Deprecated: Use isds_load_message() instead. */
-/* Load signed message from buffer.
- * @context is session context
- * @outgoing is true if message is outgoing, false if message is incoming
- * @buffer is DER encoded PKCS#7 structure with signed message. You can
- * retrieve such data from message->raw after calling
- * isds_get_signed{received,sent}_message().
- * @length is length of buffer in bytes.
- * @message is automatically reallocated message parsed from @buffer.
- * @strategy selects how buffer will be attached into raw isds_message member.
- * */
-isds_error isds_load_signed_message(struct isds_ctx *context,
-        const _Bool outgoing, const void *buffer, const size_t length,
-        struct isds_message **message, const isds_buffer_strategy strategy)
-    _deprecated;
 
 /* Load message of any type from buffer.
  * @context is session context
