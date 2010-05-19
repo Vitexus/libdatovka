@@ -103,10 +103,9 @@ isds_error isds_log(const isds_log_facility facility,
         const isds_log_level level, const char *message, ...);
 
 /* Makes known all relevant namespaces to given XPath context
- * @xpat_ctx is XPath context
+ * @xpath_ctx is XPath context
  * @message_ns selects propper message name space. Unsisnged and signed
- * messages differs.
- * prefix and to URI ISDS_NS */
+ * messages and delivery infos differ in prefix and URI. */
 isds_error register_namespaces(xmlXPathContextPtr xpath_ctx,
         const message_ns_type message_ns);
 

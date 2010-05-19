@@ -8655,10 +8655,9 @@ int isds_address_free(struct isds_address **address);
 
 
 /* Makes known all relevant namespaces to given XPath context
- * @xpat_ctx is XPath context
+ * @xpath_ctx is XPath context
  * @message_ns selects propper message name space. Unsisnged and signed
- * messages differs.
- * prefix and to URI ISDS_NS */
+ * messages and delivery infos differ in prefix and URI. */
 _hidden isds_error register_namespaces(xmlXPathContextPtr xpath_ctx,
         const message_ns_type message_ns) {
     const xmlChar *message_namespace = NULL;
