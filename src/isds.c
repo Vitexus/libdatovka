@@ -8099,7 +8099,7 @@ leave:
  * isds_get_list_of_{sent,received}_messages())
  * @message is automatically reallocated message retrieved from ISDS. The raw
  * memeber will be filled with PKCS#7 structure in DER format. */
-_hidden isds_error isds_get_signed_message(struct isds_ctx *context,
+static isds_error isds_get_signed_message(struct isds_ctx *context,
         const _Bool outgoing, const char *message_id,
         struct isds_message **message) {
 
