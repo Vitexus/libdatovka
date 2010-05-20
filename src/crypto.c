@@ -13,7 +13,7 @@
 /* Inicialize libgrcypt if not yet done by application or other library.
  * @current_version is static string describing cerrent gcrypt version
  * @return IE_SUCCESS if everything is O.k. */
-_hidden isds_error init_gcrypt(const char **current_version) {
+_hidden isds_error _isds_init_gcrypt(const char **current_version) {
     const char *gcrypt_version;
     
     /* Check version and initialize gcrypt */
@@ -46,7 +46,7 @@ _hidden isds_error init_gcrypt(const char **current_version) {
  * @length is @input block length in bytes
  * @hash input algoritm, output hash value and hash length; hash value will be
  * reallocated, it's always valid pointer or NULL (before and after call) */
-_hidden isds_error compute_hash(const void *input, const size_t length,
+_hidden isds_error _isds_compute_hash(const void *input, const size_t length,
         struct isds_hash *hash) {
     int g_algorithm;
     void *buffer;
@@ -87,7 +87,7 @@ _hidden isds_error compute_hash(const void *input, const size_t length,
 /* Inicialize GPGME.
  * @current_version is pointer to static string decribing currnet gpgme
  * @return IE_SUCCESS if everything is O.k. */
-_hidden isds_error init_gpgme(const char **current_version) {
+_hidden isds_error _isds_init_gpgme(const char **current_version) {
     const char *gpgme_version;
     gpgme_error_t err;
     
@@ -147,10 +147,10 @@ _hidden isds_error init_gpgme(const char **current_version) {
 }
 
 
-/* Free CMS data buffer allocated inside extract_cms_data().
+/* Free CMS data buffer allocated inside _isds_extract_cms_data().
  * This is necesary because GPGME.
  * @buffer is pointer to memory to free */
-_hidden void cms_data_free(void *buffer) {
+_hidden void _isds_cms_data_free(void *buffer) {
 #ifdef ISDS_USE_KSBA
     free(buffer);
 #else
@@ -164,9 +164,9 @@ _hidden void cms_data_free(void *buffer) {
  * @cms is input block with CMS structure
  * @cms_length is @cms block length in bytes
  * @data are automatically reallocated bit stream with data found in @cms
- * You must free them with cms_data_free().
+ * You must free them with _isds_cms_data_free().
  * @data_length is length of @data in bytes */
-_hidden isds_error extract_cms_data(struct isds_ctx *context,
+_hidden isds_error _isds_extract_cms_data(struct isds_ctx *context,
         const void *cms, const size_t cms_length,
         void **data, size_t *data_length) {
     isds_error err = IE_SUCCESS;

@@ -8,7 +8,7 @@
 
 /* Check for expat compile-time configuration
  * @current_version is static string describing current expat version */
-isds_error init_expat(const char **current_version);
+isds_error _isds_init_expat(const char **current_version);
 
 /* Locate element specified by element path in XML stream.
  * TODO: Support other encodings than UTF-8
@@ -24,6 +24,6 @@ isds_error init_expat(const char **current_version);
  * counts from 0)
  * @end outputs end of element (inclusive, counts from 0)
  * @return 0 if element found */
-isds_error find_element_boundary(void *document, size_t length,
+isds_error _isds_find_element_boundary(void *document, size_t length,
         char *path, size_t *start, size_t *end);
 #endif

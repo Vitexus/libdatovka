@@ -51,7 +51,7 @@ isds_error isds(struct isds_ctx *context, const isds_service service,
  * @documents is list of isds_document to check
  * @returns IE_SUCCESS if structure is valid, otherwise context' message will
  * be filled with explanation of found problem. */
-isds_error check_documents_hierarchy(struct isds_ctx *context,
+isds_error _isds_check_documents_hierarchy(struct isds_ctx *context,
         const struct isds_list *documents);
 
 /* Check for message ID length
@@ -68,7 +68,7 @@ isds_error validate_message_id_length(struct isds_ctx *context,
  * @response is automatically allocated response from server as XML Document
  * In case of error, @response will be dealocated.
  * */
-isds_error czpdeposit(struct isds_ctx *context,
+isds_error _czp_czpdeposit(struct isds_ctx *context,
         const xmlNodePtr request, xmlDocPtr *response);
 
 #endif

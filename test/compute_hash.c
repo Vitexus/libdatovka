@@ -26,7 +26,7 @@ static int test_compute_hash(const isds_error error,
 
     if (!correct || !test) return 1;
 
-    err = compute_hash(input, input_length, test);
+    err = _isds_compute_hash(input, input_length, test);
     if (err != error) {
         free(test->value); test->value = NULL;
         FAIL_TEST("Wrong return value");
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
 
     INIT_TEST("compute_hash");
 
-    if (init_gcrypt(NULL))
+    if (_isds_init_gcrypt(NULL))
         ABORT_UNIT("init_gcrypt() failed");
 
     char input[] = "42";

@@ -55,7 +55,7 @@ _hidden isds_error isds_response_status(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, 
+    if (_isds_register_namespaces(xpath_ctx, 
                 (context->type == CTX_TYPE_TESTING_REQUEST_COLLECTOR) ?
                     MESSAGE_NS_1 : MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
@@ -169,7 +169,7 @@ _hidden isds_error isds(struct isds_ctx *context, const isds_service service,
         }
     }
 
-    err = soap(context, file, request, &response_body,
+    err = _isds_soap(context, file, request, &response_body,
             raw_response, raw_response_length);
 
     if (err) goto leave;
@@ -235,7 +235,7 @@ leave:
  * @documents is list of isds_document to check
  * @returns IE_SUCCESS if structure is valid, otherwise context' message will
  * be filled with explanation of found problem. */
-_hidden isds_error check_documents_hierarchy(struct isds_ctx *context,
+_hidden isds_error _isds_check_documents_hierarchy(struct isds_ctx *context,
         const struct isds_list *documents) {
 
     const struct isds_list *item;
@@ -303,7 +303,7 @@ isds_error validate_message_id_length(struct isds_ctx *context,
     const int length = xmlUTF8Strlen(message_id);
 
     if (length == -1) {
-        char *message_id_locale = utf82locale((char*) message_id);
+        char *message_id_locale = _isds_utf82locale((char*) message_id);
         isds_printf_message(context,
                 _("Could not check message ID length: %s"),
                 message_id_locale);
@@ -312,7 +312,7 @@ isds_error validate_message_id_length(struct isds_ctx *context,
     }
 
     if (length >= 20) {
-        char *message_id_locale = utf82locale((char*) message_id);
+        char *message_id_locale = _isds_utf82locale((char*) message_id);
         isds_printf_message(context,
                 _("Message ID must not be longer than 20 characters: %s"),
                 message_id_locale);
@@ -331,7 +331,7 @@ isds_error validate_message_id_length(struct isds_ctx *context,
  * @response is automatically allocated response from server as XML Document
  * In case of error, @response will be dealocated.
  * */
-_hidden isds_error czpdeposit(struct isds_ctx *context,
+_hidden isds_error _czp_czpdeposit(struct isds_ctx *context,
         const xmlNodePtr request, xmlDocPtr *response) {
     isds_error err = IE_SUCCESS;
     xmlNodePtr response_body = NULL, deposit_node;
@@ -339,7 +339,7 @@ _hidden isds_error czpdeposit(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     if (!response) return IE_INVAL;
 
-    err = soap(context, NULL, request, &response_body, NULL, NULL);
+    err = _isds_soap(context, NULL, request, &response_body, NULL, NULL);
 
     if (err) goto leave;
 

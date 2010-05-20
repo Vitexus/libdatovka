@@ -18,7 +18,7 @@ char *tz_orig; /* Copy of original TZ variable */
  * Any of the arguments can be NULL meaning empty string.
  * In case of error returns NULL.
  * Empty string is always returned as allocated empty string. */
-_hidden char *astrcat(const char *first, const char *second) {
+_hidden char *_isds_astrcat(const char *first, const char *second) {
     size_t first_len, second_len;
     char *buf;
     
@@ -39,7 +39,7 @@ _hidden char *astrcat(const char *first, const char *second) {
  * Any of the arguments can be NULL meaning empty string.
  * In case of error returns NULL.
  * Empty string is always returned as allocated empty string. */
-_hidden char *astrcat3(const char *first, const char *second,
+_hidden char *_isds_astrcat3(const char *first, const char *second,
         const char *third) {
     size_t first_len, second_len, third_len;
     char *buf, *next;
@@ -134,7 +134,7 @@ _hidden int isds_asprintf(char **buffer, const char *format, ...) {
  * @utf string int UTF-8 terminated by zero byte
  * @return allocated string encoded in locale specific encoding. You must free
  * it. In case of error or NULL @utf returns NULL. */
-_hidden char *utf82locale(const char *utf) {
+_hidden char *_isds_utf82locale(const char *utf) {
     iconv_t state;
     size_t utf_length;
     char *buffer = NULL, *new_buffer;
@@ -193,7 +193,7 @@ leave:
  * @length is length of @plain data in bytes
  * @return allocated string of base64 encoded plain data or NULL in case of
  * error. You must free it. */
-_hidden char *b64encode(const void *plain, const size_t length) {
+_hidden char *_isds_b64encode(const void *plain, const size_t length) {
 
     base64_encodestate state;
     size_t code_length;
@@ -201,7 +201,7 @@ _hidden char *b64encode(const void *plain, const size_t length) {
 
     if (!plain) return NULL;
 
-    base64_init_encodestate(&state);
+    _isds_base64_init_encodestate(&state);
 
     /* TODO: This function assumes sizeof(char) == 1 byte.
      * To fix it, one must fix underlying functions too. */
@@ -213,8 +213,8 @@ _hidden char *b64encode(const void *plain, const size_t length) {
     if (!buffer) return NULL;
 
     /* Encode plain data */
-    code_length = base64_encode_block(plain, length, buffer, &state);
-    code_length += base64_encode_blockend(buffer + code_length, &state);
+    code_length = _isds_base64_encode_block(plain, length, buffer, &state);
+    code_length += _isds_base64_encode_blockend(buffer + code_length, &state);
 
     /* Terminate string */
     buffer[code_length++] = '\0';
@@ -234,7 +234,7 @@ _hidden char *b64encode(const void *plain, const size_t length) {
  * free it. Will be freed in case of error.
  * @return length of @plain data in bytes or (size_t) -1 in case of decoding
  * failure. */
-_hidden size_t b64decode(const char *encoded, void **plain) {
+_hidden size_t _isds_b64decode(const char *encoded, void **plain) {
 
     base64_decodestate state;
     size_t encoded_length;
@@ -247,7 +247,7 @@ _hidden size_t b64decode(const char *encoded, void **plain) {
     }
 
     encoded_length = strlen(encoded);
-    base64_init_decodestate(&state);
+    _isds_base64_init_decodestate(&state);
 
     /* TODO: This function assumes sizeof(char) == 1 byte.
      * To fix it, one must fix underlying functions too. */
@@ -262,7 +262,7 @@ _hidden size_t b64decode(const char *encoded, void **plain) {
     *plain = buffer;
 
     /* Decode encoded data */
-    plain_length = base64_decode_block(encoded, encoded_length,
+    plain_length = _isds_base64_decode_block(encoded, encoded_length,
             *plain, &state);
     if (plain_length < 0) {
         zfree(*plain);
@@ -279,7 +279,7 @@ _hidden size_t b64decode(const char *encoded, void **plain) {
 
 /* Switches time zone to UTC.
  * XXX: This is not reentrant and not thread-safe */
-_hidden void switch_tz_to_utc(void) {
+_hidden void _isds_switch_tz_to_utc(void) {
     char *tz;
 
     tz = getenv("TZ");
@@ -300,7 +300,7 @@ _hidden void switch_tz_to_utc(void) {
 
 /* Switches time zone to original value.
  * XXX: This is not reentrant and not thread-safe */
-_hidden void switch_tz_to_native(void) {
+_hidden void _isds_switch_tz_to_native(void) {
     if (tz_orig) {
         if (setenv("TZ", tz_orig, 1))
             PANIC("Can not restore time zone by setting TZ variable");

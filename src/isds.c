@@ -537,14 +537,14 @@ isds_error isds_init(void) {
     }
 
     /* Initialize GPGME */
-    if (init_gpgme(&version_gpgme)) {
+    if (_isds_init_gpgme(&version_gpgme)) {
         isds_log(ILF_ISDS, ILL_CRIT,
                 _("GPGME library initialization failed\n"));
         return IE_ERROR;
     }
 
     /* Initialize gcrypt */
-    if (init_gcrypt(&version_gcrypt)) {
+    if (_isds_init_gcrypt(&version_gcrypt)) {
         isds_log(ILF_ISDS, ILL_CRIT,
                 _("gcrypt library initialization failed\n"));
         return IE_ERROR;
@@ -554,7 +554,7 @@ isds_error isds_init(void) {
     LIBXML_TEST_VERSION;
 
     /* Check expat */
-    if (init_expat(&version_expat)) {
+    if (_isds_init_expat(&version_expat)) {
         isds_log(ILF_ISDS, ILL_CRIT,
                 _("expat library initialization failed\n"));
         return IE_ERROR;
@@ -665,7 +665,7 @@ struct isds_ctx *isds_ctx_create(void) {
  * @context is Czech POINT session context. */
 static isds_error czp_do_close_connection(struct isds_ctx *context) {
     if (!context) return IE_INVALID_CONTEXT;
-    close_connection(context);
+    _isds_close_connection(context);
     return IE_SUCCESS;
 }
 
@@ -1013,7 +1013,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 
     /* Close connection if already logged in */
     if (context->curl) {
-        close_connection(context);
+        _isds_close_connection(context);
     }
 
     /* Default locator is offical system */
@@ -1040,18 +1040,18 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
                     _("Selected authentication method: system certificate, "
                         "no username and no password\n"));
             password = NULL;
-            context->url = astrcat(url, "cert/");
+            context->url = _isds_astrcat(url, "cert/");
         } else {
             if (!password) {
                 isds_log(ILF_SEC, ILL_INFO,
                         _("Selected authentication method: system certificate, "
                             "box ID and no password\n"));
-                context->url = astrcat(url, "hspis/");
+                context->url = _isds_astrcat(url, "hspis/");
             } else {
                 isds_log(ILF_SEC, ILL_INFO,
                         _("Selected authentication method: commercial "
                             "certificate, username and password\n"));
-                context->url = astrcat(url, "cert/");
+                context->url = _isds_astrcat(url, "cert/");
             }
         }
     }
@@ -1095,7 +1095,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
             username, url);
 
     /* Send login request */
-    soap_err = soap(context, "DS/dz", request, &response, NULL, NULL);
+    soap_err = _isds_soap(context, "DS/dz", request, &response, NULL, NULL);
    
     /* Remove credentials */
     discard_credentials(context);
@@ -1105,7 +1105,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 
     if (soap_err) {
         xmlFreeNodeList(response);
-        close_connection(context);
+        _isds_close_connection(context);
         return soap_err;
     }
 
@@ -1130,7 +1130,7 @@ isds_error isds_logout(struct isds_ctx *context) {
 
     /* Close connection */
     if (context->curl) {
-        close_connection(context);
+        _isds_close_connection(context);
 
         /* Discard credentials for sure. They should not survive isds_login(),
          * even successful .*/
@@ -1177,7 +1177,7 @@ isds_error isds_ping(struct isds_ctx *context) {
     isds_log(ILF_ISDS, ILL_DEBUG, _("Pinging ISDS server\n"));
 
     /* Sent dummy request */
-    soap_err = soap(context, "DS/dz", request, &response, NULL, NULL);
+    soap_err = _isds_soap(context, "DS/dz", request, &response, NULL, NULL);
    
     /* Destroy login request */
     xmlFreeNode(request);
@@ -1264,8 +1264,8 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
         return err;
     }
     if (xmlStrcmp(code, BAD_CAST "0000")) {
-        char *code_locale = utf82locale((char*)code);
-        char *message_locale = utf82locale((char*)message);
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Server refused bogus request (code=%s, message=%s)\n"),
                 code_locale, message_locale);
@@ -1855,9 +1855,9 @@ static isds_error timestring2timeval(const xmlChar *string,
     }
 
     /* Convert to time_t */
-    switch_tz_to_utc();
+    _isds_switch_tz_to_utc();
     (*time)->tv_sec = mktime(&broken);
-    switch_tz_to_native();
+    _isds_switch_tz_to_native();
     if ((*time)->tv_sec == (time_t) -1) {
         free(*time); *time = NULL;
         return IE_DATE;
@@ -1946,7 +1946,7 @@ static isds_error eventstring2event(const xmlChar *string,
     
     /* Unknown event prefix.
      * XSD allows any string */
-    char *string_locale = utf82locale((char *) string);
+    char *string_locale = _isds_utf82locale((char *) string);
     isds_log(ILF_ISDS, ILL_WARNING,
             _("Uknown delivery info event prefix: %s\n"), string_locale);
     free(string_locale);
@@ -2002,7 +2002,7 @@ static isds_error eventstring2event(const xmlChar *string,
                     !xmlStrcmp((xmlChar *)string, BAD_CAST "0")) \
                 *(booleanPtr) = 0; \
             else { \
-                char *string_locale = utf82locale((char*)string); \
+                char *string_locale = _isds_utf82locale((char*)string); \
                 isds_printf_message(context, \
                         _("%s value is not valid boolean: %s"), \
                         element, string_locale); \
@@ -2027,7 +2027,7 @@ static isds_error eventstring2event(const xmlChar *string,
             number = strtol((char*)string, &endptr, 10); \
              \
             if (*endptr != '\0') { \
-                char *string_locale = utf82locale((char *)string); \
+                char *string_locale = _isds_utf82locale((char *)string); \
                 isds_printf_message(context, \
                         _("%s is not valid integer: %s"), \
                         element, string_locale); \
@@ -2038,7 +2038,7 @@ static isds_error eventstring2event(const xmlChar *string,
             } \
              \
             if (number == LONG_MIN || number == LONG_MAX) { \
-                char *string_locale = utf82locale((char *)string); \
+                char *string_locale = _isds_utf82locale((char *)string); \
                 isds_printf_message(context, \
                         _("%s value out of range of long int: %s"), \
                         element, string_locale); \
@@ -2072,7 +2072,7 @@ static isds_error eventstring2event(const xmlChar *string,
             number = strtol((char*)string, &endptr, 10); \
              \
             if (*endptr != '\0') { \
-                char *string_locale = utf82locale((char *)string); \
+                char *string_locale = _isds_utf82locale((char *)string); \
                 isds_printf_message(context, \
                         _("%s is not valid integer: %s"), \
                         element, string_locale); \
@@ -2083,7 +2083,7 @@ static isds_error eventstring2event(const xmlChar *string,
             } \
              \
             if (number == LONG_MIN || number == LONG_MAX) { \
-                char *string_locale = utf82locale((char *)string); \
+                char *string_locale = _isds_utf82locale((char *)string); \
                 isds_printf_message(context, \
                         _("%s value out of range of long int: %s"), \
                         element, string_locale); \
@@ -2116,8 +2116,9 @@ static isds_error eventstring2event(const xmlChar *string,
     (string) = (char *) xmlGetNsProp(xpath_ctx->node, ( BAD_CAST attribute), \
             NULL); \
     if ((required) && (!string)) { \
-        char *attribute_locale = utf82locale(attribute); \
-        char *element_locale = utf82locale((char *)xpath_ctx->node->name); \
+        char *attribute_locale = _isds_utf82locale(attribute); \
+        char *element_locale = \
+            _isds_utf82locale((char *)xpath_ctx->node->name); \
         isds_printf_message(context, \
                 _("Could not extract required %s attribute value from " \
                     "%s element"), attribute_locale, element_locale); \
@@ -2266,8 +2267,8 @@ static isds_error move_xpathctx_to_child(struct isds_ctx *context,
 
     /* No match */
     if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-        char *parent_locale = utf82locale((char*) xpath_ctx->node->name);
-        char *child_locale = utf82locale((char*) child);
+        char *parent_locale = _isds_utf82locale((char*) xpath_ctx->node->name);
+        char *child_locale = _isds_utf82locale((char*) child);
         isds_printf_message(context,
                 _("%s element does not contain %s child"),
                 parent_locale, child_locale);
@@ -2279,8 +2280,8 @@ static isds_error move_xpathctx_to_child(struct isds_ctx *context,
 
     /* More matches */
     if (result->nodesetval->nodeNr > 1) {
-        char *parent_locale = utf82locale((char*) xpath_ctx->node->name);
-        char *child_locale = utf82locale((char*) child);
+        char *parent_locale = _isds_utf82locale((char*) xpath_ctx->node->name);
+        char *child_locale = _isds_utf82locale((char*) child);
         isds_printf_message(context,
                 _("%s element contains multiple %s children"),
                 parent_locale, child_locale);
@@ -2414,7 +2415,7 @@ static isds_error extract_BiDate(struct isds_ctx *context,
         if (err) {
             if (err == IE_NOTSUP) {
                 err = IE_ISDS;
-                char *string_locale = utf82locale(string);
+                char *string_locale = _isds_utf82locale(string);
                 isds_printf_message(context,
                         _("Invalid isds:biDate value: %s"), string_locale);
                 free(string_locale);
@@ -2470,7 +2471,7 @@ static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
             zfree((*db_owner_info)->dbType);
             if (err == IE_ENUM) {
                 err = IE_ISDS;
-                char *string_locale = utf82locale(string);
+                char *string_locale = _isds_utf82locale(string);
                 isds_printf_message(context, _("Unknown isds:dbType: %s"), 
                     string_locale);
                 free(string_locale);
@@ -2652,7 +2653,7 @@ static isds_error extract_DbUserInfo(struct isds_ctx *context,
             zfree((*db_user_info)->userType);
             if (err == IE_ENUM) {
                 err = IE_ISDS;
-                char *string_locale = utf82locale(string);
+                char *string_locale = _isds_utf82locale(string);
                 isds_printf_message(context,
                         _("Unknown isds:userType value: %s"), string_locale);
                 free(string_locale);
@@ -2975,7 +2976,7 @@ static isds_error append_status_size_times(struct isds_ctx *context,
         err = timestring2timeval((xmlChar *) string,
                 &((*envelope)->dmDeliveryTime));
         if (err) {
-            char *string_locale = utf82locale(string);
+            char *string_locale = _isds_utf82locale(string);
             if (err == IE_DATE) err = IE_ISDS;
             isds_printf_message(context,
                     _("Could not convert dmDeliveryTime as ISO time: %s"),
@@ -2991,7 +2992,7 @@ static isds_error append_status_size_times(struct isds_ctx *context,
         err = timestring2timeval((xmlChar *) string,
                 &((*envelope)->dmAcceptanceTime));
         if (err) {
-            char *string_locale = utf82locale(string);
+            char *string_locale = _isds_utf82locale(string);
             if (err == IE_DATE) err = IE_ISDS;
             isds_printf_message(context,
                     _("Could not convert dmAcceptanceTime as ISO time: %s"),
@@ -3054,7 +3055,7 @@ static isds_error append_message_type(struct isds_ctx *context,
             goto leave;
         }
     } else if (1 != xmlUTF8Strlen((xmlChar *) (*envelope)->dmType)) {
-        char *type_locale = utf82locale((*envelope)->dmType);
+        char *type_locale = _isds_utf82locale((*envelope)->dmType);
         isds_printf_message(context,
                 _("Message type in dmType attribute is not 1 character long: "
                     "%s"),
@@ -3116,7 +3117,7 @@ static isds_error extract_document(struct isds_ctx *context,
     err = string2isds_FileMetaType((xmlChar*)string,
             &((*document)->dmFileMetaType));
     if (err) {
-        char *meta_type_locale = utf82locale(string);
+        char *meta_type_locale = _isds_utf82locale(string);
         isds_printf_message(context,
                 _("Document has invalid dmFileMetaType attribute value: %s"),
                 meta_type_locale);
@@ -3158,7 +3159,8 @@ static isds_error extract_document(struct isds_ctx *context,
 
         /* Decode non-emptys document */
         if (string && string[0] != '\0') {
-            (*document)->data_length = b64decode(string, &((*document)->data));
+            (*document)->data_length =
+                _isds_b64decode(string, &((*document)->data));
             if ((*document)->data_length == (size_t) -1) {
                 isds_printf_message(context,
                         _("Error while Base64-decoding document content"));
@@ -3365,7 +3367,7 @@ static isds_error find_and_extract_DmHash(struct isds_ctx *context,
     err = string2isds_hash_algorithm((xmlChar*) string, &(*hash)->algorithm);
     if (err) {
         if (err == IE_ENUM) {
-            char *string_locale = utf82locale(string);
+            char *string_locale = _isds_utf82locale(string);
             isds_printf_message(context, _("Unsported hash algorithm: %s"),
                     string_locale);
             free(string_locale);
@@ -3382,7 +3384,7 @@ static isds_error find_and_extract_DmHash(struct isds_ctx *context,
         err = IE_ISDS;
         goto leave;
     }
-    (*hash)->length = b64decode(string, &((*hash)->value));
+    (*hash)->length = _isds_b64decode(string, &((*hash)->value));
     if ((*hash)->length == (size_t) -1) {
         isds_printf_message(context,
                 _("Error while Base64-decoding hash value"));
@@ -3437,7 +3439,7 @@ static isds_error find_and_append_DmQTimestamp(struct isds_ctx *context,
         goto leave;
     }
     (*envelope)->timestamp_length =
-        b64decode(string, &((*envelope)->timestamp));
+        _isds_b64decode(string, &((*envelope)->timestamp));
     if ((*envelope)->timestamp_length == (size_t) -1) {
         isds_printf_message(context,
                 _("Error while Base64-decoding timestamp value"));
@@ -3562,7 +3564,7 @@ static isds_error extract_event(struct isds_ctx *context,
     if (string) {
         err = timestring2timeval((xmlChar *) string, &((*event)->time));
         if (err) {
-            char *string_locale = utf82locale(string);
+            char *string_locale = _isds_utf82locale(string);
             if (err == IE_DATE) err = IE_ISDS;
             isds_printf_message(context,
                     _("Could not convert dmEventTime as ISO time: %s"),
@@ -3735,7 +3737,8 @@ static isds_error insert_document(struct isds_ctx *context,
 
     /* Insert content (data) of the document. */
     /* XXX; Only base64 is implemented currently. */
-    base64data = (xmlChar *) b64encode(document->data, document->data_length);
+    base64data = (xmlChar *) _isds_b64encode(document->data,
+            document->data_length);
     if (!base64data) {
         isds_printf_message(context,
                 ngettext("Not enought memory to encode %zd bytes into Base64",
@@ -3786,7 +3789,7 @@ static isds_error append_TMStatus(struct isds_ctx *context,
         copy->error = IE_ISDS;
         EXTRACT_STRING("isds:dmStatus/isds:dmStatusMessage", message);
         if (message) {
-            copy->dmStatus = astrcat3(code, ": ", message);
+            copy->dmStatus = _isds_astrcat3(code, ": ", message);
             if (!copy->dmStatus) {
                 copy->dmStatus = code;
                 code = NULL;
@@ -3878,7 +3881,7 @@ static isds_error build_send_check_dbdummy_request(struct isds_ctx *context,
      * TODO: This check should be done donwstairs. */
     if (!context->curl) return IE_CONNECTION_CLOSED;
 
-    service_name_locale = utf82locale((char*)service_name);
+    service_name_locale = _isds_utf82locale((char*)service_name);
     if (!service_name_locale) {
         err = IE_NOMEM;
         goto leave;
@@ -3932,8 +3935,9 @@ static isds_error build_send_check_dbdummy_request(struct isds_ctx *context,
 
     /* Request processed, but nothing found */
     if (xmlStrcmp(*code, BAD_CAST "0000")) {
-        char *code_locale = utf82locale((char*) *code);
-        char *status_message_locale = utf82locale((char*) *status_message);
+        char *code_locale = _isds_utf82locale((char*) *code);
+        char *status_message_locale = 
+            _isds_utf82locale((char*) *status_message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                     _("Server refused %s request (code=%s, message=%s)\n"),
                 service_name_locale, code_locale, status_message_locale);
@@ -3989,7 +3993,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -4076,7 +4080,7 @@ isds_error isds_GetUserInfoFromLogin(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -4159,7 +4163,7 @@ isds_error isds_get_password_expiration(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -4196,7 +4200,7 @@ isds_error isds_get_password_expiration(struct isds_ctx *context,
 
     err = timestring2timeval((xmlChar *) string, expiration);
     if (err) {
-        char *string_locale = utf82locale(string);
+        char *string_locale = _isds_utf82locale(string);
         if (err == IE_DATE) err = IE_ISDS;
         isds_printf_message(context,
                 _("Could not convert pswExpDate as ISO time: %s"),
@@ -4298,8 +4302,8 @@ isds_error isds_change_password(struct isds_ctx *context,
 
     /* Request processed, but empty password refused */
     if (!xmlStrcmp(code, BAD_CAST "1066")) {
-        char *code_locale = utf82locale((char*)code);
-        char *message_locale = utf82locale((char*)message);
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Server refused empty password on ChangeISDSPassword "
                     "request (code=%s, message=%s)\n"),
@@ -4313,8 +4317,8 @@ isds_error isds_change_password(struct isds_ctx *context,
 
     /* Request processed, but new password was reused */
     else if (!xmlStrcmp(code, BAD_CAST "1067")) {
-        char *code_locale = utf82locale((char*)code);
-        char *message_locale = utf82locale((char*)message);
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Server refused the same new password on ChangeISDSPassword "
                     "request (code=%s, message=%s)\n"),
@@ -4329,8 +4333,8 @@ isds_error isds_change_password(struct isds_ctx *context,
 
     /* Other error */
     else if (xmlStrcmp(code, BAD_CAST "0000")) {
-        char *code_locale = utf82locale((char*)code);
-        char *message_locale = utf82locale((char*)message);
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Server refused to change password on ChangeISDSPassword "
                     "request (code=%s, message=%s)\n"),
@@ -4386,7 +4390,7 @@ static isds_error send_destroy_request_check_response(
      * TODO: This check should be done donwstairs. */
     if (!context->curl) return IE_CONNECTION_CLOSED;
 
-    service_name_locale = utf82locale((char*) service_name);
+    service_name_locale = _isds_utf82locale((char*) service_name);
     if (!service_name_locale) {
         err = IE_NOMEM;
         goto leave;
@@ -4418,8 +4422,8 @@ static isds_error send_destroy_request_check_response(
 
     /* Request processed, but server failed */
     if (xmlStrcmp(code, BAD_CAST "0000")) {
-        char *code_locale = utf82locale((char*) code);
-        char *message_locale = utf82locale((char*) message);
+        char *code_locale = _isds_utf82locale((char*) code);
+        char *message_locale = _isds_utf82locale((char*) message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                     _("Server refused %s request (code=%s, message=%s)\n"),
                 service_name_locale, code_locale, message_locale);
@@ -4481,7 +4485,7 @@ static isds_error send_request_check_drop_response(
     }
 
     if (!err) {
-        char *service_name_locale = utf82locale((char *) service_name);
+        char *service_name_locale = _isds_utf82locale((char *) service_name);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("%s request processed by server successfully.\n"),
                 service_name_locale);
@@ -4526,7 +4530,7 @@ static isds_error build_CreateDBInput_request(struct isds_ctx *context,
     /* Build DeleteDataBox request */
     *request = xmlNewNode(NULL, service_name);
     if (!*request) {
-        char *service_name_locale = utf82locale((char*) service_name);
+        char *service_name_locale = _isds_utf82locale((char*) service_name);
         isds_printf_message(context, _("Could build %s request"),
                 service_name_locale);
         free(service_name_locale);
@@ -4633,7 +4637,7 @@ isds_error isds_add_box(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -4852,12 +4856,12 @@ static isds_error build_send_dbid_request_check_response(
     xmlFreeDoc(*response); *response = NULL;
    
     /* Prepare strings */
-    service_name_locale = utf82locale((char*)service_name);
+    service_name_locale = _isds_utf82locale((char*)service_name);
     if (!service_name_locale) {
         err = IE_NOMEM;
         goto leave;
     }
-    box_id_locale = utf82locale((char*)box_id);
+    box_id_locale = _isds_utf82locale((char*)box_id);
     if (!box_id_locale) {
         err = IE_NOMEM;
         goto leave;
@@ -4929,7 +4933,7 @@ isds_error isds_GetDataBoxUsers(struct isds_ctx *context, const char *box_id,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -5128,7 +5132,7 @@ isds_error isds_reset_password(struct isds_ctx *context,
             err = IE_ERROR;
             goto leave;
         }
-        if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
             err = IE_ERROR;
             goto leave;
         }
@@ -5178,7 +5182,7 @@ static isds_error build_send_manipulationboxuser_request_check_drop_response(
     /* Build NewAccessData request */
     request = xmlNewNode(NULL, service_name);
     if (!request) {
-        char *service_name_locale = utf82locale((char *) service_name);
+        char *service_name_locale = _isds_utf82locale((char *) service_name);
         isds_printf_message(context, _("Could build %s request"),
                 service_name_locale);
         free(service_name_locale);
@@ -5337,8 +5341,8 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
     /* Request processed, but nothing found */
     if (!xmlStrcmp(code, BAD_CAST "0002") ||
             !xmlStrcmp(code, BAD_CAST "5001")) {
-        char *code_locale = utf82locale((char*)code);
-        char *message_locale = utf82locale((char*)message);
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Server did not found any box on FindDataBox request "
                     "(code=%s, message=%s)\n"), code_locale, message_locale);
@@ -5351,8 +5355,8 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
 
     /* Warning, not a error */
     if (!xmlStrcmp(code, BAD_CAST "0003")) {
-        char *code_locale = utf82locale((char*)code);
-        char *message_locale = utf82locale((char*)message);
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Server truncated response on FindDataBox request "
                     "(code=%s, message=%s)\n"), code_locale, message_locale);
@@ -5364,8 +5368,8 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
     
     /* Other error */
     else if (xmlStrcmp(code, BAD_CAST "0000")) {
-        char *code_locale = utf82locale((char*)code);
-        char *message_locale = utf82locale((char*)message);
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Server refused FindDataBox request "
                     "(code=%s, message=%s)\n"), code_locale, message_locale);
@@ -5381,7 +5385,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -5521,9 +5525,9 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
 
     /* Request processed, but nothing found */
     if (!xmlStrcmp(code, BAD_CAST "5001")) {
-        char *box_id_locale = utf82locale((char*)box_id);
-        char *code_locale = utf82locale((char*)code);
-        char *message_locale = utf82locale((char*)message);
+        char *box_id_locale = _isds_utf82locale((char*)box_id);
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Server did not found box %s on CheckDataBox request "
                     "(code=%s, message=%s)\n"),
@@ -5538,8 +5542,8 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
 
     /* Other error */
     else if (xmlStrcmp(code, BAD_CAST "0000")) {
-        char *code_locale = utf82locale((char*)code);
-        char *message_locale = utf82locale((char*)message);
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Server refused CheckDataBox request "
                     "(code=%s, message=%s)\n"), code_locale, message_locale);
@@ -5556,7 +5560,7 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -5628,7 +5632,7 @@ static isds_error build_send_manipulationdbid_request_check_drop_response(
     xmlFreeDoc(response);
 
     if (!err) {
-        char *service_name_locale = utf82locale((char *) service_name);
+        char *service_name_locale = _isds_utf82locale((char *) service_name);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("%s request processed by server successfully.\n"),
                 service_name_locale);
@@ -5698,7 +5702,7 @@ static isds_error build_send_manipulationdbowner_request_check_drop_response(
     zfree(context->long_message);
     if (!service_name || *service_name == '\0' || !owner) return IE_INVAL;
 
-    service_name_locale = utf82locale((char*)service_name);
+    service_name_locale = _isds_utf82locale((char*)service_name);
     if (!service_name_locale) {
         err = IE_NOMEM;
         goto leave;
@@ -5954,7 +5958,7 @@ static isds_error insert_envelope_files(struct isds_ctx *context,
     }
 
     /* Check for document hieararchy */
-    err = check_documents_hierarchy(context, outgoing_message->documents);
+    err = _isds_check_documents_hierarchy(context, outgoing_message->documents);
     if (err) goto leave;
 
     /* Process each document */
@@ -6062,9 +6066,9 @@ isds_error isds_send_message(struct isds_ctx *context,
     /* Request processed, but refused by server or server failed */
     if (xmlStrcmp(code, BAD_CAST "0000")) {
         char *box_id_locale =
-            utf82locale((char*)outgoing_message->envelope->dbIDRecipient);
-        char *code_locale = utf82locale((char*)code);
-        char *message_locale = utf82locale((char*)message);
+            _isds_utf82locale((char*)outgoing_message->envelope->dbIDRecipient);
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Server did not accept message for %s on CreateMessage "
                     "request (code=%s, message=%s)\n"),
@@ -6084,7 +6088,7 @@ isds_error isds_send_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -6307,9 +6311,9 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
     /* Request processed, but some copies failed */
     if (!xmlStrcmp(code, BAD_CAST "0004")) {
         char *box_id_locale =
-            utf82locale((char*)outgoing_message->envelope->dbIDRecipient);
-        char *code_locale = utf82locale((char*)code);
-        char *message_locale = utf82locale((char*)message);
+            _isds_utf82locale((char*)outgoing_message->envelope->dbIDRecipient);
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Server did accept message for multiple recipients "
                     "on CreateMultipleMessage request but delivery to "
@@ -6325,9 +6329,9 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
     /* Request refused by server as whole */
     else if (xmlStrcmp(code, BAD_CAST "0000")) {
         char *box_id_locale =
-            utf82locale((char*)outgoing_message->envelope->dbIDRecipient);
-        char *code_locale = utf82locale((char*)code);
-        char *message_locale = utf82locale((char*)message);
+            _isds_utf82locale((char*)outgoing_message->envelope->dbIDRecipient);
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Server did not accept message for multiple recipients "
                     "on CreateMultipleMessage request (code=%s, message=%s)\n"),
@@ -6347,7 +6351,7 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -6565,8 +6569,8 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
 
     /* Request processed, but nothing found */
     if (xmlStrcmp(code, BAD_CAST "0000")) {
-        char *code_locale = utf82locale((char*)code);
-        char *message_locale = utf82locale((char*)message);
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 (outgoing_direction) ?
                     _("Server refused GetListOfSentMessages request "
@@ -6588,7 +6592,7 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -6788,8 +6792,8 @@ static isds_error build_send_check_message_request(struct isds_ctx *context,
      * TODO: This check should be done donwstairs. */
     if (!context->curl) return IE_CONNECTION_CLOSED;
 
-    service_name_locale = utf82locale((char*)service_name);
-    message_id_locale = utf82locale(message_id);
+    service_name_locale = _isds_utf82locale((char*)service_name);
+    message_id_locale = _isds_utf82locale(message_id);
     if (!service_name_locale || !message_id_locale) {
         err = IE_NOMEM;
         goto leave;
@@ -6846,8 +6850,8 @@ static isds_error build_send_check_message_request(struct isds_ctx *context,
 
     /* Request processed, but nothing found */
     if (xmlStrcmp(*code, BAD_CAST "0000")) {
-        char *code_locale = utf82locale((char*) *code);
-        char *status_message_locale = utf82locale((char*) *status_message);
+        char *code_locale = _isds_utf82locale((char*) *code);
+        char *status_message_locale = _isds_utf82locale((char*) *status_message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                     _("Server refused %s request for %s message ID "
                         "(code=%s, message=%s)\n"),
@@ -6898,7 +6902,7 @@ static isds_error find_extract_signed_data_free_response(
         return IE_INVAL;
 
     /* Build XPath expression */
-    xpath_expression = astrcat3("/isds:", (char *) request_name,
+    xpath_expression = _isds_astrcat3("/isds:", (char *) request_name,
             "Response/isds:dmSignature");
     if (!xpath_expression) return IE_NOMEM;
    
@@ -6908,7 +6912,7 @@ static isds_error find_extract_signed_data_free_response(
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -6919,7 +6923,7 @@ static isds_error find_extract_signed_data_free_response(
     }
     /* Empty response */
     if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-        char *message_id_locale = utf82locale((char*) message_id);
+        char *message_id_locale = _isds_utf82locale((char*) message_id);
         isds_printf_message(context,
                 _("Server did not return any signed data for mesage ID `%s' "
                     "on %s request"),
@@ -6930,7 +6934,7 @@ static isds_error find_extract_signed_data_free_response(
     }
     /* More reponses */
     if (result->nodesetval->nodeNr > 1) {
-        char *message_id_locale = utf82locale((char*) message_id);
+        char *message_id_locale = _isds_utf82locale((char*) message_id);
         isds_printf_message(context,
                 _("Server did return more signed data for message ID `%s' "
                     "on %s request"),
@@ -6956,7 +6960,7 @@ static isds_error find_extract_signed_data_free_response(
 
 
     /* Decode PKCS#7 to DER format */
-    *raw_length = b64decode(encoded_structure, raw);
+    *raw_length = _isds_b64decode(encoded_structure, raw);
     if (*raw_length == (size_t) -1) {
         isds_log_message(context,
                 _("Error while Base64-decoding PKCS#7 structure"));
@@ -7015,7 +7019,7 @@ isds_error isds_get_received_envelope(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -7029,7 +7033,7 @@ isds_error isds_get_received_envelope(struct isds_ctx *context,
     }
     /* Empty response */
     if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-        char *message_id_locale = utf82locale((char*) message_id);
+        char *message_id_locale = _isds_utf82locale((char*) message_id);
         isds_printf_message(context,
                 _("Server did not return any envelope for ID `%s' "
                     "on MessageEnvelopeDownload request"), message_id_locale);
@@ -7039,7 +7043,7 @@ isds_error isds_get_received_envelope(struct isds_ctx *context,
     }
     /* More envelops */
     if (result->nodesetval->nodeNr > 1) {
-        char *message_id_locale = utf82locale((char*) message_id);
+        char *message_id_locale = _isds_utf82locale((char*) message_id);
         isds_printf_message(context,
                 _("Server did return more envelopes for ID `%s' "
                     "on MessageEnvelopeDownload request"), message_id_locale);
@@ -7126,7 +7130,7 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
 
         case RAWTYPE_CMS_SIGNED_DELIVERYINFO:
             message_ns = MESSAGE_NS_SIGNED_DELIVERY;
-            err = extract_cms_data(context, buffer, length,
+            err = _isds_extract_cms_data(context, buffer, length,
                     &xml_stream, &xml_stream_length);
             if (err) goto leave;
             break;
@@ -7167,7 +7171,7 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
      *   </q:dmDelivery>
      * </q:GetDeliveryInfoResponse>
      * */
-    if (register_namespaces(xpath_ctx, message_ns)) {
+    if (_isds_register_namespaces(xpath_ctx, message_ns)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -7241,7 +7245,7 @@ leave:
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
     xmlFreeDoc(message_doc);
-    if (xml_stream != buffer) cms_data_free(xml_stream);
+    if (xml_stream != buffer) _isds_cms_data_free(xml_stream);
 
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
@@ -7349,7 +7353,7 @@ isds_error isds_get_delivery_info(struct isds_ctx *context,
     /* Serialize delivery info */
     delivery_node = xmlDocGetRootElement(response);
     if (!delivery_node) {
-        char *message_id_locale = utf82locale((char*) message_id);
+        char *message_id_locale = _isds_utf82locale((char*) message_id);
         isds_printf_message(context,
                 _("Server did not return any delivery info for ID `%s' "
                     "on GetDeliveryInfo request"), message_id_locale);
@@ -7427,7 +7431,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -7440,7 +7444,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
     }
     /* Empty response */
     if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-        char *message_id_locale = utf82locale((char*) message_id);
+        char *message_id_locale = _isds_utf82locale((char*) message_id);
         isds_printf_message(context,
                 _("Server did not return any message for ID `%s' "
                     "on MessageDownload request"), message_id_locale);
@@ -7450,7 +7454,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
     }
     /* More messages */
     if (result->nodesetval->nodeNr > 1) {
-        char *message_id_locale = utf82locale((char*) message_id);
+        char *message_id_locale = _isds_utf82locale((char*) message_id);
         isds_printf_message(context,
                 _("Server did return more messages for ID `%s' "
                     "on MessageDownload request"), message_id_locale);
@@ -7477,7 +7481,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
         err = IE_NOMEM;
         goto leave;
     }
-    err = find_element_boundary(xml_stream, xml_stream_length,
+    err = _isds_find_element_boundary(xml_stream, xml_stream_length,
             phys_path, &phys_start, &phys_end);
     zfree(phys_path);
     if (err) {
@@ -7570,7 +7574,7 @@ isds_error isds_load_message(struct isds_ctx *context,
 
         case RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE:
             message_ns = MESSAGE_NS_SIGNED_INCOMING;
-            err = extract_cms_data(context, buffer, length,
+            err = _isds_extract_cms_data(context, buffer, length,
                     &xml_stream, &xml_stream_length);
             if (err) goto leave;
             break;
@@ -7583,7 +7587,7 @@ isds_error isds_load_message(struct isds_ctx *context,
 
         case RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE:
             message_ns = MESSAGE_NS_SIGNED_OUTGOING;
-            err = extract_cms_data(context, buffer, length,
+            err = _isds_extract_cms_data(context, buffer, length,
                     &xml_stream, &xml_stream_length);
             if (err) goto leave;
             break;
@@ -7645,7 +7649,7 @@ isds_error isds_load_message(struct isds_ctx *context,
      * </q:MessageDownloadResponse>
      *
      * Stupidity of ISDS developers is unlimited */
-    if (register_namespaces(xpath_ctx, message_ns)) {
+    if (_isds_register_namespaces(xpath_ctx, message_ns)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -7708,7 +7712,7 @@ leave:
         isds_message_free(message);
     }
 
-    if (xml_stream != buffer) cms_data_free(xml_stream);
+    if (xml_stream != buffer) _isds_cms_data_free(xml_stream);
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
     xmlFreeDoc(message_doc);
@@ -7741,7 +7745,7 @@ isds_error isds_guess_raw_type(struct isds_ctx *context,
     if (!raw_type) return IE_INVAL;
 
     /* Try CMS */
-    err = extract_cms_data(context, buffer, length,
+    err = _isds_extract_cms_data(context, buffer, length,
             &xml_stream, &xml_stream_length);
     if (err) {
         xml_stream = (void *) buffer;
@@ -7811,7 +7815,7 @@ isds_error isds_guess_raw_type(struct isds_ctx *context,
     }
 
 leave:
-    if (xml_stream != buffer) cms_data_free(xml_stream);
+    if (xml_stream != buffer) _isds_cms_data_free(xml_stream);
     xmlFreeDoc(document);
     return err;
 }
@@ -7948,7 +7952,7 @@ isds_error isds_download_message_hash(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -7961,7 +7965,7 @@ isds_error isds_download_message_hash(struct isds_ctx *context,
     }
     /* Empty response */
     if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-        char *message_id_locale = utf82locale((char*) message_id);
+        char *message_id_locale = _isds_utf82locale((char*) message_id);
         isds_printf_message(context,
                 _("Server did not return any response for ID `%s' "
                     "on VerifyMessage request"), message_id_locale);
@@ -7971,7 +7975,7 @@ isds_error isds_download_message_hash(struct isds_ctx *context,
     }
     /* More responses */
     if (result->nodesetval->nodeNr > 1) {
-        char *message_id_locale = utf82locale((char*) message_id);
+        char *message_id_locale = _isds_utf82locale((char*) message_id);
         isds_printf_message(context,
                 _("Server did return more responses for ID `%s' "
                     "on VerifyMessage request"), message_id_locale);
@@ -8150,7 +8154,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
             document->dmFileDescr);
 
     /* Document encoded in Base64 */
-    base64data = (xmlChar *) b64encode(document->data, document->data_length);
+    base64data = (xmlChar *) _isds_b64encode(document->data, document->data_length);
     if (!base64data) {
         isds_printf_message(context,
                 ngettext("Not enought memory to encode %zd bytes into Base64",
@@ -8167,7 +8171,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
             _("Submitting document for conversion into Czech POINT deposit"));
 
     /* Send conversion request */
-    err = czpdeposit(context, request, &response);
+    err = _czp_czpdeposit(context, request, &response);
     xmlFreeNode(request); request = NULL;
 
     if (err) {
@@ -8182,7 +8186,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -8214,7 +8218,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
     EXTRACT_LONGINT("status", status_ptr, 1);
     if (status) {
         EXTRACT_STRING("statusMsg", string);
-        char *string_locale = utf82locale(string);
+        char *string_locale = _isds_utf82locale(string);
         isds_printf_message(context,
                 _("Czech POINT deposit refused document for conversion "
                     "(code=%ld, message=%s)"),
@@ -8239,7 +8243,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
         if (err) {
             if (err == IE_NOTSUP) {
                 err = IE_ISDS;
-                char *string_locale = utf82locale(string);
+                char *string_locale = _isds_utf82locale(string);
                 isds_printf_message(context,
                         _("Invalid dateInserted value: %s"), string_locale);
                 free(string_locale);
@@ -8258,7 +8262,7 @@ leave:
     xmlFreeNode(request);
 
     if (!err) {
-        char *id_locale = utf82locale((char *) *id); 
+        char *id_locale = _isds_utf82locale((char *) *id); 
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Document %s has been submitted for conversion "
                     "to server successfully\n"), id_locale);
@@ -8350,7 +8354,7 @@ isds_error isds_request_new_testing_box(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -8428,7 +8432,8 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
 
         case RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE:
             nsuri = SISDS_INCOMING_NS;
-            err = extract_cms_data(context, message->raw, message->raw_length,
+            err = _isds_extract_cms_data(context,
+                    message->raw, message->raw_length,
                     &xml_stream, &xml_stream_length);
             if (err) goto leave;
             break;
@@ -8441,7 +8446,8 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
 
         case RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE:
             nsuri = SISDS_OUTGOING_NS;
-            err = extract_cms_data(context, message->raw, message->raw_length,
+            err = _isds_extract_cms_data(context,
+                    message->raw, message->raw_length,
                     &xml_stream, &xml_stream_length);
             if (err) goto leave;
             break;
@@ -8465,7 +8471,7 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
         err = IE_NOMEM;
         goto leave;
     }
-    err = find_element_boundary(xml_stream, xml_stream_length,
+    err = _isds_find_element_boundary(xml_stream, xml_stream_length,
             phys_path, &phys_start, &phys_end);
     zfree(phys_path);
     if (err) {
@@ -8483,7 +8489,7 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
         goto leave;
     }
     new_hash->algorithm = algorithm;
-    err = compute_hash(xml_stream + phys_start, phys_end - phys_start + 1,
+    err = _isds_compute_hash(xml_stream + phys_start, phys_end - phys_start + 1,
             new_hash);
     if (err) {
         isds_log_message(context, _("Could not compute message hash"));
@@ -8658,7 +8664,7 @@ int isds_address_free(struct isds_address **address);
  * @xpath_ctx is XPath context
  * @message_ns selects propper message name space. Unsisnged and signed
  * messages and delivery infos differ in prefix and URI. */
-_hidden isds_error register_namespaces(xmlXPathContextPtr xpath_ctx,
+_hidden isds_error _isds_register_namespaces(xmlXPathContextPtr xpath_ctx,
         const message_ns_type message_ns) {
     const xmlChar *message_namespace = NULL;
 

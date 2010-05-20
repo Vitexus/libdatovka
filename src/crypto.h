@@ -6,7 +6,7 @@
 /* Inicialize libgrcypt if not yet done by application or other library.
  * @current_version is static string describing cerrent gcrypt version
  * @return IE_SUCCESS if everything is O.k. */
-isds_error init_gcrypt(const char **current_version);
+isds_error _isds_init_gcrypt(const char **current_version);
 
 /* Computes hash from @input with @length and store it into @hash.
  * The hash algoritm is defined inside @hash.
@@ -14,27 +14,27 @@ isds_error init_gcrypt(const char **current_version);
  * @length is @input block length in bytes
  * @hash input algoritm, output hash value and hash length; hash value will be
  * reallocated, it's always valid pointer or NULL (before and after call) */
-isds_error compute_hash(const void *input, const size_t length,
+isds_error _isds_compute_hash(const void *input, const size_t length,
         struct isds_hash *hash);
 
 /* Inicialize GPGME.
  * @current_version is pointer to static string decribing currnet gpgme
  * @return IE_SUCCESS if everything is O.k. */
-isds_error init_gpgme(const char **current_version);
+isds_error _isds_init_gpgme(const char **current_version);
 
-/* Free CMS data buffer allocated inside extract_cms_data().
+/* Free CMS data buffer allocated inside _isds_extract_cms_data().
  * This is necesary because GPGME.
  * @buffer is pointer to memory to free */
-void cms_data_free(void *buffer);
+void _isds_cms_data_free(void *buffer);
 
 /* Extract data from CMS (successor of PKCS#7)
  * @context is session context
  * @cms is input block with CMS structure
  * @cms_length is @cms block length in bytes
  * @data are automatically reallocated bit stream with data found in @cms
- * You must free them with cms_data_free().
+ * You must free them with _isds_cms_data_free().
  * @data_length is length of @data in bytes */
-isds_error extract_cms_data(struct isds_ctx *context,
+isds_error _isds_extract_cms_data(struct isds_ctx *context,
         const void *cms, const size_t cms_length,
         void **data, size_t *data_length);
 

@@ -26,7 +26,7 @@
 
 
 /* Used to choose proper name space for message elements.
- * See register_namespaces(). */
+ * See _isds_register_namespaces(). */
 typedef enum {
     MESSAGE_NS_1,
     MESSAGE_NS_UNSIGNED,
@@ -106,7 +106,7 @@ isds_error isds_log(const isds_log_facility facility,
  * @xpath_ctx is XPath context
  * @message_ns selects propper message name space. Unsisnged and signed
  * messages and delivery infos differ in prefix and URI. */
-isds_error register_namespaces(xmlXPathContextPtr xpath_ctx,
+isds_error _isds_register_namespaces(xmlXPathContextPtr xpath_ctx,
         const message_ns_type message_ns);
 
 #endif

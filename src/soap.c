@@ -14,7 +14,7 @@ struct soap_body {
 
 /* Close connection to server and destroy CURL handle associated
  * with @context */
-_hidden isds_error close_connection(struct isds_ctx *context) {
+_hidden isds_error _isds_close_connection(struct isds_ctx *context) {
     if (!context) return IE_INVALID_CONTEXT;
 
     if (context->curl) {
@@ -198,7 +198,8 @@ static isds_error http(struct isds_ctx *context, const char *url,
     }
 #else
     if (!curl_err && (context->username || context->password)) {
-        char *userpwd = astrcat3(context->username, ":", context->password);
+        char *userpwd =
+            _isds_astrcat3(context->username, ":", context->password);
         if (!userpwd) {
             isds_log_message(context, _("Could not pass credentials to CURL"));
             err = IE_NOMEM;
@@ -540,7 +541,7 @@ leave:
             *charset = NULL;
         }
 
-        if (err != IE_ABORTED) close_connection(context);
+        if (err != IE_ABORTED) _isds_close_connection(context);
     }
 
     *response = body.data;
@@ -564,7 +565,7 @@ leave:
  * @raw_response_length is size of @raw_response in bytes
  * In case of error the response will be deallocated automatically.
  * Side effect: message buffer */
-_hidden isds_error soap(struct isds_ctx *context, const char *file,
+_hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
         const xmlNodePtr request, xmlNodePtr *response,
         void **raw_response, size_t *raw_response_length) {
 
@@ -594,7 +595,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     *response = NULL;
     if (raw_response) *raw_response = NULL;
 
-    url = astrcat(context->url, file);
+    url = _isds_astrcat(context->url, file);
     if (!url) return IE_NOMEM;
 
     /* Build SOAP request envelope */
@@ -720,7 +721,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
     if (mime_type && strcmp(mime_type, "text/xml")
             && strcmp(mime_type, "application/soap+xml")
             && strcmp(mime_type, "application/xml")) {
-        char *mime_type_locale = utf82locale(mime_type);
+        char *mime_type_locale = _isds_utf82locale(mime_type);
         isds_printf_message(context,
                 _("%s: bad MIME type sent by server: %s"), url,
                 mime_type_locale);
@@ -744,7 +745,7 @@ _hidden isds_error soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
 
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
         goto leave;
     }

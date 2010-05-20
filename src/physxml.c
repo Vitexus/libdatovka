@@ -23,7 +23,7 @@ struct expat_data {
 
 /* Check for expat compile-time configuration
  * @current_version is static string describing current expat version */
-_hidden isds_error init_expat(const char **current_version) {
+_hidden isds_error _isds_init_expat(const char **current_version) {
     XML_Expat_Version current;
     const int min_major = 2;
     const int min_minor = 0;
@@ -205,7 +205,7 @@ static void XMLCALL element_end(void *userData, const XML_Char *name) {
  * counts from 0)
  * @end outputs end of element (inclusive, counts from 0)
  * @return 0 if element found */
-_hidden isds_error find_element_boundary(void *document, size_t length,
+_hidden isds_error _isds_find_element_boundary(void *document, size_t length,
         char *path, size_t *start, size_t *end) {
     
     XML_Parser parser;

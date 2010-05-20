@@ -5,7 +5,7 @@
 
 /* Close connection to server and destroy CURL handle associated
  * with @context */
-isds_error close_connection(struct isds_ctx *context);
+isds_error _isds_close_connection(struct isds_ctx *context);
 
 /* Do SOAP request.
  * @context holds the base URL,
@@ -21,7 +21,7 @@ isds_error close_connection(struct isds_ctx *context);
  * @raw_response_length is size of @raw_response in bytes
  * In case of error the response will be deallocated automatically.
  * Side effect: message buffer */
-isds_error soap(struct isds_ctx *context, const char *file,
+isds_error _isds_soap(struct isds_ctx *context, const char *file,
         const xmlNodePtr request, xmlNodePtr *response,
         void **raw_response, size_t *raw_response_length);
 

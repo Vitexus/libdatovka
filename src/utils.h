@@ -26,14 +26,14 @@
  * Any of the arguments can be NULL meaning empty string.
  * In case of error returns NULL.
  * Empty string is always returned as allocated empty string. */
-char *astrcat(const char *first, const char *second);
+char *_isds_astrcat(const char *first, const char *second);
 
 /* Concatenate three strings into newly allocated buffer.
  * You must free() them, when you don't need it anymore.
  * Any of the arguments can be NULL meaning empty string.
  * In case of error returns NULL.
  * Empty string is always returned as allocated empty string. */
-char *astrcat3(const char *first, const char *second,
+char *_isds_astrcat3(const char *first, const char *second,
         const char *third);
 
 /* Print formated string into automtically reallocated @uffer.
@@ -56,14 +56,14 @@ int isds_asprintf(char **buffer, const char *format, ...);
  * @utf string int UTF-8 terminated by zero byte
  * @return allocated string encoded in locale specific encoding. You must free
  * it. In case of error or NULL @utf returns NULL. */
-char *utf82locale(const char *utf);
+char *_isds_utf82locale(const char *utf);
 
 /* Encode given data into MIME Base64 encoded zero terminated string.
  * @plain are input data (binary stream)
  * @length is length of @plain data in bytes
  * @return allocated string of base64 encoded plain data or NULL in case of
  * error. You must free it. */
-char *b64encode(const void *plain, const size_t length);
+char *_isds_b64encode(const void *plain, const size_t length);
 
 /* Decode given data from MIME Base64 encoded zero terminated string to binary
  * stream.
@@ -72,15 +72,15 @@ char *b64encode(const void *plain, const size_t length);
  * free it. Will be freed in case of error.
  * @return length of @plain data in bytes or (size_t) -1 in case of decoding
  * failure. */
-size_t b64decode(const char *encoded, void **plain);
+size_t _isds_b64decode(const char *encoded, void **plain);
 
 /* Switches time zone to UTC.
  * XXX: This is not reentrant and not thread-safe */
-void switch_tz_to_utc(void);
+void _isds_switch_tz_to_utc(void);
 
 /* Switches time zone to original value.
  * XXX: This is not reentrant and not thread-safe */
-void switch_tz_to_native(void);
+void _isds_switch_tz_to_native(void);
 
 /* Free() and set to NULL pointed memory */
 #define zfree(memory) { \
