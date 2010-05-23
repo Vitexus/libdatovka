@@ -260,8 +260,10 @@ void isds_message_free(struct isds_message **message) {
 /* Deallocate struct isds_document recursively and NULL it */
 void isds_document_free(struct isds_document **document) {
     if (!document || !*document) return;
-
-    free((*document)->data);
+    
+    if (!(*document)->is_xml) {
+        free((*document)->data);
+    }
     free((*document)->dmMimeType);
     free((*document)->dmFileGuid);
     free((*document)->dmUpFileGuid);
@@ -3140,7 +3142,7 @@ static isds_error extract_document(struct isds_ctx *context,
             char *new_type = strdup(normalized_type);
             if (!new_type) {
                 isds_printf_message(context,
-                        _("No enough memory to normalize document MIME type"));
+                        _("Not enough memory to normalize document MIME type"));
                 err = IE_NOMEM;
                 goto leave;
             }
@@ -3172,7 +3174,7 @@ static isds_error extract_document(struct isds_ctx *context,
     /* Extract document data.
      * Base64 encoded blob or XML subtree must be presented. */
 
-    /* Check from dmEncodedContent */
+    /* Check for dmEncodedContent */
     result = xmlXPathEvalExpression(BAD_CAST "isds:dmEncodedContent",
             xpath_ctx);
     if (!result) {
@@ -3182,6 +3184,7 @@ static isds_error extract_document(struct isds_ctx *context,
 
     if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
         /* Here we have Base64 blob */
+        (*document)->is_xml = 0;
 
         if (result->nodesetval->nodeNr > 1) {
             isds_printf_message(context,
@@ -3216,6 +3219,7 @@ static isds_error extract_document(struct isds_ctx *context,
 
         if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
             /* Here we have XML document */
+            (*document)->is_xml = 1;
 
             if (result->nodesetval->nodeNr > 1) {
                 isds_printf_message(context,
@@ -3224,11 +3228,16 @@ static isds_error extract_document(struct isds_ctx *context,
                 goto leave;
             }
 
-            /* FIXME: Serialize the tree rooted at result's node */
-            isds_printf_message(context,
-                    _("XML documents not yet supported"));
-            err = IE_NOTSUP;
-            goto leave;
+            /* XXX: We cannot serialize the content simply because:
+             * - XML document may point out of its scope (e.g. to message
+             *   envelope)
+             * - isds:dmXMLContent can contain more elements, no element,
+             *   a text node only
+             * - it's not the XML way
+             * Thus we provide the only right solution: XML DOM. Let's
+             * application to cope with this hot potato :) */
+            (*document)->xml_node_list =
+                result->nodesetval->nodeTab[0]->children;
         } else {
             /* No bas64 blob, nor XML document */
             isds_printf_message(context,
@@ -3532,6 +3541,8 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
     if (err) goto leave;
 
     if (include_documents) {
+        struct isds_list *item;
+
         /* Extract dmFiles */
         err = move_xpathctx_to_child(context, BAD_CAST "isds:dmFiles",
                 xpath_ctx);
@@ -3541,9 +3552,15 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
         if (err) { err = IE_ERROR; goto leave; }
         err = extract_documents(context, &((*message)->documents), xpath_ctx);
         if (err) goto leave;
+
         /* Store xmlDoc of this message if needed */
-        /* FIXME: Only if needed */
-        (*message)->xml = xpath_ctx->doc;
+        /* Only if we got a XML document in all the documents. */
+        for (item = (*message)->documents; item; item = item->next) {
+            if (item->data && ((struct isds_document *)item->data)->is_xml) {
+                (*message)->xml = xpath_ctx->doc;
+                break;
+            }
+        }
     }
 
 

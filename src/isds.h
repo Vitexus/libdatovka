@@ -443,11 +443,24 @@ typedef enum {
 
 /* Document */
 struct isds_document {
+    _Bool is_xml;                   /* True if document is ISDS XML document.
+                                       False if document is ISDS binary
+                                       document. */
+    xmlNodePtr xml_node_list;       /* XML node-set presenting current XML
+                                       document content. This is pointer to
+                                       first node of the document in
+                                       isds_message.xml tree. Use `children'
+                                       and `next' members to iterate the
+                                       document.
+                                       It will be NULL if document is empty.
+                                       Valid only if is_xml is true. */
     void *data;                     /* Document content.
                                        The encoding and interpretation depends
                                        on dmMimeType.
-                                       TODO: inline XML */
-    size_t data_length;             /* Length of the data in bytes */
+                                       Valid only if is_xml is false. */
+    size_t data_length;             /* Length of the data in bytes.
+                                       Valid only if is_xml is false. */
+
     char *dmMimeType;               /* MIME type of data; Mandatory. */
     isds_FileMetaType dmFileMetaType;   /* Document type to create hierarchy */
     char *dmFileGuid;               /* Message-local document identifier;
