@@ -7,7 +7,7 @@ noinst_PROGRAMS = isdsclient login certauth version progressbar logger \
 	getuserboxinfo addbox changebox \
 	changepassword resetpassword deleteuser changeuser \
 	switchcommercial switchaccessibility disableaccesibilityexternaly \
-	sendmultiple getsent  getsignedsent getsignedsentbyid \
+	sendmultiple sendxmldoc getsent  getsignedsent getsignedsentbyid \
 	loadreceivedmessage loadcmssignedsentmessage \
 	getreceived getsignedreceived \
 	getreceivedenvelope markasread markasreceived \
@@ -34,6 +34,7 @@ switchcommercial_SOURCES = switchcommercial.c $(common)
 switchaccessibility_SOURCES = switchaccessibility.c $(common)
 disableaccesibilityexternaly_SOURCES = disableaccesibilityexternaly.c $(common)
 sendmultiple_SOURCES = sendmultiple.c $(common)
+sendxmldoc_SOURCES = sendxmldoc.c $(common)
 getsent_SOURCES = getsent.c $(common)
 getsignedsent_SOURCES = getsignedsent.c $(common)
 getsignedsentbyid_SOURCES = getsignedsentbyid.c $(common)
