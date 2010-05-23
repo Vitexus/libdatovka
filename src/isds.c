@@ -3492,7 +3492,8 @@ leave:
 
 
 /* Convert XSD tReturnedMessage XML tree into message structure.
- * It doea not store XML tree into message->raw.
+ * It does not store serialized XML tree into message->raw.
+ * It does store (pointer to) parsed XML tree into message->xml if needed.
  * @context is ISDS context
  * @include_documents Use true if documents must be extracted
  * (tReturnedMessage XSD type), use false if documents shall be ommited
@@ -3540,6 +3541,9 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
         if (err) { err = IE_ERROR; goto leave; }
         err = extract_documents(context, &((*message)->documents), xpath_ctx);
         if (err) goto leave;
+        /* Store xmlDoc of this message if needed */
+        /* FIXME: Only if needed */
+        (*message)->xml = xpath_ctx->doc;
     }
 
 
@@ -7108,7 +7112,9 @@ leave:
 
     free(code);
     free(status_message);
-    xmlFreeDoc(response);
+    if (!*message || !(*message)->xml) {
+        xmlFreeDoc(response);
+    }
 
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
@@ -7280,7 +7286,9 @@ leave:
 
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
-    xmlFreeDoc(message_doc);
+    if (!*message || !(*message)->xml) {
+        xmlFreeDoc(message_doc);
+    }
     if (xml_stream != buffer) _isds_cms_data_free(xml_stream);
 
     if (!err)
@@ -7554,7 +7562,9 @@ leave:
     free(code);
     free(status_message);
     free(xml_stream);
-    xmlFreeDoc(response);
+    if (!*message || !(*message)->xml) {
+        xmlFreeDoc(response);
+    }
 
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
@@ -7751,7 +7761,9 @@ leave:
     if (xml_stream != buffer) _isds_cms_data_free(xml_stream);
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
-    xmlFreeDoc(message_doc);
+    if (!*message || !(*message)->xml) {
+        xmlFreeDoc(message_doc);
+    }
 
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG, _("Message loaded successfully.\n"));

@@ -487,10 +487,8 @@ struct isds_message {
     isds_raw_type raw_type;         /* Content type of raw representation
                                        Meaningfull only with non-NULL raw
                                        member */
-    xmlDocPtr xml;                  /* Message as parsed XML document while
-                                       getting message.
-                                       Parsed XML document with attached message
-                                       XML documents.
+    xmlDocPtr xml;                  /* Parsed XML document with attached ISDS
+                                       message XML documents.
                                        Can be NULL. May be freed AFTER deallocating
                                        documents member structure. */
     struct isds_envelope *envelope; /* Message envelope */
