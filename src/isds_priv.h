@@ -6,7 +6,6 @@
 #include "isds.h"
 #include <curl/curl.h>
 #include <libxml/parser.h>
-#include <libxml/tree.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 #include <libxml/xmlsave.h>

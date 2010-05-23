@@ -6,6 +6,7 @@
 
 #include <stdlib.h> /* For size_t */
 #include <sys/time.h> /* For struct timeval */
+#include <libxml/tree.h>    /* Gor xmlDoc and xmlNodePtr */
 
 #ifdef __cplusplus  /* For C++ linker sake */
 extern "C" {
@@ -486,6 +487,12 @@ struct isds_message {
     isds_raw_type raw_type;         /* Content type of raw representation
                                        Meaningfull only with non-NULL raw
                                        member */
+    xmlDocPtr xml;                  /* Message as parsed XML document while
+                                       getting message.
+                                       Parsed XML document with attached message
+                                       XML documents.
+                                       Can be NULL. May be freed AFTER deallocating
+                                       documents member structure. */
     struct isds_envelope *envelope; /* Message envelope */
     struct isds_list *documents;    /* List of isds_document's.
                                        Valid message must contain exactly one

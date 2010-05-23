@@ -1,7 +1,7 @@
 LIBDIR =../src
-# Large files needed by GPGME
+AM_CPPFLAGS = @XML_CPPFLAGS@
 AM_CFLAGS =-I$(LIBDIR)
-LDADD = $(LIBDIR)/libisds.la -L$(LIBDIR)
+LDADD = $(LIBDIR)/libisds.la -L$(LIBDIR) @XML_LIBS@
 
 noinst_PROGRAMS = isdsclient login certauth version progressbar logger \
 	getuserboxinfo addbox changebox \

@@ -520,6 +520,7 @@ void print_message(const struct isds_message *message) {
     printf("\traw_length = %zu\n", message->raw_length);
     printf("\traw_type = ");
     print_raw_type(message->raw_type);
+    printf("\txml = %p\n", message->xml);
     print_envelope(message->envelope);
     print_documents(message->documents);
 

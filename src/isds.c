@@ -250,6 +250,7 @@ void isds_message_free(struct isds_message **message) {
     free((*message)->raw);
     isds_envelope_free(&((*message)->envelope));
     isds_list_free(&((*message)->documents));
+    xmlFreeDoc((*message)->xml); (*message)->xml = NULL;
 
     free(*message);
     *message = NULL;
