@@ -104,9 +104,9 @@ int main(int argc, char **argv) {
         printf("isds_set_timeout() failed: %s\n", isds_strerror(err));
     }
 
-    /* err = isds_set_tls(ctx, ITLS_VERIFY_SERVER, 0);
+    /* err = isds_set_opt(ctx, IOPT_TLS_VERIFY_SERVER, 0);
     if (err) {
-        printf("isds_set_tls(ITLS_VERIFY_SERVER) failed: %s\n",
+        printf("isds_set_opt(IOPT_TLS_VERIFY_SERVER) failed: %s\n",
                 isds_strerror(err));
     }*/
 
@@ -116,9 +116,9 @@ int main(int argc, char **argv) {
             printf("setenv(\"SSL_DIR\", \"%s\") failed\n", NSS_DIR);
         }
     } else {
-        err = isds_set_tls(ctx, ITLS_CA_FILE, "../server/tls/ca.cert");
+        err = isds_set_opt(ctx, IOPT_TLS_CA_FILE, "../server/tls/ca.cert");
         if (err) {
-            printf("isds_set_tls(ITLS_CA_FILE) failed: %s\n",
+            printf("isds_set_opt(IOPT_TLS_CA_FILE) failed: %s\n",
                     isds_strerror(err));
         }
     }

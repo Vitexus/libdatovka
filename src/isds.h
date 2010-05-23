@@ -76,6 +76,23 @@ typedef enum {
 /* Return text description of ISDS error */
 const char *isds_strerror(const isds_error error);
 
+/* libisds options */
+typedef enum {
+    IOPT_TLS_VERIFY_SERVER,     /*  _Bool: Verify server idetity?
+                                   Default value is true. */
+    IOPT_TLS_CA_FILE,           /* char *: File name with CA certificates.
+                                   Default value depends on cryptographic
+                                   library. */
+    IOPT_TLS_CA_DIRECTORY,      /* char *: Directory name with CA certificates.
+                                   Default value depends on cryptographic
+                                   library. */
+    IOPT_TLS_CRL_FILE,          /* char *: File  name with CRL in PEM format.
+                                   Default value depends on cryptographic
+                                   library. */
+    IOPT_NORMALIZE_MIME_TYPE,   /*  _Bool: Normalize MIME type values?
+                                   Default value is false. */
+} isds_option;
+
 /* TLS libisds options */
 typedef enum {
     ITLS_VERIFY_SERVER,     /*  _Bool: Verify server idetity? */
@@ -605,14 +622,24 @@ typedef int (*isds_progress_callback)(
 isds_error isds_set_progress_callback(struct isds_ctx *context,
         isds_progress_callback callback, void *data);
 
-/* Change SSL/TLS settings.
+/* Change context settings.
  * @context is context which setting vill be applied to
+ * @option is name of option. It determines the type of last argument. See
+ * isds_option definition for more info.
+ * @... is value of new setting. Type is determined by @option
+ * */
+isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
+        ...);
+
+/* Deprecated: Use isds_set_opt() instead.
+ * Change SSL/TLS settings.
+ * @context is context which setting will be applied to
  * @option is name of option. It determines the type of last argument. See
  * isds_tls_option definition for more info.
  * @... is value of new setting. Type is determined by @option
  * */
 isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
-        ...);
+        ...) _deprecated; 
 
 /* Connect and log in into ISDS server.
  * All required arguments will be copied, you do not have to keep them after
@@ -1190,11 +1217,12 @@ const struct isds_document *isds_find_document_by_id(
  * constant static UTF-8 encoded string with proper MIME type. */
 char *isds_normalize_mime_type(const char* mime_type);
 
-/* Switch MIME type normalization while message loading. Default state for new
+/* XXX: Deprecated: Use isds_set_opt() instead.
+ * Switch MIME type normalization while message loading. Default state for new
  * context is no normalization.
  * @normalize use true to switch normalization on, false to switch off */
 isds_error isds_set_mime_type_normalization(struct isds_ctx *context,
-        _Bool normalize);
+        _Bool normalize) _deprecated;
 
 /* Free isds_list with all member data.
  * @list list to free, on return will be NULL */

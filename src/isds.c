@@ -906,13 +906,13 @@ isds_error isds_set_progress_callback(struct isds_ctx *context,
 }
 
 
-/* Change SSL/TLS settings.
- * @context is context which setting will be applied to
+/* Change context settings.
+ * @context is context which setting vill be applied to
  * @option is name of option. It determines the type of last argument. See
- * isds_tls_option definition for more info.
+ * isds_option definition for more info.
  * @... is value of new setting. Type is determined by @option
  * */
-isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
+isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
         ...) {
     isds_error err = IE_SUCCESS;
     va_list ap;
@@ -923,7 +923,17 @@ isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
 
     va_start(ap, option);
 
-#define REPLACE_VA_STRING(destination) \
+#define REPLACE_VA_BOOLEAN(destination) { \
+    if (!(destination)) { \
+        (destination) = malloc(sizeof(*(destination))); \
+        if (!(destination)) { \
+            err = IE_NOMEM; goto leave; \
+        } \
+    } \
+    *(destination) = (_Bool) !!va_arg(ap, int); \
+}
+
+#define REPLACE_VA_STRING(destination) { \
     string = va_arg(ap, char *); \
     if (string) { \
         pointer = realloc((destination), 1 + strlen(string)); \
@@ -933,27 +943,20 @@ isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
     } else { \
         free(destination); \
         (destination) = NULL; \
-    } 
+    } \
+}
 
     switch (option) {
-        case ITLS_VERIFY_SERVER:
-            if (!context->tls_verify_server) {
-                context->tls_verify_server =
-                    malloc(sizeof(*context->tls_verify_server));
-                if (!context->tls_verify_server) {
-                    err = IE_NOMEM; goto leave;
-                }
-            }
-            *context->tls_verify_server = (_Bool) (0 != va_arg(ap, int));
+        case IOPT_TLS_VERIFY_SERVER:
+            REPLACE_VA_BOOLEAN(context->tls_verify_server);
             break;
-
-        case ITLS_CA_FILE:
+        case IOPT_TLS_CA_FILE:
             REPLACE_VA_STRING(context->tls_ca_file);
             break;
-        case ITLS_CA_DIRECTORY:
+        case IOPT_TLS_CA_DIRECTORY:
             REPLACE_VA_STRING(context->tls_ca_dir);
             break;
-        case ITLS_CRL_FILE:
+        case IOPT_TLS_CRL_FILE:
 #if HAVE_DECL_CURLOPT_CRLFILE /* Since curl-7.19.0 */
             REPLACE_VA_STRING(context->tls_crl_file);
 #else
@@ -962,14 +965,46 @@ isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
             err = IE_NOTSUP;
 #endif  /* not HAVE_DECL_CURLOPT_CRLFILE */
             break;
+        case IOPT_NORMALIZE_MIME_TYPE:
+            context->normalize_mime_type = (_Bool) !!va_arg(ap, int);
 
         default:
             err = IE_ENUM; goto leave;
     }
 
 #undef REPLACE_VA_STRING
+#undef REPLACE_VA_BOOLEAN
 
 leave:
+    va_end(ap);
+    return err;
+}
+
+
+/* Deprecated: Use isds_set_opt() instead.
+ * Change SSL/TLS settings.
+ * @context is context which setting will be applied to
+ * @option is name of option. It determines the type of last argument. See
+ * isds_tls_option definition for more info.
+ * @... is value of new setting. Type is determined by @option
+ * */
+isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
+        ...) {
+    isds_error err = IE_ENUM;
+    va_list ap;
+
+    va_start(ap, option);
+
+    switch (option) {
+        case ITLS_VERIFY_SERVER:
+            err = isds_set_opt(context, option, va_arg(ap, int));
+            break;
+        case ITLS_CA_FILE:
+        case ITLS_CA_DIRECTORY:
+        case ITLS_CRL_FILE:
+            err = isds_set_opt(context, option, va_arg(ap, char*));
+    }
+
     va_end(ap);
     return err;
 }
