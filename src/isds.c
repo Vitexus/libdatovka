@@ -6076,7 +6076,7 @@ isds_error isds_send_message(struct isds_ctx *context,
     request = xmlNewNode(NULL, BAD_CAST "CreateMessage");
     if (!request) {
         isds_log_message(context,
-                _("Could build CreateMessage request"));
+                _("Could not build CreateMessage request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
