@@ -3792,21 +3792,66 @@ static isds_error insert_document(struct isds_ctx *context,
     }
 
 
-    /* Insert content (data) of the document. */
-    /* XXX; Only base64 is implemented currently. */
-    base64data = (xmlChar *) _isds_b64encode(document->data,
-            document->data_length);
-    if (!base64data) {
-        isds_printf_message(context,
-                ngettext("Not enought memory to encode %zd bytes into Base64",
-                    "Not enought memory to encode %zd bytes into Base64",
-                    document->data_length),
+    /* Insert content (body) of the document. */
+    if (document->is_xml) {
+        /* XML document requested */
+
+        /* Allocate new dmXMLContent */
+        xmlNodePtr xmlcontent = xmlNewNode(file->ns, BAD_CAST "dmXMLContent");
+        if (!xmlcontent) {
+            isds_printf_message(context,
+                    _("Could not allocate dmXMLContent elemement"));
+            err = IE_ERROR;
+            goto leave;
+        }
+        /* Append it */
+        node = xmlAddChild(file, xmlcontent);
+        if (!node) {
+            xmlFreeNode(xmlcontent); xmlcontent = NULL;
+            isds_printf_message(context,
+                    _("Could not add dmXMLContent child to %s element"),
+                    file->name);
+            err = IE_ERROR;
+            goto leave;
+        }
+
+        /* Copy non-empty node list */
+        if (document->xml_node_list) {
+            xmlNodePtr content = xmlDocCopyNodeList(node->doc,
+                    document->xml_node_list);
+            if (!content) {
+                isds_printf_message(context,
+                        _("Not enough memory to copy XML document"));
+                err = IE_NOMEM;
+                goto leave;
+            }
+
+            if (!xmlAddChildList(node, content)) {
+                xmlFreeNodeList(content);
+                isds_printf_message(context,
+                        _("Error while adding XML document into dmXMLContent"));
+                err = IE_XML;
+                goto leave;
+            }
+            /* XXX: We cannot free the content here because it's part of node's
+             * document since now. It will be freed with it automatically. */
+        }
+    } else {
+        /* Binary document requested */
+        base64data = (xmlChar *) _isds_b64encode(document->data,
                 document->data_length);
-        err = IE_NOMEM;
-        goto leave;
+        if (!base64data) {
+            isds_printf_message(context,
+                    ngettext("Not enought memory to encode %zd bytes into Base64",
+                        "Not enought memory to encode %zd bytes into Base64",
+                        document->data_length),
+                    document->data_length);
+            err = IE_NOMEM;
+            goto leave;
+        }
+        INSERT_STRING(file, "dmEncodedContent", base64data);
+        free(base64data);
     }
-    INSERT_STRING(file, "dmEncodedContent", base64data);
-    free(base64data);
 
 leave:
     return err;
