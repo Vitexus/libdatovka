@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
 
     {
         /* Find a recipient */
-        struct isds_list *boxes = NULL, *item;
+        struct isds_list *boxes = NULL;
         struct isds_DbOwnerInfo criteria;
         isds_DbType criteria_db_type = DBTYPE_OVM;
         memset(&criteria, 0, sizeof(criteria));
@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
 
             if (boxes && boxes->data) {
                 printf("Selected recipient:\n");
-                print_DbOwnerInfo(item->data);
+                print_DbOwnerInfo(boxes->data);
                 recipient = strdup(
                     ((struct isds_DbOwnerInfo *)(boxes->data))->dbID);
             }
