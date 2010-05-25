@@ -1,6 +1,6 @@
 LIBDIR =../src
 # Large files needed by GPGME
-AM_CFLAGS =-I$(LIBDIR)
+AM_CFLAGS = -I$(srcdir)/$(LIBDIR)
 LDADD = $(LIBDIR)/libisds.la -L$(LIBDIR)
 
 noinst_PROGRAMS = isdsclient login certauth version progressbar logger \

@@ -2,9 +2,10 @@ if BUILD_ONLINE_TEST
 SUBDIRS = online
 endif
 
-LIBDIR =../src
+libdirpath = src
+LIBDIR = $(top_srcdir)/$(libdirpath)
 localedir = $(datadir)/locale
-AM_CPPFLAGS =-I$(LIBDIR)
+AM_CPPFLAGS = -I$(LIBDIR) -I$(top_builddir)/$(libdirpath)
 
 # Large files needed by GPGME
 AM_CPPFLAGS += @XML_CPPFLAGS@ @LIBCURL_CPPFLAGS@ \
