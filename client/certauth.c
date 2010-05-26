@@ -7,7 +7,7 @@
 #include <isds.h>
 #include "common.h"
 
-#define TLS_PREFIX "../server/tls/"
+#define TLS_PREFIX SRCDIR "/server/tls/"
 #define NSS_DIR TLS_PREFIX "client_nss"
 
 void usage(const char *command) {
@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
             printf("setenv(\"SSL_DIR\", \"%s\") failed\n", NSS_DIR);
         }
     } else {
-        err = isds_set_opt(ctx, IOPT_TLS_CA_FILE, "../server/tls/ca.cert");
+        err = isds_set_opt(ctx, IOPT_TLS_CA_FILE, TLS_PREFIX "ca.cert");
         if (err) {
             printf("isds_set_opt(IOPT_TLS_CA_FILE) failed: %s\n",
                     isds_strerror(err));

@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
         int fd;
         size_t length;
 
-        if (mmap_file("../server/messages/signed_sent_message-151874.zfo",
+        if (mmap_file(SRCDIR "/server/messages/signed_sent_message-151874.zfo",
                 &fd, &buffer, &length)) {
             fprintf(stderr, "Could not map file with message");
             isds_ctx_free(&ctx);

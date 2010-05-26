@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
         int fd;
         size_t length;
         
-        if (mmap_file("../server/messages/received_message-151916.xml",
+        if (mmap_file(SRCDIR "/server/messages/received_message-151916.xml",
                 &fd, &buffer, &length)) {
             fprintf(stderr, "Could not map file with plain received message\n");
             isds_ctx_free(&ctx);
@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
         int fd;
         size_t length;
         
-        if (mmap_file("../server/messages/sent_message-206720.xml",
+        if (mmap_file(SRCDIR "/server/messages/sent_message-206720.xml",
                 &fd, &buffer, &length)) {
             fprintf(stderr, "Could not map file with plain signed message\n");
             isds_ctx_free(&ctx);
@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
         int fd;
         size_t length;
         
-        if (mmap_file("../server/messages/signed_sent_message-151874.zfo",
+        if (mmap_file(SRCDIR "/server/messages/signed_sent_message-151874.zfo",
                 &fd, &buffer, &length)) {
             fprintf(stderr, "Could not map file with CMS signed message\n");
             isds_ctx_free(&ctx);
