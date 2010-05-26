@@ -79,37 +79,38 @@ int main(int argc, char **argv) {
     struct test messages[] = {
         {
             .name = "unsigned incoming message",
-            .file = "../server/messages/received_message-151916.xml",
+            .file = SRCDIR "/server/messages/received_message-151916.xml",
             .type = RAWTYPE_INCOMING_MESSAGE,
             .should_pass = 1
         },
         {
             .name = "plain signed incoming message",
-            .file = "../server/messages/received_signed_message-330141.xml",
+            .file = SRCDIR
+                "/server/messages/received_signed_message-330141.xml",
             .type = RAWTYPE_PLAIN_SIGNED_INCOMING_MESSAGE,
             .should_pass = 1
         },
         {
             .name = "CMS signed incoming message",
-            .file = "../server/messages/received_message-330141.zfo",
+            .file = SRCDIR "/server/messages/received_message-330141.zfo",
             .type = RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE,
             .should_pass = 1
         },
         {
             .name = "plain signed sent message",
-            .file = "../server/messages/sent_message-206720.xml",
+            .file = SRCDIR "/server/messages/sent_message-206720.xml",
             .type = RAWTYPE_PLAIN_SIGNED_OUTGOING_MESSAGE,
             .should_pass = 1
         },
         {
             .name = "CMS signed sent message",
-            .file = "../server/messages/signed_sent_message-151874.zfo",
+            .file = SRCDIR "/server/messages/signed_sent_message-151874.zfo",
             .type = RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE,
             .should_pass = 1
         },
         {
             .name = "text file is not an incoming message",
-            .file = "guess_raw_type.c",
+            .file = "Makefile",
             .type = RAWTYPE_INCOMING_MESSAGE,
             .should_pass = 0
         },
@@ -121,25 +122,25 @@ int main(int argc, char **argv) {
     struct test deliveries[] = {
         {
             .name = "unsigned delivery info",
-            .file = "../server/messages/delivery_info-316590.xml",
+            .file = SRCDIR "/server/messages/delivery_info-316590.xml",
             .type = RAWTYPE_DELIVERYINFO,
             .should_pass = 1
         },
         {
             .name = "plain signed delivery info",
-            .file = "../server/messages/signed_delivered-DD_170272.xml",
+            .file = SRCDIR "/server/messages/signed_delivered-DD_170272.xml",
             .type = RAWTYPE_PLAIN_SIGNED_DELIVERYINFO,
             .should_pass = 1
         },
         {
             .name = "CMS signed delivery info",
-            .file = "../server/messages/signed_delivered-DD_170272.zfo",
+            .file = SRCDIR "/server/messages/signed_delivered-DD_170272.zfo",
             .type = RAWTYPE_CMS_SIGNED_DELIVERYINFO,
             .should_pass = 1
         },
         {
             .name = "text file is not a delivery info",
-            .file = "guess_raw_type.c",
+            .file = "Makefile",
             .type = RAWTYPE_INCOMING_MESSAGE,
             .should_pass = 0
         },

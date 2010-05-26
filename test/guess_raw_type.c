@@ -42,55 +42,56 @@ int main(int argc, char **argv) {
     struct test tests[] = {
         {
             .name = "unsigned incoming message",
-            .file = "../server/messages/received_message-151916.xml",
+            .file = SRCDIR "/server/messages/received_message-151916.xml",
             .type = RAWTYPE_INCOMING_MESSAGE,
             .error = IE_SUCCESS
         },
         {
             .name = "plain signed incoming message",
-            .file = "../server/messages/received_signed_message-330141.xml",
+            .file = SRCDIR
+                "/server/messages/received_signed_message-330141.xml",
             .type = RAWTYPE_PLAIN_SIGNED_INCOMING_MESSAGE,
             .error = IE_SUCCESS
         },
         {
             .name = "CMS signed incoming message",
-            .file = "../server/messages/received_message-330141.zfo",
+            .file = SRCDIR "/server/messages/received_message-330141.zfo",
             .type = RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE,
             .error = IE_SUCCESS
         },
         {
             .name = "plain signed sent message",
-            .file = "../server/messages/sent_message-206720.xml",
+            .file = SRCDIR "/server/messages/sent_message-206720.xml",
             .type = RAWTYPE_PLAIN_SIGNED_OUTGOING_MESSAGE,
             .error = IE_SUCCESS
         },
         {
             .name = "CMS signed sent message",
-            .file = "../server/messages/signed_sent_message-151874.zfo",
+            .file = SRCDIR "/server/messages/signed_sent_message-151874.zfo",
             .type = RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE,
             .error = IE_SUCCESS
         },
         {
             .name = "unsigned delivery info",
-            .file = "../server/messages/delivery_info-316590.xml",
+            .file = SRCDIR "/server/messages/delivery_info-316590.xml",
             .type = RAWTYPE_DELIVERYINFO,
             .error = IE_SUCCESS
         },
         {
             .name = "plain signed delivery info",
-            .file = "../server/messages/signed_delivered-DD_170272.xml",
+            .file = SRCDIR "/server/messages/signed_delivered-DD_170272.xml",
             .type = RAWTYPE_PLAIN_SIGNED_DELIVERYINFO,
             .error = IE_SUCCESS
         },
         {
             .name = "CMS signed delivery info",
-            .file = "../server/messages/signed_delivered-DD_170272.zfo",
+            .file = SRCDIR "/server/messages/signed_delivered-DD_170272.zfo",
             .type = RAWTYPE_CMS_SIGNED_DELIVERYINFO,
             .error = IE_SUCCESS
         },
         {
             .name = "text file",
-            .file = "guess_raw_type.c",
+            .file = "Makefile",
             .error = IE_NOTSUP
         },
         {

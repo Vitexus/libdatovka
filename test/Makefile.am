@@ -5,7 +5,8 @@ endif
 libdirpath = src
 LIBDIR = $(top_srcdir)/$(libdirpath)
 localedir = $(datadir)/locale
-AM_CPPFLAGS = -I$(LIBDIR) -I$(top_builddir)/$(libdirpath)
+AM_CPPFLAGS = -I$(LIBDIR) -I$(top_builddir)/$(libdirpath) \
+			  -DSRCDIR=\"$(top_srcdir)\"
 
 # Large files needed by GPGME
 AM_CPPFLAGS += @XML_CPPFLAGS@ @LIBCURL_CPPFLAGS@ \
