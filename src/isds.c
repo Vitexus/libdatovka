@@ -967,6 +967,7 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
             break;
         case IOPT_NORMALIZE_MIME_TYPE:
             context->normalize_mime_type = (_Bool) !!va_arg(ap, int);
+            break;
 
         default:
             err = IE_ENUM; goto leave;
