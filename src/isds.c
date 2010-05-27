@@ -1643,6 +1643,8 @@ static isds_error string2isds_DbType(xmlChar *string, isds_DbType *type) {
  * @Return pointer to static string, or NULL if unkwnow enum value */
 static const xmlChar *isds_DbType2string(const isds_DbType type) {
      switch(type) {
+            /* DBTYPE_SYSTEM is invalid value from point of view of public
+             * SOAP interface. */
             case DBTYPE_FO: return(BAD_CAST "FO"); break;
             case DBTYPE_PFO: return(BAD_CAST "PFO"); break;
             case DBTYPE_PFO_ADVOK: return(BAD_CAST "PFO_ADVOK"); break;
