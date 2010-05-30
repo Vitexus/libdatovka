@@ -155,6 +155,7 @@ int main(int argc, char **argv) {
         struct isds_document xml_document;
         memset(&xml_document, 0, sizeof(xml_document));
         xml_document.is_xml = 1;
+        xml_document.xml_node_list = node_list;
         xml_document.dmMimeType = "text/xml";
         xml_document.dmFileMetaType = FILEMETATYPE_ENCLOSURE;
         xml_document.dmFileDescr = "in-line.xml";
