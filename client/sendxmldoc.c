@@ -8,6 +8,7 @@
 #include <isds.h>
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
+#include <libxml/debugXML.h>
 #include "common.h"
 
 
@@ -47,7 +48,9 @@ int main(int argc, char **argv) {
     }
 
 
-    {
+    if (argv[1] && argv[1][0]) {
+        recipient = strdup(argv[1]);
+    } else {
         /* Find a recipient */
         struct isds_list *boxes = NULL;
         struct isds_DbOwnerInfo criteria;
@@ -81,15 +84,16 @@ int main(int argc, char **argv) {
         xmlXPathObjectPtr result = NULL;
 
         /* Get XML node list */
-        if (argc != 3) {
+        if (argc != 4) {
             printf("Bad number of arguments\n");
-            printf("Usage: %s XML_FILE XPATH_EXPRESSION\n"
-    "Send a message with XML document defined by XPATH_EXPRESSION on XML_FILE\n",
+            printf("Usage: %s RECIPIENT XML_FILE XPATH_EXPRESSION\n"
+"Send a message with XML document defined by XPATH_EXPRESSION on XML_FILE\n"
+"to RECIPIENT. If RECIPIENT is empty, send to random foubd one.",
             basename(argv[0]));
             exit(EXIT_FAILURE);
         }
 
-        xml = xmlParseFile(argv[1]);
+        xml = xmlParseFile(argv[2]);
         if (!xml) {
             printf("Error while parsing `%s'\n", argv[1]);
             exit(EXIT_FAILURE);
@@ -100,9 +104,9 @@ int main(int argc, char **argv) {
             printf("Error while creating XPath context\n");
             exit(EXIT_FAILURE);
         }
-        result = xmlXPathEvalExpression(BAD_CAST argv[2], xpath_ctx);
+        result = xmlXPathEvalExpression(BAD_CAST argv[3], xpath_ctx);
         if (!result) {
-            printf("Error while evaluating XPath expression `%s'\n", argv[2]);
+            printf("Error while evaluating XPath expression `%s'\n", argv[3]);
             exit(EXIT_FAILURE);
         }
         if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
@@ -111,8 +115,10 @@ int main(int argc, char **argv) {
         } else {
             /* Convert node set to list of siblings */
             for (int i = 0; i < result->nodesetval->nodeNr; i++) {
+                printf("* Embeding node #%d:\n", i);
                 /* FIXME */
                 node_list = result->nodesetval->nodeTab[i];
+                xmlDebugDumpNode(stdout, result->nodesetval->nodeTab[i], 2);
             }
 
         }
