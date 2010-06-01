@@ -82,6 +82,7 @@ int main(int argc, char **argv) {
     {
         xmlXPathContextPtr xpath_ctx = NULL;
         xmlXPathObjectPtr result = NULL;
+        xmlNodePtr node = NULL, prev_node = NULL;
 
         /* Get XML node list */
         if (argc != 4) {
@@ -115,10 +116,26 @@ int main(int argc, char **argv) {
         } else {
             /* Convert node set to list of siblings */
             for (int i = 0; i < result->nodesetval->nodeNr; i++) {
+                /* Make weak copy of the node */
+                node = malloc(sizeof(*node));
+                if (!node) {
+                    fprintf(stderr, "Not enoungh memory\n");
+                    exit (EXIT_FAILURE);
+                }
+                memcpy(node, result->nodesetval->nodeTab[i], sizeof(*node));
+
+                /* Add node to node_list */
+                node->prev = prev_node;
+                node->next = NULL;
+                if (prev_node)
+                    prev_node->next = node;
+                else
+                    node_list = node;
+                prev_node = node;
+
+                /* Debug */
                 printf("* Embeding node #%d:\n", i);
-                /* FIXME */
-                node_list = result->nodesetval->nodeTab[i];
-                xmlDebugDumpNode(stdout, result->nodesetval->nodeTab[i], 2);
+                xmlDebugDumpNode(stdout, node, 2);
             }
 
         }
@@ -186,6 +203,7 @@ int main(int argc, char **argv) {
 
     }
 
+    for (xmlNodePtr node = node_list; node; node = node->next) free(node);
     free(recipient);
     xmlFreeDoc(xml);
 
