@@ -4,6 +4,7 @@
 #include <locale.h>
 #include <time.h>
 #include <string.h>
+#include <libgen.h>
 #include <isds.h>
 #include "common.h"
 
@@ -13,6 +14,11 @@ int main(int argc, char **argv) {
     isds_error err;
     
     setlocale(LC_ALL, "");
+
+    if (argc != 2 || !argv[1] || !*argv[1]) {
+        printf("Usage: %s FILE_WITH_SIGNED_SEND_MESSAGE\n", basename(argv[0]));
+        exit(EXIT_FAILURE);
+    }
 
     err = isds_init();
     if (err) {
@@ -36,8 +42,7 @@ int main(int argc, char **argv) {
         int fd;
         size_t length;
 
-        if (mmap_file(SRCDIR "/server/messages/signed_sent_message-151874.zfo",
-                &fd, &buffer, &length)) {
+        if (mmap_file(argv[1], &fd, &buffer, &length)) {
             fprintf(stderr, "Could not map file with message");
             isds_ctx_free(&ctx);
             isds_cleanup();
