@@ -12,6 +12,8 @@
 #include "common.h"
 
 
+/* @node_list is pointer to by-function allocated weak copy of libxml node
+ * pointers list. *NULL means empty list. */
 int xpath2nodelist(xmlNodePtr *node_list, xmlXPathContextPtr xpath_ctx, const xmlChar *xpath_expr) {
     xmlXPathObjectPtr result = NULL;
     xmlNodePtr node = NULL, prev_node = NULL;
@@ -68,6 +70,7 @@ int main(int argc, char **argv) {
     isds_error err;
     char *recipient = NULL;
     xmlDocPtr xml = NULL;
+    struct isds_list *documents = NULL;
     
     setlocale(LC_ALL, "");
 
@@ -130,13 +133,12 @@ int main(int argc, char **argv) {
 
 
     {
+        /* Create XML documents */
         xmlXPathContextPtr xpath_ctx = NULL;
-        xmlNodePtr node_list = NULL;
 
         struct isds_document *document;
-        struct isds_list *documents_item;
+        struct isds_list *documents_item, *prev_documents_item = NULL;
 
-        /* Create XML documents */
         if (argc < 4) {
             printf("Bad number of arguments\n");
             printf("Usage: %s RECIPIENT XML_FILE XPATH_EXPRESSION...\n"
@@ -162,32 +164,43 @@ int main(int argc, char **argv) {
         for (int j = 3; j < argc; j++) {
             printf("** Building XML document #%d:\n", j);
 
-            xpath2nodelist(&node_list, xpath_ctx, BAD_CAST argv[j]);
-
             document = calloc(1, sizeof(*document));
             if (!document) {
-                printf("Not enought memory\n");
+                printf("Not enough memory\n");
                 exit(EXIT_FAILURE);
             }
             document->is_xml = 1;
-            document->xml_node_list = node_list;
             document->dmMimeType = "text/xml";
-            document->dmFileMetaType = FILEMETATYPE_ENCLOSURE;
+            if (prev_documents_item)
+                document->dmFileMetaType = FILEMETATYPE_ENCLOSURE; 
+            else
+                document->dmFileMetaType = FILEMETATYPE_MAIN; 
             document->dmFileDescr = "in-line.xml";
+
+            if (xpath2nodelist(&document->xml_node_list, xpath_ctx,
+                    BAD_CAST argv[j])) {
+                printf("Could not convert XPath result to node list: %s\n",
+                        argv[j]);
+                exit(EXIT_FAILURE);
+            }
 
             documents_item = calloc(1, sizeof(*documents_item));
             if (!documents_item) {
-                printf("Not enought memory\n");
+                printf("Not enough memory\n");
                 exit(EXIT_FAILURE);
             }
 
             documents_item->data = document,
             documents_item->destructor = (void(*)(void**))isds_document_free;
-
+            if (!prev_documents_item) 
+                documents = prev_documents_item = documents_item;
+            else {
+                prev_documents_item->next = documents_item;
+                prev_documents_item = documents_item;
+            }
         }
 
         xmlXPathFreeContext(xpath_ctx);
-
     }
 
 
@@ -204,7 +217,7 @@ int main(int argc, char **argv) {
         envelope.dmAnnotation = "XML documents";
         envelope.dbIDRecipient = recipient;
 
-        message.documents = NULL; /* FIXME */
+        message.documents = documents;
 
         printf("Sending message to box ID `%s'\n", recipient);
         err = isds_send_message(ctx, &message);
@@ -218,7 +231,20 @@ int main(int argc, char **argv) {
 
     }
 
-    /*for (xmlNodePtr node = node_list; node; node = node->next) free(node);*/
+    /* Free document xml_node_lists because they are weak copies of nodes in
+     * message->xml and isds_document_free() does not free it. */
+    for (struct isds_list *item = documents; item; item = item->next) {
+        if (item->data) {
+            struct isds_document *document =
+                (struct isds_document *)item->data;
+            if (document->is_xml) {
+                for (xmlNodePtr node = document->xml_node_list; node;
+                        node = node->next)
+                    free(node);
+            }
+        }
+    }
+
     free(recipient);
     xmlFreeDoc(xml);
 
