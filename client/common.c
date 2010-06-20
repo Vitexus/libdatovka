@@ -467,6 +467,9 @@ void print_document(const struct isds_document *document) {
     }
     printf("\{\n");
 
+    printf("\t\t\tis_xml = %u\n", !!document->is_xml);
+    printf("\t\t\txml_node_list = %p\n", document->xml_node_list);
+
     printf("\t\t\tdata = %p\n", document->data);
     printf("\t\t\tdata_length = %zu\n", document->data_length);
     printf("\t\t\tdmMimeType = %s\n", document->dmMimeType);
