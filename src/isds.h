@@ -28,7 +28,7 @@ extern const char isds_testing_locator[]; /* B. URL of testing ISDS instance */
 struct isds_ctx;    /* Context for specific ISDS box */
 
 typedef enum {
-    IE_SUCCESS = 0, /* No error, just for C conveniece (0 means Ok) */
+    IE_SUCCESS = 0, /* No error, just for C convenience (0 means Ok) */
     IE_ERROR,       /* Unspecified error */
     IE_NOTSUP,
     IE_INVAL,
@@ -79,7 +79,7 @@ const char *isds_strerror(const isds_error error);
 
 /* libisds options */
 typedef enum {
-    IOPT_TLS_VERIFY_SERVER,     /*  _Bool: Verify server idetity?
+    IOPT_TLS_VERIFY_SERVER,     /*  _Bool: Verify server identity?
                                    Default value is true. */
     IOPT_TLS_CA_FILE,           /* char *: File name with CA certificates.
                                    Default value depends on cryptographic
@@ -96,7 +96,7 @@ typedef enum {
 
 /* TLS libisds options */
 typedef enum {
-    ITLS_VERIFY_SERVER,     /*  _Bool: Verify server idetity? */
+    ITLS_VERIFY_SERVER,     /*  _Bool: Verify server identity? */
     ITLS_CA_FILE,           /* char *: File name with CA certificates */
     ITLS_CA_DIRECTORY,      /* char *: Directory name with CA certificates */
     ITLS_CRL_FILE           /* char *: File  name with CRL in PEM format */
@@ -115,7 +115,7 @@ struct isds_pki_credentials {
                                (where key is stored). Use NULL for no engine */
     isds_pki_format certificate_format;     /* Certificate format */
     char *certificate;      /* Path to client certificate, or certificate
-                               nickname in case of NSS as curl backend,
+                               nickname in case of NSS as curl back-end,
                                or key slot identifier inside crypto engine.
                                Some crypto engines can pair certificate with
                                key automatically (NULL value) */
@@ -124,7 +124,7 @@ struct isds_pki_credentials {
                                in case of used engine */
     char *passphrase;       /* Zero terminated string with password for
                                decrypting private key, or engine PIN.
-                               Use NULL for no passhrase or question by
+                               Use NULL for no pass-phrase or question by
                                engine. */
 };
 
@@ -146,7 +146,7 @@ typedef enum {
     DBTYPE_FO = 40
 } isds_DbType;
 
-/* Box status from point of view of accesibilty */
+/* Box status from point of view of accessibility */
 typedef enum {
     DBSTATE_ACCESSIBLE = 1,
     DBSTATE_TEMP_UNACCESSIBLE = 2,
@@ -163,14 +163,14 @@ typedef enum {
     PRIVIL_READ_ALL = 0x2,          /* Can download and read messages with
                                        dmPersonalDelivery == true */
     PRIVIL_CREATE_DM = 0x4,         /* Can create and sent messages,
-                                       can dowload outgoing (sent) messages */
+                                       can download outgoing (sent) messages */
     PRIVIL_VIEW_INFO = 0x8,         /* Can list messages and data about
                                        post and delivery */
     PRIVIL_SEARCH_DB = 0x10,        /* Can search for boxes */
     PRIVIL_OWNER_ADM = 0x20,        /* Can administer his box (add/remove
                                        permitted users and theirs
                                        permissions) */
-    PRIVIL_READ_VAULT = 0x40,       /* Cen read message stored in data safe */
+    PRIVIL_READ_VAULT = 0x40,       /* Can read message stored in data safe */
     PRIVIL_ERASE_VAULT = 0x80       /* Can delete messages from data safe */ 
 } isds_priviledges;
 
@@ -178,19 +178,19 @@ typedef enum {
 typedef enum {
     MESSAGESTATE_SENT = 0x2,            /* Message has been put into ISDS */
     MESSAGESTATE_STAMPED = 0x4,         /* Message stamped by TSA */
-    MESSAGESTATE_INFECTED = 0x8,        /* Message included virues,
+    MESSAGESTATE_INFECTED = 0x8,        /* Message included viruses,
                                            infected document has been removed */
     MESSAGESTATE_DELIVERED = 0x10,      /* Message delivered
                                            (dmDeliveryTime stored) */
     MESSAGESTATE_SUBSTITUTED = 0x20,    /* Message delivered through fiction,
                                            dmAcceptanceTime stored */
-    MESSAGESTATE_RECEIVED = 0x40,       /* Message accepted (by user login or
+    MESSAGESTATE_RECEIVED = 0x40,       /* Message accepted (by user log-in or
                                            user explicit request),
                                            dmAcceptanceTime stored */
     MESSAGESTATE_READ = 0x80,           /* Message has been read by user */
     MESSAGESTATE_UNDELIVERABLE = 0x100, /* Message could not been delivered
-                                           (e.g. recipent box has been made
-                                           unaccessible meantime) */
+                                           (e.g. recipient box has been made
+                                           inaccessible meantime) */
     MESSAGESTATE_REMOVED = 0x200,       /* Message content deleted */
     MESSAGESTATE_IN_SAFE = 0x400        /* Message stored in data safe */
 
@@ -198,7 +198,7 @@ typedef enum {
 #define MESSAGESTATE_ANY 0x7FE          /* Union of all isds_message_status
                                            values */
 
-/* Hash algoritm types */
+/* Hash algorithm types */
 typedef enum {
     HASH_ALGORITHM_MD5,
     HASH_ALGORITHM_SHA_1,
@@ -212,7 +212,7 @@ typedef enum {
  * How function should embed application provided buffer into raw element of
  * output structure. */
 typedef enum {
-    BUFFER_DONT_STORE,      /* Don't fill raw memeber */
+    BUFFER_DONT_STORE,      /* Don't fill raw member */
     BUFFER_COPY,            /* Copy buffer content into newly allocated raw */
     BUFFER_MOVE             /* Just copy pointer.
                                But leave deallocation to isds_*_free(). */
@@ -220,8 +220,8 @@ typedef enum {
 
 /* Hash value storage */
 struct isds_hash {
-    isds_hash_algorithm algorithm;      /* Hash algoritgm */
-    size_t length;                      /* Hash value lenght in bytes */
+    isds_hash_algorithm algorithm;      /* Hash algorithm */
+    size_t length;                      /* Hash value length in bytes */
     void *value;                        /* Hash value */
 };
 
@@ -272,10 +272,10 @@ struct isds_DbOwnerInfo {
     char *registryCode;             /* PFO External registry code
                                        [Max. 5 chars] */
     long int *dbState;              /* Box state; 1 <=> active box;
-                                       long int beacause xsd:integer
+                                       long int because xsd:integer
                                        TODO: enum? */
     _Bool *dbEffectiveOVM;          /* Box has OVM role (§ 5a) */
-    _Bool *dbOpenAddressing;        /* Non-OVM Box is free to recieve
+    _Bool *dbOpenAddressing;        /* Non-OVM Box is free to receive
                                        messages from anybody */  
 };
 
@@ -312,17 +312,17 @@ struct isds_DbUserInfo {
 typedef enum {
     EVENT_UKNOWN,                   /* Event unknown to this library */
     EVENT_ACCEPTED_BY_RECIPIENT,    /* Message has been delivered and accepted
-                                       by recipeint action */
+                                       by recipient action */
     EVENT_ACCEPTED_BY_FICTION,      /* Message has been delivered, acceptance
                                        timed out, considered as accepted */
-    EVENT_UNDELIVERABLE,            /* Recipient box made unaccessible,
-                                       thus message is undelivarable */
-    EVENT_COMMERCIAL_ACCEPTED       /* Recipient confirmed acceptace of
+    EVENT_UNDELIVERABLE,            /* Recipient box made inaccessible,
+                                       thus message is undeliverable */
+    EVENT_COMMERCIAL_ACCEPTED       /* Recipient confirmed acceptance of
                                        commercial message */
 } isds_event_type;
 
 /* Message event
- * Alle members are optional as specification states so. */
+ * All members are optional as specification states so. */
 struct isds_event {
     struct timeval *time;           /* When the event occurred */
     isds_event_type *type;          /* Type of the event */
@@ -331,13 +331,13 @@ struct isds_event {
 };
 
 /* Message envelope
- * Be ware that the string length contraints are forced only on output
- * memebers transmitted to ISDS. The other direction (downloded from ISDS)
+ * Be ware that the string length constraints are forced only on output
+ * members transmitted to ISDS. The other direction (downloaded from ISDS)
  * can break these rules. It should not happen, but nobody knows how much
  * incompatible new version of ISDS protocol will be. This is the gold
- * Internet rule: be strict on what you put, be tollerant on what you get. */
+ * Internet rule: be strict on what you put, be tolerant on what you get. */
 struct isds_envelope {
-    /* Following memebers apply to incoming messages only: */
+    /* Following members apply to incoming messages only: */
     char *dmID;                     /* Message ID.
                                        Maximal length is 20 characters. */
     char *dbIDSender;               /* Box ID of sender.
@@ -359,7 +359,7 @@ struct isds_envelope {
                                        "V" is public message
                                        "K" is commercial message */
 
-    /* Following memebers are assigned by ISDS in different phases of message
+    /* Following members are assigned by ISDS in different phases of message
      * life cycle. */
     unsigned long int *dmOrdinal;   /* Ordinal number in list of
                                        incoming/outgoing messages */
@@ -369,13 +369,13 @@ struct isds_envelope {
     struct timeval *dmDeliveryTime;     /* Time of delivery into a box
                                            NULL, if message has not been
                                            delivered yet */
-    struct timeval *dmAcceptanceTime;   /* Time of accpetance of the message
+    struct timeval *dmAcceptanceTime;   /* Time of acceptance of the message
                                            by an user. NULL if message has not
                                            been accepted yet. */
     struct isds_hash *hash;         /* Message hash.
                                        This is hash of isds:dmDM subtree. */
     void *timestamp;                /* Qualified time stamp */
-    size_t timestamp_length;        /* Lenght of timestamp in bytes */
+    size_t timestamp_length;        /* Length of timestamp in bytes */
     struct isds_list *events;       /* Events message passed trough;
                                        List of isds_event's. */
 
@@ -398,25 +398,25 @@ struct isds_envelope {
     char *dmRecipientRefNumber;     /* Czech: číslo jednací příjemce; Optional.
                                        Maximal length is 50 characters. */
     char *dmSenderRefNumber;        /* Czech: číslo jednací odesílatele;
-                                       Optional. Maximal lenght is 50 chars. */
+                                       Optional. Maximal length is 50 chars. */
     char *dmRecipientIdent;         /* Czech: spisová značka příjemce; Optional.
                                        Maximal length is 50 characters. */
     char *dmSenderIdent;            /* Czech: spisová značka odesílatele;
-                                       Optional. Maximal lenght is 50 chars. */
+                                       Optional. Maximal length is 50 chars. */
 
     /* Act addressing in Czech Republic:
-     * Point (Parahraph) § Section Law/Year Coll. */
+     * Point (Paragraph) § Section Law/Year Coll. */
     long int *dmLegalTitleLaw;      /* Number of act mandating authority */
     long int *dmLegalTitleYear;     /* Year of act issue mandating authority */
     char *dmLegalTitleSect;         /* Section of act mandating authority.
                                        Czech: paragraf */
-    char *dmLegalTitlePar;          /* Parahraph of act mandating authority.
+    char *dmLegalTitlePar;          /* Paragraph of act mandating authority.
                                        Czech: odstavec */
     char *dmLegalTitlePoint;        /* Point of act mandating authority.
                                        Czech: písmeno */
 
     _Bool *dmPersonalDelivery;      /* If true, only person with higher
-                                       priviledges can read this message */
+                                       privileges can read this message */
     _Bool *dmAllowSubstDelivery;    /* Allow delivery through fiction.
                                        I.e. Even if recipient did not read this
                                        message, message is considered as
@@ -428,11 +428,11 @@ struct isds_envelope {
                                        dbEffectiveOVM == true MUST select
                                        between true (OVM mode) and
                                        false (non-OVM mode).
-                                       Optionable; Implicit value is true. */
+                                       Optional; Implicit value is true. */
 };
 
 
-/* Document type from point of hiearchy */
+/* Document type from point of hierarchy */
 typedef enum {
     FILEMETATYPE_MAIN,              /* Main document */
     FILEMETATYPE_ENCLOSURE,         /* Appendix */
@@ -470,13 +470,13 @@ struct isds_document {
     char *dmFileDescr;              /* Document name (title). E.g. file name;
                                        Mandatory. */
     char *dmFormat;                 /* Reference to XML form definition;
-                                       Defines howto interpret XML document;
+                                       Defines how to interpret XML document;
                                        Optional. */
 };
 
 /* Raw message representation content type.
  * This is necessary to distinguish between different representations without
- * expensive repated detection.
+ * expensive repeated detection.
  * Infix explanation:
  *  PLAIN_SIGNED  data are XML with namespace mangled to signed alternative
  *  CMS_SIGNED    data are XML with signed namespace encapsulated in CMS */
@@ -496,9 +496,9 @@ struct isds_message {
     void *raw;                      /* Raw message in XML format as send to or
                                        from the ISDS. You can use it to store
                                        local copy. This is binary buffer. */
-    size_t raw_length;              /* Lenght of raw message in bytes */
+    size_t raw_length;              /* Length of raw message in bytes */
     isds_raw_type raw_type;         /* Content type of raw representation
-                                       Meaningfull only with non-NULL raw
+                                       Meaningful only with non-NULL raw
                                        member */
     xmlDocPtr xml;                  /* Parsed XML document with attached ISDS
                                        message XML documents.
@@ -509,7 +509,7 @@ struct isds_message {
                                        Valid message must contain exactly one
                                        document of type FILEMETATYPE_MAIN and
                                        can contain any number of other type
-                                       documents. Totol size of documents
+                                       documents. Total size of documents
                                        must not exceed 10 MB. */
 };
 
@@ -529,7 +529,7 @@ struct isds_message_copy {
     isds_error error;               /* libisds compatible error of delivery to o                                       ne recipient */
     char *dmStatus;                 /* Error description returned by ISDS;
                                        Optional. */
-    char *dmID;                     /* Assigned message ID; Meaningfull only
+    char *dmID;                     /* Assigned message ID; Meaningful only
                                        for error == IE_SUCCESS */
 };
 
@@ -544,22 +544,22 @@ struct isds_list {
 /* External box approval */
 struct isds_approval {
     _Bool approved;                 /* True if request for box has been
-                                       approvedout of ISDS */
+                                       approved out of ISDS */
     char *refference;               /* Identifier of the approval */
 };
 
 
 /* Initialize ISDS library.
  * Global function, must be called before other functions.
- * If it failes you can not use ISDS library and must call isds_cleanup() to
- * free partially inititialized global variables. */
+ * If it fails you can not use ISDS library and must call isds_cleanup() to
+ * free partially initialized global variables. */
 isds_error isds_init(void);
 
-/* Deinicialize ISDS library.
+/* Deinitialize ISDS library.
  * Global function, must be called as last library function. */
 isds_error isds_cleanup(void);
 
-/* Return version string of this library. Version of dependecies can be
+/* Return version string of this library. Version of dependencies can be
  * embedded. Do no try to parse it. You must free it. */
 char *isds_version(void);
 
@@ -569,25 +569,25 @@ char *isds_version(void);
  * Returns new context, or NULL */
 struct isds_ctx *isds_ctx_create(void);
 
-/* Destroy ISDS context and free memmory.
+/* Destroy ISDS context and free memory.
  * @context will be NULLed on success. */
 isds_error isds_ctx_free(struct isds_ctx **context);
 
-/* Return long message text produced by library fucntion, e.g. detailed error
- * mesage. Returned pointer is only valid until new library function is
+/* Return long message text produced by library function, e.g. detailed error
+ * message. Returned pointer is only valid until new library function is
  * called for the same context. Could be NULL, especially if NULL context is
  * supplied. Return string is locale encoded. */
 char *isds_long_message(const struct isds_ctx *context);
 
 /* Set logging up.
- * @facilities is bitmask of isds_log_facility values,
+ * @facilities is bit mask of isds_log_facility values,
  * @level is verbosity level. */
 void isds_set_logging(const unsigned int facilities,
         const isds_log_level level);
 
 /* Function provided by application libisds will call to pass log message.
- * The message is ussually locale encoded, but raw strings (UTF-8 usually) can
- * occur when logging raw communitication with ISDS servers. Infixed zero byte
+ * The message is usually locale encoded, but raw strings (UTF-8 usually) can
+ * occur when logging raw communication with ISDS servers. Infixed zero byte
  * is not excluded, but should not present. Use @length argument to get real
  * length of the message.
  * TODO: We will try to fix the encoding issue
@@ -606,18 +606,18 @@ typedef void (*isds_log_callback)(
 
 /* Register callback function libisds calls when new global log message is
  * produced by library. Library logs to stderr by default.
- * @callback is function provided by application libsds will call. See type
- * defition for @callback argument explanation. Pass NULL to revert logging to
+ * @callback is function provided by application libisds will call. See type
+ * definition for @callback argument explanation. Pass NULL to revert logging to
  * default behaviour.
  * @data is application specific data @callback gets as last argument */
 void isds_set_log_callback(isds_log_callback callback, void *data);
 
-/* Set timeout in miliseconds for each network job like connecting to server
+/* Set timeout in milliseconds for each network job like connecting to server
  * or sending message. Use 0 to disable timeout limits. */
 isds_error isds_set_timeout(struct isds_ctx *context,
         const unsigned int timeout);
 
-/* Function provided by application libsds will call with
+/* Function provided by application libisds will call with
  * following five arguments. Value zero of any argument means the value is
  * unknown.
  * @upload_total is expected total upload,
@@ -625,23 +625,23 @@ isds_error isds_set_timeout(struct isds_ctx *context,
  * @dowload_total is expected total download
  * @download_current is cumulative current download progress
  * @data is pointer that will be passed unchanged to this function at run-time
- * @return 0 to continue HTTP transfaer, or non-zero to abort transfer */
+ * @return 0 to continue HTTP transfer, or non-zero to abort transfer */
 typedef int (*isds_progress_callback)(
         double upload_total, double upload_current,
         double download_total, double download_current,
         void *data);
 
-/* Register callback function libisds calls periodocally during HTTP data
+/* Register callback function libisds calls periodically during HTTP data
  * transfer.
  * @context is session context
- * @callback is function provided by application libsds will call. See type
- * defition for @callback argument explanation.
+ * @callback is function provided by application libisds will call. See type
+ * definition for @callback argument explanation.
  * @data is application specific data @callback gets as last argument */
 isds_error isds_set_progress_callback(struct isds_ctx *context,
         isds_progress_callback callback, void *data);
 
 /* Change context settings.
- * @context is context which setting vill be applied to
+ * @context is context which setting will be applied to
  * @option is name of option. It determines the type of last argument. See
  * isds_option definition for more info.
  * @... is value of new setting. Type is determined by @option
@@ -672,7 +672,7 @@ isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
  *            @username shifts meaning to box ID. This is used for hosted
  *            services.
  *          - Otherwise all three arguments will be used.
- * Please note, that differen cases requires different certificate type
+ * Please note, that different cases requires different certificate type
  * (system qualified one or commercial non qualified one). This library does
  * not check such political issues. Please see ISDS Specification for more
  * details.
@@ -691,7 +691,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 isds_error isds_logout(struct isds_ctx *context);
 
 /* Verify connection to ISDS is alive and server is responding.
- * Sent dumy request to ISDS and expect dummy response. */
+ * Sent dummy request to ISDS and expect dummy response. */
 isds_error isds_ping(struct isds_ctx *context);
 
 /* Get data about logged in user and his box. */
@@ -755,10 +755,10 @@ isds_error isds_add_pfoinfo(struct isds_ctx *context,
         const char *ceo_label, const struct isds_approval *approval,
         char **refnumber);
 
-/* Remove given given box permanetly.
+/* Remove given given box permanently.
  * @context is session context
  * @box is box description to delete
- * @since is date of box owner cancalation. Only tm_year, tm_mon and tm_mday
+ * @since is date of box owner cancellation. Only tm_year, tm_mon and tm_mday
  * carry sane value.
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
@@ -808,7 +808,7 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
  * @token is NULL if new password should be delivered off-line to the user.
  * It is valid pointer if user should obtain new password on-line on dedicated
  * web server. Then it output automatically reallocated token user needs to
- * use to athtorize on the web server to view his new password. 
+ * use to authorize on the web server to view his new password. 
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_reset_password(struct isds_ctx *context,
@@ -831,7 +831,7 @@ isds_error isds_add_user(struct isds_ctx *context,
 /* Remove user assigned to given box.
  * @context is session context
  * @box is box identification
- * @user identifies user to removve
+ * @user identifies user to remove
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
@@ -845,9 +845,9 @@ isds_error isds_delete_user(struct isds_ctx *context,
  * @boxes is automatically reallocated list of isds_DbOwnerInfo structures,
  * possibly empty. Input NULL or valid old structure.
  * @return:
- *  IE_SUCCESS if search sucseeded, @boxes contains usefull data
+ *  IE_SUCCESS if search succeeded, @boxes contains useful data
  *  IE_NOEXIST if no such box exists, @boxes will be NULL
- *  IE_2BIG if too much boxes exist and server truncated the resuluts, @boxes
+ *  IE_2BIG if too much boxes exist and server truncated the results, @boxes
  *      contains still valid data
  *  other code if something bad happens. @boxes will be NULL. */
 isds_error isds_FindDataBox(struct isds_ctx *context,
@@ -899,8 +899,8 @@ isds_error isds_switch_effective_ovm(struct isds_ctx *context,
  * Despite the name, owner must do the request off-line. This function is
  * designed for such off-line meeting points (e.g. Czech POINT).
  * @context is ISDS session context.
- * @box identifies box to swith accesibilty state.
- * @allow is true for making accesibale, false to disallow access.
+ * @box identifies box to switch accessibility state.
+ * @allow is true for making accessible, false to disallow access.
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
@@ -912,8 +912,8 @@ isds_error isds_switch_box_accessibility_on_owner_request(
 /* Disable box accessibility on law enforcement (e.g. by prison) since exact
  * date.
  * @context is ISDS session context.
- * @box identifies box to swith accesibilty state.
- * @since is date since accesseibility has been denied. This can be past too.
+ * @box identifies box to switch accessibility state.
+ * @since is date since accessibility has been denied. This can be past too.
  * Only tm_year, tm_mon and tm_mday carry sane value.
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
@@ -923,10 +923,10 @@ isds_error isds_disable_box_accessibility_externaly(
         const struct tm *since, const struct isds_approval *approval,
         char **refnumber);
 
-/* Send a message via ISDS to a recipent
+/* Send a message via ISDS to a recipient
  * @context is session context
- * @outgoing_message is message to send; Some memebers are mandatory (like
- * dbIDRecipient), some are optional and some are irrelevant (especialy data
+ * @outgoing_message is message to send; Some members are mandatory (like
+ * dbIDRecipient), some are optional and some are irrelevant (especially data
  * about sender). Included pointer to isds_list documents must contain at
  * least one document of FILEMETATYPE_MAIN. This is read-write structure, some
  * members will be filled with valid data from ISDS. Exact list of write
@@ -935,10 +935,10 @@ isds_error isds_disable_box_accessibility_externaly(
 isds_error isds_send_message(struct isds_ctx *context,
         struct isds_message *outgoing_message);
 
-/* Send a message via ISDS to a multiple recipents
+/* Send a message via ISDS to a multiple recipients
  * @context is session context
- * @outgoing_message is message to send; Some memebers are mandatory,
- * some are optional and some are irrelevant (especialy data
+ * @outgoing_message is message to send; Some members are mandatory,
+ * some are optional and some are irrelevant (especially data
  * about sender). Data about recipient will be substituted by ISDS from
  * @copies. Included pointer to isds_list documents must
  * contain at least one document of FILEMETATYPE_MAIN.
@@ -948,7 +948,7 @@ isds_error isds_send_message(struct isds_ctx *context,
  * @return
  *  ISDS_SUCCESS if all messages have been sent
  *  ISDS_PARTIAL_SUCCESS if sending of some messages has failed (failed and
- *      succesed messages can be identified by copies->data->error),
+ *      succeeded messages can be identified by copies->data->error),
  *  or other error code if something other goes wrong. */
 isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
         const struct isds_message *outgoing_message,
@@ -962,7 +962,7 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
  * @dmSenderOrgUnitNum is the same as isds_envelope.dmSenderOrgUnitNum
  * @status_filter is bit field of isds_message_status values. Use special
  * value MESSAGESTATE_ANY to signal you don't care. (It's defined as union of
- * all values, you can use bitwise arithmetic if you want.)
+ * all values, you can use bit-wise arithmetic if you want.)
  * @offset is index of first message we are interested in. First message is 1.
  * Set to 0 (or 1) if you don't care.
  * @number is maximal length of list you want to get as input value, outputs
@@ -972,9 +972,9 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
  * it returns only brief overview (envelope and some other fields) about each
  * message, not the complete message. FIXME: Specify exact fields.
  * The list is sorted by delivery time in ascending order.
- * Use NULL if you don't care about the metadata (useful if you want to know
+ * Use NULL if you don't care about the meta data (useful if you want to know
  * only the @number). If you provide &NULL, list will be allocated on heap,
- * if you provide pointer to non-NULL, list will be freed automacally at first.
+ * if you provide pointer to non-NULL, list will be freed automatically at first.
  * Also in case of error the list will be NULLed.
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
@@ -991,7 +991,7 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
  * @dmSenderOrgUnitNum is the same as isds_envelope.dmSenderOrgUnitNum
  * @status_filter is bit field of isds_message_status values. Use special
  * value MESSAGESTATE_ANY to signal you don't care. (It's defined as union of
- * all values, you can use bitwise arithmetic if you want.)
+ * all values, you can use bit-wise arithmetic if you want.)
  * @offset is index of first message we are interested in. First message is 1.
  * Set to 0 (or 1) if you don't care.
  * @number is maximal length of list you want to get as input value, outputs
@@ -1000,9 +1000,9 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
  * @messages is automatically reallocated list of isds_message's. Be ware that
  * it returns only brief overview (envelope and some other fields) about each
  * message, not the complete message. FIXME: Specify exact fields.
- * Use NULL if you don't care about the metadata (useful if you want to know
+ * Use NULL if you don't care about the meta data (useful if you want to know
  * only the @number). If you provide &NULL, list will be allocated on heap,
- * if you provide pointer to non-NULL, list will be freed automacally at first.
+ * if you provide pointer to non-NULL, list will be freed automatically at first.
  * Also in case of error the list will be NULLed.
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
@@ -1017,18 +1017,18 @@ isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
  * isds_get_list_of_received_messages())
  * @message is automatically reallocated message retrieved from ISDS.
  * It will miss documents per se. Use isds_get_received_message(), if you are
- * interrested in documents (content) too.
+ * interested in documents (content) too.
  * Returned hash and timestamp require documents to be verifiable. */
 isds_error isds_get_received_envelope(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
 
-/* Download signed delivery infosheet of given message identified by ID.
+/* Download signed delivery info-sheet of given message identified by ID.
  * @context is session context
  * @message_id is message identifier (you can get them from
  * isds_get_list_of_{sent,received}_messages())
  * @message is automatically reallocated message retrieved from ISDS.
  * It will miss documents per se. Use isds_get_signed_received_message(),
- * if you are interrested in documents (content). OTOH, only this function
+ * if you are interested in documents (content). OTOH, only this function
  * can get list events message has gone through. */
 isds_error isds_get_signed_delivery_info(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
@@ -1049,13 +1049,13 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
         const void *buffer, const size_t length,
         struct isds_message **message, const isds_buffer_strategy strategy);
 
-/* Download delivery infosheet of given message identified by ID.
+/* Download delivery info-sheet of given message identified by ID.
  * @context is session context
  * @message_id is message identifier (you can get them from
  * isds_get_list_of_{sent,received}_messages())
  * @message is automatically reallocated message retrieved from ISDS.
  * It will miss documents per se. Use isds_get_received_message(), if you are
- * interrested in documents (content). OTOH, only this function can get list
+ * interested in documents (content). OTOH, only this function can get list
  * events message has gone through. */
 isds_error isds_get_delivery_info(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
@@ -1087,7 +1087,7 @@ isds_error isds_load_message(struct isds_ctx *context,
  * @context is session context
  * @raw_type returns content type of @buffer. Valid only if exit code of this
  * function is IE_SUCCESS. The pointer must be valid. This is no automatically
- * reallocted memory.
+ * reallocated memory.
  * @buffer is message raw representation.
  * @length is length of buffer in bytes. */
 isds_error isds_guess_raw_type(struct isds_ctx *context,
@@ -1098,7 +1098,7 @@ isds_error isds_guess_raw_type(struct isds_ctx *context,
  * @message_id is message identifier (you can get them from
  * isds_get_list_of_received_messages())
  * @message is automatically reallocated message retrieved from ISDS. The raw
- * memeber will be filled with PKCS#7 structure in DER format. */
+ * member will be filled with PKCS#7 structure in DER format. */
 isds_error isds_get_signed_received_message(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
 
@@ -1107,7 +1107,7 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
  * @message_id is message identifier (you can get them from
  * isds_get_list_of_sent_messages())
  * @message is automatically reallocated message retrieved from ISDS. The raw
- * memeber will be filled with PKCS#7 structure in DER format. */
+ * member will be filled with PKCS#7 structure in DER format. */
 isds_error isds_get_signed_sent_message(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
 
@@ -1146,7 +1146,7 @@ isds_error isds_hash_cmp(const struct isds_hash *h1,
  * isds_compute_message_hash(), and isds_hash_cmp() sequence.
  * @context is session context
  * @message is message with valid raw and envelope member; envelope->hash
- * member will be changed during funcion run. Use envelope on heap only.
+ * member will be changed during function run. Use envelope on heap only.
  * @return
  *  IE_SUCCESS  if message originates in ISDS
  *  IE_NOTEQUAL if message is unknown to ISDS
@@ -1154,7 +1154,7 @@ isds_error isds_hash_cmp(const struct isds_hash *h1,
 isds_error isds_verify_message_hash(struct isds_ctx *context,
         struct isds_message *message);
 
-/* Mark message as read. This is a transactional commit function to acknoledge
+/* Mark message as read. This is a transactional commit function to acknowledge
  * to ISDS the message has been downloaded and processed by client properly.
  * @context is session context
  * @message_id is message identifier. */
@@ -1162,9 +1162,9 @@ isds_error isds_mark_message_read(struct isds_ctx *context,
         const char *message_id);
 
 /* Mark message as received by recipient. This is applicable only to
- * commercial message. There is no specified way how to distinguishe
- * commercial message from government message yet. Government message is
- * received automatically (by law), commenrcial message on recipient request.
+ * commercial message. Use envelope->dmType message member to distinguish
+ * commercial message from government message. Government message is
+ * received automatically (by law), commercial message on recipient request.
  * @context is session context
  * @message_id is message identifier. */
 isds_error isds_mark_message_received(struct isds_ctx *context,
@@ -1175,12 +1175,12 @@ isds_error isds_mark_message_received(struct isds_ctx *context,
 isds_error isds_bogus_request(struct isds_ctx *context);
 
 /* Send document for authorize conversion into Czech POINT system.
- * This is public anonymous service, no login necessary. Special context is
+ * This is public anonymous service, no log-in necessary. Special context is
  * used to reuse keep-a-live HTTPS connection.
  * @context is Czech POINT session context. DO NOT use context connected to
  * ISDS server. Use new context or context used by this function previously.
  * @document is document to convert. Only data, data_length and dmFileDescr
- * memebers are signifact. Be ware that not all document formats can be
+ * members are significant. Be ware that not all document formats can be
  * converted (signed PDF 1.3 and higher only (2010-02 state)).
  * @id is reallocated identifier assigned by Czech POINT system to
  * your document on submit. Use is to tell it to Czech POINT officer.
@@ -1196,7 +1196,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
 isds_error czp_close_connection(struct isds_ctx *context);
 
 /* Send request for new box creation in testing ISDS instance.
- * It's not possible to requst for a production box currently, as it
+ * It's not possible to request for a production box currently, as it
  * communicates via e-mail.
  * XXX: This function does not work either. Server complains about invalid
  * e-mail address.

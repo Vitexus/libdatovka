@@ -19,12 +19,12 @@ Known values:
 
 0000    means success
 0002    FindDataBox: No box suits to search request (by name)
-0003    FindDataBox: To much bexes suit to search request (by name), response
+0003    FindDataBox: To much boxes suit to search request (by name), response
             truncated
 5001    FindDataBox: No such box exists (by box ID or registry identifier)
 
 NON-NORMATIVE: ISDS on bogus ISDS request but still valid SOAP request
-reponses with SOAP non-Fault 200-HTTP Code message. Example:
+responses with SOAP non-Fault 200-HTTP Code message. Example:
 
 POST https://www.czebox.cz/DS/dz
 <?xml version="1.0" encoding="UTF-8"?>

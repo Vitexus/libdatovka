@@ -193,10 +193,10 @@ static void XMLCALL element_end(void *userData, const XML_Char *name) {
 
 /* Locate element specified by element path in XML stream.
  * TODO: Support other encodings than UTF-8
- * @document is XML documuent as bitstream
- * @length is size of @docuement in bytes. Zero length is forbidden.
+ * @document is XML document as bit stream
+ * @length is size of @document in bytes. Zero length is forbidden.
  * @path is special path (e.g. "|html|head|title",
- * quallified element names are specified as
+ * qualified element names are specified as
  * NSURI '>' LOCALNAME, ommit NSURI and '>' separator if no namespace
  * should be addressed (i.e. use only locale name)
  * You can use PHYSXML_ELEMENT_SEPARATOR and PHYSXML_NS_SEPARATOR string

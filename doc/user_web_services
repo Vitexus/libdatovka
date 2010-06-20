@@ -35,9 +35,9 @@ CreateMultipleMessage (*)
 MessageDownload
     Download incoming message
 SignedMessageDownload
-    Download incoming message with digital signature of ministery of interiors
+    Download incoming message with digital signature of ministry of interiors
 SignedSentMessageDownload
-    Download outgoing message with digital signature of ministery of interiors
+    Download outgoing message with digital signature of ministry of interiors
 DummyOperation
     Void operation used to log in and to keep connection alive
 
@@ -57,10 +57,10 @@ MarkMessageAsDownloaded
 ConfirmDelivery
     Mark commercial message as accepted by recipient
 GetDeliveryInfo
-    Download infosheet about message post and delivery
+    Download info-sheet about message post and delivery
 GetSignedDeliveryInfo
-    Download infosheet about message post and delivery with signature of
-    ministery of interiors
+    Download info-sheet about message post and delivery with signature of
+    ministry of interiors
 GetListOfRecievedMessages
     Download list of incoming messages
 GetListOfSentMessages
@@ -73,7 +73,7 @@ db_search.wsdl
 URL postfix: df
 
 FindDataBox (*)
-    Find boxes conforming to serch criteria
+    Find boxes conforming to search criteria
 CheckDataBox (*)
     Return state of given box
 
@@ -99,7 +99,7 @@ Identifier of just sent message assigned by system is returned.
 Error codes:
     0000    Message sent successfully
 Non-normative error codes:
-    1214    Document desciption is not a filename with acceptable file name
+    1214    Document description is not a file name with acceptable file name
             extension
     1214    Document description extension does not match document content
     1214    Provided MIME type does not match document
@@ -147,10 +147,10 @@ ISDS outputs list of assigned message IDs (each copy gets independent ID),
 list of sent status for each message ID and one cumulative status of
 whole CreateMultipleMessage operation.
 
-If operation failes before replicating messages for each recipient
+If operation fails before replicating messages for each recipient
 (i.e. sending), global error code will be non-zero. If operation fails on some
 message copies (i.e. while sending) special global error code 0004 will be
-returned and errornous recipients can be gather by recipient specific error
+returned and erroneous recipients can be gather by recipient specific error
 code (failed ones will have non-zero code). If all messages are sent
 successfully, global error code will be 0000.
 
@@ -158,8 +158,8 @@ Structure:
 CreateMultipleMessageResponse
     + dmMultipleStatus
     |   + dmSingleStatus
-    |   |   + dmID – assigned message ID, optional, missing if error occured
-    |   |   + dmStatus – message local error code and textual desciption
+    |   |   + dmID – assigned message ID, optional, missing if error occurred
+    |   |   + dmStatus – message local error code and textual description
     |   + dmSingleStatus
     |   ⋮
     + dmStatus – global error code and textual description
@@ -175,7 +175,7 @@ MessageDownload
 Retrieve incoming message identified by message ID.
 
 Commercial message must be accepted manually by ConfirmDelivery before.
-Commetcial message has set dmReturnedMessage/@dmType="K".
+Commercial message has set dmReturnedMessage/@dmType="K".
 
 Error codes:
     0000    Message sent successfully
@@ -186,11 +186,11 @@ Non-normative error codes:
 SignedMessageDownload
 =====================
 
-Download incoming message with digital signature of ministery of interiors
+Download incoming message with digital signature of ministry of interiors
 identified by message ID.
 
 Return PKCS#7 structure containing data as defined in MessageDownload and
-digital signature of the message by ministery.
+digital signature of the message by ministry.
 
 The data are XML document with mangled ISDS name space:
 http://isds.czechpoint.cz/v20/ vs. http://isds.czechpoint.cz/v20/message:
@@ -214,11 +214,11 @@ Commercial message must be accepted manually by ConfirmDelivery before.
 SignedSentMessageDownload
 =========================
 
-Download outgoing message with digital signature of ministery of interiors
+Download outgoing message with digital signature of ministry of interiors
 identified by ID.
 
 Return PKCS#7 structure containing data as defined in MessageDownload and
-digital signature of the message by ministery.
+digital signature of the message by ministry.
 
 The data are XML document with mangled ISDS name space:
 http://isds.czechpoint.cz/v20/ vs. http://isds.czechpoint.cz/v20/SentMessage:
@@ -275,9 +275,9 @@ Retrieve message hash (dmHash element) for given message from ISDS.
 Works for not yet deleted messages only.
 
 Only SHA-1 algorithm is in use currently. SHA-2 family is expected after
-2010 year begining.
+2010 year beginning.
 
-Hash input is isds:dmDM subtree procesed as raw bit stream without XML
+Hash input is isds:dmDM subtree processed as raw bit stream without XML
 canonicalization. Authoritative isds:dmDM element can be get via
 MessageDownload service. God bless ISDS developers to not change XML
 serialization.
@@ -292,14 +292,14 @@ MessageEnvelopeDownload
 Download envelope of incoming message. That is message without documents.
 Message type is stored in dmReturnedMessageEnvelope/@dmType.
 
-Returend hash and timestamp are computed from whole message. You must get
-complete message inluding documents to be able to verify them.
+Returned hash and time-stamp are computed from whole message. You must get
+complete message including documents to be able to verify them.
 
 
 MarkMessageAsDownloaded
 =======================
 
-Change status of a message identidied by its ID as read.
+Change status of a message identified by its ID as read.
 
 That means next GetListOfRecievedMessages service can exclude such message if
 only unread messages requested.
@@ -310,9 +310,9 @@ ConfirmDelivery
 
 Mark commercial message as accepted by recipient.
 
-Changes message state from delivered (4) to accepted (6). Appliable only to
+Changes message state from delivered (4) to accepted (6). Applicable only to
 commercial messages. Messages from public offices (municipalities, government
-etc.) are accepted automatically by login on interactive web portal or by
+etc.) are accepted automatically by log-in on interactive web portal or by
 triggering most of SOAP operations.
 
 Must be called before downloading (signed or unsigned) incoming message
@@ -322,23 +322,23 @@ Must be called before downloading (signed or unsigned) incoming message
 GetDeliveryInfo
 ===============
 
-Download infosheet about incoming or outgoing message post and delivery or
+Download infighter about incoming or outgoing message post and delivery or
 deliver impossibility. The message is specified by message ID.
 
-It returns complete message envelope, hash, timestamp. Delivery time and
+It returns complete message envelope, hash, time-stamp. Delivery time and
 acceptance time only if message has been delivered to recipient box or
 accepted by recipient. Precise status of message is returned too.
 
 In addition, non-empty list of events is attached. Each event compounds of
 ISO time and text description. The text description has well-known prefix to
-distinguishe the event meaning. Following prefixes are defined:
+distinguish the event meaning. Following prefixes are defined:
 
     Prefix  Meaning
     -----------------------------------------------------
     EV1:    Message has been accepted by recipient action
     EV2:    Message has been delivered to box and is considered as accepted by
             no-user-action time out (through fiction)
-    EV3:    Recipient box has been made unaccessible retrospectively
+    EV3:    Recipient box has been made inaccessible retrospectively
             (even after successful delivery or acceptance,
             this event is retroactive). In this case special system-generated
             message is sent to sender in addition.
@@ -348,11 +348,11 @@ distinguishe the event meaning. Following prefixes are defined:
 GetSignedDeliveryInfo
 =====================
 
-Download infosheet about incoming or outgoing message post and delivery or
+Download info-sheet about incoming or outgoing message post and delivery or
 deliver impossibility as signed PKCS#7 structure. See GetDeliveryInfo for
 details about returned data.
 
-The PKCS#7 structure carries digital signature made by ministery of interiours.
+The PKCS#7 structure carries digital signature made by ministry of interiors.
 
 There is mangled namespace again: http://isds.czechpoint.cz/v20/ vs.
 http://isds.czechpoint.cz/v20/delivery:
@@ -373,10 +373,10 @@ http://isds.czechpoint.cz/v20/delivery:
 FindDataBox (*)
 ===========
 
-Find boxes conforming to serch criteria or exact ID and returns corresponding
+Find boxes conforming to search criteria or exact ID and returns corresponding
 (possibly truncated) list of boxes.
 
-Returned boxes exist, but it does not mean they can recieve messages. Use
+Returned boxes exist, but it does not mean they can receive messages. Use
 CheckDataBox to figure out.
 
 There are three different search cases distinguished in this order:
@@ -391,11 +391,11 @@ There are three different search cases distinguished in this order:
 
 Returns list of boxes (possibly empty).
 
-List can be truncated or search request refused because of not enought
-specific criteria to protect user privacy. There are following contrains
+List can be truncated or search request refused because of not enough
+specific criteria to protect user privacy. There are following constrains
 differentiated by box type now:
 
-Gross Box type  Constraints (requried search criteria)
+Gross Box type  Constraints (required search criteria)
 ------------------------------------------------------
 FO              pnLastName or pnLastNameAtBirth
 PFO             ic or pnLastName or pnLastNameAtBirth

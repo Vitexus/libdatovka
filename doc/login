@@ -18,8 +18,8 @@ Allowed log in methods:
     user authenticated using HTTP 1.1 basic authentication with user name and
     password.
 
-    – SSL connection, user authenticated using `commerical' client
-    certificate AND username and passwod. The client certificate must be
+    – SSL connection, user authenticated using `commercial' client
+    certificate AND user name and password. The client certificate must be
     preregistered in web (browser) interface.
 
     – SSL connection, user authenticated using `system' client certificate.
@@ -34,18 +34,18 @@ Note: Certificate attributes `commercial' and `system' are defined in Czech
 Electronic Signature Act.
 
 Once client certificate is registered, user could not log in with HTTP basic
-auhtentication only.
+authentication only.
 
-Client private key must be stored in cryptographic device in unexportable way.
+Client private key must be stored in cryptographic device in non-exportable way.
 The device driver must provide any of the APIs in addition:
 
     – Microsoft CryptoAPI
     – PKCS#11 API through libp11 library.
 
-Login HTTP request must not be larger than 50 KB because server implementation
+Log-in HTTP request must not be larger than 50 KB because server implementation
 uses weird HTTP redirects etc. Therefore SOAP DummyOperation is available for
-login purposes that is small enough (other SOAP requests can be much bigger).
+log-in purposes that is small enough (other SOAP requests can be much bigger).
 
-Desktop applications accesing ISDS must log in only on manual request of
-a user. Daemon implementations can log in automatically, but they are forbiden
+Desktop applications accessing ISDS must log in only on manual request of
+a user. Daemon implementations can log in automatically, but they are forbidden
 to abuse ISDS (e.g. redownloading old messages).

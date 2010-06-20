@@ -3,7 +3,7 @@ Box specification
 
 Source: Webové služby ISDS pro vyhledávání datových schránek, version 2.7
     (2009-12-18) [DBSearch_ws.pdf]
-Source: Webové služby ISDS pro manipulaci s datovými schránkami, verzion 2.6
+Source: Webové služby ISDS pro manipulaci s datovými schránkami, version 2.6
     (2010-01-18) [DataMessage_ws.pdf], Page 6
 
 Box types
@@ -35,9 +35,9 @@ Value       Description
 -----------------------------------------------------
 0 or empty  Error occurred while retrieving box state
 1           Box is accessible.
-2           Temporarily unaccesible
+2           Temporarily inaccessible
 3           Not yet active
-4           Permanently unaccesible
+4           Permanently inaccessible
 5           Box has been removed
 
 Only state 1 means box is capable of receiving messages.

@@ -1,4 +1,4 @@
-Maintanance web services specification
+Maintenance web services specification
 ======================================
 
 Source: Provozní řád ISDS, version 2010-01-22, Pages 14–15
@@ -21,7 +21,7 @@ Documentation: DataBox_ws.pdf (Appendix 3), GetInfo_ws.pdf (Appendix 2)
 Note: OVM mode is defined in paragraph 5a of Czech ISDS Act (300/2008 Coll.)
 
 Non-normative: [dbTypes.xsd] augments XSD:gDbReqStatus type with optional
-dbStatusRefNumber element carying request serial number assigned by ISDS.
+dbStatusRefNumber element carrying request serial number assigned by ISDS.
 
 List of SOAP requests follows.
 
@@ -48,10 +48,10 @@ UpdateDataBoxUser
 NewAccessData
     Reset user credentials (remove old ones and generates new ones)
 DisableDataBoxExternally
-    Make box unaccessible because owner lost ability to use the box for legal
+    Make box inaccessible because owner lost ability to use the box for legal
     reasons (prisoned person, person with no or weak legal rights)
 DisableOwnDataBox
-    Make box unaccessable on request of its owner
+    Make box inaccessible on request of its owner
 EnableOwnDataBox
     Renew access to the box
 SetEffectiveOVM
@@ -87,14 +87,14 @@ CreateDataBox
 Create box of any type with complete set of PRIMARY users (i.e. box owners).
 Additional users can be assigned by AddDataBoxUser.
 
-Freshly created box has state 3, after first login (or first login time out),
+Freshly created box has state 3, after first log-in (or first log-in time out),
 box changes moves to standard state 1.
 
 Credentials will be sent to each PRIMARY user by paper mail. Credentials
 postal address is supplied contact address or address obtained from external
 government registers (supplied person or firm address must match them).
 
-Different box types can created by users with specific priviledges.
+Different box types can created by users with specific privileges.
 
 Input structure is:
 CreateDataBox
@@ -137,7 +137,7 @@ Remove box permanently.
 If request succeeds, box will moves to state 4, and three years after that to
 state 5.
 
-Input is box description and ISO date of owner cancelation
+Input is box description and ISO date of owner cancellation
 (dbOwnerTerminationDate element).
 
 
@@ -147,7 +147,7 @@ UpdateDataBoxDescr
 Change data about box or its owner.
 
 Input is current box description and new description. Different fields can
-(not) be changed by different box types and differenlty privileged user.
+(not) be changed by different box types and differently privileged user.
 
 
 AddDataBoxUser
@@ -155,7 +155,7 @@ AddDataBoxUser
 
 Add person permitted to access to the box
 
-Different user types can be added only by users with specific priviledges
+Different user types can be added only by users with specific privileges
 (PRIMARY_USER can be added only by PRIVIL_CZP user).
 
 Input is box description and new user definition.
@@ -166,7 +166,7 @@ DeleteDataBoxUser
 
 Remove person permitted to access to the box.
 
-Different user types can be removed only by users with specific priviledges
+Different user types can be removed only by users with specific privileges
 (PRIMARY_USER can be removed only by PRIVIL_CZP user).
 
 Input is box description and user description.
@@ -187,7 +187,7 @@ old user data, not only user ID.
 
 One can change any data (even user permissions) except user type of PRIMARY
 user. However PRIMARY user assigned to PO or OVM box can be removed
-(DeleteDataBoxUser) and reacreated (AddDataBoxUser).
+(DeleteDataBoxUser) and recreated (AddDataBoxUser).
 
 
 NewAccessData
@@ -212,7 +212,7 @@ to match e-mail address provided on meeting point.
 DisableDataBoxExternally
 ========================
 
-Make box unaccessible because owner lost ability to use the box for legal
+Make box inaccessible because owner lost ability to use the box for legal
 reasons (prisoned person, person with no or weak legal rights).
 
 Input is box description and date when the ability to access box has became
@@ -227,20 +227,20 @@ Non-normative error codes:
 DisableOwnDataBox
 =================
 
-Make box unaccessable on request of its owner.
+Make box inaccessible on request of its owner.
 
 Despite name, this does not disable access to the box of currently logged in
-user. The box owner must apply for making his box unaccassible off-line on
+user. The box owner must apply for making his box inaccessible off-line on
 special off-line meeting point and officer (with permission PRIVIL_OVMPOZAK
 | PRIVIL_CZP) call this SOAP service. Result is box state changed to value 2.
 
-Input is box description (box ID ot other criteria).
+Input is box description (box ID or other criteria).
 
 
 EnableOwnDataBox
 ================
 
-Renew access to box made unaccessible previously.
+Renew access to box made inaccessible previously.
 
 Disable/enable access period is limited by law and can be charged. See
 DisableOwnDataBox for more detail.s
@@ -259,7 +259,7 @@ Input is box ID.
 CleareEffectiveOVM
 ==================
 
-Remove box priviledge to act as a government or municpality (OVM role).
+Remove box privilege to act as a government or municipality (OVM role).
 
 Input is box ID.
 
@@ -289,7 +289,7 @@ GetDataBoxUsers
 Get list of users permitted to access given box.
 
 Note: This request is not specified in any verbose document. Following info
-has been obtained from XML Schma file [dbTypes.xsd].
+has been obtained from XML Schema file [dbTypes.xsd].
 
 Input is type of XSD:tIdDbInput. Only box ID is sufficient probably.
 
@@ -311,7 +311,7 @@ Get details about current box that user is logged in.
 
 Input is empty dummy request.
 
-Result is returned in tDbOwnerInfo structure. Some structrure memebers are
+Result is returned in tDbOwnerInfo structure. Some structure members are
 undefined or unknown for particular box type.
 
 
@@ -340,7 +340,7 @@ will return non-SOAP response and client could not continue in work.
 Input is empty dummy request.
 
 Output is ISO time of password expiration. Service has no sense if client
-authenticates with certifacate only.
+authenticates with certificate only.
 
 
 ChangeISDSPassword
@@ -372,12 +372,12 @@ Password must meet formal syntax rules assuring strong complexity:
 
 Service is meaningful only when user logs in with password.
 
-After successfull password update, client continue in current sessesion.
+After successful password update, client continue in current session.
 Password change takes effect after propagation into whole ISDS cluster (about
 15 seconds).
 
 Error codes:
-    0000    Password chaned successfully
+    0000    Password changed successfully
     1066    Empty password
     1067    New password same as current one
     9204    Generic error

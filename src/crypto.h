@@ -3,27 +3,27 @@
 
 #include "isds.h"
 
-/* Inicialize libgrcypt if not yet done by application or other library.
- * @current_version is static string describing cerrent gcrypt version
+/* Initialize libgrcypt if not yet done by application or other library.
+ * @current_version is static string describing current gcrypt version
  * @return IE_SUCCESS if everything is O.k. */
 isds_error _isds_init_gcrypt(const char **current_version);
 
 /* Computes hash from @input with @length and store it into @hash.
- * The hash algoritm is defined inside @hash.
+ * The hash algorithm is defined inside @hash.
  * @input is input block to hash
  * @length is @input block length in bytes
- * @hash input algoritm, output hash value and hash length; hash value will be
+ * @hash input algorithm, output hash value and hash length; hash value will be
  * reallocated, it's always valid pointer or NULL (before and after call) */
 isds_error _isds_compute_hash(const void *input, const size_t length,
         struct isds_hash *hash);
 
-/* Inicialize GPGME.
- * @current_version is pointer to static string decribing currnet gpgme
+/* Initialize GPGME.
+ * @current_version is pointer to static string describing current gpgme
  * @return IE_SUCCESS if everything is O.k. */
 isds_error _isds_init_gpgme(const char **current_version);
 
 /* Free CMS data buffer allocated inside _isds_extract_cms_data().
- * This is necesary because GPGME.
+ * This is necessary because GPGME.
  * @buffer is pointer to memory to free */
 void _isds_cms_data_free(void *buffer);
 

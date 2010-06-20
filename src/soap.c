@@ -29,7 +29,7 @@ _hidden isds_error _isds_close_connection(struct isds_ctx *context) {
 }
 
 
-/* CURL call back function called when chunk of HTTP reponse body is available.
+/* CURL call back function called when chunk of HTTP response body is available.
  * @buffer points to new data
  * @size * @nmemb is length of the chunk in bytes. Zero means empty body.
  * @userp is private structure.
@@ -102,19 +102,19 @@ static int log_curl(CURL *curl, curl_infotype type, char *buffer, size_t size,
  * @request is body for POST request 
  * @request_length is length of @request in bytes
  * @reponse is automatically reallocated() buffer to fit HTTP response with
- * @response_length (does not need to match allocatef memory exactly). You must
+ * @response_length (does not need to match allocated memory exactly). You must
  * free() the @response.
  * @mime_type is automatically allocated MIME type send by server (*NULL if not
  * sent). Set NULL if you don't care.
  * @charset is charset of the body signaled by server. The same constrains
  * like on @mime_type apply.
  * @http_code is final HTTP code returned by server. This can be 200, 401, 500
- * or any other one. Pass NULL if you don't interrest.
- * In case of error, the response memory, MIME type, charset and lenght will be
- * deallocated and zerod automatically. Thus be sure they are preallocated or
+ * or any other one. Pass NULL if you don't interest.
+ * In case of error, the response memory, MIME type, charset and length will be
+ * deallocated and zeroed automatically. Thus be sure they are preallocated or
  * they points to NULL.
  * Be ware that successful return value does not mean the HTTP request has
- * been accepted by the server. You must cosult @http_code. OTOH, failure
+ * been accepted by the server. You must consult @http_code. OTOH, failure
  * return value means the request could not been sent (e.g. SSL error).
  * Side effect: message buffer */
 static isds_error http(struct isds_ctx *context, const char *url,
@@ -134,7 +134,7 @@ static isds_error http(struct isds_ctx *context, const char *url,
     if (request_length > 0 && !request) return IE_INVAL;
     if (!response || !response_length) return IE_INVAL;
 
-    /* Set the body here to allow deallocatation in leave block */
+    /* Set the body here to allow deallocation in leave block */
     body.data = *response;
     body.length = 0;
 
@@ -215,7 +215,7 @@ static isds_error http(struct isds_ctx *context, const char *url,
         if (context->pki_credentials->engine) {
             /* Select SSL engine */
             isds_log(ILF_SEC, ILL_INFO,
-                    _("Cryptograhic engine `%s' will be used for "
+                    _("Cryptographic engine `%s' will be used for "
                         "key or certificate\n"),
                     context->pki_credentials->engine);
             curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLENGINE,
@@ -256,7 +256,7 @@ static isds_error http(struct isds_ctx *context, const char *url,
                         PKI_FORMAT_ENG ||
                         context->pki_credentials->certificate))
                 isds_log(ILF_SEC, ILL_WARNING,
-                        _("Your curl library cannot distinguish certifcate "
+                        _("Your curl library cannot distinguish certificate "
                             "formats. Make sure your cryptographic library\n"
                             "understands your certificate file by default, "
                             "or upgrade curl.\n"));
@@ -301,7 +301,7 @@ static isds_error http(struct isds_ctx *context, const char *url,
                         context->pki_credentials->key);
 
             if (!curl_err) {
-                /* Pass key passphrase */
+                /* Pass key pass-phrase */
 #if HAVE_DECL_CURLOPT_KEYPASSWD /* since curl-7.16.5 */
                 curl_err = curl_easy_setopt(context->curl,
                         CURLOPT_KEYPASSWD,
@@ -560,7 +560,7 @@ leave:
  * @reponse is automatically allocated() node set with SOAP response body.
  * You must xmlFreeNodeList() it. This is literal body, empty (NULL), one node
  * or more nodes can be returned.
- * @raw_response is automatically allocated bitstream with response body. Use
+ * @raw_response is automatically allocated bit stream with response body. Use
  * NULL if you don't care
  * @raw_response_length is size of @raw_response in bytes
  * In case of error the response will be deallocated automatically.
@@ -670,11 +670,11 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
     /* XXX: According LibXML documentation, this function does not return
-     * meaningfull value yet */
+     * meaningful value yet */
     xmlSaveDoc(save_ctx, request_soap_doc);
     if (-1 == xmlSaveFlush(save_ctx)) {
         isds_log_message(context,
-                _("Could not serialize SOAP request to HTTP request bddy"));
+                _("Could not serialize SOAP request to HTTP request body"));
         err = IE_ERROR;
         goto leave;
     }
@@ -825,8 +825,8 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
     /* Extract XML Tree with ISDS response from SOAP envelope and return it.
      * XXX: response_soap_body is Body, we need children which may not exist
      * (i.e. empty Body). */
-    /* TODO: Destroy SOAP response but Body childern. This is more memory
-     * friendly than copying (potentialy) fat body */
+    /* TODO: Destroy SOAP response but Body children. This is more memory
+     * friendly than copying (potentially) fat body */
     if (response_soap_body->nodesetval->nodeTab[0]->children) {
         *response = xmlDocCopyNodeList(response_soap_doc,
                 response_soap_body->nodesetval->nodeTab[0]->children);
