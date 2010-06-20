@@ -30,16 +30,16 @@ isds_error isds_response_status(struct isds_ctx *context,
 /* Send @request to ISDS and return ISDS @response as XML document.
  * Be ware the @response can be invalid (in sense of XML Schema).
  * (And it is because current ISDS server does not follow its own
- * specification. Please appology my government, its herd of imcompetent
+ * specification. Please apology my government, its herd of incompetent
  * creatures.)
  * @context is ISDS session context,
  * @service identifies ISDS web service
  * @request is tree with ISDS message, can be NULL
  * @response is automatically allocated response from server as XML Document
- * @raw_response is automatically allocated bitstream with response body. Use
+ * @raw_response is automatically allocated bit stream with response body. Use
  * NULL if you don't care
  * @raw_response_length is size of @raw_response in bytes
- * In case of error, @response and @raw_response will be dealocated.
+ * In case of error, @response and @raw_response will be deallocated.
  * */
 isds_error isds(struct isds_ctx *context, const isds_service service,
         const xmlNodePtr request, xmlDocPtr *response,
@@ -66,7 +66,7 @@ isds_error validate_message_id_length(struct isds_ctx *context,
  * @context is Czech POINT session context,
  * @request is tree with deposit message, can be NULL
  * @response is automatically allocated response from server as XML Document
- * In case of error, @response will be dealocated.
+ * In case of error, @response will be deallocated.
  * */
 isds_error _czp_czpdeposit(struct isds_ctx *context,
         const xmlNodePtr request, xmlDocPtr *response);

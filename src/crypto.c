@@ -10,8 +10,8 @@
 #include <gpgme.h>
 #include <locale.h>
 
-/* Inicialize libgrcypt if not yet done by application or other library.
- * @current_version is static string describing cerrent gcrypt version
+/* Initialize libgrcypt if not yet done by application or other library.
+ * @current_version is static string describing current gcrypt version
  * @return IE_SUCCESS if everything is O.k. */
 _hidden isds_error _isds_init_gcrypt(const char **current_version) {
     const char *gcrypt_version;
@@ -41,10 +41,10 @@ _hidden isds_error _isds_init_gcrypt(const char **current_version) {
 
 
 /* Computes hash from @input with @length and store it into @hash.
- * The hash algoritm is defined inside @hash.
+ * The hash algorithm is defined inside @hash.
  * @input is input block to hash
  * @length is @input block length in bytes
- * @hash input algoritm, output hash value and hash length; hash value will be
+ * @hash input algorithm, output hash value and hash length; hash value will be
  * reallocated, it's always valid pointer or NULL (before and after call) */
 _hidden isds_error _isds_compute_hash(const void *input, const size_t length,
         struct isds_hash *hash) {
@@ -84,8 +84,8 @@ _hidden isds_error _isds_compute_hash(const void *input, const size_t length,
 }
 
 
-/* Inicialize GPGME.
- * @current_version is pointer to static string decribing currnet gpgme
+/* Initialize GPGME.
+ * @current_version is pointer to static string describing current gpgme
  * @return IE_SUCCESS if everything is O.k. */
 _hidden isds_error _isds_init_gpgme(const char **current_version) {
     const char *gpgme_version;
@@ -148,7 +148,7 @@ _hidden isds_error _isds_init_gpgme(const char **current_version) {
 
 
 /* Free CMS data buffer allocated inside _isds_extract_cms_data().
- * This is necesary because GPGME.
+ * This is necessary because GPGME.
  * @buffer is pointer to memory to free */
 _hidden void _isds_cms_data_free(void *buffer) {
 #ifdef ISDS_USE_KSBA
@@ -235,16 +235,16 @@ _hidden isds_error _isds_extract_cms_data(struct isds_ctx *context,
             return IE_ERROR;
         }
         if (stop_reason == KSBA_SR_BEGIN_DATA) {
-            isds_log(ILF_SEC, ILL_DEBUG, _("CMS: Data begining found\n"));
+            isds_log(ILF_SEC, ILL_DEBUG, _("CMS: Data beginning found\n"));
         }
         if (stop_reason == KSBA_SR_GOT_CONTENT) {
             char *type;
             switch (ksba_cms_get_content_type(cms_handler, 0)) {
-                case KSBA_CT_NONE: type = _("uknown data"); break;
+                case KSBA_CT_NONE: type = _("unknown data"); break;
                 case KSBA_CT_DATA: type = _("plain data"); break;
                 case KSBA_CT_SIGNED_DATA: type = _("signed data"); break;
                 case KSBA_CT_ENVELOPED_DATA:
-                        type = _("encypted data by session key"); break;
+                        type = _("encrypted data by session key"); break;
                 case KSBA_CT_DIGESTED_DATA: type = _("digest data"); break;
                 case KSBA_CT_ENCRYPTED_DATA: type = _("encrypted data"); break;
                 case KSBA_CT_AUTH_DATA: type = _("auth data"); break;
@@ -324,7 +324,7 @@ leave:
     *data = gpgme_data_release_and_get_mem(plain_handler, data_length);
     plain_handler = NULL;
     if (!*data) {
-        /* No data or error occured */
+        /* No data or error occurred */
         isds_printf_message(context,
                 _("Could not get plain data from GPGME "
                     "after verifying CMS structure"));

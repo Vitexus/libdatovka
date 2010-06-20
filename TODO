@@ -1,10 +1,10 @@
 * Asynchronous interface
-    Grep for (rentrant|thread) comments
+    Grep for (reentrant|thread) comments
 * Multithreaded interface
-    Grep for (rentrant|thread) comments
+    Grep for (reentrant|thread) comments
 * Make CURL (network services) optional
 * Improve isds_*message() system
-    Allow formated message appeding, preserve deep messages
+    Allow formatted message appending, preserve deep messages
 * Catch curl debug messages
 * Make function tests
     Cover all functions

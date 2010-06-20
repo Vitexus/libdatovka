@@ -67,12 +67,12 @@ _hidden char *_isds_astrcat3(const char *first, const char *second,
 }
 
 
-/* Print formated string into automtically reallocated @uffer.
+/* Print formatted string into automatically reallocated @buffer.
  * @buffer automatically reallocated buffer. Must be &NULL or preallocated
  * memory.
  * @format format string as for printf(3)
- * @ap list of variadic arguments, after call will be in udefined state
- * @Returns number of bytes printed. In case of errror, -1 and NULL @buffer*/
+ * @ap list of variadic arguments, after call will be in undefined state
+ * @Returns number of bytes printed. In case of error, -1 and NULL @buffer*/
 _hidden int isds_vasprintf(char **buffer, const char *format, va_list ap) {
     va_list aq;
     int length, new_length;
@@ -114,12 +114,12 @@ _hidden int isds_vasprintf(char **buffer, const char *format, va_list ap) {
 }
 
 
-/* Print formated string into automtically reallocated @uffer.
+/* Print formatted string into automatically reallocated @buffer.
  * @buffer automatically reallocated buffer. Must be &NULL or preallocated
  * memory.
  * @format format string as for printf(3)
  * @... variadic arguments
- * @Returns number of bytes printed. In case of errror, -1 and NULL @buffer*/
+ * @Returns number of bytes printed. In case of error, -1 and NULL @buffer*/
 _hidden int isds_asprintf(char **buffer, const char *format, ...) {
     int ret;
     va_list ap;
@@ -148,7 +148,7 @@ _hidden char *_isds_utf82locale(const char *utf) {
     state = iconv_open(nl_langinfo(CODESET), "UTF-8");
     if (state == (iconv_t) -1) return NULL;
 
-    /* Get the initial ouput buffer length */
+    /* Get the initial output buffer length */
     utf_length = strlen(utf);
     buffer_length = utf_length + 1;
 
@@ -230,7 +230,7 @@ _hidden char *_isds_b64encode(const void *plain, const size_t length) {
 /* Decode given data from MIME Base64 encoded zero terminated string to binary
  * stream.
  * @encoded are input data (Base64 zero terminated string)
- * @plain are automatically realocated output data (binary stream). You must
+ * @plain are automatically reallocated output data (binary stream). You must
  * free it. Will be freed in case of error.
  * @return length of @plain data in bytes or (size_t) -1 in case of decoding
  * failure. */

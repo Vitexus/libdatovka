@@ -1,4 +1,4 @@
-See README for dependecies.
+See README for dependencies.
 
 If you get code from VCS, you will need Autotools (automake, autoconf,
 libtool) and gettext in addition and you must prepare build system with
@@ -14,7 +14,7 @@ Additional configure options:
 
     --enable-example
 
-        Build exalpe client. You can run and study example clients in `client'
+        Build example client. You can run and study example clients in `client'
         subdirectory.
 
     --enable-test
@@ -31,7 +31,7 @@ Additional configure options:
 
     --enable-debug
 
-        Switch on debbuging mode, compile in debugging code.
+        Switch on debugging mode, compile in debugging code.
 
     --disable-fatalwarnings
 
@@ -39,7 +39,7 @@ Additional configure options:
         enabled to catch all code ambiguities by default.
 
 Large File Support (LFS) Notice: libisds uses GPGME, and GPGME is compiled
-with LFS on usually. You need to keep LFS compatibility on reverse dependecies
+with LFS on usually. You need to keep LFS compatibility on reverse dependencies
 (libisds library, your application using libisds), otherwise strange things
 can happen (e.g. file/message/document sizes can mismatch). libisds switches
 LFS on too. Use --disable-largefile to switch it off if you think it's more

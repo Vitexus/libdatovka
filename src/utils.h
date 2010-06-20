@@ -13,7 +13,7 @@
 #define _hidden
 #endif
 
-/* PANIC macro aborts current proces without any clean up.
+/* PANIC macro aborts current process without any clean up.
  * Use it as last resort fatal error solution */
 #define PANIC(message) { \
     if (stderr != NULL ) fprintf(stderr, \
@@ -36,20 +36,20 @@ char *_isds_astrcat(const char *first, const char *second);
 char *_isds_astrcat3(const char *first, const char *second,
         const char *third);
 
-/* Print formated string into automtically reallocated @uffer.
+/* Print formatted string into automatically reallocated @buffer.
  * @buffer automatically reallocated buffer. Must be &NULL or preallocated
  * memory.
  * @format format string as for printf(3)
- * @ap list of variadic arguments, after call will be in udefined state
- * @Returns number of bytes printed. In case of errror, -1 and NULL @buffer*/
+ * @ap list of variadic arguments, after call will be in undefined state
+ * @Returns number of bytes printed. In case of error, -1 and NULL @buffer*/
 int isds_vasprintf(char **buffer, const char *format, va_list ap);
 
-/* Print formated string into automtically reallocated @uffer.
+/* Print formatted string into automatically reallocated @buffer.
  * @buffer automatically reallocated buffer. Must be &NULL or preallocated
  * memory.
  * @format format string as for printf(3)
  * @... variadic arguments
- * @Returns number of bytes printed. In case of errror, -1 and NULL @buffer*/
+ * @Returns number of bytes printed. In case of error, -1 and NULL @buffer*/
 int isds_asprintf(char **buffer, const char *format, ...);
 
 /* Converts UTF8 string into locale encoded string.
@@ -68,7 +68,7 @@ char *_isds_b64encode(const void *plain, const size_t length);
 /* Decode given data from MIME Base64 encoded zero terminated string to binary
  * stream.
  * @encoded are input data (Base64 zero terminated string)
- * @plain are automatically realocated output data (binary stream). You must
+ * @plain are automatically reallocated output data (binary stream). You must
  * free it. Will be freed in case of error.
  * @return length of @plain data in bytes or (size_t) -1 in case of decoding
  * failure. */

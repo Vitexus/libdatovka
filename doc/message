@@ -9,7 +9,7 @@ Source: Registration of media type FO and ZFO
 
 Message ::= Envelope, Content
 
-Message format is defined in Appendinx 1, file dmBaseTypes.xsd.
+Message format is defined in Appendix 1, file dmBaseTypes.xsd.
 
 Content ::= (Document)+
 
@@ -42,7 +42,7 @@ Currently (2009-11-18) allowed formats are (quotation follows):
     – mp2/mp3 (MPEG-1 Audio Layer 2 / Layer 3)
     – isdoc/isdocx (Information System Document) version 5.2 or higher
 
-Document format declaration inside Document and conformace checks change
+Document format declaration inside Document and conformance checks change
 during time. XML Schemas provide attribute for Document MIME type and Document
 annotation.
 
@@ -63,7 +63,7 @@ odt, ods, odp, txt, rtf, doc, xls, ppt, jpg, jpeg, jfif, png, tiff, gif, mpeg1
 mpeg2, wav, mp2, mp3, isdoc, isdocx, cer, crt, der, pk7, p7b, p7c, p7f, p7m,
 p7s, tst (time stamp).
 
-Non-normative: File name extenstion to MIME type map:
+Non-normative: File name extension to MIME type map:
 
 Extensions  MIME type           Description
 -------------------------------------------------------------------------------
@@ -141,21 +141,21 @@ than 10 days after delivery.
 Digital Signatures
 ==================
 
-Emeded digital signatures are PKCS#7 to avoid expensive XML canonicalization.
+Embedded digital signatures are PKCS#7 to avoid expensive XML canonicalization.
 
 
 System messages
 ===============
 
-There exists special message type iniciated by ISDS (i.e. from system, not from
+There exists special message type initiated by ISDS (i.e. from system, not from
 other box). Such message has reserved from-box `aaaaaaa' (7 × `a') value and
 sender type `0' and it contains always document of type HTML. There are
 following cases defined:
 
 1   Outgoing message contained malicious code
 2   You, administrator, deleted other user
-3   Outgoing message could not been delivered because recipeient box had been
-    made unaccessible
+3   Outgoing message could not been delivered because recipient box had been
+    made inaccessible
 4   Outgoing commercial message has not been accepted by recipient
 5   User has been added to the box
 6   User permissions has been changed
@@ -164,18 +164,18 @@ following cases defined:
 Commercial messages
 ===================
 
-Users can allow commercial message receiving explicitelly. Commercial message
+Users can allow commercial message receiving explicitly. Commercial message
 are not considered as accepted by recipient automatically (in opposite to
 standard messages), recipient must call ConfirmDelivery to move message from
 state Delivered (4) to state Received (6).
 
 User can request to assign permission to send commercial messages. Permission
-can be assigned by Czech Post. Commecial recipient can not be searched. Sender
+can be assigned by Czech Post. Commercial recipient can not be searched. Sender
 must know exact box ID.
 
 Commercial message can be recognised by @dmType="K" in message envelope. If
 @dmType is "V" or attribute is missing, message is so called public (i.e.
-standard noncommercial with acceptence time outs etc.).
+standard noncommercial with acceptance time outs etc.).
 
 
 Message states
@@ -184,13 +184,13 @@ Message states
 Value   Meaning
 1       Message has been put into ISDS
 2       Message stamped by TSA
-3       Message included virues, infected document has been removed
+3       Message included viruses, infected document has been removed
 4       Message delivered (dmDeliveryTime stored)
 5       Message delivered through fiction (dmAcceptanceTime stored)
-6       Message delivered by user login or user explicit request (in case of
+6       Message delivered by user log-in or user explicit request (in case of
         commercial message) (dmAcceptanceTime stored)
 7       Message has been read by user
-8       Message could not been delivered (e.g. recipent box has been made
-        unaccessible meantime)
+8       Message could not been delivered (e.g. recipient box has been made
+        inaccessible meantime)
 9       Message content deleted (thus can not be obtained on-line)
 10      Message stored into data safe (this is optional commercial service)

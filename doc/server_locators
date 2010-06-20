@@ -3,7 +3,7 @@ Server locators
 
 Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2.6
     (2010-01-18) [DataMessage_ws.pdf], Page 4
-Souce: Provozní řád ISDS, version 2010-01-22, Page 13
+Source: Provozní řád ISDS, version 2010-01-22, Page 13
 
 
 Coockie-tracked session
@@ -15,14 +15,14 @@ Production ISDS instance base URL:
 Testing ISDS instance base URL:
     https://www.czebox.cz/
 
-Different login methods requires different URL infixes:
+Different log-in methods requires different URL infixes:
 
     /DS/
         HTTP basic authentication (and client commercial certificate)
     /cert/DS/
         System certificate authentication
     /hspis/DS/
-        Login from hosted third party solution by system certificate and
+        Log-in from hosted third party solution by system certificate and
         box ID
 
 
@@ -32,7 +32,7 @@ Stateless communication
 Production ISDS instance:
     https://ws1.mojedatovaschranka.cz/DS/
 
-Different login methods requires different URL infixes:
+Different log-in methods requires different URL infixes:
 
     https://ws1.mojedatovaschranka.cz/DS/
         HTTP basic authentication
@@ -41,5 +41,5 @@ Different login methods requires different URL infixes:
     https://ws1c.mojedatovaschranka.cz/certds/DS/
         Commercial certificate with HTTP basic authentication
     https://ws1c.mojedatovaschranka.cz/hspis/DS/
-        Login from hosted third party solution by system certificate and
+        Log-in from hosted third party solution by system certificate and
         box ID

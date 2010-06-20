@@ -1,25 +1,25 @@
 Document conversion
 ===================
 
-Source: Reverse ingeneering of 602XML Filler, version 3.14
+Source: Reverse engineering of 602XML Filler, version 3.14
 Source: Autorizovaná konverze z moci úřední – API
     <http://www.mvcr.cz/clanek/autorizovana-konverze-z-moci-uredni.aspx>
 
 
 Digital documents can be converted into their analogue projections. Currently 
-only PDF 1.3 or hihger document with digital signature is allowed to be
+only PDF 1.3 or higher document with digital signature is allowed to be
 converted.
 
 User can send such document through Internet into `Czech POINT' system, which
 is responsible for so called authorized conversion.
 
 Other direction from analogue form to digital one is possible too. Of course
-software can obtaint digital output only.
+software can obtain digital output only.
 
 Public conversion interface is web page <https://www.czechpoint.cz/uschovna/>.
 There is nice interactive interface with ugly CAPTCHA.
 
-Proprieatary client `602XML Filler' uses similar interface that works
+Proprietary client `602XML Filler' uses similar interface that works
 automatically. Without CAPTCHA solving obviously. Description of this batch
 interface follows.
 

@@ -134,16 +134,16 @@ leave:
 /* Send @request to ISDS and return ISDS @response as XML document.
  * Be ware the @response can be invalid (in sense of XML Schema).
  * (And it is because current ISDS server does not follow its own
- * specification. Please appology my government, its herd of imcompetent
+ * specification. Please apology my government, its herd of incompetent
  * creatures.)
  * @context is ISDS session context,
  * @service identifies ISDS web service
  * @request is tree with ISDS message, can be NULL
  * @response is automatically allocated response from server as XML Document
- * @raw_response is automatically allocated bitstream with response body. Use
+ * @raw_response is automatically allocated bit stream with response body. Use
  * NULL if you don't care
  * @raw_response_length is size of @raw_response in bytes
- * In case of error, @response and @raw_response will be dealocated.
+ * In case of error, @response and @raw_response will be deallocated.
  * */
 _hidden isds_error isds(struct isds_ctx *context, const isds_service service,
         const xmlNodePtr request, xmlDocPtr *response,
@@ -157,7 +157,7 @@ _hidden isds_error isds(struct isds_ctx *context, const isds_service service,
     if (!raw_response_length && raw_response) return IE_INVAL;
 
     /* Effective ISDS URL is build from base URL and suffix.
-     * Other conenction types has specific stable URL. */
+     * Other connection types has specific stable URL. */
     if (context->type == CTX_TYPE_ISDS) {
         switch (service) {
             case SERVICE_DM_OPERATIONS:     file = "DS/dz"; break;
@@ -270,12 +270,12 @@ _hidden isds_error _isds_check_documents_hierarchy(struct isds_ctx *context,
         }
 
         /* All document references should point to existing document ID */
-        /* ???: Should we forbid self-refencing? */
+        /* ???: Should we forbid self-referencing? */
         if (document->dmUpFileGuid) {
             if (!isds_find_document_by_id(documents,
                         document->dmUpFileGuid)) {
                 isds_printf_message(context, _("List contains documents "
-                            "referencing to unexisting document ID `%s'"),
+                            "referencing to not existing document ID `%s'"),
                         document->dmUpFileGuid);
                 return IE_ERROR;
             }
@@ -329,7 +329,7 @@ isds_error validate_message_id_length(struct isds_ctx *context,
  * @context is Czech POINT session context,
  * @request is tree with deposit message, can be NULL
  * @response is automatically allocated response from server as XML Document
- * In case of error, @response will be dealocated.
+ * In case of error, @response will be deallocated.
  * */
 _hidden isds_error _czp_czpdeposit(struct isds_ctx *context,
         const xmlNodePtr request, xmlDocPtr *response) {
