@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
         int fd;
         size_t length;
 
-        if (mmap_file("../server/messages/signed_delivered-DD_170272.zfo",
+        if (mmap_file(SRCDIR "/server/messages/signed_delivered-DD_170272.zfo",
                 &fd, &buffer, &length)) {
             fprintf(stderr, "Could not open map file with signed delivery info\n");
             isds_ctx_free(&ctx);
@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
         int fd;
         size_t length;
 
-        if (mmap_file("../server/messages/received_message-151916.xml",
+        if (mmap_file(SRCDIR "/server/messages/received_message-151916.xml",
                 &fd, &buffer, &length)) {
             fprintf(stderr, "Could not map file with message");
             isds_ctx_free(&ctx);

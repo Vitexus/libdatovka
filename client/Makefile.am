@@ -1,6 +1,6 @@
 LIBDIR =../src
 AM_CPPFLAGS = @XML_CPPFLAGS@
-AM_CFLAGS =-I$(LIBDIR)
+AM_CFLAGS = -I$(srcdir)/$(LIBDIR) -DSRCDIR=\"$(top_srcdir)\"
 LDADD = $(LIBDIR)/libisds.la -L$(LIBDIR) @XML_LIBS@
 
 noinst_PROGRAMS = isdsclient login certauth version progressbar logger \

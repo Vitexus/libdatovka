@@ -12,12 +12,62 @@
 #include "common.h"
 
 
+int xpath2nodelist(xmlNodePtr *node_list, xmlXPathContextPtr xpath_ctx, const xmlChar *xpath_expr) {
+    xmlXPathObjectPtr result = NULL;
+    xmlNodePtr node = NULL, prev_node = NULL;
+
+    if (!node_list || !xpath_ctx || !xpath_expr) return -1;
+
+    result = xmlXPathEvalExpression(xpath_expr, xpath_ctx);
+    if (!result) {
+        printf("Error while evaluating XPath expression `%s'\n", xpath_expr);
+        return -1;
+    }
+
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        printf("Empty match, returning empty node list\n");
+        *node_list = NULL;
+    } else {
+        /* Convert node set to list of siblings */
+        for (int i = 0; i < result->nodesetval->nodeNr; i++) {
+            /* Make weak copy of the node */
+            node = malloc(sizeof(*node));
+            if (!node) {
+                fprintf(stderr, "Not enoungh memory\n");
+                xmlXPathFreeObject(result);
+                for (node = *node_list; node; node = node->next)
+                    free(node);
+                *node_list = NULL;
+                return -1;
+            }
+            memcpy(node, result->nodesetval->nodeTab[i], sizeof(*node));
+
+            /* Add node to node_list */
+            node->prev = prev_node;
+            node->next = NULL;
+            if (prev_node)
+                prev_node->next = node;
+            else
+                *node_list = node;
+            prev_node = node;
+
+            /* Debug */
+            printf("* Embeding node #%d:\n", i);
+            xmlDebugDumpNode(stdout, node, 2);
+        }
+
+    }
+
+    xmlXPathFreeObject(result);
+    return 0;
+}
+
+
 int main(int argc, char **argv) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
     char *recipient = NULL;
     xmlDocPtr xml = NULL;
-    xmlNodePtr node_list = NULL;
     
     setlocale(LC_ALL, "");
 
@@ -81,15 +131,18 @@ int main(int argc, char **argv) {
 
     {
         xmlXPathContextPtr xpath_ctx = NULL;
-        xmlXPathObjectPtr result = NULL;
-        xmlNodePtr node = NULL, prev_node = NULL;
+        xmlNodePtr node_list = NULL;
 
-        /* Get XML node list */
-        if (argc != 4) {
+        struct isds_document *document;
+        struct isds_list *documents_item;
+
+        /* Create XML documents */
+        if (argc < 4) {
             printf("Bad number of arguments\n");
-            printf("Usage: %s RECIPIENT XML_FILE XPATH_EXPRESSION\n"
+            printf("Usage: %s RECIPIENT XML_FILE XPATH_EXPRESSION...\n"
 "Send a message with XML document defined by XPATH_EXPRESSION on XML_FILE\n"
-"to RECIPIENT. If RECIPIENT is empty, send to random foubd one.",
+"to RECIPIENT. If RECIPIENT is empty, send to random foubd one. If more\n"
+"XPATH_EXPRESSIONS are specified creates XML document for each of them.\n",
             basename(argv[0]));
             exit(EXIT_FAILURE);
         }
@@ -105,41 +158,34 @@ int main(int argc, char **argv) {
             printf("Error while creating XPath context\n");
             exit(EXIT_FAILURE);
         }
-        result = xmlXPathEvalExpression(BAD_CAST argv[3], xpath_ctx);
-        if (!result) {
-            printf("Error while evaluating XPath expression `%s'\n", argv[3]);
-            exit(EXIT_FAILURE);
-        }
-        if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-            printf("Empty match, trying to send empty XML document\n");
-            node_list = NULL;
-        } else {
-            /* Convert node set to list of siblings */
-            for (int i = 0; i < result->nodesetval->nodeNr; i++) {
-                /* Make weak copy of the node */
-                node = malloc(sizeof(*node));
-                if (!node) {
-                    fprintf(stderr, "Not enoungh memory\n");
-                    exit (EXIT_FAILURE);
-                }
-                memcpy(node, result->nodesetval->nodeTab[i], sizeof(*node));
 
-                /* Add node to node_list */
-                node->prev = prev_node;
-                node->next = NULL;
-                if (prev_node)
-                    prev_node->next = node;
-                else
-                    node_list = node;
-                prev_node = node;
+        for (int j = 3; j < argc; j++) {
+            printf("** Building XML document #%d:\n", j);
 
-                /* Debug */
-                printf("* Embeding node #%d:\n", i);
-                xmlDebugDumpNode(stdout, node, 2);
+            xpath2nodelist(&node_list, xpath_ctx, BAD_CAST argv[j]);
+
+            document = calloc(1, sizeof(*document));
+            if (!document) {
+                printf("Not enought memory\n");
+                exit(EXIT_FAILURE);
+            }
+            document->is_xml = 1;
+            document->xml_node_list = node_list;
+            document->dmMimeType = "text/xml";
+            document->dmFileMetaType = FILEMETATYPE_ENCLOSURE;
+            document->dmFileDescr = "in-line.xml";
+
+            documents_item = calloc(1, sizeof(*documents_item));
+            if (!documents_item) {
+                printf("Not enought memory\n");
+                exit(EXIT_FAILURE);
             }
 
+            documents_item->data = document,
+            documents_item->destructor = (void(*)(void**))isds_document_free;
+
         }
-        xmlXPathFreeObject(result);
+
         xmlXPathFreeContext(xpath_ctx);
 
     }
@@ -158,38 +204,7 @@ int main(int argc, char **argv) {
         envelope.dmAnnotation = "XML documents";
         envelope.dbIDRecipient = recipient;
 
-       
-        struct isds_document main_document;
-        memset(&main_document, 0, sizeof(main_document));
-        main_document.is_xml = 0;
-        main_document.data = "Hello World!";
-        main_document.data_length = strlen(main_document.data);
-        main_document.dmMimeType = "text/plain";
-        main_document.dmFileMetaType = FILEMETATYPE_MAIN;
-        main_document.dmFileDescr = "standard_text.txt";
-        main_document.dmFileGuid = "1";
-
-        struct isds_document xml_document;
-        memset(&xml_document, 0, sizeof(xml_document));
-        xml_document.is_xml = 1;
-        xml_document.xml_node_list = node_list;
-        xml_document.dmMimeType = "text/xml";
-        xml_document.dmFileMetaType = FILEMETATYPE_ENCLOSURE;
-        xml_document.dmFileDescr = "in-line.xml";
-        xml_document.dmFileGuid = "2";
-
-        struct isds_list documents_xml_item = {
-            .data = &xml_document,
-            .next = NULL,
-            .destructor = NULL
-        };
-        struct isds_list documents_main_item = {
-            .data = &main_document,
-            .next = &documents_xml_item,
-            .destructor = NULL
-        };
-        message.documents = &documents_main_item;
-
+        message.documents = NULL; /* FIXME */
 
         printf("Sending message to box ID `%s'\n", recipient);
         err = isds_send_message(ctx, &message);
@@ -203,7 +218,7 @@ int main(int argc, char **argv) {
 
     }
 
-    for (xmlNodePtr node = node_list; node; node = node->next) free(node);
+    /*for (xmlNodePtr node = node_list; node; node = node->next) free(node);*/
     free(recipient);
     xmlFreeDoc(xml);
 

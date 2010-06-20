@@ -38,6 +38,7 @@ void print_DbType(const long int *type) {
     if (!type) printf("NULL\n");
     else
         switch(*type) {
+            case DBTYPE_SYSTEM: printf("SYSTEM\n"); break;
             case DBTYPE_FO: printf("FO\n"); break;
             case DBTYPE_PFO: printf("PFO\n"); break;
             case DBTYPE_PFO_ADVOK: printf("PFO_ADVOK\n"); break;
