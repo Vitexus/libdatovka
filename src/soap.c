@@ -352,20 +352,6 @@ static isds_error http(struct isds_ctx *context, const char *url,
     if (!curl_err) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_FAILONERROR, 0);
     }
-    if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_FOLLOWLOCATION, 1);
-    }
-    if (!curl_err) {
-        /* TODO: Make the redirect depth configurable */
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_MAXREDIRS, 8);
-    }
-    if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl,
-                CURLOPT_UNRESTRICTED_AUTH, 1);
-    }
-    if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_COOKIEFILE, "");
-    }
 
     /* Set get-response function */
     if (!curl_err) {
@@ -438,20 +424,6 @@ static isds_error http(struct isds_ctx *context, const char *url,
 
     /*  Do the request */
     curl_err = curl_easy_perform(context->curl);
-
-    /* Wipe credentials out of the handler */
-#if HAVE_DECL_CURLOPT_USERNAME /* Since curl-7.19.1 */
-    if (context->username) {
-        curl_easy_setopt(context->curl, CURLOPT_USERNAME, NULL);
-    }
-    if (context->password) {
-        curl_easy_setopt(context->curl, CURLOPT_PASSWORD, NULL);
-    }
-#else
-    if (context->username || context->password) {
-        curl_easy_setopt(context->curl, CURLOPT_USERPWD, NULL);
-    }
-#endif /* not HAVE_DECL_CURLOPT_USERNAME */
 
     if (!curl_err)
         curl_err = curl_easy_getinfo(context->curl, CURLINFO_CONTENT_TYPE,
