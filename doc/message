@@ -6,6 +6,8 @@ Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2.6
     (2010-01-18) [DataMessage_ws.pdf]
 Source: Registration of media type FO and ZFO
     <http://www.alvestrand.no/pipermail/ietf-types/2008-June/002037.html>
+Source: O2. Datové schránky: Informace pro dodavatele aplikací, version
+    2010-04-28, Page 18
 
 Message ::= Envelope, Content
 
@@ -142,6 +144,19 @@ Digital Signatures
 ==================
 
 Embedded digital signatures are PKCS#7 to avoid expensive XML canonicalization.
+
+
+Message hash
+============
+
+Message checksum is a hashed bit stream of part of a message. Exact message
+part to hash must preserve physical XML serialization. The hash value is
+carried inside a message, it's stored in ISDS and it's used as a input form
+digital time stamp.
+
+Currently SHA-1 and SHA-256 algortihms are defined. They are identified by
+dmHash/@algorithm attribute. Algorithm name in attribute value contains hyphen
+character.
 
 
 System messages
