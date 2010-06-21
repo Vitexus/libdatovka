@@ -15,10 +15,12 @@
 
 /* Locators */
 /* Base URL of production ISDS instance */
-const char isds_locator[] = "https://www.mojedatovaschranka.cz/";
+const char isds_locator[] = "https://ws1.mojedatovaschranka.cz/";
+const char isds_cert_locator[] = "https://ws1c.mojedatovaschranka.cz/";
 
 /* Base URL of production ISDS instance */
-const char isds_testing_locator[] = "https://www.czebox.cz/";
+const char isds_testing_locator[] = "https://ws1.czebox.cz/";
+const char isds_cert_testing_locator[] = "https://ws1c.czebox.cz/";
 
 /* Extension to MIME type map */
 static xmlChar *extension_map_mime[] = {
@@ -1028,9 +1030,13 @@ isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
  * (system qualified one or commercial non qualified one). This library does
  * not check such political issues. Please see ISDS Specification for more
  * details.
- * @url is base address of ISDS web service. Pass NULL or extern isds_locator
- * variable to use production ISDS instance. You can pass extern
- * isds_testing_locator variable to select testing instance. 
+ * @url is base address of ISDS web service. Pass extern isds_locator
+ * variable to use production ISDS instance without client certificate
+ * authentication (or extern isds_cert_locator with client certificate
+ * authentication). Passing NULL has the same effect, autoselection between
+ * isds_locator and isds_cert_locator is performed in addition. You can pass
+ * extern isds_testing_locator (or isds_cert_testing_locator) variable to
+ * select testing instance. 
  * @username is user name of ISDS user or box ID
  * @password is user's secret password
  * @pki_credentials defines public key cryptographic material to use in client
@@ -1052,9 +1058,6 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
         _isds_close_connection(context);
     }
 
-    /* Default locator is official system */
-    if (!url) url = isds_locator;
-
     /* Store configuration */
     context->type = CTX_TYPE_ISDS;
     zfree(context->url);
@@ -1069,8 +1072,12 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
                     _("Both username and password must be supplied"));
             return IE_INVAL;
         }
-        context->url = strdup(url);
+        /* Default locator is official system (without client certificate) */
+        context->url = strdup((url) ? url : isds_locator);
     } else {
+        /* Default locator is official system (with client certificate) */
+        if (!url) url = isds_cert_locator;
+
         if (!username) {
             isds_log(ILF_SEC, ILL_INFO,
                     _("Selected authentication method: system certificate, "
@@ -1087,7 +1094,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
                 isds_log(ILF_SEC, ILL_INFO,
                         _("Selected authentication method: commercial "
                             "certificate, username and password\n"));
-                context->url = _isds_astrcat(url, "cert/");
+                context->url = _isds_astrcat(url, "certds/");
             }
         }
     }
