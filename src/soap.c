@@ -673,6 +673,13 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
         /* XXX: We must see which code is used for not permitted ISDS
          * operation like downloading message without proper user
          * permissions. In that cat we should keep connection opened. */
+        case 302:
+            err = IE_HTTP;
+            isds_printf_message(context,
+                    _("Code 302: Server redirects on <%s>. "
+                        "Redirection is forbidden in stateless mode."), url);
+            goto leave;
+            break;
         case 401:
             err = IE_NOT_LOGGED_IN;
             isds_log_message(context, _("Authentication failed"));
