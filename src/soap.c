@@ -352,20 +352,6 @@ static isds_error http(struct isds_ctx *context, const char *url,
     if (!curl_err) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_FAILONERROR, 0);
     }
-    if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_FOLLOWLOCATION, 1);
-    }
-    if (!curl_err) {
-        /* TODO: Make the redirect depth configurable */
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_MAXREDIRS, 8);
-    }
-    if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl,
-                CURLOPT_UNRESTRICTED_AUTH, 1);
-    }
-    if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_COOKIEFILE, "");
-    }
 
     /* Set get-response function */
     if (!curl_err) {
@@ -438,20 +424,6 @@ static isds_error http(struct isds_ctx *context, const char *url,
 
     /*  Do the request */
     curl_err = curl_easy_perform(context->curl);
-
-    /* Wipe credentials out of the handler */
-#if HAVE_DECL_CURLOPT_USERNAME /* Since curl-7.19.1 */
-    if (context->username) {
-        curl_easy_setopt(context->curl, CURLOPT_USERNAME, NULL);
-    }
-    if (context->password) {
-        curl_easy_setopt(context->curl, CURLOPT_PASSWORD, NULL);
-    }
-#else
-    if (context->username || context->password) {
-        curl_easy_setopt(context->curl, CURLOPT_USERPWD, NULL);
-    }
-#endif /* not HAVE_DECL_CURLOPT_USERNAME */
 
     if (!curl_err)
         curl_err = curl_easy_getinfo(context->curl, CURLINFO_CONTENT_TYPE,
@@ -701,6 +673,13 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
         /* XXX: We must see which code is used for not permitted ISDS
          * operation like downloading message without proper user
          * permissions. In that cat we should keep connection opened. */
+        case 302:
+            err = IE_HTTP;
+            isds_printf_message(context,
+                    _("Code 302: Server redirects on <%s>. "
+                        "Redirection is forbidden in stateless mode."), url);
+            goto leave;
+            break;
         case 401:
             err = IE_NOT_LOGGED_IN;
             isds_log_message(context, _("Authentication failed"));

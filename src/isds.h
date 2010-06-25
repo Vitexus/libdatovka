@@ -21,8 +21,12 @@ extern "C" {
 #endif
 
 /* Service locators */
-extern const char isds_locator[];   /* Base URL of production ISDS instance */
-extern const char isds_testing_locator[]; /* B. URL of testing ISDS instance */
+/* Base URL of production ISDS instance */
+extern const char isds_locator[];       /* Without client certificate auth. */
+extern const char isds_cert_locator[];  /* With client certificate auth. */
+/* Base URL of testing ISDS instance */
+extern const char isds_testing_locator[]; /* Without client certificate auth. */
+extern const char isds_testing_locator[]; /* With client certificate auth. */
 
 
 struct isds_ctx;    /* Context for specific ISDS box */
@@ -676,9 +680,13 @@ isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
  * (system qualified one or commercial non qualified one). This library does
  * not check such political issues. Please see ISDS Specification for more
  * details.
- * @url is base address of ISDS web service. Pass NULL or extern isds_locator
- * variable to use production ISDS instance. You can pass extern
- * isds_testing_locator variable to select testing instance. 
+ * @url is base address of ISDS web service. Pass extern isds_locator
+ * variable to use production ISDS instance without client certificate
+ * authentication (or extern isds_cert_locator with client certificate
+ * authentication). Passing NULL has the same effect, autoselection between
+ * isds_locator and isds_cert_locator is performed in addition. You can pass
+ * extern isds_testing_locator (or isds_cert_testing_locator) variable to
+ * select testing instance. 
  * @username is user name of ISDS user or box ID
  * @password is user's secret password
  * @pki_credentials defines public key cryptographic material to use in client
