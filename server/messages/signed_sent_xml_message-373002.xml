@@ -1,0 +1,91 @@
+<q:MessageDownloadResponse xmlns:q="http://isds.czechpoint.cz/v20/SentMessage" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" isds_send="https://www.czebox.cz/any/DS/dz"><q:dmReturnedMessage><p:dmDm xmlns:p="http://isds.czechpoint.cz/v20"><p:dmID>373002</p:dmID><p:dbIDSender>ga2dqwf</p:dbIDSender><p:dmSender>isds_tester_tri Testovič - Tester Testovič</p:dmSender><p:dmSenderAddress>18, 30300 Pepíkov, CZ</p:dmSenderAddress><p:dmSenderType>30</p:dmSenderType><p:dmRecipient>Institut pro místní správu Praha</p:dmRecipient><p:dmRecipientAddress>11000 Praha, CZ</p:dmRecipientAddress><p:dmAmbiguousRecipient>false</p:dmAmbiguousRecipient><p:dmSenderOrgUnit xsi:nil="true"></p:dmSenderOrgUnit><p:dmSenderOrgUnitNum>42</p:dmSenderOrgUnitNum><p:dbIDRecipient>nd3b9ka</p:dbIDRecipient><p:dmRecipientOrgUnit xsi:nil="true"></p:dmRecipientOrgUnit><p:dmRecipientOrgUnitNum xsi:nil="true"></p:dmRecipientOrgUnitNum><p:dmToHands xsi:nil="true"></p:dmToHands><p:dmAnnotation>XML documents</p:dmAnnotation><p:dmRecipientRefNumber xsi:nil="true"></p:dmRecipientRefNumber><p:dmSenderRefNumber xsi:nil="true"></p:dmSenderRefNumber><p:dmRecipientIdent xsi:nil="true"></p:dmRecipientIdent><p:dmSenderIdent xsi:nil="true"></p:dmSenderIdent><p:dmLegalTitleLaw xsi:nil="true"></p:dmLegalTitleLaw><p:dmLegalTitleYear xsi:nil="true"></p:dmLegalTitleYear><p:dmLegalTitleSect xsi:nil="true"></p:dmLegalTitleSect><p:dmLegalTitlePar xsi:nil="true"></p:dmLegalTitlePar><p:dmLegalTitlePoint xsi:nil="true"></p:dmLegalTitlePoint><p:dmPersonalDelivery>false</p:dmPersonalDelivery><p:dmAllowSubstDelivery>true</p:dmAllowSubstDelivery>
+      <p:dmFiles>
+        <p:dmFile dmFileDescr="in-line.xml" dmFileMetaType="main" dmMimeType="text/xml">
+          <p:dmXMLContent>
+            <root>
+    <element>Text1</element>
+    <elements>
+        <element>Text2</element>
+        <element>Text3</element>
+    </elements>
+</root>
+          </p:dmXMLContent>
+        </p:dmFile>
+        <p:dmFile dmFileDescr="in-line.xml" dmFileMetaType="enclosure" dmMimeType="text/xml">
+          <p:dmXMLContent>
+            <element>Text1</element>
+          </p:dmXMLContent>
+        </p:dmFile>
+        <p:dmFile dmFileDescr="in-line.xml" dmFileMetaType="enclosure" dmMimeType="text/xml">
+          <p:dmXMLContent>
+            <element>Text2</element>
+            <element>Text3</element>
+          </p:dmXMLContent>
+        </p:dmFile>
+        <p:dmFile dmFileDescr="in-line.xml" dmFileMetaType="enclosure" dmMimeType="text/xml">
+          <p:dmXMLContent>Text1</p:dmXMLContent>
+        </p:dmFile>
+        <p:dmFile dmFileDescr="in-line.xml" dmFileMetaType="enclosure" dmMimeType="text/xml">
+          <p:dmXMLContent></p:dmXMLContent>
+        </p:dmFile>
+      </p:dmFiles></p:dmDm><q:dmHash algorithm="SHA-256">pe38PRw494V+Civ0N0vjczuTJiHd37/yu+6yvPj4KOU=
+</q:dmHash><q:dmQTimestamp>MIINGwYJKoZIhvcNAQcCoIINDDCCDQgCAQMxDzANBglghkgBZQMEAgEFADCCAQkGCyqGSIb3DQEJ
+EAEEoIH5BIH2MIHzAgEBBghngQYBBQEBbjAxMA0GCWCGSAFlAwQCAQUABCCl7fw9HDj3hX4KK/Q3
+S+NzO5MmId3fv/K77rK8+Pgo5QIGSrTHtYceGBMyMDEwMDYyNTEzMzI1Ni4wMzlaMASAAgH0Agis
+ITocjJfhEKCBg6SBgDB+MQswCQYDVQQGEwJDWjEsMCoGA1UECgwjxIxlc2vDoSBwb8WhdGEsIHMu
+cC4gW0nEjCA0NzExNDk4M10xIDAeBgNVBAsTF1RpbWUgU3RhbXBpbmcgQXV0aG9yaXR5MR8wHQYD
+VQQDExZQb3N0U2lnbnVtIFRTQSAtIFRTVSAxoIIJSzCCBxowggYCoAMCAQICAwPOtjANBgkqhkiG
+9w0BAQsFADBdMQswCQYDVQQGEwJDWjEsMCoGA1UECgwjxIxlc2vDoSBwb8WhdGEsIHMucC4gW0nE
+jCA0NzExNDk4M10xIDAeBgNVBAMTF1Bvc3RTaWdudW0gUXVhbGlmaWVkIENBMB4XDTA5MDYyMjA4
+NDIzMFoXDTEyMDYyMjA4NDExNlowfjELMAkGA1UEBhMCQ1oxLDAqBgNVBAoMI8SMZXNrw6EgcG/F
+oXRhLCBzLnAuIFtJxIwgNDcxMTQ5ODNdMSAwHgYDVQQLExdUaW1lIFN0YW1waW5nIEF1dGhvcml0
+eTEfMB0GA1UEAxMWUG9zdFNpZ251bSBUU0EgLSBUU1UgMTCCASIwDQYJKoZIhvcNAQEBBQADggEP
+ADCCAQoCggEBANI+c0hEU43q0xNEchsv0rgSlg7Shc5QPQAtXPW63m39JZ6icMl3JbWHRJ0lrcuh
+hLOISp8qb+mex8GNKyLNSEB0fGuy1HGj9KiB5NNu9AECaMPcuqhop7+4UdRYrZ/0pFVHvF9jxOIq
++s3p8vc0VMV4REeNAJv9mFdkobIpuFGEq1RvXnnPqRLdB2nVc6PDmYUtyKpkSJxS9EGvReIEgN4z
+sbjJbCJUop8GiLSoNM2CwkqME4C87Fb7B+q8ya7OINXk1pTECNB9wmVnscJXE2pzYBOZypqUo268
+pEeY/mGCflciKCGV8RVrUUbyIW4QUFfmrS6EPdyAJeIQvQcjti8CAwEAAaOCA8AwggO8MAkGA1Ud
+EwQCMAAwggEfBgNVHSAEggEWMIIBEjCCAQ4GCGeBBgEEAQduMIIBADCB1wYIKwYBBQUHAgIwgcoa
+gcdUZW50byBrdmFsaWZpa292YW55IHN5c3RlbW92eSBjZXJ0aWZpa2F0IGJ5bCB2eWRhbiBwb2Rs
+ZSB6YWtvbmEgMjI3LzIwMDBTYi4gYSBuYXZhem55Y2ggcHJlZHBpc3UvVGhpcyBxdWFsaWZpZWQg
+c3lzdGVtIGNlcnRpZmljYXRlIHdhcyBpc3N1ZWQgYWNjb3JkaW5nIHRvIExhdyBObyAyMjcvMjAw
+MENvbGwuIGFuZCByZWxhdGVkIHJlZ3VsYXRpb25zMCQGCCsGAQUFBwIBFhhodHRwOi8vd3d3LnBv
+c3RzaWdudW0uY3owGgYIKwYBBQUHAQMEDjAMMAoGCCsGAQUFBwsCMA4GA1UdDwEB/wQEAwIGwDAW
+BgNVHSUBAf8EDDAKBggrBgEFBQcDCDCBgQYDVR0jBHoweIAUp5+2jomTmmV2CZqV+ER+aYJq3guh
+XaRbMFkxCzAJBgNVBAYTAkNaMSwwKgYDVQQKDCPEjGVza8OhIHBvxaF0YSwgcy5wLiBbScSMIDQ3
+MTE0OTgzXTEcMBoGA1UEAxMTUG9zdFNpZ251bSBSb290IFFDQYIBHDCCAaMGA1UdHwSCAZowggGW
+MDSgMqAwhi5odHRwOi8vd3d3LnBvc3RzaWdudW0uY3ovY3JsL3BzcXVhbGlmaWVkY2EuY3JsMDSg
+MqAwhi5odHRwOi8vcG9zdHNpZ251bS50dGMuY3ovY3JsL3BzcXVhbGlmaWVkY2EuY3JsMIGSoIGP
+oIGMhoGJbGRhcDovL3FjYS5wb3N0c2lnbnVtLmN6L2NuJTNkUG9zdFNpZ251bSUyMFF1YWxpZmll
+ZCUyMENBLG8lM2RDZXNrYSUyMHBvc3RhJTIwcy5wLiUyMCU1YklDJTIwNDcxMTQ5ODMlNWQsYyUz
+ZENaP2NlcnRpZmljYXRlUmV2b2NhdGlvbkxpc3QwgZKggY+ggYyGgYlsZGFwOi8vcG9zdHNpZ251
+bS50dGMuY3ovY24lM2RQb3N0U2lnbnVtJTIwUXVhbGlmaWVkJTIwQ0EsbyUzZENlc2thJTIwcG9z
+dGElMjBzLnAuJTIwJTViSUMlMjA0NzExNDk4MyU1ZCxjJTNkQ1o/Y2VydGlmaWNhdGVSZXZvY2F0
+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
+</q:dmQTimestamp><q:dmDeliveryTime>2010-06-25T15:32:56.169+02:00</q:dmDeliveryTime><q:dmAcceptanceTime xsi:nil="true"></q:dmAcceptanceTime><q:dmMessageStatus>4</q:dmMessageStatus><q:dmAttachmentSize>1</q:dmAttachmentSize></q:dmReturnedMessage></q:MessageDownloadResponse>
