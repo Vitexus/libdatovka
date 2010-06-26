@@ -3,7 +3,7 @@ Maintenance web services specification
 
 Source: Provozní řád ISDS, version 2010-01-22, Pages 14–15
 Source: Webové služby rozhraní ISDS pro správu datových schránek,
-    version 2.6 (2009-11-18)
+    version 2.9 (2010-05-03)
 Source: Webové služby související s přístupem do ISDS, version 1.2
     (2010-05-12)
 
@@ -111,10 +111,12 @@ CreateDataBox
     + dbUpperDBId – ID of supper box, optional
     + dbCEOLabel – title of OVM manager (required for OVM box, optional
     |       otherise)
+    + dbUseActPortal – true if user want to get initial credintials on
+            activation portal. optional
     + dbApproved – optional
     + dbExternRefNumber – optional
 
-Returns ID of new box.
+Returns ID of new box and token for activation portal if requested.
 
 
 CreateDataBoxPFOInfo
