@@ -3830,9 +3830,9 @@ static isds_error insert_document(struct isds_ctx *context,
         goto leave;
     }
     INSERT_STRING(file, "dmEncodedContent", base64data);
-    free(base64data);
 
 leave:
+    free(base64data);
     return err;
 }
 
@@ -8457,6 +8457,179 @@ leave:
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("CreateDataBox request processed by server successfully.\n"));
     }
+
+    return err;
+}
+
+
+/* Submit CMS signed message to ISDS to verify its originality. This is
+ * stronger form of isds_verify_message_hash() because ISDS does more checks
+ * than simple one (potentialy old weak) hash comparison.
+ * @context is session context
+ * @message is memory with raw CMS signed message bit stream
+ * @length is @message size in bytes
+ * @return
+ *  IE_SUCCESS  if message originates in ISDS
+ *  IE_NOTEQUAL if message is unknown to ISDS
+ *  other code  for other errors */
+isds_error isds_authenticate_message(struct isds_ctx *context,
+        const void *message, size_t length) {
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlDocPtr response = NULL;
+    xmlChar *base64data = NULL;
+    xmlChar *code = NULL, *status_message = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    xmlNodePtr node;
+    _Bool *authentic = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (!message || length == 0) return IE_INVAL;
+
+    /* Check if connection is established
+     * TODO: This check should be done downstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Build AuthenticateMessage request */
+    request = xmlNewNode(NULL, BAD_CAST "AuthenticateMessage");
+    if (!request) {
+        isds_log_message(context,
+                _("Could not build AuthenticateMessage request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    /* Insert Base64 encoded message */
+    base64data = (xmlChar *) _isds_b64encode(message, length);
+    if (!base64data) {
+        isds_printf_message(context,
+                ngettext("Not enough memory to encode %zd bytes into Base64",
+                    "Not enough memory to encode %zd bytes into Base64",
+                    length),
+                length);
+        err = IE_NOMEM;
+        goto leave;
+    }
+    INSERT_STRING(request, "dmMessage", base64data);
+    zfree(base64data);
+
+
+    isds_log(ILF_ISDS, ILL_DEBUG,
+            _("Sending AuthenticateMessage request to ISDS\n"));
+
+    /* Sent request */
+    err = isds(context, SERVICE_DM_OPERATIONS, request, &response, NULL, NULL);
+   
+    /* Destroy request */
+    xmlFreeNode(request); request = NULL;
+
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Processing ISDS response on AuthenticateMessage "
+                    "request failed\n"));
+        goto leave;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, SERVICE_DM_OPERATIONS, response,
+            &code, &status_message, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("ISDS response on AuthenticateMessage request is missing "
+                    "status\n"));
+        goto leave;
+    }
+
+    /* Error in ISDS */
+    if (xmlStrcmp(code, BAD_CAST "0000")) {
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)status_message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server could not decide authenticity of submitted message "
+                    "(code=%s, message=%s)\n"),
+                code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+   
+
+    /* Otherwise ISDS has decided */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(
+            BAD_CAST "/isds:AuthenticateMessageResponse",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* Empty response */
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context,
+                _("Server did not return any response on "
+                    "AuthenticateMessage request"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* More responses */
+    if (result->nodesetval->nodeNr > 1) {
+        isds_log_message(context,
+                _("Server did return more responses on "
+                    "AuthenticateMessage request"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    /* One response */
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+    EXTRACT_BOOLEAN("dmAuthResult", authentic);
+
+    if (!authentic) { 
+        isds_log_message(context,
+                _("Server did not return any response on "
+                    "AuthenticateMessage request"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    if (*authentic) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("ISDS authenticated the message successfully\n"));
+
+    } else {
+        isds_log_message(context, _("ISDS does not know the message"));
+        err = IE_NOTEQUAL;
+    }
+
+
+leave:
+    free(authentic);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(status_message);
+    free(base64data);
+    xmlFreeDoc(response);
+    xmlFreeNode(request);
 
     return err;
 }

@@ -1148,6 +1148,19 @@ isds_error isds_hash_cmp(const struct isds_hash *h1,
 isds_error isds_verify_message_hash(struct isds_ctx *context,
         struct isds_message *message);
 
+/* Submit CMS signed message to ISDS to verify its originality. This is
+ * stronger form of isds_verify_message_hash() because ISDS does more checks
+ * than simple one (potentialy old weak) hash comparison.
+ * @context is session context
+ * @message is memory with raw CMS signed message bit stream
+ * @length is @message size in bytes
+ * @return
+ *  IE_SUCCESS  if message originates in ISDS
+ *  IE_NOTEQUAL if message is unknown to ISDS
+ *  other code  for other errors */
+isds_error isds_authenticate_message(struct isds_ctx *context,
+        const void *message, size_t length);
+
 /* Mark message as read. This is a transactional commit function to acknowledge
  * to ISDS the message has been downloaded and processed by client properly.
  * @context is session context
