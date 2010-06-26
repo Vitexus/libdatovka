@@ -358,9 +358,6 @@ struct isds_envelope {
     char *dmRecipientAddress;       /* Postal address of recipient;
                                        Maximal length is 100 characters. */
     _Bool *dmAmbiguousRecipient;    /* Recipient has OVM role */
-    char *dmType;                   /* Message type:
-                                       "V" is public message
-                                       "K" is commercial message */
 
     /* Following members are assigned by ISDS in different phases of message
      * life cycle. */
@@ -432,6 +429,13 @@ struct isds_envelope {
                                        between true (OVM mode) and
                                        false (non-OVM mode).
                                        Optional; Implicit value is true. */
+    char *dmType;                   /* Message type:
+                                       "V" is public message
+                                       "K" is commercial message
+                                       Default value for outgoing message is "V"
+                                       Length: Exact 1 UTF-8 character if
+                                       defined;
+                                       As 2010-05-20, used as output only. */
 };
 
 

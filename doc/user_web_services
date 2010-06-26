@@ -90,6 +90,9 @@ dmAllowSubstDelivery, dmRecipientRefNumber, dmRecipientIdent,
 dmSenderRefNumber, dmSenderIdent, dmLegalTitleLaw, dmLegalTitleYear,
 dmLegalTitleSect, dmLegalTitlePar, dmLegalTitlePoint, dmOVM).
 
+Since 2010-05-20, outgoing message envelope can specify dmType. However it's
+currently ignored.
+
 Constraints: Sender must have PRIVIL_CREATE_DM permission.
 Constraints: Exactly one document in message must be main type.
 Constraints: Total size of all documents must not be bigger than 10 MB.

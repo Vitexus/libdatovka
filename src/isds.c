@@ -2241,6 +2241,8 @@ static isds_error eventstring2event(const xmlChar *string,
         free(buffer); (buffer) = NULL; \
     }
 
+/* Requires attribute_node variable, do not free it. Can be used to reffer to
+ * new attribute. */
 #define INSERT_STRING_ATTRIBUTE(parent, attribute, string) \
     { \
         attribute_node = xmlNewProp((parent), BAD_CAST (attribute), \
@@ -3115,6 +3117,38 @@ leave:
     return err;
 }
 
+
+/* Convert dmType isds_envelope member into XML attribute and append it to
+ * current node.
+ * @context is ISDS context
+ * @type is UTF-8 encoded string one multibyte long exactly or NULL to omit
+ * @dm_envelope is XML element the resulting attribute will be appended to.
+ * @return error code, in case of error context' message is filled. */
+static isds_error insert_message_type(struct isds_ctx *context,
+        const char *type, xmlNodePtr dm_envelope) {
+    isds_error err = IE_SUCCESS;
+    xmlAttrPtr attribute_node;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!dm_envelope) return IE_INVAL;
+
+    /* Insert optional message type */
+    if (type) {
+        if (1 != xmlUTF8Strlen((xmlChar *) type)) {
+            char *type_locale = _isds_utf82locale(type);
+            isds_printf_message(context,
+                    _("Message type in envelope is not 1 character long: %s"),
+                    type_locale);
+            free(type_locale);
+            err = IE_INVAL;
+            goto leave;
+        }
+        INSERT_STRING_ATTRIBUTE(dm_envelope, "dmType", type);
+    }
+
+leave:
+    return err;
+}
 
 
 /* Extract message document into reallocated document structure
@@ -5919,6 +5953,11 @@ static isds_error insert_envelope_files(struct isds_ctx *context,
         err = IE_INVAL;
         goto leave;
     }
+
+    /* Insert optional message type */
+    err = insert_message_type(context, outgoing_message->envelope->dmType,
+            envelope);
+    if (err) goto leave;
 
     INSERT_STRING(envelope, "dmSenderOrgUnit",
             outgoing_message->envelope->dmSenderOrgUnit);
