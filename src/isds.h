@@ -1050,7 +1050,7 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
  * @message is automatically reallocated message retrieved from ISDS.
  * It will miss documents per se. Use isds_get_received_message(), if you are
  * interested in documents (content). OTOH, only this function can get list
- * events message has gone through. */
+ * of events message has gone through. */
 isds_error isds_get_delivery_info(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
 
