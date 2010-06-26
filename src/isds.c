@@ -3516,7 +3516,7 @@ static isds_error find_and_append_DmQTimestamp(struct isds_ctx *context,
     /* Get dmQTimestamp */
     EXTRACT_STRING("sisds:dmQTimestamp", string);
     if (!string) {
-        isds_log(ILF_ISDS, ILL_INFO, _("Missing dmQTimestamp element content"));
+        isds_log(ILF_ISDS, ILL_INFO, _("Missing dmQTimestamp element content\n"));
         goto leave;
     }
     (*envelope)->timestamp_length =
