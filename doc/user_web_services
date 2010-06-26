@@ -5,7 +5,7 @@ Source: Provozní řád ISDS, version 2010-01-22, Pages 14–15
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
     version 2.11 (2010-05-20)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
-    version 2.7 (2009-12-18)
+    version 2.11 (2010-05-19)
 
 
 These services are intended for working with messages inside a box by
@@ -379,7 +379,7 @@ http://isds.czechpoint.cz/v20/delivery:
 FindDataBox (*)
 ===========
 
-Find boxes conforming to search criteria or exact ID and returns corresponding
+Find boxes conforming to search criteria or exact ID and return corresponding
 (possibly truncated) list of boxes.
 
 Returned boxes exist, but it does not mean they can receive messages. Use
@@ -387,11 +387,11 @@ CheckDataBox to figure out.
 
 There are three different search cases distinguished in this order:
 
-    – If dbID is filled in request, will search only for exact box, other
+    – If dbID is filled in request, it will search for exact box only, other
     criteria will be ignored.
 
-    – If identifier and registryCode are filled, will search only for exact
-    box, other criteria will be ignored.
+    – If identifier and registryCode are filled, it will search for exact
+    box only, other criteria will be ignored.
 
     – Otherwise search against other criteria.
 
@@ -408,10 +408,12 @@ PFO             ic or pnLastName or pnLastNameAtBirth
 PO              ic or prefix (at least 3 characters) of firmName
 OVM             ic or prefix of firmName
 
-String search criteria are matched case insensitive.
+String search criteria are matched case insensitive (except dbID). Strings are
+compared to prefix. Except firmName, adCity, adStreet and biCity that are
+matched as substrings.
 
 Search results depends or logged-in user type. Users of boxes with open
-addressing can search other open-addressing boxes, otherwise only OVM type
+addressing can search other open-addressing boxes, otherwise only OVM type
 boxes can be searched. Search based on exact box identifier finder unlimited.
 
 Error codes:
