@@ -377,7 +377,7 @@ struct isds_envelope {
                                            been accepted yet. */
     struct isds_hash *hash;         /* Message hash.
                                        This is hash of isds:dmDM subtree. */
-    void *timestamp;                /* Qualified time stamp */
+    void *timestamp;                /* Qualified time stamp; Optional. */
     size_t timestamp_length;        /* Length of timestamp in bytes */
     struct isds_list *events;       /* Events message passed trough;
                                        List of isds_event's. */

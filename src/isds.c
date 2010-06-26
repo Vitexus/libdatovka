@@ -3446,7 +3446,10 @@ leave:
 }
 
 
-/* Find and append isds:dmQTimestamp XML tree into envelope
+/* Find and append isds:dmQTimestamp XML tree into envelope.
+ * Because one service is allowed to miss time-stamp content, and we think
+ * other could too (flaw in specification), this function is deliberated and
+ * will not fail (i.e. will return IE_SUCCESS), if time-stamp is missing.
  * @context is ISDS context
  * @envelope is automatically allocated envelope structure
  * @xpath_ctx is XPath context with current node containing isds:dmQTimestamp
@@ -3479,8 +3482,7 @@ static isds_error find_and_append_DmQTimestamp(struct isds_ctx *context,
     /* Get dmQTimestamp */
     EXTRACT_STRING("sisds:dmQTimestamp", string);
     if (!string) {
-        isds_printf_message(context, _("Missing dmQTimestamp element content"));
-        err = IE_ISDS;
+        isds_log(ILF_ISDS, ILL_INFO, _("Missing dmQTimestamp element content"));
         goto leave;
     }
     (*envelope)->timestamp_length =

@@ -3,7 +3,7 @@ User web services specification
 
 Source: Provozní řád ISDS, version 2010-01-22, Pages 14–15
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
-    version 2.6 (2010-01-18)
+    version 2.11 (2010-05-20)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
     version 2.7 (2009-12-18)
 
@@ -173,6 +173,9 @@ MessageDownload
 ===============
 
 Retrieve incoming message identified by message ID.
+
+This service can return message without digital time-stamp (more precisely
+with empty dmQTimesamp element, see schema). 
 
 Commercial message must be accepted manually by ConfirmDelivery before.
 Commercial message has set dmReturnedMessage/@dmType="K".
