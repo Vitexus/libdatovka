@@ -19,7 +19,8 @@ Data types: dmBaseTypes.xsd (Appendix 1)
 Documentation: DataMessage_ws.pdf, DBSearch_ws.pdf (Appendix 2)
 
 List of SOAP requests follows. Those marked with asterisk DOES NOT MARK
-noncommercial incoming messages as delivered.
+noncommercial incoming messages as delivered. Those marked with plus has
+access to envelopes of deleted messages.
 
 
 dm_operations.wsdl
@@ -48,17 +49,17 @@ dm_info.wsdl
 URL postfix: dx
 Constraints: Client must be authenticated in Access Manager
 
-VerifyMessage
+VerifyMessage (+)
     Verify local copy of message with remote original stored in ISDS
-MessageEnvelopeDownload
+MessageEnvelopeDownload (+)
     Download envelope of incoming message
 MarkMessageAsDownloaded
     Mark message as read
 ConfirmDelivery
     Mark commercial message as accepted by recipient
-GetDeliveryInfo
+GetDeliveryInfo (+)
     Download info-sheet about message post and delivery
-GetSignedDeliveryInfo
+GetSignedDeliveryInfo (+)
     Download info-sheet about message post and delivery with signature of
     ministry of interiors
 GetListOfRecievedMessages
@@ -273,7 +274,7 @@ Non-normative error codes:
     2017    Syntax error in date-time
 
 
-VerifyMessage
+VerifyMessage (+)
 =============
 
 Retrieve message hash (dmHash element) for given message from ISDS.
@@ -292,7 +293,7 @@ Non-normative error codes:
     1219    Message with ID does not exist in ISDS.
 
 
-MessageEnvelopeDownload
+MessageEnvelopeDownload (+)
 =======================
 
 Download envelope of incoming message. That is message without documents.
@@ -325,7 +326,7 @@ Must be called before downloading (signed or unsigned) incoming message
 [Signed]MessageDownload.
 
 
-GetDeliveryInfo
+GetDeliveryInfo (+)
 ===============
 
 Download info-sheet about incoming or outgoing message post and delivery or
@@ -351,7 +352,7 @@ distinguish the event meaning. Following prefixes are defined:
     EV4:    Commercial message has been accepted by recipient confirmation
 
 
-GetSignedDeliveryInfo
+GetSignedDeliveryInfo (+)
 =====================
 
 Download info-sheet about incoming or outgoing message post and delivery or
