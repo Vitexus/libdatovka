@@ -328,7 +328,7 @@ Must be called before downloading (signed or unsigned) incoming message
 GetDeliveryInfo
 ===============
 
-Download infighter about incoming or outgoing message post and delivery or
+Download info-sheet about incoming or outgoing message post and delivery or
 deliver impossibility. The message is specified by message ID.
 
 It returns complete message envelope, hash, time-stamp. Delivery time and
