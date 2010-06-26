@@ -39,6 +39,8 @@ SignedMessageDownload
     Download incoming message with digital signature of ministry of interiors
 SignedSentMessageDownload
     Download outgoing message with digital signature of ministry of interiors
+AuthenticateMessage (+)
+    Submit local message copy to ISDS to confirm message authenticity
 DummyOperation
     Void operation used to log in and to keep connection alive
 
@@ -272,6 +274,22 @@ Offset starts on 1. Limit defaults to 1000.
 
 Non-normative error codes:
     2017    Syntax error in date-time
+
+
+AuthenticateMessage (+)
+===================
+
+Allows to verify message authenticity by providing copy to ISDS.
+
+Only signed message encapsuleted into CMS structure with digital signature can
+be verified by this service. Client pass the raw message in Base64 encoding to
+ISDS, system performs checks and return boolean value: true if message has
+not been modified and has been delivered through ISDS, false if message
+has is unkown to ISDS. In both cases 0000 error code will be returned.
+
+If message cannot be processed (e.g. broken CMS or XML syntax) or message
+contains has been signed by non-ISDS certificate or other error, non-zero
+error code will be returned.
 
 
 VerifyMessage (+)
