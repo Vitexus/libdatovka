@@ -722,14 +722,18 @@ isds_error isds_change_password(struct isds_ctx *context,
  * @upper_box_id is optional ID of supper box if currently created box is
  * subordinated.
  * @ceo_label is optional title of OVM box owner (e.g. mayor)
+ * @token is NULL if new password should be delivered off-line to the user.
+ * It is valid pointer if user should obtain new password on-line on dedicated
+ * web server. Then it outputs automatically reallocated token user needs to
+ * use to authorize on the web server to view his new password. 
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_add_box(struct isds_ctx *context,
         struct isds_DbOwnerInfo *box, const struct isds_list *users,
         const char *former_names, const char *upper_box_id,
-        const char *ceo_label, const struct isds_approval *approval,
-        char **refnumber);
+        const char *ceo_label, char **token,
+        const struct isds_approval *approval, char **refnumber);
 
 /* Notify ISDS about new PFO entity.
  * This function has no real effect.
@@ -801,7 +805,7 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
  * @approval is optional external approval of box manipulation
  * @token is NULL if new password should be delivered off-line to the user.
  * It is valid pointer if user should obtain new password on-line on dedicated
- * web server. Then it output automatically reallocated token user needs to
+ * web server. Then it outputs automatically reallocated token user needs to
  * use to authorize on the web server to view his new password. 
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/

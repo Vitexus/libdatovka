@@ -92,15 +92,19 @@ int main(int argc, char **argv) {
         const struct isds_approval approval = {
             .approved = 1, .refference = "Me"
         };
+        char *token = NULL;
         printf("Creating already existing box\n");
         err = isds_add_box(ctx, db_owner_info, users, "Former Names",
-                NULL, "CEO", &approval, &refnumber);
+                NULL, "CEO", &token, &approval, &refnumber);
         if (err) {
             printf("isds_add_box() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
         } else {
-            printf("isds_add_box() succeeded as request #%s: new box ID: %s\n",
-                    refnumber, db_owner_info->dbID);
+            printf("isds_add_box() succeeded:\n"
+                    "\trequest #: %s\n"
+                    "\tnew box ID: %s\n"
+                    "\ttoken value: %s\n",
+                    refnumber, db_owner_info->dbID, token);
         }
 
     }
