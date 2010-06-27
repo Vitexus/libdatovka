@@ -2,8 +2,8 @@ Message specification
 =====================
 
 Source: Provozní řád ISDS, version 2009-10-30, Page 13
-Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2.6
-    (2010-01-18) [DataMessage_ws.pdf]
+Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2.11
+    (2010-05-20) [DataMessage_ws.pdf]
 Source: Registration of media type FO and ZFO
     <http://www.alvestrand.no/pipermail/ietf-types/2008-June/002037.html>
 Source: O2. Datové schránky: Informace pro dodavatele aplikací, version
@@ -129,12 +129,15 @@ A Message can be addressed to 50 recipients at maximum.
 
 Life time of Message:
 
-    – 90 days for delivered message
+    – 90 days for delivered message, 100 days for system message
     – unlimited for delivered through fiction messages, however they can be
     moved to off-line storage after 90 days. User can request to move the
     Message back into his box (off-line only currently).
 
-Deleted messages are stored off-line as Envelope only without Content.
+Deleted messages are stored off-line as Envelope only without Content. Since
+2010-06-01, some services has access to off-line stored envelopes
+(Get(Signed)DeliveryInfo, MessageEnvelopeDownload, VerifyMessage,
+AuthenticateMessage).
 
 Note: Delivery through fiction is currently defined as new unread for more
 than 10 days after delivery.
@@ -188,9 +191,22 @@ User can request to assign permission to send commercial messages. Permission
 can be assigned by Czech Post. Commercial recipient can not be searched. Sender
 must know exact box ID.
 
-Commercial message can be recognised by @dmType="K" in message envelope. If
-@dmType is "V" or attribute is missing, message is so called public (i.e.
-standard noncommercial with acceptance time outs etc.).
+Incomming commercial message can be recognised by @dmType="K" in message
+envelope. If @dmType is "V" or attribute is missing, message is so called
+public (i.e. standard noncommercial with acceptance time outs etc.).
+
+How does ISDS determine (non-)commercial status of outgoing message?
+The decision is based on sender and recipient box type, commercial
+sending/receiving permission and OVM message flag:
+
+All messages are public except following combinations when message is
+considered as commercial:
+
+        Sender                         Recipient
+Gross type  Commercial sending  Gross type  Commercial receiving    OVM flag
+----------------------------------------------------------------------------
+non-OVM     allowed             non-OVM     allowed                 any
+any         any                 non-OVM     allowed                 false
 
 
 Message states

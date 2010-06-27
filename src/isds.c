@@ -2244,6 +2244,8 @@ static isds_error eventstring2event(const xmlChar *string,
         free(buffer); (buffer) = NULL; \
     }
 
+/* Requires attribute_node variable, do not free it. Can be used to reffer to
+ * new attribute. */
 #define INSERT_STRING_ATTRIBUTE(parent, attribute, string) \
     { \
         attribute_node = xmlNewProp((parent), BAD_CAST (attribute), \
@@ -3119,6 +3121,38 @@ leave:
 }
 
 
+/* Convert dmType isds_envelope member into XML attribute and append it to
+ * current node.
+ * @context is ISDS context
+ * @type is UTF-8 encoded string one multibyte long exactly or NULL to omit
+ * @dm_envelope is XML element the resulting attribute will be appended to.
+ * @return error code, in case of error context' message is filled. */
+static isds_error insert_message_type(struct isds_ctx *context,
+        const char *type, xmlNodePtr dm_envelope) {
+    isds_error err = IE_SUCCESS;
+    xmlAttrPtr attribute_node;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!dm_envelope) return IE_INVAL;
+
+    /* Insert optional message type */
+    if (type) {
+        if (1 != xmlUTF8Strlen((xmlChar *) type)) {
+            char *type_locale = _isds_utf82locale(type);
+            isds_printf_message(context,
+                    _("Message type in envelope is not 1 character long: %s"),
+                    type_locale);
+            free(type_locale);
+            err = IE_INVAL;
+            goto leave;
+        }
+        INSERT_STRING_ATTRIBUTE(dm_envelope, "dmType", type);
+    }
+
+leave:
+    return err;
+}
+
 
 /* Extract message document into reallocated document structure
  * @context is ISDS context
@@ -3456,7 +3490,10 @@ leave:
 }
 
 
-/* Find and append isds:dmQTimestamp XML tree into envelope
+/* Find and append isds:dmQTimestamp XML tree into envelope.
+ * Because one service is allowed to miss time-stamp content, and we think
+ * other could too (flaw in specification), this function is deliberated and
+ * will not fail (i.e. will return IE_SUCCESS), if time-stamp is missing.
  * @context is ISDS context
  * @envelope is automatically allocated envelope structure
  * @xpath_ctx is XPath context with current node containing isds:dmQTimestamp
@@ -3489,8 +3526,7 @@ static isds_error find_and_append_DmQTimestamp(struct isds_ctx *context,
     /* Get dmQTimestamp */
     EXTRACT_STRING("sisds:dmQTimestamp", string);
     if (!string) {
-        isds_printf_message(context, _("Missing dmQTimestamp element content"));
-        err = IE_ISDS;
+        isds_log(ILF_ISDS, ILL_INFO, _("Missing dmQTimestamp element content\n"));
         goto leave;
     }
     (*envelope)->timestamp_length =
@@ -3725,6 +3761,43 @@ leave:
 }
 
 
+/* Insert Base64 encoded data as element with text child.
+ * @context is session context
+ * @parent is XML node to append @element with @data as child
+ * @ns is XML namespace of @element, use NULL to inherit from @parent
+ * @element is UTF-8 encoded name of new element
+ * @data is bit stream to encode into @element
+ * @length is size of @data in bytes
+ * @return standard error code and fill long error message if needed */
+static isds_error insert_base64_encoded_string(struct isds_ctx *context,
+        xmlNodePtr parent, const xmlNsPtr ns, const char *element,
+        const void *data, size_t length) {
+    isds_error err = IE_SUCCESS;
+    xmlNodePtr node;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!data && length > 0) return IE_INVAL;
+    if (!parent || !element) return IE_INVAL;
+
+    xmlChar *base64data = NULL;
+    base64data = (xmlChar *) _isds_b64encode(data, length);
+    if (!base64data) {
+        isds_printf_message(context,
+                ngettext("Not enough memory to encode %zd bytes into Base64",
+                    "Not enough memory to encode %zd bytes into Base64",
+                    length),
+                length);
+        err = IE_NOMEM;
+        goto leave;
+    }
+    INSERT_STRING_WITH_NS(parent, ns, element, base64data);
+
+leave:
+    free(base64data);
+    return err;
+}
+
+
 /* Convert isds_document structure into XML tree and append to dmFiles node.
  * @context is session context
  * @document is ISDS document
@@ -3733,9 +3806,8 @@ leave:
 static isds_error insert_document(struct isds_ctx *context,
         struct isds_document *document, xmlNodePtr dm_files) {
     isds_error err = IE_SUCCESS;
-    xmlNodePtr new_file = NULL, file = NULL, node;
+    xmlNodePtr new_file = NULL, file = NULL;
     xmlAttrPtr attribute_node;
-    xmlChar *base64data = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!document || !dm_files) return IE_INVAL;
@@ -3848,19 +3920,9 @@ static isds_error insert_document(struct isds_ctx *context,
         }
     } else {
         /* Binary document requested */
-        base64data = (xmlChar *) _isds_b64encode(document->data,
-                document->data_length);
-        if (!base64data) {
-            isds_printf_message(context,
-                    ngettext("Not enough memory to encode %zd bytes into Base64",
-                        "Not enough memory to encode %zd bytes into Base64",
-                        document->data_length),
-                    document->data_length);
-            err = IE_NOMEM;
-            goto leave;
-        }
-        INSERT_STRING(file, "dmEncodedContent", base64data);
-        free(base64data);
+        err = insert_base64_encoded_string(context, file, NULL, "dmEncodedContent",
+                document->data, document->data_length);
+        if (err) goto leave;
     }
 
 leave:
@@ -4619,14 +4681,17 @@ static isds_error send_request_check_drop_response(
  * @former_names is optional undocumented string. Pass NULL if you don't care.
  * @upper_box_id is optional ID of supper box if currently created box is
  * subordinated.
- * @ceo_label is optional title of OVM box owner (e.g. mayor) NULL, if you
+ * @ceo_label is optional title of OVM box owner (e.g. mayor); NULL, if you
  * don't care.
+ * @request_token is true if ISDS should return token that box owner can use
+ * to obtain his new credentials in on-line way
  * @approval is optional external approval of box manipulation */
 static isds_error build_CreateDBInput_request(struct isds_ctx *context,
         xmlNodePtr *request, const xmlChar *service_name,
         const struct isds_DbOwnerInfo *box, const struct isds_list *users,
         const xmlChar *former_names, const xmlChar *upper_box_id,
-        const xmlChar *ceo_label, const struct isds_approval *approval) {
+        const xmlChar *ceo_label, _Bool request_token,
+        const struct isds_approval *approval) {
     isds_error err = IE_SUCCESS;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr node, dbPrimaryUsers;
@@ -4639,7 +4704,7 @@ static isds_error build_CreateDBInput_request(struct isds_ctx *context,
         return IE_INVAL;
 
 
-    /* Build DeleteDataBox request */
+    /* Build CreateDataBox-similar request */
     *request = xmlNewNode(NULL, service_name);
     if (!*request) {
         char *service_name_locale = _isds_utf82locale((char*) service_name);
@@ -4685,6 +4750,12 @@ static isds_error build_CreateDBInput_request(struct isds_ctx *context,
     INSERT_STRING(*request, "dbFormerNames", former_names);
     INSERT_STRING(*request, "dbUpperDBId", upper_box_id);
     INSERT_STRING(*request, "dbCEOLabel", ceo_label);
+    
+    if (request_token) {
+        /* This element is allowed only for CreateDataBox and there is optional
+         * with default to false */
+        INSERT_SCALAR_BOOLEAN(*request, "dbUseActPortal", 1);
+    }
 
     err = insert_GExtApproval(context, approval, *request);
     if (err) goto leave;
@@ -4709,14 +4780,18 @@ leave:
  * @upper_box_id is optional ID of supper box if currently created box is
  * subordinated.
  * @ceo_label is optional title of OVM box owner (e.g. mayor)
+ * @token is NULL if new password should be delivered off-line to the user.
+ * It is valid pointer if user should obtain new password on-line on dedicated
+ * web server. Then it outputs automatically reallocated token user needs to
+ * use to authorize on the web server to view his new password. 
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_add_box(struct isds_ctx *context,
         struct isds_DbOwnerInfo *box, const struct isds_list *users,
         const char *former_names, const char *upper_box_id,
-        const char *ceo_label, const struct isds_approval *approval,
-        char **refnumber) {
+        const char *ceo_label, char **token,
+        const struct isds_approval *approval, char **refnumber) {
     isds_error err = IE_SUCCESS;
     xmlNodePtr request = NULL;
     xmlDocPtr response = NULL;
@@ -4726,6 +4801,7 @@ isds_error isds_add_box(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    if (token) zfree(*token);
     if (!box) return IE_INVAL;
 
     /* Scratch box ID */
@@ -4735,7 +4811,7 @@ isds_error isds_add_box(struct isds_ctx *context,
     err = build_CreateDBInput_request(context,
             &request, BAD_CAST "CreateDataBox",
             box, users, (xmlChar *) former_names, (xmlChar *) upper_box_id,
-            (xmlChar *) ceo_label, approval);
+            (xmlChar *) ceo_label, token, approval);
     if (err) goto leave;
 
     /* Send it to server and process response */
@@ -4753,7 +4829,16 @@ isds_error isds_add_box(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    EXTRACT_STRING("/isds:CreateDataBoxResponse/dbID", box->dbID);
+    EXTRACT_STRING("/isds:CreateDataBoxResponse/isds:dbID", box->dbID);
+
+    /* Extract optional token */
+    if (token) {
+        EXTRACT_STRING("/isds:CreateDataBoxResponse/isds:dbAccessDataId", *token);
+        if (!*token)
+            isds_log(ILF_ISDS, ILL_WARNING,
+                    _("ISDS did not return token on CreateDataBox request "
+                        "even if requested\n"));
+    }
 
 leave:
     xmlXPathFreeObject(result);
@@ -4798,7 +4883,7 @@ isds_error isds_add_pfoinfo(struct isds_ctx *context,
     err = build_CreateDBInput_request(context,
             &request, BAD_CAST "CreateDataBoxPFOInfo",
             box, users, (xmlChar *) former_names, (xmlChar *) upper_box_id,
-            (xmlChar *) ceo_label, approval);
+            (xmlChar *) ceo_label, 0, approval);
     if (err) goto leave;
 
     /* Send it to server and process response */
@@ -5172,7 +5257,7 @@ leave:
  * @approval is optional external approval of box manipulation
  * @token is NULL if new password should be delivered off-line to the user.
  * It is valid pointer if user should obtain new password on-line on dedicated
- * web server. Then it output automatically reallocated token user needs to
+ * web server. Then it outputs automatically reallocated token user needs to
  * use to authorize on the web server to view his new password. 
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
@@ -5191,9 +5276,9 @@ isds_error isds_reset_password(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
-    if (!box || !user) return IE_INVAL;
 
     if (token) zfree(*token);
+    if (!box || !user) return IE_INVAL;
 
 
     /* Build NewAccessData request */
@@ -5249,7 +5334,11 @@ isds_error isds_reset_password(struct isds_ctx *context,
             goto leave;
         }
 
-        EXTRACT_STRING("/isds:NewAccessDataResponse/dbAccessDataId", *token);
+        EXTRACT_STRING("/isds:NewAccessDataResponse/isds:dbAccessDataId", *token);
+        if (!*token)
+            isds_log(ILF_ISDS, ILL_WARNING,
+                    _("ISDS did not return token on CreateDataBox request "
+                        "even if requested\n"));
     }
 
 leave:
@@ -5984,6 +6073,11 @@ static isds_error insert_envelope_files(struct isds_ctx *context,
         err = IE_INVAL;
         goto leave;
     }
+
+    /* Insert optional message type */
+    err = insert_message_type(context, outgoing_message->envelope->dmType,
+            envelope);
+    if (err) goto leave;
 
     INSERT_STRING(envelope, "dmSenderOrgUnit",
             outgoing_message->envelope->dmSenderOrgUnit);
@@ -8216,7 +8310,6 @@ isds_error czp_convert_document(struct isds_ctx *context,
     xmlNsPtr deposit_ns = NULL, empty_ns = NULL;
     xmlNodePtr request = NULL, node;
     xmlDocPtr response = NULL;
-    xmlChar *base64data = NULL;
 
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
@@ -8275,18 +8368,9 @@ isds_error czp_convert_document(struct isds_ctx *context,
             document->dmFileDescr);
 
     /* Document encoded in Base64 */
-    base64data = (xmlChar *) _isds_b64encode(document->data, document->data_length);
-    if (!base64data) {
-        isds_printf_message(context,
-                ngettext("Not enough memory to encode %zd bytes into Base64",
-                    "Not enough memory to encode %zd bytes into Base64",
-                    document->data_length),
-                document->data_length);
-        err = IE_NOMEM;
-        goto leave;
-    }
-    INSERT_STRING_WITH_NS(request, empty_ns, "document", base64data);
-    zfree(base64data);
+    err = insert_base64_encoded_string(context, request, empty_ns, "document",
+            document->data, document->data_length);
+    if (err) goto leave;
 
     isds_log(ILF_ISDS, ILL_DEBUG,
             _("Submitting document for conversion into Czech POINT deposit"));
@@ -8379,7 +8463,6 @@ leave:
     xmlXPathFreeContext(xpath_ctx);
 
     xmlFreeDoc(response);
-    free(base64data);
     xmlFreeNode(request);
 
     if (!err) {
@@ -8461,13 +8544,14 @@ isds_error isds_request_new_testing_box(struct isds_ctx *context,
     /* Build CreateDataBox request */
     err = build_CreateDBInput_request(context,
             &request, BAD_CAST "CreateDataBox",
-            box, users, (xmlChar *) former_names, NULL, NULL, approval);
+            box, users, (xmlChar *) former_names, NULL, NULL, 0, approval);
     if (err) goto leave;
 
     /* Send it to server and process response */
     err = send_destroy_request_check_response(context,
             SERVICE_DB_MANIPULATION, BAD_CAST "CreateDataBox", &request,
             &response, (xmlChar **) refnumber);
+    if (err) goto leave;
 
     /* Extract box ID */
     xpath_ctx = xmlXPathNewContext(response);
@@ -8479,7 +8563,7 @@ isds_error isds_request_new_testing_box(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    EXTRACT_STRING("/isds:CreateDataBoxResponse/dbID", box->dbID);
+    EXTRACT_STRING("/isds:CreateDataBoxResponse/isds:dbID", box->dbID);
 
 leave:
     xmlXPathFreeObject(result);
@@ -8491,6 +8575,103 @@ leave:
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("CreateDataBox request processed by server successfully.\n"));
     }
+
+    return err;
+}
+
+
+/* Submit CMS signed message to ISDS to verify its originality. This is
+ * stronger form of isds_verify_message_hash() because ISDS does more checks
+ * than simple one (potentialy old weak) hash comparison.
+ * @context is session context
+ * @message is memory with raw CMS signed message bit stream
+ * @length is @message size in bytes
+ * @return
+ *  IE_SUCCESS  if message originates in ISDS
+ *  IE_NOTEQUAL if message is unknown to ISDS
+ *  other code  for other errors */
+isds_error isds_authenticate_message(struct isds_ctx *context,
+        const void *message, size_t length) {
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlDocPtr response = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    _Bool *authentic = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (!message || length == 0) return IE_INVAL;
+
+    /* Check if connection is established
+     * TODO: This check should be done downstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Build AuthenticateMessage request */
+    request = xmlNewNode(NULL, BAD_CAST "AuthenticateMessage");
+    if (!request) {
+        isds_log_message(context,
+                _("Could not build AuthenticateMessage request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    /* Insert Base64 encoded message */
+    err = insert_base64_encoded_string(context, request, NULL, "dmMessage",
+            message, length);
+    if (err) goto leave;
+
+    /* Send request to server and process response */
+    err = send_destroy_request_check_response(context,
+            SERVICE_DM_OPERATIONS, BAD_CAST "AuthenticateMessage", &request,
+            &response, NULL);
+    if (err) goto leave;
+
+
+    /* ISDS has decided */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    EXTRACT_BOOLEAN("/isds:AuthenticateMessageResponse/isds:dmAuthResult", authentic);
+
+    if (!authentic) { 
+        isds_log_message(context,
+                _("Server did not return any response on "
+                    "AuthenticateMessage request"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    if (*authentic) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("ISDS authenticated the message successfully\n"));
+    } else {
+        isds_log_message(context, _("ISDS does not know the message"));
+        err = IE_NOTEQUAL;
+    }
+
+
+leave:
+    free(authentic);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    xmlFreeDoc(response);
+    xmlFreeNode(request);
 
     return err;
 }

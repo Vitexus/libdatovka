@@ -359,9 +359,6 @@ struct isds_envelope {
     char *dmRecipientAddress;       /* Postal address of recipient;
                                        Maximal length is 100 characters. */
     _Bool *dmAmbiguousRecipient;    /* Recipient has OVM role */
-    char *dmType;                   /* Message type:
-                                       "V" is public message
-                                       "K" is commercial message */
 
     /* Following members are assigned by ISDS in different phases of message
      * life cycle. */
@@ -378,7 +375,7 @@ struct isds_envelope {
                                            been accepted yet. */
     struct isds_hash *hash;         /* Message hash.
                                        This is hash of isds:dmDM subtree. */
-    void *timestamp;                /* Qualified time stamp */
+    void *timestamp;                /* Qualified time stamp; Optional. */
     size_t timestamp_length;        /* Length of timestamp in bytes */
     struct isds_list *events;       /* Events message passed trough;
                                        List of isds_event's. */
@@ -433,6 +430,13 @@ struct isds_envelope {
                                        between true (OVM mode) and
                                        false (non-OVM mode).
                                        Optional; Implicit value is true. */
+    char *dmType;                   /* Message type:
+                                       "V" is public message
+                                       "K" is commercial message
+                                       Default value for outgoing message is "V"
+                                       Length: Exact 1 UTF-8 character if
+                                       defined;
+                                       As 2010-05-20, used as output only. */
 };
 
 
@@ -736,14 +740,18 @@ isds_error isds_change_password(struct isds_ctx *context,
  * @upper_box_id is optional ID of supper box if currently created box is
  * subordinated.
  * @ceo_label is optional title of OVM box owner (e.g. mayor)
+ * @token is NULL if new password should be delivered off-line to the user.
+ * It is valid pointer if user should obtain new password on-line on dedicated
+ * web server. Then it outputs automatically reallocated token user needs to
+ * use to authorize on the web server to view his new password. 
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_add_box(struct isds_ctx *context,
         struct isds_DbOwnerInfo *box, const struct isds_list *users,
         const char *former_names, const char *upper_box_id,
-        const char *ceo_label, const struct isds_approval *approval,
-        char **refnumber);
+        const char *ceo_label, char **token,
+        const struct isds_approval *approval, char **refnumber);
 
 /* Notify ISDS about new PFO entity.
  * This function has no real effect.
@@ -815,7 +823,7 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
  * @approval is optional external approval of box manipulation
  * @token is NULL if new password should be delivered off-line to the user.
  * It is valid pointer if user should obtain new password on-line on dedicated
- * web server. Then it output automatically reallocated token user needs to
+ * web server. Then it outputs automatically reallocated token user needs to
  * use to authorize on the web server to view his new password. 
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
@@ -1064,7 +1072,7 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
  * @message is automatically reallocated message retrieved from ISDS.
  * It will miss documents per se. Use isds_get_received_message(), if you are
  * interested in documents (content). OTOH, only this function can get list
- * events message has gone through. */
+ * of events message has gone through. */
 isds_error isds_get_delivery_info(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
 
@@ -1161,6 +1169,19 @@ isds_error isds_hash_cmp(const struct isds_hash *h1,
  *  other code  for other errors */
 isds_error isds_verify_message_hash(struct isds_ctx *context,
         struct isds_message *message);
+
+/* Submit CMS signed message to ISDS to verify its originality. This is
+ * stronger form of isds_verify_message_hash() because ISDS does more checks
+ * than simple one (potentialy old weak) hash comparison.
+ * @context is session context
+ * @message is memory with raw CMS signed message bit stream
+ * @length is @message size in bytes
+ * @return
+ *  IE_SUCCESS  if message originates in ISDS
+ *  IE_NOTEQUAL if message is unknown to ISDS
+ *  other code  for other errors */
+isds_error isds_authenticate_message(struct isds_ctx *context,
+        const void *message, size_t length);
 
 /* Mark message as read. This is a transactional commit function to acknowledge
  * to ISDS the message has been downloaded and processed by client properly.

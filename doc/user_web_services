@@ -3,9 +3,9 @@ User web services specification
 
 Source: Provozní řád ISDS, version 2010-01-22, Pages 14–15
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
-    version 2.6 (2010-01-18)
+    version 2.11 (2010-05-20)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
-    version 2.7 (2009-12-18)
+    version 2.11 (2010-05-19)
 
 
 These services are intended for working with messages inside a box by
@@ -19,7 +19,8 @@ Data types: dmBaseTypes.xsd (Appendix 1)
 Documentation: DataMessage_ws.pdf, DBSearch_ws.pdf (Appendix 2)
 
 List of SOAP requests follows. Those marked with asterisk DOES NOT MARK
-noncommercial incoming messages as delivered.
+noncommercial incoming messages as delivered. Those marked with plus has
+access to envelopes of deleted messages.
 
 
 dm_operations.wsdl
@@ -38,6 +39,8 @@ SignedMessageDownload
     Download incoming message with digital signature of ministry of interiors
 SignedSentMessageDownload
     Download outgoing message with digital signature of ministry of interiors
+AuthenticateMessage (+)
+    Submit local message copy to ISDS to confirm message authenticity
 DummyOperation
     Void operation used to log in and to keep connection alive
 
@@ -48,17 +51,17 @@ dm_info.wsdl
 URL postfix: dx
 Constraints: Client must be authenticated in Access Manager
 
-VerifyMessage
+VerifyMessage (+)
     Verify local copy of message with remote original stored in ISDS
-MessageEnvelopeDownload
+MessageEnvelopeDownload (+)
     Download envelope of incoming message
 MarkMessageAsDownloaded
     Mark message as read
 ConfirmDelivery
     Mark commercial message as accepted by recipient
-GetDeliveryInfo
+GetDeliveryInfo (+)
     Download info-sheet about message post and delivery
-GetSignedDeliveryInfo
+GetSignedDeliveryInfo (+)
     Download info-sheet about message post and delivery with signature of
     ministry of interiors
 GetListOfRecievedMessages
@@ -89,6 +92,9 @@ dmSenderOrgUnit, dmSenderOrgUnitNum, dmToHands, dmPersonalDelivery,
 dmAllowSubstDelivery, dmRecipientRefNumber, dmRecipientIdent,
 dmSenderRefNumber, dmSenderIdent, dmLegalTitleLaw, dmLegalTitleYear,
 dmLegalTitleSect, dmLegalTitlePar, dmLegalTitlePoint, dmOVM).
+
+Since 2010-05-20, outgoing message envelope can specify dmType. However it's
+currently ignored.
 
 Constraints: Sender must have PRIVIL_CREATE_DM permission.
 Constraints: Exactly one document in message must be main type.
@@ -173,6 +179,9 @@ MessageDownload
 ===============
 
 Retrieve incoming message identified by message ID.
+
+This service can return message without digital time-stamp (more precisely
+with empty dmQTimesamp element, see schema). 
 
 Commercial message must be accepted manually by ConfirmDelivery before.
 Commercial message has set dmReturnedMessage/@dmType="K".
@@ -267,7 +276,23 @@ Non-normative error codes:
     2017    Syntax error in date-time
 
 
-VerifyMessage
+AuthenticateMessage (+)
+===================
+
+Allows to verify message authenticity by providing copy to ISDS.
+
+Only signed message encapsuleted into CMS structure with digital signature can
+be verified by this service. Client pass the raw message in Base64 encoding to
+ISDS, system performs checks and return boolean value: true if message has
+not been modified and has been delivered through ISDS, false if message
+has is unkown to ISDS. In both cases 0000 error code will be returned.
+
+If message cannot be processed (e.g. broken CMS or XML syntax) or message
+contains has been signed by non-ISDS certificate or other error, non-zero
+error code will be returned.
+
+
+VerifyMessage (+)
 =============
 
 Retrieve message hash (dmHash element) for given message from ISDS.
@@ -286,7 +311,7 @@ Non-normative error codes:
     1219    Message with ID does not exist in ISDS.
 
 
-MessageEnvelopeDownload
+MessageEnvelopeDownload (+)
 =======================
 
 Download envelope of incoming message. That is message without documents.
@@ -319,10 +344,10 @@ Must be called before downloading (signed or unsigned) incoming message
 [Signed]MessageDownload.
 
 
-GetDeliveryInfo
+GetDeliveryInfo (+)
 ===============
 
-Download infighter about incoming or outgoing message post and delivery or
+Download info-sheet about incoming or outgoing message post and delivery or
 deliver impossibility. The message is specified by message ID.
 
 It returns complete message envelope, hash, time-stamp. Delivery time and
@@ -345,7 +370,7 @@ distinguish the event meaning. Following prefixes are defined:
     EV4:    Commercial message has been accepted by recipient confirmation
 
 
-GetSignedDeliveryInfo
+GetSignedDeliveryInfo (+)
 =====================
 
 Download info-sheet about incoming or outgoing message post and delivery or
@@ -373,7 +398,7 @@ http://isds.czechpoint.cz/v20/delivery:
 FindDataBox (*)
 ===========
 
-Find boxes conforming to search criteria or exact ID and returns corresponding
+Find boxes conforming to search criteria or exact ID and return corresponding
 (possibly truncated) list of boxes.
 
 Returned boxes exist, but it does not mean they can receive messages. Use
@@ -381,11 +406,11 @@ CheckDataBox to figure out.
 
 There are three different search cases distinguished in this order:
 
-    – If dbID is filled in request, will search only for exact box, other
+    – If dbID is filled in request, it will search for exact box only, other
     criteria will be ignored.
 
-    – If identifier and registryCode are filled, will search only for exact
-    box, other criteria will be ignored.
+    – If identifier and registryCode are filled, it will search for exact
+    box only, other criteria will be ignored.
 
     – Otherwise search against other criteria.
 
@@ -402,10 +427,12 @@ PFO             ic or pnLastName or pnLastNameAtBirth
 PO              ic or prefix (at least 3 characters) of firmName
 OVM             ic or prefix of firmName
 
-String search criteria are matched case insensitive.
+String search criteria are matched case insensitive (except dbID). Strings are
+compared to prefix. Except firmName, adCity, adStreet and biCity that are
+matched as substrings.
 
 Search results depends or logged-in user type. Users of boxes with open
-addressing can search other open-addressing boxes, otherwise only OVM type
+addressing can search other open-addressing boxes, otherwise only OVM type
 boxes can be searched. Search based on exact box identifier finder unlimited.
 
 Error codes:
