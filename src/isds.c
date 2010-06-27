@@ -3806,7 +3806,7 @@ leave:
 static isds_error insert_document(struct isds_ctx *context,
         struct isds_document *document, xmlNodePtr dm_files) {
     isds_error err = IE_SUCCESS;
-    xmlNodePtr new_file = NULL, file = NULL;
+    xmlNodePtr new_file = NULL, file = NULL, node;
     xmlAttrPtr attribute_node;
 
     if (!context) return IE_INVALID_CONTEXT;
