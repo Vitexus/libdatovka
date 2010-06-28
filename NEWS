@@ -1,3 +1,71 @@
+Version 0.3
+===========
+
+• This library breaks API because of new features and changes in ISDS.
+
+• This library version covers complete ISDS specification as released on
+2010-05-23.
+
+• Support for XML documents added. Use isds_document.is_xml to distinguish
+between binary and XML document types. Because XML node list
+(isds_document.xml_node_list) is used to describe XML document, your
+application must link to libxml2 library too since now. Please note this
+feature has not been heavily tested and that the interface is a little tricky
+(regarding memory allocation). See client/sendxmldoc.c and
+client/loadsentmessagewithxmldocuments.c examples for hints how to use it.
+
+• Box creation (isds_add_box()) supports requesting for token. This
+functionality is not covered by specification as it's not implemented on
+server side yet.
+
+• Message authenticity verification through new web service
+AuthenticateMessage (isds_authenticate_message()) is supported. This function
+sends a signed message encapsulated in CMS to ISDS where the system resolves
+originality of the message.
+
+• isds_envelope->dmType is input/output now. The one letter value is
+transferred while sending new message. However ISDS ignores this option as
+semantic is not defined yet.
+
+• isds_envelope->timestamp is optional now. Some ISDS services can return
+message without time stamp as can do not exist yet.
+
+• Cookie-tracked session authentication changed to stateless. That means
+password is transmitted to server on each request. Password is cached by
+libcurl library until connection gets closed. Also different server locators
+for non-certificate and certificate client authentication emerged. Old log-in
+method will be canceled on 2010-07-01. Old libisds versions become useless.
+Upgrade is strongly recommended.
+
+• Static and out-of-source directory compilation is supported now.
+
+• New function isds_normalize_mime_type(): translates file name extension to
+MIME type (because official ISDS client is broken). This can be globally
+enabled by isds_set_opt().
+
+• Context parameters can be set by isds_set_opt(): TLS options (isds_set_tls()
+is deprecated now), MIME type normalization (new: mangle document MIME type
+in incoming messages into more reasonable values).
+
+• Deprecated functions removed: isds_load_received_message(),
+isds_log_signed_message().
+
+• isds_DbUserInfo.caState added (country of contact address).
+
+• isds_get_delivery_info() fixed to produce standard raw representation of
+delivery details that can be loaded by isds_load_delivery() back.
+
+• New function guess_raw_type(): detects type of supported message and
+delivery details formats. Detected format can be supplied to
+isds_load_message(). This way, application can automagically load and parse
+any supported format.
+
+• libcurl debug messages are caught by libisds and redirected to library
+logger (ILF_HTTP facility).
+
+• 
+• 
+
 Version 0.2.1
 =============
 
