@@ -3882,7 +3882,7 @@ static isds_error insert_document(struct isds_ctx *context,
         xmlNodePtr xmlcontent = xmlNewNode(file->ns, BAD_CAST "dmXMLContent");
         if (!xmlcontent) {
             isds_printf_message(context,
-                    _("Could not allocate dmXMLContent elemement"));
+                    _("Could not allocate dmXMLContent element"));
             err = IE_ERROR;
             goto leave;
         }
