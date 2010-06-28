@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
         size_t length;
 
         if (mmap_file(SRCDIR
-                    "/server/messages/signed_sent_xml_message-373002.xml",
+                    "/server/messages/signed_sent_xml_message-376701.xml",
                 &fd, &buffer, &length)) {
             fprintf(stderr, "Could not map file with message");
             isds_ctx_free(&ctx);
