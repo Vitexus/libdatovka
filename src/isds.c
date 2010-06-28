@@ -1109,7 +1109,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     /* Build log-in request */
     request = xmlNewNode(NULL, BAD_CAST "DummyOperation");
     if (!request) {
-        isds_log_message(context, _("Could build ISDS log-in request"));
+        isds_log_message(context, _("Could not build ISDS log-in request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
@@ -7948,7 +7948,7 @@ isds_error isds_guess_raw_type(struct isds_ctx *context,
         }
     } else {
         isds_printf_message(context,
-                _("Unknown namespace"));
+                _("Unknown name space"));
         err = IE_NOTSUP;
     }
 
