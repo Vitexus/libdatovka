@@ -63,9 +63,6 @@ any supported format.
 • libcurl debug messages are caught by libisds and redirected to library
 logger (ILF_HTTP facility).
 
-• 
-• 
-
 Version 0.2.1
 =============
 
