@@ -467,6 +467,9 @@ void print_document(const struct isds_document *document) {
     }
     printf("\{\n");
 
+    printf("\t\t\tis_xml = %u\n", !!document->is_xml);
+    printf("\t\t\txml_node_list = %p\n", document->xml_node_list);
+
     printf("\t\t\tdata = %p\n", document->data);
     printf("\t\t\tdata_length = %zu\n", document->data_length);
     printf("\t\t\tdmMimeType = %s\n", document->dmMimeType);
@@ -521,6 +524,7 @@ void print_message(const struct isds_message *message) {
     printf("\traw_length = %zu\n", message->raw_length);
     printf("\traw_type = ");
     print_raw_type(message->raw_type);
+    printf("\txml = %p\n", message->xml);
     print_envelope(message->envelope);
     print_documents(message->documents);
 

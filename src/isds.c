@@ -252,6 +252,7 @@ void isds_message_free(struct isds_message **message) {
     free((*message)->raw);
     isds_envelope_free(&((*message)->envelope));
     isds_list_free(&((*message)->documents));
+    xmlFreeDoc((*message)->xml); (*message)->xml = NULL;
 
     free(*message);
     *message = NULL;
@@ -261,8 +262,10 @@ void isds_message_free(struct isds_message **message) {
 /* Deallocate struct isds_document recursively and NULL it */
 void isds_document_free(struct isds_document **document) {
     if (!document || !*document) return;
-
-    free((*document)->data);
+    
+    if (!(*document)->is_xml) {
+        free((*document)->data);
+    }
     free((*document)->dmMimeType);
     free((*document)->dmFileGuid);
     free((*document)->dmUpFileGuid);
@@ -3183,7 +3186,7 @@ static isds_error extract_document(struct isds_ctx *context,
             char *new_type = strdup(normalized_type);
             if (!new_type) {
                 isds_printf_message(context,
-                        _("No enough memory to normalize document MIME type"));
+                        _("Not enough memory to normalize document MIME type"));
                 err = IE_NOMEM;
                 goto leave;
             }
@@ -3215,7 +3218,7 @@ static isds_error extract_document(struct isds_ctx *context,
     /* Extract document data.
      * Base64 encoded blob or XML subtree must be presented. */
 
-    /* Check from dmEncodedContent */
+    /* Check for dmEncodedContent */
     result = xmlXPathEvalExpression(BAD_CAST "isds:dmEncodedContent",
             xpath_ctx);
     if (!result) {
@@ -3225,6 +3228,7 @@ static isds_error extract_document(struct isds_ctx *context,
 
     if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
         /* Here we have Base64 blob */
+        (*document)->is_xml = 0;
 
         if (result->nodesetval->nodeNr > 1) {
             isds_printf_message(context,
@@ -3259,6 +3263,7 @@ static isds_error extract_document(struct isds_ctx *context,
 
         if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
             /* Here we have XML document */
+            (*document)->is_xml = 1;
 
             if (result->nodesetval->nodeNr > 1) {
                 isds_printf_message(context,
@@ -3267,11 +3272,16 @@ static isds_error extract_document(struct isds_ctx *context,
                 goto leave;
             }
 
-            /* FIXME: Serialize the tree rooted at result's node */
-            isds_printf_message(context,
-                    _("XML documents not yet supported"));
-            err = IE_NOTSUP;
-            goto leave;
+            /* XXX: We cannot serialize the content simply because:
+             * - XML document may point out of its scope (e.g. to message
+             *   envelope)
+             * - isds:dmXMLContent can contain more elements, no element,
+             *   a text node only
+             * - it's not the XML way
+             * Thus we provide the only right solution: XML DOM. Let's
+             * application to cope with this hot potato :) */
+            (*document)->xml_node_list =
+                result->nodesetval->nodeTab[0]->children;
         } else {
             /* No base64 blob, nor XML document */
             isds_printf_message(context,
@@ -3537,7 +3547,8 @@ leave:
 
 
 /* Convert XSD tReturnedMessage XML tree into message structure.
- * It does not store XML tree into message->raw.
+ * It does not store serialized XML tree into message->raw.
+ * It does store (pointer to) parsed XML tree into message->xml if needed.
  * @context is ISDS context
  * @include_documents Use true if documents must be extracted
  * (tReturnedMessage XSD type), use false if documents shall be omitted
@@ -3576,6 +3587,8 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
     if (err) goto leave;
 
     if (include_documents) {
+        struct isds_list *item;
+
         /* Extract dmFiles */
         err = move_xpathctx_to_child(context, BAD_CAST "isds:dmFiles",
                 xpath_ctx);
@@ -3585,6 +3598,15 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
         if (err) { err = IE_ERROR; goto leave; }
         err = extract_documents(context, &((*message)->documents), xpath_ctx);
         if (err) goto leave;
+
+        /* Store xmlDoc of this message if needed */
+        /* Only if we got a XML document in all the documents. */
+        for (item = (*message)->documents; item; item = item->next) {
+            if (item->data && ((struct isds_document *)item->data)->is_xml) {
+                (*message)->xml = xpath_ctx->doc;
+                break;
+            }
+        }
     }
 
 
@@ -3784,7 +3806,7 @@ leave:
 static isds_error insert_document(struct isds_ctx *context,
         struct isds_document *document, xmlNodePtr dm_files) {
     isds_error err = IE_SUCCESS;
-    xmlNodePtr new_file = NULL, file = NULL;
+    xmlNodePtr new_file = NULL, file = NULL, node;
     xmlAttrPtr attribute_node;
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -3852,10 +3874,56 @@ static isds_error insert_document(struct isds_ctx *context,
     }
 
 
-    /* Insert content (data) of the document. */
-    /* XXX; Only base64 is implemented currently. */
-    err = insert_base64_encoded_string(context, file, NULL, "dmEncodedContent",
-            document->data, document->data_length);
+    /* Insert content (body) of the document. */
+    if (document->is_xml) {
+        /* XML document requested */
+
+        /* Allocate new dmXMLContent */
+        xmlNodePtr xmlcontent = xmlNewNode(file->ns, BAD_CAST "dmXMLContent");
+        if (!xmlcontent) {
+            isds_printf_message(context,
+                    _("Could not allocate dmXMLContent elemement"));
+            err = IE_ERROR;
+            goto leave;
+        }
+        /* Append it */
+        node = xmlAddChild(file, xmlcontent);
+        if (!node) {
+            xmlFreeNode(xmlcontent); xmlcontent = NULL;
+            isds_printf_message(context,
+                    _("Could not add dmXMLContent child to %s element"),
+                    file->name);
+            err = IE_ERROR;
+            goto leave;
+        }
+
+        /* Copy non-empty node list */
+        if (document->xml_node_list) {
+            xmlNodePtr content = xmlDocCopyNodeList(node->doc,
+                    document->xml_node_list);
+            if (!content) {
+                isds_printf_message(context,
+                        _("Not enough memory to copy XML document"));
+                err = IE_NOMEM;
+                goto leave;
+            }
+
+            if (!xmlAddChildList(node, content)) {
+                xmlFreeNodeList(content);
+                isds_printf_message(context,
+                        _("Error while adding XML document into dmXMLContent"));
+                err = IE_XML;
+                goto leave;
+            }
+            /* XXX: We cannot free the content here because it's part of node's
+             * document since now. It will be freed with it automatically. */
+        }
+    } else {
+        /* Binary document requested */
+        err = insert_base64_encoded_string(context, file, NULL, "dmEncodedContent",
+                document->data, document->data_length);
+        if (err) goto leave;
+    }
 
 leave:
     return err;
@@ -6157,7 +6225,7 @@ isds_error isds_send_message(struct isds_ctx *context,
     request = xmlNewNode(NULL, BAD_CAST "CreateMessage");
     if (!request) {
         isds_log_message(context,
-                _("Could build CreateMessage request"));
+                _("Could not build CreateMessage request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
@@ -7210,7 +7278,9 @@ leave:
 
     free(code);
     free(status_message);
-    xmlFreeDoc(response);
+    if (!*message || !(*message)->xml) {
+        xmlFreeDoc(response);
+    }
 
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
@@ -7382,7 +7452,9 @@ leave:
 
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
-    xmlFreeDoc(message_doc);
+    if (!*message || !(*message)->xml) {
+        xmlFreeDoc(message_doc);
+    }
     if (xml_stream != buffer) _isds_cms_data_free(xml_stream);
 
     if (!err)
@@ -7656,7 +7728,9 @@ leave:
     free(code);
     free(status_message);
     free(xml_stream);
-    xmlFreeDoc(response);
+    if (!*message || !(*message)->xml) {
+        xmlFreeDoc(response);
+    }
 
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
@@ -7853,7 +7927,9 @@ leave:
     if (xml_stream != buffer) _isds_cms_data_free(xml_stream);
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
-    xmlFreeDoc(message_doc);
+    if (!*message || !(*message)->xml) {
+        xmlFreeDoc(message_doc);
+    }
 
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG, _("Message loaded successfully.\n"));

@@ -633,8 +633,9 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
     /* Last argument 1 means format the XML tree. This is pretty but it breaks
-     * digital signatures probably because ISDS abandoned XMLDSig */
-    save_ctx = xmlSaveToBuffer(http_request, "UTF-8", 1);
+     * XML document transport as it adds text nodes (indentiation) between
+     * elements. */
+    save_ctx = xmlSaveToBuffer(http_request, "UTF-8", 0);
     if (!save_ctx) {
         isds_log_message(context,
                 _("Could not create XML serializer"));

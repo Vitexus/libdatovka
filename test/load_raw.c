@@ -109,6 +109,12 @@ int main(int argc, char **argv) {
             .should_pass = 1
         },
         {
+            .name = "plain signed sent message with XML documents",
+            .file = SRCDIR "/server/messages/signed_sent_xml_message-376701.xml",
+            .type = RAWTYPE_PLAIN_SIGNED_OUTGOING_MESSAGE,
+            .should_pass = 1
+        },
+        {
             .name = "text file is not an incoming message",
             .file = "Makefile",
             .type = RAWTYPE_INCOMING_MESSAGE,
