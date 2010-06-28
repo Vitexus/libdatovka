@@ -49,7 +49,18 @@ static xmlChar *extension_map_mime[] = {
     BAD_CAST "wav", BAD_CAST "audio/x-wav",
     BAD_CAST "mp2", BAD_CAST "audio/mpeg",
     BAD_CAST "mp3", BAD_CAST "audio/mpeg",
-    /* TODO: Add MIME types for ISDOC, X.509 certificates, CMS and TST */
+    BAD_CAST "isdoc", BAD_CAST "text/isdoc",
+    BAD_CAST "isdocx", BAD_CAST "text/isdocx",
+    BAD_CAST "cer", BAD_CAST "application/x-x509-ca-cert",
+    BAD_CAST "crt", BAD_CAST "application/x-x509-ca-cert",
+    BAD_CAST "der", BAD_CAST "application/x-x509-ca-cert",
+    BAD_CAST "pk7", BAD_CAST "application/pkcs7-mime",
+    BAD_CAST "p7b", BAD_CAST "application/pkcs7-mime",
+    BAD_CAST "p7c", BAD_CAST "application/pkcs7-mime",
+    BAD_CAST "p7f", BAD_CAST "application/pkcs7-signature",
+    BAD_CAST "p7m", BAD_CAST "application/pkcs7-mime",
+    BAD_CAST "p7s", BAD_CAST "application/pkcs7-signature",
+    BAD_CAST "tst", BAD_CAST "application/timestamp-reply"
 };
 
 /* Deallocate structure isds_pki_credentials and NULL it.

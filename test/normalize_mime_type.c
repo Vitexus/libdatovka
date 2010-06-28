@@ -62,18 +62,18 @@ int main(int argc, char **argv) {
     TEST("wav", test_normalize, "wav", "audio/x-wav");
     TEST("mp2", test_normalize, "mp2", "audio/mpeg");
     TEST("mp3", test_normalize, "mp3", "audio/mpeg");
-    /*TEST("isdoc", test_normalize, "isdoc", "");
-    TEST("isdocx", test_normalize, "isdocx", "");
-    TEST("cer", test_normalize, "cer", "");
-    TEST("crt", test_normalize, "crt", "");
-    TEST("der", test_normalize, "der", "");
-    TEST("pk7", test_normalize, "pk7", "");
-    TEST("p7b", test_normalize, "p7b", "");
-    TEST("p7c", test_normalize, "p7c", "");
-    TEST("p7f", test_normalize, "p7f", "");
-    TEST("p7m", test_normalize, "p7m", "");
-    TEST("p7s", test_normalize, "p7s", "");
-    TEST("tst", test_normalize, "tst", "");*/
+    TEST("isdoc", test_normalize, "isdoc", "text/isdoc");
+    TEST("isdocx", test_normalize, "isdocx", "text/isdocx");
+    TEST("cer", test_normalize, "cer", "application/x-x509-ca-cert");
+    TEST("crt", test_normalize, "crt", "application/x-x509-ca-cert");
+    TEST("der", test_normalize, "der", "application/x-x509-ca-cert");
+    TEST("pk7", test_normalize, "pk7", "application/pkcs7-mime");
+    TEST("p7b", test_normalize, "p7b", "application/pkcs7-mime");
+    TEST("p7c", test_normalize, "p7c", "application/pkcs7-mime");
+    TEST("p7f", test_normalize, "p7f", "application/pkcs7-signature");
+    TEST("p7m", test_normalize, "p7m", "application/pkcs7-mime");
+    TEST("p7s", test_normalize, "p7s", "application/pkcs7-signature");
+    TEST("tst", test_normalize, "tst", "application/timestamp-reply");
 
     SUM_TEST();
 }
