@@ -13,7 +13,7 @@ endif
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = $(PACKAGE).pc
 
-EXTRA_DIST = config.rpath doc
+EXTRA_DIST = config.rpath doc server
 
 dist-hook:
 	git log --decorate=full > $(distdir)/ChangeLog || echo "Could not dump git log"
