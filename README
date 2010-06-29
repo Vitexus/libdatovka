@@ -30,4 +30,5 @@ Latest code can be obtained from GIT repository
 
 ISDS documentation is located under `doc' directory, user documentation can be
 found in header files. See `client' directory for examples how to use this
-library. Preliminary library self-tests are located in `test' directory.
+library. Preliminary library self-tests are located in `test' directory. Test
+data and message examples are stored in `server/messages' directory.
