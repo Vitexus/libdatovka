@@ -1,3 +1,9 @@
+Version 0.3.1
+=============
+
+• Add `server' directory to distribution tar balls because example messages
+are needed for some tests.
+
 Version 0.3
 ===========
 

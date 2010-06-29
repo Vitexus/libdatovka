@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libisds 0.3\n"
 "Report-Msgid-Bugs-To: petr.pisar@atlas.cz\n"
-"POT-Creation-Date: 2010-06-29 00:16+0200\n"
+"POT-Creation-Date: 2010-06-29 10:36+0200\n"
 "PO-Revision-Date: 2010-06-28 23:48+0200\n"
 "Last-Translator: Petr Pisar <petr.pisar@atlas.cz>\n"
 "Language-Team: Czech <translation-team-cs@lists.sourceforge.net>\n"
+"Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: cs\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 
 #: src/crypto.c:23
@@ -779,8 +779,8 @@ msgid ""
 "Server refused empty password on ChangeISDSPassword request (code=%s, "
 "message=%s)\n"
 msgstr ""
-"Server odmítl prázdné heslo v požadavku ChangeISDSPassword (kód=%s, zpráva=%"
-"s)\n"
+"Server odmítl prázdné heslo v požadavku ChangeISDSPassword (kód=%s, zpráva="
+"%s)\n"
 
 #: src/isds.c:4496
 msgid "Password must not be empty"
@@ -805,8 +805,8 @@ msgid ""
 "Server refused to change password on ChangeISDSPassword request (code=%s, "
 "message=%s)\n"
 msgstr ""
-"Při požadavku ChangeISDSPassword odmítl server změnit heslo (kód=%s, zpráva=%"
-"s)\n"
+"Při požadavku ChangeISDSPassword odmítl server změnit heslo (kód=%s, zpráva="
+"%s)\n"
 
 #: src/isds.c:4544
 msgid "Password changed successfully on ChangeISDSPassword request.\n"
@@ -888,8 +888,8 @@ msgstr "Odpověď ISDS na požadavek FindDataBox postrádá status\n"
 msgid ""
 "Server did not found any box on FindDataBox request (code=%s, message=%s)\n"
 msgstr ""
-"Server při požadavku FindDataBox nenalezl žádnou schránku (kód=%s, zpráva=%"
-"s)\n"
+"Server při požadavku FindDataBox nenalezl žádnou schránku (kód=%s, zpráva="
+"%s)\n"
 
 #: src/isds.c:5573
 #, c-format
@@ -1362,8 +1362,8 @@ msgstr "V odpovědi úschovny Czech POINTu je element „return“ vícekrát"
 msgid ""
 "Czech POINT deposit refused document for conversion (code=%ld, message=%s)"
 msgstr ""
-"Úschovna Czech POINTu odmítla dokument určený pro konverzi (kód=%ld, zpráva=%"
-"s)"
+"Úschovna Czech POINTu odmítla dokument určený pro konverzi (kód=%ld, zpráva="
+"%s)"
 
 #: src/isds.c:8464
 #, c-format
