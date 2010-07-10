@@ -15,7 +15,8 @@ AM_CFLAGS = @LIBGCRYPT_CFLAGS@ @GPGME_CFLAGS@
 LDADD = @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ @GPGME_LIBS@ @EXPAT_LIBS@ \
 		@LTLIBINTL@
 
-TESTS = compute_hash context guess_raw_type init_gpgpme isds_init load_raw \
+TESTS = b64encode \
+		compute_hash context guess_raw_type init_gpgpme isds_init load_raw \
 		normalize_mime_type \
 		isds-dbtype isds-filemetatype isds-hash_algorithm
 
@@ -62,6 +63,7 @@ isds_common = test.c test.h \
 	$(LIBDIR)/validator.h
 
 # Access _hidden symbols
+b64encode_SOURCES 		= b64encode.c $(common)
 compute_hash_SOURCES 	= compute_hash.c $(common)
 context_SOURCES 		= context.c $(common)
 guess_raw_type_SOURCES 	= guess_raw_type.c $(common)
