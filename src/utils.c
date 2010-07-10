@@ -199,7 +199,11 @@ _hidden char *_isds_b64encode(const void *plain, const size_t length) {
     size_t code_length;
     char *buffer, *new_buffer;
 
-    if (!plain) return NULL;
+    if (!plain) {
+        if (length) return NULL;
+        /* Empty input is valid input */
+        plain = "";
+    }
 
     _isds_base64_init_encodestate(&state);
 
