@@ -3794,7 +3794,7 @@ static isds_error insert_base64_encoded_string(struct isds_ctx *context,
     base64data = (xmlChar *) _isds_b64encode(data, length);
     if (!base64data) {
         isds_printf_message(context,
-                ngettext("Not enough memory to encode %zd bytes into Base64",
+                ngettext("Not enough memory to encode %zd byte into Base64",
                     "Not enough memory to encode %zd bytes into Base64",
                     length),
                 length);
