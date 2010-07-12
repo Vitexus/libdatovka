@@ -1203,7 +1203,7 @@ isds_error isds_mark_message_received(struct isds_ctx *context,
  * Just for test purposes */
 isds_error isds_bogus_request(struct isds_ctx *context);
 
-/* Send document for authorize conversion into Czech POINT system.
+/* Send document for authorized conversion into Czech POINT system.
  * This is public anonymous service, no log-in necessary. Special context is
  * used to reuse keep-a-live HTTPS connection.
  * @context is Czech POINT session context. DO NOT use context connected to

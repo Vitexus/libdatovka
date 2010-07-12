@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
 
 
     /* Submit document for conversion  */
-    printf("Submitting document for authorize conversion: "
+    printf("Submitting document for authorized conversion: "
             "content=%s, description=%s\n", argv[1], argv[2]);
     err = czp_convert_document(ctx, &document, &id, &date);
     if (err)

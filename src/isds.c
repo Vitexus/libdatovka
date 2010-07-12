@@ -8301,7 +8301,7 @@ isds_error isds_mark_message_received(struct isds_ctx *context,
 }
 
 
-/* Send document for authorize conversion into Czech POINT system.
+/* Send document for authorized conversion into Czech POINT system.
  * This is public anonymous service, no log-in necessary. Special context is
  * used to reuse keep-a-live HTTPS connection.
  * @context is Czech POINT session context. DO NOT use context connected to
@@ -8335,7 +8335,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
 
     if (document->is_xml) {
         isds_log_message(context,
-                _("XML documents cannot be sent to conversion"));
+                _("XML documents cannot be submitted to conversion"));
         return IE_NOTSUP;
     }
 
