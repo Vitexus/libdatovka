@@ -626,12 +626,17 @@ int mmap_file(const char *file, int *fd, void **buffer, size_t *length) {
     }
     *length = file_info.st_size;
 
-    *buffer = mmap(NULL, *length, PROT_READ, MAP_PRIVATE, *fd, 0);
-    if (*buffer == MAP_FAILED) {
-        fprintf(stderr, "%s: Could not map file to memory: %s\n", file,
-                strerror(errno));
-        close(*fd);
-        return -1;
+    if (!*length) {
+        /* Empty region cannot be mmapped */
+        *buffer = NULL;
+    } else {
+        *buffer = mmap(NULL, *length, PROT_READ, MAP_PRIVATE, *fd, 0);
+        if (*buffer == MAP_FAILED) {
+            fprintf(stderr, "%s: Could not map file to memory: %s\n", file,
+                    strerror(errno));
+            close(*fd);
+            return -1;
+        }
     }
 
     return 0;
@@ -645,10 +650,13 @@ int munmap_file(int fd, void *buffer, size_t length) {
         ((length / page_size) + 1) * page_size:
         length;
 
-    err = munmap(buffer, pages);
-    if (err) {
-        fprintf(stderr, "Could not unmap memory at %p and length %zu: %s\n",
-                buffer, pages, strerror(errno));
+    if (length) {
+        err = munmap(buffer, pages);
+        if (err) {
+            fprintf(stderr,
+                    "Could not unmap memory at %p and length %zu: %s\n",
+                    buffer, pages, strerror(errno));
+        }
     }
 
     err = close(fd);
