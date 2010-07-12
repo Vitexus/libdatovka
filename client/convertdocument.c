@@ -55,6 +55,7 @@ int main(int argc, char **argv) {
 
 
     /* Load document */ 
+    memset(&document, 0, sizeof(document));
     if (mmap_file(argv[1], &fd, &document.data, &document.data_length)) {
         fprintf(stderr, "Could not map file with document");
         isds_ctx_free(&ctx);

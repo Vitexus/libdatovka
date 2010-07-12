@@ -1208,8 +1208,8 @@ isds_error isds_bogus_request(struct isds_ctx *context);
  * used to reuse keep-a-live HTTPS connection.
  * @context is Czech POINT session context. DO NOT use context connected to
  * ISDS server. Use new context or context used by this function previously.
- * @document is document to convert. Only data, data_length and dmFileDescr
- * members are significant. Be ware that not all document formats can be
+ * @document is document to convert. Only data, data_length, dmFileDescr and
+ * is_xml members are significant. Be ware that not all document formats can be
  * converted (signed PDF 1.3 and higher only (2010-02 state)).
  * @id is reallocated identifier assigned by Czech POINT system to
  * your document on submit. Use is to tell it to Czech POINT officer.

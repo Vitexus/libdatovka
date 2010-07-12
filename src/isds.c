@@ -8306,8 +8306,8 @@ isds_error isds_mark_message_received(struct isds_ctx *context,
  * used to reuse keep-a-live HTTPS connection.
  * @context is Czech POINT session context. DO NOT use context connected to
  * ISDS server. Use new context or context used by this function previously.
- * @document is document to convert. Only data, data_length and dmFileDescr
- * members are significant. Be ware that not all document formats can be
+ * @document is document to convert. Only data, data_length, dmFileDescr and
+ * is_xml members are significant. Be ware that not all document formats can be
  * converted (signed PDF 1.3 and higher only (2010-02 state)).
  * @id is reallocated identifier assigned by Czech POINT system to
  * your document on submit. Use is to tell it to Czech POINT officer.
@@ -8332,6 +8332,12 @@ isds_error czp_convert_document(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     if (!document || !id || !date) return IE_INVAL;
+
+    if (document->is_xml) {
+        isds_log_message(context,
+                _("XML documents cannot be sent to conversion"));
+        return IE_NOTSUP;
+    }
 
     /* Free output arguments */
     zfree(*id);
