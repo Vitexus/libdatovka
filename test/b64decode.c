@@ -41,6 +41,22 @@ static int test_b64decode(const void *input, const void *correct,
 }
 
 
+static int test_b64decode_null_pointer(const void *input,
+        size_t correct_length) {
+    size_t length;
+
+    length = _isds_b64decode(input, NULL);
+    
+    if (length == correct_length)
+        PASS_TEST
+    else
+        /* Format as signed to get -1 as error. Big positive numbers should
+         * not occure in these tests */
+        FAIL_TEST("Output length differs: expected=%zd, got=%zd",
+                correct_length, length)
+}
+
+
 int main(int argc, char **argv) {
     INIT_TEST("b64decode");
 
@@ -49,6 +65,8 @@ int main(int argc, char **argv) {
     TEST("new line only", test_b64decode, "\n", NULL, 0);
     TEST("empty string", test_b64decode, "", NULL, 0);
     TEST("invalid input", test_b64decode, "42", NULL, (size_t) -1);
+    TEST("NULL output pointer", test_b64decode_null_pointer, "\n",
+            (size_t) -1);
 
     SUM_TEST();
 }
