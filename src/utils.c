@@ -274,7 +274,7 @@ _hidden size_t _isds_b64decode(const char *encoded, void **plain) {
     /* Decode encoded data */
     plain_length = _isds_base64_decode_block(encoded, encoded_length,
             *plain, &state);
-    if (plain_length < 0) {
+    if (plain_length < 0 || plain_length >= (size_t) -1) {
         zfree(*plain);
         return((size_t) -1);
     }
