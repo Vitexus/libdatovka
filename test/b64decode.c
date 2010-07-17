@@ -65,6 +65,7 @@ int main(int argc, char **argv) {
     TEST("new line only", test_b64decode, "\n", NULL, 0);
     TEST("empty string", test_b64decode, "", NULL, 0);
     TEST("invalid input", test_b64decode, "42", NULL, (size_t) -1);
+    TEST("NULL input", test_b64decode, NULL, NULL, (size_t) -1);
     TEST("NULL output pointer", test_b64decode_null_pointer, "\n",
             (size_t) -1);
 
