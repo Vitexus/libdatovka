@@ -66,12 +66,12 @@ char *_isds_utf82locale(const char *utf);
 char *_isds_b64encode(const void *plain, const size_t length);
 
 /* Decode given data from MIME Base64 encoded zero terminated string to binary
- * stream.
+ * stream. Invalid Base64 symbols are skipped.
  * @encoded are input data (Base64 zero terminated string)
  * @plain are automatically reallocated output data (binary stream). You must
  * free it. Will be freed in case of error.
- * @return length of @plain data in bytes or (size_t) -1 in case of decoding
- * failure. */
+ * @return length of @plain data in bytes or (size_t) -1 in case of memory
+ * allocation failure. */
 size_t _isds_b64decode(const char *encoded, void **plain);
 
 /* Switches time zone to UTC.
