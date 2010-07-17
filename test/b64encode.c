@@ -37,6 +37,7 @@ int main(int argc, char **argv) {
     INIT_TEST("b64encode");
 
     TEST("generic", test_b64encode, "NDIA\n", "42", 3);
+    TEST("empty string", test_b64encode, "AA==\n", "", 1);
     TEST("NULL input, 0 length", test_b64encode, "\n", NULL, 0);
     TEST("non-NULL input, 0 length", test_b64encode, "\n", "", 0);
     TEST("NULL input, non-zero length", test_b64encode, NULL, NULL, 1);
