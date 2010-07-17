@@ -1,4 +1,5 @@
-AUTOMAKE_OPTIONS = color-tests
+AUTOMAKE_OPTIONS = color-tests parallel-tests
+export VERBOSE=1
 
 libdirpath = src
 LIBDIR = $(top_srcdir)/$(libdirpath)

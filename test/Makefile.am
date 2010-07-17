@@ -1,4 +1,5 @@
-AUTOMAKE_OPTIONS = color-tests
+AUTOMAKE_OPTIONS = color-tests parallel-tests
+export VERBOSE=1
 
 if BUILD_ONLINE_TEST
 SUBDIRS = online
