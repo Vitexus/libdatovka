@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = color-tests
+
 if BUILD_ONLINE_TEST
 SUBDIRS = online
 endif

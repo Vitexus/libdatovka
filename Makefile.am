@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
-AUTOMAKE_OPTIONS = check-news dist-bzip2
+AUTOMAKE_OPTIONS = check-news dist-bzip2 color-tests
 SUBDIRS = po src
 
 if BUILD_EXAMPLE

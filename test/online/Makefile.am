@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = color-tests
+
 libdirpath = src
 LIBDIR = $(top_srcdir)/$(libdirpath)
 localedir = $(datadir)/locale
