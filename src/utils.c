@@ -257,6 +257,12 @@ _hidden size_t _isds_b64decode(const char *encoded, void **plain) {
      * To fix it, one must fix underlying functions too. */
     if (sizeof(char) != 1) PANIC("sizeof(char) != 1 byte");
 
+    /* Divert empty input */
+    if (encoded_length == 0) {
+        zfree(*plain);
+        return 0;
+    }
+
     /* Allocate buffer */
     buffer = realloc(*plain, encoded_length);
     if (!buffer) {
@@ -276,6 +282,8 @@ _hidden size_t _isds_b64decode(const char *encoded, void **plain) {
     /* Shrink the buffer */
     buffer = realloc(*plain, plain_length);
     if (!buffer) *plain = buffer;
+    /* realloc(, 0) can return NULL or pointer designed to free() */
+    if (plain_length == 0) zfree(*plain);
 
     return plain_length;
 }
