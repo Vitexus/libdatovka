@@ -22,7 +22,7 @@ TESTS = b64decode b64encode \
 		compute_hash context guess_raw_type init_gpgpme isds_init load_raw \
 		normalize_mime_type \
 		isds-dbtype isds-filemetatype isds-hash_algorithm isds-usertype \
-		isds-datestring2tm
+		isds-datestring2tm isds-tm2datestring
 
 
 noinst_PROGRAMS = $(TESTS)
@@ -83,6 +83,7 @@ isds_filemetatype_SOURCES 	= isds-filemetatype.c $(isds_common)
 isds_hash_algorithm_SOURCES = isds-hash_algorithm.c $(isds_common)
 isds_usertype_SOURCES 		= isds-usertype.c $(isds_common)
 isds_datestring2tm_SOURCES 	= isds-datestring2tm.c $(isds_common)
+isds_tm2datestring_SOURCES 	= isds-tm2datestring.c $(isds_common)
 
 ## First specific tests
 ##isds-%.test: isds-%.o
