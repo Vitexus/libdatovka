@@ -46,12 +46,17 @@ int test_munmap_file(int fd, void *buffer, size_t length);
     exit(failed ? EXIT_FAILURE : EXIT_SUCCESS ); \
 }
 
-#define PASS_TEST \
-    return 0;
+#define PASS_TEST { \
+    return 0; \
+} \
 
-#define FAIL_TEST(...) { \
+#define FAILURE_REASON(...) { \
     if (!reason) \
         test_asprintf(&reason, __VA_ARGS__); \
+}
+
+#define FAIL_TEST(...) { \
+    FAILURE_REASON(__VA_ARGS__); \
     return 1; \
 }
 

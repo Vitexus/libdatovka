@@ -8,13 +8,11 @@ static int test_b64encode(const char *correct, const void *input,
 
     output = _isds_b64encode(input, length);
 
-    if (correct == NULL && output == NULL) {
+    if (correct == NULL && output == NULL)
         PASS_TEST;
-    }
 
-    if (correct != NULL && output == NULL) {
+    if (correct != NULL && output == NULL)
         FAIL_TEST("Excpected non-NULL, got NULL");
-    }
 
     if (correct == NULL && output != NULL) {
         free(output);
@@ -22,7 +20,7 @@ static int test_b64encode(const char *correct, const void *input,
     }
 
     if (strcmp(correct, output)) {
-        test_asprintf(&reason, "Wrong return value: expected=`%s', got=`%s'",
+        FAILURE_REASON("Wrong return value: expected=`%s', got=`%s'",
                 correct, output);
         free(output);
         return 1;
