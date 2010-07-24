@@ -1844,6 +1844,10 @@ static isds_error timestring2timeval(const xmlChar *string,
     int i;
     
     if (!time) return IE_INVAL;
+    if (!string) {
+        zfree(*time);
+        return IE_INVAL;
+    }
 
     memset(&broken, 0, sizeof(broken));
 
