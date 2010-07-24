@@ -23,7 +23,7 @@ TESTS = b64decode b64encode \
 		normalize_mime_type \
 		isds-dbtype isds-filemetatype isds-hash_algorithm isds-usertype \
 		isds-datestring2tm isds-tm2datestring \
-		isds-timeval2timestring
+		isds-timestring2timeval isds-timeval2timestring
 
 
 noinst_PROGRAMS = $(TESTS)
@@ -85,6 +85,7 @@ isds_hash_algorithm_SOURCES = isds-hash_algorithm.c $(isds_common)
 isds_usertype_SOURCES 		= isds-usertype.c $(isds_common)
 isds_datestring2tm_SOURCES 	= isds-datestring2tm.c $(isds_common)
 isds_tm2datestring_SOURCES 	= isds-tm2datestring.c $(isds_common)
+isds_timestring2timeval_SOURCES = isds-timestring2timeval.c $(isds_common)
 isds_timeval2timestring_SOURCES	= isds-timeval2timestring.c $(isds_common)
 
 ## First specific tests
