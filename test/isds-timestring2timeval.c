@@ -44,22 +44,57 @@ static int test_timestring2timeval(const xmlChar *time, const isds_error error,
 int main(int argc, char **argv) {
     INIT_TEST("ISO date-time string to timeval conversion");
 
+    /* Generic */
     struct timeval *output;
     char *input = "2001-02-03T04:05:06.123456+01:45";
     struct timeval time = {.tv_sec = 981166806, .tv_usec = 123456};
     TEST(input, test_timestring2timeval, BAD_CAST input, IE_SUCCESS, &time,
             &output);
 
-    /*input = "20010203";
-    TEST(input, test_datestring2tm, BAD_CAST input, IE_SUCCESS, &date, &output);
+    /* Negative time zone */
+    input = "2001-02-03T04:05:06.123456-01:45";
+    time.tv_sec = 981179406; time.tv_usec = 123456;
+    TEST(input, test_timestring2timeval, BAD_CAST input, IE_SUCCESS, &time,
+            &output);
 
-    input = "2001-34";
-    TEST(input, test_datestring2tm, BAD_CAST input, IE_SUCCESS, &date, &output);
+    /* Shorten subseconds */
+    input = "2001-02-03T04:05:06.01-01:45";
+    time.tv_sec = 981179406; time.tv_usec = 10000;
+    TEST(input, test_timestring2timeval, BAD_CAST input, IE_SUCCESS, &time,
+            &output);
 
+    input = "2001-02-03T04:05:06-01:45";
+    time.tv_sec = 981179406; time.tv_usec = 0;
+    TEST(input, test_timestring2timeval, BAD_CAST input, IE_SUCCESS, &time,
+            &output);
 
-    input = "2001-02-03T05:06";
-    TEST(input, test_datestring2tm, BAD_CAST input, IE_NOTSUP, &date, &output);*/
+    input = "2001-02-03T04:05:06Z";
+    time.tv_sec = 981173106; time.tv_usec = 0;
+    TEST(input, test_timestring2timeval, BAD_CAST input, IE_SUCCESS, &time,
+            &output);
 
+    input = "2001-02-03T04:05:06";
+    time.tv_sec = 981173106; time.tv_usec = 0;
+    TEST(input, test_timestring2timeval, BAD_CAST input, IE_SUCCESS, &time,
+            &output);
+
+    /* Zulu with subseconds */
+    input = "2001-02-03T04:05:06.123456+00:00";
+    time.tv_sec = 981173106; time.tv_usec = 123456;
+    TEST(input, test_timestring2timeval, BAD_CAST input, IE_SUCCESS, &time,
+            &output);
+
+    input = "2001-02-03T04:05:06.123456Z";
+    time.tv_sec = 981173106; time.tv_usec = 123456;
+    TEST(input, test_timestring2timeval, BAD_CAST input, IE_SUCCESS, &time,
+            &output);
+
+    input = "2001-02-03T04:05:06.123456";
+    time.tv_sec = 981173106; time.tv_usec = 123456;
+    TEST(input, test_timestring2timeval, BAD_CAST input, IE_SUCCESS, &time,
+            &output);
+
+    /* Invalid invocation */
     input = "foo bar";
     TEST(input, test_timestring2timeval, BAD_CAST input, IE_DATE, &time,
             &output);
