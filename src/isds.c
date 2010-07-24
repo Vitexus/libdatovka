@@ -1865,7 +1865,7 @@ static isds_error timestring2timeval(const xmlChar *string,
     /* Parse date and time without subseconds and offset */
     offset = strptime((char*)string, "%Y-%m-%dT%T", &broken);
     if (!offset) {
-        free(*time); *time = NULL;
+        zfree(*time);
         return IE_DATE;
     }
     
@@ -1891,7 +1891,7 @@ static isds_error timestring2timeval(const xmlChar *string,
         (*time)->tv_usec = strtol(subseconds, &endptr, 10); 
         if (*endptr != '\0' || (*time)->tv_usec == LONG_MIN ||
             (*time)->tv_usec == LONG_MAX) {
-            free(*time); *time = NULL;
+            zfree(*time);
             return IE_DATE;
         }
 
@@ -1910,7 +1910,7 @@ static isds_error timestring2timeval(const xmlChar *string,
     if (*offset == '-' || *offset == '+') {
         offset++;
         if (2 != sscanf(offset, "%2d:%2d", &offset_hours, &offset_minutes)) {
-            free(*time); *time = NULL;
+            zfree(*time);
             return IE_DATE;
         }
         broken.tm_hour -= offset_hours;
@@ -1922,7 +1922,7 @@ static isds_error timestring2timeval(const xmlChar *string,
     (*time)->tv_sec = mktime(&broken);
     _isds_switch_tz_to_native();
     if ((*time)->tv_sec == (time_t) -1) {
-        free(*time); *time = NULL;
+        zfree(*time);
         return IE_DATE;
     }
 
