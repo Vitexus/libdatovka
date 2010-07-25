@@ -1910,13 +1910,17 @@ static isds_error timestring2timeval(const xmlChar *string,
     /* One can not use strptime(, "%z",) becase it's RFC E-MAIL format without
      * colon separator */
     if (offset && (*offset == '-' || *offset == '+')) {
-        offset++;
-        if (2 != sscanf(offset, "%2d:%2d", &offset_hours, &offset_minutes)) {
+        if (2 != sscanf(offset + 1, "%2d:%2d", &offset_hours, &offset_minutes)) {
             zfree(*time);
             return IE_DATE;
         }
-        broken.tm_hour -= offset_hours;
-        broken.tm_min -= offset_minutes * ((offset_hours<0) ? -1 : 1);
+        if (*offset == '+') {
+            broken.tm_hour -= offset_hours;
+            broken.tm_min -= offset_minutes;
+        } else {
+            broken.tm_hour += offset_hours;
+            broken.tm_min += offset_minutes;
+        }
     }
 
     /* Convert to time_t */
