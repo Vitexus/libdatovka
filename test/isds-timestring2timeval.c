@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     INIT_TEST("ISO date-time string to timeval conversion");
 
     /* Generic */
-    struct timeval *output;
+    struct timeval *output = NULL;
     char *input = "2001-02-03T04:05:06.123456+01:45";
     struct timeval time = {.tv_sec = 981166806, .tv_usec = 123456};
     TEST(input, test_timestring2timeval, BAD_CAST input, IE_SUCCESS, &time,
