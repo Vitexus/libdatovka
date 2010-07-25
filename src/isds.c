@@ -1895,10 +1895,12 @@ static isds_error timestring2timeval(const xmlChar *string,
             return IE_DATE;
         }
 
-        /* move to the zone offset delimiter */
+        /* move to the zone offset delimiter or signal NULL*/
         delim = strchr(offset, '-');
         if (!delim)
             delim = strchr(offset, '+');
+        if (!delim)
+            delim = strchr(offset, 'Z');
         offset = delim;
     }
 
@@ -1907,7 +1909,7 @@ static isds_error timestring2timeval(const xmlChar *string,
      * "" equals to "Z" and it means UTC zone. */
     /* One can not use strptime(, "%z",) becase it's RFC E-MAIL format without
      * colon separator */
-    if (*offset == '-' || *offset == '+') {
+    if (offset && (*offset == '-' || *offset == '+')) {
         offset++;
         if (2 != sscanf(offset, "%2d:%2d", &offset_hours, &offset_minutes)) {
             zfree(*time);
