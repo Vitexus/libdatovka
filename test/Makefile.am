@@ -24,7 +24,7 @@ TESTS = b64decode b64encode \
 		isds-dbtype isds-filemetatype isds-hash_algorithm isds-usertype \
 		isds-datestring2tm isds-tm2datestring \
 		isds-timestring2timeval isds-timeval2timestring \
-		isds-uint2isds_message_status
+		isds-uint2isds_message_status isds-eventstring2event
 
 
 noinst_PROGRAMS = $(TESTS)
@@ -90,6 +90,7 @@ isds_timestring2timeval_SOURCES = isds-timestring2timeval.c $(isds_common)
 isds_timeval2timestring_SOURCES	= isds-timeval2timestring.c $(isds_common)
 isds_uint2isds_message_status_SOURCES	= isds-uint2isds_message_status.c \
 										  $(isds_common)
+isds_eventstring2event_SOURCES	= isds-eventstring2event.c $(isds_common)
 
 ## First specific tests
 ##isds-%.test: isds-%.o
