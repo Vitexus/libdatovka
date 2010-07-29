@@ -19,7 +19,7 @@ static int test_isds_list_free(struct isds_list **list, int destructor_hits) {
     if (!list) PASS_TEST;
 
     if (*list)
-        FAIL_TEST("isds_list_free() did not nulled pointer");
+        FAIL_TEST("isds_list_free() did not null pointer");
 
     PASS_TEST;
 }
