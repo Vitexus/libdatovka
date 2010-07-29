@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
 
     isds_init();
 
-    /* Valid input */
+    /* Known event prefixes */
     input = BAD_CAST "EV1: some text";
     event.time = NULL;
     event_type = EVENT_ACCEPTED_BY_RECIPIENT;
@@ -79,23 +79,66 @@ int main(int argc, char **argv) {
     TEST((char*)input, test_eventstring2event, input,
             IE_SUCCESS, &event, &output);
 
+    input = BAD_CAST "EV2: some text";
+    event.time = NULL;
+    event_type = EVENT_ACCEPTED_BY_FICTION;
+    event.type = &event_type;
+    event.description = "some text";
+    TEST((char*)input, test_eventstring2event, input,
+            IE_SUCCESS, &event, &output);
+
+    input = BAD_CAST "EV3: some text";
+    event.time = NULL;
+    event_type = EVENT_UNDELIVERABLE;
+    event.type = &event_type;
+    event.description = "some text";
+    TEST((char*)input, test_eventstring2event, input,
+            IE_SUCCESS, &event, &output);
+
+    input = BAD_CAST "EV4: some text";
+    event.time = NULL;
+    event_type = EVENT_COMMERCIAL_ACCEPTED;
+    event.type = &event_type;
+    event.description = "some text";
+    TEST((char*)input, test_eventstring2event, input,
+            IE_SUCCESS, &event, &output);
+
+    /* Unknown event prefixes */
+    input = BAD_CAST "EV0: out of range event";
+    event.time = NULL;
+    event_type = EVENT_UKNOWN;
+    event.type = &event_type;
+    event.description = (char *) input;
+    TEST((char*)input, test_eventstring2event, input,
+            IE_SUCCESS, &event, &output);
+
+    input = BAD_CAST "EV5: out of range event";
+    event.time = NULL;
+    event_type = EVENT_UKNOWN;
+    event.type = &event_type;
+    event.description = (char *) input;
+    TEST((char*)input, test_eventstring2event, input,
+            IE_SUCCESS, &event, &output);
+
+    /* Other valid cases */
+    event.time = NULL;
+    event_type = EVENT_UKNOWN;
+    event.type = &event_type;
+    event.description = "";
+    TEST("Empty input", test_eventstring2event, BAD_CAST "",
+            IE_SUCCESS, &event, &output);
+
     /* Invalid invocations */
-    /*unsigned long int number = 0;
-    test_asprintf(&text, "Too low input (%lu)", number);
-    TEST(text, test_uint2isds_message_status, context, &number,
-            IE_ENUM, states[0], &state);
+    TEST("NULL input", test_eventstring2event, NULL,
+            IE_INVAL, NULL, &output);
 
-    number = 11;
-    test_asprintf(&text, "Too high input (%lu)", number);
-    TEST(text, test_uint2isds_message_status, context, &number,
-            IE_ENUM, states[0], &state);
-
-    TEST("NULL context", test_uint2isds_message_status, NULL, &numbers[0],
-            IE_INVALID_CONTEXT, states[0], &state);
-    TEST("NULL input", test_uint2isds_message_status, context, NULL,
-            IE_INVAL, states[0], &state);
-    TEST("NULL output", test_uint2isds_message_status, context, &numbers[0],
-            IE_INVAL, states[0], NULL);*/
+    input = BAD_CAST "EV1: some text";
+    event.time = NULL;
+    event_type = EVENT_ACCEPTED_BY_RECIPIENT;
+    event.type = &event_type;
+    event.description = "some text";
+    TEST("NULL output", test_eventstring2event, input,
+            IE_INVAL, &event, NULL);
 
     isds_cleanup();
     SUM_TEST();
