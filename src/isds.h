@@ -546,7 +546,8 @@ struct isds_list {
     struct isds_list *next;         /* Next list item,
                                        or NULL if current is last */
     void *data;                     /* Payload */
-    void (*destructor) (void **);   /* Payload deallocator */
+    void (*destructor) (void **);   /* Payload deallocator;
+                                       Use NULL to have static data member. */
 };
 
 /* External box approval */

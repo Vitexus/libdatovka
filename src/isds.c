@@ -90,7 +90,7 @@ void isds_list_free(struct isds_list **list) {
     if (!list || !*list) return;
     
     for(item = *list; item; item = next_item) {
-        (item->destructor)(&(item->data));
+        if (item->destructor) (item->destructor)(&(item->data));
         next_item = item->next;
         free(item);
     }
