@@ -1272,6 +1272,11 @@ char *isds_normalize_mime_type(const char* mime_type);
 isds_error isds_set_mime_type_normalization(struct isds_ctx *context,
         _Bool normalize) _deprecated;
 
+/* Deallocate structure isds_pki_credentials and NULL it.
+ * Pass-phrase is discarded.
+ * @pki  credentials to to free */
+void isds_pki_credentials_free(struct isds_pki_credentials **pki);
+
 /* Free isds_list with all member data.
  * @list list to free, on return will be NULL */
 void isds_list_free(struct isds_list **list);
