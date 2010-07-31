@@ -21,7 +21,7 @@ LDADD = @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ @GPGME_LIBS@ @EXPAT_LIBS@ \
 TESTS = b64decode b64encode \
 		compute_hash context guess_raw_type init_gpgpme isds_init load_raw \
 		normalize_mime_type  \
-		isds_list_free isds_pki_credentials_free \
+		isds_list_free isds_pki_credentials_free isds_hash_free \
 		isds-dbtype isds-filemetatype isds-hash_algorithm isds-usertype \
 		isds-datestring2tm isds-tm2datestring \
 		isds-timestring2timeval isds-timeval2timestring \
@@ -81,6 +81,7 @@ load_raw_SOURCES 		= load_raw.c $(common)
 normalize_mime_type_SOURCES 		= normalize_mime_type.c $(common)
 isds_list_free_SOURCES 	= isds_list_free.c $(common)
 isds_pki_credentials_free_SOURCES 	= isds_pki_credentials_free.c $(common)
+isds_hash_free_SOURCES 	= isds_hash_free.c $(common)
 
 # Access static symbols from isds.c
 isds_dbtype_SOURCES 		= isds-dbtype.c $(isds_common)
