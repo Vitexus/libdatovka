@@ -23,12 +23,10 @@ int main(int argc, char **argv) {
     TEST("NULL", test_isds_hash_free, NULL);
     TEST("*NULL", test_isds_hash_free, &hash);
 
-    hash = calloc(1, sizeof(*hash));
-    if (!hash) ABORT_UNIT("No enough memory");
+    TEST_CALLOC(hash);
     TEST("Empty structure", test_isds_hash_free, &hash);
 
-    hash = calloc(1, sizeof(*hash));
-    if (!hash) ABORT_UNIT("No enough memory");
+    TEST_CALLOC(hash);
     TEST_FILL_STRING(hash->value);
     TEST("Full structure", test_isds_hash_free, &hash);
 

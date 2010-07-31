@@ -37,20 +37,16 @@ int main(int argc, char **argv) {
     TEST("NULL", test_isds_list_free, NULL, 0);
     TEST("*NULL", test_isds_list_free, &list, 0);
 
-    list = calloc(1, sizeof(*list));
-    if (!list) ABORT_UNIT("No enough memory");
+    TEST_CALLOC(list);
     TEST("One item without destructor", test_isds_list_free, &list, 0);
 
-    list = calloc(1, sizeof(*list));
-    if (!list) ABORT_UNIT("No enough memory");
+    TEST_CALLOC(list);
     list->destructor = destructor;
     TEST("One item with destructor", test_isds_list_free, &list, 1);
 
-    list = calloc(1, sizeof(*list));
-    if (!list) ABORT_UNIT("No enough memory");
+    TEST_CALLOC(list);
     list->destructor = destructor;
-    list->next = calloc(1, sizeof(*list->next));
-    if (!list->next) ABORT_UNIT("No enough memory");
+    TEST_CALLOC(list->next);
     list->next->destructor = destructor;
     TEST("Two items list", test_isds_list_free, &list, 2);
 

@@ -23,12 +23,10 @@ int main(int argc, char **argv) {
     TEST("NULL", test_isds_pki_credentials_free, NULL);
     TEST("*NULL", test_isds_pki_credentials_free, &credentials);
 
-    credentials = calloc(1, sizeof(*credentials));
-    if (!credentials) ABORT_UNIT("No enough memory");
+    TEST_CALLOC(credentials);
     TEST("Empty structure", test_isds_pki_credentials_free, &credentials);
 
-    credentials = calloc(1, sizeof(*credentials));
-    if (!credentials) ABORT_UNIT("No enough memory");
+    TEST_CALLOC(credentials);
     TEST_FILL_STRING(credentials->engine);
     TEST_FILL_STRING(credentials->certificate);
     TEST_FILL_STRING(credentials->key);
