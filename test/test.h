@@ -7,6 +7,7 @@
 #include <locale.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <string.h>
 
 char *unit_name, *reason = NULL;
 unsigned int passed, failed;
@@ -80,6 +81,12 @@ int test_munmap_file(int fd, void *buffer, size_t length);
     printf("\t%s: %s\n", (name), message); \
     if (status) printf("\t\treason: %s\n", reason); \
     free(reason); reason = NULL; \
+}
+
+#define TEST_FILL_STRING(pointer) { \
+    (pointer) = strdup("DATA"); \
+    if (!(pointer)) \
+        ABORT_UNIT("No enough memory"); \
 }
 
 #endif
