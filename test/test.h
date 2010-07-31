@@ -83,10 +83,23 @@ int test_munmap_file(int fd, void *buffer, size_t length);
     free(reason); reason = NULL; \
 }
 
+#define TEST_CALLOC(pointer) { \
+    (pointer) = calloc(1, sizeof(*(pointer))); \
+    if (!(pointer)) \
+        ABORT_UNIT("No enough memory"); \
+}
+
 #define TEST_FILL_STRING(pointer) { \
     (pointer) = strdup("DATA"); \
     if (!(pointer)) \
         ABORT_UNIT("No enough memory"); \
+}
+
+#define TEST_FILL_INT(pointer) { \
+    (pointer) = malloc(sizeof(*(pointer))); \
+    if (!(pointer)) \
+        ABORT_UNIT("No enough memory"); \
+    *(pointer) = 42; \
 }
 
 #endif
