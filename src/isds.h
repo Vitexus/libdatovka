@@ -5,6 +5,7 @@
  * Private declarations in isds_priv.h. */
 
 #include <stdlib.h> /* For size_t */
+#include <time.h>   /* For struct tm */
 #include <sys/time.h> /* For struct timeval */
 #include <libxml/tree.h>    /* Gor xmlDoc and xmlNodePtr */
 
