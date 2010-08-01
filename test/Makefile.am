@@ -22,7 +22,7 @@ TESTS = b64decode b64encode \
 		compute_hash context guess_raw_type init_gpgpme isds_init load_raw \
 		normalize_mime_type  \
 		isds_list_free isds_pki_credentials_free isds_hash_free \
-		isds_DbOwnerInfo_free isds_DbUserInfo_free \
+		isds_DbOwnerInfo_free isds_DbUserInfo_free isds_event_free \
 		isds-dbtype isds-filemetatype isds-hash_algorithm isds-usertype \
 		isds-datestring2tm isds-tm2datestring \
 		isds-timestring2timeval isds-timeval2timestring \
@@ -85,6 +85,7 @@ isds_pki_credentials_free_SOURCES 	= isds_pki_credentials_free.c $(common)
 isds_hash_free_SOURCES 	= isds_hash_free.c $(common)
 isds_DbOwnerInfo_free_SOURCES 	= isds_DbOwnerInfo_free.c $(common)
 isds_DbUserInfo_free_SOURCES 	= isds_DbUserInfo_free.c $(common)
+isds_event_free_SOURCES 	= isds_event_free.c $(common)
 
 # Access static symbols from isds.c
 isds_dbtype_SOURCES 		= isds-dbtype.c $(isds_common)
