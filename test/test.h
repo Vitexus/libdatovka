@@ -68,17 +68,17 @@ int test_munmap_file(int fd, void *buffer, size_t length);
 
 
 #define TEST(name, function, ...) { \
-    const char *message; \
+    const char *test_message; \
     free(reason); reason = NULL; \
     int status = (function)(__VA_ARGS__); \
     if (status) { \
         failed++; \
-        message = "failed"; \
+        test_message = "failed"; \
     } else { \
         passed++; \
-        message = "passed"; \
+        test_message = "passed"; \
     } \
-    printf("\t%s: %s\n", (name), message); \
+    printf("\t%s: %s\n", (name), test_message); \
     if (status) printf("\t\treason: %s\n", reason); \
     free(reason); reason = NULL; \
 }
