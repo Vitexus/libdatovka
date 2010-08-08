@@ -26,12 +26,26 @@ int main(int argc, char **argv) {
     TEST_CALLOC(DbUserInfo);
     TEST("Empty structure", test_isds_DbUserInfo_free, &DbUserInfo);
 
+    /* Full structure */
     TEST_CALLOC(DbUserInfo);
     TEST_FILL_STRING(DbUserInfo->userID);
     TEST_FILL_INT(DbUserInfo->userType)
     TEST_FILL_INT(DbUserInfo->userPrivils);
+
     TEST_CALLOC(DbUserInfo->personName);       /* Name of the person */
+    TEST_FILL_STRING(DbUserInfo->personName->pnFirstName);
+    TEST_FILL_STRING(DbUserInfo->personName->pnMiddleName);
+    TEST_FILL_STRING(DbUserInfo->personName->pnLastName);
+    TEST_FILL_STRING(DbUserInfo->personName->pnLastNameAtBirth);
+
     TEST_CALLOC(DbUserInfo->address);          /* Post address */
+    TEST_FILL_STRING(DbUserInfo->address->adCity);
+    TEST_FILL_STRING(DbUserInfo->address->adStreet);
+    TEST_FILL_STRING(DbUserInfo->address->adNumberInStreet);
+    TEST_FILL_STRING(DbUserInfo->address->adNumberInMunicipality);
+    TEST_FILL_STRING(DbUserInfo->address->adZipCode);
+    TEST_FILL_STRING(DbUserInfo->address->adState);
+
     TEST_CALLOC(DbUserInfo->biDate);           /* Date of birth in local time */
     TEST_FILL_STRING(DbUserInfo->ic);
     TEST_FILL_STRING(DbUserInfo->firmName);
