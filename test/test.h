@@ -102,4 +102,19 @@ int test_munmap_file(int fd, void *buffer, size_t length);
     *(pointer) = 42; \
 }
 
+#define STR(x) #x
+
+#define TEST_STRING_DUPLICITY(x, y) { \
+    if (x == NULL && y != NULL) \
+        FAIL_TEST(STR(x) " is NULL, " STR(y) " is not NULL and should be"); \
+    if (x != NULL && y == NULL) \
+        FAIL_TEST(STR(x) " is not NULL, " STR(y) " is NULL and shouldn't be"); \
+    if (x != NULL && y != NULL) { \
+        if (x == y) \
+            FAIL_TEST(STR(y) " is the same pointer as " STR(x)); \
+        if (strcmp(x, y)) \
+            FAIL_TEST(STR(y) " differs: expected=`%s' is=`%s'", x, y); \
+    } \
+}
+    
 #endif
