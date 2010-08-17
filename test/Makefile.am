@@ -26,7 +26,7 @@ TESTS = b64decode b64encode \
 		isds_envelope_free isds_document_free isds_message_free \
 		isds_message_copy_free isds_approval_free \
 		isds_PersonName_duplicate isds_Address_duplicate \
-		isds_DbOwnerInfo_duplicate \
+		isds_DbOwnerInfo_duplicate isds_DbUserInfo_duplicate \
 		isds-dbtype isds-filemetatype isds-hash_algorithm isds-usertype \
 		isds-datestring2tm isds-tm2datestring \
 		isds-timestring2timeval isds-timeval2timestring \
@@ -98,6 +98,7 @@ isds_approval_free_SOURCES 	= isds_approval_free.c $(common)
 isds_PersonName_duplicate_SOURCES	= isds_PersonName_duplicate.c $(common)
 isds_Address_duplicate_SOURCES	= isds_Address_duplicate.c $(common)
 isds_DbOwnerInfo_duplicate_SOURCES	= isds_DbOwnerInfo_duplicate.c $(common)
+isds_DbUserInfo_duplicate_SOURCES	= isds_DbUserInfo_duplicate.c $(common)
 
 # Access static symbols from isds.c
 isds_dbtype_SOURCES 		= isds-dbtype.c $(isds_common)
