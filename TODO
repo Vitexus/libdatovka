@@ -17,7 +17,6 @@
 * I18N
     Solve UTF-8 vs. locale-encoded logging schism
 * Find a way how to request for a box creation
-* Test document submit for authorized conversion
 * Test message is system generated
 * Make high logic checks optional
 * Validate XML trees (optional)
