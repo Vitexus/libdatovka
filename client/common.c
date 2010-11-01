@@ -13,15 +13,8 @@
 #include <sys/mman.h>
 #include <isds.h>
 
-/*char username[] = "jrfh7i";*/
-/*char password[] = "Ab123456";*/
-/*char password[] = "Ac123456";*/
-
 char username[] = "5s59sd";
-/*char password[] = "Ab123456";*/
-/*char password[] = "Ac123456";*/
-/*char password[] = "Ad123456"; */
-char password[] = "Ae123456";
+char password[] = "Af123456";
 
 
 void print_DbState(const long int state) {
