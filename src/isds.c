@@ -5280,13 +5280,18 @@ leave:
  * It is valid pointer if user should obtain new password on-line on dedicated
  * web server. Then it outputs automatically reallocated token user needs to
  * use to authorize on the web server to view his new password. 
+ * @email is user's e-mail address user must provide to dedicated web server
+ * together with @token. Valid only if @token is not NULL.
+ * @new_user_name is automatically reallocated user's log-in name that ISDS
+ * changed up on this call. Valid only if @token is not NULL.
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_reset_password(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box,
         const struct isds_DbUserInfo *user,
         const _Bool fee_paid, const struct isds_approval *approval,
-        char **token, char **refnumber) {
+        char **token, const char *email, char **new_user_name,
+        char **refnumber) {
     isds_error err = IE_SUCCESS;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL, node;
@@ -5298,7 +5303,11 @@ isds_error isds_reset_password(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
 
-    if (token) zfree(*token);
+    if (token) {
+        zfree(*token);
+        if (!new_user_name) return IE_INVAL;
+        zfree(*new_user_name);
+    }
     if (!box || !user) return IE_INVAL;
 
 
@@ -5329,6 +5338,7 @@ isds_error isds_reset_password(struct isds_ctx *context,
 
     if (token) {
         INSERT_SCALAR_BOOLEAN(request, "dbVirtual", 1);
+        INSERT_STRING(request, "email", email);
     } else {
         INSERT_SCALAR_BOOLEAN(request, "dbVirtual", 0);
     }
@@ -5355,10 +5365,21 @@ isds_error isds_reset_password(struct isds_ctx *context,
             goto leave;
         }
 
-        EXTRACT_STRING("/isds:NewAccessDataResponse/isds:dbAccessDataId", *token);
+        EXTRACT_STRING("/isds:NewAccessDataResponse/isds:dbUserID",
+                *new_user_name);
+        if (!*new_user_name)
+            /* ??? Specification does not declare whether user name is 
+             * always changed or whether non-changed user name is returned
+             * either. */
+            isds_log(ILF_ISDS, ILL_WARNING,
+                    _("ISDS did not return new user's log-in name on "
+                        "NewAccessData request even if requested\n"));
+
+        EXTRACT_STRING("/isds:NewAccessDataResponse/isds:dbAccessDataId",
+                *token);
         if (!*token)
             isds_log(ILF_ISDS, ILL_WARNING,
-                    _("ISDS did not return token on CreateDataBox request "
+                    _("ISDS did not return token on NewAccessData request "
                         "even if requested\n"));
     }
 

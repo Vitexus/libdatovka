@@ -9,12 +9,13 @@
 
 void reset_password(struct isds_ctx *ctx,
         const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
-        const _Bool paid, char **token) {
+        const _Bool paid, char **token, const char *email,
+        char **new_user_name) {
     char *refnumber = NULL;
 
     printf("Resetting password\n");
     isds_error err = isds_reset_password(ctx, box, user, paid, NULL, token,
-            &refnumber);
+            email, new_user_name, &refnumber);
     if (err) {
         printf("isds_reset_password() failed: %s: %s\n",
                 isds_strerror(err), isds_long_message(ctx));
@@ -22,6 +23,7 @@ void reset_password(struct isds_ctx *ctx,
         printf("isds_reset_password() succeeded as request #%s.\n"
                 "This should not happen\n", refnumber);
         if (token) printf("token = %s\n", *token);
+        if (new_user_name) printf("new_user_name = %s\n", *new_user_name);
     }
     printf("\n");
     free(refnumber);
@@ -102,15 +104,23 @@ int main(int argc, char **argv) {
 
     if (db_owner_info && db_user_info) {
         char *token = NULL;
+        char *new_user_name = NULL;
         /* Try some invalid invocation that should fail */
 #if 0
-        reset_password(ctx, db_owner_info, db_user_info, 0, NULL);
-        reset_password(ctx, db_owner_info, db_user_info, 1, NULL);
-        reset_password(ctx, db_owner_info, db_user_info, 1, &token);
+        reset_password(ctx, db_owner_info, db_user_info, 0, NULL, NULL, NULL);
+        reset_password(ctx, db_owner_info, db_user_info, 1, NULL, NULL, NULL);
+        reset_password(ctx, db_owner_info, db_user_info, 1, &token, NULL, NULL);
+        reset_password(ctx, db_owner_info, db_user_info, 1, &token, NULL,
+                &new_user_name);
+        reset_password(ctx, db_owner_info, db_user_info, 1, &token,
+                "I. C. Wiener", NULL);
+        reset_password(ctx, db_owner_info, db_user_info, 1, &token,
+                "I. C. Wiener", &new_user_name);
 #endif
         fprintf(stderr, "This function can lose current user credentials. "
                 "DO NOT TRY IT!\n");
         free(token);
+        free(new_user_name);
     }
 
     isds_DbOwnerInfo_free(&db_owner_info);
