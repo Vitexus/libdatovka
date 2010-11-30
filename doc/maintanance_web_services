@@ -3,7 +3,7 @@ Maintenance web services specification
 
 Source: Provozní řád ISDS, version 2010-01-22, Pages 14–15
 Source: Webové služby rozhraní ISDS pro správu datových schránek,
-    version 2.9 (2010-05-03)
+    version 2.15 (2010-11-19)
 Source: Webové služby související s přístupem do ISDS, version 1.2
     (2010-05-12)
 
@@ -204,11 +204,15 @@ is designed to user who forgot his credentials. He must apply for the reset
 off-line on dedicated meeting point.
 
 Input is box description, user description, billing flag and optional switch
-how to deliver new credentials.
+how to deliver new credentials and optional user's e-mail address.
 
-If switch is true, output element dbAccessDataId will contain token that user
-will use to authorize web page revealing new credentials. If switch is false,
-new credentials will be send by paper mail to user.
+If switch is true, e-mail address will be recorded in the ISDS and output
+element dbAccessDataId will contain token that user will use to authorize to
+web page revealing new credentials and output element dbUserID will contain
+new user log-in name.
+
+If switch is false, new credentials will be sent by paper mail to user. Input
+e-mail address and output token and new log-in name will not be returned.
 
 Non-normative: The special web page revealing new credentials is
 <https://www.czechpoint.cz/aktivacniportal/>. The form requires e-mail address
