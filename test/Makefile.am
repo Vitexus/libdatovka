@@ -25,6 +25,7 @@ TESTS = b64decode b64encode \
 		isds_DbOwnerInfo_free isds_DbUserInfo_free isds_event_free \
 		isds_envelope_free isds_document_free isds_message_free \
 		isds_message_copy_free isds_approval_free \
+		isds_credentials_delivery_free \
 		isds_PersonName_duplicate isds_Address_duplicate \
 		isds_DbOwnerInfo_duplicate isds_DbUserInfo_duplicate \
 		isds-dbtype isds-filemetatype isds-hash_algorithm isds-usertype \
@@ -95,6 +96,8 @@ isds_document_free_SOURCES 	= isds_document_free.c $(common)
 isds_message_free_SOURCES 	= isds_message_free.c $(common)
 isds_message_copy_free_SOURCES 	= isds_message_copy_free.c $(common)
 isds_approval_free_SOURCES 	= isds_approval_free.c $(common)
+isds_credentials_delivery_free_SOURCES 	= isds_credentials_delivery_free.c \
+										  $(common)
 isds_PersonName_duplicate_SOURCES	= isds_PersonName_duplicate.c $(common)
 isds_Address_duplicate_SOURCES	= isds_Address_duplicate.c $(common)
 isds_DbOwnerInfo_duplicate_SOURCES	= isds_DbOwnerInfo_duplicate.c $(common)

@@ -314,6 +314,20 @@ void isds_approval_free(struct isds_approval **approval) {
 }
 
 
+/* Deallocate struct isds_credentials_delivery recursively and NULL it.
+ * The email string is deallocated too. */
+void isds_credentials_delivery_free(
+        struct isds_credentials_delivery **credentials_delivery) {
+    if (!credentials_delivery || !*credentials_delivery) return;
+
+    free((*credentials_delivery)->email);
+    free((*credentials_delivery)->token);
+    free((*credentials_delivery)->new_user_name);
+
+    zfree(*credentials_delivery);
+}
+
+
 /* *DUP_OR_ERROR macros needs error label */
 #define STRDUP_OR_ERROR(new, template) { \
     if (!template) { \

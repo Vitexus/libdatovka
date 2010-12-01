@@ -558,6 +558,19 @@ struct isds_approval {
     char *refference;               /* Identifier of the approval */
 };
 
+/* Digital delivery of credentials */
+struct isds_credentials_delivery {
+    /* Input members */
+    char *email;                    /* e-mail address where to send
+                                       notification with link to service where
+                                       user can get know his new credentials */
+    /* Output members */
+    char *token;                    /* token user needs to use to authorize on
+                                       the web server to view his new
+                                       credentials. */
+    char *new_user_name;            /* user's log-in name that ISDS created/
+                                       changed up on a call. */
+};
 
 /* Initialize ISDS library.
  * Global function, must be called before other functions.
@@ -1314,6 +1327,11 @@ void isds_message_copy_free(struct isds_message_copy **copy);
 
 /* Deallocate struct isds_approval recursively and NULL it */
 void isds_approval_free(struct isds_approval **approval);
+
+/* Deallocate struct isds_credentials_delivery recursively and NULL it.
+ * The email string is deallocated too. */
+void isds_credentials_delivery_free(
+        struct isds_credentials_delivery **credentials_delivery);
 
 /* Copy structure isds_PersonName recursively */
 struct isds_PersonName *isds_PersonName_duplicate(
