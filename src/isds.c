@@ -5290,21 +5290,22 @@ leave:
  * @user identifies user to reset password
  * @fee_paid is true if fee has been paid, false otherwise
  * @approval is optional external approval of box manipulation
- * @token is NULL if new password should be delivered off-line to the user.
- * It is valid pointer if user should obtain new password on-line on dedicated
- * web server. Then it outputs automatically reallocated token user needs to
- * use to authorize on the web server to view his new password. 
- * @email is user's e-mail address user must provide to dedicated web server
- * together with @token. Valid only if @token is not NULL.
- * @new_user_name is automatically reallocated user's log-in name that ISDS
- * changed up on this call. Valid only if @token is not NULL.
+ * @credentials_delivery is NULL if new password should be delivered off-line
+ * to the user. It is valid pointer if user should obtain new password on-line
+ * on dedicated web server. Then input @credentials_delivery.email value is
+ * user's e-mail address user must provide to dedicated web server together
+ * with @credentials_delivery.token. The output reallocated token user needs
+ * to use to authorize on the web server to view his new password. Output
+ * reallocated @credentials_delivery.new_user_name is user's log-in name that
+ * ISDS changed up on this call. (No reason why server could change the name
+ * is known now.)
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_reset_password(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box,
         const struct isds_DbUserInfo *user,
         const _Bool fee_paid, const struct isds_approval *approval,
-        char **token, const char *email, char **new_user_name,
+        struct isds_credentials_delivery *credentials_delivery,
         char **refnumber) {
     isds_error err = IE_SUCCESS;
     xmlNsPtr isds_ns = NULL;
@@ -5317,10 +5318,9 @@ isds_error isds_reset_password(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
 
-    if (token) {
-        zfree(*token);
-        if (!new_user_name) return IE_INVAL;
-        zfree(*new_user_name);
+    if (credentials_delivery) {
+        zfree(credentials_delivery->token);
+        zfree(credentials_delivery->new_user_name);
     }
     if (!box || !user) return IE_INVAL;
 
@@ -5350,9 +5350,9 @@ isds_error isds_reset_password(struct isds_ctx *context,
 
     INSERT_SCALAR_BOOLEAN(request, "dbFeePaid", fee_paid);
 
-    if (token) {
+    if (credentials_delivery) {
         INSERT_SCALAR_BOOLEAN(request, "dbVirtual", 1);
-        INSERT_STRING(request, "email", email);
+        INSERT_STRING(request, "email", credentials_delivery->email);
     } else {
         INSERT_SCALAR_BOOLEAN(request, "dbVirtual", 0);
     }
@@ -5368,7 +5368,7 @@ isds_error isds_reset_password(struct isds_ctx *context,
 
 
     /* Extract optional token */
-    if (token) {
+    if (credentials_delivery) {
         xpath_ctx = xmlXPathNewContext(response);
         if (!xpath_ctx) {
             err = IE_ERROR;
@@ -5380,8 +5380,8 @@ isds_error isds_reset_password(struct isds_ctx *context,
         }
 
         EXTRACT_STRING("/isds:NewAccessDataResponse/isds:dbUserID",
-                *new_user_name);
-        if (!*new_user_name)
+                credentials_delivery->new_user_name);
+        if (!credentials_delivery->new_user_name)
             /* ??? Specification does not declare whether user name is 
              * always changed or whether non-changed user name is returned
              * either. */
@@ -5390,8 +5390,8 @@ isds_error isds_reset_password(struct isds_ctx *context,
                         "NewAccessData request even if requested\n"));
 
         EXTRACT_STRING("/isds:NewAccessDataResponse/isds:dbAccessDataId",
-                *token);
-        if (!*token)
+                credentials_delivery->token);
+        if (!credentials_delivery->token)
             isds_log(ILF_ISDS, ILL_WARNING,
                     _("ISDS did not return token on NewAccessData request "
                         "even if requested\n"));

@@ -836,21 +836,22 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
  * @user identifies user to reset password
  * @fee_paid is true if fee has been paid, false otherwise
  * @approval is optional external approval of box manipulation
- * @token is NULL if new password should be delivered off-line to the user.
- * It is valid pointer if user should obtain new password on-line on dedicated
- * web server. Then it outputs automatically reallocated token user needs to
- * use to authorize on the web server to view his new password. 
- * @email is user's e-mail address user must provide to dedicated web server
- * together with @token. Valid only if @token is not NULL.
- * @new_user_name is automatically reallocated user's log-in name that ISDS
- * changed up on this call. Valid only if @token is not NULL.
+ * @credentials_delivery is NULL if new password should be delivered off-line
+ * to the user. It is valid pointer if user should obtain new password on-line
+ * on dedicated web server. Then input @credentials_delivery.email value is
+ * user's e-mail address user must provide to dedicated web server together
+ * with @credentials_delivery.token. The output reallocated token user needs
+ * to use to authorize on the web server to view his new password. Output
+ * reallocated @credentials_delivery.new_user_name is user's log-in name that
+ * ISDS changed up on this call. (No reason why server could change the name
+ * is known now.)
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_reset_password(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box,
         const struct isds_DbUserInfo *user,
         const _Bool fee_paid, const struct isds_approval *approval,
-        char **token, const char *email, char **new_user_name,
+        struct isds_credentials_delivery *credentials_delivery,
         char **refnumber);
 
 /* Assign new user to given box.
