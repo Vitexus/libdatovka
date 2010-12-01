@@ -164,7 +164,14 @@ Add person permitted to access to the box
 Different user types can be added only by users with specific privileges
 (PRIMARY_USER can be added only by PRIVIL_CZP user).
 
-Input is box description and new user definition.
+Mandaory input is box description and new user definition.
+
+If optional input dbVirtual is true, additional input element email specifies
+e-mail address to send notificication about new account and link where to get
+find initial credentials for created user. Then two output elements are
+returned: dbUserID (XSD mistakenly says dbID) and dbAccessDataId for new
+user identifier and temporal token to login on the web page linked from
+received e-mail. See NewAccessData for more details.
 
 
 DeleteDataBoxUser
