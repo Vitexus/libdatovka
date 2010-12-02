@@ -40,4 +40,8 @@ Value       Description
 4           Permanently inaccessible
 5           Box has been removed
 
+Non-normative:
+6           Temporary inaccesible by law; State 2 is shifted to `by request'
+            (Source: <http://www.datoveschranky.info/clanek/386>)
+
 Only state 1 means box is capable of receiving messages.
