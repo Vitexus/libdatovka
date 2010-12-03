@@ -164,7 +164,7 @@ Add person permitted to access to the box
 Different user types can be added only by users with specific privileges
 (PRIMARY_USER can be added only by PRIVIL_CZP user).
 
-Mandaory input is box description and new user definition.
+Mandatory input is box description and new user definition.
 
 If optional input dbVirtual is true, additional input element email specifies
 e-mail address to send notificication about new account and link where to get
