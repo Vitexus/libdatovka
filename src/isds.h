@@ -858,11 +858,21 @@ isds_error isds_reset_password(struct isds_ctx *context,
  * @context is session context
  * @box is box identification
  * @user defines new user to add
+ * @credentials_delivery is NULL if new user's password should be delivered
+ * off-line to the user. It is valid pointer if user should obtain new
+ * password on-line on dedicated web server. Then input
+ * @credentials_delivery.email value is user's e-mail address user must
+ * provide to dedicated web server together with @credentials_delivery.token.
+ * The output reallocated token user needs to use to authorize on the web
+ * server to view his new password. Output reallocated
+ * @credentials_delivery.new_user_name is user's log-in name that ISDS
+ * assingned up on this call.
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_add_user(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
+        struct isds_credentials_delivery *credentials_delivery,
         const struct isds_approval *approval, char **refnumber);
 
 /* Remove user assigned to given box.

@@ -2042,7 +2042,7 @@ static isds_error eventstring2event(const xmlChar *string,
 }
 
 
-/* Following EXTRACT_* macros expects @result, @xpath_ctx, @err, @context
+/* Following EXTRACT_* macros expect @result, @xpath_ctx, @err, @context
  * and leave label */
 #define EXTRACT_STRING(element, string) { \
     result = xmlXPathEvalExpression(BAD_CAST element "/text()", xpath_ctx); \
@@ -5284,6 +5284,126 @@ leave:
 }
 
 
+/* Insert isds_credentials_delivery structure into XML request if not NULL
+ * @context is session context
+ * @credentials_delivery is NULL if to omit, non-NULL to signal on-line
+ * credentials delivery. The email field is passed.
+ * @parent is XML element where to insert */
+static isds_error insert_credentials_delivery(struct isds_ctx *context,
+        const struct isds_credentials_delivery *credentials_delivery,
+        xmlNodePtr parent) {
+    isds_error err = IE_SUCCESS;
+    xmlNodePtr node;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!parent) return IE_INVAL;
+        
+    if (credentials_delivery) {
+        /* Following elements are valid only for services:
+         * NewAccessData, AddDataBoxUser, CreateDataBox */
+        INSERT_SCALAR_BOOLEAN(parent, "dbVirtual", 1);
+        INSERT_STRING(parent, "email", credentials_delivery->email);
+    }
+
+leave:
+    return err;
+}
+
+
+/* Extract credentials delivery from ISDS response.
+ * @context is session context
+ * @credentials_delivery is pointer to valid structure to fill in returned new
+ * user log-in name and new password. If NULL, do not extract the data.
+ * @response is pointer to XML document with ISDS response
+ * @request_name is UTF-8 encoded name of ISDS service the @response it to.
+ * @return IE_SUCCESS even if new user name has not been found because it's not
+ * clear whether it's returned always. */ 
+static isds_error extract_credentials_delivery(struct isds_ctx *context,
+        struct isds_credentials_delivery *credentials_delivery,
+        xmlDocPtr response, const char *request_name) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    char *xpath_query = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (credentials_delivery) {
+        zfree(credentials_delivery->token);
+        zfree(credentials_delivery->new_user_name);
+    }
+    if (!response || !request_name || !*request_name) return IE_INVAL;
+
+
+    /* Extract optional token */
+    if (credentials_delivery) {
+        xpath_ctx = xmlXPathNewContext(response);
+        if (!xpath_ctx) {
+            err = IE_ERROR;
+            goto leave;
+        }
+        if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+            err = IE_ERROR;
+            goto leave;
+        }
+
+        /* Verify root element */
+        if (-1 == isds_asprintf(&xpath_query, "/isds:%sResponse",
+                    request_name)) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+        result = xmlXPathEvalExpression(BAD_CAST xpath_query, xpath_ctx);
+        if (!result) {
+            err = IE_ERROR;
+            goto leave;
+        }
+        if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+            char *request_name_locale = _isds_utf82locale(request_name);
+            isds_log(ILF_ISDS, ILL_WARNING,
+                    _("Wrong element in ISDS response for %s request "
+                        "while extracting credentials delivery details\n"),
+                    request_name_locale);
+            free(request_name_locale);
+            err = IE_ERROR;
+            goto leave;
+        }
+        xpath_ctx->node = result->nodesetval->nodeTab[0];
+
+
+        /* XXX: XML schema in specification talks about "isds:dbID" element
+         * mistakenly */
+        EXTRACT_STRING("isds:dbUserID", credentials_delivery->new_user_name);
+        if (!credentials_delivery->new_user_name) {
+            /* ??? Specification does not declare whether user name is 
+             * always changed or whether non-changed user name is returned
+             * either. */
+            char *request_name_locale = _isds_utf82locale(request_name);
+            isds_log(ILF_ISDS, ILL_WARNING,
+                    _("ISDS did not return new user's log-in name on "
+                        "%s request even if requested\n"), request_name_locale);
+            free(request_name_locale);
+        }
+
+        EXTRACT_STRING("isds:dbAccessDataId", credentials_delivery->token);
+        if (!credentials_delivery->token) {
+            char *request_name_locale = _isds_utf82locale(request_name);
+            isds_log(ILF_ISDS, ILL_ERR,
+                    _("ISDS did not return token on %s request "
+                        "even if requested\n"), request_name_locale);
+            free(request_name_locale);
+            err = IE_ERROR;
+        }
+    }
+
+leave:
+    free(xpath_query);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    return err;
+}
+
+
 /* Reset credentials of user assigned to given box.
  * @context is session context
  * @box is box identification
@@ -5311,8 +5431,6 @@ isds_error isds_reset_password(struct isds_ctx *context,
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL, node;
     xmlDocPtr response = NULL;
-    xmlXPathContextPtr xpath_ctx = NULL;
-    xmlXPathObjectPtr result = NULL;
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -5350,12 +5468,8 @@ isds_error isds_reset_password(struct isds_ctx *context,
 
     INSERT_SCALAR_BOOLEAN(request, "dbFeePaid", fee_paid);
 
-    if (credentials_delivery) {
-        INSERT_SCALAR_BOOLEAN(request, "dbVirtual", 1);
-        INSERT_STRING(request, "email", credentials_delivery->email);
-    } else {
-        INSERT_SCALAR_BOOLEAN(request, "dbVirtual", 0);
-    }
+    err = insert_credentials_delivery(context, credentials_delivery, request);
+    if (err) goto leave;
 
     err = insert_GExtApproval(context, approval, request);
     if (err) goto leave;
@@ -5368,38 +5482,10 @@ isds_error isds_reset_password(struct isds_ctx *context,
 
 
     /* Extract optional token */
-    if (credentials_delivery) {
-        xpath_ctx = xmlXPathNewContext(response);
-        if (!xpath_ctx) {
-            err = IE_ERROR;
-            goto leave;
-        }
-        if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
-            err = IE_ERROR;
-            goto leave;
-        }
-
-        EXTRACT_STRING("/isds:NewAccessDataResponse/isds:dbUserID",
-                credentials_delivery->new_user_name);
-        if (!credentials_delivery->new_user_name)
-            /* ??? Specification does not declare whether user name is 
-             * always changed or whether non-changed user name is returned
-             * either. */
-            isds_log(ILF_ISDS, ILL_WARNING,
-                    _("ISDS did not return new user's log-in name on "
-                        "NewAccessData request even if requested\n"));
-
-        EXTRACT_STRING("/isds:NewAccessDataResponse/isds:dbAccessDataId",
-                credentials_delivery->token);
-        if (!credentials_delivery->token)
-            isds_log(ILF_ISDS, ILL_WARNING,
-                    _("ISDS did not return token on NewAccessData request "
-                        "even if requested\n"));
-    }
+    err = extract_credentials_delivery(context, credentials_delivery,
+            response, "NewAccessData");
 
 leave:
-    xmlXPathFreeObject(result);
-    xmlXPathFreeContext(xpath_ctx);
     xmlFreeDoc(response);
     xmlFreeNode(request);
 
@@ -5418,12 +5504,22 @@ leave:
  * @service_name is name of SERVICE_DB_MANIPULATION service
  * @box is box identification
  * @user identifies user to remove
+ * @credentials_delivery is NULL if new user's password should be delivered
+ * off-line to the user. It is valid pointer if user should obtain new
+ * password on-line on dedicated web server. Then input
+ * @credentials_delivery.email value is user's e-mail address user must
+ * provide to dedicated web server together with @credentials_delivery.token.
+ * The output reallocated token user needs to use to authorize on the web
+ * server to view his new password. Output reallocated
+ * @credentials_delivery.new_user_name is user's log-in name that ISDS
+ * assingned or changed up on this call.
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
 static isds_error build_send_manipulationboxuser_request_check_drop_response(
         struct isds_ctx *context, const xmlChar *service_name,
         const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
+        struct isds_credentials_delivery *credentials_delivery,
         const struct isds_approval *approval, xmlChar **refnumber) {
     isds_error err = IE_SUCCESS;
     xmlNsPtr isds_ns = NULL;
@@ -5432,15 +5528,19 @@ static isds_error build_send_manipulationboxuser_request_check_drop_response(
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    if (credentials_delivery) {
+        zfree(credentials_delivery->token);
+        zfree(credentials_delivery->new_user_name);
+    }
     if (!service_name || service_name[0] == '\0' || !box || !user)
         return IE_INVAL;
 
 
-    /* Build NewAccessData request */
+    /* Build NewAccessData or similar request */
     request = xmlNewNode(NULL, service_name);
     if (!request) {
         char *service_name_locale = _isds_utf82locale((char *) service_name);
-        isds_printf_message(context, _("Could build %s request"),
+        isds_printf_message(context, _("Could not build %s request"),
                 service_name_locale);
         free(service_name_locale);
         return IE_ERROR;
@@ -5461,10 +5561,13 @@ static isds_error build_send_manipulationboxuser_request_check_drop_response(
     err = insert_DbUserInfo(context, user, node);
     if (err) goto leave;
 
+    err = insert_credentials_delivery(context, credentials_delivery, request);
+    if (err) goto leave;
+
     err = insert_GExtApproval(context, approval, request);
     if (err) goto leave;
 
-    /* Send request and check response*/
+    /* Send request and check response */
     err = send_request_check_drop_response (context,
             SERVICE_DB_MANIPULATION, service_name, &request, refnumber);
 
@@ -5478,15 +5581,25 @@ leave:
  * @context is session context
  * @box is box identification
  * @user defines new user to add
+ * @credentials_delivery is NULL if new user's password should be delivered
+ * off-line to the user. It is valid pointer if user should obtain new
+ * password on-line on dedicated web server. Then input
+ * @credentials_delivery.email value is user's e-mail address user must
+ * provide to dedicated web server together with @credentials_delivery.token.
+ * The output reallocated token user needs to use to authorize on the web
+ * server to view his new password. Output reallocated
+ * @credentials_delivery.new_user_name is user's log-in name that ISDS
+ * assingned up on this call.
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_add_user(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
+        struct isds_credentials_delivery *credentials_delivery,
         const struct isds_approval *approval, char **refnumber) {
     return build_send_manipulationboxuser_request_check_drop_response(context,
-            BAD_CAST "AddDataBoxUser", box, user, approval,
-            (xmlChar **) refnumber);
+            BAD_CAST "AddDataBoxUser", box, user, credentials_delivery,
+            approval, (xmlChar **) refnumber);
 }
 
 
@@ -5501,7 +5614,7 @@ isds_error isds_delete_user(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
         const struct isds_approval *approval, char **refnumber) {
     return build_send_manipulationboxuser_request_check_drop_response(context,
-            BAD_CAST "DeleteDataBoxUser", box, user, approval,
+            BAD_CAST "DeleteDataBoxUser", box, user, NULL, approval,
             (xmlChar **) refnumber);
 }
 
