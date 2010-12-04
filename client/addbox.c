@@ -7,7 +7,7 @@
 #include <isds.h>
 #include "common.h"
 
-
+/* Pass e-mail address where to deliver credentials as first argument. */
 int main(int argc, char **argv) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
@@ -89,24 +89,36 @@ int main(int argc, char **argv) {
     /* Create the same box */
     if (db_owner_info) {
         char *refnumber = NULL;
+        struct isds_credentials_delivery *credentials_delivery = NULL;
         const struct isds_approval approval = {
             .approved = 1, .refference = "Me"
         };
-        char *token = NULL;
-        printf("Creating already existing box\n");
-        err = isds_add_box(ctx, db_owner_info, users, "Former Names",
-                NULL, "CEO", &token, &approval, &refnumber);
-        if (err) {
-            printf("isds_add_box() failed: %s: %s\n",
-                    isds_strerror(err), isds_long_message(ctx));
-        } else {
-            printf("isds_add_box() succeeded:\n"
-                    "\trequest #: %s\n"
-                    "\tnew box ID: %s\n"
-                    "\ttoken value: %s\n",
-                    refnumber, db_owner_info->dbID, token);
-        }
 
+        credentials_delivery = calloc(1, sizeof(*credentials_delivery));
+        if (credentials_delivery && argv[1])
+            credentials_delivery->email = strdup(argv[1]);
+
+        if (!credentials_delivery || (argv[1] && !credentials_delivery->email))
+        {
+            printf("Not enough memory\n");
+        } else {
+            printf("Creating already existing box\n");
+            err = isds_add_box(ctx, db_owner_info, users, "Former Names",
+                    NULL, "CEO", credentials_delivery, &approval, &refnumber);
+            if (err) {
+                printf("isds_add_box() failed: %s: %s\n",
+                        isds_strerror(err), isds_long_message(ctx));
+            } else {
+                printf("isds_add_box() succeeded:\n"
+                        "\trequest #: %s\n"
+                        "\tnew box ID: %s\n"
+                        "\tcredentials e-mail: %s\n"
+                        "\ttoken value: %s\n",
+                        refnumber, db_owner_info->dbID,
+                        credentials_delivery->email, credentials_delivery->token);
+            }
+        }
+        isds_credentials_delivery_free(&credentials_delivery);
     }
 
     isds_DbOwnerInfo_free(&db_owner_info);
