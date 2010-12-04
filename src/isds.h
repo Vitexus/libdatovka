@@ -751,21 +751,24 @@ isds_error isds_change_password(struct isds_ctx *context,
  * FO box type). It outputs box ID assigned by ISDS in dbID element.
  * @users is list of struct isds_DbUserInfo (primary users in case of non-FO
  * box, or contact address of PFO box owner)
- * @former_names is optional undocumented string. Pass NULL if you don't care.
+ * @former_names is optional former name of box owner. Pass NULL if you don't care.
  * @upper_box_id is optional ID of supper box if currently created box is
  * subordinated.
  * @ceo_label is optional title of OVM box owner (e.g. mayor)
- * @token is NULL if new password should be delivered off-line to the user.
- * It is valid pointer if user should obtain new password on-line on dedicated
- * web server. Then it outputs automatically reallocated token user needs to
- * use to authorize on the web server to view his new password. 
+ * @credentials_delivery is NULL if new password should be delivered off-line
+ * to box owner. It is valid pointer if owner should obtain new password on-line
+ * on dedicated web server. Then input @credentials_delivery.email value is
+ * his e-mail address he must provide to dedicated web server together
+ * with output reallocated @credentials_delivery.token member. Output
+ * member @credentials_delivery.new_user_name is unused up on this call.
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 isds_error isds_add_box(struct isds_ctx *context,
         struct isds_DbOwnerInfo *box, const struct isds_list *users,
         const char *former_names, const char *upper_box_id,
-        const char *ceo_label, char **token,
+        const char *ceo_label,
+        struct isds_credentials_delivery *credentials_delivery,
         const struct isds_approval *approval, char **refnumber);
 
 /* Notify ISDS about new PFO entity.
