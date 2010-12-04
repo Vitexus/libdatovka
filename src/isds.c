@@ -5035,6 +5035,8 @@ isds_error isds_add_pfoinfo(struct isds_ctx *context,
     err = send_request_check_drop_response(context,
             SERVICE_DB_MANIPULATION, BAD_CAST "CreateDataBox", &request,
             (xmlChar **) refnumber);
+    /* XXX: XML Schema names output dbID element but textual documentation
+     * states no box identifier is returned. */
 leave:
     xmlFreeNode(request);
     return err;
