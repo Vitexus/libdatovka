@@ -8665,7 +8665,7 @@ isds_error czp_close_connection(struct isds_ctx *context) {
  * @users is list of struct isds_DbUserInfo (primary users in case of non-FO
  * box, or contact address of PFO box owner). The email member is mandatory as
  * it will be used to deliver credentials.
- * @former_names is optional undocumented string. Pass NULL if you don't care.
+ * @former_names is former name of box owner. Pass NULL if you don't care.
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
@@ -8709,7 +8709,7 @@ isds_error isds_request_new_testing_box(struct isds_ctx *context,
     /* Build CreateDataBox request */
     err = build_CreateDBInput_request(context,
             &request, BAD_CAST "CreateDataBox",
-            box, users, (xmlChar *) former_names, NULL, NULL, 0, approval);
+            box, users, (xmlChar *) former_names, NULL, NULL, NULL, approval);
     if (err) goto leave;
 
     /* Send it to server and process response */
