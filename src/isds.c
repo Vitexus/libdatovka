@@ -5516,6 +5516,7 @@ static isds_error build_send_manipulationboxuser_request_check_drop_response(
     isds_error err = IE_SUCCESS;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL, node;
+    xmlDocPtr response = NULL;
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -5559,12 +5560,30 @@ static isds_error build_send_manipulationboxuser_request_check_drop_response(
     err = insert_GExtApproval(context, approval, request);
     if (err) goto leave;
 
-    /* Send request and check response */
-    err = send_request_check_drop_response (context,
-            SERVICE_DB_MANIPULATION, service_name, &request, refnumber);
+
+    /* Send request and check response*/
+    err = send_destroy_request_check_response(context,
+            SERVICE_DB_MANIPULATION, service_name, &request, &response, refnumber);
+
+    xmlFreeNode(request);
+    request = NULL;
+
+    /* Pick up credentials_delivery if requested */
+    err = extract_credentials_delivery(context, credentials_delivery, response,
+            (char *)service_name);
 
 leave:
-    xmlFreeNode(request);
+    xmlFreeDoc(response);
+    if (request) xmlFreeNode(request);
+
+    if (!err) {
+        char *service_name_locale = _isds_utf82locale((char *) service_name);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("%s request processed by server successfully.\n"),
+                service_name_locale);
+        free(service_name_locale);
+    }
+
     return err;
 }
 
