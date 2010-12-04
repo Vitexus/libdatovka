@@ -94,9 +94,9 @@ Credentials will be sent to each PRIMARY user by paper mail. Credentials
 postal address is supplied contact address or address obtained from external
 government registers (supplied person or firm address must match them).
 
-Non-normative: If dbUseActPortal element is true, ISDS will return one-time
-password that box owner will use to obtain credentials. See NewAccessData for
-more details.
+If optional dbVirtual element is true, optional input element email is
+required and ISDS will return one-time password that box owner will use to
+obtain his credentials. See NewAccessData for more details.
 
 Different box types can created by users with specific privileges.
 
@@ -111,16 +111,19 @@ CreateDataBox
     |   + dbUserInfo – primary user description (not all fields has meaning)
     |   + dbUserInfo
     |   ⋮
-    + dbFormerNames – optional, undocumented
+    + dbFormerNames – former name of the user, optional
     + dbUpperDBId – ID of supper box, optional
     + dbCEOLabel – title of OVM manager (required for OVM box, optional
     |       otherise)
-    + dbUseActPortal – true if user want to get initial credintials on
-            activation portal. optional
+    + dbVirtual – true if user want to get initial credentials on
+    |       activation portal. Optional
+    + email – address to send notification about new credentials, optional,
+    |       required and meaningful only if dbVirtual is true
     + dbApproved – optional
     + dbExternRefNumber – optional
 
-Returns ID of new box and token for activation portal if requested.
+Returns ID of new box and token for activation portal if requested by
+dbVirtual.
 
 
 CreateDataBoxPFOInfo
