@@ -60,6 +60,7 @@ static xmlChar *extension_map_mime[] = {
     BAD_CAST "p7f", BAD_CAST "application/pkcs7-signature",
     BAD_CAST "p7m", BAD_CAST "application/pkcs7-mime",
     BAD_CAST "p7s", BAD_CAST "application/pkcs7-signature",
+    BAD_CAST "tsr", BAD_CAST "application/timestamp-reply",
     BAD_CAST "tst", BAD_CAST "application/timestamp-reply"
 };
 

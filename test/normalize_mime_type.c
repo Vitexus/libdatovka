@@ -73,6 +73,7 @@ int main(int argc, char **argv) {
     TEST("p7f", test_normalize, "p7f", "application/pkcs7-signature");
     TEST("p7m", test_normalize, "p7m", "application/pkcs7-mime");
     TEST("p7s", test_normalize, "p7s", "application/pkcs7-signature");
+    TEST("tsr", test_normalize, "tsr", "application/timestamp-reply");
     TEST("tst", test_normalize, "tst", "application/timestamp-reply");
 
     SUM_TEST();
