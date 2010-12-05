@@ -360,6 +360,7 @@ distinguish the event meaning. Following prefixes are defined:
 
     Prefix  Meaning
     -----------------------------------------------------
+    EV0:    Message enterend into ISDS
     EV1:    Message has been accepted by recipient action
     EV2:    Message has been delivered to box and is considered as accepted by
             no-user-action time out (through fiction)
