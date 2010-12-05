@@ -359,7 +359,8 @@ will return non-SOAP response and client could not continue in work.
 
 Input is empty dummy request.
 
-Output is ISO time of password expiration. Service has no sense if client
+Output is ISO time of password expiration in pswExpDate element. If password
+expiration is disabled, empty element is returned. Service has no sense if client
 authenticates with certificate only.
 
 
