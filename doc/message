@@ -173,10 +173,18 @@ following cases defined:
 1   Outgoing message contained malicious code
 2   You, administrator, deleted other user
 3   Outgoing message could not been delivered because recipient box had been
-    made inaccessible
+    made inaccessible retrospectively.
 4   Outgoing commercial message has not been accepted by recipient
-5   User has been added to the box
+5   User has been added to your box
 6   User permissions has been changed
+7   Box has been made temporary inaccessible on court desicion (e.g. user has
+    been found eligable unresponsible)
+8   Box has been made temporary inaccessible on box owner or administrator
+    request
+9   Box has been made permanently inaccessible because organization does not
+    exist anymore
+10  Box has been made temporary (??? specification says temporary, not
+    permanently) inaccessible because person has died
 
 
 Commercial messages
