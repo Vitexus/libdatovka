@@ -1,3 +1,6 @@
+* Implement GetMessageStateChanges
+* Implement GetDataBoxList
+* Learn and possibnly implement Activate service
 * Asynchronous interface
     Grep for (reentrant|thread) comments
 * Multithreaded interface
