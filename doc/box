@@ -1,6 +1,7 @@
 Box specification
 =================
 
+Source: Provozní řád Informačního systému datových schránek, (2010-11-28)
 Source: Webové služby ISDS pro vyhledávání datových schránek, version 2.7
     (2009-12-18) [DBSearch_ws.pdf]
 Source: Webové služby ISDS pro manipulaci s datovými schránkami, version 2.6
@@ -45,3 +46,5 @@ Non-normative:
             (Source: <http://www.datoveschranky.info/clanek/386>)
 
 Only state 1 means box is capable of receiving messages.
+User can log in even into inaccessible box. However some operations, like
+message sending, are not allowed then.
