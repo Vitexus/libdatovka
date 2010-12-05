@@ -1,7 +1,7 @@
 Message specification
 =====================
 
-Source: Provozní řád ISDS, version 2009-10-30, Page 13
+Source: Provozní řád ISDS, version 2010-11-28, Page 14
 Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2.11
     (2010-05-20) [DataMessage_ws.pdf]
 Source: Registration of media type FO and ZFO
@@ -105,7 +105,7 @@ cer, crt, der
                                 X.509 Certificate (different serialization)
 pk7, p7b, p7c, p7f, p7m, p7s
                                 Crypto Message Syntax (different serialization)
-tst                             Time Stamp Token (RFC 3161)
+tsr, tst                        Time Stamp Token (RFC 3161)
 
 
 Document ::= Binary_Document | XML_Document
