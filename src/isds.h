@@ -322,8 +322,10 @@ typedef enum {
                                        timed out, considered as accepted */
     EVENT_UNDELIVERABLE,            /* Recipient box made inaccessible,
                                        thus message is undeliverable */
-    EVENT_COMMERCIAL_ACCEPTED       /* Recipient confirmed acceptance of
+    EVENT_COMMERCIAL_ACCEPTED,      /* Recipient confirmed acceptance of
                                        commercial message */
+    EVENT_ENTERED_SYSTEM            /* Message entered ISDS, i.e. has been just
+                                       sent by sender */
 } isds_event_type;
 
 /* Message event

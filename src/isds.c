@@ -1987,12 +1987,14 @@ static isds_error uint2isds_message_status(struct isds_ctx *context,
 static isds_error eventstring2event(const xmlChar *string,
         struct isds_event* event) {
     const xmlChar *known_prefixes[] = {
+        BAD_CAST "EV0:",
         BAD_CAST "EV1:",
         BAD_CAST "EV2:",
         BAD_CAST "EV3:",
         BAD_CAST "EV4:"
     };
     const isds_event_type types[] = {
+        EVENT_ENTERED_SYSTEM, 
         EVENT_ACCEPTED_BY_RECIPIENT,
         EVENT_ACCEPTED_BY_FICTION,
         EVENT_UNDELIVERABLE,

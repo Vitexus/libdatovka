@@ -312,6 +312,7 @@ void print_event_type(const isds_event_type *type) {
     }
     switch (*type) {
         case EVENT_UKNOWN: printf("UNKNOWN\n"); break;
+        case EVENT_ENTERED_SYSTEM: printf("ENTERED_SYSTEM\n"); break;
         case EVENT_ACCEPTED_BY_RECIPIENT:
                            printf("ACCEPTED_BY_RECIPIENT\n"); break;
         case EVENT_ACCEPTED_BY_FICTION:

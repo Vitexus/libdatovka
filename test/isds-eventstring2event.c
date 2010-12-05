@@ -71,6 +71,14 @@ int main(int argc, char **argv) {
     isds_init();
 
     /* Known event prefixes */
+    input = BAD_CAST "EV0: some text";
+    event.time = NULL;
+    event_type = EVENT_ENTERED_SYSTEM;
+    event.type = &event_type;
+    event.description = "some text";
+    TEST((char*)input, test_eventstring2event, input,
+            IE_SUCCESS, &event, &output);
+
     input = BAD_CAST "EV1: some text";
     event.time = NULL;
     event_type = EVENT_ACCEPTED_BY_RECIPIENT;
@@ -104,7 +112,7 @@ int main(int argc, char **argv) {
             IE_SUCCESS, &event, &output);
 
     /* Unknown event prefixes */
-    input = BAD_CAST "EV0: out of range event";
+    input = BAD_CAST "EV-1: out of range event";
     event.time = NULL;
     event_type = EVENT_UKNOWN;
     event.type = &event_type;
