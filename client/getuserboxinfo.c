@@ -152,7 +152,10 @@ int main(int argc, char **argv) {
         else {
             printf("isds_get_password_expiration() succeeded: "
                     "Password expires at: ");
-            print_timeval(expiration);
+            if (expiration) 
+                print_timeval(expiration);
+            else 
+                printf("<Never>\n");
         }
         free(expiration);
     }

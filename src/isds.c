@@ -4340,8 +4340,9 @@ leave:
 
 /* Get expiration time of current password
  * @context is session context
- * @expiration is automatically reallocated time when password expires, In
- * case of error will be nulled. */
+ * @expiration is automatically reallocated time when password expires. If
+ * password expiration is disables, NULL will be returned. In case of error
+ * it will be nulled too. */
 isds_error isds_get_password_expiration(struct isds_ctx *context,
         struct timeval **expiration) {
     isds_error err = IE_SUCCESS;
@@ -4354,6 +4355,7 @@ isds_error isds_get_password_expiration(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     if (!expiration) return IE_INVAL;
+    zfree(*expiration);
 
     /* Check if connection is established */
     if (!context->curl) return IE_CONNECTION_CLOSED;
@@ -4401,21 +4403,18 @@ isds_error isds_get_password_expiration(struct isds_ctx *context,
 
     /* Extract expiration date */
     EXTRACT_STRING("isds:pswExpDate", string);
-    if (!string) {
-        isds_log_message(context, _("Missing pswExpDate element"));
-        err = IE_ISDS;
-        goto leave;
-    }
-
-    err = timestring2timeval((xmlChar *) string, expiration);
-    if (err) {
-        char *string_locale = _isds_utf82locale(string);
-        if (err == IE_DATE) err = IE_ISDS;
-        isds_printf_message(context,
-                _("Could not convert pswExpDate as ISO time: %s"),
-                string_locale);
-        free(string_locale);
-        goto leave;
+    if (string) {
+        /* And convert it if any returned. Otherwise expiration is disabled. */
+        err = timestring2timeval((xmlChar *) string, expiration);
+        if (err) {
+            char *string_locale = _isds_utf82locale(string);
+            if (err == IE_DATE) err = IE_ISDS;
+            isds_printf_message(context,
+                    _("Could not convert pswExpDate as ISO time: %s"),
+                    string_locale);
+            free(string_locale);
+            goto leave;
+        }
     }
 
 leave:

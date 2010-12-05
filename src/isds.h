@@ -731,8 +731,9 @@ isds_error isds_GetUserInfoFromLogin(struct isds_ctx *context,
 
 /* Get expiration time of current password
  * @context is session context
- * @expiration is automatically reallocated time when password expires, In
- * case of error will be nulled. */
+ * @expiration is automatically reallocated time when password expires. If
+ * password expiration is disables, NULL will be returned. In case of error
+ * it will be nulled too. */
 isds_error isds_get_password_expiration(struct isds_ctx *context,
         struct timeval **expiration);
 
