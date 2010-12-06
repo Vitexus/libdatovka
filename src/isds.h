@@ -836,6 +836,17 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
         const struct isds_DbUserInfo *new_user,
         char **refnumber);
 
+/* Undocumented function. 
+ * @context is session context
+ * @box_id is UTF-8 encoded box identifier
+ * @token is UTF-8 encoded temporary password
+ * @user_id outputs UTF-8 encoded reallocated user identifier
+ * @password outpus UTF-8 encoded reallocated user password
+ * Output arguments will be nulled in case of error */
+isds_error isds_activate(struct isds_ctx *context,
+        const char *box_id, const char *token,
+        char **user_id, char **password);
+
 /* Reset credentials of user assigned to given box.
  * @context is session context
  * @box is box identification

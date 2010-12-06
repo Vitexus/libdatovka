@@ -5398,6 +5398,112 @@ leave:
 }
 
 
+/* Undocumented function. 
+ * @context is session context
+ * @box_id is UTF-8 encoded box identifier
+ * @token is UTF-8 encoded temporary password
+ * @user_id outputs UTF-8 encoded reallocated user identifier
+ * @password outpus UTF-8 encoded reallocated user password
+ * Output arguments will be nulled in case of error */
+isds_error isds_activate(struct isds_ctx *context,
+        const char *box_id, const char *token,
+        char **user_id, char **password) {
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL, node;
+    xmlDocPtr response = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+
+    if (user_id) zfree(*user_id);
+    if (password) zfree(*password);
+
+    if (!box_id || !token || !user_id || !password) return IE_INVAL;
+
+
+    /* Build Activate request */
+    request = xmlNewNode(NULL, BAD_CAST "Activate");
+    if (!request) {
+        isds_log_message(context, _("Could build Activate request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    INSERT_STRING(request, "dbAccessDataId", token);
+    CHECK_FOR_STRING_LENGTH(box_id, 7, 7, "dbID");
+    INSERT_STRING(request, "dbID", box_id);
+
+
+    /* Send request and check response*/
+    err = send_destroy_request_check_response(context,
+            SERVICE_DB_MANIPULATION, BAD_CAST "Activate", &request,
+            &response, NULL);
+    if (err) goto leave;
+
+
+    /* Extract data */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(BAD_CAST "/isds:ActivateResponse",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context, _("Missing ActivateResponse element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    if (result->nodesetval->nodeNr > 1) {
+        isds_log_message(context, _("Multiple ActivateResponse element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+    xmlXPathFreeObject(result); result = NULL;
+
+    EXTRACT_STRING("isds:userId", *user_id);
+    if (!*user_id) 
+        isds_log(ILF_ISDS, ILL_ERR, _("Server accepted Activate request, "
+                    "but did not return `userId' element.\n"));
+
+    EXTRACT_STRING("isds:password", *password);
+    if (!*password) 
+        isds_log(ILF_ISDS, ILL_ERR, _("Server accepted Activate request, "
+                    "but did not return `password' element.\n"));
+
+leave:
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(response);
+    xmlFreeNode(request);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Activate request processed by server successfully.\n"));
+
+    return err;
+}
+
+
 /* Reset credentials of user assigned to given box.
  * @context is session context
  * @box is box identification
