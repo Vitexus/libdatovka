@@ -5,7 +5,7 @@ LDADD = $(LIBDIR)/libisds.la -L$(LIBDIR) @XML_LIBS@
 
 noinst_PROGRAMS = isdsclient login certauth version progressbar logger \
 	getuserboxinfo addbox changebox \
-	changepassword resetpassword deleteuser changeuser \
+	changepassword activate resetpassword deleteuser changeuser \
 	switchcommercial switchaccessibility disableaccesibilityexternaly \
 	sendmultiple getsent getsignedsent getsignedsentbyid \
 	loadreceivedmessage loadcmssignedsentmessage \
@@ -29,6 +29,7 @@ getuserboxinfo_SOURCES = getuserboxinfo.c $(common)
 addbox_SOURCES = addbox.c $(common)
 changebox_SOURCES = changebox.c $(common)
 changepassword_SOURCES = changepassword.c $(common)
+activate_SOURCES = activate.c $(common)
 resetpassword_SOURCES = resetpassword.c $(common)
 deleteuser_SOURCES = deleteuser.c $(common)
 changeuser_SOURCES = changeuser.c $(common)
