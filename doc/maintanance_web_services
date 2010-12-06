@@ -63,7 +63,9 @@ SetOpenAddressing
 ClearOpenAddressing 
     Set box off commercial message receiving mode
 GetDataBoxUsers
-    Get list of users permitted to access a box.
+    Get list of users permitted to access a box
+Activate
+    Not documented
 
 
 db_access.wsdl
@@ -322,6 +324,18 @@ EnableOwnDataBoxResponse
     |   + dbUserInfo
     |   ⋮ 
     + dbStatus
+
+
+Activate
+========
+
+This service is not documented. The only mention is in XML Schema.
+
+There are two elements on input: dbAccessDataId (temporary token for user to
+get access to his initial credentials probably) and dbID (box identifier).
+
+Output is sequence of userId (user identifier), password (non-empty string),
+and dbStatus (common service return code).
 
 
 GetOwnerInfoFromLogin
