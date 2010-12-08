@@ -1,11 +1,11 @@
 User web services specification
 ===============================
 
-Source: Provozní řád ISDS, version 2010-01-22, Pages 14–15
+Source: Provozní řád ISDS, version 2010-11-28, Pages 15–16
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
     version 2.11 (2010-05-20)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
-    version 2.11 (2010-05-19)
+    version 2.15 (2010-11-19)
 
 
 These services are intended for working with messages inside a box by
@@ -79,6 +79,8 @@ FindDataBox (*)
     Find boxes conforming to search criteria
 CheckDataBox (*)
     Return state of given box
+GetDataBoxList (*)
+    Get list of all boxes
 
 
 CreateMessage (*)
@@ -458,3 +460,59 @@ Error codes:
     5001    Box does not exist
 Non-normative:
     2011    Box ID malformed
+
+
+GetDataBoxList (*)
+==============
+
+Get comma-separete list of all boxes of given type.
+
+Input is type of boxes of interrest (dblType element):
+
+Value   Description             File name           Permission
+-------------------------------------------------------------------------------
+ALL     All types of boxes      actdsYYYYMMDD.csv   OVM or OVM_REQ user
+                                                    authenticated by commercial
+                                                    certificate or user with
+                                                    PRIVIL_BILLING permission
+UPG     Effectively OVM boxes   effovmYYYYMMDD.csv  Anybody
+OVM     OVM gross type boxes    ovmYYYYMMDD.csv     PRIVIL_BILLING only
+OPN     Boxes that allow to     opendsYYYYMMDD.csv  PRIVIL_BILLING only
+        receive commercial
+        messages
+
+Output is Base64-encoded ZIP file containing a file with name from the table.
+The Base64 string is stored in dblData element. The name of the file embeds
+date of list creation (Y is year digit, M is month, D is day).
+
+The file is created once per a day and its format is following comma-separate
+value table:
+
+Key 
+----------------------
+dbID
+dbType
+pnFirstName
+pnMiddleName
+pnLastName
+pnLastNameAtBirth
+biDate
+firmName
+ic
+adCity
+adStreet
+adNumberInStreet
+adNumberInMunicipality
+adZipCode
+adState
+nationality
+lastChangeDate
+
+The inner file is encoded in UTF-8. First line of the file is a header. Each
+next line is a box. If a value is undefined, it will be empty. Values in
+a line are separated by a comma (`,'). If a value contains comma or quotation
+(`"'), the value will be enclosed into quotes (`"'). If value contains quotes,
+the will be escaped by a quotes (e.g. `"lazy, ""fox""' means `lazy, "fox"').
+
+Error codes:
+    1004    Operation not permitted
