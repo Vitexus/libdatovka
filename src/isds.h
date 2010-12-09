@@ -903,6 +903,22 @@ isds_error isds_delete_user(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
         const struct isds_approval *approval, char **refnumber);
 
+/* Get list of boxes in ZIP archive.
+ * @context is session context
+ * @list_identifier is UTF-8 encoded string identifying boxes of interrest.
+ * System recognizes following values currently: ALL (all boxes), UPG
+ * (effectively OVM boxes), OVM (OVM gross type boxes), OPN (boxes allowing
+ * receiving commercial messages). This argument is a string because
+ * specification states new values can appear in the future. Not all list
+ * types are available to all users.
+ * @buffer is automatically reallocated memory to store the list of boxes. The
+ * list is zipped CSV file.
+ * @buffer_length is size of @buffer data in bytes.
+ * In case of error @buffer will be freed and @buffer_length will be
+ * undefined.*/
+isds_error isds_get_box_list_archive(struct isds_ctx *context,
+        const char *list_identifier, void **buffer, size_t *buffer_length);
+
 /* Find boxes suiting given criteria.
  * @context is ISDS session context.
  * @criteria is filter. You should fill in at least some members.

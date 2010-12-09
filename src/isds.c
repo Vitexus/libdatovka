@@ -5738,6 +5738,104 @@ isds_error isds_delete_user(struct isds_ctx *context,
 }
 
 
+/* Get list of boxes in ZIP archive.
+ * @context is session context
+ * @list_identifier is UTF-8 encoded string identifying boxes of interrest.
+ * System recognizes following values currently: ALL (all boxes), UPG
+ * (effectively OVM boxes), OVM (OVM gross type boxes), OPN (boxes allowing
+ * receiving commercial messages). This argument is a string because
+ * specification states new values can appear in the future. Not all list
+ * types are available to all users.
+ * @buffer is automatically reallocated memory to store the list of boxes. The
+ * list is zipped CSV file.
+ * @buffer_length is size of @buffer data in bytes.
+ * In case of error @buffer will be freed and @buffer_length will be
+ * undefined.*/
+isds_error isds_get_box_list_archive(struct isds_ctx *context,
+        const char *list_identifier, void **buffer, size_t *buffer_length) {
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL, node;
+    xmlDocPtr response = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (buffer) zfree(*buffer);
+    if (!buffer || !buffer_length) return IE_INVAL;
+
+
+    /* Check if connection is established
+     * TODO: This check should be done downstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Build AuthenticateMessage request */
+    request = xmlNewNode(NULL, BAD_CAST "GetDataBoxList");
+    if (!request) {
+        isds_log_message(context,
+                _("Could not build GetDataBoxList request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+    INSERT_STRING(request, "dblType", list_identifier);
+
+    /* Send request to server and process response */
+    err = send_destroy_request_check_response(context,
+            SERVICE_DB_SEARCH, BAD_CAST "GetDataBoxList", &request,
+            &response, NULL);
+    if (err) goto leave;
+
+
+    /* Extract Base-64 encoded ZIP file */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    EXTRACT_STRING("/isds:GetDataBoxListResponse/isds:dblData", string);
+
+    /* Decode non-empty archive */
+    if (string && string[0] != '\0') {
+        *buffer_length = _isds_b64decode(string, buffer);
+        if (*buffer_length == (size_t) -1) {
+            isds_printf_message(context,
+                    _("Error while Base64-decoding box list archive"));
+            err = IE_ERROR;
+            goto leave;
+        }
+    }
+
+
+leave:
+    free(string);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(response);
+    xmlFreeNode(request);
+
+    if (!err) {
+        isds_log(ILF_ISDS, ILL_DEBUG, _("GetDataBoxList request "
+                    "processed by server successfully.\n"));
+    }
+
+    return err;
+}
+
+
 /* Find boxes suiting given criteria.
  * @criteria is filter. You should fill in at least some members.
  * @boxes is automatically reallocated list of isds_DbOwnerInfo structures,
