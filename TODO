@@ -1,5 +1,4 @@
 * Implement GetMessageStateChanges
-* Implement GetDataBoxList
 * Asynchronous interface
     Grep for (reentrant|thread) comments
 * Multithreaded interface
