@@ -3,7 +3,7 @@ User web services specification
 
 Source: Provozní řád ISDS, version 2010-11-28, Pages 15–16
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
-    version 2.11 (2010-05-20)
+    version 2.15 (2010-11-19)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
     version 2.15 (2010-11-19)
 
@@ -68,6 +68,8 @@ GetListOfRecievedMessages
     Download list of incoming messages
 GetListOfSentMessages
     Download list of outgoing messages
+GetMessageStateChanges
+    Download list of outgoing messages that changed state
 
 
 db_search.wsdl
@@ -276,6 +278,33 @@ Offset starts on 1. Limit defaults to 1000.
 
 Non-normative error codes:
     2017    Syntax error in date-time
+
+
+GetMessageStateChanges
+======================
+
+Download list of outgoing messages that changed state in given time range.
+
+If a message changed state multiple times, it is listed more times. Only
+changes from state 2 to 4, from 4 to {5, 6, 8} are reported. Only recent
+changes (not older than 15 days currently) are reported.
+
+This service is designed for polling state changes of sent messages.
+
+Input are start (dmFromTime element) and end (dmToTime element) ISO times.
+
+Output is list of records with message state changes.
+
+Structure:
+GetMessageStateChangesResponse
+    + dmRecords – optional, possibly empty element
+    |   + dmRecord – one state change
+    |   |   + dmId – identifier of message that changed state
+    |   |   + dmEventTime – ISO time of state change
+    |   |   + dmMessageStatus – new message state in numeric notation
+    |   + dmRecord
+    |   ⋮
+    + dmStatus – global error code and textual description
 
 
 AuthenticateMessage (+)
