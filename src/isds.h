@@ -544,6 +544,13 @@ struct isds_message_copy {
                                        for error == IE_SUCCESS */
 };
 
+/* Message state change event */
+struct isds_message_status_change {
+    char *dmID;                             /* Message ID. */
+    isds_message_status dmMessageStatus;    /* Message state */
+    struct timeval *time;                   /* When the state changed */
+};
+
 /* General linked list */
 struct isds_list {
     struct isds_list *next;         /* Next list item,
@@ -1368,6 +1375,10 @@ void isds_message_free(struct isds_message **message);
 
 /* Deallocate struct isds_message_copy recursively and NULL it */
 void isds_message_copy_free(struct isds_message_copy **copy);
+
+/* Deallocate struct isds_message_status_change recursively and NULL it */
+void isds_message_status_change_free(
+        struct isds_message_status_change **message_status_change);
 
 /* Deallocate struct isds_approval recursively and NULL it */
 void isds_approval_free(struct isds_approval **approval);

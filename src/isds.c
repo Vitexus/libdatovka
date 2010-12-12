@@ -305,6 +305,18 @@ void isds_message_copy_free(struct isds_message_copy **copy) {
 }
 
 
+/* Deallocate struct isds_message_status_change recursively and NULL it */
+void isds_message_status_change_free(
+        struct isds_message_status_change **message_status_change) {
+    if (!message_status_change || !*message_status_change) return;
+
+    free((*message_status_change)->dmID);
+    free((*message_status_change)->time);
+
+    zfree(*message_status_change);
+}
+
+
 /* Deallocate struct isds_approval recursively and NULL it */
 void isds_approval_free(struct isds_approval **approval) {
     if (!approval || !*approval) return;
