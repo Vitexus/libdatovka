@@ -7,7 +7,7 @@ noinst_PROGRAMS = isdsclient login certauth version progressbar logger \
 	getuserboxinfo addbox changebox \
 	changepassword activate resetpassword deleteuser changeuser \
 	switchcommercial switchaccessibility disableaccesibilityexternaly \
-	sendmultiple getsent getsignedsent getsignedsentbyid \
+	sendmultiple getsent getsignedsent getsignedsentbyid getchangedstates \
 	loadreceivedmessage loadcmssignedsentmessage \
 	sendxmldoc loadsentmessagewithxmldocuments \
 	getreceived getsignedreceived \
@@ -40,6 +40,7 @@ sendmultiple_SOURCES = sendmultiple.c $(common)
 getsent_SOURCES = getsent.c $(common)
 getsignedsent_SOURCES = getsignedsent.c $(common)
 getsignedsentbyid_SOURCES = getsignedsentbyid.c $(common)
+getchangedstates_SOURCES = getchangedstates.c $(common)
 loadreceivedmessage_SOURCES = loadreceivedmessage.c $(common)
 loadcmssignedsentmessage_SOURCES = loadcmssignedsentmessage.c $(common)
 sendxmldoc_SOURCES = sendxmldoc.c $(common)
