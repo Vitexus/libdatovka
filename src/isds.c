@@ -7035,11 +7035,10 @@ leave:
  * it returns only brief overview (envelope and some other fields) about each
  * message, not the complete message. FIXME: Specify exact fields.
  * The list is sorted by delivery time in ascending order.
- * Use NULL if
- * you don't care about don't need the data (useful if you want to know only
- * the @number). If you provide &NULL, list will be allocated on heap, if you
- * provide pointer to non-NULL, list will be freed automatically at first. Also
- * in case of error the list will be NULLed.
+ * Use NULL if you don't care about don't need the data (useful if you want to
+ * know only the @number). If you provide &NULL, list will be allocated on
+ * heap, if you provide pointer to non-NULL, list will be freed automatically
+ * at first. Also in case of error the list will be NULLed.
  * @return IE_SUCCESS or appropriate error code. */
 static isds_error isds_get_list_of_messages(struct isds_ctx *context,
         _Bool outgoing_direction,
@@ -7301,8 +7300,8 @@ leave:
  * The list is sorted by delivery time in ascending order.
  * Use NULL if you don't care about the meta data (useful if you want to know
  * only the @number). If you provide &NULL, list will be allocated on heap,
- * if you provide pointer to non-NULL, list will be freed automatically at first.
- * Also in case of error the list will be NULLed.
+ * if you provide pointer to non-NULL, list will be freed automatically at
+ * first. Also in case of error the list will be NULLed.
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
         const struct timeval *from_time, const struct timeval *to_time,
@@ -7337,8 +7336,8 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
  * message, not the complete message. FIXME: Specify exact fields.
  * Use NULL if you don't care about the meta data (useful if you want to know
  * only the @number). If you provide &NULL, list will be allocated on heap,
- * if you provide pointer to non-NULL, list will be freed automatically at first.
- * Also in case of error the list will be NULLed.
+ * if you provide pointer to non-NULL, list will be freed automatically at
+ * first. Also in case of error the list will be NULLed.
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
         const struct timeval *from_time, const struct timeval *to_time,

@@ -1061,8 +1061,8 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
  * The list is sorted by delivery time in ascending order.
  * Use NULL if you don't care about the meta data (useful if you want to know
  * only the @number). If you provide &NULL, list will be allocated on heap,
- * if you provide pointer to non-NULL, list will be freed automatically at first.
- * Also in case of error the list will be NULLed.
+ * if you provide pointer to non-NULL, list will be freed automatically at
+ * first. Also in case of error the list will be NULLed.
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
         const struct timeval *from_time, const struct timeval *to_time,
@@ -1075,7 +1075,7 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
  * @context is session context. Must not be NULL.
  * @from_time is minimal time and date of message sending inclusive.
  * @to_time is maximal time and date of message sending inclusive
- * @dmSenderOrgUnitNum is the same as isds_envelope.dmSenderOrgUnitNum
+ * @dmRecipientOrgUnitNum is the same as isds_envelope.dmRecipientOrgUnitNum
  * @status_filter is bit field of isds_message_status values. Use special
  * value MESSAGESTATE_ANY to signal you don't care. (It's defined as union of
  * all values, you can use bit-wise arithmetic if you want.)
@@ -1089,12 +1089,13 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
  * message, not the complete message. FIXME: Specify exact fields.
  * Use NULL if you don't care about the meta data (useful if you want to know
  * only the @number). If you provide &NULL, list will be allocated on heap,
- * if you provide pointer to non-NULL, list will be freed automatically at first.
- * Also in case of error the list will be NULLed.
+ * if you provide pointer to non-NULL, list will be freed automatically at
+ * first. Also in case of error the list will be NULLed.
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
         const struct timeval *from_time, const struct timeval *to_time,
-        const long int *dmSenderOrgUnitNum, const unsigned int status_filter,
+        const long int *dmRecipientOrgUnitNum,
+        const unsigned int status_filter,
         const unsigned long int offset, unsigned long int *number,
         struct isds_list **messages);
 
