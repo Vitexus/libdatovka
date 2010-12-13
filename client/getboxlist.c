@@ -58,10 +58,10 @@ int main(int argc, char **argv) {
 
         err = isds_get_box_list_archive(ctx, "UPG", &archive, &length);
         if (err) {
-            printf("isds_getboxlist() failed: %s: %s\n",
+            printf("isds_get_box_list_archive() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
         } else {
-            printf("isds_getboxlist() succeeded:\n");
+            printf("isds_get_box_list_archive() succeeded:\n");
             printf("length = %zu B\n", length);
             save_data("Saving ZIP archive", archive, length);
         }
