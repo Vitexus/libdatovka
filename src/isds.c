@@ -312,6 +312,7 @@ void isds_message_status_change_free(
 
     free((*message_status_change)->dmID);
     free((*message_status_change)->time);
+    free((*message_status_change)->dmMessageStatus);
 
     zfree(*message_status_change);
 }
@@ -3460,6 +3461,79 @@ static isds_error extract_DmRecord(struct isds_ctx *context,
     
 leave:
     if (err) isds_envelope_free(envelope);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
+/* Convert XSD:tStateChangesRecord type XML tree into structure
+ * @context is ISDS context
+ * @changed_status is automatically reallocated message state change structure
+ * @xpath_ctx is XPath context with current node as element of
+ * XSD:tStateChangesRecord type
+ * In case of error @changed_status will be freed. */
+static isds_error extract_StateChangesRecord(struct isds_ctx *context,
+        struct isds_message_status_change **changed_status,
+        xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    unsigned long int *unumber = NULL;
+    char *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!changed_status) return IE_INVAL;
+    isds_message_status_change_free(changed_status);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *changed_status = calloc(1, sizeof(**changed_status));
+    if (!*changed_status) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+
+    /* Extract tGetStateChangesInput data */
+    EXTRACT_STRING("isds:dmID", (*changed_status)->dmID);
+
+    /* dmEventTime is mandatory */
+    EXTRACT_STRING("isds:dmEventTime", string);
+    if (string) {
+        err = timestring2timeval((xmlChar *) string,
+                &((*changed_status)->time));
+        if (err) {
+            char *string_locale = _isds_utf82locale(string);
+            if (err == IE_DATE) err = IE_ISDS;
+            isds_printf_message(context,
+                    _("Could not convert dmEventTime as ISO time: %s"),
+                    string_locale);
+            free(string_locale);
+            goto leave;
+        }
+        zfree(string);
+    }
+
+    /* dmMessageStatus element is mandatory */
+    EXTRACT_ULONGINT("isds:dmMessageStatus", unumber, 0);
+    if (!unumber) {
+        isds_log_message(context,
+                _("Missing mandatory isds:dmMessageStatus integer"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    err = uint2isds_message_status(context, unumber,
+            &((*changed_status)->dmMessageStatus));
+    if (err) {
+        if (err == IE_ENUM) err = IE_ISDS;
+        goto leave;
+    }
+    zfree(unumber);
+
+    
+leave:
+    free(unumber);
+    free(string);
+    if (err) isds_message_status_change_free(changed_status);
     xmlXPathFreeObject(result);
     return err;
 }
@@ -7351,6 +7425,151 @@ isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
             from_time, to_time, dmRecipientOrgUnitNum, status_filter,
             offset, number,
             messages);
+}
+
+
+/* Get list of sent message state changes.
+ * Any criterion argument can be NULL, if you don't care about it.
+ * @context is session context. Must not be NULL.
+ * @from_time is minimal time and date of status changes inclusive
+ * @to_time is maximal time and date of status changes inclusive
+ * @changed_states is automatically reallocated list of
+ * isds_message_status_change's. If you provide &NULL, list will be allocated
+ * on heap, if you provide pointer to non-NULL, list will be freed
+ * automatically at first. Also in case of error the list will be NULLed.
+ * XXX: The list item ordering is not specified.
+ * XXX: Server provides only `recent' changes.
+ * @return IE_SUCCESS or appropriate error code. */
+isds_error isds_get_list_of_sent_message_state_changes(
+        struct isds_ctx *context,
+        const struct timeval *from_time, const struct timeval *to_time,
+        struct isds_list **changed_states) {
+
+    isds_error err = IE_SUCCESS;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL, node;
+    xmlDocPtr response = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    xmlChar *string = NULL;
+    long unsigned int count = 0;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+   
+    /* Free former message list if any */
+    isds_list_free(changed_states);
+
+    /* Check if connection is established
+     * TODO: This check should be done downstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+    /* Build GetMessageStateChanges request */
+    request = xmlNewNode(NULL, BAD_CAST "GetMessageStateChanges");
+    if (!request) {
+        isds_log_message(context,
+                _("Could not build GetMessageStateChanges request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+   
+    if (from_time) {
+        err = timeval2timestring(from_time, &string);
+        if (err) goto leave;
+    }
+    INSERT_STRING(request, "dmFromTime", string);
+    zfree(string);
+
+    if (to_time) {
+        err = timeval2timestring(to_time, &string);
+        if (err) goto leave;
+    }
+    INSERT_STRING(request, "dmToTime", string);
+    zfree(string);
+
+
+    /* Sent request */
+    err = send_destroy_request_check_response(context,
+            SERVICE_DM_INFO, BAD_CAST "GetMessageStateChanges", &request,
+            &response, NULL);
+    if (err) goto leave;
+
+
+    /* Extract data */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(
+                BAD_CAST "/isds:GetMessageStateChangesResponse/"
+                "isds:dmRecords/isds:dmRecord", xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    
+    /* Fill output arguments in */
+    if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        struct isds_list *item = NULL, *last_item = NULL;
+
+        for (count = 0; count < result->nodesetval->nodeNr; count++) {
+            /* Create new status change  */
+            item = calloc(1, sizeof(*item));
+            if (!item) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+            item->destructor =
+                (void(*)(void**)) &isds_message_status_change_free;
+
+            /* Extract message status change */
+            xpath_ctx->node = result->nodesetval->nodeTab[count];
+            err = extract_StateChangesRecord(context,
+                    (struct isds_message_status_change **) &item->data,
+                    xpath_ctx);
+            if (err) {
+                isds_list_free(&item);
+                goto leave;
+            }
+
+            /* Append new message status change into the list */
+            if (!*changed_states) { 
+                *changed_states = last_item = item;
+            } else {
+                last_item->next = item;
+                last_item = item;
+            }
+        }
+    }
+
+leave:
+    if (err) {
+        isds_list_free(changed_states);
+    }
+
+    free(string);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(response);
+    xmlFreeNode(request);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("GetMessageStateChanges request processed by server "
+                    "successfully.\n"));
+    return err;
 }
 
 

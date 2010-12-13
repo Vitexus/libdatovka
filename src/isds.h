@@ -547,7 +547,7 @@ struct isds_message_copy {
 /* Message state change event */
 struct isds_message_status_change {
     char *dmID;                             /* Message ID. */
-    isds_message_status dmMessageStatus;    /* Message state */
+    isds_message_status *dmMessageStatus;   /* Message state */
     struct timeval *time;                   /* When the state changed */
 };
 
@@ -1098,6 +1098,23 @@ isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
         const unsigned int status_filter,
         const unsigned long int offset, unsigned long int *number,
         struct isds_list **messages);
+
+/* Get list of sent message state changes.
+ * Any criterion argument can be NULL, if you don't care about it.
+ * @context is session context. Must not be NULL.
+ * @from_time is minimal time and date of status changes inclusive
+ * @to_time is maximal time and date of status changes inclusive
+ * @changed_states is automatically reallocated list of
+ * isds_message_status_change's. If you provide &NULL, list will be allocated
+ * on heap, if you provide pointer to non-NULL, list will be freed
+ * automatically at first. Also in case of error the list will be NULLed.
+ * XXX: The list item ordering is not specified.
+ * XXX: Server provides only `recent' changes.
+ * @return IE_SUCCESS or appropriate error code. */
+isds_error isds_get_list_of_sent_message_state_changes(
+        struct isds_ctx *context,
+        const struct timeval *from_time, const struct timeval *to_time,
+        struct isds_list **changed_states);
 
 /* Download incoming message envelope identified by ID.
  * @context is session context
