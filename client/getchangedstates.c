@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <locale.h>
 #include <string.h>
+#include <sys/time.h>
 #include <isds.h>
 #include "common.h"
 
@@ -53,20 +54,33 @@ int main(int argc, char **argv) {
 
 
     {
-        struct isds_list *changed_states = NULL;
+        struct isds_list *changed_states = NULL, *item;
+        struct timeval not_before = { .tv_sec = 0, .tv_usec = 0 };
+        struct timeval not_after;
 
-        err = isds_get_list_of_sent_message_state_changes(ctx, NULL, NULL,
-                &changed_states);
-        if (err) {
-            printf("isds_get_list_of_sent_message_state_changes() failed: "
-                    "%s: %s\n", isds_strerror(err), isds_long_message(ctx));
+        if (!gettimeofday(&not_after, NULL)) {
+            err = isds_get_list_of_sent_message_state_changes(ctx,
+                    &not_before, &not_after, &changed_states);
+            if (err) {
+                printf("isds_get_list_of_sent_message_state_changes() failed: "
+                        "%s: %s\n", isds_strerror(err), isds_long_message(ctx));
+            } else {
+                printf("isds_get_list_of_sent_message_state_changes() "
+                        "succeeded:\n");
+                if (!changed_states)
+                    printf("No message status changes available\n");
+                else
+                    for(item = changed_states; item; item = item->next) {
+                        printf("List item:\n");
+                        print_message_status_change(item->data);
+                    }
+            }
+            printf("\n");
+
+            isds_list_free(&changed_states);
         } else {
-            printf("isds_get_list_of_sent_message_state_changes() "
-                    "succeeded:\n");
+            perror("Could not get current time");
         }
-        printf("\n");
-
-        isds_list_free(&changed_states);
     }
 
 

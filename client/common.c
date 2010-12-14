@@ -144,6 +144,23 @@ void print_raw_type(const isds_raw_type type) {
     }
 }
 
+static void print_dmMessageStatus(const isds_message_status *status) {
+    if (!status) printf("NULL\n");
+    else
+        switch(*status) {
+            case MESSAGESTATE_SENT: printf("SENT\n"); break;
+            case MESSAGESTATE_STAMPED: printf("STAMPED\n"); break;
+            case MESSAGESTATE_INFECTED: printf("INFECTED\n"); break;
+            case MESSAGESTATE_DELIVERED: printf("DELIVERED\n"); break;
+            case MESSAGESTATE_SUBSTITUTED: printf("SUBSTITUTED\n"); break;
+            case MESSAGESTATE_RECEIVED: printf("RECEIVED\n"); break;
+            case MESSAGESTATE_READ: printf("READ\n"); break;
+            case MESSAGESTATE_UNDELIVERABLE: printf("UNDELIVERABLE\n"); break;
+            case MESSAGESTATE_REMOVED: printf("REMOVED\n"); break;
+            case MESSAGESTATE_IN_SAFE: printf("IN_SAFE\n"); break;
+            default: printf("<unknown type %d>\n", *status);
+        }
+}
 
 void print_bool(const _Bool *boolean) {
     printf("%s\n", (!boolean) ? "NULL" : ((*boolean)? "true" : "false") );
@@ -413,22 +430,7 @@ void print_envelope(const struct isds_envelope *envelope) {
     else printf("%lu\n", *(envelope->dmOrdinal));
 
     printf("\t\tdmMessageStatus = ");
-    if (!envelope->dmMessageStatus) printf("NULL\n");
-    else
-        switch(*(envelope->dmMessageStatus)) {
-            case MESSAGESTATE_SENT: printf("SENT\n"); break;
-            case MESSAGESTATE_STAMPED: printf("STAMPED\n"); break;
-            case MESSAGESTATE_INFECTED: printf("INFECTED\n"); break;
-            case MESSAGESTATE_DELIVERED: printf("DELIVERED\n"); break;
-            case MESSAGESTATE_SUBSTITUTED: printf("SUBSTITUTED\n"); break;
-            case MESSAGESTATE_RECEIVED: printf("RECEIVED\n"); break;
-            case MESSAGESTATE_READ: printf("READ\n"); break;
-            case MESSAGESTATE_UNDELIVERABLE: printf("UNDELIVERABLE\n"); break;
-            case MESSAGESTATE_REMOVED: printf("REMOVED\n"); break;
-            case MESSAGESTATE_IN_SAFE: printf("IN_SAFE\n"); break;
-            default: printf("<unknown type %d>\n",
-                             *(envelope->dmMessageStatus));
-        }
+    print_dmMessageStatus(envelope->dmMessageStatus);
 
     printf("\t\tdmAttachmentSize = ");
     if (!envelope->dmAttachmentSize) printf("NULL\n");
@@ -564,6 +566,27 @@ void print_copies(const struct isds_list *copies) {
     printf("}\n");
 }
 
+void print_message_status_change(
+        const struct isds_message_status_change *changed_status) {
+    printf("message_status_change = ");
+
+    if (!changed_status) {
+        printf("NULL\n");
+        return;
+    }
+
+    printf("{\n");
+
+    printf("\tdmID = %p\n", changed_status->dmID);
+
+    printf("\tdmMessageStatus = ");
+    print_dmMessageStatus(changed_status->dmMessageStatus);
+
+    printf("\ttime = ");
+    print_timeval(changed_status->time);
+
+    printf("}\n");
+}
 
 void compare_hashes(const struct isds_hash *hash1,
         const struct isds_hash *hash2) {
