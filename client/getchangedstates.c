@@ -59,6 +59,9 @@ int main(int argc, char **argv) {
         struct timeval not_after;
 
         if (!gettimeofday(&not_after, NULL)) {
+            /* Changes older than 15 days are not reported currently. */
+            not_before.tv_sec = not_after.tv_sec - 10 * 24 * 3600;
+
             err = isds_get_list_of_sent_message_state_changes(ctx,
                     &not_before, &not_after, &changed_states);
             if (err) {
