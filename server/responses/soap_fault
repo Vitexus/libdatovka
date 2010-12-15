@@ -1,0 +1,19 @@
+HTTP/1.1 503 Service Temporarily Unavailable
+Content-Length: 645
+Connection: close
+Content-Type: text/xml; charset=utf-8
+
+<?xml version='1.0' encoding='UTF-8'?>
+<SOAP-ENV:Envelope
+  xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+  xmlns:xsi="http://www.w3.org/1999/XMLSchema-instance"
+  xmlns:xsd="http://www.w3.org/1999/XMLSchema">
+  <SOAP-ENV:Body>
+    <SOAP-ENV:Fault>
+      <faultcode xsi:type="xsd:string">Probíhá plánovaná údržba</faultcode>
+      <faultstring xsi:type="xsd:string">Omlouváme se všem uživatelům datových
+schránek za dočasné omezení přístupu do systému datových schránek z důvodu plánované
+údržby systému. Děkujeme za pochopení.</faultstring>
+    </SOAP-ENV:Fault>
+  </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

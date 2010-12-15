@@ -795,8 +795,47 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
     if (!xmlXPathNodeSetIsEmpty(response_soap_fault->nodesetval)) {
-        /* TODO: log the faultcode and faultstring */ 
-        isds_log_message(context, _("SOAP response signals Fault"));
+        /* Server signals Fault. Gather error message and croak. */
+        /* XXX: Only first message is passed */
+        char *message = NULL, *message_locale = NULL;
+        xpath_ctx->node = response_soap_fault->nodesetval->nodeTab[0];
+        xmlXPathFreeObject(response_soap_fault);
+        /* XXX: faultstring and faultcode are in no name space according
+         * ISDS specification */
+        /* First more verbose faultstring */
+        response_soap_fault = xmlXPathEvalExpression(
+                BAD_CAST "faultstring[1]/text()", xpath_ctx);
+        if (response_soap_fault &&
+                !xmlXPathNodeSetIsEmpty(response_soap_fault->nodesetval)) {
+            message = (char *)
+                xmlXPathCastNodeSetToString(response_soap_fault->nodesetval);
+            message_locale = _isds_utf82locale(message);
+        }
+        /* If not available, try shorter faultcode */
+        if (!message_locale) {
+            free(message);
+            xmlXPathFreeObject(response_soap_fault);
+            response_soap_fault = xmlXPathEvalExpression(
+                    BAD_CAST "faultcode[1]/text()", xpath_ctx);
+            if (response_soap_fault &&
+                    !xmlXPathNodeSetIsEmpty(response_soap_fault->nodesetval)) {
+                message = (char *)
+                    xmlXPathCastNodeSetToString(
+                            response_soap_fault->nodesetval);
+                message_locale = _isds_utf82locale(message);
+            }
+        }
+
+        /* Croak */
+        if (message_locale) 
+            isds_printf_message(context, _("SOAP response signals Fault: %s"),
+                    message_locale);
+        else
+            isds_log_message(context, _("SOAP response signals Fault"));
+
+        free(message_locale);
+        free(message);
+
         err = IE_SOAP;
         goto leave;
     }

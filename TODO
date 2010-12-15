@@ -1,4 +1,3 @@
-* Handle SOAP Fault as it's now used on system shut-down
 * Asynchronous interface
     Grep for (reentrant|thread) comments
 * Multithreaded interface
