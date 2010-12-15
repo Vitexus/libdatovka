@@ -11,8 +11,24 @@
 int main(int argc, char **argv) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
+    const char *request_url = url;
+    const char *request_username = username;
+    const char *request_password = password;
     
     setlocale(LC_ALL, "");
+
+    if (argc > 1) {
+        if (argc != 4) {
+            printf("Usage: %s [ URL login password ]\n",
+                    (argv[0])?argv[0]: "");
+            exit(EXIT_SUCCESS);
+        }
+
+        request_url = argv[1];
+        request_username = argv[2];
+        request_password = argv[3];
+    }
+
 
     err = isds_init();
     if (err) {
@@ -44,7 +60,8 @@ int main(int argc, char **argv) {
                 isds_strerror(err));
     }*/
 
-    err = isds_login(ctx, url, username, password, NULL);
+    err = isds_login(ctx, request_url, request_username, request_password,
+            NULL);
     if (err) {
         printf("isds_login() failed: %s: %s\n", isds_strerror(err),
                 isds_long_message(ctx));
