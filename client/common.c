@@ -577,7 +577,7 @@ void print_message_status_change(
 
     printf("{\n");
 
-    printf("\tdmID = %p\n", changed_status->dmID);
+    printf("\tdmID = %s\n", changed_status->dmID);
 
     printf("\tdmMessageStatus = ");
     print_dmMessageStatus(changed_status->dmMessageStatus);
