@@ -292,8 +292,10 @@ changes (not older than 15 days currently) are reported.
 This service is designed for polling state changes of sent messages.
 
 Input are start (dmFromTime element) and end (dmToTime element) ISO times.
+Empty dmFromTime meands since last 15 days, empty dmToTime means till now.
 
-Output is list of records with message state changes.
+Output is list of records with message state changes. The order of records is
+undefined.
 
 Structure:
 GetMessageStateChangesResponse
