@@ -294,6 +294,8 @@ This service is designed for polling state changes of sent messages.
 Input are start (dmFromTime element) and end (dmToTime element) ISO times.
 Empty dmFromTime meands since last 15 days, empty dmToTime means till now.
 
+Non-normative: Server does not report changes at recent more than one hour.
+
 Output is list of records with message state changes. The order of records is
 undefined.
 
