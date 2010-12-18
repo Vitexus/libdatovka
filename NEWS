@@ -1,3 +1,46 @@
+Version 0.4
+===========
+
+• This version breaks ABI because of ISDS specification change. Please adapt
+your application where affected functions are called.
+
+• ABI change: isds_get_password_expiration() will return NULL if password never
+expires. Adjust your application to cope with NULL pointer on IE_SUCCESS.
+
+• ABI change: isds_add_box() has new credentials_delivery parameter to request
+for on-line credentials delivery and to receive token for that.
+
+• ABI change: isds_add_user() has new credentials_delivery parameter to
+request for on-line credentials delivery and to receive token for that.
+
+• ABI change: isds_reset_password() has different arguments to request for
+on-line credentials delivery and to receive token for that.
+
+• SOAP Fault error message is passed to application via isds_long_message().
+
+• New function isds_get_list_of_sent_message_state_changes() implements
+GetMessageStateChanges service. It returns list of message status changes in
+requested time interval.
+
+• New function isds_get_box_list_archive() implements GetDataBoxList service.
+It returns ZIP archive with comma separate list of boxes. Different types of
+lists can be requested. Only type `UPG' is available to public.
+
+• New function isds_activate() implements Activate service.
+
+• New delivery state EV0 is recognized as EVENT_ENTERED_SYSTEM isds_event_type.
+
+• `tsr' document name suffix is recognized as time stamp file type.
+
+• New function isds_pki_credentials_free() to deallocate isds_pki_credentials
+structure.
+
+• ISO time string parser fixed (negative or no time zone offset).
+
+• All tests can run in parallel now.
+
+• Lot of internal tests added. Funny color output now.
+
 Version 0.3.1
 =============
 
