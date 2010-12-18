@@ -18,6 +18,8 @@ details.
 This code is written in ISO99 C language and requires libxml2, cURL,
 libgcrypt, GPGME, and >=expat-2.0.0 libraries at compilation time. gnupg2 is
 required at run time (provides gpgsm that uses gpgme to process CMS).
+Build system preparation from VCS requies >=automake-1.11, autoconf and
+libtool in addition.
 
 Applications linked against this library need to be linked to libxml2 too.
 
