@@ -31,18 +31,6 @@ int main(int argc, char **argv) {
         printf("isds_set_timeout() failed: %s\n", isds_strerror(err));
     }
 
-    /* err = isds_set_tls(ctx, ITLS_VERIFY_SERVER, 0);
-    if (err) {
-        printf("isds_set_tls(ITLS_VERIFY_SERVER) failed: %s\n",
-                isds_strerror(err));
-    }
-
-    err = isds_set_tls(ctx, ITLS_CA_FILE, "/etc/ssl/certs/ca-certificates.crt");
-    if (err) {
-        printf("isds_set_tls(ITLS_CA_FILE) failed: %s\n",
-                isds_strerror(err));
-    }*/
-
     err = isds_login(ctx, url, username, password, NULL);
     if (err) {
         printf("isds_login() failed: %s: %s\n", isds_strerror(err),

@@ -681,16 +681,6 @@ isds_error isds_set_progress_callback(struct isds_ctx *context,
 isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
         ...);
 
-/* Deprecated: Use isds_set_opt() instead.
- * Change SSL/TLS settings.
- * @context is context which setting will be applied to
- * @option is name of option. It determines the type of last argument. See
- * isds_tls_option definition for more info.
- * @... is value of new setting. Type is determined by @option
- * */
-isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
-        ...) _deprecated; 
-
 /* Connect and log in into ISDS server.
  * All required arguments will be copied, you do not have to keep them after
  * that.
@@ -1352,13 +1342,6 @@ const struct isds_document *isds_find_document_by_id(
  * @return original @mime_type if no better interpretation exists, or array to
  * constant static UTF-8 encoded string with proper MIME type. */
 char *isds_normalize_mime_type(const char* mime_type);
-
-/* XXX: Deprecated: Use isds_set_opt() instead.
- * Switch MIME type normalization while message loading. Default state for new
- * context is no normalization.
- * @normalize use true to switch normalization on, false to switch off */
-isds_error isds_set_mime_type_normalization(struct isds_ctx *context,
-        _Bool normalize) _deprecated;
 
 /* Deallocate structure isds_pki_credentials and NULL it.
  * Pass-phrase is discarded.

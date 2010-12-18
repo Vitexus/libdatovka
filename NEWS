@@ -16,6 +16,9 @@ request for on-line credentials delivery and to receive token for that.
 • ABI change: isds_reset_password() has different arguments to request for
 on-line credentials delivery and to receive token for that.
 
+• ABI change: deprecated functions isds_set_tls() and
+isds_set_mime_type_normalization() removed. Use isds_set_opt() instead.
+
 • SOAP Fault error message is passed to application via isds_long_message().
 
 • New function isds_get_list_of_sent_message_state_changes() implements

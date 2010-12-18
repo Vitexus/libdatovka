@@ -1026,35 +1026,6 @@ leave:
 }
 
 
-/* Deprecated: Use isds_set_opt() instead.
- * Change SSL/TLS settings.
- * @context is context which setting will be applied to
- * @option is name of option. It determines the type of last argument. See
- * isds_tls_option definition for more info.
- * @... is value of new setting. Type is determined by @option
- * */
-isds_error isds_set_tls(struct isds_ctx *context, const isds_tls_option option,
-        ...) {
-    isds_error err = IE_ENUM;
-    va_list ap;
-
-    va_start(ap, option);
-
-    switch (option) {
-        case ITLS_VERIFY_SERVER:
-            err = isds_set_opt(context, option, va_arg(ap, int));
-            break;
-        case ITLS_CA_FILE:
-        case ITLS_CA_DIRECTORY:
-        case ITLS_CRL_FILE:
-            err = isds_set_opt(context, option, va_arg(ap, char*));
-    }
-
-    va_end(ap);
-    return err;
-}
-
-
 /* Connect and log in into ISDS server.
  * All required arguments will be copied, you do not have to keep them after
  * that.
@@ -9553,22 +9524,6 @@ char *isds_normalize_mime_type(const char* mime_type) {
     }
 
     return (char *) mime_type;
-}
-
-
-/* Switch MIME type normalization while message loading. Default state for new
- * context is no normalization.
- * @normalize use true to switch normalization on, false to switch off */
-isds_error isds_set_mime_type_normalization(struct isds_ctx *context,
-        _Bool normalize) {
-    if (!context) return IE_INVALID_CONTEXT;
-    zfree(context->long_message);
-
-    context->normalize_mime_type = normalize;
-    isds_log(ILF_FILE, ILL_INFO, (context->normalize_mime_type) ?
-            _("MIME type normalization switched on\n") :
-            _("MIME type normalization switched off\n"));
-    return IE_SUCCESS;
 }
 
 
