@@ -21,9 +21,9 @@ required at run time (provides gpgsm that uses gpgme to process CMS).
 
 Applications linked against this library need to be linked to libxml2 too.
 
-It has been tested on GNU/Linux (Linux 2.6.34, glibc-2.11.2, gcc-4.4.3) with
-libxml2-2.7.7, curl-7.20.0, libgcrypt-1.4.5, gpgme-1.3.0, expat-2.0.1 and
-gnupg-2.0.15.
+It has been tested on GNU/Linux (Linux 2.6.36, glibc-2.12.1, gcc-4.4.5) with
+libxml2-2.7.7, curl-7.21.2, libgcrypt-1.4.6, gpgme-1.3.0, expat-2.0.1 and
+gnupg-2.0.16 on MIPS64 architecture.
 
 Latest code can be obtained from GIT repository
 <http://repo.or.cz/w/libisds.git> (web interface).
