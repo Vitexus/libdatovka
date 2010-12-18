@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: libisds 0.3\n"
+"Project-Id-Version: libisds 0.4\n"
 "Report-Msgid-Bugs-To: petr.pisar@atlas.cz\n"
 "POT-Creation-Date: 2010-12-18 07:33+0100\n"
-"PO-Revision-Date: 2010-06-28 23:48+0200\n"
+"PO-Revision-Date: 2010-12-18 07:47+0100\n"
 "Last-Translator: Petr Pisar <petr.pisar@atlas.cz>\n"
 "Language-Team: Czech <translation-team-cs@lists.sourceforge.net>\n"
 "Language: cs\n"
@@ -606,9 +606,8 @@ msgid "Could not convert dmEventTime as ISO time: %s"
 msgstr "dmEventTime nebylo možné převést jako ISO čas: %s"
 
 #: src/isds.c:3520
-#, fuzzy
 msgid "Missing mandatory isds:dmMessageStatus integer"
-msgstr "Chybí povinné celé číslo sisds:dmMessageStatus"
+msgstr "Chybí povinné celé číslo isds:dmMessageStatus"
 
 #: src/isds.c:3584
 #, c-format
@@ -636,7 +635,7 @@ msgid "Delivery info does not contain any event"
 msgstr "Informace o doručení neobsahují žádnou událost"
 
 #: src/isds.c:3910
-#, fuzzy, c-format
+#, c-format
 msgid "Not enough memory to encode %zd byte into Base64"
 msgid_plural "Not enough memory to encode %zd bytes into Base64"
 msgstr[0] "Nedostatek paměti na zakódování %zd bajtu do Base64"
@@ -825,12 +824,14 @@ msgid ""
 "Wrong element in ISDS response for %s request while extracting credentials "
 "delivery details\n"
 msgstr ""
+"Při zjišťování způsobu doručení přihlašovacích údajů nalezen v odpovědi ISDS "
+"na požadavek %s chybný element\n"
 
 #: src/isds.c:4890
-#, fuzzy, c-format
+#, c-format
 msgid "ISDS did not return token on %s request even if requested\n"
 msgstr ""
-"ISDS na požadavek CreateDataBox nevrátil token, i když byl o to požádán\n"
+"ISDS na požadavek %s nevrátil token, i když byl o to požádán\n"
 
 #: src/isds.c:4946
 #, c-format
@@ -866,38 +867,32 @@ msgid "Could build UpdateDataBoxUser request"
 msgstr "Požadavek UpdateDataBoxUser nebylo možné sestavit"
 
 #: src/isds.c:5517
-#, fuzzy
 msgid "Could build Activate request"
-msgstr "Požadavek %s nebylo možné sestavit"
+msgstr "Požadavek Activate nebylo možné sestavit"
 
 #: src/isds.c:5557
-#, fuzzy
 msgid "Missing ActivateResponse element"
-msgstr "Chybí element CheckDataBoxResponse"
+msgstr "Chybí element ActivateResponse"
 
 #: src/isds.c:5562
-#, fuzzy
 msgid "Multiple ActivateResponse element"
-msgstr "Násobný element CheckDataBoxResponse"
+msgstr "Násobný element ActivateResponse"
 
 #: src/isds.c:5571
-#, fuzzy
 msgid ""
 "Server accepted Activate request, but did not return `userId' element.\n"
 msgstr ""
-"Server přijal odeslanou zprávu, ale nevrátil identifikátor přidělený zprávě\n"
+"Server přijal požadavek Activate, ale nevrátil element „userId“.\n"
 
 #: src/isds.c:5576
-#, fuzzy
 msgid ""
 "Server accepted Activate request, but did not return `password' element.\n"
 msgstr ""
-"Server přijal odeslanou zprávu, ale nevrátil identifikátor přidělený zprávě\n"
+"Server přijal požadavek Activate, ale nevrátil element „password“.\n"
 
 #: src/isds.c:5587
-#, fuzzy
 msgid "Activate request processed by server successfully.\n"
-msgstr "Požadavek %s úspěšně zpracován serverem.\n"
+msgstr "Požadavek Activate úspěšně zpracován serverem.\n"
 
 #: src/isds.c:5636
 msgid "Could build NewAccessData request"
@@ -908,19 +903,16 @@ msgid "NewAccessData request processed by server successfully.\n"
 msgstr "Požadavek NewAccessData úspěšně zpracován serverem.\n"
 
 #: src/isds.c:5866
-#, fuzzy
 msgid "Could not build GetDataBoxList request"
-msgstr "Požadavek DeleteDataBox nebylo možné sestavit"
+msgstr "Požadavek GetDataBoxList nebylo možné sestavit"
 
 #: src/isds.c:5902
-#, fuzzy
 msgid "Error while Base64-decoding box list archive"
-msgstr "Chyba při dekódování hodnoty hashe z Base64"
+msgstr "Chyba při dekódování archivu se seznamem schránek z Base64"
 
 #: src/isds.c:5917
-#, fuzzy
 msgid "GetDataBoxList request processed by server successfully.\n"
-msgstr "Požadavek GetDataBoxUsers úspěšně zpracován serverem.\n"
+msgstr "Požadavek GetDataBoxList úspěšně zpracován serverem.\n"
 
 #: src/isds.c:5968
 msgid "Could build FindDataBox request"
@@ -1196,14 +1188,12 @@ msgid "GetListOfReceivedMessages request processed by server successfully.\n"
 msgstr "Požadavek GetListOfReceivedMessages úspěšně zpracován serverem.\n"
 
 #: src/isds.c:7471
-#, fuzzy
 msgid "Could not build GetMessageStateChanges request"
-msgstr "Požadavek CreateMessage nebylo možné sestavit"
+msgstr "Požadavek GetMessageStateChanges nebylo možné sestavit"
 
 #: src/isds.c:7570
-#, fuzzy
 msgid "GetMessageStateChanges request processed by server successfully.\n"
-msgstr "Požadavek CreateMessage úspěšně zpracován serverem.\n"
+msgstr "Požadavek GetMessageStateChanges úspěšně zpracován serverem.\n"
 
 #: src/isds.c:7648
 #, c-format
@@ -1403,9 +1393,8 @@ msgid "ConfirmDelivery request processed by server successfully.\n"
 msgstr "Požadavek ConfirmDelivery úspěšně zpracován serverem.\n"
 
 #: src/isds.c:8943
-#, fuzzy
 msgid "XML documents cannot be submitted to conversion"
-msgstr "Dokumenty XML ještě nejsou podporovány"
+msgstr "Dokumenty XML nelze odeslat ke konverzi"
 
 #: src/isds.c:8969
 msgid "Could not build Czech POINT conversion request"
@@ -1768,9 +1757,9 @@ msgid "SOAP response has more than one Body element"
 msgstr "Odpověď SOAP obsahuje více jak jeden element Body"
 
 #: src/soap.c:831
-#, fuzzy, c-format
+#, c-format
 msgid "SOAP response signals Fault: %s"
-msgstr "Odpověď SOAP signalizuje chybu (Fault)"
+msgstr "Odpověď SOAP signalizuje chybu (Fault): %s"
 
 #: src/soap.c:834
 msgid "SOAP response signals Fault"
