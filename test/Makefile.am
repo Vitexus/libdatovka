@@ -18,7 +18,11 @@ AM_CFLAGS = @LIBGCRYPT_CFLAGS@ @GPGME_CFLAGS@
 LDADD = @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ @GPGME_LIBS@ @EXPAT_LIBS@ \
 		@LTLIBINTL@
 
-TESTS = b64decode b64encode \
+# To fake home dir for gnupg2
+export HOME=@top_builddir@
+
+TESTS = prepare_environment \
+		b64decode b64encode \
 		compute_hash context guess_raw_type init_gpgpme isds_init load_raw \
 		normalize_mime_type  \
 		isds_list_free isds_pki_credentials_free isds_hash_free \
@@ -118,12 +122,9 @@ isds_uint2isds_message_status_SOURCES	= isds-uint2isds_message_status.c \
 										  $(isds_common)
 isds_eventstring2event_SOURCES	= isds-eventstring2event.c $(isds_common)
 
-## First specific tests
-##isds-%.test: isds-%.o
-##	$(CC) $(LDFLAGS) $< $(filter-out ../src/isds.o,$(OBJS)) -o $@
 
-## Then generic rule. Order is important.
-##%.test: %.o
-##	$(CC) $(LDFLAGS) $< $(OBJS) -o $@
+# Tests that need .gnupg
+guess_raw_type.log load_raw.log: prepare_environment.log
 
+prepare_environment_SOURCES = prepare_environment.c test.c test.h
 
