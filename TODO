@@ -5,7 +5,6 @@
 * Make CURL (network services) optional
 * Improve isds_*message() system
     Allow formatted message appending, preserve deep messages
-* Catch libxml2 debug messages
 * Make function tests
     Cover all functions
     Simulate server?

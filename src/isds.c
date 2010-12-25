@@ -551,6 +551,26 @@ error:
 #undef STRDUP_OR_ERROR 
 
 
+/* Logs libxml2 errors. Should be registered to libxml2 library.
+ * @ctx is unused currently
+ * @msg is printf-like formated message from libxml2 (UTF-8?)
+ * @... are variadic arguments for @msg */
+static void log_xml(void *ctx, const char *msg, ...) {
+    va_list ap;
+    char *text = NULL;
+
+    if (!msg) return;
+
+    va_start(ap, msg);
+    isds_vasprintf(&text, msg, ap);
+    va_end(ap);
+
+    if (text)
+        isds_log(ILF_XML, ILL_ERR, "%s", text);
+    free(text);
+}
+
+
 /* Initialize ISDS library.
  * Global function, must be called before other functions.
  * If it fails you can not use ISDS library and must call isds_cleanup() to
@@ -596,6 +616,7 @@ isds_error isds_init(void) {
 
     /* This can _exit() current program. Find not so assertive check. */
     LIBXML_TEST_VERSION;
+    xmlSetGenericErrorFunc(NULL, log_xml);
 
     /* Check expat */
     if (_isds_init_expat(&version_expat)) {
