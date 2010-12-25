@@ -24,6 +24,12 @@ static int test_load_message(struct isds_ctx *context,
     if (test_mmap_file(test->file, &fd, &buffer, &length))
         FAIL_TEST("Could not load test data from `%s' file", test->file);
 
+    if (!test->should_pass)
+        /* Do not log expected XML parser failures */
+        isds_set_logging(ILF_XML, ILL_NONE);
+    else
+        isds_set_logging(ILF_ALL, ILL_WARNING);
+
     err = isds_load_message(context, test->type, buffer, length,
             &message, BUFFER_DONT_STORE);
     isds_message_free(&message);

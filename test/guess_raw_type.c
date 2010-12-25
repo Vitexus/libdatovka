@@ -23,6 +23,12 @@ static int test_guess_raw_type(struct isds_ctx *context,
     if (test_mmap_file(test->file, &fd, &buffer, &length))
         FAIL_TEST("Could not load test data from `%s' file", test->file);
 
+    if (test->error != IE_SUCCESS)
+        /* Do not log expected XML parser failures */
+        isds_set_logging(ILF_XML, ILL_NONE);
+    else
+        isds_set_logging(ILF_ALL, ILL_WARNING);
+
     err = isds_guess_raw_type(context, &guessed_type, buffer, length);
     test_munmap_file(fd, buffer, length);
 
