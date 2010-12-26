@@ -38,6 +38,13 @@ Additional configure options:
         Switch off compile mode when compiler raises error on warning. This is
         enabled to catch all code ambiguities by default.
 
+    --without-libcurl
+    
+        Disable network operations by omitting cURL library. It disables
+        on-line tests too. Library will keep capability to process local
+        messages and delivery details. Library will not be able to connect to
+        ISDS server in this mode.
+
 Large File Support (LFS) Notice: libisds uses GPGME, and GPGME is compiled
 with LFS on usually. You need to keep LFS compatibility on reverse dependencies
 (libisds library, your application using libisds), otherwise strange things

@@ -31,9 +31,6 @@ AM_CONDITIONAL([BUILD_TEST], [test "$enable_test" = "yes"])
 # Enable on-line test
 AC_ARG_ENABLE(online-test, [AS_HELP_STRING([--enable-online-test],
                               [Enable on-line internal library tests])])
-AM_CONDITIONAL([BUILD_ONLINE_TEST],
-               [test "$enable_test" = "yes" -a "$enable_online_test" = "yes"])
-
 # Enable gettext
 AM_GNU_GETTEXT_VERSION([0.17])
 AM_GNU_GETTEXT([external])
@@ -55,30 +52,40 @@ AM_PATH_XML2([2.6.26])
 
 # Checks for CURL 
 LIBCURL_CHECK_CONFIG()
-cppflags_orig="$CPPFLAGS"
-CPPFLAGS="${CPPFLAGS} ${LIBCURL_CPPFLAGS}"
-AC_CHECK_DECLS([CURLOPT_TIMEOUT_MS], [],
-    AC_MSG_WARN([Your libcurl does not support subsecond timeout resolution.
-                 Consider upgrade to 7.16.2 version.]),
-    [[#include <curl/curl.h>]])
-AC_CHECK_DECLS([CURLOPT_USERNAME], [],
-    AC_MSG_WARN([Your libcurl does not support separate username and password.
-                 Your ISDS username could not contain colon.
-                 Consider upgrade to 7.19.1 version.]),
-    [[#include <curl/curl.h>]])
-AC_CHECK_DECLS([CURLOPT_SSLCERTTYPE], [],
-    AC_MSG_WARN([Your libcurl does not support client certificate format
-                 declaration (PEM vs. DER).
-                 Consider upgrade to 7.9.3 version.]),
-    [[#include <curl/curl.h>]])
-AC_CHECK_DECLS([CURLOPT_CRLFILE], [],
-    AC_MSG_WARN([Your libcurl does not support certificate revocation list
-                 declaration.
-                 Consider upgrade to 7.19.0 version.]),
-    [[#include <curl/curl.h>]])
-AC_CHECK_DECLS([CURLOPT_KEYPASSWD], [], [], [[#include <curl/curl.h>]])
-AC_CHECK_DECLS([CURLOPT_SSLKEYPASSWD], [], [], [[#include <curl/curl.h>]])
-CPPFLAGS="$cppflags_orig"
+AS_IF([test -z "$LIBCURL"],
+      AC_MSG_WARN([libcurl disabled or not found. Network features will be
+                   disabled.]),
+    [
+    cppflags_orig="$CPPFLAGS"
+    CPPFLAGS="${CPPFLAGS} ${LIBCURL_CPPFLAGS}"
+    AC_CHECK_DECLS([CURLOPT_TIMEOUT_MS], [],
+        AC_MSG_WARN([Your libcurl does not support subsecond timeout resolution.
+                     Consider upgrade to 7.16.2 version.]),
+        [[#include <curl/curl.h>]])
+    AC_CHECK_DECLS([CURLOPT_USERNAME], [],
+        AC_MSG_WARN([Your libcurl does not support separate username and password.
+                     Your ISDS username could not contain colon.
+                     Consider upgrade to 7.19.1 version.]),
+        [[#include <curl/curl.h>]])
+    AC_CHECK_DECLS([CURLOPT_SSLCERTTYPE], [],
+        AC_MSG_WARN([Your libcurl does not support client certificate format
+                     declaration (PEM vs. DER).
+                     Consider upgrade to 7.9.3 version.]),
+        [[#include <curl/curl.h>]])
+    AC_CHECK_DECLS([CURLOPT_CRLFILE], [],
+        AC_MSG_WARN([Your libcurl does not support certificate revocation list
+                     declaration.
+                     Consider upgrade to 7.19.0 version.]),
+        [[#include <curl/curl.h>]])
+    AC_CHECK_DECLS([CURLOPT_KEYPASSWD], [], [], [[#include <curl/curl.h>]])
+    AC_CHECK_DECLS([CURLOPT_SSLKEYPASSWD], [], [], [[#include <curl/curl.h>]])
+    CPPFLAGS="$cppflags_orig"
+    ])
+
+dnl On-line tests requires libcurl
+AM_CONDITIONAL([BUILD_ONLINE_TEST],
+               [test -n "$LIBCURL" -a "$enable_test" = "yes" \
+                    -a "$enable_online_test" = "yes"])
 
 #TODO: Determine minimal version
 AM_PATH_LIBGCRYPT([1:1.4.0])
