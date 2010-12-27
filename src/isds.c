@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <ctype.h>
 #include <stdint.h>
+#include <limits.h>     /* Because of LONG_{MIN,MAX} constants */
 #include "isds_priv.h"
 #include "utils.h"
 #include "soap.h"
@@ -587,11 +588,13 @@ isds_error isds_init(void) {
     bindtextdomain(PACKAGE, LOCALEDIR);
 #endif
 
+#if HAVE_LIBCURL
     /* Initialize CURL */
     if (curl_global_init(CURL_GLOBAL_ALL)) {
         isds_log(ILF_ISDS, ILL_CRIT, _("CURL library initialization failed\n"));
         return IE_ERROR;
     }
+#endif /* HAVE_LIBCURL */
 
     /* Initialize gpg-error because of gpgme and ksba */
     if (gpg_err_init()) {
@@ -638,8 +641,10 @@ isds_error isds_cleanup(void) {
     /* XML */
     xmlCleanupParser();
     
+#if HAVE_LIBCURL
     /* Curl */
     curl_global_cleanup();
+#endif
 
     return IE_SUCCESS;
 }
@@ -650,8 +655,17 @@ isds_error isds_cleanup(void) {
 char *isds_version(void) {
     char *buffer = NULL;
 
-    isds_asprintf(&buffer, _("%s (%s, GPGME %s, gcrypt %s, %s, libxml2 %s)"),
-            PACKAGE_VERSION, curl_version(), version_gpgme, version_gcrypt,
+    isds_asprintf(&buffer,
+#if HAVE_LIBCURL
+            _("%s (%s, GPGME %s, gcrypt %s, %s, libxml2 %s)"),
+#else
+            _("%s (GPGME %s, gcrypt %s, %s, libxml2 %s)"),
+#endif
+            PACKAGE_VERSION,
+#if HAVE_LIBCURL
+            curl_version(),
+#endif
+            version_gpgme, version_gcrypt,
             version_expat, xmlParserVersion);
     return buffer;
 }
@@ -722,7 +736,7 @@ struct isds_ctx *isds_ctx_create(void) {
     return context;
 };
 
-
+#if HAVE_LIBCURL
 /* Close possibly opened connection to Czech POINT document deposit without
  * resetting long_message buffer.
  * XXX: Do not use czp_close_connection() if you do not want to destroy log
@@ -752,6 +766,7 @@ static isds_error discard_credentials(struct isds_ctx *context) {
 
     return IE_SUCCESS;
 }
+#endif /* HAVE_LIBCURL */
 
 
 /* Destroy ISDS context and free memory.
@@ -761,6 +776,7 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
         return IE_INVALID_CONTEXT;
     }
   
+#if HAVE_LIBCURL
     /* Discard credentials and close connection */
     switch ((*context)->type) {
         case CTX_TYPE_NONE: break;
@@ -778,6 +794,7 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
     free((*context)->tls_ca_file);
     free((*context)->tls_ca_dir);
     free((*context)->tls_crl_file);
+#endif /* HAVE_LIBCURL */
     free((*context)->long_message);
 
     free(*context);
@@ -932,6 +949,7 @@ isds_error isds_set_timeout(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
 
+#if HAVE_LIBCURL
     context->timeout = timeout;
 
     if (context->curl) {
@@ -950,6 +968,9 @@ isds_error isds_set_timeout(struct isds_ctx *context,
     }
 
     return IE_SUCCESS;
+#else /* not HAVE_LIBCURL */
+    return IE_NOTSUP;
+#endif
 }
 
 
@@ -964,10 +985,14 @@ isds_error isds_set_progress_callback(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
 
+#if HAVE_LIBCURL
     context->progress_callback = callback;
     context->progress_callback_data = data;
 
     return IE_SUCCESS;
+#else /* not HAVE_LIBCURL */
+    return IE_NOTSUP;
+#endif
 }
 
 
@@ -981,7 +1006,9 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
         ...) {
     isds_error err = IE_SUCCESS;
     va_list ap;
+#if HAVE_LIBCURL
     char *pointer, *string;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
@@ -1013,15 +1040,28 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
 
     switch (option) {
         case IOPT_TLS_VERIFY_SERVER:
+#if HAVE_LIBCURL
             REPLACE_VA_BOOLEAN(context->tls_verify_server);
+#else
+            err = IE_NOTSUP; goto leave;
+#endif
             break;
         case IOPT_TLS_CA_FILE:
+#if HAVE_LIBCURL
             REPLACE_VA_STRING(context->tls_ca_file);
+#else
+            err = IE_NOTSUP; goto leave;
+#endif
             break;
         case IOPT_TLS_CA_DIRECTORY:
+#if HAVE_LIBCURL
             REPLACE_VA_STRING(context->tls_ca_dir);
+#else
+            err = IE_NOTSUP; goto leave;
+#endif
             break;
         case IOPT_TLS_CRL_FILE:
+#if HAVE_LIBCURL
 #if HAVE_DECL_CURLOPT_CRLFILE /* Since curl-7.19.0 */
             REPLACE_VA_STRING(context->tls_crl_file);
 #else
@@ -1029,6 +1069,9 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
                     _("Curl library does not support CRL definition"));
             err = IE_NOTSUP;
 #endif  /* not HAVE_DECL_CURLOPT_CRLFILE */
+#else
+            err = IE_NOTSUP; goto leave;
+#endif  /* not HAVE_LIBCURL */
             break;
         case IOPT_NORMALIZE_MIME_TYPE:
             context->normalize_mime_type = (_Bool) !!va_arg(ap, int);
@@ -1078,15 +1121,18 @@ leave:
 isds_error isds_login(struct isds_ctx *context, const char *url,
         const char *username, const char *password,
         const struct isds_pki_credentials *pki_credentials) {
+#if HAVE_LIBCURL
     isds_error err = IE_NOT_LOGGED_IN;
     isds_error soap_err;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
     xmlNodePtr response = NULL;
+#endif /* HAVE_LIBCURL */
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
 
+#if HAVE_LIBCURL
     /* Close connection if already logged in */
     if (context->curl) {
         _isds_close_connection(context);
@@ -1197,6 +1243,9 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
                 _("User %s has been logged into server %s successfully\n"),
             username, url);
     return err;
+#else /* not HAVE_LIBCURL */
+    return IE_NOTSUP;
+#endif
 }
 
 
@@ -1205,6 +1254,7 @@ isds_error isds_logout(struct isds_ctx *context) {
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
 
+#if HAVE_LIBCURL
     /* Close connection */
     if (context->curl) {
         _isds_close_connection(context);
@@ -1219,20 +1269,26 @@ isds_error isds_logout(struct isds_ctx *context) {
         discard_credentials(context);
     }
     return IE_SUCCESS;
+#else /* not HAVE_LIBCURL */
+    return IE_NOTSUP;
+#endif
 }
 
 
 /* Verify connection to ISDS is alive and server is responding.
  * Sent dummy request to ISDS and expect dummy response. */
 isds_error isds_ping(struct isds_ctx *context) {
+#if HAVE_LIBCURL
     isds_error soap_err;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
     xmlNodePtr response = NULL;
+#endif /* HAVE_LIBCURL */
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
 
+#if HAVE_LIBCURL
     /* Check if connection is established */
     if (!context->curl) return IE_CONNECTION_CLOSED;
 
@@ -1277,21 +1333,27 @@ isds_error isds_ping(struct isds_ctx *context) {
     isds_log(ILF_ISDS, ILL_DEBUG, _("ISDS server alive\n"));
 
     return IE_SUCCESS;
+#else /* not HAVE_LIBCURL */
+    return IE_NOTSUP;
+#endif
 }
 
 
 /* Send bogus request to ISDS.
  * Just for test purposes */
 isds_error isds_bogus_request(struct isds_ctx *context) {
+#if HAVE_LIBCURL
     isds_error err;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *message = NULL;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
 
+#if HAVE_LIBCURL
     /* Check if connection is established */
     if (!context->curl) {
         /* Testing printf message */
@@ -1368,9 +1430,13 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
             _("Bogus message accepted by server. This should not happen.\n"));
 
     return IE_SUCCESS;
+#else /* not HAVE_LIBCURL */
+    return IE_NOTSUP;
+#endif
 }
 
 
+#if HAVE_LIBCURL
 /* Serialize XML subtree to buffer preserving XML indentation.
  * @context is session context
  * @subtree is XML element to be serialized (with children)
@@ -1478,6 +1544,8 @@ leave:
     xmlFreeDoc(subtree_doc); /* Frees subtree_copy, isds_ns etc. */
     return err;
 }
+#endif /* HAVE_LIBCURL */
+
 
 #if 0
 /* Dump XML subtree to buffer as literal string, not valid XML possibly.
@@ -1646,6 +1714,7 @@ leave:
 #endif
 
 
+#if HAVE_LIBCURL
 /* Convert UTF-8 @string representation of ISDS dbType to enum @type */
 static isds_error string2isds_DbType(xmlChar *string, isds_DbType *type) {
     if (!string || !type) return IE_INVAL;
@@ -1745,6 +1814,7 @@ static const xmlChar *isds_FileMetaType2string(const isds_FileMetaType type) {
             default: return NULL; break;
         }
 }
+#endif /* HAVE_LIBCURL */
 
 
 /* Convert UTF-8 @string to ISDS dmFileMetaType enum @type.
@@ -1791,6 +1861,7 @@ static isds_error string2isds_hash_algorithm(const xmlChar *string,
 }
 
 
+#if HAVE_LIBCURL
 /* Convert UTF-8 @string representation of ISO 8601 date to @time.
  * XXX: Not all ISO formats are supported */
 static isds_error datestring2tm(const xmlChar *string, struct tm *time) {
@@ -1850,6 +1921,7 @@ static isds_error timeval2timestring(const struct timeval *time,
 
     return IE_SUCCESS;
 }
+#endif /* HAVE_LIBCURL */
 
 
 /* Convert UTF-8 ISO 8601 date-time @string to struct timeval.
@@ -2394,6 +2466,7 @@ leave:
 
 
 
+#if HAVE_LIBCURL
 /* Find and convert XSD:gPersonName group in current node into structure
  * @context is ISDS context
  * @personName is automatically reallocated person name structure. If no member
@@ -2863,6 +2936,7 @@ leave:
     free(string);
     return err;
 }
+#endif /* HAVE_LIBCURL */
 
 
 /* Convert XSD gMessageEnvelopeSub group of elements from XML tree into
@@ -3164,6 +3238,7 @@ leave:
 }
 
 
+#if HAVE_LIBCURL
 /* Convert dmType isds_envelope member into XML attribute and append it to
  * current node.
  * @context is ISDS context
@@ -3195,6 +3270,7 @@ static isds_error insert_message_type(struct isds_ctx *context,
 leave:
     return err;
 }
+#endif /* HAVE_LIBCURL */
 
 
 /* Extract message document into reallocated document structure
@@ -3409,6 +3485,7 @@ leave:
 }
 
 
+#if HAVE_LIBCURL
 /* Convert isds:dmRecord XML tree into structure
  * @context is ISDS context
  * @envelope is automatically reallocated message envelope structure
@@ -3529,6 +3606,7 @@ leave:
     xmlXPathFreeObject(result);
     return err;
 }
+#endif /* HAVE_LIBCURL */
 
 
 /* Find and convert isds:dmHash XML tree into structure
@@ -3877,6 +3955,7 @@ leave:
 }
 
 
+#if HAVE_LIBCURL
 /* Insert Base64 encoded data as element with text child.
  * @context is session context
  * @parent is XML node to append @element with @data as child
@@ -4243,22 +4322,27 @@ leave:
     xmlFreeNode(request);
     return err;
 }
+#endif
 
 
 /* Get data about logged in user and his box. */
 isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         struct isds_DbOwnerInfo **db_owner_info) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *message = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     char *string = NULL;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     if (!db_owner_info) return IE_INVAL;
+    isds_DbOwnerInfo_free(db_owner_info);
 
+#if HAVE_LIBCURL
     /* Check if connection is established */
     if (!context->curl) return IE_CONNECTION_CLOSED;
 
@@ -4272,7 +4356,6 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
 
     /* Extract data */
     /* Prepare structure */
-    isds_DbOwnerInfo_free(db_owner_info);
     *db_owner_info = calloc(1, sizeof(**db_owner_info));
     if (!*db_owner_info) {
         err = IE_NOMEM;
@@ -4311,6 +4394,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
     /* Extract it */
     err = extract_DbOwnerInfo(context, db_owner_info, xpath_ctx);
 
+
 leave:
     if (err) {
         isds_DbOwnerInfo_free(db_owner_info);
@@ -4328,6 +4412,9 @@ leave:
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("GetOwnerInfoFromLogin request processed by server "
                     "successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
@@ -4337,15 +4424,19 @@ leave:
 isds_error isds_GetUserInfoFromLogin(struct isds_ctx *context,
         struct isds_DbUserInfo **db_user_info) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *message = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     if (!db_user_info) return IE_INVAL;
+    isds_DbUserInfo_free(db_user_info);
 
+#if HAVE_LIBCURL
     /* Check if connection is established */
     if (!context->curl) return IE_CONNECTION_CLOSED;
 
@@ -4359,7 +4450,6 @@ isds_error isds_GetUserInfoFromLogin(struct isds_ctx *context,
 
     /* Extract data */
     /* Prepare structure */
-    isds_DbUserInfo_free(db_user_info);
     *db_user_info = calloc(1, sizeof(**db_user_info));
     if (!*db_user_info) {
         err = IE_NOMEM;
@@ -4414,6 +4504,9 @@ leave:
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("GetUserInfoFromLogin request processed by server "
                     "successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
@@ -4427,17 +4520,20 @@ leave:
 isds_error isds_get_password_expiration(struct isds_ctx *context,
         struct timeval **expiration) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *message = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     char *string = NULL;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     if (!expiration) return IE_INVAL;
     zfree(*expiration);
 
+#if HAVE_LIBCURL
     /* Check if connection is established */
     if (!context->curl) return IE_CONNECTION_CLOSED;
 
@@ -4517,6 +4613,9 @@ leave:
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("GetPasswordInfo request processed by server "
                     "successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
@@ -4531,15 +4630,18 @@ leave:
 isds_error isds_change_password(struct isds_ctx *context,
         const char *old_password, const char *new_password) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL, node;
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *message = NULL;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     if (!old_password || !new_password) return IE_INVAL;
 
+#if HAVE_LIBCURL
     /* Check if connection is established
      * TODO: This check should be done downstairs. */
     if (!context->curl) return IE_CONNECTION_CLOSED;
@@ -4647,11 +4749,15 @@ leave:
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Password changed successfully on ChangeISDSPassword "
                     "request.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
 
 
+#if HAVE_LIBCURL
 /* Generic middle part with request sending and response check.
  * It sends prepared request and checks for error code.
  * @context is ISDS session context.
@@ -4992,6 +5098,7 @@ leave:
     free(string);
     return err;
 }
+#endif /* HAVE_LIBCURL */
 
 
 /* Create new box.
@@ -5020,10 +5127,12 @@ isds_error isds_add_box(struct isds_ctx *context,
         struct isds_credentials_delivery *credentials_delivery,
         const struct isds_approval *approval, char **refnumber) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlNodePtr request = NULL;
     xmlDocPtr response = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
+#endif
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -5034,6 +5143,7 @@ isds_error isds_add_box(struct isds_ctx *context,
     }
     if (!box) return IE_INVAL;
 
+#if HAVE_LIBCURL
     /* Scratch box ID */
     zfree(box->dbID);
 
@@ -5075,6 +5185,9 @@ leave:
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("CreateDataBox request processed by server successfully.\n"));
     }
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
@@ -5098,12 +5211,15 @@ isds_error isds_add_pfoinfo(struct isds_ctx *context,
         const char *ceo_label, const struct isds_approval *approval,
         char **refnumber) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlNodePtr request = NULL;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     if (!box) return IE_INVAL;
 
+#if HAVE_LIBCURL
     /* Build CreateDataBoxPFOInfo request */
     err = build_CreateDBInput_request(context,
             &request, BAD_CAST "CreateDataBoxPFOInfo",
@@ -5119,6 +5235,9 @@ isds_error isds_add_pfoinfo(struct isds_ctx *context,
      * states no box identifier is returned. */
 leave:
     xmlFreeNode(request);
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
     return err;
 }
 
@@ -5135,10 +5254,12 @@ isds_error isds_delete_box(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box, const struct tm *since,
         const struct isds_approval *approval, char **refnumber) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
     xmlNodePtr node;
     xmlChar *string = NULL;
+#endif
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -5146,6 +5267,7 @@ isds_error isds_delete_box(struct isds_ctx *context,
     if (!box || !since) return IE_INVAL;
 
 
+#if HAVE_LIBCURL
     /* Build DeleteDataBox request */
     request = xmlNewNode(NULL, BAD_CAST "DeleteDataBox");
     if (!request) {
@@ -5185,6 +5307,9 @@ isds_error isds_delete_box(struct isds_ctx *context,
 leave:
     xmlFreeNode(request);
     free(string);
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
     return err;
 }
 
@@ -5201,9 +5326,11 @@ isds_error isds_UpdateDataBoxDescr(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *new_box,
         const struct isds_approval *approval, char **refnumber) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
     xmlNodePtr node;
+#endif
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -5211,6 +5338,7 @@ isds_error isds_UpdateDataBoxDescr(struct isds_ctx *context,
     if (!old_box || !new_box) return IE_INVAL;
 
 
+#if HAVE_LIBCURL
     /* Build UpdateDataBoxDescr request */
     request = xmlNewNode(NULL, BAD_CAST "UpdateDataBoxDescr");
     if (!request) {
@@ -5244,11 +5372,15 @@ isds_error isds_UpdateDataBoxDescr(struct isds_ctx *context,
 
 leave:
     xmlFreeNode(request);
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
 
 
+#if HAVE_LIBCURL
 /* Build ISDS request of XSD tIdDbInput type, sent it and check for error
  * code
  * @context is session context
@@ -5322,6 +5454,7 @@ leave:
     xmlFreeNode(request);
     return err;
 }
+#endif /* HAVE_LIBCURL */
 
 
 /* Get data about all users assigned to given box.
@@ -5331,17 +5464,21 @@ leave:
 isds_error isds_GetDataBoxUsers(struct isds_ctx *context, const char *box_id,
         struct isds_list **users) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlDocPtr response = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     int i;
     struct isds_list *item, *prev_item = NULL;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     if (!users || !box_id) return IE_INVAL;
+    isds_list_free(users);
 
 
+#if HAVE_LIBCURL
     /* Do request and check for success */
     err = build_send_dbid_request_check_response(context,
             SERVICE_DB_MANIPULATION, BAD_CAST "GetDataBoxUsers",
@@ -5351,7 +5488,6 @@ isds_error isds_GetDataBoxUsers(struct isds_ctx *context, const char *box_id,
 
     /* Extract data */
     /* Prepare structure */
-    isds_list_free(users);
     xpath_ctx = xmlXPathNewContext(response);
     if (!xpath_ctx) {
         err = IE_ERROR;
@@ -5410,6 +5546,9 @@ leave:
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("GetDataBoxUsers request processed by server "
                     "successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
@@ -5428,9 +5567,11 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
         const struct isds_DbUserInfo *new_user,
         char **refnumber) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
     xmlNodePtr node;
+#endif
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -5438,6 +5579,7 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
     if (!box || !old_user || !new_user) return IE_INVAL;
 
 
+#if HAVE_LIBCURL
     /* Build UpdateDataBoxUser request */
     request = xmlNewNode(NULL, BAD_CAST "UpdateDataBoxUser");
     if (!request) {
@@ -5471,6 +5613,9 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
 
 leave:
     xmlFreeNode(request);
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
@@ -5487,11 +5632,13 @@ isds_error isds_activate(struct isds_ctx *context,
         const char *box_id, const char *token,
         char **user_id, char **password) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL, node;
     xmlDocPtr response = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
+#endif
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -5503,6 +5650,7 @@ isds_error isds_activate(struct isds_ctx *context,
     if (!box_id || !token || !user_id || !password) return IE_INVAL;
 
 
+#if HAVE_LIBCURL
     /* Build Activate request */
     request = xmlNewNode(NULL, BAD_CAST "Activate");
     if (!request) {
@@ -5577,6 +5725,9 @@ leave:
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Activate request processed by server successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
@@ -5606,9 +5757,11 @@ isds_error isds_reset_password(struct isds_ctx *context,
         struct isds_credentials_delivery *credentials_delivery,
         char **refnumber) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL, node;
     xmlDocPtr response = NULL;
+#endif
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -5621,6 +5774,7 @@ isds_error isds_reset_password(struct isds_ctx *context,
     if (!box || !user) return IE_INVAL;
 
 
+#if HAVE_LIBCURL
     /* Build NewAccessData request */
     request = xmlNewNode(NULL, BAD_CAST "NewAccessData");
     if (!request) {
@@ -5671,6 +5825,9 @@ leave:
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("NewAccessData request processed by server "
                     "successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
@@ -5700,9 +5857,11 @@ static isds_error build_send_manipulationboxuser_request_check_drop_response(
         struct isds_credentials_delivery *credentials_delivery,
         const struct isds_approval *approval, xmlChar **refnumber) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL, node;
     xmlDocPtr response = NULL;
+#endif
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -5715,6 +5874,7 @@ static isds_error build_send_manipulationboxuser_request_check_drop_response(
         return IE_INVAL;
 
 
+#if HAVE_LIBCURL
     /* Build NewAccessData or similar request */
     request = xmlNewNode(NULL, service_name);
     if (!request) {
@@ -5769,6 +5929,9 @@ leave:
                 service_name_locale);
         free(service_name_locale);
     }
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
@@ -5832,12 +5995,14 @@ isds_error isds_delete_user(struct isds_ctx *context,
 isds_error isds_get_box_list_archive(struct isds_ctx *context,
         const char *list_identifier, void **buffer, size_t *buffer_length) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL, node;
     xmlDocPtr response = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     char *string = NULL;
+#endif
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -5846,6 +6011,7 @@ isds_error isds_get_box_list_archive(struct isds_ctx *context,
     if (!buffer || !buffer_length) return IE_INVAL;
 
 
+#if HAVE_LIBCURL
     /* Check if connection is established
      * TODO: This check should be done downstairs. */
     if (!context->curl) return IE_CONNECTION_CLOSED;
@@ -5909,6 +6075,9 @@ leave:
         isds_log(ILF_ISDS, ILL_DEBUG, _("GetDataBoxList request "
                     "processed by server successfully.\n"));
     }
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
@@ -5928,6 +6097,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *criteria,
         struct isds_list **boxes) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     _Bool truncated = 0;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
@@ -5937,6 +6107,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     xmlChar *string = NULL;
+#endif
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -5948,6 +6119,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         return IE_INVAL;
     }
 
+#if HAVE_LIBCURL
     /* Check if connection is established
      * TODO: This check should be done downstairs. */
     if (!context->curl) return IE_CONNECTION_CLOSED;
@@ -6103,6 +6275,9 @@ leave:
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("FindDataBox request processed by server successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
@@ -6124,6 +6299,7 @@ leave:
 isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
         long int *box_status) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL, db_id;
     xmlDocPtr response = NULL;
@@ -6131,11 +6307,13 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     xmlChar *string = NULL;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     if (!box_status || !box_id || *box_id == '\0') return IE_INVAL;
 
+#if HAVE_LIBCURL
     /* Check if connection is established
      * TODO: This check should be done downstairs. */
     if (!context->curl) return IE_CONNECTION_CLOSED;
@@ -6263,6 +6441,9 @@ leave:
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("CheckDataBox request processed by server successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
@@ -6281,12 +6462,15 @@ static isds_error build_send_manipulationdbid_request_check_drop_response(
         const xmlChar *box_id, const struct isds_approval *approval,
         xmlChar **refnumber) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlDocPtr response = NULL;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     if (!service_name || *service_name == '\0' || !box_id) return IE_INVAL;
 
+#if HAVE_LIBCURL
     /* Check if connection is established */
     if (!context->curl) return IE_CONNECTION_CLOSED;
 
@@ -6303,6 +6487,9 @@ static isds_error build_send_manipulationdbid_request_check_drop_response(
                 service_name_locale);
         free(service_name_locale);
     }
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
@@ -6358,15 +6545,18 @@ static isds_error build_send_manipulationdbowner_request_check_drop_response(
         const struct isds_DbOwnerInfo *owner,
         const struct isds_approval *approval, xmlChar **refnumber) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     char *service_name_locale = NULL;
     xmlNodePtr request = NULL, db_owner_info;
     xmlNsPtr isds_ns = NULL;
+#endif
 
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     if (!service_name || *service_name == '\0' || !owner) return IE_INVAL;
 
+#if HAVE_LIBCURL
     service_name_locale = _isds_utf82locale((char*)service_name);
     if (!service_name_locale) {
         err = IE_NOMEM;
@@ -6406,6 +6596,9 @@ static isds_error build_send_manipulationdbowner_request_check_drop_response(
 leave:
     xmlFreeNode(request);
     free(service_name_locale);
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
@@ -6445,16 +6638,19 @@ isds_error isds_disable_box_accessibility_externaly(
         const struct tm *since, const struct isds_approval *approval,
         char **refnumber) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     char *service_name_locale = NULL;
     xmlNodePtr request = NULL, node;
     xmlNsPtr isds_ns = NULL;
     xmlChar *string = NULL;
+#endif
 
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     if (!box || !since) return IE_INVAL;
 
+#if HAVE_LIBCURL
     /* Build request */
     request = xmlNewNode(NULL, BAD_CAST "DisableDataBoxExternally");
     if (!request) {
@@ -6500,11 +6696,15 @@ leave:
     free(string);
     xmlFreeNode(request);
     free(service_name_locale);
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
 
 
+#if HAVE_LIBCURL
 /* Insert struct isds_message data (envelope (recipient data optional) and
  * documents) into XML tree
  * @context is session context
@@ -6653,6 +6853,7 @@ leave:
     free(string);
     return err;
 }
+#endif /* HAVE_LIBCURL */
 
 
 /* Send a message via ISDS to a recipient
@@ -6668,6 +6869,7 @@ isds_error isds_send_message(struct isds_ctx *context,
         struct isds_message *outgoing_message) {
 
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
     xmlDocPtr response = NULL;
@@ -6675,11 +6877,13 @@ isds_error isds_send_message(struct isds_ctx *context,
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     _Bool message_is_complete = 0;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     if (!outgoing_message) return IE_INVAL;
 
+#if HAVE_LIBCURL
     /* Check if connection is established
      * TODO: This check should be done downstairs. */
     if (!context->curl) return IE_CONNECTION_CLOSED;
@@ -6849,6 +7053,9 @@ serialization_failed:
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("CreateMessage request processed by server "
                     "successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
@@ -6873,7 +7080,9 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
         const struct isds_message *outgoing_message,
         struct isds_list *copies) {
 
-    isds_error err = IE_SUCCESS, append_err;
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    isds_error append_err;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL, recipients, recipient, node;
     struct isds_list *item;
@@ -6884,11 +7093,13 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
     xmlXPathObjectPtr result = NULL;
     xmlChar *string = NULL;
     int i;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     if (!outgoing_message || !copies) return IE_INVAL;
 
+#if HAVE_LIBCURL
     /* Check if connection is established
      * TODO: This check should be done downstairs. */
     if (!context->curl) return IE_CONNECTION_CLOSED;
@@ -7075,6 +7286,9 @@ leave:
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("CreateMultipleMessageResponse request processed by server "
                     "successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
@@ -7115,6 +7329,7 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
         struct isds_list **messages) {
 
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL, node;
     xmlDocPtr response = NULL;
@@ -7123,6 +7338,7 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
     xmlXPathObjectPtr result = NULL;
     xmlChar *string = NULL;
     long unsigned int count = 0;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
@@ -7130,6 +7346,7 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
     /* Free former message list if any */
     if (messages) isds_list_free(messages);
 
+#if HAVE_LIBCURL
     /* Check if connection is established
      * TODO: This check should be done downstairs. */
     if (!context->curl) return IE_CONNECTION_CLOSED;
@@ -7342,6 +7559,9 @@ leave:
                     _("GetListOfReceivedMessages request processed by server "
                         "successfully.\n")
                 );
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
     return err;
 }
 
@@ -7438,6 +7658,7 @@ isds_error isds_get_list_of_sent_message_state_changes(
         struct isds_list **changed_states) {
 
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL, node;
     xmlDocPtr response = NULL;
@@ -7445,6 +7666,7 @@ isds_error isds_get_list_of_sent_message_state_changes(
     xmlXPathObjectPtr result = NULL;
     xmlChar *string = NULL;
     long unsigned int count = 0;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
@@ -7452,6 +7674,7 @@ isds_error isds_get_list_of_sent_message_state_changes(
     /* Free former message list if any */
     isds_list_free(changed_states);
 
+#if HAVE_LIBCURL
     /* Check if connection is established
      * TODO: This check should be done downstairs. */
     if (!context->curl) return IE_CONNECTION_CLOSED;
@@ -7561,10 +7784,14 @@ leave:
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("GetMessageStateChanges request processed by server "
                     "successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
     return err;
 }
 
 
+#if HAVE_LIBCURL
 /* Build ISDS request of XSD tIDMessInput type, sent it and check for error
  * code
  * @context is session context
@@ -7795,6 +8022,7 @@ leave:
 
     return err;
 }
+#endif /* HAVE_LIBCURL */
 
 
 /* Download incoming message envelope identified by ID.
@@ -7809,10 +8037,12 @@ isds_error isds_get_received_envelope(struct isds_ctx *context,
         const char *message_id, struct isds_message **message) {
 
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *status_message = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
@@ -7821,6 +8051,7 @@ isds_error isds_get_received_envelope(struct isds_ctx *context,
     if (!message) return IE_INVAL;
     isds_message_free(message);
 
+#if HAVE_LIBCURL
     /* Do request and check for success */
     err = build_send_check_message_request(context, SERVICE_DM_INFO,
             BAD_CAST "MessageEnvelopeDownload", message_id,
@@ -7895,6 +8126,9 @@ leave:
                     _("MessageEnvelopeDownload request processed by server "
                         "successfully.\n")
                 );
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
     return err;
 }
 
@@ -8084,10 +8318,12 @@ isds_error isds_get_signed_delivery_info(struct isds_ctx *context,
         const char *message_id, struct isds_message **message) {
 
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *status_message = NULL;
     void *raw = NULL;
     size_t raw_length = 0;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
@@ -8096,6 +8332,7 @@ isds_error isds_get_signed_delivery_info(struct isds_ctx *context,
     if (!message) return IE_INVAL;
     isds_message_free(message);
 
+#if HAVE_LIBCURL
     /* Do request and check for success */
     err = build_send_check_message_request(context, SERVICE_DM_INFO,
             BAD_CAST "GetSignedDeliveryInfo", message_id,
@@ -8132,6 +8369,9 @@ leave:
                 _("GetSignedDeliveryInfo request processed by server "
                         "successfully.\n")
                 );
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
     return err;
 }
 
@@ -8148,11 +8388,13 @@ isds_error isds_get_delivery_info(struct isds_ctx *context,
         const char *message_id, struct isds_message **message) {
 
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *status_message = NULL;
     xmlNodePtr delivery_node = NULL;
     void *raw = NULL;
     size_t raw_length = 0;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
@@ -8161,6 +8403,7 @@ isds_error isds_get_delivery_info(struct isds_ctx *context,
     if (!message) return IE_INVAL;
     isds_message_free(message);
 
+#if HAVE_LIBCURL
     /* Do request and check for success */
     err = build_send_check_message_request(context, SERVICE_DM_INFO,
             BAD_CAST "GetDeliveryInfo", message_id,
@@ -8208,6 +8451,9 @@ leave:
                     _("GetDeliveryInfo request processed by server "
                         "successfully.\n")
                 );
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
     return err;
 }
 
@@ -8221,6 +8467,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
         const char *message_id, struct isds_message **message) {
 
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlDocPtr response = NULL;
     void *xml_stream = NULL;
     size_t xml_stream_length;
@@ -8229,6 +8476,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
     xmlXPathObjectPtr result = NULL;
     char *phys_path = NULL;
     size_t phys_start, phys_end;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
@@ -8236,6 +8484,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
     /* Free former message if any */
     if (message) isds_message_free(message);
 
+#if HAVE_LIBCURL
     /* Do request and check for success */
     err = build_send_check_message_request(context, SERVICE_DM_OPERATIONS,
             BAD_CAST "MessageDownload", message_id,
@@ -8345,6 +8594,9 @@ leave:
                     _("MessageDownload request processed by server "
                         "successfully.\n")
                 );
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
     return err;
 }
 
@@ -8655,6 +8907,7 @@ static isds_error isds_get_signed_message(struct isds_ctx *context,
         struct isds_message **message) {
 
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *status_message = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
@@ -8662,12 +8915,14 @@ static isds_error isds_get_signed_message(struct isds_ctx *context,
     char *encoded_structure = NULL;
     void *raw = NULL;
     size_t raw_length = 0;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     if (!message) return IE_INVAL;
     isds_message_free(message);
 
+#if HAVE_LIBCURL
     /* Do request and check for success */
     err = build_send_check_message_request(context, SERVICE_DM_OPERATIONS,
             (outgoing) ? BAD_CAST "SignedSentMessageDownload" :
@@ -8715,6 +8970,9 @@ leave:
                     _("SignedMessageDownload request processed by server "
                         "successfully.\n")
                 );
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
     return err;
 }
 
@@ -8752,16 +9010,19 @@ isds_error isds_download_message_hash(struct isds_ctx *context,
         const char *message_id, struct isds_hash **hash) {
 
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *status_message = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
    
     isds_hash_free(hash);
 
+#if HAVE_LIBCURL
     err = build_send_check_message_request(context, SERVICE_DM_INFO,
             BAD_CAST "VerifyMessage", message_id,
             &response, NULL, NULL, &code, &status_message);
@@ -8828,6 +9089,9 @@ leave:
                     _("VerifyMessage request processed by server "
                         "successfully.\n")
                 );
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
     return err;
 }
 
@@ -8840,12 +9104,15 @@ isds_error isds_mark_message_read(struct isds_ctx *context,
         const char *message_id) {
 
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *status_message = NULL;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
    
+#if HAVE_LIBCURL
     /* Do request and check for success */
     err = build_send_check_message_request(context, SERVICE_DM_INFO,
             BAD_CAST "MarkMessageAsDownloaded", message_id,
@@ -8860,6 +9127,9 @@ isds_error isds_mark_message_read(struct isds_ctx *context,
                     _("MarkMessageAsDownloaded request processed by server "
                         "successfully.\n")
                 );
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
     return err;
 }
 
@@ -8874,12 +9144,15 @@ isds_error isds_mark_message_received(struct isds_ctx *context,
         const char *message_id) {
 
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *status_message = NULL;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
    
+#if HAVE_LIBCURL
     /* Do request and check for success */
     err = build_send_check_message_request(context, SERVICE_DM_INFO,
             BAD_CAST "ConfirmDelivery", message_id,
@@ -8894,6 +9167,9 @@ isds_error isds_mark_message_received(struct isds_ctx *context,
                     _("ConfirmDelivery request processed by server "
                         "successfully.\n")
                 );
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
     return err;
 }
 
@@ -8915,6 +9191,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
         const struct isds_document *document,
         char **id, struct tm **date) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlNsPtr deposit_ns = NULL, empty_ns = NULL;
     xmlNodePtr request = NULL, node;
     xmlDocPtr response = NULL;
@@ -8924,6 +9201,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
     long int status = -1;
     long int *status_ptr = &status;
     char *string = NULL;
+#endif
 
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -8940,6 +9218,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
     zfree(*id);
     zfree(*date);
 
+#if HAVE_LIBCURL
     /* Store configuration */
     context->type = CTX_TYPE_CZP;
     free(context->url);
@@ -9086,6 +9365,9 @@ leave:
                     "to server successfully\n"), id_locale);
         free(id_locale);
     }
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
     return err;
 }
 
@@ -9095,7 +9377,11 @@ leave:
 isds_error czp_close_connection(struct isds_ctx *context) {
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+#if HAVE_LIBCURL
     return czp_do_close_connection(context);
+#else
+    return IE_NOTSUP;
+#endif
 }
 
 
@@ -9123,16 +9409,19 @@ isds_error isds_request_new_testing_box(struct isds_ctx *context,
         const char *former_names, const struct isds_approval *approval,
         char **refnumber) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlNodePtr request = NULL;
     xmlDocPtr response = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
+#endif
 
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     if (!box) return IE_INVAL;
 
+#if HAVE_LIBCURL
     if (!box->email || box->email[0] == '\0') {
         isds_log_message(context, _("E-mail field is mandatory"));
         return IE_INVAL;
@@ -9189,6 +9478,9 @@ leave:
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("CreateDataBox request processed by server successfully.\n"));
     }
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }
@@ -9207,17 +9499,20 @@ leave:
 isds_error isds_authenticate_message(struct isds_ctx *context,
         const void *message, size_t length) {
     isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
     xmlDocPtr response = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     _Bool *authentic = NULL;
+#endif
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     if (!message || length == 0) return IE_INVAL;
 
+#if HAVE_LIBCURL
     /* Check if connection is established
      * TODO: This check should be done downstairs. */
     if (!context->curl) return IE_CONNECTION_CLOSED;
@@ -9286,6 +9581,9 @@ leave:
 
     xmlFreeDoc(response);
     xmlFreeNode(request);
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
 
     return err;
 }

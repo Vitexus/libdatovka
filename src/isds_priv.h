@@ -4,7 +4,9 @@
 /* Structures not to export outside library */
 #include "../config.h"
 #include "isds.h"
-#include <curl/curl.h>
+#if HAVE_LIBCURL
+    #include <curl/curl.h>
+#endif
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
@@ -60,6 +62,7 @@ const char *version_expat;          /* Static string with expat version */
 /* Context */
 struct isds_ctx {
     context_type type;      /* Context type */
+#if HAVE_LIBCURL
     unsigned int timeout;   /* milliseconds */
     char *url;              /* URL of the ISDS web service */
     char *username;
@@ -75,6 +78,7 @@ struct isds_ctx {
     char *tls_ca_file;      /* File name with CA certificates */
     char *tls_ca_dir;       /* Directory name with CA certificates */
     char *tls_crl_file;     /* File name with CRL in PEM format */
+#endif /* HAVE_LIBCURL */
     _Bool normalize_mime_type; /* Normalize document MIME types? */
     char *long_message;     /* message buffer */
 };
