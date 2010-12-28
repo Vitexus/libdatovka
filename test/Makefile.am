@@ -32,10 +32,14 @@ TESTS = prepare_environment \
 		isds_credentials_delivery_free \
 		isds_PersonName_duplicate isds_Address_duplicate \
 		isds_DbOwnerInfo_duplicate isds_DbUserInfo_duplicate \
-		isds-dbtype isds-filemetatype isds-hash_algorithm isds-usertype \
-		isds-datestring2tm isds-tm2datestring \
-		isds-timestring2timeval isds-timeval2timestring \
+		isds-filemetatype isds-hash_algorithm \
+		isds-timestring2timeval \
 		isds-uint2isds_message_status isds-eventstring2event
+if BUILD_CURL
+TESTS += isds-dbtype isds-usertype \
+		 isds-datestring2tm isds-tm2datestring \
+		 isds-timeval2timestring 
+endif
 
 
 noinst_PROGRAMS = $(TESTS)
@@ -46,7 +50,6 @@ common = test.c test.h \
 	$(LIBDIR)/crypto.c \
 	$(LIBDIR)/isds.c \
 	$(LIBDIR)/physxml.c \
-	$(LIBDIR)/soap.c \
 	$(LIBDIR)/utils.c \
 	$(LIBDIR)/validator.c \
 	$(LIBDIR)/cdecode.h \
@@ -56,9 +59,11 @@ common = test.c test.h \
 	$(LIBDIR)/isds.h \
 	$(LIBDIR)/isds_priv.h \
 	$(LIBDIR)/physxml.h \
-	$(LIBDIR)/soap.h \
 	$(LIBDIR)/utils.h \
 	$(LIBDIR)/validator.h
+if BUILD_CURL
+common += $(LIBDIR)/soap.c $(LIBDIR)/soap.h
+endif
 
 # Omit isds.c
 isds_common = test.c test.h \
@@ -66,7 +71,6 @@ isds_common = test.c test.h \
 	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/crypto.c \
 	$(LIBDIR)/physxml.c \
-	$(LIBDIR)/soap.c \
 	$(LIBDIR)/utils.c \
 	$(LIBDIR)/validator.c \
 	$(LIBDIR)/cdecode.h \
@@ -75,9 +79,11 @@ isds_common = test.c test.h \
 	$(LIBDIR)/isds.h \
 	$(LIBDIR)/isds_priv.h \
 	$(LIBDIR)/physxml.h \
-	$(LIBDIR)/soap.h \
 	$(LIBDIR)/utils.h \
 	$(LIBDIR)/validator.h
+if BUILD_CURL
+isds_common += $(LIBDIR)/soap.c $(LIBDIR)/soap.h
+endif
 
 # Access _hidden symbols
 b64decode_SOURCES 		= b64decode.c $(common)
