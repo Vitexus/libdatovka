@@ -81,6 +81,7 @@ AS_IF([test -z "$LIBCURL"],
     AC_CHECK_DECLS([CURLOPT_SSLKEYPASSWD], [], [], [[#include <curl/curl.h>]])
     CPPFLAGS="$cppflags_orig"
     ])
+AM_CONDITIONAL([BUILD_CURL], [test -n "$LIBCURL"])
 
 dnl On-line tests requires libcurl
 AM_CONDITIONAL([BUILD_ONLINE_TEST],

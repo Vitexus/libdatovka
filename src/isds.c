@@ -8,7 +8,9 @@
 #include <limits.h>     /* Because of LONG_{MIN,MAX} constants */
 #include "isds_priv.h"
 #include "utils.h"
-#include "soap.h"
+#if HAVE_LIBCURL
+    #include "soap.h"
+#endif
 #include "validator.h"
 #include "crypto.h"
 #include <gpg-error.h> /* Because of ksba or gpgme */

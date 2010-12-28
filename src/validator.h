@@ -3,6 +3,7 @@
 
 #include "isds.h"
 
+#if HAVE_LIBCURL
 typedef enum {
     SERVICE_DM_OPERATIONS,
     SERVICE_DM_INFO,
@@ -44,6 +45,7 @@ isds_error isds_response_status(struct isds_ctx *context,
 isds_error isds(struct isds_ctx *context, const isds_service service,
         const xmlNodePtr request, xmlDocPtr *response,
         void **raw_response, size_t *raw_response_length);
+#endif /* HAVE_LIBCURL */
 
 /* Walk through list of isds_documents and check for their types and
  * references.
@@ -61,6 +63,7 @@ isds_error _isds_check_documents_hierarchy(struct isds_ctx *context,
 isds_error validate_message_id_length(struct isds_ctx *context,
         const xmlChar *message_id);
 
+#if HAVE_LIBCURL
 /* Send @request to Czech POINT conversion deposit and return response
  * as XML document.
  * @context is Czech POINT session context,
@@ -70,5 +73,6 @@ isds_error validate_message_id_length(struct isds_ctx *context,
  * */
 isds_error _czp_czpdeposit(struct isds_ctx *context,
         const xmlNodePtr request, xmlDocPtr *response);
+#endif /* HAVE_LIBCURL */
 
 #endif

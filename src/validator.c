@@ -1,9 +1,12 @@
 #include "isds_priv.h"
 #include "utils.h"
 #include "validator.h"
-#include "soap.h"
+#if HAVE_LIBCURL
+    #include "soap.h"
+#endif
 
 
+#if HAVE_LIBCURL
 /* Get ISDS status info from ISDS @response XML document.
  * Be ware that different request families return differently encoded status
  * (e.g. dmStatus, dbStatus)
@@ -227,6 +230,7 @@ leave:
 
     return err;
 }
+#endif /* HAVE_LIBCURL */
 
 
 /* Walk through list of isds_documents and check for their types and
@@ -324,6 +328,7 @@ isds_error validate_message_id_length(struct isds_ctx *context,
 }
 
 
+#if HAVE_LIBCURL
 /* Send @request to Czech POINT conversion deposit and return response
  * as XML document.
  * @context is Czech POINT session context,
@@ -389,3 +394,4 @@ leave:
 
     return err;
 }
+#endif /* HAVE_LIBCURL */
