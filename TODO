@@ -2,7 +2,6 @@
     Grep for (reentrant|thread) comments
 * Multithreaded interface
     Grep for (reentrant|thread) comments
-* Make CURL (network services) optional
 * Improve isds_*message() system
     Allow formatted message appending, preserve deep messages
 * Make function tests
