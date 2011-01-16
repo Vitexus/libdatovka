@@ -291,7 +291,7 @@ _hidden size_t _isds_b64decode(const char *encoded, void **plain) {
 
 /* Switches time zone to UTC.
  * XXX: This is not reentrant and not thread-safe */
-_hidden void _isds_switch_tz_to_utc(void) {
+static void _isds_switch_tz_to_utc(void) {
     char *tz;
 
     tz = getenv("TZ");
@@ -312,7 +312,7 @@ _hidden void _isds_switch_tz_to_utc(void) {
 
 /* Switches time zone to original value.
  * XXX: This is not reentrant and not thread-safe */
-_hidden void _isds_switch_tz_to_native(void) {
+static void _isds_switch_tz_to_native(void) {
     if (tz_orig) {
         if (setenv("TZ", tz_orig, 1))
             PANIC("Can not restore time zone by setting TZ variable");
@@ -326,3 +326,17 @@ _hidden void _isds_switch_tz_to_native(void) {
 }
 
 
+/* Convert UTC broken time to time_t.
+ * @broken_utc it time in UTC in broken format. Despite its content is not
+ * touched, it'sw not-const because underlying POSIX function has non-const
+ * signature.
+ * @return (time_t) -1 in case of error */
+_hidden time_t _isds_timegm(struct tm *broken_utc) {
+    time_t time; 
+
+    _isds_switch_tz_to_utc();
+    time = mktime(broken_utc);
+    _isds_switch_tz_to_native();
+
+    return time;
+}

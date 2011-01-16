@@ -2018,9 +2018,7 @@ static isds_error timestring2timeval(const xmlChar *string,
     }
 
     /* Convert to time_t */
-    _isds_switch_tz_to_utc();
-    (*time)->tv_sec = mktime(&broken);
-    _isds_switch_tz_to_native();
+    (*time)->tv_sec = _isds_timegm(&broken);
     if ((*time)->tv_sec == (time_t) -1) {
         zfree(*time);
         return IE_DATE;

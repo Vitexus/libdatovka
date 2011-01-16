@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <time.h>
 
 /* _hidden macro marks library private symbols. GCC can exclude them from global
  * symbols table */
@@ -74,13 +75,12 @@ char *_isds_b64encode(const void *plain, const size_t length);
  * allocation failure. */
 size_t _isds_b64decode(const char *encoded, void **plain);
 
-/* Switches time zone to UTC.
- * XXX: This is not reentrant and not thread-safe */
-void _isds_switch_tz_to_utc(void);
-
-/* Switches time zone to original value.
- * XXX: This is not reentrant and not thread-safe */
-void _isds_switch_tz_to_native(void);
+/* Convert UTC broken time to time_t.
+ * @broken_utc it time in UTC in broken format. Despite its content is not
+ * touched, it'sw not-const because underlying POSIX function has non-const
+ * signature.
+ * @return (time_t) -1 in case of error */
+time_t _isds_timegm(struct tm *broken_utc);
 
 /* Free() and set to NULL pointed memory */
 #define zfree(memory) { \
