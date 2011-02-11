@@ -3432,7 +3432,7 @@ static isds_error extract_documents(struct isds_ctx *context,
     isds_error err = IE_SUCCESS;
     xmlXPathObjectPtr result = NULL;
     xmlNodePtr files_node = xpath_ctx->node;
-    struct isds_list *document, *prev_document;
+    struct isds_list *document, *prev_document = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!documents) return IE_INVAL;
@@ -6876,7 +6876,7 @@ isds_error isds_send_message(struct isds_ctx *context,
     xmlChar *code = NULL, *message = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
-    _Bool message_is_complete = 0;
+    /*_Bool message_is_complete = 0;*/
 #endif
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -6910,7 +6910,7 @@ isds_error isds_send_message(struct isds_ctx *context,
 
 
     /* Signal we can serialize message since now */
-    message_is_complete = 1;
+    /*message_is_complete = 1;*/
     
 
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending CreateMessage request to ISDS\n"));
