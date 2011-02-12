@@ -3,7 +3,7 @@ User web services specification
 
 Source: Provozní řád ISDS, version 2010-11-28, Pages 15–16
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
-    version 2.15 (2010-11-19)
+    version 2.16 (2011-01-26)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
     version 2.15 (2010-11-19)
 
@@ -404,6 +404,11 @@ distinguish the event meaning. Following prefixes are defined:
             this event is retroactive). In this case special system-generated
             message is sent to sender in addition.
     EV4:    Commercial message has been accepted by recipient confirmation
+    EV5:    Message has been delivered into recipent box
+    EV11:   Primary user has logged into his box
+    EV12:   Entrusted user havin permission to read this message has logged in
+    EV13:   Application (not a human) has logged into box using `system'
+            certificate 
 
 
 GetSignedDeliveryInfo (+)
