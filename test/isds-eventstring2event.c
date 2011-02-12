@@ -111,8 +111,40 @@ int main(int argc, char **argv) {
     TEST((char*)input, test_eventstring2event, input,
             IE_SUCCESS, &event, &output);
 
+    input = BAD_CAST "EV5: some text";
+    event.time = NULL;
+    event_type = EVENT_DELIVERED;
+    event.type = &event_type;
+    event.description = "some text";
+    TEST((char*)input, test_eventstring2event, input,
+            IE_SUCCESS, &event, &output);
+
+    input = BAD_CAST "EV11: some text";
+    event.time = NULL;
+    event_type = EVENT_PRIMARY_LOGIN;
+    event.type = &event_type;
+    event.description = "some text";
+    TEST((char*)input, test_eventstring2event, input,
+            IE_SUCCESS, &event, &output);
+
+    input = BAD_CAST "EV12: some text";
+    event.time = NULL;
+    event_type = EVENT_ENTRUSTED_LOGIN;
+    event.type = &event_type;
+    event.description = "some text";
+    TEST((char*)input, test_eventstring2event, input,
+            IE_SUCCESS, &event, &output);
+
+    input = BAD_CAST "EV13: some text";
+    event.time = NULL;
+    event_type = EVENT_SYSCERT_LOGIN;
+    event.type = &event_type;
+    event.description = "some text";
+    TEST((char*)input, test_eventstring2event, input,
+            IE_SUCCESS, &event, &output);
+
     /* Unknown event prefixes */
-    input = BAD_CAST "EV-1: out of range event";
+    input = BAD_CAST "EV-1: unknown event";
     event.time = NULL;
     event_type = EVENT_UKNOWN;
     event.type = &event_type;
@@ -120,7 +152,23 @@ int main(int argc, char **argv) {
     TEST((char*)input, test_eventstring2event, input,
             IE_SUCCESS, &event, &output);
 
-    input = BAD_CAST "EV5: out of range event";
+    input = BAD_CAST "EV6: intermediate undefined event";
+    event.time = NULL;
+    event_type = EVENT_UKNOWN;
+    event.type = &event_type;
+    event.description = (char *) input;
+    TEST((char*)input, test_eventstring2event, input,
+            IE_SUCCESS, &event, &output);
+
+    input = BAD_CAST "EV10: intermediate undefined event";
+    event.time = NULL;
+    event_type = EVENT_UKNOWN;
+    event.type = &event_type;
+    event.description = (char *) input;
+    TEST((char*)input, test_eventstring2event, input,
+            IE_SUCCESS, &event, &output);
+
+    input = BAD_CAST "EV14: out of range event";
     event.time = NULL;
     event_type = EVENT_UKNOWN;
     event.type = &event_type;

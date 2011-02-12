@@ -2068,14 +2068,22 @@ static isds_error eventstring2event(const xmlChar *string,
         BAD_CAST "EV1:",
         BAD_CAST "EV2:",
         BAD_CAST "EV3:",
-        BAD_CAST "EV4:"
+        BAD_CAST "EV4:",
+        BAD_CAST "EV5:",
+        BAD_CAST "EV11:",
+        BAD_CAST "EV12:",
+        BAD_CAST "EV13:"
     };
     const isds_event_type types[] = {
         EVENT_ENTERED_SYSTEM, 
         EVENT_ACCEPTED_BY_RECIPIENT,
         EVENT_ACCEPTED_BY_FICTION,
         EVENT_UNDELIVERABLE,
-        EVENT_COMMERCIAL_ACCEPTED
+        EVENT_COMMERCIAL_ACCEPTED,
+        EVENT_DELIVERED,
+        EVENT_PRIMARY_LOGIN,
+        EVENT_ENTRUSTED_LOGIN,
+        EVENT_SYSCERT_LOGIN
     };
     unsigned int index;
     size_t length;

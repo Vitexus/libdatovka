@@ -324,8 +324,14 @@ typedef enum {
                                        thus message is undeliverable */
     EVENT_COMMERCIAL_ACCEPTED,      /* Recipient confirmed acceptance of
                                        commercial message */
-    EVENT_ENTERED_SYSTEM            /* Message entered ISDS, i.e. has been just
+    EVENT_ENTERED_SYSTEM,           /* Message entered ISDS, i.e. has been just
                                        sent by sender */
+    EVENT_DELIVERED,                /* Message has been delivered */
+    EVENT_PRIMARY_LOGIN,            /* Primary user has logged in */
+    EVENT_ENTRUSTED_LOGIN,          /* Entrusted user with capability to read
+                                       has logged in */
+    EVENT_SYSCERT_LOGIN             /* Application authenticated by `system'
+                                       certificate has logged in */
 } isds_event_type;
 
 /* Message event
