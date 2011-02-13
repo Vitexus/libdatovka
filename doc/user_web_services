@@ -68,6 +68,8 @@ GetListOfRecievedMessages
     Download list of incoming messages
 GetListOfSentMessages
     Download list of outgoing messages
+GetMessageAuthor
+    Get details about sender
 GetMessageStateChanges
     Download list of outgoing messages that changed state
 
@@ -278,6 +280,31 @@ Offset starts on 1. Limit defaults to 1000.
 
 Non-normative error codes:
     2017    Syntax error in date-time
+
+
+GetMessageAuthor
+================
+
+Get information about sender as un user of given message.
+
+Input is mandatory message identifier. Output is optional userType and
+optional authorName.
+
+userType (unknown and undefined for older messages) is type of user who has
+sent the message. Be ware there is special additional type `VIRTUAL'. Be ware
+the userType is a string unconstrained by XML schema:
+
+Value               Description
+--------------------------------------------------------------------------
+PRIMARY_USER        The sender was a owner of the box
+ENTRUSTED_USER     The sender was an entrusted user associated to the box
+ADMINISTRATOR       The sender was administrator assiciated to the box
+OFFICIAL            The sender was ISDS (for system messages)
+VIRTUAL             The sender was an application authenticated by `system'
+                    certificate
+
+authorName is a name of user logged into senders box (not a login name) if
+sender allowed to reveal his name explicitely.
 
 
 GetMessageStateChanges
