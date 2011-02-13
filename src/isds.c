@@ -1805,6 +1805,27 @@ static const xmlChar *isds_UserType2string(const isds_UserType type) {
 }
 
 
+/* Convert UTF-8 @string representation of ISDS sender type to enum @type */
+static isds_error string2isds_sender_type(xmlChar *string,
+        isds_sender_type *type) {
+    if (!string || !type) return IE_INVAL;
+
+    if (!xmlStrcmp(string, BAD_CAST "PRIMARY_USER"))
+        *type = SENDERTYPE_PRIMARY;
+    else if (!xmlStrcmp(string, BAD_CAST "ENTRUSTED_USER"))
+        *type = SENDERTYPE_ENTRUSTED;
+    else if (!xmlStrcmp(string, BAD_CAST "ADMINISTRATOR"))
+        *type = SENDERTYPE_ADMINISTRATOR;
+    else if (!xmlStrcmp(string, BAD_CAST "OFFICIAL"))
+        *type = SENDERTYPE_OFFICIAL;
+    else if (!xmlStrcmp(string, BAD_CAST "VIRTUAL"))
+        *type = SENDERTYPE_VIRTUAL;
+    else
+        return IE_ENUM;
+    return IE_SUCCESS;
+}
+
+
 /* Convert ISDS dmFileMetaType enum @type to UTF-8 string.
  * @Return pointer to static string, or NULL if unknown enum value */
 static const xmlChar *isds_FileMetaType2string(const isds_FileMetaType type) {
@@ -9006,6 +9027,121 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
 isds_error isds_get_signed_sent_message(struct isds_ctx *context,
         const char *message_id, struct isds_message **message) {
     return isds_get_signed_message(context, 1, message_id, message);
+}
+
+
+/* Get type and name of user who sent a message identified by ID.
+ * @context is session context
+ * @message_id is message identifier
+ * @sender_type is pointer to automatically allocated type of sender detected
+ * from @raw_sender_type string. If @raw_sender_type is unknown to this
+ * library or to the server, NULL will be returned.
+ * @raw_sender_type is automatically reallocated UTF-8 string describing
+ * sender type or NULL if not known to server.
+ * @sender_name is automatically reallocated UTF-8 name of user who sent the
+ * message, or NULL if not known to ISDS. */
+isds_error isds_get_message_sender(struct isds_ctx *context,
+        const char *message_id, isds_sender_type **sender_type,
+        char **raw_sender_type, char **sender_name) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *status_message = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+#endif
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (sender_type) zfree(*sender_type);
+    if (raw_sender_type) zfree(*raw_sender_type);
+    if (sender_name) zfree(*sender_name);
+    if (!message_id || !sender_type || !raw_sender_type || !sender_name)
+        return IE_INVAL;
+
+#if HAVE_LIBCURL
+    /* Do request and check for success */
+    err = build_send_check_message_request(context, SERVICE_DM_INFO,
+            BAD_CAST "GetMessageAuthor",
+            message_id, &response, NULL, NULL, &code, &status_message);
+    if (err) goto leave;
+
+    /* Extract data */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(
+                BAD_CAST "/isds:GetMessageAuthorResponse", xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context,
+                _("Missing GetMessageAuthorResponse element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    if (result->nodesetval->nodeNr > 1) {
+        isds_log_message(context,
+                _("Multiple GetMessageAuthorResponse element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+    xmlXPathFreeObject(result); result = NULL;
+
+    /* Fill output arguments in */
+    EXTRACT_STRING("isds:userType", *raw_sender_type);
+    if (*raw_sender_type) {
+        *sender_type = calloc(1, sizeof(**sender_type));
+        if (!*sender_type) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+        err = string2isds_sender_type((xmlChar *)*raw_sender_type,
+                *sender_type);
+        if (err) {
+            zfree(*sender_type);
+            if (err == IE_ENUM) {
+                err = IE_SUCCESS;
+                char *raw_locale = _isds_utf82locale(*raw_sender_type);
+                isds_log(ILF_ISDS, ILL_WARNING,
+                        _("Unknown isds:userType value: %s"), raw_locale);
+                free(raw_locale);
+            }
+        }
+    }
+    EXTRACT_STRING("isds:authorName", *sender_name);
+
+leave:
+    if (err) {
+        zfree(*sender_type);
+        zfree(*raw_sender_type);
+        zfree(*sender_name);
+    }
+
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(status_message);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("GetMessageAuthor request processed by server "
+                    "successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+    return err;
 }
 
 

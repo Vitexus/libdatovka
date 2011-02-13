@@ -573,6 +573,17 @@ struct isds_approval {
     char *refference;               /* Identifier of the approval */
 };
 
+/* Message sender type.
+ * Similar but not equivalent to isds_UserType. */
+typedef enum {
+    SENDERTYPE_PRIMARY,             /* Owner of the box */
+    SENDERTYPE_ENTRUSTED,           /* User with limited access to the box */
+    SENDERTYPE_ADMINISTRATOR,       /* User to manage ENTRUSTED_USERs */
+    SENDERTYPE_OFFICIAL,            /* ISDS; sender of system message */
+    SENDERTYPE_VIRTUAL              /* An application (e.g. document
+                                       information system) */
+} isds_sender_type;
+
 /* Digital delivery of credentials */
 struct isds_credentials_delivery {
     /* Input members */
@@ -1211,6 +1222,20 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
  * member will be filled with PKCS#7 structure in DER format. */
 isds_error isds_get_signed_sent_message(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
+
+/* Get type and name of user who sent a message identified by ID.
+ * @context is session context
+ * @message_id is message identifier
+ * @sender_type is pointer to automatically allocated type of sender detected
+ * from @raw_sender_type string. If @raw_sender_type is unknown to this
+ * library or to the server, NULL will be returned.
+ * @raw_sender_type is automatically reallocated UTF-8 string describing
+ * sender type or NULL if not known to server.
+ * @sender_name is automatically reallocated UTF-8 name of user who sent the
+ * message, or NULL if not known to ISDS. */
+isds_error isds_get_message_sender(struct isds_ctx *context,
+        const char *message_id, isds_sender_type **sender_type,
+        char **raw_sender_type, char **sender_name);
 
 /* Retrieve hash of message identified by ID stored in ISDS.
  * @context is session context
