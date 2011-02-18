@@ -9035,11 +9035,12 @@ isds_error isds_get_signed_sent_message(struct isds_ctx *context,
  * @message_id is message identifier
  * @sender_type is pointer to automatically allocated type of sender detected
  * from @raw_sender_type string. If @raw_sender_type is unknown to this
- * library or to the server, NULL will be returned.
+ * library or to the server, NULL will be returned. Pass NULL if you don't
+ * care about it.
  * @raw_sender_type is automatically reallocated UTF-8 string describing
- * sender type or NULL if not known to server.
+ * sender type or NULL if not known to server. Pass NULL if you don't care.
  * @sender_name is automatically reallocated UTF-8 name of user who sent the
- * message, or NULL if not known to ISDS. */
+ * message, or NULL if not known to ISDS. Pass NULL if you don't care. */
 isds_error isds_get_message_sender(struct isds_ctx *context,
         const char *message_id, isds_sender_type **sender_type,
         char **raw_sender_type, char **sender_name) {
@@ -9049,6 +9050,7 @@ isds_error isds_get_message_sender(struct isds_ctx *context,
     xmlChar *code = NULL, *status_message = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
+    char *type_string = NULL;
 #endif
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -9056,8 +9058,7 @@ isds_error isds_get_message_sender(struct isds_ctx *context,
     if (sender_type) zfree(*sender_type);
     if (raw_sender_type) zfree(*raw_sender_type);
     if (sender_name) zfree(*sender_name);
-    if (!message_id || !sender_type || !raw_sender_type || !sender_name)
-        return IE_INVAL;
+    if (!message_id) return IE_INVAL;
 
 #if HAVE_LIBCURL
     /* Do request and check for success */
@@ -9098,34 +9099,40 @@ isds_error isds_get_message_sender(struct isds_ctx *context,
     xmlXPathFreeObject(result); result = NULL;
 
     /* Fill output arguments in */
-    EXTRACT_STRING("isds:userType", *raw_sender_type);
-    if (*raw_sender_type) {
+    EXTRACT_STRING("isds:userType", type_string);
+    if (type_string) {
         *sender_type = calloc(1, sizeof(**sender_type));
         if (!*sender_type) {
             err = IE_NOMEM;
             goto leave;
         }
-        err = string2isds_sender_type((xmlChar *)*raw_sender_type,
-                *sender_type);
-        if (err) {
-            zfree(*sender_type);
-            if (err == IE_ENUM) {
-                err = IE_SUCCESS;
-                char *raw_locale = _isds_utf82locale(*raw_sender_type);
-                isds_log(ILF_ISDS, ILL_WARNING,
-                        _("Unknown isds:userType value: %s"), raw_locale);
-                free(raw_locale);
+
+        if (sender_type) {
+            err = string2isds_sender_type((xmlChar *)type_string,
+                    *sender_type);
+            if (err) {
+                zfree(*sender_type);
+                if (err == IE_ENUM) {
+                    err = IE_SUCCESS;
+                    char *type_string_locale = _isds_utf82locale(type_string);
+                    isds_log(ILF_ISDS, ILL_WARNING,
+                            _("Unknown isds:userType value: %s"),
+                            type_string_locale);
+                    free(type_string_locale);
+                }
             }
         }
     }
-    EXTRACT_STRING("isds:authorName", *sender_name);
+    if (sender_type)
+        EXTRACT_STRING("isds:authorName", *sender_name);
 
 leave:
     if (err) {
-        zfree(*sender_type);
-        zfree(*raw_sender_type);
-        zfree(*sender_name);
+        if (sender_type) zfree(*sender_type);
+        zfree(type_string);
+        if (sender_name) zfree(*sender_name);
     }
+    if (raw_sender_type) *raw_sender_type = type_string;
 
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);

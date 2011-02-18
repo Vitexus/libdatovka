@@ -1228,11 +1228,12 @@ isds_error isds_get_signed_sent_message(struct isds_ctx *context,
  * @message_id is message identifier
  * @sender_type is pointer to automatically allocated type of sender detected
  * from @raw_sender_type string. If @raw_sender_type is unknown to this
- * library or to the server, NULL will be returned.
+ * library or to the server, NULL will be returned. Pass NULL if you don't
+ * care about it.
  * @raw_sender_type is automatically reallocated UTF-8 string describing
- * sender type or NULL if not known to server.
+ * sender type or NULL if not known to server. Pass NULL if you don't care.
  * @sender_name is automatically reallocated UTF-8 name of user who sent the
- * message, or NULL if not known to ISDS. */
+ * message, or NULL if not known to ISDS. Pass NULL if you don't care. */
 isds_error isds_get_message_sender(struct isds_ctx *context,
         const char *message_id, isds_sender_type **sender_type,
         char **raw_sender_type, char **sender_name);
