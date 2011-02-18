@@ -1806,7 +1806,7 @@ static const xmlChar *isds_UserType2string(const isds_UserType type) {
 
 
 /* Convert UTF-8 @string representation of ISDS sender type to enum @type */
-static isds_error string2isds_sender_type(xmlChar *string,
+static isds_error string2isds_sender_type(const xmlChar *string,
         isds_sender_type *type) {
     if (!string || !type) return IE_INVAL;
 

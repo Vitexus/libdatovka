@@ -36,7 +36,7 @@ TESTS = prepare_environment \
 		isds-timestring2timeval \
 		isds-uint2isds_message_status isds-eventstring2event
 if BUILD_CURL
-TESTS += isds-dbtype isds-usertype \
+TESTS += isds-dbtype isds-sendertype isds-usertype \
 		 isds-datestring2tm isds-tm2datestring \
 		 isds-timeval2timestring 
 endif
@@ -119,6 +119,7 @@ isds_DbUserInfo_duplicate_SOURCES	= isds_DbUserInfo_duplicate.c $(common)
 isds_dbtype_SOURCES 		= isds-dbtype.c $(isds_common)
 isds_filemetatype_SOURCES 	= isds-filemetatype.c $(isds_common)
 isds_hash_algorithm_SOURCES = isds-hash_algorithm.c $(isds_common)
+isds_sendertype_SOURCES 	= isds-sendertype.c $(isds_common)
 isds_usertype_SOURCES 		= isds-usertype.c $(isds_common)
 isds_datestring2tm_SOURCES 	= isds-datestring2tm.c $(isds_common)
 isds_tm2datestring_SOURCES 	= isds-tm2datestring.c $(isds_common)
