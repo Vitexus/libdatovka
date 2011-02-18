@@ -63,6 +63,20 @@ void print_UserType(const long int *type) {
 }
 
 
+void print_sender_type(const isds_sender_type *type) {
+    if (!type) printf("NULL\n");
+    else
+        switch(*type) {
+            case SENDERTYPE_PRIMARY: printf("PRIMARY\n"); break;
+            case SENDERTYPE_ENTRUSTED: printf("ENTRUSTED\n"); break;
+            case SENDERTYPE_ADMINISTRATOR: printf("ADMINISTRATOR\n"); break;
+            case SENDERTYPE_OFFICIAL: printf("OFFICIAL\n"); break;
+            case SENDERTYPE_VIRTUAL: printf("VIRTUAL\n"); break;
+            default: printf("<unknown type %u>\n", *type);
+        }
+}
+
+
 void print_UserPrivils(const long int *privils) {
 
     const char *priviledges[] = {

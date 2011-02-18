@@ -20,6 +20,7 @@ void print_message(const struct isds_message *message);
 void print_copies(const struct isds_list *copies);
 void print_message_status_change(
         const struct isds_message_status_change *changed_status);
+void print_sender_type(const isds_sender_type *type);
 
 void compare_hashes(const struct isds_hash *hash1,
         const struct isds_hash *hash2);
