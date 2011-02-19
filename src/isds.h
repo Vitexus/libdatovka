@@ -433,12 +433,6 @@ struct isds_envelope {
                                        delivered after (currently) 10 days.
                                        This is delivery through fiction.
                                        Applies only to OVM dbType sender. */
-    _Bool *dmOVM;                   /* OVM sending mode.
-                                       Non-OVM dbType boxes that has
-                                       dbEffectiveOVM == true MUST select
-                                       between true (OVM mode) and
-                                       false (non-OVM mode).
-                                       Optional; Implicit value is true. */
     char *dmType;                   /* Message type:
                                        "V" is public message
                                        "K" is commercial message
@@ -448,6 +442,12 @@ struct isds_envelope {
                                        As 2010-05-20, used as output only. */
 
     /* Following members apply to outgoing messages only: */
+    _Bool *dmOVM;                   /* OVM sending mode.
+                                       Non-OVM dbType boxes that has
+                                       dbEffectiveOVM == true MUST select
+                                       between true (OVM mode) and
+                                       false (non-OVM mode).
+                                       Optional; Implicit value is true. */
     _Bool *dmPublishOwnID;          /* Allow sender to express his name shall
                                        be available to recipient by
                                        isds_get_message_sender(). Sender type

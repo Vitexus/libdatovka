@@ -253,6 +253,7 @@ void isds_envelope_free(struct isds_envelope **envelope) {
 
     free((*envelope)->dmPersonalDelivery);
     free((*envelope)->dmAllowSubstDelivery);
+
     free((*envelope)->dmOVM);
     free((*envelope)->dmPublishOwnID);
 
@@ -3551,7 +3552,6 @@ static isds_error extract_DmRecord(struct isds_ctx *context,
      * (XSD: gMessageEnvelope type) */
     err = append_GMessageEnvelope(context, envelope, xpath_ctx);
     if (err) goto leave;
-    /* dmOVM can not be obtained from ISDS */
 
     /* Get message type */
     err = append_message_type(context, envelope, xpath_ctx);
