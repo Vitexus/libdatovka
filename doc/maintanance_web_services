@@ -6,6 +6,7 @@ Source: Webové služby rozhraní ISDS pro správu datových schránek,
     version 2.15 (2010-11-19)
 Source: Webové služby související s přístupem do ISDS, version 1.2
     (2010-05-12)
+Source: dbTypes.xsd, version 2.11 (2010-11-23)
 
 
 These services are intended for administration of box as such. NONE of the
@@ -265,7 +266,7 @@ EnableOwnDataBox
 Renew access to box made inaccessible previously.
 
 Disable/enable access period is limited by law and can be charged. See
-DisableOwnDataBox for more detail.s
+DisableOwnDataBox for more details.
 
 
 SetEffectiveOVM
@@ -317,9 +318,9 @@ Input is type of XSD:tIdDbInput. Only box ID is sufficient probably.
 
 Output is list of box users. Structure:
 
-EnableOwnDataBoxResponse
+GetDataBoxUsersResponse
     + dbUsers – optional
-    |   + dbUserInfo – at least one must present. Type of XSD:tDbUserInfo. See
+    |   + dbUserInfo – zero count is possible. Type of XSD:tDbUserInfo. See
         |           GetUserInfoFromLogin request for more details.
     |   + dbUserInfo
     |   ⋮ 
