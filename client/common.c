@@ -438,6 +438,8 @@ void print_envelope(const struct isds_envelope *envelope) {
     print_bool(envelope->dmAllowSubstDelivery);
     printf("\t\tdmOVM = ");
     print_bool(envelope->dmOVM);
+    printf("\t\tdmPublishOwnID = ");
+    print_bool(envelope->dmPublishOwnID);
 
     printf("\t\tdmOrdinal = ");
     if (!envelope->dmOrdinal) printf("NULL\n");
