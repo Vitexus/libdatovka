@@ -297,7 +297,7 @@ the userType is a string unconstrained by XML schema:
 Value               Description
 --------------------------------------------------------------------------
 PRIMARY_USER        The sender was a owner of the box
-ENTRUSTED_USER     The sender was an entrusted user associated to the box
+ENTRUSTED_USER      The sender was an entrusted user associated to the box
 ADMINISTRATOR       The sender was administrator assiciated to the box
 OFFICIAL            The sender was ISDS (for system messages)
 VIRTUAL             The sender was an application authenticated by `system'
