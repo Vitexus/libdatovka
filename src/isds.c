@@ -5536,31 +5536,27 @@ isds_error isds_GetDataBoxUsers(struct isds_ctx *context, const char *box_id,
         err = IE_ERROR;
         goto leave;
     }
-    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-        isds_log_message(context, _("Missing dbUserInfo element"));
-        err = IE_ISDS;
-        goto leave;
-    }
+    if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        /* Iterate over all users */
+        for (i = 0; i < result->nodesetval->nodeNr; i++) {
 
-    /* Iterate over all users */
-    for (i = 0; i < result->nodesetval->nodeNr; i++) {
+            /* Prepare structure */
+            item = calloc(1, sizeof(*item));
+            if (!item) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+            item->destructor = (void(*)(void**))isds_DbUserInfo_free;
+            if (i == 0) *users = item;
+            else prev_item->next = item;
+            prev_item = item;
 
-        /* Prepare structure */
-        item = calloc(1, sizeof(*item));
-        if (!item) {
-            err = IE_NOMEM;
-            goto leave;
+            /* Extract it */
+            xpath_ctx->node = result->nodesetval->nodeTab[i];
+            err = extract_DbUserInfo(context,
+                    (struct isds_DbUserInfo **) (&item->data), xpath_ctx);
+            if (err) goto leave;
         }
-        item->destructor = (void(*)(void**))isds_DbUserInfo_free;
-        if (i == 0) *users = item;
-        else prev_item->next = item;
-        prev_item = item;
-
-        /* Extract it */
-        xpath_ctx->node = result->nodesetval->nodeTab[i];
-        err = extract_DbUserInfo(context,
-                (struct isds_DbUserInfo **) (&item->data), xpath_ctx);
-        if (err) goto leave;
     }
 
 leave:
