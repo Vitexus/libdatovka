@@ -97,7 +97,7 @@ Other elements are optional (dmRecipientOrgUnit, dmRecipientOrgUnitNum,
 dmSenderOrgUnit, dmSenderOrgUnitNum, dmToHands, dmPersonalDelivery,
 dmAllowSubstDelivery, dmRecipientRefNumber, dmRecipientIdent,
 dmSenderRefNumber, dmSenderIdent, dmLegalTitleLaw, dmLegalTitleYear,
-dmLegalTitleSect, dmLegalTitlePar, dmLegalTitlePoint, dmOVM).
+dmLegalTitleSect, dmLegalTitlePar, dmLegalTitlePoint, dmOVM, dmPublishOwnID).
 
 Since 2010-05-20, outgoing message envelope can specify dmType. However it's
 currently ignored.
@@ -153,6 +153,7 @@ CreateMultipleMessage
     |   |   dmLegalTitleYear, dmLegalTitleSect, dmLegalTitlePar,
     |   |   dmLegalTitlePoint, dmPersonalDelivery, dmAllowSubstDelivery
     |   + dmOVM – optional
+    |   + dmPublishOwnID – optional
     + dmFiles
 
 ISDS outputs list of assigned message IDs (each copy gets independent ID),
