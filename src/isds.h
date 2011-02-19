@@ -446,6 +446,13 @@ struct isds_envelope {
                                        Length: Exact 1 UTF-8 character if
                                        defined;
                                        As 2010-05-20, used as output only. */
+
+    /* Following members apply to outgoing messages only: */
+    _Bool *dmPublishOwnID;          /* Allow sender to express his name shall
+                                       be available to recipient by
+                                       isds_get_message_sender(). Sender type
+                                       will be always available.
+                                       Optional; Default value is false. */
 };
 
 
@@ -1024,7 +1031,7 @@ isds_error isds_disable_box_accessibility_externaly(
  * about sender). Included pointer to isds_list documents must contain at
  * least one document of FILEMETATYPE_MAIN. This is read-write structure, some
  * members will be filled with valid data from ISDS. Exact list of write
- * members is subject to change. Currently dmId is changed.
+ * members is subject to change. Currently dmID is changed.
  * @return ISDS_SUCCESS, or other error code if something goes wrong. */
 isds_error isds_send_message(struct isds_ctx *context,
         struct isds_message *outgoing_message);

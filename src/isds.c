@@ -254,6 +254,7 @@ void isds_envelope_free(struct isds_envelope **envelope) {
     free((*envelope)->dmPersonalDelivery);
     free((*envelope)->dmAllowSubstDelivery);
     free((*envelope)->dmOVM);
+    free((*envelope)->dmPublishOwnID);
 
     free(*envelope);
     *envelope = NULL;
@@ -6839,6 +6840,8 @@ static isds_error insert_envelope_files(struct isds_ctx *context,
     /* ???: Should we require value for dbEffectiveOVM sender?
      * ISDS has default as true */
     INSERT_BOOLEAN(envelope, "dmOVM", outgoing_message->envelope->dmOVM);
+    INSERT_BOOLEAN(envelope, "dmOVM",
+            outgoing_message->envelope->dmPublishOwnID);
 
 
     /* Append dmFiles */
@@ -6892,7 +6895,7 @@ leave:
  * about sender). Included pointer to isds_list documents must contain at
  * least one document of FILEMETATYPE_MAIN. This is read-write structure, some
  * members will be filled with valid data from ISDS. Exact list of write
- * members is subject to change. Currently dmId is changed.
+ * members is subject to change. Currently dmID is changed.
  * @return ISDS_SUCCESS, or other error code if something goes wrong. */
 isds_error isds_send_message(struct isds_ctx *context,
         struct isds_message *outgoing_message) {
