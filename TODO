@@ -1,7 +1,7 @@
 * Request for testing box in new testing environment
   (http://www.datoveschranky.info/spisova-sluzba/)
 * Test GetMessageAuthor (since 2011-02-05)
-* Add dmPublishOwnID element to CreateMessage{,Multiple}Message (since
+* Test dmPublishOwnID element to CreateMessage{,Multiple}Message (since
   2011-02-05)
 * Check we allow empty list in GetDataBoxUsers response (since 2011-02-05)
 * Check list of countries for standards, otherwise provide a mapping to
