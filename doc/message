@@ -2,8 +2,8 @@ Message specification
 =====================
 
 Source: Provozní řád ISDS, version 2010-11-28, Page 14
-Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2.11
-    (2010-05-20) [DataMessage_ws.pdf]
+Source: Webové služby rozhranní ISDS pro manipulaci s datovými zprávami,
+    version 2.16 (2011-01-26)
 Source: Registration of media type FO and ZFO
     <http://www.alvestrand.no/pipermail/ietf-types/2008-June/002037.html>
 Source: O2. Datové schránky: Informace pro dodavatele aplikací, version
@@ -60,53 +60,101 @@ file name of the Document. Even if dmMimeType exists, ISDS uses THIS attribute
 to detect Document format (according file name extension) and checks content
 for format conformance.
 
-There is list of allowed file name extensions: pdf, xml, fo, zfo, html, htm,
-odt, ods, odp, txt, rtf, doc, xls, ppt, jpg, jpeg, jfif, png, tiff, gif, mpeg1
-mpeg2, wav, mp2, mp3, isdoc, isdocx, cer, crt, der, pk7, p7b, p7c, p7f, p7m,
-p7s, tst (time stamp).
+List of allowed MIME types is copied (and sometimes agumented) in appendix
+of Webové služby rozhranní ISDS pro manipulaci s datovými zprávami.
 
-Non-normative: File name extension to MIME type map:
+There is list of allowed file name extensions and MIME type mapping
+(types ordered in decreasing prefference):
 
-Extensions  MIME type           Description
+Extensions  MIME type               Description
 -------------------------------------------------------------------------------
-pdf         application/pdf     Portable Document Format
-xml         application/xml     Extensible MarkUp Language
-fo          application/vnd.software602.filler.xml+form
-                                602XML form (uncompressed)
-zfo         application/vnd.software602.filler.xml+zip+form
-                                602XML form (zipped XML form with XSL-FO styles)
-html, htm   text/html           Hyper Text MarkUp Language
-odt         application/vnd.oasis.opendocument.text
-                                Open Document Format Text
-ods         application/vnd.oasis.opendocument.spreadsheet
-                                Open Document Format Spreadsheet
-odp         application/vnd.oasis.opendocument.presentation
-                                Open Document Format Presentation
-txt         text/plain          Plain text (no charset nor encoding signalled)
-rtf         application/rtf     Rich Text Format
-doc         application/msword  Microsoft Word Document
-xls         application/vnd.ms-excel
-                                Microsoft Excel Document
-ppt         application/vnd.ms-powerpoint
-                                Microsoft PowerPoint Document
-jpg, jpeg, jfif
-            image/jpeg          JFIF/JPEG image
-png         image/png           Portable Network Graphics
-tiff        image/tiff          Tag Image File Format
-gif         image/gif           Graphics Interchange Format
-mpeg1       video/mpeg          Motion Joint Picture Expert Group Version 1
-mpeg2       video/mpeg2         Motion Joint Picture Expert Group Version 2
-wav         audio/x-wav         RIFF Waveform Audio File Format
-mp2         audio/mpeg          MPEG-1 Audio Layer II
-mp3         audio/mpeg          MPEG-1 Audio Layer III
-isdoc, isdocx
-                                Information System Document (payment invoice)
 cer, crt, der
-                                X.509 Certificate (different serialization)
-pk7, p7b, p7c, p7f, p7m, p7s
-                                Crypto Message Syntax (different serialization)
-tsr, tst                        Time Stamp Token (RFC 3161)
-
+            application/x-x509-ca-cert  X.509 Certificate (different serialization)
+doc         application/msword          Microsoft Word Document
+docx        application/vnd.openxmlformats-officedocument.wordprocessingml.document
+                                        Microsoft OpenXML Document
+dbf         application/octetstream     ESRI Shapefile
+dgn         application/octetstream     Bentley Microstation Format
+dwg         image/vnd.dwg               AutoCAD Drawing
+edi         application/edifact         EDIFACT (ODETTE, EANCOM standards for
+            application/edi-x12         inernational bussines document
+            application/edi-consent     exchange)
+            text/plain
+            text/xml
+            application/xml
+fo          application/vnd.software602.filler.xml+form
+            application/xml
+                                        602XML form (uncompressed)
+gfs, gml    application/xml             Geography Markup Language Document
+            text/xml
+gif         image/gif                   Graphics Interchange Format
+html, htm   text/html                   Hyper Text MarkUp Language
+isdoc       text/isdoc                  Information System Document
+                                        (version >= 5.2)
+isdocx      text/isdocx                 Information System Document
+                                        (version >= 5.2)
+jfif, jpeg, jpg
+            image/jpeg                  JFIF/JPEG image
+            image/pjpeg
+mpeg, mpeg1, mpeg2, mpg
+            video/mpeg                  Motion Joint Picture Expert Group
+            video/mpeg1
+            video/mpeg2
+            video/mpg
+mp2, mp3    audio/mpeg                  MPEG-1 Audio Layer II
+odp         application/vnd.oasis.opendocument.presentation
+                                        Open Document Format Presentation
+ods         application/vnd.oasis.opendocument.spreadsheet
+                                        Open Document Format Spreadsheet
+odt         application/vnd.oasis.opendocument.text
+                                        Open Document Format Text
+pdf         application/pdf             Portable Document Format
+p7b         application/pkcs7-certificates
+            application/pkcs7-mime      
+            application/x-pkcs7-certificates
+                                        Crypto Message Syntax
+p7c, p7m    application/pkcs7-mime      Crypto Message Syntax
+            application/x-pkcs7-mime
+p7f         application/pkcs7-signature
+                                        Crypto Message Syntax
+p7s         application/pkcs7-signature      
+            application/x-pkcs7-signature      
+                                        Crypto Message Syntax
+pk7         application/pkcs7-mime      Crypto Message Syntax signatures
+            application/x-pkcs7-mime
+png         image/png                   Portable Network Graphics
+            image/x-png
+ppt         application/vnd.ms-powerpoint
+                                        Microsoft PowerPoint Document
+pptx        application/vnd.openxmlformats-officedocument.presentationml.presentation
+                                        Microsoft OpenXML Presentation
+prj         application/octet-stream    ESRI Shapefile
+qix         application/octet-stream    ESRI Shapefile
+rtf         application/msword          Rich Text Format
+            text/rtf
+            application/rtf
+sbn         application/octet-stream    ESRI Shapefile
+sbx         application/octet-stream    ESRI Shapefile
+shp         application/octet-stream    ESRI Shapefile
+shx         application/octet-stream    ESRI Shapefile
+tiff, tiff  image/tiff                  Tag Image File Format
+tsr, tst    application/timestamp-reply 
+                                        Time Stamp Token (RFC 3161)
+txt         text/plain                  Plain text
+                                        (no charset nor encoding signalled)
+wav         audio/wav                   RIFF Waveform Audio File Format
+            audio/wave
+            audio/x-wav
+xls         application/vnd.ms-excel    Microsoft Excel Document
+xlsx        application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+                                        Microsoft OpenXML Spreadsheet
+xml         application/xml             Extensible MarkUp Language
+            text/xml
+xsd         application/xml             XML Schema
+            text/xml
+zfo         application/vnd.software602.filler.xml+zip+form
+                                        602XML form (zipped XML form with
+                                        XSL-FO styles) or data box message
 
 Document ::= Binary_Document | XML_Document
 
