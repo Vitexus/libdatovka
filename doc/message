@@ -8,6 +8,8 @@ Source: Registration of media type FO and ZFO
     <http://www.alvestrand.no/pipermail/ietf-types/2008-June/002037.html>
 Source: O2. Datové schránky: Informace pro dodavatele aplikací, version
     2010-04-28, Page 18
+Source: Vyhláška 194/2009 Sb., o stanovení podrobností užívání a provozování
+    informačního systému datových schránek, updated by 422/2010 Coll.
 
 Message ::= Envelope, Content
 
@@ -16,33 +18,40 @@ Message format is defined in Appendix 1, file dmBaseTypes.xsd.
 Content ::= (Document)+
 
 Content involves one or more attachments (= Documents). Allowed Document
-formats are defined in Appendix 3 of Vyhláška o stanovení podrobností užívání
-a provozování ISDS.
+formats are defined in Vyhláška o stanovení podrobností užívání a provozování
+ISDS, 194/2009 Coll.
 
-Currently (2009-11-18) allowed formats are (quotation follows):
+Currently (2011-02-21) allowed formats are (quotation follows):
 
     – pdf (Portable Document Format)
     – PDF/A (Portable Document Format for the Long-term Archiving)
     – xml (Extensible Markup Language Document); must be valid against
-    free available XML Schema published by recipient
-    – fo/zfo (602XML Filler dokument)
+    freely available XML Schema published by recipient
+    – fo, zfo (602XML Filler Document)
     – html/htm (Hypertext Markup Language Document)
     – odt (Open Document Text)
     – ods (Open Document Spreadsheet)
     – odp (Open Document Presentation)
     – txt (plain text)
     – rtf (Rich Text Format)
-    – doc (MS Word Document)
-    – xls (MS Excel Spreadsheet)
-    – ppt (MS PowerPoint Presentation)
-    – jpg/jpeg/jfif (Joint Photographic Experts Group File Interchange Format)
+    – doc, docx (MS Word Document)
+    – xls, xlsx (MS Excel Spreadsheet)
+    – ppt, pptx (MS PowerPoint Presentation)
+    – jpg, jpeg, jfif (Joint Photographic Experts Group File Interchange
+    Format)
     – png (Portable Network Graphics)
-    – tiff (Tagged Image File Format)
+    – tif, tiff (Tagged Image File Format)
     – gif (Graphics Interchange Format)
-    – mpeg1/mpeg2 (Moving Picture Experts Group Phase 1 / Phase 2)
+    – mpeg1, mpeg2 (Moving Picture Experts Group Phase 1 / Phase 2)
     – wav (Waveform Audio Format)
-    – mp2/mp3 (MPEG-1 Audio Layer 2 / Layer 3)
-    – isdoc/isdocx (Information System Document) version 5.2 or higher
+    – mp2, mp3 (MPEG-1 Audio Layer 2 / Layer 3)
+    – isdoc, isdocx (Information System Document) version 5.2 or higher
+    - edi (international standard EDIFACT, standards for electotronic
+    interchange of business documents [EDI] ODETTE and EANCOM)
+    - dwg (AutoCAD DraWinG File Format) version 2007 or higher
+    - shp, dbf, shx, prj, qix, sbn, sbx (ESRI Shapefile)
+    - dgn (Bentley MicroStation Format) version V7 or V8
+    - gml, gfs, xsd (Geography Markup Language Document)
 
 Document format declaration inside Document and conformance checks change
 during time. XML Schemas provide attribute for Document MIME type and Document
