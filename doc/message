@@ -83,8 +83,8 @@ doc         application/msword          Microsoft Word Document
 docx        application/vnd.openxmlformats-officedocument.wordprocessingml.document
                                         Microsoft OpenXML Document
 dbf, prj, qix, sbn, sbx, shp, shx
-            application/octetstream     ESRI Shapefile
-dgn         application/octetstream     Bentley Microstation Format
+            application/octet-stream    ESRI Shapefile
+dgn         application/octet-stream    Bentley Microstation Format
 dwg         image/vnd.dwg               AutoCAD Drawing
 edi         application/edifact         EDIFACT (ODETTE, EANCOM standards for
             application/edi-x12         inernational bussines document
