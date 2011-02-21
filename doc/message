@@ -151,7 +151,7 @@ wav         audio/wav                   RIFF Waveform Audio File Format
             audio/x-wav
 xls         application/vnd.ms-excel    Microsoft Excel Document
 xlsx        application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
-                                        Microsoft OpenXML Spreadsheet
+                                        Microsoft OpenXML WorkBook
 xml         application/xml             Extensible MarkUp Language
             text/xml
 xsd         application/xml             XML Schema
