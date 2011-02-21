@@ -141,7 +141,7 @@ pptx        application/vnd.openxmlformats-officedocument.presentationml.present
 rtf         application/msword          Rich Text Format
             text/rtf
             application/rtf
-tiff, tiff  image/tiff                  Tag Image File Format
+tif, tiff   image/tiff                  Tag Image File Format
 tsr, tst    application/timestamp-reply 
                                         Time Stamp Token (RFC 3161)
 txt         text/plain                  Plain text
