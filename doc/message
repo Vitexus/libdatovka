@@ -4,8 +4,8 @@ Message specification
 Source: Provozní řád ISDS, version 2010-11-28, Page 14
 Source: Webové služby rozhranní ISDS pro manipulaci s datovými zprávami,
     version 2.16 (2011-01-26)
-Source: Registration of media type FO and ZFO
-    <http://www.alvestrand.no/pipermail/ietf-types/2008-June/002037.html>
+Source: MIME Media Types
+    <http://www.iana.org/assignments/media-types/index.html>
 Source: O2. Datové schránky: Informace pro dodavatele aplikací, version
     2010-04-28, Page 18
 Source: Vyhláška 194/2009 Sb., o stanovení podrobností užívání a provozování
@@ -92,7 +92,7 @@ edi         application/edifact         EDIFACT (ODETTE, EANCOM standards for
             text/plain
             text/xml
             application/xml
-fo          application/vnd.software602.filler.xml+form
+fo          application/vnd.software602.filler.form+xml
             application/xml
                                         602XML form (uncompressed)
 gfs, gml    application/xml             Geography Markup Language Document
@@ -156,7 +156,7 @@ xml         application/xml             Extensible MarkUp Language
             text/xml
 xsd         application/xml             XML Schema
             text/xml
-zfo         application/vnd.software602.filler.xml+zip+form
+zfo         application/vnd.software602.filler.form-xml-zip
                                         602XML form (zipped XML form with
                                         XSL-FO styles) or data box message
 
