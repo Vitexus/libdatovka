@@ -1,16 +1,14 @@
 Log in specification
 =====================
 
-Source: Provozní řád ISDS, version 2010-01-22, Pages 10–13, 16
+Source: Provozní řád ISDS, version 2011-02-05, Pages 11–13, 17
 Source: Vyhláška o stanovení podrobností užívání a provozování ISDS (194/2009
     Coll.)
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
     version 2 (2009-06-25)
 
 
-Connection tracking of web services is done via HTTP Cookie, or HTTP client
-must attach authentication data to each request. These two different
-connection trackings are differentiated on base URL clients connect to.
+HTTP client must attach authentication data to each request by Basic method.
 
 Allowed log in methods:
 
@@ -41,10 +39,6 @@ The device driver must provide any of the APIs in addition:
 
     – Microsoft CryptoAPI
     – PKCS#11 API through libp11 library.
-
-Log-in HTTP request must not be larger than 50 KB because server implementation
-uses weird HTTP redirects etc. Therefore SOAP DummyOperation is available for
-log-in purposes that is small enough (other SOAP requests can be much bigger).
 
 Desktop applications accessing ISDS must log in only on manual request of
 a user. Daemon implementations can log in automatically, but they are forbidden
