@@ -82,7 +82,8 @@ cer, crt, der
 doc         application/msword          Microsoft Word Document
 docx        application/vnd.openxmlformats-officedocument.wordprocessingml.document
                                         Microsoft OpenXML Document
-dbf         application/octetstream     ESRI Shapefile
+dbf, prj, qix, sbn, sbx, shp, shx
+            application/octetstream     ESRI Shapefile
 dgn         application/octetstream     Bentley Microstation Format
 dwg         image/vnd.dwg               AutoCAD Drawing
 edi         application/edifact         EDIFACT (ODETTE, EANCOM standards for
@@ -137,15 +138,9 @@ ppt         application/vnd.ms-powerpoint
                                         Microsoft PowerPoint Document
 pptx        application/vnd.openxmlformats-officedocument.presentationml.presentation
                                         Microsoft OpenXML Presentation
-prj         application/octet-stream    ESRI Shapefile
-qix         application/octet-stream    ESRI Shapefile
 rtf         application/msword          Rich Text Format
             text/rtf
             application/rtf
-sbn         application/octet-stream    ESRI Shapefile
-sbx         application/octet-stream    ESRI Shapefile
-shp         application/octet-stream    ESRI Shapefile
-shx         application/octet-stream    ESRI Shapefile
 tiff, tiff  image/tiff                  Tag Image File Format
 tsr, tst    application/timestamp-reply 
                                         Time Stamp Token (RFC 3161)
