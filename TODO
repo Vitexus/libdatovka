@@ -3,8 +3,8 @@
 * Test GetMessageAuthor (since 2011-02-05)
 * Test dmPublishOwnID element to CreateMessage{,Multiple}Message (since
   2011-02-05)
-* Check list of countries for standards, otherwise provide a mapping to
-  standard identifiries.
+* Provide a mapping from country codes to full English names (to allow
+  binding to Debian ISO 3166 catalogues)
 * Asynchronous interface
     Grep for (reentrant|thread) comments
 * Multithreaded interface

@@ -2,8 +2,8 @@ Box specification
 =================
 
 Source: Provozní řád Informačního systému datových schránek, (2010-11-28)
-Source: Webové služby ISDS pro vyhledávání datových schránek, version 2.7
-    (2009-12-18) [DBSearch_ws.pdf]
+Source: Webové služby ISDS pro vyhledávání datových schránek, version 2.16
+    (2011-01-25)
 Source: Webové služby ISDS pro manipulaci s datovými schránkami, version 2.6
     (2010-01-18) [DataMessage_ws.pdf], Page 6
 
@@ -48,3 +48,42 @@ Non-normative:
 Only state 1 means box is capable of receiving messages.
 User can log in even into inaccessible box. However some operations, like
 message sending, are not allowed then.
+
+
+Country values
+==============
+
+The counries are denoted by two-letter abbreviation. Sometimes it can be full
+or somewhat abbreviated name. Exact list of codes is in Appendix A of Webové
+služby ISDS pro vyhledávání datových schránek.
+
+Non-normative: It's a subset of ISO 3166-1 alpha-2 list with some non-standard
+extensions (borrowed from International Post Union).
+
+Missing codes: 
+
+Value   Description
+--------------------------------------------------
+AQ      Antarctica
+AS      Samoa (American)
+AX      Åland Islands
+BV      Bouvet Island
+CC      Cocos (Keeling) Islands
+CX      Christmas Island
+EH      Western Sahara
+GS      South Georgia & the South Sandwich Islands
+GU      Guam
+HM      Heard Island & McDonald Islands
+MP      Northern Mariana Islands
+NF      Norfolk Island
+SJ      Svalbard & Jan Mayen
+UM      US minor outlying islands
+YT      Mayotte
+
+Additional codes:
+
+Value   Description
+------------------------
+TA      Tristan da Cunha
+XZ      Kosovo
+
