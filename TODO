@@ -5,7 +5,6 @@
   2011-02-05)
 * Check list of countries for standards, otherwise provide a mapping to
   standard identifiries.
-* Check for list of allowed document types (since 2011-02-05)
 * Asynchronous interface
     Grep for (reentrant|thread) comments
 * Multithreaded interface

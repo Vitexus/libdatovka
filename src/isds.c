@@ -27,44 +27,66 @@ const char isds_cert_testing_locator[] = "https://ws1c.czebox.cz/";
 
 /* Extension to MIME type map */
 static xmlChar *extension_map_mime[] = {
-    BAD_CAST "pdf", BAD_CAST "application/pdf",
-    BAD_CAST "xml", BAD_CAST "application/xml",
-    BAD_CAST "fo", BAD_CAST "application/vnd.software602.filler.xml+form",
-    BAD_CAST "zfo", BAD_CAST "application/vnd.software602.filler.xml+zip+form",
-    BAD_CAST "html", BAD_CAST "text/html",
-    BAD_CAST "htm", BAD_CAST "text/html",
-    BAD_CAST "odt", BAD_CAST "application/vnd.oasis.opendocument.text",
-    BAD_CAST "ods", BAD_CAST "application/vnd.oasis.opendocument.spreadsheet",
-    BAD_CAST "odp", BAD_CAST "application/vnd.oasis.opendocument.presentation",
-    BAD_CAST "txt", BAD_CAST "text/plain",
-    BAD_CAST "rtf", BAD_CAST "application/rtf",
-    BAD_CAST "doc", BAD_CAST "application/msword",
-    BAD_CAST "xls", BAD_CAST "application/vnd.ms-excel",
-    BAD_CAST "ppt", BAD_CAST "application/vnd.ms-powerpoint",
-    BAD_CAST "jpg", BAD_CAST "image/jpeg",
-    BAD_CAST "jpeg", BAD_CAST "image/jpeg",
-    BAD_CAST "jfif", BAD_CAST "image/jpeg",
-    BAD_CAST "png", BAD_CAST "image/png",
-    BAD_CAST "tiff", BAD_CAST "image/tiff",
-    BAD_CAST "gif", BAD_CAST "image/gif",
-    BAD_CAST "mpeg1", BAD_CAST "video/mpeg",
-    BAD_CAST "mpeg2", BAD_CAST "video/mpeg2",
-    BAD_CAST "wav", BAD_CAST "audio/x-wav",
-    BAD_CAST "mp2", BAD_CAST "audio/mpeg",
-    BAD_CAST "mp3", BAD_CAST "audio/mpeg",
-    BAD_CAST "isdoc", BAD_CAST "text/isdoc",
-    BAD_CAST "isdocx", BAD_CAST "text/isdocx",
     BAD_CAST "cer", BAD_CAST "application/x-x509-ca-cert",
     BAD_CAST "crt", BAD_CAST "application/x-x509-ca-cert",
     BAD_CAST "der", BAD_CAST "application/x-x509-ca-cert",
-    BAD_CAST "pk7", BAD_CAST "application/pkcs7-mime",
-    BAD_CAST "p7b", BAD_CAST "application/pkcs7-mime",
+    BAD_CAST "doc", BAD_CAST "application/msword",
+    BAD_CAST "docx", BAD_CAST "application/vnd.openxmlformats-officedocument."
+        "wordprocessingml.document",
+    BAD_CAST "dbf", BAD_CAST "application/octet-stream",
+    BAD_CAST "prj", BAD_CAST "application/octet-stream",
+    BAD_CAST "qix", BAD_CAST "application/octet-stream",
+    BAD_CAST "sbn", BAD_CAST "application/octet-stream",
+    BAD_CAST "sbx", BAD_CAST "application/octet-stream",
+    BAD_CAST "shp", BAD_CAST "application/octet-stream",
+    BAD_CAST "shx", BAD_CAST "application/octet-stream",
+    BAD_CAST "dgn", BAD_CAST "application/octet-stream",
+    BAD_CAST "dwg", BAD_CAST "image/vnd.dwg",
+    BAD_CAST "edi", BAD_CAST "application/edifact",
+    BAD_CAST "fo", BAD_CAST "application/vnd.software602.filler.form+xml",
+    BAD_CAST "gfs", BAD_CAST "application/xml",
+    BAD_CAST "gml", BAD_CAST "application/xml",
+    BAD_CAST "gif", BAD_CAST "image/gif",
+    BAD_CAST "htm", BAD_CAST "text/html",
+    BAD_CAST "html", BAD_CAST "text/html",
+    BAD_CAST "isdoc", BAD_CAST "text/isdoc",
+    BAD_CAST "isdocx", BAD_CAST "text/isdocx",
+    BAD_CAST "jfif", BAD_CAST "image/jpeg",
+    BAD_CAST "jpg", BAD_CAST "image/jpeg",
+    BAD_CAST "jpeg", BAD_CAST "image/jpeg",
+    BAD_CAST "mpeg", BAD_CAST "video/mpeg",
+    BAD_CAST "mpeg1", BAD_CAST "video/mpeg",
+    BAD_CAST "mpeg2", BAD_CAST "video/mpeg",
+    BAD_CAST "mpg", BAD_CAST "video/mpeg",
+    BAD_CAST "mp2", BAD_CAST "audio/mpeg",
+    BAD_CAST "mp3", BAD_CAST "audio/mpeg",
+    BAD_CAST "odp", BAD_CAST "application/vnd.oasis.opendocument.presentation",
+    BAD_CAST "ods", BAD_CAST "application/vnd.oasis.opendocument.spreadsheet",
+    BAD_CAST "odt", BAD_CAST "application/vnd.oasis.opendocument.text",
+    BAD_CAST "pdf", BAD_CAST "application/pdf",
+    BAD_CAST "p7b", BAD_CAST "application/pkcs7-certificates",
     BAD_CAST "p7c", BAD_CAST "application/pkcs7-mime",
-    BAD_CAST "p7f", BAD_CAST "application/pkcs7-signature",
     BAD_CAST "p7m", BAD_CAST "application/pkcs7-mime",
+    BAD_CAST "p7f", BAD_CAST "application/pkcs7-signature",
     BAD_CAST "p7s", BAD_CAST "application/pkcs7-signature",
+    BAD_CAST "pk7", BAD_CAST "application/pkcs7-mime",
+    BAD_CAST "png", BAD_CAST "image/png",
+    BAD_CAST "ppt", BAD_CAST "application/vnd.ms-powerpoint",
+    BAD_CAST "pptx", BAD_CAST "application/vnd.openxmlformats-officedocument."
+        "presentationml.presentation",
+    BAD_CAST "rtf", BAD_CAST "application/rtf",
+    BAD_CAST "tif", BAD_CAST "image/tiff",
+    BAD_CAST "tiff", BAD_CAST "image/tiff",
     BAD_CAST "tsr", BAD_CAST "application/timestamp-reply",
-    BAD_CAST "tst", BAD_CAST "application/timestamp-reply"
+    BAD_CAST "tst", BAD_CAST "application/timestamp-reply",
+    BAD_CAST "txt", BAD_CAST "text/plain",
+    BAD_CAST "wav", BAD_CAST "audio/wav",
+    BAD_CAST "xls", BAD_CAST "application/vnd.ms-excel",
+    BAD_CAST "xlsx", BAD_CAST "application/vnd.openxmlformats-officedocument."
+        "spreadsheetml.sheet",
+    BAD_CAST "xml", BAD_CAST "application/xml",
+    BAD_CAST "xsd", BAD_CAST "application/xml",
+    BAD_CAST "zfo", BAD_CAST "application/vnd.software602.filler.form-xml-zip"
 };
 
 /* Deallocate structure isds_pki_credentials and NULL it.
@@ -9977,7 +9999,7 @@ const struct isds_document *isds_find_document_by_id(
 
 
 /* Normalize @mime_type to be proper MIME type.
- * ISDS servers passes invalid MIME types (e.g. "pdf"). This function tries to
+ * ISDS servers pass invalid MIME types (e.g. "pdf"). This function tries to
  * guess regular MIME type (e.g. "application/pdf").
  * @mime_type is UTF-8 encoded MIME type to fix
  * @return original @mime_type if no better interpretation exists, or array to

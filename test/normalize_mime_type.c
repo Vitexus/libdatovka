@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
     TEST("xlsx", test_normalize, "xlsx",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     TEST("xml", test_normalize, "xml", "application/xml");
-    TEST("xsd", test_normalize, "xsd", "application/xsd");
+    TEST("xsd", test_normalize, "xsd", "application/xml");
     TEST("zfo", test_normalize, "zfo",
             "application/vnd.software602.filler.form-xml-zip");
 

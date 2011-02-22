@@ -1375,7 +1375,7 @@ const struct isds_document *isds_find_document_by_id(
         const struct isds_list *documents, const char *id);
 
 /* Normalize @mime_type to be proper MIME type.
- * ISDS servers passes invalid MIME types (e.g. "pdf"). This function tries to
+ * ISDS servers pass invalid MIME types (e.g. "pdf"). This function tries to
  * guess regular MIME type (e.g. "application/pdf").
  * @mime_type is UTF-8 encoded MIME type to fix
  * @return original @mime_type if no better interpretation exists, or array to
