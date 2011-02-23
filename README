@@ -34,3 +34,8 @@ ISDS documentation is located under `doc' directory, user documentation can be
 found in header files. See `client' directory for examples how to use this
 library. Preliminary library self-tests are located in `test' directory. Test
 data and message examples are stored in `server/messages' directory.
+
+Credentials for testing account can be passed to example clients by
+environmental variables `ISDS_USERNAME' and `ISDS_PASSWORD' or by saving them
+into `testing_credentials' in build root directory (first line is user name,
+second line is password). Environmental variables take precedence.
