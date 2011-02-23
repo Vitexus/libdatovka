@@ -12,8 +12,8 @@ int main(int argc, char **argv) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
     const char *request_url = url;
-    const char *request_username = username;
-    const char *request_password = password;
+    const char *request_username = username();
+    const char *request_password = password();
     
     setlocale(LC_ALL, "");
 

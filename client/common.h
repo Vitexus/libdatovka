@@ -4,8 +4,8 @@
 #include <isds.h>
 
 #define url isds_testing_locator
-extern char username[];
-extern char password[];
+const char *username(void);
+const char *password(void);
 
 void print_bool(const _Bool *boolean);
 void print_longint(const long int *number);

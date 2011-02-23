@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
         printf("isds_set_progress_callback() succeeded.\n");
     }
 
-    err = isds_login(ctx, url, username, password, NULL);
+    err = isds_login(ctx, url, username(), password(), NULL);
     if (err) {
         printf("isds_login() failed: %s: %s\n", isds_strerror(err),
                 isds_long_message(ctx));

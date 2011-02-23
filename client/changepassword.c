@@ -10,7 +10,7 @@
 void change_password(struct isds_ctx *ctx,
         const char *old_password, const char *new_password) {
     printf("Changing password to: `%s'\n", new_password);
-    if (old_password && new_password && !strcmp(new_password, password))
+    if (old_password && new_password && !strcmp(old_password, new_password))
         printf("(Same as old password)\n");
     if (!old_password)
         printf("(Old password omitted)\n");
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
         printf("isds_set_timeout() failed: %s\n", isds_strerror(err));
     }
 
-    err = isds_login(ctx, url, username, password, NULL);
+    err = isds_login(ctx, url, username(), password(), NULL);
     if (err) {
         printf("isds_login() failed: %s: %s\n", isds_strerror(err),
                 isds_long_message(ctx));
@@ -59,9 +59,9 @@ int main(int argc, char **argv) {
 
 
     /* Try some invalid invocation that should fail */
-    change_password(ctx, password, NULL);
-    change_password(ctx, password, "");
-    change_password(ctx, password, password);
+    change_password(ctx, password(), NULL);
+    change_password(ctx, password(), "");
+    change_password(ctx, password(), password());
 
 
 
