@@ -17,7 +17,7 @@ TESTS = login
 
 noinst_PROGRAMS = $(TESTS)
 
-common = ../test.c ../test.h \
+common = ../test.c ../test.h common.c common.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/crypto.c \

@@ -1,5 +1,6 @@
 #include "../test.h"
 #include "isds.h"
+#include "common.h"
 
 static int test_login(const isds_error error, struct isds_ctx *context,
         const char *url, const char *username, const char *password,
@@ -36,8 +37,6 @@ int main(int argc, char **argv) {
     
     struct isds_ctx *context = NULL;
     const char *url = isds_testing_locator;
-    char username[] = "5s59sd";
-    char password[] = "Af123456";
 
     if (isds_init())
         ABORT_UNIT("isds_init() failed\n");
@@ -47,27 +46,27 @@ int main(int argc, char **argv) {
 
 
     TEST("invalid context", test_login, IE_INVALID_CONTEXT, NULL,
-            url, username, password, NULL);
+            url, username(), password(), NULL);
     TEST("NULL url with invalid credentials", test_login, IE_NOT_LOGGED_IN,
-            context, NULL, username, password, NULL);
+            context, NULL, username(), password(), NULL);
     TEST("NULL username", test_login, IE_INVAL, context,
-            url, NULL, password, NULL);
+            url, NULL, password(), NULL);
     TEST("NULL password", test_login, IE_INVAL, context,
-            url, username, NULL, NULL);
+            url, username(), NULL, NULL);
 
     TEST("invalid URL", test_login, IE_NETWORK, context,
-            "invalid://", username, password, NULL);
+            "invalid://", username(), password(), NULL);
     /* Direct connection fails on local resolution, connection trough proxy
      * failes on HTTP code */
     TEST("unresolvable host name", test_login2, IE_NETWORK, IE_SOAP, context,
-            "http://unresolvable.example.com/", username, password,
+            "http://unresolvable.example.com/", username(), password(),
             NULL);
 
     TEST("invalid credentials", test_login, IE_NOT_LOGGED_IN, context,
             url, "7777777", "nbuusr1", NULL);
 
     TEST("valid login", test_login, IE_SUCCESS, context,
-            url, username, password, NULL);
+            url, username(), password(), NULL);
 
     isds_ctx_free(&context);
     isds_cleanup();
