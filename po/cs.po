@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: libisds 0.4\n"
 "Report-Msgid-Bugs-To: petr.pisar@atlas.cz\n"
 "POT-Creation-Date: 2011-02-27 11:16+0100\n"
-"PO-Revision-Date: 2010-12-18 07:47+0100\n"
+"PO-Revision-Date: 2011-02-27 11:26+0100\n"
 "Last-Translator: Petr Pisar <petr.pisar@atlas.cz>\n"
 "Language-Team: Czech <translation-team-cs@lists.sourceforge.net>\n"
 "Language: cs\n"
@@ -216,9 +216,9 @@ msgid "%s (%s, GPGME %s, gcrypt %s, %s, libxml2 %s)"
 msgstr "%s (%s, GPGME %s, gcrypt %s, %s, libxml2 %s)"
 
 #: src/isds.c:688
-#, fuzzy, c-format
+#, c-format
 msgid "%s (GPGME %s, gcrypt %s, %s, libxml2 %s)"
-msgstr "%s (%s, GPGME %s, gcrypt %s, %s, libxml2 %s)"
+msgstr "%s (GPGME %s, gcrypt %s, %s, libxml2 %s)"
 
 #: src/isds.c:704
 msgid "Success"
@@ -1373,19 +1373,16 @@ msgid "SignedMessageDownload request processed by server successfully.\n"
 msgstr "Požadavek SignedMessageDownload úspěšně zpracován serverem.\n"
 
 #: src/isds.c:9109
-#, fuzzy
 msgid "Missing GetMessageAuthorResponse element"
-msgstr "Chybí element CreateMessageResponse"
+msgstr "Chybí element GetMessageAuthorResponse"
 
 #: src/isds.c:9115
-#, fuzzy
 msgid "Multiple GetMessageAuthorResponse element"
-msgstr "Násobný element CreateMessageResponse"
+msgstr "Násobný element GetMessageAuthorResponse"
 
 #: src/isds.c:9167
-#, fuzzy
 msgid "GetMessageAuthor request processed by server successfully.\n"
-msgstr "Požadavek CreateMessage úspěšně zpracován serverem.\n"
+msgstr "Požadavek GetMessageAuthor úspěšně zpracován serverem.\n"
 
 #: src/isds.c:9225
 #, c-format
