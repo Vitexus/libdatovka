@@ -13,8 +13,6 @@
 #include <sys/mman.h>
 #include <isds.h>
 
-char username_value[] = "5s59sd";
-char password_value[] = "Af123456";
 char credentials_file[] = "../test_credentials";
 
 static int read_config(char **line, int order) {
