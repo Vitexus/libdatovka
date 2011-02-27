@@ -1,3 +1,45 @@
+Version 0.5
+===========
+
+• ABI changed due to changes in specification. API is preserved. Please
+recompile your applications.
+
+• This release has not been tested on real system because devoloper has not
+obtained new testing account yet. But he believes library works. Testers are
+welcome.
+
+• Delivery events 5, 10, 11, 12, and 13 are recognized now.
+
+• GetMessageAuthor service implemented as get_message_sender() function.
+
+• New isds_envelope member `dmPublishOwnID' added. It allows sender to reveal
+his natural name to recipient on sending a message.
+
+• isds_GetDataBoxUsers() can return empty list of users now.
+
+• New document types recognised. MIME types of Software602 forms have been
+changed to reflect IANA registry.
+
+• Credential for testing account removed from documentation and code. Owner of
+ISDS removed all testing accounts, testers must request for new account and
+must agree with new rules including keeping credentials in secret and
+non-disclosuring found bugs in ISDS. Example clients and on-line tests read
+credentials from environment and central file in build root direcotory. See
+README for more details.
+
+• Errors from libxml2 parser are captured by libisds log system as ILF_XML
+facility and at ILL_ERROR level. Application can get them by standard library
+interface.
+
+• Library can be compiled without support for network operation by passing
+`--without-curl' option to configure script. All functions dependent on network
+remain available and will return IE_NOTSUP return code.
+
+• Dead variables removed to pass compilation by GCC 4.6 in strict mode.
+
+• Prepare test environment to pass without ~/.gnupg directory. Packagers can
+remove the hack from their packages now.
+
 Version 0.4
 ===========
 
