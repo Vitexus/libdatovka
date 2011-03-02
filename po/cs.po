@@ -1,14 +1,14 @@
 # Czech translation of libisds.
 # Copyright (C) 2010 Petr Písař
 # This file is distributed under the same license as the libisds package.
-# Petr Pisar <petr.pisar@atlas.cz>, 2010.
+# Petr Pisar <petr.pisar@atlas.cz>, 2010, 2011.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: libisds 0.4\n"
 "Report-Msgid-Bugs-To: petr.pisar@atlas.cz\n"
 "POT-Creation-Date: 2011-02-27 11:16+0100\n"
-"PO-Revision-Date: 2011-02-27 11:26+0100\n"
+"PO-Revision-Date: 2011-03-02 21:20+0100\n"
 "Last-Translator: Petr Pisar <petr.pisar@atlas.cz>\n"
 "Language-Team: Czech <translation-team-cs@lists.sourceforge.net>\n"
 "Language: cs\n"
