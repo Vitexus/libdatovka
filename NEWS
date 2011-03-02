@@ -32,8 +32,8 @@ facility and at ILL_ERROR level. Application can get them by standard library
 interface.
 
 • Library can be compiled without support for network operation by passing
-`--without-curl' option to configure script. All functions dependent on network
-remain available and will return IE_NOTSUP return code.
+`--without-libcurl' option to configure script. All functions dependent on
+network remain available and will return IE_NOTSUP return code.
 
 • Dead variables removed to pass compilation by GCC 4.6 in strict mode.
 
