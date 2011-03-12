@@ -7,21 +7,22 @@ For details, see http://sourceforge.net/projects/libb64
 
 #ifndef BASE64_CDECODE_H
 #define BASE64_CDECODE_H
+#include <stdint.h>
+#include <stddef.h>
 
-typedef enum
-{
+typedef enum {
 	step_a, step_b, step_c, step_d
 } base64_decodestep;
 
-typedef struct
-{
+typedef struct {
 	base64_decodestep step;
-	char plainchar;
+	int8_t plainchar;
 } base64_decodestate;
 
-void _isds_base64_init_decodestate(base64_decodestate* state_in);
+void _isds_base64_init_decodestate(base64_decodestate *state_in);
 
-int _isds_base64_decode_block(const char* code_in, const int length_in,
-        char* plaintext_out, base64_decodestate* state_in);
+size_t _isds_base64_decode_block(const int8_t *code_in,
+        const size_t length_in, int8_t *plaintext_out,
+        base64_decodestate *state_in);
 
 #endif /* BASE64_CDECODE_H */

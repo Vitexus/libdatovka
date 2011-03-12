@@ -207,18 +207,16 @@ _hidden char *_isds_b64encode(const void *plain, const size_t length) {
 
     _isds_base64_init_encodestate(&state);
 
-    /* TODO: This function assumes sizeof(char) == 1 byte.
-     * To fix it, one must fix underlying functions too. */
-    if (sizeof(char) != 1) PANIC("sizeof(char) != 1 byte");
-
     /* Allocate buffer
      * (4 is padding, 1 is final new line, and 1 is string terminator) */
     buffer = malloc(length * 2 + 4 + 1 + 1);
     if (!buffer) return NULL;
 
     /* Encode plain data */
-    code_length = _isds_base64_encode_block(plain, length, buffer, &state);
-    code_length += _isds_base64_encode_blockend(buffer + code_length, &state);
+    code_length = _isds_base64_encode_block(plain, length, (int8_t *)buffer,
+            &state);
+    code_length += _isds_base64_encode_blockend(((int8_t*)buffer) + code_length,
+            &state);
 
     /* Terminate string */
     buffer[code_length++] = '\0';
@@ -253,10 +251,6 @@ _hidden size_t _isds_b64decode(const char *encoded, void **plain) {
     encoded_length = strlen(encoded);
     _isds_base64_init_decodestate(&state);
 
-    /* TODO: This function assumes sizeof(char) == 1 byte.
-     * To fix it, one must fix underlying functions too. */
-    if (sizeof(char) != 1) PANIC("sizeof(char) != 1 byte");
-
     /* Divert empty input */
     if (encoded_length == 0) {
         zfree(*plain);
@@ -272,8 +266,8 @@ _hidden size_t _isds_b64decode(const char *encoded, void **plain) {
     *plain = buffer;
 
     /* Decode encoded data */
-    plain_length = _isds_base64_decode_block(encoded, encoded_length,
-            *plain, &state);
+    plain_length = _isds_base64_decode_block((const int8_t *)encoded,
+            encoded_length, *plain, &state);
     if (plain_length < 0 || plain_length >= (size_t) -1) {
         zfree(*plain);
         return((size_t) -1);
