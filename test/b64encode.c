@@ -34,7 +34,10 @@ static int test_b64encode(const char *correct, const void *input,
 int main(int argc, char **argv) {
     INIT_TEST("b64encode");
 
-    TEST("generic", test_b64encode, "NDIA\n", "42", 3);
+    TEST("generic", test_b64encode, "Af+qVQA=\n", "\x1\xff\xaa\x55", 5);
+    TEST("partial cycle", test_b64encode, "MQA=\n", "1", 2);
+    TEST("1 cycle", test_b64encode, "NDIA\n", "42", 3);
+    TEST("2 cycles", test_b64encode, "MTIzNDUA\n", "12345", 6);
     TEST("empty string", test_b64encode, "AA==\n", "", 1);
     TEST("NULL input, 0 length", test_b64encode, "\n", NULL, 0);
     TEST("non-NULL input, 0 length", test_b64encode, "\n", "", 0);

@@ -60,6 +60,10 @@ static int test_b64decode_null_pointer(const void *input,
 int main(int argc, char **argv) {
     INIT_TEST("b64decode");
 
+    TEST("generic", test_b64decode, "Af+qVQA=\n", "\x1\xff\xaa\x55", 5);
+    TEST("partial cycle", test_b64decode, "MQA=\n", "1", 2);
+    TEST("1 cycle", test_b64decode, "NDIA\n", "42", 3);
+    TEST("2 cycles", test_b64decode, "MTIzNDUA\n", "12345", 6);
     TEST("generic with new line", test_b64decode, "NDIA\n", "42", 3);
     TEST("generic without new line", test_b64decode, "NDIA", "42", 3);
     TEST("new line only", test_b64decode, "\n", NULL, 0);
