@@ -3,7 +3,7 @@ Message specification
 
 Source: Provozní řád ISDS, version 2010-11-28, Page 14
 Source: Webové služby rozhranní ISDS pro manipulaci s datovými zprávami,
-    version 2.16 (2011-01-26)
+    version 2.18 (2011-04-14)
 Source: MIME Media Types
     <http://www.iana.org/assignments/media-types/index.html>
 Source: O2. Datové schránky: Informace pro dodavatele aplikací, version
@@ -198,7 +198,30 @@ than 10 days after delivery.
 Digital Signatures
 ==================
 
-Embedded digital signatures are PKCS#7 to avoid expensive XML canonicalization.
+Some SOAP services (GetSignedDeliveryInfo etc.) returns response that embeds
+digitally signed ISDS message or delivery info. The digital signature is
+Base64-encoded BER CMS. (xmldsig is not used to avoid expensive XML
+canonicalization).
+
+The CMS should carry one certificate and one signed body. Since 2011-04,
+a time stamp is embedded into the CMS (get-message responses currently only).
+The data structure is compliant with RFC 5126 (CMS Advanced Electronic
+Signatures (CAdES)) and RFC 3161 (Internet X.509 Public Key Infrastructure
+Time-Stamp Protocol (TSP)).
+
+Stamp is stored in id-aa-signatureTimeStampToken object (iso(1).
+member-body(2).us(840).rsadsi(113549).pkcs(1).pkcs-9(9).smime(16).
+id-aa(2).14). Input for stamp is CMS SignerInfo.SignatureValue object.
+
+The signature and time stamp is computed on-the-fly, for each reponse again.
+
+If time stamp authority is irresponsive, CMS without time stamp is returned
+with special ISDS error code 0005. Client can retry to get the same stamped
+response two times in 20 minutes. Exceeding this quota leads to 50-second
+delay or error code 3005.
+
+If time stamp authority is failing, error code 9502 is returned without any
+message. 
 
 
 Message hash
