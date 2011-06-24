@@ -1,8 +1,8 @@
 User specification
 =================
 
-Source: Webové služby rozhraní ISDS pro správu datových schránkek, verzion 2.6
-    (2009-11-18) [DataBox_ws.pdf]
+Source: Webové služby rozhraní ISDS pro správu datových schránkek,
+    version 2.19 (2011-05-05)
 
 
 User types
@@ -18,6 +18,9 @@ ENTRUSTED_USER      User with limited access to the box. Such user is
 ADMINISTRATOR       User who can add/remove/update other users to a box, but
                     who is not a owner of the box.
 OFFICIAL
+OFFICIAL_CERT
+LIQUIDATOR          Liquidator of a commercial organisation. Effectively
+                    equivalent to PRIMARY_USER.
 
 
 User authorizations
