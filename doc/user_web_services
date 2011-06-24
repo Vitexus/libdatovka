@@ -304,6 +304,11 @@ OFFICIAL            The sender was ISDS (for system messages)
 VIRTUAL             The sender was an application authenticated by `system'
                     certificate
 
+Non-normative: New user types OFFICIAL_CERT and LIQUIDATOR are not listed in
+official documentation for this service. However LIQUIDATOR is said to be
+equivalent to PRIMARY_USER and PRIMARY_USER can send messages, thus I conclude
+these two now user types can occur in output of this service.
+
 authorName is a name of user logged into senders box (not a login name) if
 sender allowed to reveal his name explicitely.
 
