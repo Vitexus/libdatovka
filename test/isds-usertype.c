@@ -53,14 +53,18 @@ int main(int argc, char **argv) {
         USERTYPE_PRIMARY,
         USERTYPE_ENTRUSTED,
         USERTYPE_ADMINISTRATOR,
-        USERTYPE_OFFICIAL
+        USERTYPE_OFFICIAL,
+        USERTYPE_OFFICIAL_CERT,
+        USERTYPE_LIQUIDATOR
     };
 
     const xmlChar *names[] = {
         BAD_CAST "PRIMARY_USER",
         BAD_CAST "ENTRUSTED_USER",
         BAD_CAST "ADMINISTRATOR",
-        BAD_CAST "OFFICIAL"
+        BAD_CAST "OFFICIAL",
+        BAD_CAST "OFFICIAL_CERT",
+        BAD_CAST "LIQUIDATOR"
     };
 
 

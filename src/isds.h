@@ -289,7 +289,9 @@ typedef enum {
     USERTYPE_PRIMARY,               /* Owner of the box */
     USERTYPE_ENTRUSTED,             /* User with limited access to the box */
     USERTYPE_ADMINISTRATOR,         /* User to manage ENTRUSTED_USERs */
-    USERTYPE_OFFICIAL               /* ??? */
+    USERTYPE_OFFICIAL,              /* ??? */
+    USERTYPE_OFFICIAL_CERT,         /* ??? */
+    USERTYPE_LIQUIDATOR             /* Company liquidator */
 } isds_UserType;
 
 /* Data about user.
@@ -587,8 +589,10 @@ typedef enum {
     SENDERTYPE_ENTRUSTED,           /* User with limited access to the box */
     SENDERTYPE_ADMINISTRATOR,       /* User to manage ENTRUSTED_USERs */
     SENDERTYPE_OFFICIAL,            /* ISDS; sender of system message */
-    SENDERTYPE_VIRTUAL              /* An application (e.g. document
+    SENDERTYPE_VIRTUAL,             /* An application (e.g. document
                                        information system) */
+    SENDERTYPE_OFFICIAL_CERT,        /* ???; Non-normative */
+    SENDERTYPE_LIQUIDATOR           /* Liquidator of the company; Non-normative */
 } isds_sender_type;
 
 /* Digital delivery of credentials */

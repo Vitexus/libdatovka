@@ -29,7 +29,9 @@ int main(int argc, char **argv) {
         SENDERTYPE_ENTRUSTED,
         SENDERTYPE_ADMINISTRATOR,
         SENDERTYPE_OFFICIAL,
-        SENDERTYPE_VIRTUAL
+        SENDERTYPE_VIRTUAL,
+        SENDERTYPE_OFFICIAL_CERT,
+        SENDERTYPE_LIQUIDATOR
     };
 
     const xmlChar *names[] = {
@@ -37,7 +39,9 @@ int main(int argc, char **argv) {
         BAD_CAST "ENTRUSTED_USER",
         BAD_CAST "ADMINISTRATOR",
         BAD_CAST "OFFICIAL",
-        BAD_CAST "VIRTUAL"
+        BAD_CAST "VIRTUAL",
+        BAD_CAST "OFFICIAL_CERT",
+        BAD_CAST "LIQUIDATOR"
     };
 
 
