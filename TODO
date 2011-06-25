@@ -1,6 +1,5 @@
 * Implement news from 2011-05-15 specification update
     DeleteDataBoxPromptly service
-    New user types LIQUIDATOR and OFFICIAL_CERT
 * Request for testing box in new testing environment
   (http://www.datoveschranky.info/spisova-sluzba/)
 * Test GetMessageAuthor (since 2011-02-05)

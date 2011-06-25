@@ -1810,6 +1810,10 @@ static isds_error string2isds_UserType(xmlChar *string, isds_UserType *type) {
         *type = USERTYPE_ADMINISTRATOR;
     else if (!xmlStrcmp(string, BAD_CAST "OFFICIAL"))
         *type = USERTYPE_OFFICIAL;
+    else if (!xmlStrcmp(string, BAD_CAST "OFFICIAL_CERT"))
+        *type = USERTYPE_OFFICIAL_CERT;
+    else if (!xmlStrcmp(string, BAD_CAST "LIQUIDATOR"))
+        *type = USERTYPE_LIQUIDATOR;
     else
         return IE_ENUM;
     return IE_SUCCESS;
@@ -1824,6 +1828,8 @@ static const xmlChar *isds_UserType2string(const isds_UserType type) {
         case USERTYPE_ENTRUSTED: return(BAD_CAST "ENTRUSTED_USER"); break;
         case USERTYPE_ADMINISTRATOR: return(BAD_CAST "ADMINISTRATOR"); break;
         case USERTYPE_OFFICIAL: return(BAD_CAST "OFFICIAL"); break;
+        case USERTYPE_OFFICIAL_CERT: return(BAD_CAST "OFFICIAL_CERT"); break;
+        case USERTYPE_LIQUIDATOR: return(BAD_CAST "LIQUIDATOR"); break;
         default: return NULL; break;
     }
 }
@@ -1844,6 +1850,10 @@ static isds_error string2isds_sender_type(const xmlChar *string,
         *type = SENDERTYPE_OFFICIAL;
     else if (!xmlStrcmp(string, BAD_CAST "VIRTUAL"))
         *type = SENDERTYPE_VIRTUAL;
+    else if (!xmlStrcmp(string, BAD_CAST "OFFICIAL_CERT"))
+        *type = SENDERTYPE_OFFICIAL_CERT;
+    else if (!xmlStrcmp(string, BAD_CAST "LIQUIDATOR"))
+        *type = SENDERTYPE_LIQUIDATOR;
     else
         return IE_ENUM;
     return IE_SUCCESS;
