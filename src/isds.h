@@ -817,7 +817,7 @@ isds_error isds_add_pfoinfo(struct isds_ctx *context,
         const char *ceo_label, const struct isds_approval *approval,
         char **refnumber);
 
-/* Remove given given box permanently.
+/* Remove given box permanently.
  * @context is session context
  * @box is box description to delete
  * @since is date of box owner cancellation. Only tm_year, tm_mon and tm_mday
@@ -827,6 +827,16 @@ isds_error isds_add_pfoinfo(struct isds_ctx *context,
  * NULL, if you don't care.*/
 isds_error isds_delete_box(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box, const struct tm *since,
+        const struct isds_approval *approval, char **refnumber);
+
+/* Undocumented function.
+ * @context is session context
+ * @box is box description to delete
+ * @approval is optional external approval of box manipulation
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_delete_box_promptly(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *box,
         const struct isds_approval *approval, char **refnumber);
 
 /* Update data about given box.

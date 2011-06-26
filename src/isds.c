@@ -5304,15 +5304,17 @@ leave:
 }
 
 
-/* Remove given given box permanently.
+/* Common implementation for removing given box.
  * @context is session context
+ * @service_name is UTF-8 encoded name fo ISDS service
  * @box is box description to delete
  * @since is date of box owner cancellation. Only tm_year, tm_mon and tm_mday
- * carry sane value.
+ * carry sane value. If NULL, do not inject this information into request.
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
-isds_error isds_delete_box(struct isds_ctx *context,
+isds_error _isds_delete_box_common(struct isds_ctx *context,
+        const xmlChar *service_name, 
         const struct isds_DbOwnerInfo *box, const struct tm *since,
         const struct isds_approval *approval, char **refnumber) {
     isds_error err = IE_SUCCESS;
@@ -5326,15 +5328,17 @@ isds_error isds_delete_box(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
-    if (!box || !since) return IE_INVAL;
+    if (!service_name || !*service_name || !box) return IE_INVAL;
 
 
 #if HAVE_LIBCURL
-    /* Build DeleteDataBox request */
-    request = xmlNewNode(NULL, BAD_CAST "DeleteDataBox");
+    /* Build DeleteDataBox(Promptly) request */
+    request = xmlNewNode(NULL, service_name);
     if (!request) {
-        isds_log_message(context,
-                _("Could build DeleteDataBox request"));
+        char *service_name_locale = _isds_utf82locale((char*)service_name);
+        isds_printf_message(context,
+                _("Could build %s request"), service_name_locale);
+        free(service_name_locale);
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
@@ -5349,14 +5353,16 @@ isds_error isds_delete_box(struct isds_ctx *context,
     err = insert_DbOwnerInfo(context, box, node);
     if (err) goto leave;
 
-    err = tm2datestring(since, &string);
-    if (err) {
-        isds_log_message(context,
-                _("Could not convert `since' argument to ISO date string"));
-        goto leave;
+    if (since) {
+        err = tm2datestring(since, &string);
+        if (err) {
+            isds_log_message(context,
+                    _("Could not convert `since' argument to ISO date string"));
+            goto leave;
+        }
+        INSERT_STRING(request, "dbOwnerTerminationDate", string);
+        zfree(string);
     }
-    INSERT_STRING(request, "dbOwnerTerminationDate", string);
-    zfree(string);
 
     err = insert_GExtApproval(context, approval, request);
     if (err) goto leave;
@@ -5364,7 +5370,7 @@ isds_error isds_delete_box(struct isds_ctx *context,
 
     /* Send it to server and process response */
     err = send_request_check_drop_response(context, SERVICE_DB_MANIPULATION,
-            BAD_CAST "DeleteDataBox", &request, (xmlChar **) refnumber);
+            service_name, &request, (xmlChar **) refnumber);
 
 leave:
     xmlFreeNode(request);
@@ -5373,6 +5379,44 @@ leave:
     err = IE_NOTSUP;
 #endif
     return err;
+}
+
+
+/* Remove given box permanently.
+ * @context is session context
+ * @box is box description to delete
+ * @since is date of box owner cancellation. Only tm_year, tm_mon and tm_mday
+ * carry sane value.
+ * @approval is optional external approval of box manipulation
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_delete_box(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *box, const struct tm *since,
+        const struct isds_approval *approval, char **refnumber) {
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (!box || !since) return IE_INVAL;
+
+    return _isds_delete_box_common(context, BAD_CAST "DeleteDataBox",
+            box, since, approval, refnumber);
+}
+
+
+/* Undocumented function.
+ * @context is session context
+ * @box is box description to delete
+ * @approval is optional external approval of box manipulation
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_delete_box_promptly(struct isds_ctx *context,
+        const struct isds_DbOwnerInfo *box,
+        const struct isds_approval *approval, char **refnumber) {
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (!box) return IE_INVAL;
+
+    return _isds_delete_box_common(context, BAD_CAST "DeleteDataBoxPromptly",
+            box, NULL, approval, refnumber);
 }
 
 
