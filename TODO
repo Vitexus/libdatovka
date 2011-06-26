@@ -1,3 +1,6 @@
+* Implement news defined from 2011-06-19 specification:
+    HOTP and TOTP authentication
+    Convenience wrappers for publishing and ceasing government journals
 * Request for testing box in new testing environment
   (http://www.datoveschranky.info/spisova-sluzba/)
 * Test GetMessageAuthor (since 2011-02-05)
