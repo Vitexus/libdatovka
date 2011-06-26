@@ -67,6 +67,8 @@ GetDataBoxUsers
     Get list of users permitted to access a box
 Activate
     Not documented
+DeleteDataBoxPromptly
+    Not documented
 
 
 db_access.wsdl
@@ -337,6 +339,20 @@ get access to his initial credentials probably) and dbID (box identifier).
 
 Output is sequence of userId (user identifier), password (non-empty string),
 and dbStatus (common service return code).
+
+
+DeleteDataBoxPromptly
+=====================
+
+This service is not documentd. The only mention is in XML Schema and change
+log. Even the SOAP end-point dsManage is not specified.
+
+There are following elements in input: dbOwnerInfo (identifies box by owner
+structure) and group of optional elements gExtApproval (sequence of dbApproved
+and dbExternRefNumber as used in other services).
+
+Output is standard dbStatus subtree (error code and message of requested
+service).
 
 
 GetOwnerInfoFromLogin
