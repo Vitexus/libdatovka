@@ -1,0 +1,57 @@
+Publishing Government Journals
+==============================
+
+Source: Provozní řád Informačního systému datových schránek, (2011-06-19),
+    page 18.
+
+ISDS specification describes some additional services built on top of ISDS.
+One of them is publishing news by central administration (sections 4 and 5 of
+365/200? Coll. act, Government Information Systems Act).
+
+Permitted box owners (some government offices) can send a PDF journal
+encapsulated into special XML document as part of ISDS message to dedicated
+box, the message will be processed by a robot and decapsulated journal
+placed on web ISDS portal.
+
+The same box owner can cease publishing of a journal by sending other XML
+document carrying journal identifier as an ISDS message to the same dedicated
+box and the journal will be removed from web portal.
+
+Non-normative: Specification does not mention whether it's possible to publish
+or unpublish more journals by adding more documents into one message.
+
+The dedicated recipient box ID is `uur3q2i' and the box owner name is `Portál
+datových schránek (Ministerstvo vnitra)'.
+
+XML schemata of ISDS documents used to deliver or un-publish journal are
+described in 5th techical amendment of ISDS specification.
+
+
+XML Document for Publishing Journal
+===================================
+
+Structure:
+docMeta
+    + docName – type xs:string, obligate, title of the journal
+    + effectiveFrom – type xs:date, obligate, date since the journal is valid
+    + effectiveTo – type xs:string, effectively sequence of spaces or xs:date,
+    |               optional, date till the journal is valid
+    + dataPdf – type xs:base64Binary, obligate, the PDF journal encoded into
+                Base64, maximal size is 10 MB.
+
+Non-normative: No acknowledgment is defined by specification.
+
+
+XML Document for Un-publishing Journal
+======================================
+
+Structure:
+docMeta
+    + publishingDate – type xs:date, obligate, date since the journal is valid
+    + docErase – type xs:integer, obligate, journal identifier
+
+Journal identifier is assigned by recipient robot when publishing a journal.
+The identifier value can be found on web ISDS portal. It follows journal title
+in brackets there.
+
+Non-normative: No acknowledgment is defined by specification.
