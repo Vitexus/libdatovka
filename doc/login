@@ -25,7 +25,7 @@ Allowed log in methods:
 
     – SSL connection, user authenticated using `system' client certificate of
     third party AND using HTTP 1.1 basic authentication (user name is box ID,
-    password is empty). This case is intended for hosted Software as Service
+    password is empty). This case is intended for hosted software as service
     solutions.
 
 Note: Certificate attributes `commercial' and `system' are defined in Czech
