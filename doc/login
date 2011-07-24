@@ -6,7 +6,16 @@ Source: Vyhláška o stanovení podrobností užívání a provozování ISDS (
     Coll.)
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
     version 2 (2009-06-25)
+Source: Podpora OTP autentizace v ISDS, version 1.0 (2011-06-10)
 
+
+There are two auhtentication methods. One is stateless HTTP Basic method
+(assured by X.509 client certificate in some cases). The other one is
+statefull HTTP non-standard hotp or totpsendsms/totp method.
+
+
+Stateless HTTP Basic Method
+===========================
 
 HTTP client must attach authentication data to each request by Basic method.
 
@@ -43,6 +52,72 @@ The device driver must provide any of the APIs in addition:
 Desktop applications accessing ISDS must log in only on manual request of
 a user. Daemon implementations can log in automatically, but they are forbidden
 to abuse ISDS (e.g. redownloading old messages).
+
+
+HTTP OTP Methods
+================
+
+SOAP services are relocated to
+<https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT> URL.
+
+Server HTTP header `X-Response-message-text' value is encoded according to RFC
+2047, method B (Base64) in UTF-8.
+
+Authentication process is sequence of chalenge respose HTTP messages that
+differ for Hash-based One Time Pasword (HOTP) and Time-based One Time Password
+(TOTP) methods. They are described bellow.
+
+After successfull OTP authentication, client obtains a cookie named
+IPCZ-X-COOKIE that must be sent with each subsequent HTTP request. The cookie
+is valid for 30 minutes of inactivity.
+
+Client is supposed to ask server to invalidate the cookie before closing
+session by sending GET request to
+<https://DOMAINNAME/as/processLogout?uri=https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT>.
+
+The DOMAINNAME variable is one from server locators (e.g.
+`ws1.mojedatovaschranka.cz'). WEB_SERVICE_ENDPOINT is request-URI postfix
+specific for family of requested SOAP service (e.g `dz').
+
+
+HTTP HOTP Method
+================
+
+Client sends a POST request to
+<https://DOMAINNAME/as/processLogin?type=hotp&uri=https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT>
+with credentials in HTTP Basic header. The credentials are user name, password
+and OTP code in form USERNAME ":" PASSWORD OTP_CODE. All four fields are
+concatenated and encoded into Base64 as in standard HTTP Basic method. So the
+only difference is the password is agmented with OTP code.
+
+If authentication does not succeed, server will return 401 response
+with headers:
+
+WWW-Authenticate: hotp
+X-Response-message-code: authentication.error.userIsNotAuthenticated
+X-Response-message-text: =?UTF-
+    8?B?Q2h5YmEgcMWZaWhsw6HFoWVuw60sIHpub3Z1IHphZGVqdGUgw7pkYWplLg==?=
+
+The X-Response-message-code header carries machine readable code,
+X-Response-message-text is user readable text and the have following
+meaning:
+
+X-Response-message-Code                         Meaning
+-----------------------------------------------------------------------------
+authentication.error.userIsNotAuthenticated     Bad log-in, retry
+authentication.error.intruderDetected           Access blocked for 60 minutes
+authentication.error.paswordExpired             Password has expired
+authentication.error.badRole                    User name is not permitted to
+                                                access requested URI
+
+If authentication succeeds, server will return 302 response:
+
+Set-Cookie:IPCZ-X-COOKIE=01-5c1047cb9f3545f68cf987e6750acac4;
+Domain=.mojedatovaschranka.cz; secure
+Location: https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT
+
+With cookie used to track session and redirects to new URL where client should
+resubmit its original POST request.
 
 
 ISDS unavailability
