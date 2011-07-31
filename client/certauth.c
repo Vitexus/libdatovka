@@ -18,7 +18,9 @@ void usage(const char *command) {
     }
     if (!name) name = command;
 
-    fprintf(stderr, "Usage: %s {openssl|nss} {sw|hw}\n", name);
+    fprintf(stderr, "Usage: %s {openssl|nss} {sw|hw ID}\n"
+            "\tID\tIdentifier of cryptographic material in hardware engine\n",
+            name);
     exit(EXIT_FAILURE);
 }
 
@@ -71,17 +73,23 @@ int main(int argc, char **argv) {
     setlocale(LC_ALL, "");
 
     /* Parse arguments */
-    if (argc != 3 || !argv[1] || !argv[2]) usage(argv[0]);
+    if (argc < 3 || !argv[1] || !argv[2]) usage(argv[0]);
     if (!strcmp(argv[1], "openssl")) {
         use_nss = 0;
         if (!strcmp(argv[2], "sw")) pki_credentials = &pki_software_ossl;
-        else if (!strcmp(argv[2], "hw")) pki_credentials = &pki_hardware_ossl;
-        else usage(argv[0]);
+        else if (!strcmp(argv[2], "hw")) {
+            pki_credentials = &pki_hardware_ossl;
+            if (argc < 4 || !argv[3]) usage(argv[0]);
+            pki_credentials->key = argv[3];
+        } else usage(argv[0]);
     } else if (!strcmp(argv[1], "nss")) {
         use_nss = 1;
         if (!strcmp(argv[2], "sw")) pki_credentials = &pki_software_nss;
-        else if (!strcmp(argv[2], "hw")) pki_credentials = &pki_hardware_nss;
-        else usage(argv[0]);
+        else if (!strcmp(argv[2], "hw")) {
+            pki_credentials = &pki_hardware_nss;
+            if (argc < 4 || !argv[3]) usage(argv[0]);
+            pki_credentials->certificate = argv[3];
+        } else usage(argv[0]);
     } else
         usage(argv[0]);
 
