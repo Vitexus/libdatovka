@@ -1120,7 +1120,7 @@ leave:
  * All required arguments will be copied, you do not have to keep them after
  * that.
  * ISDS supports four different authentication methods. Exact method is
- * selected on @username, @passwors and @pki_credentials arguments:
+ * selected on @username, @password and @pki_credentials arguments:
  *   - If @pki_credentials == NULL, @username and @password must be supplied
  *   - If @pki_credentials != NULL, then
  *      - If @username == NULL, only certificate will be used
