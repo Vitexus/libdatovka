@@ -88,10 +88,10 @@ Client sends a POST request to
 with credentials in HTTP Basic header. The credentials are user name, password
 and OTP code in form USERNAME ":" PASSWORD OTP_CODE. All four fields are
 concatenated and encoded into Base64 as in standard HTTP Basic method. So the
-only difference is the password is agmented with OTP code.
+only difference is the password is augmented with OTP code.
 
 If authentication does not succeed, server will return 401 response
-with headers:
+with headers like these:
 
 WWW-Authenticate: hotp
 X-Response-message-code: authentication.error.userIsNotAuthenticated
@@ -99,7 +99,7 @@ X-Response-message-text: =?UTF-
     8?B?Q2h5YmEgcMWZaWhsw6HFoWVuw60sIHpub3Z1IHphZGVqdGUgw7pkYWplLg==?=
 
 The X-Response-message-code header carries machine readable code,
-X-Response-message-text is user readable text and the have following
+X-Response-message-text is user readable text and they have following
 meaning:
 
 X-Response-message-Code                         Meaning
