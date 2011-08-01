@@ -9,9 +9,9 @@ Source: Webové služby ISDS pro manipulaci s datovými zprávami,
 Source: Podpora OTP autentizace v ISDS, version 1.0 (2011-06-10)
 
 
-There are two auhtentication methods. One is stateless HTTP Basic method
+There are two authentication methods. One is stateless HTTP Basic method
 (assured by X.509 client certificate in some cases). The other one is
-statefull HTTP non-standard hotp or totpsendsms/totp method.
+state-full HTTP non-standard hotp or totpsendsms/totp method.
 
 
 Stateless HTTP Basic Method
@@ -63,11 +63,11 @@ SOAP services are relocated to
 Server HTTP header `X-Response-message-text' value is encoded according to RFC
 2047, method B (Base64) in UTF-8.
 
-Authentication process is sequence of chalenge respose HTTP messages that
-differ for Hash-based One Time Pasword (HOTP) and Time-based One Time Password
+Authentication process is sequence of challenge response HTTP messages that
+differ for Hash-based One Time Password (HOTP) and Time-based One Time Password
 (TOTP) methods. They are described bellow.
 
-After successfull OTP authentication, client obtains a cookie named
+After successful OTP authentication, client obtains a cookie named
 IPCZ-X-COOKIE that must be sent with each subsequent HTTP request. The cookie
 is valid for 30 minutes of inactivity.
 
@@ -120,6 +120,61 @@ With cookie used to track session and redirects to new URL where client should
 resubmit its original POST request.
 
 
+HTTP TOTP Method
+================
+
+Client sends POST request to
+<https://DOMAINNAME/as/processLogin?type=totp&sendSms=true&uri=https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT>with
+user name and password in standard HTTP Basic authentication header.
+
+If credentials are valid, ISDS generates one time code and sends it through
+SMS GSM gateway to user's predefined phone number (the phone number can be set
+on interactive web portal) and returns 302 response with redirect:
+
+302 Found
+X-Response-message-code: authentication.info.totpSended
+X-Response-message-text: =?UTF-8?B?SmVkbm9yw6F6b3bDvSBrw7NkIG9kZXNsw6FuLg==?=
+Location: https://DOMAINNAME/as/processLogin?type=totp&uri=https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT
+
+Otherwise 401 response is returned:
+
+WWW-Authenticate: totpsendsms
+X-Response-message-code: authentication.error.userIsNotAuthenticated
+X-Response-message-text: =?UTF-8?B?Q2h5YmEgcMWZaWhsw6HFoWVuw60sIHpub3Z1IHphZGVqdGUgw7pkYWplLg==?=
+
+X-Response-message-code defines machine parsable reason and
+X-Response-message-text human readable text:
+
+X-Response-message-code                         Meaning
+------------------------------------------------------------------------------
+authentication.info.totpSended                  OTP has been sent by ISDS
+authentication.error.userIsNotAuthenticated     Bad log-in, retry
+authentication.error.intruderDetected           Access blocked for 60 minutes
+authentication.error.paswordExpired             Password has expired
+authentication.info.cannotSendQuickly           OTP cannot be sent repeatedly
+                                                at this rate (minimal delay
+                                                depends on TOTP window setting)
+authentication.error.badRole                    User name is not allows to
+                                                access requested URI
+authentication.info.totpNotSended               OTP could not been sent. Retry
+                                                later.
+
+If 302 response has been received, then once user receives SMS message with
+the OTP code, client can continue by sending POST request with credentials
+USERNAME ":" PASSWORD OTP_CODE concatenated into one string and Base64
+encoded to new location
+<https://DOMAINNAME/as/processLogin?type=totp&uri=https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT>.
+
+If authentication succeeds, another 302 response with setting IPCZ-X-COOKIE
+cookie and redirecting to final SOAP service URL will be sent by server.
+Client can resubmit its original SOAP request to the new URL together with
+the cookie.
+
+Otherwise 401 response with WWW-Authenticate: totp header and
+X-Response-message-code header with one of values defined above in HOTP method
+will be delivered to client.
+
+
 ISDS unavailability
 ===================
 
@@ -141,6 +196,6 @@ Content-Type: text/xml; charset=utf-8
       <faultstring xsi:type="xsd:string">Omlouváme se všem uživatelům datových
 schránek za dočasné omezení přístupu do systému datových schránek z důvodu plánované
 údržby systému. Děkujeme za pochopení.</faultstring>
-    </SOAP-ENV:Fault>
+<F11>    </SOAP-ENV:Fault>
   </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>
