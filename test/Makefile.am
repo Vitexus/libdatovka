@@ -38,7 +38,8 @@ TESTS = prepare_environment \
 if BUILD_CURL
 TESTS += isds-dbtype isds-sendertype isds-usertype \
 		 isds-datestring2tm isds-tm2datestring \
-		 isds-timeval2timestring 
+		 isds-timeval2timestring \
+		 server
 endif
 
 
@@ -129,6 +130,8 @@ isds_uint2isds_message_status_SOURCES	= isds-uint2isds_message_status.c \
 										  $(isds_common)
 isds_eventstring2event_SOURCES	= isds-eventstring2event.c $(isds_common)
 
+# Access public API only
+server_SOURCES = server.c test.c
 
 # Tests that need .gnupg
 guess_raw_type.log load_raw.log: prepare_environment.log
