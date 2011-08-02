@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
     }
 
     err = isds_login(ctx, "https://localhost:1443/", username(), password(),
-            pki_credentials);
+            pki_credentials, NULL);
     if (err) {
         printf("isds_login() failed: %s: %s\n", isds_strerror(err),
                 isds_long_message(ctx));

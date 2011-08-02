@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
     }
 
     err = isds_login(ctx, request_url, request_username, request_password,
-            NULL);
+            NULL, NULL);
     if (err) {
         printf("isds_login() failed: %s: %s\n", isds_strerror(err),
                 isds_long_message(ctx));
