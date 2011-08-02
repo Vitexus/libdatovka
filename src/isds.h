@@ -133,6 +133,44 @@ struct isds_pki_credentials {
                                engine. */
 };
 
+/* One-time password authentication method */
+typedef enum {
+    OTP_HASH = 0,           /* Hash based OTP method */
+    OTP_TIME                /* Time based OTP method */
+} isds_otp_method;
+
+/* One-time passwed authentication resolution */
+typedef enum {
+    OTP_RESOLUTION_SUCCESS = 0,         /* Authentication succeded */
+    OTP_RESOLUTION_UNKNOWN,             /* Status is unkown */
+    OTP_RESOLUTION_BAD_AUTHENTICATION,  /* Bad log-in, retry */
+    OTP_RESOLUTION_ACCESS_BLOCKED,      /* Access blocked for 60 minutes
+                                           (brute force attack detected) */
+    OTP_RESOLUTION_PASSWORD_EXPIRED,    /* Password has expired.
+                                           ???: OTP or regular password
+                                           expired? */
+    OTP_RESOLUTION_TO_FAST,             /* OTP cannot be sent repeatedly
+                                           at this rate (minimal delay
+                                           depends on TOTP window setting) */
+    OTP_RESOLUTION_UNAUTHORIZED,        /* User name is not allows to
+                                           access requested URI */
+    OTP_RESOLUTION_TOTP_SENT,           /* OTP has been generated and sent by
+                                           ISDS */
+    OTP_RESOLUTION_TOTP_NOT_SENT,       /* OTP could not been sent.
+                                           Retry later. */
+} isds_otp_resolution;
+
+/* One-time password to authenticate client */
+struct isds_otp {
+    const isds_otp_method method;   /* Select OTP method to use */
+    const char *otp_code;           /* One-time password to use. Pass NULL,
+                                       if you do not know it yet (e.g. in case
+                                       of first phase of time-based OTP to
+                                       request new code from ISDS.) */
+    isds_otp_resolution resolution; /* Fine-grade resolution of OTP
+                                       authentication attempt. */
+};
+
 /* Box type */
 typedef enum {
     DBTYPE_SYSTEM = 0,          /* This is special sender value for messages
@@ -712,9 +750,14 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
 /* Connect and log in into ISDS server.
  * All required arguments will be copied, you do not have to keep them after
  * that.
- * ISDS supports four different authentication methods. Exact method is
- * selected on @username, @password and @pki_credentials arguments:
+ * ISDS supports six different authentication methods. Exact method is
+ * selected on @username, @password, @pki_credentials, and @otp arguments:
  *   - If @pki_credentials == NULL, @username and @password must be supplied
+ *     and then
+ *      - If @otp == NULL, simple authentication by username and password will
+ *        be proceeded.
+ *      - If @otp != NULL, authentication by username and password and OTP
+ *        will be used.
  *   - If @pki_credentials != NULL, then
  *      - If @username == NULL, only certificate will be used
  *      - If @username != NULL, then
@@ -722,10 +765,10 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
  *            @username shifts meaning to box ID. This is used for hosted
  *            services.
  *          - Otherwise all three arguments will be used.
- * Please note, that different cases requires different certificate type
- * (system qualified one or commercial non qualified one). This library does
- * not check such political issues. Please see ISDS Specification for more
- * details.
+ *      Please note, that different cases requires different certificate type
+ *      (system qualified one or commercial non qualified one). This library
+ *      does not check such political issues. Please see ISDS Specification
+ *      for more details.
  * @url is base address of ISDS web service. Pass extern isds_locator
  * variable to use production ISDS instance without client certificate
  * authentication (or extern isds_cert_locator with client certificate
@@ -736,10 +779,23 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
  * @username is user name of ISDS user or box ID
  * @password is user's secret password
  * @pki_credentials defines public key cryptographic material to use in client
- * authentication. */
+ * authentication.
+ * @otp selects one-time password authentication method to use, defines OTP
+ * code and returns fine grade resolution of OTP procedure.
+ * @return:
+ *  IE_SUCCESS if authentication succeeds
+ *  IE_NOT_LOGGED_IN if authentication fails. If OTP authentication has been
+ *  requested, fine grade reason will be set into @otp->resolution. Error
+ *  message from server can be obtained by isds_long_message() call. 
+ *  IE_PARTIAL_SUCCESS if time-based OTP authentication has been requested and
+ *  server has sent OTP code through side channel. Application is expected to
+ *  fill the code into @otp->otp_code and retry this call to complete second
+ *  phase of TOTP authentication;
+ *  or other appropriate error. */
 isds_error isds_login(struct isds_ctx *context, const char *url,
         const char *username, const char *password,
-        const struct isds_pki_credentials *pki_credentials);
+        const struct isds_pki_credentials *pki_credentials,
+        struct isds_otp *otp);
 
 /* Log out from ISDS server and close connection. */
 isds_error isds_logout(struct isds_ctx *context);

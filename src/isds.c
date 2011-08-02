@@ -1119,9 +1119,14 @@ leave:
 /* Connect and log in into ISDS server.
  * All required arguments will be copied, you do not have to keep them after
  * that.
- * ISDS supports four different authentication methods. Exact method is
- * selected on @username, @password and @pki_credentials arguments:
+ * ISDS supports six different authentication methods. Exact method is
+ * selected on @username, @password, @pki_credentials, and @otp arguments:
  *   - If @pki_credentials == NULL, @username and @password must be supplied
+ *     and then
+ *      - If @otp == NULL, simple authentication by username and password will
+ *        be proceeded.
+ *      - If @otp != NULL, authentication by username and password and OTP
+ *        will be used.
  *   - If @pki_credentials != NULL, then
  *      - If @username == NULL, only certificate will be used
  *      - If @username != NULL, then
@@ -1129,10 +1134,10 @@ leave:
  *            @username shifts meaning to box ID. This is used for hosted
  *            services.
  *          - Otherwise all three arguments will be used.
- * Please note, that different cases requires different certificate type
- * (system qualified one or commercial non qualified one). This library does
- * not check such political issues. Please see ISDS Specification for more
- * details.
+ *      Please note, that different cases requires different certificate type
+ *      (system qualified one or commercial non qualified one). This library
+ *      does not check such political issues. Please see ISDS Specification
+ *      for more details.
  * @url is base address of ISDS web service. Pass extern isds_locator
  * variable to use production ISDS instance without client certificate
  * authentication (or extern isds_cert_locator with client certificate
@@ -1143,10 +1148,23 @@ leave:
  * @username is user name of ISDS user or box ID
  * @password is user's secret password
  * @pki_credentials defines public key cryptographic material to use in client
- * authentication. */
+ * authentication.
+ * @otp selects one-time password authentication method to use, defines OTP
+ * code and returns fine grade resolution of OTP procedure.
+ * @return:
+ *  IE_SUCCESS if authentication succeeds
+ *  IE_NOT_LOGGED_IN if authentication fails. If OTP authentication has been
+ *  requested, fine grade reason will be set into @otp->resolution. Error
+ *  message from server can be obtained by isds_long_message() call. 
+ *  IE_PARTIAL_SUCCESS if time-based OTP authentication has been requested and
+ *  server has sent OTP code through side channel. Application is expected to
+ *  fill the code into @otp->otp_code and retry this call to complete second
+ *  phase of TOTP authentication;
+ *  or other appropriate error. */
 isds_error isds_login(struct isds_ctx *context, const char *url,
         const char *username, const char *password,
-        const struct isds_pki_credentials *pki_credentials) {
+        const struct isds_pki_credentials *pki_credentials,
+        struct isds_otp *otp) {
 #if HAVE_LIBCURL
     isds_error err = IE_NOT_LOGGED_IN;
     isds_error soap_err;
@@ -1177,6 +1195,12 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
             isds_log_message(context,
                     _("Both username and password must be supplied"));
             return IE_INVAL;
+        }
+        if (otp) {
+            isds_log_message(context,
+                    _("One-time password authentication method has not been "
+                        "implemented yet"));
+            return IE_NOTSUP;
         }
         /* Default locator is official system (without client certificate) */
         context->url = strdup((url) ? url : isds_locator);
