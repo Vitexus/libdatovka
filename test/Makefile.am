@@ -131,7 +131,10 @@ isds_uint2isds_message_status_SOURCES	= isds-uint2isds_message_status.c \
 isds_eventstring2event_SOURCES	= isds-eventstring2event.c $(isds_common)
 
 # Access public API only
-server_SOURCES = server.c test.c
+server_AM_CPPFLAGS = @XML_CPPFLAGS@
+server_AM_CFLAGS = -I$(srcdir)/$(LIBDIR) -DSRCDIR=\"$(top_srcdir)\"
+server_LDADD = $(LIBDIR)/libisds.la -L$(LIBDIR) @XML_LIBS@
+server_SOURCES = server.c test.c test.h
 
 # Tests that need .gnupg
 guess_raw_type.log load_raw.log: prepare_environment.log

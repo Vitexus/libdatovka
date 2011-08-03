@@ -1,4 +1,5 @@
 #include "test.h"
+#include "isds.h"
 
 #ifndef _POSIX_SOURCE
 #define _POSIX_SOURCE   /* For getaddrinfo(3) */
@@ -12,6 +13,9 @@
 #include <signal.h>
 #include <unistd.h>
 #include <wait.h>
+
+static const char *username = "douglas";
+static const char *password = "42";
 
 static const char *server_error = NULL;
 
@@ -64,6 +68,10 @@ static int listen_on_socket(void) {
 /* Do the server protocol.
  * Never returns. Terminates by exit(). */
 static void server(int server_socket) {
+    int client_socket;
+
+    client_socket = accept(server_socket, NULL, NULL);
+    fprintf(stderr, "Connection accepted\n");
 
     close(server_socket);
     exit(EXIT_SUCCESS);
@@ -118,9 +126,26 @@ static int stop_server(pid_t server_process) {
 }
 
 
+static int test_login(const isds_error error, struct isds_ctx *context,
+        const char *url, const char *username, const char *password,
+        const struct isds_pki_credentials *pki_credentials,
+        struct isds_otp *otp) {
+    isds_error err;
+
+    err = isds_login(context, url, username, password, pki_credentials, otp);
+    if (error != err)
+        FAIL_TEST("Wrong return code: expected=%s, returned=%s",
+                isds_strerror(error), isds_strerror(err));
+
+    isds_logout(context);
+    PASS_TEST;
+}
+
 int main(int argc, char **argv) {
     int error;
     pid_t server_process;
+    struct isds_ctx *context = NULL;
+    const char *url = "http://localhost/";
 
     INIT_TEST("server");
 
@@ -128,6 +153,18 @@ int main(int argc, char **argv) {
     if (server_process == -1) {
         ABORT_UNIT(server_error);
     }
+
+    if (isds_init())
+        ABORT_UNIT("isds_init() failed\n");
+    context = isds_ctx_create();
+    if (!context)
+        ABORT_UNIT("isds_ctx_create() failed\n");
+
+    TEST("valid login", test_login, IE_SUCCESS, context,
+            url, username, password, NULL, NULL);
+
+    isds_ctx_free(&context);
+    isds_cleanup();
 
     error = stop_server(server_process);
     if (error == -1) {
