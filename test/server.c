@@ -35,7 +35,7 @@ static int listen_on_socket(void) {
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     retval = getaddrinfo("localhost", NULL, &hints, &addresses);
-    if (!retval) {
+    if (retval) {
         set_server_error("Could not resolve `localhost'");
         return -1;
     }
