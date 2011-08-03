@@ -1,9 +1,13 @@
-#include "test.h"
-#include "isds.h"
-
 #ifndef _POSIX_SOURCE
 #define _POSIX_SOURCE   /* For getaddrinfo(3) */
 #endif
+
+#ifndef _BSD_SOURCE
+#define _BSD_SOURCE   /* For NI_MAXHOST */
+#endif
+
+#include "test.h"
+#include "isds.h"
 
 #include <stdlib.h>
 #include <sys/types.h>
@@ -65,6 +69,38 @@ static int listen_on_socket(void) {
 }
 
 
+/* Format socket address as printable string.
+ * @return allocated string or NULL in case of error. */
+static char *socket2address(int socket) {
+    struct sockaddr_storage storage;
+    socklen_t length = (socklen_t) sizeof(storage);
+    char host[NI_MAXHOST];
+    char service[NI_MAXSERV];
+    char *address = NULL;
+
+    if (-1 == getsockname(socket, (struct sockaddr *)&storage, &length)) {
+        set_server_error("Could not get address of server socket");
+        return NULL;
+    }
+
+    if (0 != getnameinfo((struct sockaddr *)&storage, length,
+                host, sizeof(host), service, sizeof(service),
+                NI_NUMERICHOST|NI_NUMERICSERV)) {
+        set_server_error("Could not resolve address of server socket");
+        return NULL;
+    }
+    
+    if (-1 == test_asprintf(&address,
+                (strchr(host, ':') == NULL) ? "%s:%s" : "[%s]:%s",
+                host, service)) {
+        set_server_error("Could not format server address");
+        return NULL;
+    }
+
+    return address;
+}
+
+
 /* Do the server protocol.
  * Never returns. Terminates by exit(). */
 static void server(int server_socket) {
@@ -79,31 +115,50 @@ static void server(int server_socket) {
 
 
 /* Start sever in separate process.
- * Return PID of server or
- * -1 in case of error. */
-static pid_t start_server(void) {
+ * @server_process is PID of forked server
+ * @server_address is automatically allocated TCP address of listening server
+ * socket.
+ * @return -1 in case of error. */
+static int start_server(pid_t *server_process, char **server_address) {
     int server_socket;
-    pid_t server_process;
     
+    if (server_address == NULL) {
+        set_server_error("start_server(): Got invalid server_address pointer");
+        return -1;
+    }
+    *server_address = NULL;
+
+    if (server_process == NULL) {
+        set_server_error("start_server(): Got invalid server_process pointer");
+        return -1;
+    }
+
     server_socket = listen_on_socket();
     if (server_socket == -1) {
         set_server_error("Could not create listening socket");
         return -1;
     }
 
-    server_process = fork();
-    if (server_process == -1) {
+    *server_address = socket2address(server_socket);
+    if (*server_address == NULL) {
+        close(server_socket);
+        set_server_error("Could not format address of listening address");
+        return -1;
+    }
+
+    *server_process = fork();
+    if (*server_process == -1) {
         close(server_socket);
         set_server_error("Server could not been forked");
         return -1;
     }
 
-    if (server_process == 0) {
+    if (*server_process == 0) {
         server(server_socket);
         /* Does not return */
     }
 
-    return server_process;
+    return 0;
 }
 
 
@@ -144,30 +199,44 @@ static int test_login(const isds_error error, struct isds_ctx *context,
 int main(int argc, char **argv) {
     int error;
     pid_t server_process;
+    char *server_address = NULL;
     struct isds_ctx *context = NULL;
-    const char *url = "http://localhost/";
+    char *url = NULL;
 
     INIT_TEST("server");
 
-    server_process = start_server();
-    if (server_process == -1) {
+    error = start_server(&server_process, &server_address);
+    if (error == -1) {
         ABORT_UNIT(server_error);
     }
+    if (-1 == test_asprintf(&url, "http://%s/", server_address)) {
+        free(server_address);
+        stop_server(server_process);
+        ABORT_UNIT("Could not format ISDS URL");
+    }
+    free(server_address);
 
-    if (isds_init())
+    if (isds_init()) {
+        isds_cleanup();
+        free(url);
+        stop_server(server_process);
         ABORT_UNIT("isds_init() failed\n");
+    }
     context = isds_ctx_create();
-    if (!context)
+    if (!context) {
+        isds_cleanup();
+        free(url);
+        stop_server(server_process);
         ABORT_UNIT("isds_ctx_create() failed\n");
+    }
 
     TEST("valid login", test_login, IE_SUCCESS, context,
             url, username, password, NULL, NULL);
 
     isds_ctx_free(&context);
     isds_cleanup();
-
-    error = stop_server(server_process);
-    if (error == -1) {
+    free(url);
+    if (-1 == stop_server(server_process)) {
         ABORT_UNIT(server_error);
     }
     
