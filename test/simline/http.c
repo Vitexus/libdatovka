@@ -29,6 +29,31 @@ static int http_read_line(int socket, char **line,
 
 #define BURST 1024
     while (1) {
+        /* Check for EOL */
+        for (p = *buffer; p < *buffer + *buffer_used; p++)
+        {
+            if (*p != '\r')
+                continue;
+            if (!(p + 1 < *buffer + *buffer_used && p[1] == '\n'))
+                continue;
+
+            /* EOL found */
+            /* Crop by zero at EOL */
+            *p = '\0';
+            p += 2;
+            /* Copy read ahead data to new buffer and point line to original
+             * buffer. */
+            tmp = malloc(BURST);
+            if (tmp == NULL) return -1;
+            memcpy(tmp, p, *buffer + *buffer_used - p);
+            *line = *buffer;
+            *buffer_size = BURST;
+            *buffer_used = *buffer + *buffer_used - p;
+            *buffer = tmp;
+            /* And exit */
+            return 0;
+        }
+        
         if (*buffer_size == *buffer_used) {
             /* Grow buffer */
             tmp = realloc(*buffer, *buffer_size + BURST);
@@ -41,32 +66,7 @@ static int http_read_line(int socket, char **line,
         got = read(socket, *buffer + *buffer_used, *buffer_size - *buffer_used);
         if (got == -1 && errno != EINTR) return -1;
 
-        /* Check for EOL */
-        for (p = *buffer + *buffer_used; p < *buffer + *buffer_used + got; p++)
-        {
-            if (*p != '\r')
-                continue;
-            if (!(p + 1 < *buffer + *buffer_used + got && p[1] == '\n'))
-                continue;
-
-            /* EOL found */
-            /* Crop by zero at EOL */
-            *p = '\0';
-            p += 2;
-            /* Copy read ahead data to new buffer and point line to original
-             * buffer. */
-            tmp = malloc(BURST);
-            if (tmp == NULL) return -1;
-            memcpy(tmp, p, *buffer + *buffer_used + got - p);
-            *line = *buffer;
-            *buffer_size = BURST;
-            *buffer_used = *buffer + *buffer_used + got - p;
-            *buffer = tmp;
-            /* And exit */
-            return 0;
-        }
-        
-        /* Chek for EOF */
+        /* Check for EOF */
         if (got == 0) return -1;
 
         /* Move end of buffer */
