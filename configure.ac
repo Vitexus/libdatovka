@@ -149,7 +149,8 @@ AC_CHECK_FUNCS([localtime_r memset munmap setlocale strdup strerror])
 CFLAGS="${CFLAGS} -std=c99 -Wall"
 
 AC_CONFIG_FILES([Makefile src/Makefile po/Makefile.in client/Makefile
-                 test/Makefile test/online/Makefile libisds.pc])
+                 test/Makefile test/simline/Makefile test/online/Makefile
+                 libisds.pc])
 
 #AC_CONFIG_SUBDIRS([src])
 AC_OUTPUT

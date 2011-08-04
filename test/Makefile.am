@@ -1,8 +1,9 @@
 AUTOMAKE_OPTIONS = color-tests parallel-tests
 export VERBOSE=1
 
+SUBDIRS = simline
 if BUILD_ONLINE_TEST
-SUBDIRS = online
+SUBDIRS += online
 endif
 
 libdirpath = src
@@ -38,8 +39,7 @@ TESTS = prepare_environment \
 if BUILD_CURL
 TESTS += isds-dbtype isds-sendertype isds-usertype \
 		 isds-datestring2tm isds-tm2datestring \
-		 isds-timeval2timestring \
-		 server
+		 isds-timeval2timestring
 endif
 
 
@@ -129,12 +129,6 @@ isds_timeval2timestring_SOURCES	= isds-timeval2timestring.c $(isds_common)
 isds_uint2isds_message_status_SOURCES	= isds-uint2isds_message_status.c \
 										  $(isds_common)
 isds_eventstring2event_SOURCES	= isds-eventstring2event.c $(isds_common)
-
-# Access public API only
-server_AM_CPPFLAGS = @XML_CPPFLAGS@
-server_AM_CFLAGS = -I$(srcdir)/$(LIBDIR) -DSRCDIR=\"$(top_srcdir)\"
-server_LDADD = $(LIBDIR)/libisds.la -L$(LIBDIR) @XML_LIBS@
-server_SOURCES = server.c test.c test.h
 
 # Tests that need .gnupg
 guess_raw_type.log load_raw.log: prepare_environment.log

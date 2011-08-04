@@ -6,7 +6,7 @@
 #define _BSD_SOURCE   /* For NI_MAXHOST */
 #endif
 
-#include "test.h"
+#include "../test.h"
 #include "isds.h"
 
 #include <stdlib.h>
