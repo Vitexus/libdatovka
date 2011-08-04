@@ -32,8 +32,7 @@ void http_headers_free(struct http_header **headers);
 void http_request_free(struct http_request **request);
 
 /* Read a HTTP request from connected socket.
- * @request is automatically allocated received HTTP request
- * @return 0 in case of success */
-int http_read_request(int socket, struct http_request *request);
+ * @return is heap-allocated received HTTP request, or NULL in case of error. */
+struct http_request *http_read_request(int socket);
 
 #endif

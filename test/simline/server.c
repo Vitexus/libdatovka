@@ -110,7 +110,7 @@ static void server(int server_socket) {
 
     while (0 <= (client_socket = accept(server_socket, NULL, NULL))) {
         fprintf(stderr, "Connection accepted\n");
-        http_read_request(client_socket, request);
+        request = http_read_request(client_socket);
         http_request_free(&request);
         close(client_socket);
     }

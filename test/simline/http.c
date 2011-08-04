@@ -8,7 +8,7 @@
 /* Read a line from HTTP socket.
  * @socket is descriptor to read from.
  * @line is auto-allocated just read line. Will be NULL if EOF has been
- * reached.
+ * reached or error occured.
  * @buffer is automatically reallocated buffer for the socket. It can preserve
  * prematurately read socket data.
  * @buffer_size is allocated size of @buffer
@@ -77,21 +77,100 @@ static int http_read_line(int socket, char **line,
     return -1;
 }
 
+
+/* Parse HTTP request header.
+ * @request is pre-allocated HTTP request.
+ * @return 0 if success. */
+static int http_parse_request_header(char *line,
+        struct http_request *request) {
+    char *p;
+    size_t length;
+
+    fprintf(stderr, "Request: <%s>\n", line);
+
+    /* Get method */
+    p = strchr(line, ' ');
+    if (p == NULL) return -1;
+    *p = '\0';
+    if (strcmp(line, "GET"))
+        request->method = HTTP_METHOD_GET;
+    else if (strcmp(line, "POST"))
+        request->method = HTTP_METHOD_POST;
+    else
+        request->method = HTTP_METHOD_UNKNOWN;
+    line = p + 1;
+
+    /* Get URI */
+    /* TODO: URI-decode */
+    p = strchr(line, ' ');
+    if (p == NULL) *p = '\0';
+    length = strlen(line);
+    request->uri = malloc(length + 1);
+    if (request->uri == NULL) return -1;
+    strcpy(request->uri, line);
+
+    /* Do not care about HTTP version */
+
+    return 0;
+}
+
+
+/* Parse generic HTTP header.
+ * @request is pre-allocated HTTP request.
+ * @return 0 if success. */
+static int http_parse_header(char *line, struct http_request *request) {
+    /* FIXME: Parse, multi-line, decode */
+    fprintf(stderr, "Header: <%s>\n", line);
+    return 0;
+}
+
+
 /* Read a HTTP request from connected socket.
- * @request is automatically allocated received HTTP request
- * @return 0 in case of success */
-int http_read_request(int socket, struct http_request *request) {
+ * @return is heap-allocated received HTTP request, or NULL in case of error. */
+struct http_request *http_read_request(int socket) {
+    struct http_request *request = NULL;
     char *line = NULL;
     char *buffer = NULL;
     size_t buffer_size = 0, buffer_used = 0;
 
+    request = malloc(sizeof(*request));
+    if (request == NULL) return NULL;
+    memset(request, 0, sizeof(*request));
+
+    /* Get request header */
     if (-1 == http_read_line(socket, &line, &buffer, &buffer_size,
-                &buffer_used))
-        return -1;
-    fprintf(stderr, "Request: <%s>\n", line);
+                &buffer_used)) {
+        http_request_free(&request);
+        goto leave;
+    }
+    if (http_parse_request_header(line, request)) {
+        http_request_free(&request);
+        goto leave;
+    }
+
+    /* Get other headers */
+    while (1) {
+        if (-1 == http_read_line(socket, &line, &buffer, &buffer_size,
+                    &buffer_used)) {
+            http_request_free(&request);
+            goto leave;
+        }
+
+        /* Check for headers delimiter */
+        if (line == NULL || *line == '\0')
+            break;
+
+        if (http_parse_header(line, request)) {
+            http_request_free(&request);
+            goto leave;
+        }
+    };
+
+
+leave:
     free(line);
     free(buffer);
-    return -1;
+    return request;;
 }
 
 /* Free HTTP header and set it to NULL */
