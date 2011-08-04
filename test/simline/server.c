@@ -7,6 +7,7 @@
 #endif
 
 #include "../test.h"
+#include "http.h"
 #include "isds.h"
 
 #include <stdlib.h>
@@ -105,9 +106,14 @@ static char *socket2address(int socket) {
  * Never returns. Terminates by exit(). */
 static void server(int server_socket) {
     int client_socket;
+    struct http_request *request = NULL;
 
-    client_socket = accept(server_socket, NULL, NULL);
-    fprintf(stderr, "Connection accepted\n");
+    while (0 <= (client_socket = accept(server_socket, NULL, NULL))) {
+        fprintf(stderr, "Connection accepted\n");
+        http_read_request(client_socket, request);
+        http_request_free(&request);
+        close(client_socket);
+    }
 
     close(server_socket);
     exit(EXIT_SUCCESS);
