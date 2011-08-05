@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h> /* fprintf() */
+#include <limits.h>
+#include <strings.h> /* strcasecmp() */
 
 /* Read a line from HTTP socket.
  * @socket is descriptor to read from.
@@ -179,6 +181,37 @@ static int http_parse_header(char *line, struct http_request *request) {
 }
 
 
+/* Find Content-Length value in HTTP request headers and set it into @request.
+ * @return 0 in success. */
+static int find_content_length(struct http_request *request) {
+    struct http_header *header;
+    if (request == NULL) return -1;
+
+    for (header = request->headers; header != NULL; header = header->next) {
+        if (header->name == NULL) continue;
+        if (!strcasecmp(header->name, "Content-Length")) break;
+    }
+
+    if (header != NULL || header->value == NULL) {
+        char *p;
+        long long int value = strtol(header->value, &p, 10);
+        if (*p != '\0')
+            return 1;
+        if ((value == LLONG_MIN || value == LLONG_MAX) && errno == ERANGE)
+            return -1;
+        if (value < 0)
+            return 1;
+        /* FIXME:
+        if (value > SIZE_T_MAX)
+            return -1;*/
+        request->body_length = value;
+    } else {
+        request->body_length = 0;
+    }
+    return 0;
+}
+
+
 /* Read a HTTP request from connected socket.
  * @return is heap-allocated received HTTP request, or NULL in case of error. */
 struct http_request *http_read_request(int socket) {
@@ -225,6 +258,11 @@ struct http_request *http_read_request(int socket) {
     };
 
     /* Get body */
+    if (find_content_length(request)) {
+        fprintf(stderr, "Could not determine length of body\n");
+        http_request_free(&request);
+        goto leave;
+    }
     /* TODO */
 
 leave:
