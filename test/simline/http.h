@@ -12,12 +12,13 @@ typedef enum {
 struct http_header {
     char *name;
     char *value;
+    struct http_header *next;
 };
 
 struct http_request {
     http_method method;
     char *uri;
-    struct http_header *headers; /* NULL terminated array */
+    struct http_header *headers; /* NULL terminated linked list */
     char *body;
     size_t body_length;
 };

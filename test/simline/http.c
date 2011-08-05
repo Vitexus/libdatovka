@@ -117,10 +117,64 @@ static int http_parse_request_header(char *line,
 
 /* Parse generic HTTP header.
  * @request is pre-allocated HTTP request.
- * @return 0 if success. */
+ * @return 0 if success, negative value if internal error, positive value if
+ * header is not valid. */
 static int http_parse_header(char *line, struct http_request *request) {
-    /* FIXME: Parse, multi-line, decode */
+    struct http_header *header;
+
+    if (line == NULL || request == NULL) return -1;
+
     fprintf(stderr, "Header: <%s>\n", line);
+
+    /* Find last used header */
+    for (header = request->headers; header != NULL && header->next != NULL;
+            header = header->next); 
+
+    if (*line == ' ' || *line == '\t') {
+        /* Line is continuation of last header */
+        if (header == NULL) return 1;   /* No previous header to continue */
+        line++;
+        size_t old_length = strlen(header->value);
+        char *tmp = realloc(header->value,
+                sizeof(header->value[0]) * (old_length + strlen(line) + 1));
+        if (tmp == NULL) return -1;
+        header->value = tmp;
+        strcpy(&header->value[old_length], line);
+    } else {
+        /* New header */
+        struct http_header *new_header = calloc(sizeof(new_header), 1);
+        if (new_header == NULL) return -1;
+
+        char *p = strstr(line, ": ");
+        if (p == NULL) return 1;
+
+        size_t length = p - line;
+        new_header->name = malloc(sizeof(line[0]) * (length + 1));
+        if (new_header->name == NULL) {
+            http_header_free(&new_header);
+            return -1;
+        }
+        strncpy(new_header->name, line, length);
+        new_header->name[length] = '\0';
+
+        p += 2;
+        length = strlen(p);
+        new_header->value = malloc(sizeof(p[0]) * (length + 1));
+        if (new_header->value == NULL) {
+            http_header_free(&new_header);
+            return -1;
+        }
+        strcpy(new_header->value, p);
+
+        if (request->headers == NULL)
+            request->headers = new_header;
+        else
+            header->next = new_header;
+    }
+
+
+    /* FIXME: Decode. After parsing all headers as we could decode begining
+     * and then got encoded continuation. */
     return 0;
 }
 
@@ -152,26 +206,33 @@ struct http_request *http_read_request(int socket) {
     while (1) {
         if (-1 == http_read_line(socket, &line, &buffer, &buffer_size,
                     &buffer_used)) {
+            fprintf(stderr, "Error while reading HTTP request line\n");
             http_request_free(&request);
             goto leave;
         }
 
         /* Check for headers delimiter */
-        if (line == NULL || *line == '\0')
+        if (line == NULL || *line == '\0') {
             break;
+        }
 
         if (http_parse_header(line, request)) {
+            fprintf(stderr, "Error while parsing HTTP request line: <%s>\n",
+                    line);
             http_request_free(&request);
             goto leave;
         }
     };
 
+    /* Get body */
+    /* TODO */
 
 leave:
     free(line);
     free(buffer);
-    return request;;
+    return request;
 }
+
 
 /* Free HTTP header and set it to NULL */
 void http_header_free(struct http_header **header) {
@@ -182,16 +243,17 @@ void http_header_free(struct http_header **header) {
     *header = NULL;
 }
 
-/* Free HTTP headers and set it to NULL */
+
+/* Free linked list of HTTP headers and set it to NULL */
 void http_headers_free(struct http_header **headers) {
     struct http_header *header, *next;
 
     if (headers == NULL || *headers == NULL) return;
 
     for (header = *headers; header != NULL;) {
-        next = header;
+        next = header->next;
         http_header_free(&header);
-        next++;
+        header = next;
     }
 
     free(*headers);
