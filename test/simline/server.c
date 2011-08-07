@@ -107,11 +107,26 @@ static char *socket2address(int socket) {
 static void server(int server_socket) {
     int client_socket;
     struct http_request *request = NULL;
+    struct http_response *response = NULL;
 
     while (0 <= (client_socket = accept(server_socket, NULL, NULL))) {
         fprintf(stderr, "Connection accepted\n");
         request = http_read_request(client_socket);
+        if (request == NULL) {
+            fprintf(stderr, "Error while reading request\n");
+            /* TODO: Reply 400 or 500 */
+            close(client_socket);
+            continue;
+        }
         http_request_free(&request);
+
+        response = calloc(1, sizeof(*response));
+        if (response == NULL) exit(EXIT_FAILURE);
+        response->status = 401;
+        if (http_write_response(client_socket, response))
+            fprintf(stderr, "Error while sending response\n");
+        free(response);
+
         close(client_socket);
     }
 
