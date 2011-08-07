@@ -80,6 +80,45 @@ static int http_read_line(int socket, char **line,
 }
 
 
+/* Write a bulk data into HTTP socket.
+ * @socket is descriptor to write to.
+ * @data are bitstream to send to client.
+ * @length is size of @data in bytes.
+ * @return 0 in success. */
+static int http_write_bulk(int socket, const void *data, size_t length) {
+    ssize_t written;
+    const void *end;
+
+    if (data == NULL && length > 0) return -1;
+
+    for (end = data + length; data != end; data += written, length -= written) {
+        written = write(socket, data, length);
+        if (written == -1 && errno != EINTR) return 1;
+    }
+
+    return 0;
+}
+
+
+/* Write a line into HTTP socket.
+ * @socket is descriptor to write to.
+ * @line is NULL terminated string to send to client. HTTP EOL will be added.
+ * @return 0 in success. */
+static int http_write_line(int socket, const char *line) {
+    if (line == NULL) return -1;
+
+    /* Send the line */
+    if (http_write_bulk(socket, line, strlen(line)))
+        return 1;
+
+    /* Send EOL */
+    if (http_write_bulk(socket, "\r\n", 2))
+        return 1;
+
+    return 0;
+}
+
+
 /* Read data of given length from HTTP socket.
  * @socket is descriptor to read from.
  * @data is auto-allocated just read data bulk. Will be NULL if EOF has been
@@ -183,6 +222,24 @@ static int http_parse_request_header(char *line,
 }
 
 
+/* Send HTTP response status line to client.
+ * @return 0 if success. */
+static int http_write_status(int socket, struct http_response *response) {
+    char *buffer = NULL;
+    int error;
+
+    if (response == NULL) return -1;
+
+    if (-1 == test_asprintf(&buffer, "HTTP/1.0 %u %s", response->status,
+                (response->reason == NULL) ? "" : response->reason))
+        return -1;
+    error = http_write_line(socket, buffer);
+    free(buffer);
+    
+    return error;
+}
+
+    
 /* Parse generic HTTP header.
  * @request is pre-allocated HTTP request.
  * @return 0 if success, negative value if internal error, positive value if
@@ -343,6 +400,39 @@ leave:
     free(line);
     free(buffer);
     return request;
+}
+
+
+/* Write a HTTP response to connected socket. Auto-add Content-Length header.
+ * @return 0 in case of success. */
+int http_write_response(int socket, const struct http_response *response) {
+    char *buffer = NULL;
+    int error = -1;
+
+    if (response == NULL) return -1;
+
+    /* Status line */
+    error = http_write_status(socket, response);
+    if (error) return error;
+    
+    /* Headers */
+    /* TODO: Send headers */
+    error = http_write_line(socket, "");
+    if (error) return error;
+
+    /* Body */
+    if (-1 == test_asprintf(&buffer, "Content-Length: %u",
+                response->body_length))
+        return -1;
+    error = http_write_line(socket, buffer);
+    if (error) return error;
+    if (response->body_length > 0) {
+        error = http_write_bulk(socket, response->body, response->body_length);
+        if (error) return error;
+    }
+
+    free(buffer);
+    return 0;
 }
 
 

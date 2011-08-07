@@ -23,6 +23,14 @@ struct http_request {
     size_t body_length;
 };
 
+struct http_response {
+    unsigned int status;
+    char *reason;
+    struct http_header *headers; /* NULL terminated linked list */
+    void *body;
+    size_t body_length;
+};
+
 /* Free HTTP header and set it to NULL */
 void http_header_free(struct http_header **header);
 
