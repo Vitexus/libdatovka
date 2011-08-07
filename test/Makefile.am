@@ -45,7 +45,7 @@ endif
 
 noinst_PROGRAMS = $(TESTS)
 
-common = test.c test.h \
+common = test.c test.h test-tools.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/crypto.c \
@@ -67,7 +67,7 @@ common += $(LIBDIR)/soap.c $(LIBDIR)/soap.h
 endif
 
 # Omit isds.c
-isds_common = test.c test.h \
+isds_common = test.c test.h test-tools.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/crypto.c \
@@ -133,5 +133,5 @@ isds_eventstring2event_SOURCES	= isds-eventstring2event.c $(isds_common)
 # Tests that need .gnupg
 guess_raw_type.log load_raw.log: prepare_environment.log
 
-prepare_environment_SOURCES = prepare_environment.c test.c test.h
+prepare_environment_SOURCES = prepare_environment.c test.c test.h test-tools.h
 

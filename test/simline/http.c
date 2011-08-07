@@ -1,4 +1,5 @@
 #include "http.h"
+#include "../test-tools.h"
 #include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
@@ -224,7 +225,7 @@ static int http_parse_request_header(char *line,
 
 /* Send HTTP response status line to client.
  * @return 0 if success. */
-static int http_write_status(int socket, struct http_response *response) {
+static int http_write_status(int socket, const struct http_response *response) {
     char *buffer = NULL;
     int error;
 

@@ -1,6 +1,3 @@
-#ifndef __ISDS_TEST_H
-#define __ISDS_TEST_H
-
 #define _XOPEN_SOURCE 500
 #include <stdlib.h>
 #include <stdio.h>
@@ -138,4 +135,3 @@ int test_munmap_file(int fd, void *buffer, size_t length) {
     return err;
 }
 
-#endif

@@ -17,7 +17,7 @@ TESTS = login
 
 noinst_PROGRAMS = $(TESTS)
 
-common = ../test.c ../test.h common.c common.h \
+common = ../test.c ../test.h ../test-tools.h common.c common.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/crypto.c \
@@ -38,7 +38,7 @@ common = ../test.c ../test.h common.c common.h \
 	$(LIBDIR)/validator.h
 
 # Omit isds.c
-isds_common = ../test.c ../test.h \
+isds_common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/crypto.c \
