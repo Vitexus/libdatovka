@@ -108,6 +108,8 @@ static int http_write_bulk(int socket, const void *data, size_t length) {
 static int http_write_line(int socket, const char *line) {
     if (line == NULL) return -1;
 
+    fprintf(stderr, "Response: <%s>\n", line);
+
     /* Send the line */
     if (http_write_bulk(socket, line, strlen(line)))
         return 1;
