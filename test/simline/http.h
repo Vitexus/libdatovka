@@ -44,4 +44,8 @@ void http_request_free(struct http_request **request);
  * @return is heap-allocated received HTTP request, or NULL in case of error. */
 struct http_request *http_read_request(int socket);
 
+/* Write a HTTP response to connected socket. Auto-add Content-Length header.
+ * @return 0 in case of success. */
+int http_write_response(int socket, const struct http_response *response);
+
 #endif

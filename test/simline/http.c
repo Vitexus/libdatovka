@@ -225,7 +225,8 @@ static int http_parse_request_header(char *line,
 
 /* Send HTTP response status line to client.
  * @return 0 if success. */
-static int http_write_status(int socket, const struct http_response *response) {
+static int http_write_response_status(int socket,
+        const struct http_response *response) {
     char *buffer = NULL;
     int error;
 
@@ -305,6 +306,27 @@ static int http_parse_header(char *line, struct http_request *request) {
 }
 
 
+/* Send HTTP header to client.
+ * @return 0 if success. */
+static int http_write_header(int socket, const struct http_header *header) {
+    char *buffer = NULL;
+    int error;
+
+    if (header == NULL) return -1;
+
+    if (header->name == NULL) return -1;
+
+    /* TODO: Quote, split long lines */
+    if (-1 == test_asprintf(&buffer, "%s: %s", header->name,
+                (header->value == NULL) ? "" : header->value))
+        return -1;
+    error = http_write_line(socket, buffer);
+    free(buffer);
+    
+    return error;
+}
+
+    
 /* Find Content-Length value in HTTP request headers and set it into @request.
  * @return 0 in success. */
 static int find_content_length(struct http_request *request) {
@@ -413,11 +435,16 @@ int http_write_response(int socket, const struct http_response *response) {
     if (response == NULL) return -1;
 
     /* Status line */
-    error = http_write_status(socket, response);
+    error = http_write_response_status(socket, response);
     if (error) return error;
     
     /* Headers */
-    /* TODO: Send headers */
+    for (struct http_header *header = response->headers; header != NULL;
+            header = header->next) {
+        error = http_write_header(socket, header);
+        if (error) return error;
+    }
+    /* Headers trailer */
     error = http_write_line(socket, "");
     if (error) return error;
 
