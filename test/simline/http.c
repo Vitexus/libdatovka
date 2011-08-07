@@ -393,7 +393,7 @@ struct http_request *http_read_request(int socket) {
         http_request_free(&request);
         goto leave;
     }
-    fprintf(stderr, "Body of size %zu B have been received\n",
+    fprintf(stderr, "Body of size %zu B has been received\n",
             request->body_length);
     /* TODO: Decode body*/
 
