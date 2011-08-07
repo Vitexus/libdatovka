@@ -19,7 +19,7 @@ struct http_request {
     http_method method;
     char *uri;
     struct http_header *headers; /* NULL terminated linked list */
-    char *body;
+    void *body;
     size_t body_length;
 };
 

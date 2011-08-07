@@ -66,10 +66,76 @@ static int http_read_line(int socket, char **line,
 
         /* Read data */
         got = read(socket, *buffer + *buffer_used, *buffer_size - *buffer_used);
-        if (got == -1 && errno != EINTR) return -1;
+        if (got == -1 && errno != EINTR) return 1;
 
         /* Check for EOF */
-        if (got == 0) return -1;
+        if (got == 0) return 1;
+
+        /* Move end of buffer */
+        *buffer_used += got;
+    }
+#undef BURST
+
+    return -1;
+}
+
+
+/* Read data of given length from HTTP socket.
+ * @socket is descriptor to read from.
+ * @data is auto-allocated just read data bulk. Will be NULL if EOF has been
+ * reached or error occured.
+ * @data_length is size of bytes to read.
+ * @buffer is automatically reallocated buffer for the socket. It can preserve
+ * prematurately read socket data.
+ * @buffer_size is allocated size of @buffer
+ * @buffer_length is size of head of the buffer that holds read data.
+ * @return 0 in success. */
+static int http_read_bulk(int socket, void **data, size_t data_length,
+        char **buffer, size_t *buffer_size, size_t *buffer_used) {
+    ssize_t got;
+    char *tmp;
+
+    if (data == NULL) return -1;
+    *data = NULL;
+
+    if (buffer == NULL || buffer_size == NULL || buffer_used == NULL)
+        return -1;
+    if (*buffer == NULL && *buffer_size > 0) return -1;
+    if (*buffer_size < *buffer_used) return -1;
+
+    if (data_length <= 0) return 0;
+
+#define BURST 1024
+    while (1) {
+        /* Check whether anought data have been read */
+        if (*buffer_used >= data_length) {
+            /* Copy read ahead data to new buffer and point data to original
+             * buffer. */
+            tmp = malloc(BURST);
+            if (tmp == NULL) return -1;
+            memcpy(tmp, *buffer + data_length, *buffer_used - data_length);
+            *data = *buffer;
+            *buffer_size = BURST;
+            *buffer_used = *buffer_used - data_length;
+            *buffer = tmp;
+            /* And exit */
+            return 0;
+        }
+        
+        if (*buffer_size == *buffer_used) {
+            /* Grow buffer */
+            tmp = realloc(*buffer, *buffer_size + BURST);
+            if (tmp == NULL) return -1;
+            *buffer = tmp;
+            *buffer_size += BURST;
+        }
+
+        /* Read data */
+        got = read(socket, *buffer + *buffer_used, *buffer_size - *buffer_used);
+        if (got == -1 && errno != EINTR) return 1;
+
+        /* Check for EOF */
+        if (got == 0) return 1;
 
         /* Move end of buffer */
         *buffer_used += got;
@@ -263,7 +329,15 @@ struct http_request *http_read_request(int socket) {
         http_request_free(&request);
         goto leave;
     }
-    /* TODO */
+    if (http_read_bulk(socket, &request->body, request->body_length,
+                &buffer, &buffer_size, &buffer_used)) {
+        fprintf(stderr, "Could not read request body\n");
+        http_request_free(&request);
+        goto leave;
+    }
+    fprintf(stderr, "Body of size %zu B have been received\n",
+            request->body_length);
+    /* TODO: Decode body*/
 
 leave:
     free(line);
