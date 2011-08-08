@@ -50,14 +50,22 @@ void http_request_free(struct http_request **request);
 void http_response_free(struct http_response **response);
 
 /* Read a HTTP request from connected socket.
- * @return is heap-allocated received HTTP request, or NULL in case of error. */
-struct http_request *http_read_request(int socket);
+ * @http_request is heap-allocated received HTTP request,
+ * or NULL in case of error.
+ * @return http_error code. */
+http_error http_read_request(int socket, struct http_request **request);
 
 /* Write a HTTP response to connected socket. Auto-add Content-Length header.
  * @return 0 in case of success. */
 int http_write_response(int socket, const struct http_response *response);
 
+/* Send a 400 Bad Request response */ 
+int http_send_response_400(int client_socket);
+
 /* Send a 401 Unauthorized response with Basic authentication scheme header */ 
 int http_send_response_401_basic(int socket);
+
+/* Send a 500 Internal Server Error response */ 
+int http_send_response_500(int client_socket);
 
 #endif

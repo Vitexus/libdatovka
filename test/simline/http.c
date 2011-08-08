@@ -363,35 +363,32 @@ static int find_content_length(struct http_request *request) {
 
 
 /* Read a HTTP request from connected socket.
- * @return is heap-allocated received HTTP request, or NULL in case of error. */
-struct http_request *http_read_request(int socket) {
-    struct http_request *request = NULL;
+ * @http_request is heap-allocated received HTTP request,
+ * or NULL in case of error.
+ * @return http_error code. */
+http_error http_read_request(int socket, struct http_request **request) {
     char *line = NULL;
     char *buffer = NULL;
     size_t buffer_size = 0, buffer_used = 0;
     int error;
 
-    request = malloc(sizeof(*request));
-    if (request == NULL) return NULL;
-    memset(request, 0, sizeof(*request));
+    if (request == NULL) return HTTP_ERROR_SERVER;
+
+    *request = calloc(1, sizeof(**request));
+    if (*request == NULL) return HTTP_ERROR_SERVER;
 
     /* Get request header */
     if ((error = http_read_line(socket, &line, &buffer, &buffer_size,
-                &buffer_used))) {
-        http_request_free(&request);
+                &buffer_used)))
         goto leave;
-    }
-    if ((error = http_parse_request_header(line, request))) {
-        http_request_free(&request);
+    if ((error = http_parse_request_header(line, *request)))
         goto leave;
-    }
 
     /* Get other headers */
     while (1) {
         if ((error = http_read_line(socket, &line, &buffer, &buffer_size,
                     &buffer_used))) {
             fprintf(stderr, "Error while reading HTTP request line\n");
-            http_request_free(&request);
             goto leave;
         }
 
@@ -400,34 +397,33 @@ struct http_request *http_read_request(int socket) {
             break;
         }
 
-        if ((error = http_parse_header(line, request))) {
+        if ((error = http_parse_header(line, *request))) {
             fprintf(stderr, "Error while parsing HTTP request line: <%s>\n",
                     line);
-            http_request_free(&request);
             goto leave;
         }
     };
 
     /* Get body */
-    if ((error = find_content_length(request))) {
+    if ((error = find_content_length(*request))) {
         fprintf(stderr, "Could not determine length of body\n");
-        http_request_free(&request);
         goto leave;
     }
-    if ((error = http_read_bulk(socket, &request->body, request->body_length,
-                &buffer, &buffer_size, &buffer_used))) {
+    if ((error = http_read_bulk(socket,
+                    &(*request)->body, (*request)->body_length,
+                    &buffer, &buffer_size, &buffer_used))) {
         fprintf(stderr, "Could not read request body\n");
-        http_request_free(&request);
         goto leave;
     }
     fprintf(stderr, "Body of size %zu B has been received\n",
-            request->body_length);
+            (*request)->body_length);
     /* TODO: Decode body*/
 
 leave:
     free(line);
     free(buffer);
-    return request;
+    if (error) http_request_free(request);
+    return error;
 }
 
 
@@ -470,6 +466,20 @@ int http_write_response(int socket, const struct http_response *response) {
 }
 
 
+/* Send a 400 Bad Request response */ 
+int http_send_response_400(int client_socket) {
+    struct http_response response = {
+        .status = 400,
+        .reason = "Bad Request",
+        .headers = NULL,
+        .body_length = 0,
+        .body = NULL
+    };
+    
+    return http_write_response(client_socket, &response);
+}
+
+
 /* Send a 401 Unauthorized response with Basic authentication scheme header */ 
 int http_send_response_401_basic(int client_socket) {
     struct http_header header = {
@@ -481,6 +491,20 @@ int http_send_response_401_basic(int client_socket) {
         .status = 401,
         .reason = "Unauthorized",
         .headers = &header,
+        .body_length = 0,
+        .body = NULL
+    };
+    
+    return http_write_response(client_socket, &response);
+}
+
+
+/* Send a 500 Internal Server Error response */ 
+int http_send_response_500(int client_socket) {
+    struct http_response response = {
+        .status = 500,
+        .reason = "Internal Server Error",
+        .headers = NULL,
         .body_length = 0,
         .body = NULL
     };
