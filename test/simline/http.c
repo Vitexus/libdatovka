@@ -149,7 +149,7 @@ static int http_read_bulk(int socket, void **data, size_t data_length,
 
 #define BURST 1024
     while (1) {
-        /* Check whether anought data have been read */
+        /* Check whether enought data have been read */
         if (*buffer_used >= data_length) {
             /* Copy read ahead data to new buffer and point data to original
              * buffer. */
