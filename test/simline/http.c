@@ -213,7 +213,7 @@ static int http_parse_request_header(char *line,
     /* Get URI */
     /* TODO: URI-decode */
     p = strchr(line, ' ');
-    if (p == NULL) *p = '\0';
+    if (p != NULL) *p = '\0';
     length = strlen(line);
     request->uri = malloc(length + 1);
     if (request->uri == NULL) return -1;
