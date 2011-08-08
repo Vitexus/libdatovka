@@ -57,4 +57,7 @@ struct http_request *http_read_request(int socket);
  * @return 0 in case of success. */
 int http_write_response(int socket, const struct http_response *response);
 
+/* Send a 401 Unauthorized response with Basic authentication scheme header */ 
+int http_send_response_401_basic(int socket);
+
 #endif

@@ -470,6 +470,25 @@ int http_write_response(int socket, const struct http_response *response) {
 }
 
 
+/* Send a 401 Unauthorized response with Basic authentication scheme header */ 
+int http_send_response_401_basic(int client_socket) {
+    struct http_header header = {
+        .name = "WWW-Authenticate",
+        .value = "Basic realm=\"SimulatedISDSServer\"",
+        .next = NULL
+    };
+    struct http_response response = {
+        .status = 401,
+        .reason = "Unauthorized",
+        .headers = &header,
+        .body_length = 0,
+        .body = NULL
+    };
+    
+    return http_write_response(client_socket, &response);
+}
+
+
 /* Free a HTTP header and set it to NULL */
 void http_header_free(struct http_header **header) {
     if (header == NULL || *header == NULL) return;
