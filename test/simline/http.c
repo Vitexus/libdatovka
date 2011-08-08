@@ -446,16 +446,17 @@ int http_write_response(int socket, const struct http_response *response) {
         error = http_write_header(socket, header);
         if (error) return error;
     }
-    /* Headers trailer */
-    error = http_write_line(socket, "");
-    if (error) return error;
-
-    /* Body */
     if (-1 == test_asprintf(&buffer, "Content-Length: %u",
                 response->body_length))
         return -1;
     error = http_write_line(socket, buffer);
     if (error) return error;
+
+    /* Headers trailer */
+    error = http_write_line(socket, "");
+    if (error) return error;
+
+    /* Body */
     if (response->body_length > 0) {
         error = http_write_bulk(socket, response->body, response->body_length);
         if (error) return error;
