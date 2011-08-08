@@ -40,6 +40,9 @@ void http_headers_free(struct http_header **headers);
 /* Free HTTP request and set it to NULL */
 void http_request_free(struct http_request **request);
 
+/* Free HTTP response and set it to NULL */
+void http_response_free(struct http_response **response);
+
 /* Read a HTTP request from connected socket.
  * @return is heap-allocated received HTTP request, or NULL in case of error. */
 struct http_request *http_read_request(int socket);

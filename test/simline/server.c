@@ -125,7 +125,7 @@ static void server(int server_socket) {
         response->status = 401;
         if (http_write_response(client_socket, response))
             fprintf(stderr, "Error while sending response\n");
-        free(response);
+        http_response_free(&response);
 
         close(client_socket);
     }

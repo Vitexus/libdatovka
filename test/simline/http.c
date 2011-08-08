@@ -501,3 +501,13 @@ void http_request_free(struct http_request **request) {
     free(*request);
     *request = NULL;
 }
+
+/* Free HTTP response and set it to NULL */
+void http_response_free(struct http_response **response) {
+    if (response == NULL || *response == NULL) return;
+    free((*response)->reason);
+    http_headers_free(&((*response)->headers));
+    free((*response)->body);
+    free(*response);
+    *response = NULL;
+}
