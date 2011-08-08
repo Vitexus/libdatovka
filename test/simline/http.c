@@ -271,7 +271,7 @@ static int http_parse_header(char *line, struct http_request *request) {
         strcpy(&header->value[old_length], line);
     } else {
         /* New header */
-        struct http_header *new_header = calloc(sizeof(new_header), 1);
+        struct http_header *new_header = calloc(sizeof(*new_header), 1);
         if (new_header == NULL) return -1;
 
         char *p = strstr(line, ": ");
@@ -466,7 +466,7 @@ int http_write_response(int socket, const struct http_response *response) {
 }
 
 
-/* Free HTTP header and set it to NULL */
+/* Free a HTTP header and set it to NULL */
 void http_header_free(struct http_header **header) {
     if (header == NULL || *header == NULL) return;
     free((*header)->name);
@@ -488,7 +488,6 @@ void http_headers_free(struct http_header **headers) {
         header = next;
     }
 
-    free(*headers);
     *headers = NULL;
 }
 
