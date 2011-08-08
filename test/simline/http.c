@@ -22,13 +22,13 @@ static int http_read_line(int socket, char **line,
     ssize_t got;
     char *p, *tmp;
 
-    if (line == NULL) return -1;
+    if (line == NULL) return HTTP_ERROR_SERVER;
     *line = NULL;
 
     if (buffer == NULL || buffer_size == NULL || buffer_used == NULL)
-        return -1;
-    if (*buffer == NULL && *buffer_size > 0) return -1;
-    if (*buffer_size < *buffer_used) return -1;
+        return HTTP_ERROR_SERVER;
+    if (*buffer == NULL && *buffer_size > 0) return HTTP_ERROR_SERVER;
+    if (*buffer_size < *buffer_used) return HTTP_ERROR_SERVER;
 
 #define BURST 1024
     while (1) {
@@ -47,37 +47,37 @@ static int http_read_line(int socket, char **line,
             /* Copy read ahead data to new buffer and point line to original
              * buffer. */
             tmp = malloc(BURST);
-            if (tmp == NULL) return -1;
+            if (tmp == NULL) return HTTP_ERROR_SERVER;
             memcpy(tmp, p, *buffer + *buffer_used - p);
             *line = *buffer;
             *buffer_size = BURST;
             *buffer_used = *buffer + *buffer_used - p;
             *buffer = tmp;
             /* And exit */
-            return 0;
+            return HTTP_ERROR_SUCCESS;
         }
         
         if (*buffer_size == *buffer_used) {
             /* Grow buffer */
             tmp = realloc(*buffer, *buffer_size + BURST);
-            if (tmp == NULL) return -1;
+            if (tmp == NULL) return HTTP_ERROR_SERVER;
             *buffer = tmp;
             *buffer_size += BURST;
         }
 
         /* Read data */
         got = read(socket, *buffer + *buffer_used, *buffer_size - *buffer_used);
-        if (got == -1 && errno != EINTR) return 1;
+        if (got == -1 && errno != EINTR) return HTTP_ERROR_CLIENT;
 
         /* Check for EOF */
-        if (got == 0) return 1;
+        if (got == 0) return HTTP_ERROR_CLIENT;
 
         /* Move end of buffer */
         *buffer_used += got;
     }
 #undef BURST
 
-    return -1;
+    return HTTP_ERROR_SERVER;
 }
 
 
@@ -90,14 +90,14 @@ static int http_write_bulk(int socket, const void *data, size_t length) {
     ssize_t written;
     const void *end;
 
-    if (data == NULL && length > 0) return -1;
+    if (data == NULL && length > 0) return HTTP_ERROR_SERVER;
 
     for (end = data + length; data != end; data += written, length -= written) {
         written = write(socket, data, length);
-        if (written == -1 && errno != EINTR) return 1;
+        if (written == -1 && errno != EINTR) return HTTP_ERROR_CLIENT;
     }
 
-    return 0;
+    return HTTP_ERROR_SUCCESS;
 }
 
 
@@ -106,19 +106,20 @@ static int http_write_bulk(int socket, const void *data, size_t length) {
  * @line is NULL terminated string to send to client. HTTP EOL will be added.
  * @return 0 in success. */
 static int http_write_line(int socket, const char *line) {
-    if (line == NULL) return -1;
+    int error;
+    if (line == NULL) return HTTP_ERROR_SERVER;
 
     fprintf(stderr, "Response: <%s>\n", line);
 
     /* Send the line */
-    if (http_write_bulk(socket, line, strlen(line)))
-        return 1;
+    if ((error = http_write_bulk(socket, line, strlen(line))))
+        return error;
 
     /* Send EOL */
-    if (http_write_bulk(socket, "\r\n", 2))
-        return 1;
+    if ((error = http_write_bulk(socket, "\r\n", 2)))
+        return error;
 
-    return 0;
+    return HTTP_ERROR_SUCCESS;
 }
 
 
@@ -137,15 +138,15 @@ static int http_read_bulk(int socket, void **data, size_t data_length,
     ssize_t got;
     char *tmp;
 
-    if (data == NULL) return -1;
+    if (data == NULL) return HTTP_ERROR_SERVER;
     *data = NULL;
 
     if (buffer == NULL || buffer_size == NULL || buffer_used == NULL)
-        return -1;
-    if (*buffer == NULL && *buffer_size > 0) return -1;
-    if (*buffer_size < *buffer_used) return -1;
+        return HTTP_ERROR_SERVER;
+    if (*buffer == NULL && *buffer_size > 0) return HTTP_ERROR_SERVER;
+    if (*buffer_size < *buffer_used) return HTTP_ERROR_SERVER;
 
-    if (data_length <= 0) return 0;
+    if (data_length <= 0) return HTTP_ERROR_SUCCESS;
 
 #define BURST 1024
     while (1) {
@@ -154,37 +155,37 @@ static int http_read_bulk(int socket, void **data, size_t data_length,
             /* Copy read ahead data to new buffer and point data to original
              * buffer. */
             tmp = malloc(BURST);
-            if (tmp == NULL) return -1;
+            if (tmp == NULL) return HTTP_ERROR_SERVER;
             memcpy(tmp, *buffer + data_length, *buffer_used - data_length);
             *data = *buffer;
             *buffer_size = BURST;
             *buffer_used = *buffer_used - data_length;
             *buffer = tmp;
             /* And exit */
-            return 0;
+            return HTTP_ERROR_SUCCESS;
         }
         
         if (*buffer_size == *buffer_used) {
             /* Grow buffer */
             tmp = realloc(*buffer, *buffer_size + BURST);
-            if (tmp == NULL) return -1;
+            if (tmp == NULL) return HTTP_ERROR_SERVER;
             *buffer = tmp;
             *buffer_size += BURST;
         }
 
         /* Read data */
         got = read(socket, *buffer + *buffer_used, *buffer_size - *buffer_used);
-        if (got == -1 && errno != EINTR) return 1;
+        if (got == -1 && errno != EINTR) return HTTP_ERROR_CLIENT;
 
         /* Check for EOF */
-        if (got == 0) return 1;
+        if (got == 0) return HTTP_ERROR_CLIENT;
 
         /* Move end of buffer */
         *buffer_used += got;
     }
 #undef BURST
 
-    return -1;
+    return HTTP_ERROR_SERVER;
 }
 
 
@@ -200,7 +201,7 @@ static int http_parse_request_header(char *line,
 
     /* Get method */
     p = strchr(line, ' ');
-    if (p == NULL) return -1;
+    if (p == NULL) return HTTP_ERROR_SERVER;
     *p = '\0';
     if (strcmp(line, "GET"))
         request->method = HTTP_METHOD_GET;
@@ -216,12 +217,12 @@ static int http_parse_request_header(char *line,
     if (p != NULL) *p = '\0';
     length = strlen(line);
     request->uri = malloc(length + 1);
-    if (request->uri == NULL) return -1;
+    if (request->uri == NULL) return HTTP_ERROR_SERVER;
     strcpy(request->uri, line);
 
     /* Do not care about HTTP version */
 
-    return 0;
+    return HTTP_ERROR_SUCCESS;
 }
 
 
@@ -232,11 +233,11 @@ static int http_write_response_status(int socket,
     char *buffer = NULL;
     int error;
 
-    if (response == NULL) return -1;
+    if (response == NULL) return HTTP_ERROR_SERVER;
 
     if (-1 == test_asprintf(&buffer, "HTTP/1.0 %u %s", response->status,
                 (response->reason == NULL) ? "" : response->reason))
-        return -1;
+        return HTTP_ERROR_SERVER;
     error = http_write_line(socket, buffer);
     free(buffer);
     
@@ -251,7 +252,7 @@ static int http_write_response_status(int socket,
 static int http_parse_header(char *line, struct http_request *request) {
     struct http_header *header;
 
-    if (line == NULL || request == NULL) return -1;
+    if (line == NULL || request == NULL) return HTTP_ERROR_SERVER;
 
     fprintf(stderr, "Header: <%s>\n", line);
 
@@ -261,27 +262,28 @@ static int http_parse_header(char *line, struct http_request *request) {
 
     if (*line == ' ' || *line == '\t') {
         /* Line is continuation of last header */
-        if (header == NULL) return 1;   /* No previous header to continue */
+        if (header == NULL)
+            return HTTP_ERROR_CLIENT;   /* No previous header to continue */
         line++;
         size_t old_length = strlen(header->value);
         char *tmp = realloc(header->value,
                 sizeof(header->value[0]) * (old_length + strlen(line) + 1));
-        if (tmp == NULL) return -1;
+        if (tmp == NULL) return HTTP_ERROR_SERVER;
         header->value = tmp;
         strcpy(&header->value[old_length], line);
     } else {
         /* New header */
         struct http_header *new_header = calloc(sizeof(*new_header), 1);
-        if (new_header == NULL) return -1;
+        if (new_header == NULL) return HTTP_ERROR_SERVER;
 
         char *p = strstr(line, ": ");
-        if (p == NULL) return 1;
+        if (p == NULL) return HTTP_ERROR_CLIENT;
 
         size_t length = p - line;
         new_header->name = malloc(sizeof(line[0]) * (length + 1));
         if (new_header->name == NULL) {
             http_header_free(&new_header);
-            return -1;
+            return HTTP_ERROR_SERVER;
         }
         strncpy(new_header->name, line, length);
         new_header->name[length] = '\0';
@@ -291,7 +293,7 @@ static int http_parse_header(char *line, struct http_request *request) {
         new_header->value = malloc(sizeof(p[0]) * (length + 1));
         if (new_header->value == NULL) {
             http_header_free(&new_header);
-            return -1;
+            return HTTP_ERROR_SERVER;
         }
         strcpy(new_header->value, p);
 
@@ -304,7 +306,7 @@ static int http_parse_header(char *line, struct http_request *request) {
 
     /* FIXME: Decode. After parsing all headers as we could decode begining
      * and then got encoded continuation. */
-    return 0;
+    return HTTP_ERROR_SUCCESS;
 }
 
 
@@ -314,14 +316,14 @@ static int http_write_header(int socket, const struct http_header *header) {
     char *buffer = NULL;
     int error;
 
-    if (header == NULL) return -1;
+    if (header == NULL) return HTTP_ERROR_SERVER;
 
-    if (header->name == NULL) return -1;
+    if (header->name == NULL) return HTTP_ERROR_SERVER;
 
     /* TODO: Quote, split long lines */
     if (-1 == test_asprintf(&buffer, "%s: %s", header->name,
                 (header->value == NULL) ? "" : header->value))
-        return -1;
+        return HTTP_ERROR_SERVER;
     error = http_write_line(socket, buffer);
     free(buffer);
     
@@ -333,7 +335,7 @@ static int http_write_header(int socket, const struct http_header *header) {
  * @return 0 in success. */
 static int find_content_length(struct http_request *request) {
     struct http_header *header;
-    if (request == NULL) return -1;
+    if (request == NULL) return HTTP_ERROR_SERVER;
 
     for (header = request->headers; header != NULL; header = header->next) {
         if (header->name == NULL) continue;
@@ -344,19 +346,19 @@ static int find_content_length(struct http_request *request) {
         char *p;
         long long int value = strtol(header->value, &p, 10);
         if (*p != '\0')
-            return 1;
+            return HTTP_ERROR_CLIENT;
         if ((value == LLONG_MIN || value == LLONG_MAX) && errno == ERANGE)
-            return -1;
+            return HTTP_ERROR_SERVER;
         if (value < 0)
-            return 1;
+            return HTTP_ERROR_CLIENT;
         /* FIXME:
         if (value > SIZE_T_MAX)
-            return -1;*/
+            return HTTP_ERROR_SERVER; */
         request->body_length = value;
     } else {
         request->body_length = 0;
     }
-    return 0;
+    return HTTP_ERROR_SUCCESS;
 }
 
 
@@ -367,26 +369,27 @@ struct http_request *http_read_request(int socket) {
     char *line = NULL;
     char *buffer = NULL;
     size_t buffer_size = 0, buffer_used = 0;
+    int error;
 
     request = malloc(sizeof(*request));
     if (request == NULL) return NULL;
     memset(request, 0, sizeof(*request));
 
     /* Get request header */
-    if (-1 == http_read_line(socket, &line, &buffer, &buffer_size,
-                &buffer_used)) {
+    if ((error = http_read_line(socket, &line, &buffer, &buffer_size,
+                &buffer_used))) {
         http_request_free(&request);
         goto leave;
     }
-    if (http_parse_request_header(line, request)) {
+    if ((error = http_parse_request_header(line, request))) {
         http_request_free(&request);
         goto leave;
     }
 
     /* Get other headers */
     while (1) {
-        if (-1 == http_read_line(socket, &line, &buffer, &buffer_size,
-                    &buffer_used)) {
+        if ((error = http_read_line(socket, &line, &buffer, &buffer_size,
+                    &buffer_used))) {
             fprintf(stderr, "Error while reading HTTP request line\n");
             http_request_free(&request);
             goto leave;
@@ -397,7 +400,7 @@ struct http_request *http_read_request(int socket) {
             break;
         }
 
-        if (http_parse_header(line, request)) {
+        if ((error = http_parse_header(line, request))) {
             fprintf(stderr, "Error while parsing HTTP request line: <%s>\n",
                     line);
             http_request_free(&request);
@@ -406,13 +409,13 @@ struct http_request *http_read_request(int socket) {
     };
 
     /* Get body */
-    if (find_content_length(request)) {
+    if ((error = find_content_length(request))) {
         fprintf(stderr, "Could not determine length of body\n");
         http_request_free(&request);
         goto leave;
     }
-    if (http_read_bulk(socket, &request->body, request->body_length,
-                &buffer, &buffer_size, &buffer_used)) {
+    if ((error = http_read_bulk(socket, &request->body, request->body_length,
+                &buffer, &buffer_size, &buffer_used))) {
         fprintf(stderr, "Could not read request body\n");
         http_request_free(&request);
         goto leave;
@@ -434,7 +437,7 @@ int http_write_response(int socket, const struct http_response *response) {
     char *buffer = NULL;
     int error = -1;
 
-    if (response == NULL) return -1;
+    if (response == NULL) return HTTP_ERROR_SERVER;
 
     /* Status line */
     error = http_write_response_status(socket, response);
@@ -448,7 +451,7 @@ int http_write_response(int socket, const struct http_response *response) {
     }
     if (-1 == test_asprintf(&buffer, "Content-Length: %u",
                 response->body_length))
-        return -1;
+        return HTTP_ERROR_SERVER;
     error = http_write_line(socket, buffer);
     if (error) return error;
 
@@ -463,7 +466,7 @@ int http_write_response(int socket, const struct http_response *response) {
     }
 
     free(buffer);
-    return 0;
+    return HTTP_ERROR_SUCCESS;
 }
 
 

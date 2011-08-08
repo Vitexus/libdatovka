@@ -4,6 +4,12 @@
 #include <sys/types.h>
 
 typedef enum {
+    HTTP_ERROR_SERVER = -1,
+    HTTP_ERROR_SUCCESS = 0,
+    HTTP_ERROR_CLIENT = 1
+} http_error;
+
+typedef enum {
     HTTP_METHOD_UNKNOWN = 0,
     HTTP_METHOD_GET,
     HTTP_METHOD_POST
