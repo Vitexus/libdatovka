@@ -103,11 +103,17 @@ static char *socket2address(int socket) {
 
 
 /* Do the server protocol.
+ * @server_socket is listening TCP socket of the server
+ * @username sets required user name server has to require. Set NULL to
+ * disable HTTP authentication.
+ * @password sets required password server has to require
  * Never returns. Terminates by exit(). */
-static void server(int server_socket) {
+static void server(int server_socket,
+        const char *username, const char *password) {
     int client_socket;
     struct http_request *request = NULL;
     http_error error;
+    const char *pong = "<pong/>";
 
     while (0 <= (client_socket = accept(server_socket, NULL, NULL))) {
         fprintf(stderr, "Connection accepted\n");
@@ -122,9 +128,28 @@ static void server(int server_socket) {
             continue;
         }
 
+        if (username != NULL) {
+            if (http_client_authenticates(request)) {
+                switch(http_authenticate_basic(request, username, password)) {
+                    case HTTP_ERROR_SUCCESS:
+                        http_send_response_200(client_socket,
+                                pong, strlen(pong), "application/soap+xml");
+                        break;
+                    case HTTP_ERROR_CLIENT:
+                        http_send_response_403(client_socket);
+                        break;
+                    default:
+                        http_send_response_500(client_socket);
+                }
+            } else {
+                http_send_response_401_basic(client_socket);
+            }
+        } else {
+            http_send_response_200(client_socket,
+                    pong, strlen(pong), "application/soap+xml");
+        }
         http_request_free(&request);
 
-        http_send_response_401_basic(client_socket);
 
         close(client_socket);
     }
@@ -137,9 +162,13 @@ static void server(int server_socket) {
 /* Start sever in separate process.
  * @server_process is PID of forked server
  * @server_address is automatically allocated TCP address of listening server
+ * @username sets required user name server has to require. Set NULL to
+ * disable HTTP authentication.
+ * @password sets required password server has to require
  * socket.
  * @return -1 in case of error. */
-static int start_server(pid_t *server_process, char **server_address) {
+static int start_server(pid_t *server_process, char **server_address,
+        const char *username, const char *password) {
     int server_socket;
     
     if (server_address == NULL) {
@@ -174,7 +203,7 @@ static int start_server(pid_t *server_process, char **server_address) {
     }
 
     if (*server_process == 0) {
-        server(server_socket);
+        server(server_socket, username, password);
         /* Does not return */
     }
 
@@ -225,7 +254,7 @@ int main(int argc, char **argv) {
 
     INIT_TEST("server");
 
-    error = start_server(&server_process, &server_address);
+    error = start_server(&server_process, &server_address, username, password);
     if (error == -1) {
         ABORT_UNIT(server_error);
     }

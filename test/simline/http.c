@@ -7,6 +7,174 @@
 #include <stdio.h> /* fprintf() */
 #include <limits.h>
 #include <strings.h> /* strcasecmp() */
+#include <stdint.h> /* int8_t */
+#include <stddef.h> /* size_t, NULL */
+
+/*
+Base64 encoder is part of the libb64 project, and has been placed in the public domain.
+For details, see http://sourceforge.net/projects/libb64
+It's copy of ../../src/cencode.c due to symbol names.
+*/
+
+
+typedef enum {
+	step_A, step_B, step_C
+} base64_encodestep;
+
+typedef struct {
+	base64_encodestep step;
+	int8_t result;
+	int stepcount; /* number of encoded octet triplets on a line,
+                      or -1 to for end-less line */
+} base64_encodestate;
+
+static const int CHARS_PER_LINE = 72;
+
+/* Initialize Base64 coder.
+ * @one_line is false for multi-line MIME encoding,
+ * true for endless one-line format. */
+static void base64_init_encodestate(base64_encodestate* state_in, _Bool one_line) {
+	state_in->step = step_A;
+	state_in->result = 0;
+	state_in->stepcount = (one_line) ? -1 : 0;
+}
+
+
+static int8_t base64_encode_value(int8_t value_in) {
+    /* XXX: CHAR_BIT == 8 because of <stdint.h> */
+	static const int8_t encoding[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	if (value_in > 63) return '=';
+	return encoding[value_in];
+}
+
+
+static size_t base64_encode_block(const int8_t* plaintext_in,
+        size_t length_in, int8_t *code_out, base64_encodestate* state_in) {
+	const int8_t *plainchar = plaintext_in;
+	const int8_t* const plaintextend = plaintext_in + length_in;
+	int8_t *codechar = code_out;
+	int8_t result;
+	int8_t fragment;
+	
+	result = state_in->result;
+	
+	switch (state_in->step) {
+		while (1) {
+	case step_A:
+			if (plainchar == plaintextend) {
+				state_in->result = result;
+				state_in->step = step_A;
+				return codechar - code_out;
+			}
+			fragment = *plainchar++;
+			result = (fragment & 0x0fc) >> 2;
+			*codechar++ = base64_encode_value(result);
+			result = (fragment & 0x003) << 4;
+	case step_B:
+			if (plainchar == plaintextend) {
+				state_in->result = result;
+				state_in->step = step_B;
+				return codechar - code_out;
+			}
+			fragment = *plainchar++;
+			result |= (fragment & 0x0f0) >> 4;
+			*codechar++ = base64_encode_value(result);
+			result = (fragment & 0x00f) << 2;
+	case step_C:
+			if (plainchar == plaintextend) {
+				state_in->result = result;
+				state_in->step = step_C;
+				return codechar - code_out;
+			}
+			fragment = *plainchar++;
+			result |= (fragment & 0x0c0) >> 6;
+			*codechar++ = base64_encode_value(result);
+			result  = (fragment & 0x03f) >> 0;
+			*codechar++ = base64_encode_value(result);
+			
+            if (state_in->stepcount >= 0) {
+                ++(state_in->stepcount);
+                if (state_in->stepcount == CHARS_PER_LINE/4) {
+                    *codechar++ = '\n';
+                    state_in->stepcount = 0;
+                }
+            }
+		} /* while */
+	} /* switch */
+
+	/* control should not reach here */
+	return codechar - code_out;
+}
+
+
+static size_t base64_encode_blockend(int8_t *code_out,
+        base64_encodestate* state_in) {
+	int8_t *codechar = code_out;
+	
+	switch (state_in->step) {
+	case step_B:
+		*codechar++ = base64_encode_value(state_in->result);
+		*codechar++ = '=';
+		*codechar++ = '=';
+		break;
+	case step_C:
+		*codechar++ = base64_encode_value(state_in->result);
+		*codechar++ = '=';
+		break;
+	case step_A:
+		break;
+	}
+    if (state_in->stepcount >= 0)
+        *codechar++ = '\n';
+	
+	return codechar - code_out;
+}
+
+
+/* Encode given data into MIME Base64 encoded zero terminated string.
+ * @plain are input data (binary stream)
+ * @length is length of @plain data in bytes
+ * @one_line is false for multi-line MIME encoding,
+ * true for endless one-line format.
+ * @return allocated string of base64 encoded plain data or NULL in case of
+ * error. You must free it. */
+/* TODO: Allow one-line format */
+static char *base64encode(const void *plain, const size_t length,
+        _Bool one_line) {
+
+    base64_encodestate state;
+    size_t code_length;
+    char *buffer, *new_buffer;
+
+    if (!plain) {
+        if (length) return NULL;
+        /* Empty input is valid input */
+        plain = "";
+    }
+
+    base64_init_encodestate(&state, one_line);
+
+    /* Allocate buffer
+     * (4 is padding, 1 is final new line, and 1 is string terminator) */
+    buffer = malloc(length * 2 + 4 + 1 + 1);
+    if (!buffer) return NULL;
+
+    /* Encode plain data */
+    code_length = base64_encode_block(plain, length, (int8_t *)buffer,
+            &state);
+    code_length += base64_encode_blockend(((int8_t*)buffer) + code_length,
+            &state);
+
+    /* Terminate string */
+    buffer[code_length++] = '\0';
+
+    /* Shrink the buffer */
+    new_buffer = realloc(buffer, code_length);
+    if (new_buffer) buffer = new_buffer;
+
+    return buffer;
+}
+
 
 /* Read a line from HTTP socket.
  * @socket is descriptor to read from.
@@ -466,6 +634,25 @@ int http_write_response(int socket, const struct http_response *response) {
 }
 
 
+/* Send a 200 Ok response */ 
+int http_send_response_200(int client_socket,
+        const void *body, size_t body_length, const char *type) {
+    struct http_header header = {
+        .name = "Content-Type",
+        .value = (char *)type
+    };
+    struct http_response response = {
+        .status = 200,
+        .reason = "OK",
+        .headers = (type == NULL) ? NULL : &header,
+        .body_length = body_length,
+        .body = (void *)body
+    };
+    
+    return http_write_response(client_socket, &response);
+}
+
+
 /* Send a 400 Bad Request response */ 
 int http_send_response_400(int client_socket) {
     struct http_response response = {
@@ -499,6 +686,20 @@ int http_send_response_401_basic(int client_socket) {
 }
 
 
+/* Send a 403 Forbidden response */ 
+int http_send_response_403(int client_socket) {
+    struct http_response response = {
+        .status = 403,
+        .reason = "Forbidden",
+        .headers = NULL,
+        .body_length = 0,
+        .body = NULL
+    };
+    
+    return http_write_response(client_socket, &response);
+}
+
+
 /* Send a 500 Internal Server Error response */ 
 int http_send_response_500(int client_socket) {
     struct http_response response = {
@@ -510,6 +711,69 @@ int http_send_response_500(int client_socket) {
     };
     
     return http_write_response(client_socket, &response);
+}
+
+
+/* Returns Authorization header in given request */
+static const struct http_header *find_authorization(
+        const struct http_request *request) {
+    const struct http_header *header;
+    if (request == NULL) return NULL;
+    for (header = request->headers; header != NULL; header = header->next) {
+        if (header->name != NULL &&
+                !strcasecmp(header->name, "Authorization"))
+            break;
+    }
+    return header;
+}
+
+
+/* Return true if request carries Authorization header */
+int http_client_authenticates(const struct http_request *request) {
+    if (find_authorization(request))
+        return 1;
+    else
+        return 0;
+}
+
+
+/* Return HTTP_ERROR_SUCCESS if request carries valid Basic credentials.
+ * NULL @username or @password equales to empty string. */
+http_error http_authenticate_basic(const struct http_request *request,
+        const char *username, const char *password) {
+    const struct http_header *header;
+    const char *basic_cookie_client;
+    char *basic_cookie_plain = NULL, *basic_cookie_encoded = NULL;
+    _Bool is_valid;
+
+    header = find_authorization(request);
+    if (header == NULL) return HTTP_ERROR_CLIENT;
+
+    if (strncmp(header->value, "Basic ", 6)) return HTTP_ERROR_CLIENT;
+    basic_cookie_client = header->value + 6;
+    
+    if (-1 == test_asprintf(&basic_cookie_plain, "%s:%s",
+                (username == NULL) ? "" : username,
+                (password == NULL) ? "" : password)) {
+        free(basic_cookie_plain);
+        return HTTP_ERROR_SERVER;
+    }
+    
+    basic_cookie_encoded = base64encode(basic_cookie_plain,
+            strlen(basic_cookie_plain), 1);
+    if (basic_cookie_plain == NULL) {
+        free(basic_cookie_plain);
+        return HTTP_ERROR_SERVER;
+    }
+
+    fprintf(stderr, "Authenticating basic: got=<%s>, expected=<%s> (%s)\n",
+            basic_cookie_client, basic_cookie_encoded, basic_cookie_plain);
+    free(basic_cookie_plain);
+
+    is_valid = !strcmp(basic_cookie_encoded, basic_cookie_client);
+    free(basic_cookie_encoded);
+
+    return (is_valid) ? HTTP_ERROR_SUCCESS : HTTP_ERROR_CLIENT;
 }
 
 

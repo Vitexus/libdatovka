@@ -59,13 +59,28 @@ http_error http_read_request(int socket, struct http_request **request);
  * @return 0 in case of success. */
 int http_write_response(int socket, const struct http_response *response);
 
+/* Send a 200 Ok response */ 
+int http_send_response_200(int client_socket,
+        const void *body, size_t body_length, const char *type);
+
 /* Send a 400 Bad Request response */ 
 int http_send_response_400(int client_socket);
 
 /* Send a 401 Unauthorized response with Basic authentication scheme header */ 
 int http_send_response_401_basic(int socket);
 
+/* Send a 403 Forbidden response */ 
+int http_send_response_403(int client_socket);
+
 /* Send a 500 Internal Server Error response */ 
 int http_send_response_500(int client_socket);
+
+/* Returns true if request carries WWW-Authenticate header */
+int http_client_authenticates(const struct http_request *request);
+
+/* Return HTTP_ERROR_SUCCESS if request carries valid Basic credentials.
+ * NULL @username or @password equales to empty string. */
+http_error http_authenticate_basic(const struct http_request *request,
+        const char *username, const char *password);
 
 #endif
