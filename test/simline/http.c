@@ -627,6 +627,8 @@ int http_write_response(int socket, const struct http_response *response) {
         error = http_write_bulk(socket, response->body, response->body_length);
         if (error) return error;
     }
+    fprintf(stderr, "Body of size %zu B has been sent\n",
+            response->body_length);
 
     free(buffer);
     return HTTP_ERROR_SUCCESS;
