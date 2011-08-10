@@ -40,7 +40,7 @@ Allowed log in methods:
 Note: Certificate attributes `commercial' and `system' are defined in Czech
 Electronic Signature Act.
 
-Once client certificate is registered, user could not log in with HTTP basic
+Once client certificate is registered, user cannot log in with HTTP basic
 authentication only.
 
 Client private key must be stored in cryptographic device in non-exportable way.
@@ -196,6 +196,6 @@ Content-Type: text/xml; charset=utf-8
       <faultstring xsi:type="xsd:string">Omlouváme se všem uživatelům datových
 schránek za dočasné omezení přístupu do systému datových schránek z důvodu plánované
 údržby systému. Děkujeme za pochopení.</faultstring>
-<F11>    </SOAP-ENV:Fault>
+    </SOAP-ENV:Fault>
   </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>

@@ -279,6 +279,9 @@ int main(int argc, char **argv) {
         ABORT_UNIT("isds_ctx_create() failed\n");
     }
 
+    TEST("invalid credentials", test_login, IE_NOT_LOGGED_IN, context,
+            url, "7777777", "nbuusr1", NULL, NULL);
+
     TEST("valid login", test_login, IE_SUCCESS, context,
             url, username, password, NULL, NULL);
 
