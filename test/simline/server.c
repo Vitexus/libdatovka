@@ -107,9 +107,14 @@ static char *socket2address(int socket) {
  * @username sets required user name server has to require. Set NULL to
  * disable HTTP authentication.
  * @password sets required password server has to require
+ * @isds_deviations is flag to set conformance level. If false, server is
+ * compliant to standards (HTTP, SOAP) if not conflicts with ISDS
+ * specification. Otherwise server mimics real ISDS implementation as much
+ * as possible.
  * Never returns. Terminates by exit(). */
 static void server(int server_socket,
-        const char *username, const char *password) {
+        const char *username, const char *password,
+        _Bool isds_deviations) {
     int client_socket;
     struct http_request *request = NULL;
     http_error error;
@@ -137,7 +142,10 @@ static void server(int server_socket,
                                 pong, strlen(pong), soap_mime_type);
                         break;
                     case HTTP_ERROR_CLIENT:
-                        http_send_response_403(client_socket);
+                        if (isds_deviations) 
+                            http_send_response_401_basic(client_socket);
+                        else
+                            http_send_response_403(client_socket);
                         break;
                     default:
                         http_send_response_500(client_socket);
@@ -167,9 +175,14 @@ static void server(int server_socket,
  * disable HTTP authentication.
  * @password sets required password server has to require
  * socket.
+ * @isds_deviations is flag to set conformance level. If false, server is
+ * compliant to standards (HTTP, SOAP) if not conflicts with ISDS
+ * specification. Otherwise server mimics real ISDS implementation as much
+ * as possible.
  * @return -1 in case of error. */
 static int start_server(pid_t *server_process, char **server_address,
-        const char *username, const char *password) {
+        const char *username, const char *password,
+        _Bool isds_deviations) {
     int server_socket;
     
     if (server_address == NULL) {
@@ -204,7 +217,7 @@ static int start_server(pid_t *server_process, char **server_address,
     }
 
     if (*server_process == 0) {
-        server(server_socket, username, password);
+        server(server_socket, username, password, isds_deviations);
         /* Does not return */
     }
 
@@ -255,7 +268,7 @@ int main(int argc, char **argv) {
 
     INIT_TEST("server");
 
-    error = start_server(&server_process, &server_address, username, password);
+    error = start_server(&server_process, &server_address, username, password, 1);
     if (error == -1) {
         ABORT_UNIT(server_error);
     }
