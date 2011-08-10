@@ -681,7 +681,9 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
                         "Redirection is forbidden in stateless mode."), url);
             goto leave;
             break;
-        case 401:
+        case 401:   /* ISDS server returns 401 even if Authorization
+                       presents. */
+        case 403:   /* HTTP/1.0 prescribes 403 if Authorization presentes. */
             err = IE_NOT_LOGGED_IN;
             isds_log_message(context, _("Authentication failed"));
             goto leave;
