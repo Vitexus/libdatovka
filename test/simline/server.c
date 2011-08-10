@@ -113,6 +113,7 @@ static void server(int server_socket,
     int client_socket;
     struct http_request *request = NULL;
     http_error error;
+    const char *soap_mime_type = "text/xml"; /* SOAP/1.1 requires text/xml */
     const char *pong = "<?xml version='1.0' encoding='utf-8'?><SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><SOAP-ENV:Body><q:DummyOperationResponse xmlns:q=\"http://isds.czechpoint.cz/v20\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><q:dmStatus><q:dmStatusCode>0000</q:dmStatusCode><q:dmStatusMessage>Provedeno úspěšně.</q:dmStatusMessage></q:dmStatus></q:DummyOperationResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>";
 
     while (0 <= (client_socket = accept(server_socket, NULL, NULL))) {
@@ -133,7 +134,7 @@ static void server(int server_socket,
                 switch(http_authenticate_basic(request, username, password)) {
                     case HTTP_ERROR_SUCCESS:
                         http_send_response_200(client_socket,
-                                pong, strlen(pong), "application/soap+xml");
+                                pong, strlen(pong), soap_mime_type);
                         break;
                     case HTTP_ERROR_CLIENT:
                         http_send_response_403(client_socket);
@@ -146,7 +147,7 @@ static void server(int server_socket,
             }
         } else {
             http_send_response_200(client_socket,
-                    pong, strlen(pong), "application/soap+xml");
+                    pong, strlen(pong), soap_mime_type);
         }
         http_request_free(&request);
 
