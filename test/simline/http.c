@@ -519,9 +519,8 @@ static int find_content_length(struct http_request *request) {
             return HTTP_ERROR_SERVER;
         if (value < 0)
             return HTTP_ERROR_CLIENT;
-        /* FIXME:
-        if (value > SIZE_T_MAX)
-            return HTTP_ERROR_SERVER; */
+        if (value > SIZE_MAX)
+            return HTTP_ERROR_SERVER;
         request->body_length = value;
     } else {
         request->body_length = 0;
