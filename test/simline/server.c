@@ -268,30 +268,30 @@ int main(int argc, char **argv) {
 
     INIT_TEST("server");
 
-    error = start_server(&server_process, &server_address, username, password, 1);
-    if (error == -1) {
-        ABORT_UNIT(server_error);
-    }
-    if (-1 == test_asprintf(&url, "http://%s/", server_address)) {
-        free(server_address);
-        stop_server(server_process);
-        ABORT_UNIT("Could not format ISDS URL");
-    }
-    free(server_address);
-
     if (isds_init()) {
         isds_cleanup();
-        free(url);
-        stop_server(server_process);
         ABORT_UNIT("isds_init() failed\n");
     }
     context = isds_ctx_create();
     if (!context) {
         isds_cleanup();
-        free(url);
-        stop_server(server_process);
         ABORT_UNIT("isds_ctx_create() failed\n");
     }
+
+    error = start_server(&server_process, &server_address, username, password, 1);
+    if (error == -1) {
+        isds_ctx_free(&context);
+        isds_cleanup();
+        ABORT_UNIT(server_error);
+    }
+    if (-1 == test_asprintf(&url, "http://%s/", server_address)) {
+        free(server_address);
+        stop_server(server_process);
+        isds_ctx_free(&context);
+        isds_cleanup();
+        ABORT_UNIT("Could not format ISDS URL");
+    }
+    free(server_address);
 
     TEST("invalid credentials", test_login, IE_NOT_LOGGED_IN, context,
             url, "7777777", "nbuusr1", NULL, NULL);
@@ -299,12 +299,12 @@ int main(int argc, char **argv) {
     TEST("valid login", test_login, IE_SUCCESS, context,
             url, username, password, NULL, NULL);
 
-    isds_ctx_free(&context);
-    isds_cleanup();
-    free(url);
     if (-1 == stop_server(server_process)) {
         ABORT_UNIT(server_error);
     }
     
+    free(url);
+    isds_ctx_free(&context);
+    isds_cleanup();
     SUM_TEST();
 }
