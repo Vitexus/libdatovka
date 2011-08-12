@@ -75,6 +75,10 @@ int http_send_response_403(int client_socket);
 /* Send a 500 Internal Server Error response */ 
 int http_send_response_500(int client_socket);
 
+/* Send a 503 Service Temporarily Unavailable response */ 
+int http_send_response_503(int client_socket,
+        const void *body, size_t body_length, const char *type);
+
 /* Returns true if request carries WWW-Authenticate header */
 int http_client_authenticates(const struct http_request *request);
 

@@ -102,24 +102,35 @@ static char *socket2address(int socket) {
 }
 
 
+struct arguments_basic_authentication {
+    const char *username;   /* Sets required user name server has to require.
+                               Set NULL to disable HTTP authentication. */
+    const char *password;   /* sets required password server has to require */
+    _Bool isds_deviations;  /* is flag to set conformance level. If false,
+                               server is compliant to standards (HTTP, SOAP)
+                               if not conflicts with ISDS specification.
+                               Otherwise server mimics real ISDS implementation
+                               as much as possible. */
+};
+
 /* Do the server protocol.
  * @server_socket is listening TCP socket of the server
- * @username sets required user name server has to require. Set NULL to
- * disable HTTP authentication.
- * @password sets required password server has to require
- * @isds_deviations is flag to set conformance level. If false, server is
- * compliant to standards (HTTP, SOAP) if not conflicts with ISDS
- * specification. Otherwise server mimics real ISDS implementation as much
- * as possible.
+ * @server_arguments is pointer to structure:
  * Never returns. Terminates by exit(). */
-static void server(int server_socket,
-        const char *username, const char *password,
-        _Bool isds_deviations) {
+static void server_basic_authentication(int server_socket,
+        const void *server_arguments) {
     int client_socket;
+    const struct arguments_basic_authentication *arguments =
+        (const struct arguments_basic_authentication *) server_arguments;
     struct http_request *request = NULL;
     http_error error;
     const char *soap_mime_type = "text/xml"; /* SOAP/1.1 requires text/xml */
     const char *pong = "<?xml version='1.0' encoding='utf-8'?><SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><SOAP-ENV:Body><q:DummyOperationResponse xmlns:q=\"http://isds.czechpoint.cz/v20\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><q:dmStatus><q:dmStatusCode>0000</q:dmStatusCode><q:dmStatusMessage>Provedeno úspěšně.</q:dmStatusMessage></q:dmStatus></q:DummyOperationResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>";
+
+    if (arguments == NULL) {
+        close(server_socket);
+        exit(EXIT_FAILURE);
+    }
 
     while (0 <= (client_socket = accept(server_socket, NULL, NULL))) {
         fprintf(stderr, "Connection accepted\n");
@@ -134,15 +145,16 @@ static void server(int server_socket,
             continue;
         }
 
-        if (username != NULL) {
+        if (arguments->username != NULL) {
             if (http_client_authenticates(request)) {
-                switch(http_authenticate_basic(request, username, password)) {
+                switch(http_authenticate_basic(request,
+                            arguments->username, arguments->password)) {
                     case HTTP_ERROR_SUCCESS:
                         http_send_response_200(client_socket,
                                 pong, strlen(pong), soap_mime_type);
                         break;
                     case HTTP_ERROR_CLIENT:
-                        if (isds_deviations) 
+                        if (arguments->isds_deviations)
                             http_send_response_401_basic(client_socket);
                         else
                             http_send_response_403(client_socket);
@@ -168,6 +180,42 @@ static void server(int server_socket,
 }
 
 
+/* Implementation of server that is out of order.
+ * It always sends back SOAP Fault with HTTP error 503.
+ * @server_socket is listening TCP socket of the server
+ * @server_arguments is ununsed pointer
+ * Never returns. Terminates by exit(). */
+static void server_out_of_order(int server_socket,
+        const void *server_arguments) {
+    int client_socket;
+    struct http_request *request = NULL;
+    http_error error;
+    const char *soap_mime_type = "text/xml"; /* SOAP/1.1 requires text/xml */
+    const char *fault = "<?xml version='1.0' encoding='UTF-8'?><SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsi=\"http://www.w3.org/1999/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/1999/XMLSchema\"><SOAP-ENV:Body><SOAP-ENV:Fault><faultcode xsi:type=\"xsd:string\">Probíhá plánovaná údržba</faultcode><faultstring xsi:type=\"xsd:string\">Omlouváme se všem uživatelům datových schránek za dočasné omezení přístupu do systému datových schránek z důvodu plánované údržby systému. Děkujeme za pochopení.</faultstring></SOAP-ENV:Fault></SOAP-ENV:Body></SOAP-ENV:Envelope>";
+
+    while (0 <= (client_socket = accept(server_socket, NULL, NULL))) {
+        fprintf(stderr, "Connection accepted\n");
+        error = http_read_request(client_socket, &request);
+        if (error) {
+            fprintf(stderr, "Error while reading request\n");
+            if (error == HTTP_ERROR_CLIENT)
+                http_send_response_400(client_socket);
+            close(client_socket);
+            continue;
+        }
+
+        http_send_response_503(client_socket, fault, strlen(fault),
+                soap_mime_type);
+        http_request_free(&request);
+
+        close(client_socket);
+    }
+
+    close(server_socket);
+    exit(EXIT_SUCCESS);
+}
+
+
 /* Start sever in separate process.
  * @server_process is PID of forked server
  * @server_address is automatically allocated TCP address of listening server
@@ -181,8 +229,8 @@ static void server(int server_socket,
  * as possible.
  * @return -1 in case of error. */
 static int start_server(pid_t *server_process, char **server_address,
-        const char *username, const char *password,
-        _Bool isds_deviations) {
+        void (*server_implementation)(int, const void *),
+        const void *server_arguments) {
     int server_socket;
     
     if (server_address == NULL) {
@@ -217,7 +265,7 @@ static int start_server(pid_t *server_process, char **server_address,
     }
 
     if (*server_process == 0) {
-        server(server_socket, username, password, isds_deviations);
+        server_implementation(server_socket, server_arguments);
         /* Does not return */
     }
 
@@ -278,32 +326,70 @@ int main(int argc, char **argv) {
         ABORT_UNIT("isds_ctx_create() failed\n");
     }
 
-    error = start_server(&server_process, &server_address, username, password, 1);
-    if (error == -1) {
-        isds_ctx_free(&context);
-        isds_cleanup();
-        ABORT_UNIT(server_error);
-    }
-    if (-1 == test_asprintf(&url, "http://%s/", server_address)) {
+    {
+        const struct arguments_basic_authentication server_arguments = {
+            .username = username,
+            .password = password,
+            .isds_deviations = 1
+        };
+        error = start_server(&server_process, &server_address,
+                server_basic_authentication, &server_arguments);
+        if (error == -1) {
+            isds_ctx_free(&context);
+            isds_cleanup();
+            ABORT_UNIT(server_error);
+        }
+        if (-1 == test_asprintf(&url, "http://%s/", server_address)) {
+            free(server_address);
+            stop_server(server_process);
+            isds_ctx_free(&context);
+            isds_cleanup();
+            ABORT_UNIT("Could not format ISDS URL");
+        }
         free(server_address);
-        stop_server(server_process);
-        isds_ctx_free(&context);
-        isds_cleanup();
-        ABORT_UNIT("Could not format ISDS URL");
-    }
-    free(server_address);
 
-    TEST("invalid credentials", test_login, IE_NOT_LOGGED_IN, context,
-            url, "7777777", "nbuusr1", NULL, NULL);
+        TEST("invalid credentials", test_login, IE_NOT_LOGGED_IN, context,
+                url, "7777777", "nbuusr1", NULL, NULL);
 
-    TEST("valid login", test_login, IE_SUCCESS, context,
-            url, username, password, NULL, NULL);
+        TEST("valid login", test_login, IE_SUCCESS, context,
+                url, username, password, NULL, NULL);
 
-    if (-1 == stop_server(server_process)) {
-        ABORT_UNIT(server_error);
-    }
+        if (-1 == stop_server(server_process)) {
+            ABORT_UNIT(server_error);
+        }
     
-    free(url);
+        free(url);
+        url = NULL;
+    }
+
+    {
+        error = start_server(&server_process, &server_address,
+                server_out_of_order, NULL);
+        if (error == -1) {
+            isds_ctx_free(&context);
+            isds_cleanup();
+            ABORT_UNIT(server_error);
+        }
+        if (-1 == test_asprintf(&url, "http://%s/", server_address)) {
+            free(server_address);
+            stop_server(server_process);
+            isds_ctx_free(&context);
+            isds_cleanup();
+            ABORT_UNIT("Could not format ISDS URL");
+        }
+        free(server_address);
+
+        TEST("log into out-of-order server", test_login, IE_SOAP, context,
+                url, username, password, NULL, NULL);
+
+        if (-1 == stop_server(server_process)) {
+            ABORT_UNIT(server_error);
+        }
+    
+        free(url);
+        url = NULL;
+    }
+
     isds_ctx_free(&context);
     isds_cleanup();
     SUM_TEST();

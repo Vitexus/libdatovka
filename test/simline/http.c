@@ -715,6 +715,25 @@ int http_send_response_500(int client_socket) {
 }
 
 
+/* Send a 503 Service Temporarily Unavailable response */ 
+int http_send_response_503(int client_socket,
+        const void *body, size_t body_length, const char *type) {
+    struct http_header header = {
+        .name = "Content-Type",
+        .value = (char *)type
+    };
+    struct http_response response = {
+        .status = 503,
+        .reason = "Service Temporarily Unavailable",
+        .headers = (type == NULL) ? NULL : &header,
+        .body_length = body_length,
+        .body = (void *)body
+    };
+    
+    return http_write_response(client_socket, &response);
+}
+
+
 /* Returns Authorization header in given request */
 static const struct http_header *find_authorization(
         const struct http_request *request) {
