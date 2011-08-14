@@ -124,8 +124,8 @@ HTTP TOTP Method
 ================
 
 Client sends POST request to
-<https://DOMAINNAME/as/processLogin?type=totp&sendSms=true&uri=https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT>with
-user name and password in standard HTTP Basic authentication header.
+<https://DOMAINNAME/as/processLogin?type=totp&sendSms=true&uri=https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT>
+with user name and password in standard HTTP Basic authentication header.
 
 If credentials are valid, ISDS generates one time code and sends it through
 SMS GSM gateway to user's predefined phone number (the phone number can be set
@@ -146,7 +146,7 @@ X-Response-message-code defines machine parsable reason and
 X-Response-message-text human readable text:
 
 X-Response-message-code                         Meaning
-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 authentication.info.totpSended                  OTP has been sent by ISDS
 authentication.error.userIsNotAuthenticated     Bad log-in, retry
 authentication.error.intruderDetected           Access blocked for 60 minutes
@@ -154,7 +154,7 @@ authentication.error.paswordExpired             Password has expired
 authentication.info.cannotSendQuickly           OTP cannot be sent repeatedly
                                                 at this rate (minimal delay
                                                 depends on TOTP window setting)
-authentication.error.badRole                    User name is not allows to
+authentication.error.badRole                    User name is not permitted to
                                                 access requested URI
 authentication.info.totpNotSended               OTP could not been sent. Retry
                                                 later.
