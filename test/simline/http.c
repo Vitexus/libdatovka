@@ -176,6 +176,53 @@ static char *base64encode(const void *plain, const size_t length,
 }
 
 
+/* Convert hexadecimal digit to integer. Return negative value if charcter is
+ * not valid hexadecimal digit. */
+static int hex2i(char digit) {
+    if (digit >= '0' && digit <= '9')
+        return digit - 0;
+    if (digit >= 'a' && digit <= 'f')
+        return digit - 'a' + 10;
+    if (digit >= 'A' && digit <= 'F')
+        return digit - 'A' + 10;
+    return -1;
+}
+
+
+/* Decode URI-coded string.
+ * @return allocated decoded string or NULL in case of error. */
+static char *uri_decode(const char *coded) {
+    char *plain, *p;
+    int digit1, digit2;
+
+    if (coded == NULL) return NULL;
+    plain = malloc(strlen(coded) + 1);
+    if (plain == NULL) return NULL;
+
+    for (p = plain; *coded != '\0'; p++, coded++) {
+        if (*coded == '%') {
+            digit1 = hex2i(coded[1]);
+            if (digit1 < 0) {
+                free(plain);
+                return NULL;
+            }
+            digit2 = hex2i(coded[2]);
+            if (digit2< 0) {
+                free(plain);
+                return NULL;
+            }
+            *plain = (digit1 << 3) + digit2;
+            coded += 2;
+        } else {
+            *p = *coded;
+        }
+    }
+    *p = '\0';
+
+    return plain;
+}
+
+
 /* Read a line from HTTP socket.
  * @socket is descriptor to read from.
  * @line is auto-allocated just read line. Will be NULL if EOF has been
@@ -363,7 +410,6 @@ static int http_read_bulk(int socket, void **data, size_t data_length,
 static int http_parse_request_header(char *line,
         struct http_request *request) {
     char *p;
-    size_t length;
 
     fprintf(stderr, "Request: <%s>\n", line);
 
@@ -380,16 +426,14 @@ static int http_parse_request_header(char *line,
     line = p + 1;
 
     /* Get URI */
-    /* TODO: URI-decode */
     p = strchr(line, ' ');
     if (p != NULL) *p = '\0';
-    length = strlen(line);
-    request->uri = malloc(length + 1);
+    request->uri = uri_decode(line);
     if (request->uri == NULL) return HTTP_ERROR_SERVER;
-    strcpy(request->uri, line);
 
     /* Do not care about HTTP version */
 
+    fprintf(stderr, "Request-URI: <%s>\n", request->uri);
     return HTTP_ERROR_SUCCESS;
 }
 
