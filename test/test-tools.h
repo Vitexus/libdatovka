@@ -1,7 +1,8 @@
 #ifndef __ISDS_TEST_TOOLS_H
 #define __ISDS_TEST_TOOLS_H
 
-#include <stdarg.h>
+#include <stdarg.h> /* va_list */
+#include <stddef.h> /* size_t, NULL */
 
 /* Print formated string into automtically reallocated @uffer.
  * @buffer automatically reallocated buffer. Must be &NULL or preallocated

@@ -16,16 +16,16 @@ export HOME=@top_builddir@
 TESTS =
 
 if BUILD_CURL
-TESTS += server
+TESTS += basic_authentication
 endif
 
 
 noinst_PROGRAMS = $(TESTS)
 
-common = ../test.c ../test.h ../test-tools.h http.c http.h
+common = ../test.c ../test.h ../test-tools.h http.c http.h server.c server.h
 
 # Access public API only
-server_SOURCES = server.c $(common)
+basic_authentication_SOURCES = basic_authentication.c $(common)
 
 # Tests that need .gnupg
 #guess_raw_type.log load_raw.log: prepare_environment.log
