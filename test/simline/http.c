@@ -731,6 +731,44 @@ int http_send_response_401_basic(int client_socket) {
 }
 
 
+/* Send a 401 Unauthorized response with totp authentication scheme header */ 
+int http_send_response_401_totp(int client_socket,
+        const char *code, const char *text) {
+    struct http_header header = {
+        .name = "WWW-Authenticate",
+        .value = "totp realm=\"SimulatedISDSServer\"",
+        .next = NULL
+    };
+    struct http_header header_code = {
+        .name = "X-Response-message-code",
+        .value = (char *) code,
+        .next = NULL
+    };
+    struct http_header header_text = {
+        .name = "X-Response-message-text",
+        .value = (char *) text,
+        .next = NULL
+    };
+    struct http_response response = {
+        .status = 401,
+        .reason = "Unauthorized",
+        .headers = &header,
+        .body_length = 0,
+        .body = NULL
+    };
+    
+    /* Link defined headers */
+    if (code != NULL) header.next = &header_code;
+    if (text != NULL) {
+        if (code != NULL)
+            header_code.next = &header_text;
+        else
+            header.next = &header_text;
+    }
+    return http_write_response(client_socket, &response);
+}
+
+
 /* Send a 403 Forbidden response */ 
 int http_send_response_403(int client_socket) {
     struct http_response response = {
@@ -838,6 +876,29 @@ http_error http_authenticate_basic(const struct http_request *request,
     free(basic_cookie_encoded);
 
     return (is_valid) ? HTTP_ERROR_SUCCESS : HTTP_ERROR_CLIENT;
+}
+
+
+/* Return HTTP_ERROR_SUCCESS if request carries valid OTP credentials.
+ * NULL @username or @password or @otp equal to empty string. */
+http_error http_authenticate_otp(const struct http_request *request,
+        const char *username, const char *password, const char *otp) {
+    char *basic_password = NULL;
+    http_error retval;
+
+    /* Concatenate password and OTP code */
+    if (-1 == test_asprintf(&basic_password, "%s:%s",
+                (password == NULL) ? "": password,
+                (otp == NULL) ? "" : otp)) {
+        return HTTP_ERROR_SERVER;
+    }
+
+    /* Use Basic authentication */
+    /* FIXME: Specification does not define authorization method string */
+    retval = http_authenticate_basic(request, username, basic_password);
+
+    free(basic_password);
+    return retval;
 }
 
 

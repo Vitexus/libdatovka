@@ -69,6 +69,10 @@ int http_send_response_400(int client_socket);
 /* Send a 401 Unauthorized response with Basic authentication scheme header */ 
 int http_send_response_401_basic(int socket);
 
+/* Send a 401 Unauthorized response with totp authentication scheme header */ 
+int http_send_response_401_totp(int client_socket,
+        const char *code, const char *text);
+
 /* Send a 403 Forbidden response */ 
 int http_send_response_403(int client_socket);
 
@@ -86,5 +90,10 @@ int http_client_authenticates(const struct http_request *request);
  * NULL @username or @password equales to empty string. */
 http_error http_authenticate_basic(const struct http_request *request,
         const char *username, const char *password);
+
+/* Return HTTP_ERROR_SUCCESS if request carries valid OTP credentials.
+ * NULL @username or @password or @otp equal to empty string. */
+http_error http_authenticate_otp(const struct http_request *request,
+        const char *username, const char *password, const char *otp);
 
 #endif

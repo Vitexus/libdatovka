@@ -8,6 +8,7 @@
 
 #include "../test-tools.h"
 #include "http.h"
+#include "server.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -20,6 +21,10 @@
 #include <wait.h>
 
 const char *server_error = NULL;
+
+static const char *soap_mime_type = "text/xml"; /* SOAP/1.1 requires text/xml */
+/* DummyOperation respons */
+static const char *pong = "<?xml version='1.0' encoding='utf-8'?><SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><SOAP-ENV:Body><q:DummyOperationResponse xmlns:q=\"http://isds.czechpoint.cz/v20\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><q:dmStatus><q:dmStatusCode>0000</q:dmStatusCode><q:dmStatusMessage>Provedeno úspěšně.</q:dmStatusMessage></q:dmStatus></q:DummyOperationResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>";
 
 /* Save pointer to static error message if not yet set */
 void set_server_error(const char *message) {
@@ -99,17 +104,6 @@ char *socket2address(int socket) {
 }
 
 
-struct arguments_basic_authentication {
-    const char *username;   /* Sets required user name server has to require.
-                               Set NULL to disable HTTP authentication. */
-    const char *password;   /* sets required password server has to require */
-    _Bool isds_deviations;  /* is flag to set conformance level. If false,
-                               server is compliant to standards (HTTP, SOAP)
-                               if not conflicts with ISDS specification.
-                               Otherwise server mimics real ISDS implementation
-                               as much as possible. */
-};
-
 /* Do the server protocol.
  * @server_socket is listening TCP socket of the server
  * @server_arguments is pointer to structure:
@@ -121,8 +115,6 @@ void server_basic_authentication(int server_socket,
         (const struct arguments_basic_authentication *) server_arguments;
     struct http_request *request = NULL;
     http_error error;
-    const char *soap_mime_type = "text/xml"; /* SOAP/1.1 requires text/xml */
-    const char *pong = "<?xml version='1.0' encoding='utf-8'?><SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><SOAP-ENV:Body><q:DummyOperationResponse xmlns:q=\"http://isds.czechpoint.cz/v20\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><q:dmStatus><q:dmStatusCode>0000</q:dmStatusCode><q:dmStatusMessage>Provedeno úspěšně.</q:dmStatusMessage></q:dmStatus></q:DummyOperationResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>";
 
     if (arguments == NULL) {
         close(server_socket);
@@ -161,6 +153,92 @@ void server_basic_authentication(int server_socket,
                 }
             } else {
                 http_send_response_401_basic(client_socket);
+            }
+        } else {
+            http_send_response_200(client_socket,
+                    pong, strlen(pong), soap_mime_type);
+        }
+        http_request_free(&request);
+
+
+        close(client_socket);
+    }
+
+    close(server_socket);
+    exit(EXIT_SUCCESS);
+}
+
+
+struct arguments_totp_authentication {
+    const char *username;   /* Sets required user name server has to require.
+                               Set NULL to disable HTTP authentication. */
+    const char *password;   /* Sets password server has to require */
+    const char *otp;        /* Sets OTP code server has to requiere */ 
+    _Bool isds_deviations;  /* Is flag to set conformance level. If false,
+                               server is compliant to standards (HTTP, SOAP)
+                               if not conflicts with ISDS specification.
+                               Otherwise server mimics real ISDS implementation
+                               as much as possible. */
+};
+
+/* Do the server protocol with TOTP authentication.
+ * @server_socket is listening TCP socket of the server
+ * @server_arguments is pointer to structure:
+ * Never returns. Terminates by exit(). */
+void server_totp_authentication(int server_socket,
+        const void *server_arguments) {
+    int client_socket;
+    const struct arguments_totp_authentication *arguments =
+        (const struct arguments_totp_authentication *) server_arguments;
+    /*const char *cookie_name = "IPCZ-X-COOKIE";
+    static char *cookie_value;*/
+    struct http_request *request = NULL;
+    http_error error;
+
+    if (arguments == NULL) {
+        close(server_socket);
+        exit(EXIT_FAILURE);
+    }
+
+    while (0 <= (client_socket = accept(server_socket, NULL, NULL))) {
+        fprintf(stderr, "Connection accepted\n");
+        error = http_read_request(client_socket, &request);
+        if (error) {
+            fprintf(stderr, "Error while reading request\n");
+            if (error == HTTP_ERROR_CLIENT)
+                http_send_response_400(client_socket);
+            else
+                http_send_response_500(client_socket);
+            close(client_socket);
+            continue;
+        }
+
+        if (arguments->username != NULL) {
+            if (http_client_authenticates(request)) {
+                /* FIXME: Test for R-URI and check for basic or cookie */
+                /* TODO: Implement all states */
+                switch(http_authenticate_otp(request,
+                            arguments->username, arguments->password,
+                            arguments->otp)) {
+                    case HTTP_ERROR_SUCCESS:
+                        http_send_response_200(client_socket,
+                                pong, strlen(pong), soap_mime_type);
+                        break;
+                    case HTTP_ERROR_CLIENT:
+                        if (arguments->isds_deviations)
+                            http_send_response_401_totp(client_socket,
+                                    "authentication.error.userIsNotAuthenticated",
+                                    "Retry");
+                        else
+                            http_send_response_403(client_socket);
+                        break;
+                    default:
+                        http_send_response_500(client_socket);
+                }
+            } else {
+                http_send_response_401_totp(client_socket,
+                        "authentication.error.userIsNotAuthenticated",
+                        "Retry");
             }
         } else {
             http_send_response_200(client_socket,
