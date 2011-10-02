@@ -1116,7 +1116,7 @@ leave:
 }
 
 
-/* Connect and log in into ISDS server.
+/* Connect and log into ISDS server.
  * All required arguments will be copied, you do not have to keep them after
  * that.
  * ISDS supports six different authentication methods. Exact method is
@@ -1134,7 +1134,7 @@ leave:
  *            @username shifts meaning to box ID. This is used for hosted
  *            services.
  *          - Otherwise all three arguments will be used.
- *      Please note, that different cases requires different certificate type
+ *      Please note, that different cases require different certificate type
  *      (system qualified one or commercial non qualified one). This library
  *      does not check such political issues. Please see ISDS Specification
  *      for more details.

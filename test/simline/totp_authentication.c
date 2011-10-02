@@ -12,6 +12,7 @@
 
 static const char *username = "douglas";
 static const char *password = "42";
+static const char *otp_code = "314";
 
 
 static int test_login(const isds_error error, struct isds_ctx *context,
@@ -36,7 +37,7 @@ int main(int argc, char **argv) {
     struct isds_ctx *context = NULL;
     char *url = NULL;
 
-    INIT_TEST("basic authentication");
+    INIT_TEST("TOTP authentication");
 
     if (isds_init()) {
         isds_cleanup();
@@ -49,13 +50,17 @@ int main(int argc, char **argv) {
     }
 
     {
-        const struct arguments_basic_authentication server_arguments = {
+        struct isds_otp otp_credentials = {
+            .method = OTP_TIME
+        };
+        const struct arguments_totp_authentication server_arguments = {
             .username = username,
             .password = password,
+            .otp = otp_code,
             .isds_deviations = 1
         };
         error = start_server(&server_process, &server_address,
-                server_basic_authentication, &server_arguments);
+                server_totp_authentication, &server_arguments);
         if (error == -1) {
             isds_ctx_free(&context);
             isds_cleanup();
@@ -70,11 +75,18 @@ int main(int argc, char **argv) {
         }
         free(server_address);
 
+        otp_credentials.otp_code = otp_code;
         TEST("invalid credentials", test_login, IE_NOT_LOGGED_IN, context,
-                url, "7777777", "nbuusr1", NULL, NULL);
+                url, "7777777", "nbuusr1", NULL, &otp_credentials);
 
+        otp_credentials.otp_code = "666";
+        TEST("valid credentials but invalid OTP code", test_login,
+                IE_NOT_LOGGED_IN, context, url, "7777777", "nbuusr1", 
+                NULL, &otp_credentials);
+
+        otp_credentials.otp_code = otp_code;
         TEST("valid login", test_login, IE_SUCCESS, context,
-                url, username, password, NULL, NULL);
+                url, username, password, NULL, &otp_credentials);
 
         if (-1 == stop_server(server_process)) {
             ABORT_UNIT(server_error);

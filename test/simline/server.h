@@ -36,6 +36,25 @@ void server_basic_authentication(int server_socket,
         const void *server_arguments);
 
 
+struct arguments_totp_authentication {
+    const char *username;   /* Sets required user name server has to require.
+                               Set NULL to disable HTTP authentication. */
+    const char *password;   /* Sets password server has to require */
+    const char *otp;        /* Sets OTP code server has to requiere */ 
+    _Bool isds_deviations;  /* Is flag to set conformance level. If false,
+                               server is compliant to standards (HTTP, SOAP)
+                               if not conflicts with ISDS specification.
+                               Otherwise server mimics real ISDS implementation
+                               as much as possible. */
+};
+
+/* Do the server protocol with TOTP authentication.
+ * @server_socket is listening TCP socket of the server
+ * @server_arguments is pointer to structure:
+ * Never returns. Terminates by exit(). */
+void server_totp_authentication(int server_socket,
+        const void *server_arguments);
+
 /* Implementation of server that is out of order.
  * It always sends back SOAP Fault with HTTP error 503.
  * @server_socket is listening TCP socket of the server
