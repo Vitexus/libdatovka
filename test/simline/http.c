@@ -887,7 +887,7 @@ http_error http_authenticate_otp(const struct http_request *request,
     http_error retval;
 
     /* Concatenate password and OTP code */
-    if (-1 == test_asprintf(&basic_password, "%s:%s",
+    if (-1 == test_asprintf(&basic_password, "%s%s",
                 (password == NULL) ? "": password,
                 (otp == NULL) ? "" : otp)) {
         return HTTP_ERROR_SERVER;
