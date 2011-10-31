@@ -1196,14 +1196,17 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
                     _("Both username and password must be supplied"));
             return IE_INVAL;
         }
-        if (otp) {
-            isds_log_message(context,
-                    _("One-time password authentication method has not been "
-                        "implemented yet"));
-            return IE_NOTSUP;
-        }
         /* Default locator is official system (without client certificate) */
         context->url = strdup((url) ? url : isds_locator);
+        if (otp) {
+            /*isds_log_message(context,
+                    _("One-time password authentication method has not been "
+                        "implemented yet"));
+            return IE_NOTSUP;*/
+            char *new_url = _isds_astrcat(context->url, "apps/");
+            zfree(context->url);
+            context->url = new_url;
+        }
     } else {
         /* Default locator is official system (with client certificate) */
         if (!url) url = isds_cert_locator;
