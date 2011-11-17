@@ -410,6 +410,16 @@ void print_event_type(const isds_event_type *type) {
                            printf("DELIVERED_BY_FICTION\n"); break;
         case EVENT_UNDELIVERABLE:
                            printf("UNDELIVERABLE\n"); break;
+        case EVENT_COMMERCIAL_ACCEPTED:
+                           printf("COMMERCIAL_ACCEPTED\n"); break;
+        case EVENT_DELIVERED:
+                           printf("DELIVERED\n"); break;
+        case EVENT_PRIMARY_LOGIN:
+                           printf("PRIMARY_LOGIN\n"); break;
+        case EVENT_ENTRUSTED_LOGIN:
+                           printf("ENTRUSTED_LOGIN\n"); break;
+        case EVENT_SYSCERT_LOGIN:
+                           printf("SYSCERT_LOGIN\n"); break;
         default: printf("<unknown type %d>\n", *type);
     }
 }
