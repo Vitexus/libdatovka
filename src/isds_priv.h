@@ -68,6 +68,7 @@ struct isds_ctx {
     char *username;
     char *password;
     struct isds_pki_credentials *pki_credentials;
+    struct isds_otp *otp;   /* Pointer (no copy) to OTP credentials */
     CURL *curl;             /* CURL session handle */
     _Bool *tls_verify_server;   /* Verify the server? */
     isds_progress_callback progress_callback;  /* Call it during

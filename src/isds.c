@@ -1199,11 +1199,33 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
         /* Default locator is official system (without client certificate) */
         context->url = strdup((url) ? url : isds_locator);
         if (otp) {
-            /*isds_log_message(context,
-                    _("One-time password authentication method has not been "
-                        "implemented yet"));
-            return IE_NOTSUP;*/
-            char *new_url = _isds_astrcat(context->url, "apps/");
+            const char *authenticator_uri = NULL;
+            /* FIXME: Handle second stage */
+            context->otp = otp;
+            switch (otp->method) {
+                case OTP_HASH: 
+                    isds_log(ILF_SEC, ILL_INFO,
+                            _("Selected authentication method: "
+                                "Hash-based one time password\n"));
+                    authenticator_uri =
+                        "%1$sas/processLogin?type=hotp&uri=%1$sapps/";
+                    break;
+                case OTP_TIME: 
+                    isds_log(ILF_SEC, ILL_INFO,
+                            _("Selected authentication method: "
+                                "Time-based one time password\n"));
+                    authenticator_uri =
+                        "%1$sas/processLogin?type=totp&sendSms=true&"
+                        "uri=%1$sapps/";
+                    break;
+                default:
+                    isds_log_message(context,
+                            _("Unknown One-time password authentication method "
+                                "requested by application"));
+                    return IE_ENUM;
+            }
+            char *new_url = NULL;
+            isds_asprintf(&new_url, authenticator_uri, context->url);
             zfree(context->url);
             context->url = new_url;
         }
@@ -1256,6 +1278,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     /* Store credentials */
     /* FIXME: mlock password
      * (I have a library) */
+    /* FIXME: discard_credentials() to wipe otp_code too */
     discard_credentials(context);
     if (username) context->username = strdup(username);
     if (password) context->password = strdup(password);
