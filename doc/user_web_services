@@ -583,7 +583,7 @@ The inner file is encoded in UTF-8. First line of the file is a header. Each
 next line is a box. If a value is undefined, it will be empty. Values in
 a line are separated by a comma (`,'). If a value contains comma or quotation
 (`"'), the value will be enclosed into quotes (`"'). If value contains quotes,
-the will be escaped by a quotes (e.g. `"lazy, ""fox""' means `lazy, "fox"').
+they will be escaped by a quotes (e.g. `"lazy, ""fox""' means `lazy, "fox"').
 
 Error codes:
     1004    Operation not permitted
