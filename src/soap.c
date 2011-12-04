@@ -11,6 +11,75 @@ struct soap_body {
     size_t length;
 };
 
+/* Private structure for write_header() call back */
+struct auth_headers {
+    _Bool is_complete;  /* Response has finished, next iteration is new
+                           response, values become obsolete. */
+    char *method;       /* WWW-Authenticate value */
+    char *code;         /* X-Response-message-code value */
+    char *message;      /* X-Response-message-text value */
+};
+
+
+/* Deallocate content of struct auth_headers */
+static void auth_headers_free(struct auth_headers *headers) {
+    zfree(headers->method);
+    zfree(headers->code);
+    zfree(headers->message);
+}
+
+
+/* If given @line of @length characters is HTTP header of @name,
+ * return pointer to the header value. Otherwise return NULL.
+ * @name is header name without name---value separator, terminated with 0. */
+static const char *header_value(const char *line, size_t length,
+        const char *name) {
+    const char *value;
+    if (line == NULL || name == NULL) return NULL;
+    
+    for (value = line; ; value++, name++) {
+        if (value - line >= length) return NULL; /* Line too short */
+        if (*name == '\0') break;                /* Name matches */
+        if (*name != *value) return NULL;       /* Name does not match */
+    }
+
+    /* Check separator */
+    if (*value++ != ':') return NULL;
+
+    /* Jump to begin of value.
+     * HTTP requires exactly one space, but this is more friendly: */
+    while (value - line < length && *value == ' ') value++;
+
+    return value;
+}
+
+
+/* Decode HTTP header value per RFC ???
+ * @encoded_value is encoded HTTP header value
+ * @length is size in characters of the @encoded_value
+ * @return newly allocated decoded value or NULL */
+static char *decode_header_value(const char *encoded_value, size_t length) {
+    char *decoded = NULL;
+    size_t content_length;
+
+    if (encoded_value == NULL) return NULL;
+
+    /* Cut at HTTP CR-LF */
+    for (content_length = 0; content_length < length &&
+            encoded_value[content_length] != '\r' &&
+            encoded_value[content_length] != '\n'; content_length++);
+
+    /* Decode */
+    /* FIXME: Implement the RFC (?=UTF-8?B?...?) */
+    decoded = malloc(content_length + 1);
+    if (decoded != NULL) {
+        memcpy(decoded, encoded_value, content_length);
+        decoded[content_length] = '\0';
+    }
+
+    return decoded;
+}
+
 
 /* Close connection to server and destroy CURL handle associated
  * with @context */
@@ -54,6 +123,96 @@ static size_t write_body(void *buffer, size_t size, size_t nmemb, void *userp) {
     body->length += size * nmemb;
 
     return (size * nmemb);
+}
+
+
+/* CURL call back function called when a HTTP response header is available.
+ * This is called for each header even if reply consists of more responses.
+ * @buffer points to new header (no zero terminator, but HTTP EOL is included)
+ * @size * @nmemb is length of the header in bytes
+ * @userp is private structure.
+ * Must return the length of the header, otherwise CURL will signal
+ * CURL_WRITE_ERROR. */
+static size_t write_header(void *buffer, size_t size, size_t nmemb, void *userp) {
+    struct auth_headers *headers = (struct auth_headers *) userp;
+    size_t length;
+    const char *value;
+    /*void *new_data;*/
+
+    /* FIXME: Check for (size * nmemb) !> SIZE_T_MAX.
+     * Precompute the product then. */
+    length = size * nmemb;
+
+    if (!headers) return 0;    /* This should never happen */
+    if (0 == length) {
+        /* ??? Is this the empty line delimiter? */
+        fprintf(stderr, "DEBUG: %s: Empty header encountered\n", __func__);
+        return 0; /* Empty headers */
+    }
+
+    fprintf(stderr, "DEBUG: %s: Header: <%.*s>\n", __func__, length,
+            (const char *)buffer);
+
+    /* New response, invalide authentication headers. */
+    if (headers->is_complete) auth_headers_free(headers);
+
+    /* Header---body separator */
+    if (!strncmp(buffer, "\r\n", length)) {
+        headers->is_complete = 1;
+        goto leave;
+    }
+        
+    /* FIXME: Handle multi-line headers */
+    value = header_value(buffer, length, "WWW-Authenticate");
+    if (value != NULL) {
+       if (headers->method != NULL)
+           zfree(headers->method);
+       headers->method =
+           decode_header_value(value, length - ((char *) buffer - value));
+       if (headers->method == NULL) {
+           /* TODO: Set IE_NOMEM to context */
+           return 0;
+       }
+       goto leave;
+    }
+
+    value = header_value(buffer, length, "X-Response-message-code");
+    if (value != NULL) {
+       if (headers->code != NULL)
+           zfree(headers->code);
+       headers->code =
+           decode_header_value(value, length - ((char *) buffer - value));
+       if (headers->code == NULL) {
+           /* TODO: Set IE_NOMEM to context */
+           return 0;
+       }
+       goto leave;
+    }
+
+    value = header_value(buffer, length, "X-Response-message-text");
+    if (value != NULL) {
+       if (headers->message != NULL)
+           zfree(headers->message);
+       headers->message =
+           decode_header_value(value, length - ((char *) buffer - value));
+       if (headers->message == NULL) {
+           /* TODO: Set IE_NOMEM to context */
+           return 0;
+       }
+       goto leave;
+    }
+
+    /* new_data = realloc(body->data, body->length + size * nmemb);
+    if (!new_data) return 0;
+
+    memcpy(new_data + body->length, buffer, size * nmemb);
+
+    body->data = new_data;
+    body->length += size * nmemb;
+    */
+
+leave:
+    return (length);
 }
 
 
@@ -124,6 +283,9 @@ static isds_error http(struct isds_ctx *context, const char *url,
 
     CURLcode curl_err;
     isds_error err = IE_SUCCESS;
+    struct auth_headers response_headers = {
+        .method = NULL, .code = NULL, .message = NULL
+    };
     struct soap_body body;
     char *content_type;
     struct curl_slist *headers = NULL;
@@ -133,6 +295,8 @@ static isds_error http(struct isds_ctx *context, const char *url,
     if (!url) return IE_INVAL;
     if (request_length > 0 && !request) return IE_INVAL;
     if (!response || !response_length) return IE_INVAL;
+
+    /* Clean authentication headers */
 
     /* Set the body here to allow deallocation in leave block */
     body.data = *response;
@@ -362,6 +526,16 @@ static isds_error http(struct isds_ctx *context, const char *url,
         curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEDATA, &body);
     }
 
+    /* Set get-response-headers function */
+    if (!curl_err) {
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_HEADERFUNCTION,
+                write_header);
+    }
+    if (!curl_err) {
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEHEADER,
+                &response_headers);
+    }
+
     /* Set MIME types and headers requires by SOAP 1.1.
      * SOAP 1.1 requires text/xml, SOAP 1.2 requires application/soap+xml */
     if (!curl_err) {
@@ -498,6 +672,16 @@ static isds_error http(struct isds_ctx *context, const char *url,
 
 leave:
     curl_slist_free_all(headers);
+
+    {
+        fprintf(stderr, "DEBUG: %s: Auth method: <%s>\n", __func__,
+                response_headers.method);
+        fprintf(stderr, "DEBUG: %s: Auth Code: <%s>\n", __func__,
+                response_headers.code);
+        fprintf(stderr, "DEBUG: %s: Auth Message: <%s>\n", __func__,
+                response_headers.message);
+        auth_headers_free(&response_headers);
+    }
 
     if (err) {
         free(body.data);
