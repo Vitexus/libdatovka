@@ -15,6 +15,7 @@ struct soap_body {
 struct auth_headers {
     _Bool is_complete;  /* Response has finished, next iteration is new
                            response, values become obsolete. */
+    char *last_header;  /* Temporary storage for previous unfinished header */
     char *method;       /* WWW-Authenticate value */
     char *code;         /* X-Response-message-code value */
     char *message;      /* X-Response-message-text value */
@@ -23,59 +24,70 @@ struct auth_headers {
 
 /* Deallocate content of struct auth_headers */
 static void auth_headers_free(struct auth_headers *headers) {
+    zfree(headers->last_header);
     zfree(headers->method);
     zfree(headers->code);
     zfree(headers->message);
 }
 
 
-/* If given @line of @length characters is HTTP header of @name,
+/* If given @line is HTTP header of @name,
  * return pointer to the header value. Otherwise return NULL.
  * @name is header name without name---value separator, terminated with 0. */
-static const char *header_value(const char *line, size_t length,
-        const char *name) {
+static const char *header_value(const char *line, const char *name) {
     const char *value;
     if (line == NULL || name == NULL) return NULL;
     
     for (value = line; ; value++, name++) {
-        if (value - line >= length) return NULL; /* Line too short */
-        if (*name == '\0') break;                /* Name matches */
+        if (*value == '\0') return NULL;        /* Line too short */
+        if (*name == '\0') break;               /* Name matches */
         if (*name != *value) return NULL;       /* Name does not match */
     }
 
     /* Check separator */
     if (*value++ != ':') return NULL;
-
-    /* Jump to begin of value.
-     * HTTP requires exactly one space, but this is more friendly: */
-    while (value - line < length && *value == ' ') value++;
+    if (*value++ != ' ') return NULL;
 
     return value;
 }
 
 
 /* Decode HTTP header value per RFC ???
- * @encoded_value is encoded HTTP header value
- * @length is size in characters of the @encoded_value
- * @return newly allocated decoded value or NULL */
-static char *decode_header_value(const char *encoded_value, size_t length) {
-    char *decoded = NULL;
+ * @encoded_value is encoded HTTP header value terminated with NUL. It can
+ * contain HTTP LWS separators that will be replaced with a space.
+ * @return newly allocated decoded value without EOL, or return NULL */
+static char *decode_header_value(const char *encoded_value) {
+    char *decoded = NULL, *decoded_cursor;
     size_t content_length;
+    _Bool text_started = 0, lws_seen = 0;
 
     if (encoded_value == NULL) return NULL;
+    content_length = strlen(encoded_value);
 
-    /* Cut at HTTP CR-LF */
-    for (content_length = 0; content_length < length &&
-            encoded_value[content_length] != '\r' &&
-            encoded_value[content_length] != '\n'; content_length++);
+    decoded = malloc(content_length + 1);
+    if (decoded == NULL) {
+        /* ENOMEM */
+        return NULL;
+    }
 
     /* Decode */
+    /* RFC 2616, section 4.2: Remove surrounding LWS, replace inner ones with
+     * a space. */
     /* FIXME: Implement the RFC (?=UTF-8?B?...?) */
-    decoded = malloc(content_length + 1);
-    if (decoded != NULL) {
-        memcpy(decoded, encoded_value, content_length);
-        decoded[content_length] = '\0';
+    for(decoded_cursor = decoded; *encoded_value; encoded_value++) {
+        if (*encoded_value == '\r' || *encoded_value == '\n' ||
+                *encoded_value == '\t' || *encoded_value == ' ') {
+            lws_seen = 1; 
+            continue;
+        }
+        if (lws_seen) {
+            lws_seen = 0;
+            if (text_started) *(decoded_cursor++) = ' ';
+        }
+        *(decoded_cursor++) = *encoded_value;
+        text_started = 1;
     }
+    *decoded_cursor = '\0';
 
     return decoded;
 }
@@ -154,62 +166,83 @@ static size_t write_header(void *buffer, size_t size, size_t nmemb, void *userp)
             (const char *)buffer);
 
     /* New response, invalide authentication headers. */
+    /* XXX: Chunked encoding trailer is not supported */
     if (headers->is_complete) auth_headers_free(headers);
 
-    /* Header---body separator */
-    if (!strncmp(buffer, "\r\n", length)) {
-        headers->is_complete = 1;
+    /* Append continuation to multi-line header */
+    if (*(char *)buffer == ' ' || *(char *)buffer == '\t') {
+        if (headers->last_header != NULL) {
+            size_t old_length = strlen(headers->last_header);
+            char *longer_header = realloc(headers->last_header, old_length + length);
+            if (longer_header == NULL) {
+                /* ENOMEM */
+                return 0;
+            }
+            strncpy(longer_header + old_length, (char*)buffer + 1, length);
+            longer_header[old_length + length] = '\0';
+            headers->last_header = longer_header;
+        } else {
+            /* Invalid continuation without starting header will be skipped. */
+            isds_log(ILF_HTTP, ILL_WARNING,
+                    _("HTTP header continuation without starting header has "
+                        "been encountered. Skipping invalid HTTP response "
+                        "line.\n"));
+        }
         goto leave;
     }
-        
-    /* FIXME: Handle multi-line headers */
-    value = header_value(buffer, length, "WWW-Authenticate");
+
+    /* Decode last header */
+    value = header_value(headers->last_header, "WWW-Authenticate");
     if (value != NULL) {
        if (headers->method != NULL)
            zfree(headers->method);
-       headers->method =
-           decode_header_value(value, length - ((char *) buffer - value));
-       if (headers->method == NULL) {
+       if (NULL == (headers->method = decode_header_value(value))) {
            /* TODO: Set IE_NOMEM to context */
            return 0;
        }
-       goto leave;
+       goto store;
     }
 
-    value = header_value(buffer, length, "X-Response-message-code");
+    value = header_value(headers->last_header, "X-Response-message-code");
     if (value != NULL) {
        if (headers->code != NULL)
            zfree(headers->code);
-       headers->code =
-           decode_header_value(value, length - ((char *) buffer - value));
-       if (headers->code == NULL) {
+       if (NULL == (headers->code = decode_header_value(value))) {
            /* TODO: Set IE_NOMEM to context */
            return 0;
        }
-       goto leave;
+       goto store;
     }
 
-    value = header_value(buffer, length, "X-Response-message-text");
+    value = header_value(headers->last_header, "X-Response-message-text");
     if (value != NULL) {
        if (headers->message != NULL)
            zfree(headers->message);
-       headers->message =
-           decode_header_value(value, length - ((char *) buffer - value));
-       if (headers->message == NULL) {
+       if (NULL == (headers->message = decode_header_value(value))) {
            /* TODO: Set IE_NOMEM to context */
            return 0;
        }
-       goto leave;
+       goto store;
     }
 
-    /* new_data = realloc(body->data, body->length + size * nmemb);
-    if (!new_data) return 0;
+store:
+    /* Last header decoded, free it */
+    zfree(headers->last_header);
 
-    memcpy(new_data + body->length, buffer, size * nmemb);
-
-    body->data = new_data;
-    body->length += size * nmemb;
-    */
+    if (!strncmp(buffer, "\r\n", length)) {
+        /* Current line is header---body separator */
+        headers->is_complete = 1;
+        goto leave;
+    } else {
+        /* Current line is new header, store it */
+        headers->last_header = malloc(length + 1);
+        if (headers->last_header == NULL) {
+            /* TODO: Set IE_NOMEM to context */
+            return 0;
+        }
+        memcpy(headers->last_header, buffer, length);
+        headers->last_header[length] = '\0';
+    }
 
 leave:
     return (length);

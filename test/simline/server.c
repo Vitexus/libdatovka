@@ -216,7 +216,10 @@ void server_totp_authentication(int server_socket,
                         if (arguments->isds_deviations)
                             http_send_response_401_totp(client_socket,
                                     "authentication.error.userIsNotAuthenticated",
-                                    "Retry");
+                                    " Retry: Missing authentication headers.\r\n"
+                                    " This is very long header\r\n"
+                                    " which should span to more lines.\r\n"
+                                    "   Surrounding LWS are meaning-less. ");
                         else
                             http_send_response_403(client_socket);
                         break;
