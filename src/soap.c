@@ -18,7 +18,9 @@ struct auth_headers {
     char *last_header;  /* Temporary storage for previous unfinished header */
     char *method;       /* WWW-Authenticate value */
     char *code;         /* X-Response-message-code value */
+    isds_otp_resolution resolution;     /* Decoded .code member */
     char *message;      /* X-Response-message-text value */
+    char *redirect;     /* Redirect URL */
 };
 
 
@@ -28,6 +30,7 @@ static void auth_headers_free(struct auth_headers *headers) {
     zfree(headers->method);
     zfree(headers->code);
     zfree(headers->message);
+    zfree(headers->redirect);
 }
 
 
@@ -44,9 +47,8 @@ static const char *header_value(const char *line, const char *name) {
         if (*name != *value) return NULL;       /* Name does not match */
     }
 
-    /* Check separator */
+    /* Check separator. RFC2616, section 4.2 requires collon only. */
     if (*value++ != ':') return NULL;
-    if (*value++ != ' ') return NULL;
 
     return value;
 }
@@ -90,6 +92,53 @@ static char *decode_header_value(const char *encoded_value) {
     *decoded_cursor = '\0';
 
     return decoded;
+}
+
+
+/* Return true, if server requests OTP authorization method that client
+ * requested. Otherwise return false.
+ * @client_method is method client requested
+ * @server_method is value of WWW-Authenticate header */
+/*static _Bool otp_method_matches(const isds_otp_method client_method,
+        const char *server_method) {
+    char *method_name = NULL;
+    
+    switch (client_method) {
+        case OTP_HASH: method_name = "hotp"; break;
+        case OTP_TIME: method_name = "totp"; break;
+        default: return 0;
+    }
+
+    if (!strncmp(server_method, method_name, 4) && (
+                server_method[4] == '\0' || server_method[4] == ' ' ||
+                server_method[4] == '\t'))
+        return 1;
+    return 0;
+}*/
+
+
+/* Convert UTF-8 @string to HTTP OTP resolution enum type.
+ * @Return corresponding value or OTP_RESOLUTION_UNKNOWN if @string is not
+ * defined or unknown value. */
+static isds_otp_resolution string2isds_otp_resolution(const char *string) {
+    if (string == NULL)
+        return OTP_RESOLUTION_UNKNOWN;
+    else if (!strcmp(string, "authentication.info.totpSended"))
+        return OTP_RESOLUTION_TOTP_SENT;
+    else if (!strcmp(string, "authentication.error.userIsNotAuthenticated"))
+        return OTP_RESOLUTION_BAD_AUTHENTICATION;
+    else if (!strcmp(string, "authentication.error.intruderDetected"))
+        return OTP_RESOLUTION_ACCESS_BLOCKED;
+    else if (!strcmp(string, "authentication.error.paswordExpired"))
+        return OTP_RESOLUTION_PASSWORD_EXPIRED;
+    else if (!strcmp(string, "authentication.info.cannotSendQuickly"))
+        return OTP_RESOLUTION_TO_FAST;
+    else if (!strcmp(string, "authentication.error.badRole"))
+        return OTP_RESOLUTION_UNAUTHORIZED;
+    else if (!strcmp(string, "authentication.info.totpNotSended"))
+        return OTP_RESOLUTION_TOTP_NOT_SENT;
+    else
+        return OTP_RESOLUTION_UNKNOWN;
 }
 
 
@@ -149,21 +198,16 @@ static size_t write_header(void *buffer, size_t size, size_t nmemb, void *userp)
     struct auth_headers *headers = (struct auth_headers *) userp;
     size_t length;
     const char *value;
-    /*void *new_data;*/
 
     /* FIXME: Check for (size * nmemb) !> SIZE_T_MAX.
      * Precompute the product then. */
     length = size * nmemb;
 
-    if (!headers) return 0;    /* This should never happen */
+    if (NULL == headers) return 0;    /* This should never happen */
     if (0 == length) {
         /* ??? Is this the empty line delimiter? */
-        fprintf(stderr, "DEBUG: %s: Empty header encountered\n", __func__);
         return 0; /* Empty headers */
     }
-
-    fprintf(stderr, "DEBUG: %s: Header: <%.*s>\n", __func__, length,
-            (const char *)buffer);
 
     /* New response, invalide authentication headers. */
     /* XXX: Chunked encoding trailer is not supported */
@@ -178,8 +222,8 @@ static size_t write_header(void *buffer, size_t size, size_t nmemb, void *userp)
                 /* ENOMEM */
                 return 0;
             }
-            strncpy(longer_header + old_length, (char*)buffer + 1, length);
-            longer_header[old_length + length] = '\0';
+            strncpy(longer_header + old_length, (char*)buffer + 1, length - 1);
+            longer_header[old_length + length - 1] = '\0';
             headers->last_header = longer_header;
         } else {
             /* Invalid continuation without starting header will be skipped. */
@@ -194,8 +238,7 @@ static size_t write_header(void *buffer, size_t size, size_t nmemb, void *userp)
     /* Decode last header */
     value = header_value(headers->last_header, "WWW-Authenticate");
     if (value != NULL) {
-       if (headers->method != NULL)
-           zfree(headers->method);
+       free(headers->method);
        if (NULL == (headers->method = decode_header_value(value))) {
            /* TODO: Set IE_NOMEM to context */
            return 0;
@@ -205,8 +248,7 @@ static size_t write_header(void *buffer, size_t size, size_t nmemb, void *userp)
 
     value = header_value(headers->last_header, "X-Response-message-code");
     if (value != NULL) {
-       if (headers->code != NULL)
-           zfree(headers->code);
+       free(headers->code);
        if (NULL == (headers->code = decode_header_value(value))) {
            /* TODO: Set IE_NOMEM to context */
            return 0;
@@ -216,8 +258,7 @@ static size_t write_header(void *buffer, size_t size, size_t nmemb, void *userp)
 
     value = header_value(headers->last_header, "X-Response-message-text");
     if (value != NULL) {
-       if (headers->message != NULL)
-           zfree(headers->message);
+       free(headers->message);
        if (NULL == (headers->message = decode_header_value(value))) {
            /* TODO: Set IE_NOMEM to context */
            return 0;
@@ -305,6 +346,9 @@ static int log_curl(CURL *curl, curl_infotype type, char *buffer, size_t size,
  * In case of error, the response memory, MIME type, charset and length will be
  * deallocated and zeroed automatically. Thus be sure they are preallocated or
  * they points to NULL.
+ * @response_otp_headers is pre-allocated structure for OTP authentication
+ * headers sent by server. Members must be valid pointers or NULLs.
+ * Pass NULL if you don't interest.
  * Be ware that successful return value does not mean the HTTP request has
  * been accepted by the server. You must consult @http_code. OTOH, failure
  * return value means the request could not been sent (e.g. SSL error).
@@ -312,13 +356,11 @@ static int log_curl(CURL *curl, curl_infotype type, char *buffer, size_t size,
 static isds_error http(struct isds_ctx *context, const char *url,
         const void *request, const size_t request_length,
         void **response, size_t *response_length,
-        char **mime_type, char **charset, long *http_code) {
+        char **mime_type, char **charset, long *http_code,
+        struct auth_headers *response_otp_headers) {
 
     CURLcode curl_err;
     isds_error err = IE_SUCCESS;
-    struct auth_headers response_headers = {
-        .method = NULL, .code = NULL, .message = NULL
-    };
     struct soap_body body;
     char *content_type;
     struct curl_slist *headers = NULL;
@@ -559,14 +601,16 @@ static isds_error http(struct isds_ctx *context, const char *url,
         curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEDATA, &body);
     }
 
-    /* Set get-response-headers function */
-    if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_HEADERFUNCTION,
-                write_header);
-    }
-    if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEHEADER,
-                &response_headers);
+    if (response_otp_headers != NULL) {
+        /* Set get-response-headers function */
+        if (!curl_err) {
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_HEADERFUNCTION,
+                    write_header);
+        }
+        if (!curl_err) {
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEHEADER,
+                    response_otp_headers);
+        }
     }
 
     /* Set MIME types and headers requires by SOAP 1.1.
@@ -703,18 +747,52 @@ static isds_error http(struct isds_ctx *context, const char *url,
         }
     }
 
+    /* Store OTP authentication results */
+    if (response_otp_headers && response_otp_headers->is_complete) {
+        isds_log(ILF_SEC, ILL_DEBUG,
+                _("OTP authentication headers received: "
+                    "method=%s, code=%s, message=%s\n"),
+                response_otp_headers->method, response_otp_headers->code,
+                response_otp_headers->message);
+
+        /* XXX: Don't make unknown code fatal. Missing code can be succcess if
+         * HTTP code is 302. This is checked in _isds_soap(). */
+        response_otp_headers->resolution =
+            string2isds_otp_resolution(response_otp_headers->code);
+        
+        if (response_otp_headers->message != NULL) {
+            char *message_locale = _isds_utf82locale(response_otp_headers->message);
+            if (message_locale == NULL) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+            isds_printf_message(context,
+                    _("Server returned OTP authentication message: %s"),
+                    message_locale);
+            free(message_locale);
+        }
+
+        char *next_url = NULL; /* Weak pointer managed by cURL */
+        curl_err = curl_easy_getinfo(context->curl, CURLINFO_REDIRECT_URL,
+                &next_url);
+        if (curl_err) {
+            err = IE_ERROR;
+            goto leave;
+        }
+        if (next_url != NULL) {
+            isds_log(ILF_SEC, ILL_DEBUG,
+                    _("OTP authentication headers redirect to: <%s>\n"),
+                    next_url);
+            free(response_otp_headers->redirect);
+            response_otp_headers->redirect = strdup(next_url);
+            if (response_otp_headers->redirect == NULL) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+        }
+    }
 leave:
     curl_slist_free_all(headers);
-
-    {
-        fprintf(stderr, "DEBUG: %s: Auth method: <%s>\n", __func__,
-                response_headers.method);
-        fprintf(stderr, "DEBUG: %s: Auth Code: <%s>\n", __func__,
-                response_headers.code);
-        fprintf(stderr, "DEBUG: %s: Auth Message: <%s>\n", __func__,
-                response_headers.message);
-        auth_headers_free(&response_headers);
-    }
 
     if (err) {
         free(body.data);
@@ -762,6 +840,7 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
     char *url = NULL;
     char *mime_type = NULL;
     long http_code = 0;
+    struct auth_headers response_otp_headers;
     xmlBufferPtr http_request = NULL;
     xmlSaveCtxtPtr save_ctx = NULL;
     xmlDocPtr request_soap_doc = NULL;
@@ -790,7 +869,7 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
     /* Build SOAP request envelope */
     request_soap_doc = xmlNewDoc(BAD_CAST "1.0");
     if (!request_soap_doc) {
-        isds_log_message(context, _("Could not build SOAP request document"));
+        isds_log_message(context, _("could not build soap request document"));
         err = IE_ERROR;
         goto leave;
     }
@@ -868,17 +947,22 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
         err = IE_ERROR;
         goto leave;
     }
-    
+
+    if (context->otp != NULL)
+        memset(&response_otp_headers, 0, sizeof(response_otp_headers));
+/*redirect:*/
+    if (context->otp != NULL) auth_headers_free(&response_otp_headers);
     isds_log(ILF_SOAP, ILL_DEBUG,
             _("SOAP request to sent to %s:\n%.*s\nEnd of SOAP request\n"),
             url, http_request->use, http_request->content);
 
     err = http(context, url, http_request->content, http_request->use,
             &http_response, &response_length,
-            &mime_type, NULL, &http_code);
+            &mime_type, NULL, &http_code,
+            (context->otp == NULL) ? NULL: &response_otp_headers);
 
     /* TODO: HTTP binding for SOAP prescribes non-200 HTTP return codes
-     * to be processes too. */
+     * to be processed too. */
 
     if (err) {
         goto leave;
@@ -890,17 +974,34 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
     switch (http_code) {
         /* XXX: We must see which code is used for not permitted ISDS
          * operation like downloading message without proper user
-         * permissions. In that cat we should keep connection opened. */
+         * permissions. In that case we should keep connection opened. */
         case 302:
-            err = IE_HTTP;
-            isds_printf_message(context,
-                    _("Code 302: Server redirects on <%s>. "
-                        "Redirection is forbidden in stateless mode."), url);
-            goto leave;
+            if (context->otp) {
+                if (response_otp_headers.resolution == OTP_RESOLUTION_UNKNOWN)
+                    context->otp->resolution = OTP_RESOLUTION_SUCCESS;
+                else
+                    context->otp->resolution = response_otp_headers.resolution;
+                /* FIXME: Implement redirect on OTP log-in. */
+                err = IE_PARTIAL_SUCCESS;
+                isds_printf_message(context,
+                        _("Server redirects on <%s> because OTP authentication "
+                            "succeeded."),
+                        url);
+                goto leave;
+            } else {
+                err = IE_HTTP;
+                isds_printf_message(context,
+                        _("Code 302: Server redirects on <%s>. "
+                            "Redirection is forbidden in stateless mode."),
+                        url);
+                goto leave;
+            }
             break;
         case 401:   /* ISDS server returns 401 even if Authorization
                        presents. */
-        case 403:   /* HTTP/1.0 prescribes 403 if Authorization presentes. */
+        case 403:   /* HTTP/1.0 prescribes 403 if Authorization presents. */
+            if (context->otp)
+                context->otp->resolution = response_otp_headers.resolution;
             err = IE_NOT_LOGGED_IN;
             isds_log_message(context, _("Authentication failed"));
             goto leave;
@@ -1093,6 +1194,7 @@ leave:
     xmlXPathFreeObject(response_soap_headers);
     xmlXPathFreeContext(xpath_ctx);
     xmlFreeDoc(response_soap_doc);
+    auth_headers_free(&response_otp_headers);
     free(mime_type);
     free(http_response);
     xmlSaveClose(save_ctx);

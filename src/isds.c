@@ -1198,11 +1198,12 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
         }
         /* Default locator is official system (without client certificate) */
         context->url = strdup((url) ? url : isds_locator);
-        if (otp) {
+
+        context->otp = otp;
+        if (context->otp != NULL) {
             const char *authenticator_uri = NULL;
-            /* FIXME: Handle second stage */
-            context->otp = otp;
-            switch (otp->method) {
+            char *new_url = NULL;
+            switch (context->otp->method) {
                 case OTP_HASH: 
                     isds_log(ILF_SEC, ILL_INFO,
                             _("Selected authentication method: "
@@ -1214,18 +1215,32 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
                     isds_log(ILF_SEC, ILL_INFO,
                             _("Selected authentication method: "
                                 "Time-based one time password\n"));
-                    authenticator_uri =
-                        "%1$sas/processLogin?type=totp&sendSms=true&"
-                        "uri=%1$sapps/";
+                    if (context->otp->otp_code == NULL) {
+                        isds_log(ILF_SEC, ILL_INFO,
+                                _("OTP code has not been provided by "
+                                    "application, requesting server for "
+                                    "new one.\n"));
+                        authenticator_uri =
+                            "%1$sas/processLogin?type=totp&sendSms=true&"
+                            "uri=%1$sapps/";
+                    } else {
+                        isds_log(ILF_SEC, ILL_INFO,
+                                _("OTP code has been provided by "
+                                    "application, not requesting server "
+                                    "for new one.\n"));
+                        authenticator_uri =
+                            "%1$sas/processLogin?type=totp&"
+                            "uri=%1$sapps/";
+                    }
                     break;
                 default:
                     isds_log_message(context,
-                            _("Unknown One-time password authentication method "
-                                "requested by application"));
+                            _("Unknown one-time password authentication "
+                                "method requested by application"));
                     return IE_ENUM;
             }
-            char *new_url = NULL;
-            isds_asprintf(&new_url, authenticator_uri, context->url);
+            if (-1 == isds_asprintf(&new_url, authenticator_uri, context->url))
+                return IE_NOMEM;
             zfree(context->url);
             context->url = new_url;
         }
@@ -1278,10 +1293,14 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     /* Store credentials */
     /* FIXME: mlock password
      * (I have a library) */
-    /* FIXME: discard_credentials() to wipe otp_code too */
     discard_credentials(context);
     if (username) context->username = strdup(username);
-    if (password) context->password = strdup(password);
+    if (password) {
+        if (context->otp == NULL)
+            context->password = strdup(password);
+        else
+            context->password = _isds_astrcat(password, context->otp->otp_code);
+    }
     context->pki_credentials = isds_pki_credentials_duplicate(pki_credentials);
     if ((username && !context->username) || (password && !context->password) ||
             (pki_credentials && !context->pki_credentials)) {

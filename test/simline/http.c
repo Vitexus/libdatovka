@@ -698,11 +698,99 @@ int http_send_response_200(int client_socket,
 }
 
 
-/* Send a 400 Bad Request response */ 
-int http_send_response_400(int client_socket) {
+/* Send a 302 Found response setting a cookie */ 
+int http_send_response_302_cookie(int client_socket, const char *cokie_name,
+        const char *cookie_value, const char *location) {
+    int retval;
+    struct http_header header_cookie = {
+        .name = "Set-Cookie",
+        .value = NULL,
+        .next = NULL
+    };
+    struct http_header header_location = {
+        .name = "Location",
+        .value = (char *) location,
+        .next = NULL
+    };
+    struct http_response response = {
+        .status = 302,
+        .reason = "Found",
+        .headers = NULL,
+        .body_length = 0,
+        .body = NULL
+    };
+
+    if (cokie_name != NULL) {
+        if (-1 == test_asprintf(&header_cookie.value, "%s=%s", cokie_name,
+                cookie_value == NULL ? "" : cookie_value)) {
+            return http_send_response_500(client_socket);
+        }
+    }
+    
+    /* Link defined headers */
+    if (location != NULL) {
+        response.headers = &header_location;
+    }
+    if (header_cookie.value != NULL) {
+        header_cookie.next = response.headers;
+        response.headers = &header_cookie;
+    }
+    
+    retval = http_write_response(client_socket, &response);
+    free(header_cookie.value);
+    return retval;
+}
+
+
+/* Send a 302 Found response with totp authentication scheme header */ 
+int http_send_response_302_totp(int client_socket,
+        const char *code, const char *text, const char *location) {
+    struct http_header header_code = {
+        .name = "X-Response-message-code",
+        .value = (char *) code,
+        .next = NULL
+    };
+    struct http_header header_text = {
+        .name = "X-Response-message-text",
+        .value = (char *) text,
+        .next = NULL
+    };
+    struct http_header header_location = {
+        .name = "Location",
+        .value = (char *) location,
+        .next = NULL
+    };
+    struct http_response response = {
+        .status = 302,
+        .reason = "Found",
+        .headers = NULL,
+        .body_length = 0,
+        .body = NULL
+    };
+    
+    /* Link defined headers */
+    if (location != NULL) {
+        response.headers = &header_location;
+    }
+    if (text != NULL) {
+        header_text.next = response.headers;
+        response.headers = &header_text;
+    }
+    if (code != NULL) {
+        header_code.next = response.headers;
+        response.headers = &header_code;
+    }
+    
+    return http_write_response(client_socket, &response);
+}
+
+
+/* Send a 400 Bad Request response.
+ * Use non-NULL @reason to override status message. */ 
+int http_send_response_400(int client_socket, const char *reason) {
     struct http_response response = {
         .status = 400,
-        .reason = "Bad Request",
+        .reason = (reason == NULL) ? "Bad Request" : (char *) reason,
         .headers = NULL,
         .body_length = 0,
         .body = NULL
@@ -731,12 +819,14 @@ int http_send_response_401_basic(int client_socket) {
 }
 
 
-/* Send a 401 Unauthorized response with totp authentication scheme header */ 
-int http_send_response_401_totp(int client_socket,
-        const char *code, const char *text) {
+/* Send a 401 Unauthorized response with OTP authentication scheme header for
+ * given @method. */ 
+int http_send_response_401_otp(int client_socket,
+        const char *method, const char *code, const char *text) {
+    int retval;
     struct http_header header = {
         .name = "WWW-Authenticate",
-        .value = "totp realm=\"SimulatedISDSServer\"",
+        .value = NULL,
         .next = NULL
     };
     struct http_header header_code = {
@@ -756,6 +846,11 @@ int http_send_response_401_totp(int client_socket,
         .body_length = 0,
         .body = NULL
     };
+
+    if (-1 == test_asprintf(&header.value, "%s realm=\"SimulatedISDSServer\"",
+                method)) {
+        return http_send_response_500(client_socket);
+    }
     
     /* Link defined headers */
     if (code != NULL) header.next = &header_code;
@@ -765,7 +860,10 @@ int http_send_response_401_totp(int client_socket,
         else
             header.next = &header_text;
     }
-    return http_write_response(client_socket, &response);
+
+    retval = http_write_response(client_socket, &response);
+    free(header.value);
+    return retval;
 }
 
 
@@ -857,13 +955,12 @@ http_error http_authenticate_basic(const struct http_request *request,
     if (-1 == test_asprintf(&basic_cookie_plain, "%s:%s",
                 (username == NULL) ? "" : username,
                 (password == NULL) ? "" : password)) {
-        free(basic_cookie_plain);
         return HTTP_ERROR_SERVER;
     }
     
     basic_cookie_encoded = base64encode(basic_cookie_plain,
             strlen(basic_cookie_plain), 1);
-    if (basic_cookie_plain == NULL) {
+    if (basic_cookie_encoded == NULL) {
         free(basic_cookie_plain);
         return HTTP_ERROR_SERVER;
     }
@@ -894,7 +991,7 @@ http_error http_authenticate_otp(const struct http_request *request,
     }
 
     /* Use Basic authentication */
-    /* FIXME: Specification does not define authorization method string */
+    /* XXX: Specification does not define authorization method string */
     retval = http_authenticate_basic(request, username, basic_password);
 
     free(basic_password);

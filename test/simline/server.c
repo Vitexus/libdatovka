@@ -26,6 +26,9 @@ static const char *soap_mime_type = "text/xml"; /* SOAP/1.1 requires text/xml */
 /* DummyOperation respons */
 static const char *pong = "<?xml version='1.0' encoding='utf-8'?><SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><SOAP-ENV:Body><q:DummyOperationResponse xmlns:q=\"http://isds.czechpoint.cz/v20\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><q:dmStatus><q:dmStatusCode>0000</q:dmStatusCode><q:dmStatusMessage>Provedeno úspěšně.</q:dmStatusMessage></q:dmStatus></q:DummyOperationResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>";
 
+static const char *as_path_sendsms = "/as/processLogin?type=totp&sendSms=true&uri=";
+static const char *as_path_dontsendsms = "/as/processLogin?type=totp&uri=";
+
 /* Save pointer to static error message if not yet set */
 void set_server_error(const char *message) {
     if (server_error == NULL) {
@@ -127,7 +130,7 @@ void server_basic_authentication(int server_socket,
         if (error) {
             fprintf(stderr, "Error while reading request\n");
             if (error == HTTP_ERROR_CLIENT)
-                http_send_response_400(client_socket);
+                http_send_response_400(client_socket, "Error in request");
             else
                 http_send_response_500(client_socket);
             close(client_socket);
@@ -169,6 +172,128 @@ void server_basic_authentication(int server_socket,
 }
 
 
+/* Process first phase od TOTP request */
+static void do_as_sendsms(int client_socket, const struct http_request *request,
+        const struct arguments_totp_authentication *arguments) {
+    if (arguments == NULL) {
+        http_send_response_500(client_socket);
+        return;
+    }
+
+    if (!http_client_authenticates(request)) {
+        http_send_response_401_otp(client_socket,
+                "totpsendsms",
+                "authentication.error.userIsNotAuthenticated",
+                "Client did not send any authentication header");
+        return;
+    }
+
+    switch(http_authenticate_basic(request,
+                arguments->username, arguments->password)) {
+        case HTTP_ERROR_SUCCESS: {
+                /* Find final URI */
+                char *uri = strstr(request->uri, "&uri="); 
+                if (uri == NULL) {
+                    http_send_response_400(client_socket,
+                            "Missing uri parameter in Request URI");
+                    return;
+                }
+                uri += 5;
+                /* Build new location for second OTP phase */ 
+                char *location = NULL;
+                if (-1 == test_asprintf(&location, "%s%s", as_path_dontsendsms, uri)) {
+                    http_send_response_500(client_socket);
+                    return;
+                }
+                char *terminator = strchr(uri, '&');
+                if (NULL != terminator) 
+                    location[strlen(as_path_dontsendsms) + (uri - terminator)] = '\0';
+                http_send_response_302_totp(client_socket,
+                        "authentication.info.totpSended",
+                        "=?UTF-8?B?SmVkbm9yw6F6b3bDvSBrw7NkIG9kZXNsw6FuLg==?=",
+                        location);
+                free(location);
+            }
+            break;
+        case HTTP_ERROR_CLIENT:
+            if (arguments->isds_deviations)
+                http_send_response_401_otp(client_socket,
+                        "totpsendsms",
+                        "authentication.error.userIsNotAuthenticated",
+                        " Retry: Bad user name or password in first OTP phase.\r\n"
+                        " This is very long header\r\n"
+                        " which should span to more lines.\r\n"
+                        "   Surrounding LWS are meaning-less. ");
+            else
+                http_send_response_403(client_socket);
+            break;
+        default:
+            http_send_response_500(client_socket);
+    }
+}
+
+
+/* Process second phase od TOTP request */
+static void do_as_dontsendsms(int client_socket, const struct http_request *request,
+        const struct arguments_totp_authentication *arguments) {
+    if (arguments == NULL) {
+        http_send_response_500(client_socket);
+        return;
+    }
+
+    if (!http_client_authenticates(request)) {
+        http_send_response_401_otp(client_socket,
+                "totp",
+                "authentication.error.userIsNotAuthenticated",
+                "Client did not send any authentication header");
+        return;
+    }
+
+    switch(http_authenticate_otp(request,
+                arguments->username, arguments->password, arguments->otp)) {
+        case HTTP_ERROR_SUCCESS: {
+                /* Find final URI */
+                char *uri = strstr(request->uri, "&uri="); 
+                if (uri == NULL) {
+                    http_send_response_400(client_socket,
+                            "Missing uri parameter in Request URI");
+                    return;
+                }
+                uri += 5;
+                /* Build new location for final request */ 
+                char *location = NULL;
+                if (NULL == (location = strdup(uri))) {
+                    http_send_response_500(client_socket);
+                    return;
+                }
+                char *terminator = strchr(location, '&');
+                if (NULL != terminator) 
+                    *terminator = '\0';
+                http_send_response_302_cookie(client_socket,
+                        "IPCZ-X-COOKIE",
+                        "6*7",
+                        location);
+                free(location);
+            }
+            break;
+        case HTTP_ERROR_CLIENT:
+            if (arguments->isds_deviations)
+                http_send_response_401_otp(client_socket,
+                        "totp",
+                        "authentication.error.userIsNotAuthenticated",
+                        " Retry: Bad user name or password in second OTP phase.\r\n"
+                        " This is very long header\r\n"
+                        " which should span to more lines.\r\n"
+                        "   Surrounding LWS are meaning-less. ");
+            else
+                http_send_response_403(client_socket);
+            break;
+        default:
+            http_send_response_500(client_socket);
+    }
+}
+
+
 /* Do the server protocol with TOTP authentication.
  * @server_socket is listening TCP socket of the server
  * @server_arguments is pointer to structure:
@@ -194,7 +319,7 @@ void server_totp_authentication(int server_socket,
         if (error) {
             fprintf(stderr, "Error while reading request\n");
             if (error == HTTP_ERROR_CLIENT)
-                http_send_response_400(client_socket);
+                http_send_response_400(client_socket, "Error in request");
             else
                 http_send_response_500(client_socket);
             close(client_socket);
@@ -202,35 +327,16 @@ void server_totp_authentication(int server_socket,
         }
 
         if (arguments->username != NULL) {
-            if (http_client_authenticates(request)) {
-                /* FIXME: Test for R-URI and check for basic or cookie */
-                /* TODO: Implement all states */
-                switch(http_authenticate_otp(request,
-                            arguments->username, arguments->password,
-                            arguments->otp)) {
-                    case HTTP_ERROR_SUCCESS:
-                        http_send_response_200(client_socket,
-                                pong, strlen(pong), soap_mime_type);
-                        break;
-                    case HTTP_ERROR_CLIENT:
-                        if (arguments->isds_deviations)
-                            http_send_response_401_totp(client_socket,
-                                    "authentication.error.userIsNotAuthenticated",
-                                    " Retry: Missing authentication headers.\r\n"
-                                    " This is very long header\r\n"
-                                    " which should span to more lines.\r\n"
-                                    "   Surrounding LWS are meaning-less. ");
-                        else
-                            http_send_response_403(client_socket);
-                        break;
-                    default:
-                        http_send_response_500(client_socket);
-                }
+            if (!strncmp(request->uri, as_path_sendsms, strlen(as_path_sendsms))) {
+                do_as_sendsms(client_socket, request, arguments);
+            } else if (!strncmp(request->uri, as_path_dontsendsms,
+                        strlen(as_path_dontsendsms))) {
+                do_as_dontsendsms(client_socket, request, arguments);
             } else {
-                http_send_response_401_totp(client_socket,
-                        "authentication.error.userIsNotAuthenticated",
-                        "Retry");
-            }
+                /* FIXME: Test for R-URI and check for cookie and return pong */
+                http_send_response_400(client_socket,
+                        "Unknown path for TOTP authenticating service");
+            }            
         } else {
             http_send_response_200(client_socket,
                     pong, strlen(pong), soap_mime_type);
@@ -265,7 +371,7 @@ void server_out_of_order(int server_socket,
         if (error) {
             fprintf(stderr, "Error while reading request\n");
             if (error == HTTP_ERROR_CLIENT)
-                http_send_response_400(client_socket);
+                http_send_response_400(client_socket, "Error in request");
             close(client_socket);
             continue;
         }

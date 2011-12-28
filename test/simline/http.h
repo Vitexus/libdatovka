@@ -63,15 +63,25 @@ int http_write_response(int socket, const struct http_response *response);
 int http_send_response_200(int client_socket,
         const void *body, size_t body_length, const char *type);
 
-/* Send a 400 Bad Request response */ 
-int http_send_response_400(int client_socket);
+/* Send a 302 Found response setting a cookie */ 
+int http_send_response_302_cookie(int client_socket, const char *cokie_name,
+        const char *cookie_value, const char *location);
+
+/* Send a 302 Found response with totp authentication scheme header */ 
+int http_send_response_302_totp(int client_socket,
+        const char *code, const char *text, const char *location);
+
+/* Send a 400 Bad Request response.
+ * Use non-NULL @reason to override status message. */ 
+int http_send_response_400(int client_socket, const char *reason);
 
 /* Send a 401 Unauthorized response with Basic authentication scheme header */ 
-int http_send_response_401_basic(int socket);
+int http_send_response_401_basic(int client_socket);
 
-/* Send a 401 Unauthorized response with totp authentication scheme header */ 
-int http_send_response_401_totp(int client_socket,
-        const char *code, const char *text);
+/* Send a 401 Unauthorized response with OTP authentication scheme header for
+ * given @method. */ 
+int http_send_response_401_otp(int client_socket,
+        const char *method, const char *code, const char *text);
 
 /* Send a 403 Forbidden response */ 
 int http_send_response_403(int client_socket);

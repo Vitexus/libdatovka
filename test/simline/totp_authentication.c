@@ -37,6 +37,10 @@ int main(int argc, char **argv) {
     struct isds_ctx *context = NULL;
     char *url = NULL;
 
+    struct isds_otp otp_credentials = {
+        .method = OTP_TIME
+    };
+
     INIT_TEST("TOTP authentication");
 
     if (isds_init()) {
@@ -50,9 +54,6 @@ int main(int argc, char **argv) {
     }
 
     {
-        struct isds_otp otp_credentials = {
-            .method = OTP_TIME
-        };
         const struct arguments_totp_authentication server_arguments = {
             .username = username,
             .password = password,
@@ -75,17 +76,29 @@ int main(int argc, char **argv) {
         }
         free(server_address);
 
+        otp_credentials.otp_code = NULL;
+        TEST("First phase with invalid password", test_login,
+                IE_NOT_LOGGED_IN, context,
+                url, "7777777", "nbuusr1", NULL, &otp_credentials);
+
+        otp_credentials.otp_code = NULL;
+        TEST("First phase with valid password", test_login,
+                IE_PARTIAL_SUCCESS, context,
+                url, username, password, NULL, &otp_credentials);
+
         otp_credentials.otp_code = otp_code;
-        TEST("invalid credentials", test_login, IE_NOT_LOGGED_IN, context,
+        TEST("Second phase with invalid password", test_login,
+                IE_NOT_LOGGED_IN, context,
                 url, "7777777", "nbuusr1", NULL, &otp_credentials);
 
         otp_credentials.otp_code = "666";
-        TEST("valid credentials but invalid OTP code", test_login,
-                IE_NOT_LOGGED_IN, context, url, "7777777", "nbuusr1", 
-                NULL, &otp_credentials);
+        TEST("Second phase with valid password but invalid OTP code", test_login,
+                IE_NOT_LOGGED_IN, context,
+                url, username, password, NULL, &otp_credentials);
 
         otp_credentials.otp_code = otp_code;
-        TEST("valid login", test_login, IE_SUCCESS, context,
+        TEST("Second phase with valid password and valid OTP code", test_login,
+                IE_SUCCESS, context,
                 url, username, password, NULL, &otp_credentials);
 
         if (-1 == stop_server(server_process)) {
@@ -113,8 +126,9 @@ int main(int argc, char **argv) {
         }
         free(server_address);
 
+        otp_credentials.otp_code = "666";
         TEST("log into out-of-order server", test_login, IE_SOAP, context,
-                url, username, password, NULL, NULL);
+                url, username, password, NULL, &otp_credentials);
 
         if (-1 == stop_server(server_process)) {
             ABORT_UNIT(server_error);
