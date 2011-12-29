@@ -1212,7 +1212,7 @@ leave:
     xmlXPathFreeObject(response_soap_headers);
     xmlXPathFreeContext(xpath_ctx);
     xmlFreeDoc(response_soap_doc);
-    auth_headers_free(&response_otp_headers);
+    if (context->otp != NULL) auth_headers_free(&response_otp_headers);
     free(mime_type);
     free(http_response);
     xmlSaveClose(save_ctx);
