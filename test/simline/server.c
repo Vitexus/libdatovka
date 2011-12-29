@@ -28,6 +28,10 @@ static const char *pong = "<?xml version='1.0' encoding='utf-8'?><SOAP-ENV:Envel
 
 static const char *as_path_sendsms = "/as/processLogin?type=totp&sendSms=true&uri=";
 static const char *as_path_dontsendsms = "/as/processLogin?type=totp&uri=";
+static const char *ws_path = "/apps/DS/dz";
+
+static const char *authorizaton_cookie_name = "IPCZ-X-COOKIE";
+static char *authorizaton_cookie_value = "6x7";
 
 /* Save pointer to static error message if not yet set */
 void set_server_error(const char *message) {
@@ -269,9 +273,10 @@ static void do_as_dontsendsms(int client_socket, const struct http_request *requ
                 char *terminator = strchr(location, '&');
                 if (NULL != terminator) 
                     *terminator = '\0';
+                /* TODO: Generate random cookie value */
                 http_send_response_302_cookie(client_socket,
-                        "IPCZ-X-COOKIE",
-                        "6*7",
+                        authorizaton_cookie_name,
+                        authorizaton_cookie_value,
                         location);
                 free(location);
             }
@@ -294,6 +299,21 @@ static void do_as_dontsendsms(int client_socket, const struct http_request *requ
 }
 
 
+/* Process ISDS WS ping authorized by cookie */
+static void do_ws_with_cookie(int client_socket, const struct http_request *request,
+        const struct arguments_totp_authentication *arguments) {
+    const char *received_cookie =
+        http_find_cookie(request, authorizaton_cookie_name);
+
+    if (received_cookie != NULL &&
+            !strcmp(authorizaton_cookie_value, received_cookie))
+        http_send_response_200(client_socket,
+                pong, strlen(pong), soap_mime_type);
+    else
+        http_send_response_403(client_socket);
+}
+
+
 /* Do the server protocol with TOTP authentication.
  * @server_socket is listening TCP socket of the server
  * @server_arguments is pointer to structure:
@@ -303,8 +323,6 @@ void server_totp_authentication(int server_socket,
     int client_socket;
     const struct arguments_totp_authentication *arguments =
         (const struct arguments_totp_authentication *) server_arguments;
-    /*const char *cookie_name = "IPCZ-X-COOKIE";
-    static char *cookie_value;*/
     struct http_request *request = NULL;
     http_error error;
 
@@ -332,8 +350,9 @@ void server_totp_authentication(int server_socket,
             } else if (!strncmp(request->uri, as_path_dontsendsms,
                         strlen(as_path_dontsendsms))) {
                 do_as_dontsendsms(client_socket, request, arguments);
+            } else if (!strcmp(request->uri, ws_path)) {
+                do_ws_with_cookie(client_socket, request, arguments);
             } else {
-                /* FIXME: Test for R-URI and check for cookie and return pong */
                 http_send_response_400(client_socket,
                         "Unknown path for TOTP authenticating service");
             }            

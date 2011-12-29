@@ -558,6 +558,14 @@ static isds_error http(struct isds_ctx *context, const char *url,
         }
     }
 
+    /* Set authorization cookie for OTP session */
+    if (!curl_err && context->otp != NULL) {
+        isds_log(ILF_SEC, ILL_INFO,
+                _("Cookies will be stored and send "
+                    "because context has been authorized by OTP.\n"));
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_COOKIEFILE, "");
+    }
+
     /* Set timeout */
     if (!curl_err) {
         curl_err = curl_easy_setopt(context->curl, CURLOPT_NOSIGNAL, 1);
@@ -950,7 +958,7 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
 
     if (context->otp != NULL)
         memset(&response_otp_headers, 0, sizeof(response_otp_headers));
-/*redirect:*/
+redirect:
     if (context->otp != NULL) auth_headers_free(&response_otp_headers);
     isds_log(ILF_SOAP, ILL_DEBUG,
             _("SOAP request to sent to %s:\n%.*s\nEnd of SOAP request\n"),
@@ -981,17 +989,27 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
                     context->otp->resolution = OTP_RESOLUTION_SUCCESS;
                 else
                     context->otp->resolution = response_otp_headers.resolution;
-                /* FIXME: Implement redirect on OTP log-in. */
                 err = IE_PARTIAL_SUCCESS;
                 isds_printf_message(context,
                         _("Server redirects on <%s> because OTP authentication "
                             "succeeded."),
                         url);
-                goto leave;
+                if (context->otp->otp_code != NULL &&
+                        response_otp_headers.redirect != NULL) {
+                    /* XXX: If OTP code is known, this must be second OTP phase, so
+                     * sent final POST request. */
+                    free(url);
+                    url = response_otp_headers.redirect;
+                    response_otp_headers.redirect = NULL;
+                    goto redirect;
+                } else {
+                    /* XXX: Otherwise bail out to ask application for OTP code. */
+                    goto leave;
+                }
             } else {
                 err = IE_HTTP;
                 isds_printf_message(context,
-                        _("Code 302: Server redirects on <%s>. "
+                        _("Code 302: Server redirects on <%s> request. "
                             "Redirection is forbidden in stateless mode."),
                         url);
                 goto leave;

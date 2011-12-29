@@ -999,6 +999,30 @@ http_error http_authenticate_otp(const struct http_request *request,
 }
 
 
+/* Return cookie value by name or NULL if does not present. */
+const char *http_find_cookie(const struct http_request *request,
+        const char *name) {
+    const struct http_header *header;
+    size_t length;
+    const char *value = NULL;
+
+    if (request == NULL || name == NULL) return NULL;
+    length = strlen(name);
+
+    for (header = request->headers; header != NULL; header = header->next) {
+        if (header->name != NULL && !strcasecmp(header->name, "Cookie") &&
+                header->value != NULL) {
+            if (!strncmp(header->value, name, length) &&
+                    header->value[length] == '=') {
+                /* Return last cookie with the name */
+                value = header->value + length + 1;
+            }
+        }
+    }
+    return value;
+}
+
+
 /* Free a HTTP header and set it to NULL */
 void http_header_free(struct http_header **header) {
     if (header == NULL || *header == NULL) return;

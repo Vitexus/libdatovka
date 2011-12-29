@@ -106,4 +106,8 @@ http_error http_authenticate_basic(const struct http_request *request,
 http_error http_authenticate_otp(const struct http_request *request,
         const char *username, const char *password, const char *otp);
 
+/* Return cookie value by name or NULL if does not present. */
+const char *http_find_cookie(const struct http_request *request,
+        const char *name);
+
 #endif
