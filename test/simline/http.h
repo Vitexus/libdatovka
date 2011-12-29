@@ -65,7 +65,8 @@ int http_send_response_200(int client_socket,
 
 /* Send a 302 Found response setting a cookie */ 
 int http_send_response_302_cookie(int client_socket, const char *cokie_name,
-        const char *cookie_value, const char *location);
+        const char *cookie_value, const char *cookie_domain,
+        const char *cookie_path, const char *location);
 
 /* Send a 302 Found response with totp authentication scheme header */ 
 int http_send_response_302_totp(int client_socket,
@@ -109,5 +110,9 @@ http_error http_authenticate_otp(const struct http_request *request,
 /* Return cookie value by name or NULL if does not present. */
 const char *http_find_cookie(const struct http_request *request,
         const char *name);
+
+/* Return Host header value or NULL if does not present. Returned string is
+ * statically allocated. */
+const char *http_find_host(const struct http_request *request);
 
 #endif

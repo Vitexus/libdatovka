@@ -700,7 +700,8 @@ int http_send_response_200(int client_socket,
 
 /* Send a 302 Found response setting a cookie */ 
 int http_send_response_302_cookie(int client_socket, const char *cokie_name,
-        const char *cookie_value, const char *location) {
+        const char *cookie_value, const char *cookie_domain,
+        const char *cookie_path, const char *location) {
     int retval;
     struct http_header header_cookie = {
         .name = "Set-Cookie",
@@ -721,10 +722,32 @@ int http_send_response_302_cookie(int client_socket, const char *cokie_name,
     };
 
     if (cokie_name != NULL) {
-        if (-1 == test_asprintf(&header_cookie.value, "%s=%s", cokie_name,
-                cookie_value == NULL ? "" : cookie_value)) {
+        char *domain_parameter = NULL;
+        char *path_parameter = NULL;
+        if (cookie_domain != NULL) {
+            if (-1 == test_asprintf(&domain_parameter, "; Domain=%s",
+                        cookie_domain)) {
+                return http_send_response_500(client_socket);
+            }
+        }
+        if (cookie_path != NULL) {
+            if (-1 == test_asprintf(&path_parameter, "; Path=%s",
+                        cookie_path)) {
+                free(domain_parameter);
+                return http_send_response_500(client_socket);
+            }
+        }
+        if (-1 == test_asprintf(&header_cookie.value, "%s=%s%s%s",
+                    cokie_name,
+                    (cookie_value == NULL) ? "" : cookie_value,
+                    (domain_parameter == NULL) ? "": domain_parameter,
+                    (path_parameter == NULL) ? "": path_parameter)) {
+            free(domain_parameter);
+            free(path_parameter);
             return http_send_response_500(client_socket);
         }
+        free(domain_parameter);
+        free(path_parameter);
     }
     
     /* Link defined headers */
@@ -1017,6 +1040,23 @@ const char *http_find_cookie(const struct http_request *request,
                 /* Return last cookie with the name */
                 value = header->value + length + 1;
             }
+        }
+    }
+    return value;
+}
+
+
+/* Return Host header value or NULL if does not present. Returned string is
+ * statically allocated. */
+const char *http_find_host(const struct http_request *request) {
+    const struct http_header *header;
+    const char *value = NULL;
+
+    if (request == NULL) return NULL;
+
+    for (header = request->headers; header != NULL; header = header->next) {
+        if (header->name != NULL && !strcmp(header->name, "Host")) {
+                value = header->value;
         }
     }
     return value;

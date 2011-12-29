@@ -113,7 +113,7 @@ authentication.error.badRole                    User name is not permitted to
 If authentication succeeds, server will return 302 response:
 
 Set-Cookie:IPCZ-X-COOKIE=01-5c1047cb9f3545f68cf987e6750acac4;
-Domain=.mojedatovaschranka.cz; secure
+    Domain=.mojedatovaschranka.cz; secure
 Location: https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT
 
 With cookie used to track session and redirects to new URL where client should

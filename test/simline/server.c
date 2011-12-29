@@ -274,9 +274,14 @@ static void do_as_dontsendsms(int client_socket, const struct http_request *requ
                 if (NULL != terminator) 
                     *terminator = '\0';
                 /* TODO: Generate random cookie value */
+                /* XXX: Add Path parameter to cookie, otherwise
+                 * different paths will not match.
+                 * FIXME: Domain argument does not work with cURL. Report bug. */
                 http_send_response_302_cookie(client_socket,
                         authorizaton_cookie_name,
                         authorizaton_cookie_value,
+                        /*http_find_host(request)*/NULL,
+                        /*NULL*/"/",
                         location);
                 free(location);
             }

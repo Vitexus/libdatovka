@@ -997,7 +997,7 @@ redirect:
                 if (context->otp->otp_code != NULL &&
                         response_otp_headers.redirect != NULL) {
                     /* XXX: If OTP code is known, this must be second OTP phase, so
-                     * sent final POST request. */
+                     * send final POST request. */
                     free(url);
                     url = response_otp_headers.redirect;
                     response_otp_headers.redirect = NULL;
