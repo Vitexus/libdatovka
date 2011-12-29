@@ -1315,6 +1315,17 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     /* Send log-in request */
     soap_err = _isds_soap(context, "DS/dz", request, &response, NULL, NULL);
    
+    if (context->otp) {
+        /* Revert context URL from OTP authentication service URL to OTP web
+         * service base URL for subsequent calls. Potenial isds_login() retry
+         * will re-set context URL again. */
+        zfree(context->url);
+        context->url = _isds_astrcat(url, "apps/");
+        if (context->url == NULL) {
+            soap_err = IE_NOMEM;
+        }
+    }
+
     /* Remove credentials */
     discard_credentials(context);
    
