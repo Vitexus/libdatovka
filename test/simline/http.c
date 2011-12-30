@@ -417,9 +417,9 @@ static int http_parse_request_header(char *line,
     p = strchr(line, ' ');
     if (p == NULL) return HTTP_ERROR_SERVER;
     *p = '\0';
-    if (strcmp(line, "GET"))
+    if (!strcmp(line, "GET"))
         request->method = HTTP_METHOD_GET;
-    else if (strcmp(line, "POST"))
+    else if (!strcmp(line, "POST"))
         request->method = HTTP_METHOD_POST;
     else
         request->method = HTTP_METHOD_UNKNOWN;

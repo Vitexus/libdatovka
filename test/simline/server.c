@@ -111,6 +111,18 @@ char *socket2address(int socket) {
 }
 
 
+/* Process ISDS WS ping authorized by cookie */
+static void do_ws(int client_socket, const struct http_request *request) {
+    if (request->method != HTTP_METHOD_POST) {
+        http_send_response_400(client_socket,
+                "Regular ISDS web service request must be POST");
+        return;
+    }
+
+    http_send_response_200(client_socket, pong, strlen(pong), soap_mime_type);
+}
+
+
 /* Do the server protocol.
  * @server_socket is listening TCP socket of the server
  * @server_arguments is pointer to structure:
@@ -141,29 +153,36 @@ void server_basic_authentication(int server_socket,
             continue;
         }
 
-        if (arguments->username != NULL) {
-            if (http_client_authenticates(request)) {
-                switch(http_authenticate_basic(request,
-                            arguments->username, arguments->password)) {
-                    case HTTP_ERROR_SUCCESS:
-                        http_send_response_200(client_socket,
-                                pong, strlen(pong), soap_mime_type);
-                        break;
-                    case HTTP_ERROR_CLIENT:
-                        if (arguments->isds_deviations)
-                            http_send_response_401_basic(client_socket);
-                        else
-                            http_send_response_403(client_socket);
-                        break;
-                    default:
-                        http_send_response_500(client_socket);
+        if (request->method == HTTP_METHOD_POST) {
+            /* Only POST requests are used in Basic authentication mode */
+            if (arguments->username != NULL) {
+                if (http_client_authenticates(request)) {
+                    switch(http_authenticate_basic(request,
+                                arguments->username, arguments->password)) {
+                        case HTTP_ERROR_SUCCESS:
+                            http_send_response_200(client_socket,
+                                    pong, strlen(pong), soap_mime_type);
+                            break;
+                        case HTTP_ERROR_CLIENT:
+                            if (arguments->isds_deviations)
+                                http_send_response_401_basic(client_socket);
+                            else
+                                http_send_response_403(client_socket);
+                            break;
+                        default:
+                            http_send_response_500(client_socket);
+                    }
+                } else {
+                    http_send_response_401_basic(client_socket);
                 }
             } else {
-                http_send_response_401_basic(client_socket);
+                http_send_response_200(client_socket,
+                        pong, strlen(pong), soap_mime_type);
             }
         } else {
-            http_send_response_200(client_socket,
-                    pong, strlen(pong), soap_mime_type);
+            /* HTTP method unsupported per ISDS specification */
+            http_send_response_400(client_socket,
+                    "Only POST method is allowed");
         }
         http_request_free(&request);
 
@@ -181,6 +200,12 @@ static void do_as_sendsms(int client_socket, const struct http_request *request,
         const struct arguments_totp_authentication *arguments) {
     if (arguments == NULL) {
         http_send_response_500(client_socket);
+        return;
+    }
+
+    if (request->method != HTTP_METHOD_POST) {
+        http_send_response_400(client_socket,
+                "First phase TOTP request must be POST");
         return;
     }
 
@@ -242,6 +267,12 @@ static void do_as_dontsendsms(int client_socket, const struct http_request *requ
         const struct arguments_totp_authentication *arguments) {
     if (arguments == NULL) {
         http_send_response_500(client_socket);
+        return;
+    }
+
+    if (request->method != HTTP_METHOD_POST) {
+        http_send_response_400(client_socket,
+                "Second phase TOTP request must be POST");
         return;
     }
 
@@ -312,8 +343,7 @@ static void do_ws_with_cookie(int client_socket, const struct http_request *requ
 
     if (received_cookie != NULL &&
             !strcmp(authorizaton_cookie_value, received_cookie))
-        http_send_response_200(client_socket,
-                pong, strlen(pong), soap_mime_type);
+        do_ws(client_socket, request);
     else
         http_send_response_403(client_socket);
 }
@@ -362,8 +392,12 @@ void server_totp_authentication(int server_socket,
                         "Unknown path for TOTP authenticating service");
             }            
         } else {
-            http_send_response_200(client_socket,
-                    pong, strlen(pong), soap_mime_type);
+            if (!strcmp(request->uri, ws_path)) {
+                do_ws(client_socket, request);
+            } else {
+                http_send_response_400(client_socket,
+                        "Unknown path for TOTP authenticating service");
+            }            
         }
         http_request_free(&request);
 

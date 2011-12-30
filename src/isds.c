@@ -1361,8 +1361,12 @@ isds_error isds_logout(struct isds_ctx *context) {
     zfree(context->long_message);
 
 #if HAVE_LIBCURL
-    /* Close connection */
     if (context->curl) {
+        if (context->otp != NULL) {
+/*"https://DOMAINNAME/as/processLogout?uri=https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT"*/
+        }
+
+        /* Close connection */
         _isds_close_connection(context);
 
         /* Discard credentials for sure. They should not survive isds_login(),

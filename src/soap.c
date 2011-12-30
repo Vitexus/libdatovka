@@ -360,6 +360,7 @@ static int log_curl(CURL *curl, curl_infotype type, char *buffer, size_t size,
 /* Do HTTP request.
  * @context holds the base URL,
  * @url is a (CGI) file of SOAP URL,
+ * @use_get is a false to do a POST request, true to do a GET request.
  * @request is body for POST request 
  * @request_length is length of @request in bytes
  * @reponse is automatically reallocated() buffer to fit HTTP response with
@@ -381,7 +382,8 @@ static int log_curl(CURL *curl, curl_infotype type, char *buffer, size_t size,
  * been accepted by the server. You must consult @http_code. OTOH, failure
  * return value means the request could not been sent (e.g. SSL error).
  * Side effect: message buffer */
-static isds_error http(struct isds_ctx *context, const char *url,
+static isds_error http(struct isds_ctx *context,
+        const char *url, _Bool use_get,
         const void *request, const size_t request_length,
         void **response, size_t *response_length,
         char **mime_type, char **charset, long *http_code,
@@ -676,16 +678,23 @@ static isds_error http(struct isds_ctx *context, const char *url,
                 "libisds/" PACKAGE_VERSION);
     }
 
-    /* Set POST request body */
-    if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_POST, 1);
-    }
-    if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_POSTFIELDS, request);
-    }
-    if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_POSTFIELDSIZE,
-                request_length);
+    if (use_get) {
+        /* Set GET request */
+        if (!curl_err) {
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_HTTPGET, 1);
+        }
+    } else {
+        /* Set POST request body */
+        if (!curl_err) {
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_POST, 1);
+        }
+        if (!curl_err) {
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_POSTFIELDS, request);
+        }
+        if (!curl_err) {
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_POSTFIELDSIZE,
+                    request_length);
+        }
     }
 
     /* Check for errors so far */
@@ -695,11 +704,14 @@ static isds_error http(struct isds_ctx *context, const char *url,
         goto leave;
     }
 
-    isds_log(ILF_HTTP, ILL_DEBUG, _("Sending POST request to %s\n"), url);
-    isds_log(ILF_HTTP, ILL_DEBUG,
-            _("POST body length: %zu, content follows:\n"), request_length);
-    isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n", request_length, request);
-    isds_log(ILF_HTTP, ILL_DEBUG, _("End of POST body\n"));
+    isds_log(ILF_HTTP, ILL_DEBUG, _("Sending %s request to <%s>\n"),
+            use_get ? "GET" : "POST", url);
+    if (!use_get) {
+        isds_log(ILF_HTTP, ILL_DEBUG,
+                _("POST body length: %zu, content follows:\n"), request_length);
+        isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n", request_length, request);
+        isds_log(ILF_HTTP, ILL_DEBUG, _("End of POST body\n"));
+    }
     if ((log_facilities & ILF_HTTP) && (log_level >= ILL_DEBUG) ) {
         curl_easy_setopt(context->curl, CURLOPT_VERBOSE, 1);
         curl_easy_setopt(context->curl, CURLOPT_DEBUGFUNCTION, log_curl);
@@ -992,7 +1004,7 @@ redirect:
             _("SOAP request to sent to %s:\n%.*s\nEnd of SOAP request\n"),
             url, http_request->use, http_request->content);
 
-    err = http(context, url, http_request->content, http_request->use,
+    err = http(context, url, 0, http_request->content, http_request->use,
             &http_response, &response_length,
             &mime_type, NULL, &http_code,
             (context->otp == NULL) ? NULL: &response_otp_headers);
