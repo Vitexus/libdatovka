@@ -777,7 +777,7 @@ static isds_error czp_do_close_connection(struct isds_ctx *context) {
 
 /* Discard credentials.
  * Only that. It does not cause log out, connection close or similar. */
-static isds_error discard_credentials(struct isds_ctx *context) {
+_hidden isds_error _isds_discard_credentials(struct isds_ctx *context) {
     if(!context) return IE_INVALID_CONTEXT;
 
     if (context->username) {
@@ -813,7 +813,7 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
     }
 
     /* For sure */
-    discard_credentials(*context);
+    _isds_discard_credentials(*context);
 
     /* Free other structures */
     free((*context)->tls_verify_server);
@@ -1293,7 +1293,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     /* Store credentials */
     /* FIXME: mlock password
      * (I have a library) */
-    discard_credentials(context);
+    _isds_discard_credentials(context);
     if (username) context->username = strdup(username);
     if (password) {
         if (context->otp == NULL)
@@ -1304,7 +1304,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     context->pki_credentials = isds_pki_credentials_duplicate(pki_credentials);
     if ((username && !context->username) || (password && !context->password) ||
             (pki_credentials && !context->pki_credentials)) {
-        discard_credentials(context);
+        _isds_discard_credentials(context);
         xmlFreeNode(request);
         return IE_NOMEM;
     }
@@ -1327,7 +1327,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     }
 
     /* Remove credentials */
-    discard_credentials(context);
+    _isds_discard_credentials(context);
    
     /* Destroy log-in request */
     xmlFreeNode(request);
@@ -1367,12 +1367,12 @@ isds_error isds_logout(struct isds_ctx *context) {
 
         /* Discard credentials for sure. They should not survive isds_login(),
          * even successful .*/
-        discard_credentials(context);
+        _isds_discard_credentials(context);
         zfree(context->url);
 
         isds_log(ILF_ISDS, ILL_DEBUG, _("Logged out from ISDS server\n"));
     } else {
-        discard_credentials(context);
+        _isds_discard_credentials(context);
     }
     return IE_SUCCESS;
 #else /* not HAVE_LIBCURL */

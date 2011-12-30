@@ -113,4 +113,10 @@ isds_error isds_log(const isds_log_facility facility,
 isds_error _isds_register_namespaces(xmlXPathContextPtr xpath_ctx,
         const message_ns_type message_ns);
 
+#if HAVE_LIBCURL
+/* Discard credentials.
+ * Only that. It does not cause log out, connection close or similar. */
+isds_error _isds_discard_credentials(struct isds_ctx *context);
+#endif /* HAVE_LIBCURL */
+
 #endif

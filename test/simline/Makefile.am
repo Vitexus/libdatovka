@@ -17,7 +17,6 @@ TESTS =
 
 if BUILD_CURL
 TESTS += basic_authentication totp_authentication
-XFAIL_TESTS=totp_authentication
 endif
 
 

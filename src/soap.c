@@ -159,6 +159,34 @@ _hidden isds_error _isds_close_connection(struct isds_ctx *context) {
 }
 
 
+/* Remove username and password from context and CURL handle. */
+static isds_error unset_http_authorization(struct isds_ctx *context) {
+    isds_error error = IE_SUCCESS;
+
+    if (context == NULL) return IE_INVALID_CONTEXT;
+    if (context->curl == NULL) return IE_CONNECTION_CLOSED;
+
+#if HAVE_DECL_CURLOPT_USERNAME /* Since curl-7.19.1 */
+    if (curl_easy_setopt(context->curl, CURLOPT_USERNAME, NULL))
+        error = IE_ERROR;
+    if (curl_easy_setopt(context->curl, CURLOPT_PASSWORD, NULL))
+        error = IE_ERROR;
+#else
+    if (curl_easy_setopt(context->curl, CURLOPT_USERPWD, NULL))
+        error = IE_ERROR;
+#endif /* not HAVE_DECL_CURLOPT_USERNAME */
+
+    if (error) 
+        isds_log(ILF_HTTP, ILL_ERR, _("Error while unsetting user name and"
+                    "password from CURL handle for connection to server %s.\n"),
+                context->url);
+    else
+        isds_log(ILF_HTTP, ILL_DEBUG, _("User name and password for server %s"
+                    "have been unset.\n"), context->url);
+    return error;
+}
+
+
 /* CURL call back function called when chunk of HTTP response body is available.
  * @buffer points to new data
  * @size * @nmemb is length of the chunk in bytes. Zero means empty body.
@@ -997,10 +1025,18 @@ redirect:
                 if (context->otp->otp_code != NULL &&
                         response_otp_headers.redirect != NULL) {
                     /* XXX: If OTP code is known, this must be second OTP phase, so
-                     * send final POST request. */
+                     * send final POST request and unset Basic authentication
+                     * from cURL context as cookie is used instead. */
                     free(url);
                     url = response_otp_headers.redirect;
                     response_otp_headers.redirect = NULL;
+                    _isds_discard_credentials(context);
+                    err = unset_http_authorization(context);
+                    if (err) {
+                        isds_log_message(context, _("Could not remove "
+                                    "credentials from CURL handle."));
+                        goto leave;
+                    }
                     goto redirect;
                 } else {
                     /* XXX: Otherwise bail out to ask application for OTP code. */
