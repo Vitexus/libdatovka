@@ -1,3 +1,7 @@
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 500   /* For strdup() */
+#endif
+
 #include "http.h"
 #include "../test-tools.h"
 #include <stdlib.h>
@@ -6,6 +10,7 @@
 #include <string.h>
 #include <stdio.h> /* fprintf() */
 #include <limits.h>
+#include <string.h> /* strdup() */
 #include <strings.h> /* strcasecmp() */
 #include <stdint.h> /* int8_t */
 #include <stddef.h> /* size_t, NULL */
@@ -554,7 +559,7 @@ static int find_content_length(struct http_request *request) {
         if (!strcasecmp(header->name, "Content-Length")) break;
     }
 
-    if (header != NULL || header->value == NULL) {
+    if (header != NULL && header->value != NULL) {
         char *p;
         long long int value = strtol(header->value, &p, 10);
         if (*p != '\0')
@@ -679,22 +684,97 @@ int http_write_response(int socket, const struct http_response *response) {
 }
 
 
-/* Send a 200 Ok response */ 
-int http_send_response_200(int client_socket,
+/* Build Set-Cookie header. In case of error, return NULL. Caller must free
+ * the header. */
+static struct http_header *http_build_setcookie_header (
+        const char *cokie_name, const char *cookie_value,
+        const char *cookie_domain, const char *cookie_path) {
+    struct http_header *header = NULL;
+    char *domain_parameter = NULL;
+    char *path_parameter = NULL;
+
+    if (cokie_name == NULL) goto error;
+
+    header = calloc(1, sizeof(*header));
+    if (header == NULL) goto error;
+
+    header->name = strdup("Set-Cookie");
+    if (header->name == NULL) goto error;
+
+    if (cookie_domain != NULL)
+        if (-1 == test_asprintf(&domain_parameter, "; Domain=%s",
+                    cookie_domain))
+            goto error;
+
+    if (cookie_path != NULL)
+        if (-1 == test_asprintf(&path_parameter, "; Path=%s",
+                    cookie_path))
+            goto error;
+
+    if (-1 == test_asprintf(&header->value, "%s=%s%s%s",
+                cokie_name,
+                (cookie_value == NULL) ? "" : cookie_value,
+                (domain_parameter == NULL) ? "": domain_parameter,
+                (path_parameter == NULL) ? "": path_parameter))
+        goto error;
+    goto ok;
+
+error:
+    http_header_free(&header);
+ok:
+    free(domain_parameter);
+    free(path_parameter);
+    return header;
+}
+    
+
+/* Send a 200 Ok response with a cookie */ 
+int http_send_response_200_cookie(int client_socket,
+        const char *cokie_name, const char *cookie_value,
+        const char *cookie_domain, const char *cookie_path,
         const void *body, size_t body_length, const char *type) {
-    struct http_header header = {
+    int retval;
+    struct http_header *header_cookie = NULL;
+    struct http_header header_contenttype = {
         .name = "Content-Type",
-        .value = (char *)type
+        .value = (char *)type,
+        .next = NULL
     };
     struct http_response response = {
         .status = 200,
         .reason = "OK",
-        .headers = (type == NULL) ? NULL : &header,
+        .headers = NULL,
         .body_length = body_length,
         .body = (void *)body
     };
     
-    return http_write_response(client_socket, &response);
+    if (cokie_name != NULL) {
+        if (NULL == (header_cookie = http_build_setcookie_header(
+                        cokie_name, cookie_value, cookie_domain, cookie_path)))
+            return http_send_response_500(client_socket);
+    }
+
+    /* Link defined headers */
+    if (type != NULL) {
+        response.headers = &header_contenttype; 
+    }
+    if (header_cookie != NULL) {
+        header_cookie->next = response.headers;
+        response.headers = header_cookie;
+    }
+    
+    retval = http_write_response(client_socket, &response);
+    http_header_free(&header_cookie);
+    return retval;
+}
+
+
+/* Send a 200 Ok response */ 
+int http_send_response_200(int client_socket,
+        const void *body, size_t body_length, const char *type) {
+    return http_send_response_200_cookie(client_socket,
+            NULL, NULL, NULL, NULL,
+            body, body_length, type);
 }
 
 
@@ -703,11 +783,7 @@ int http_send_response_302_cookie(int client_socket, const char *cokie_name,
         const char *cookie_value, const char *cookie_domain,
         const char *cookie_path, const char *location) {
     int retval;
-    struct http_header header_cookie = {
-        .name = "Set-Cookie",
-        .value = NULL,
-        .next = NULL
-    };
+    struct http_header *header_cookie = NULL;
     struct http_header header_location = {
         .name = "Location",
         .value = (char *) location,
@@ -722,45 +798,22 @@ int http_send_response_302_cookie(int client_socket, const char *cokie_name,
     };
 
     if (cokie_name != NULL) {
-        char *domain_parameter = NULL;
-        char *path_parameter = NULL;
-        if (cookie_domain != NULL) {
-            if (-1 == test_asprintf(&domain_parameter, "; Domain=%s",
-                        cookie_domain)) {
-                return http_send_response_500(client_socket);
-            }
-        }
-        if (cookie_path != NULL) {
-            if (-1 == test_asprintf(&path_parameter, "; Path=%s",
-                        cookie_path)) {
-                free(domain_parameter);
-                return http_send_response_500(client_socket);
-            }
-        }
-        if (-1 == test_asprintf(&header_cookie.value, "%s=%s%s%s",
-                    cokie_name,
-                    (cookie_value == NULL) ? "" : cookie_value,
-                    (domain_parameter == NULL) ? "": domain_parameter,
-                    (path_parameter == NULL) ? "": path_parameter)) {
-            free(domain_parameter);
-            free(path_parameter);
+        if (NULL == (header_cookie = http_build_setcookie_header(
+                        cokie_name, cookie_value, cookie_domain, cookie_path)))
             return http_send_response_500(client_socket);
-        }
-        free(domain_parameter);
-        free(path_parameter);
     }
     
     /* Link defined headers */
     if (location != NULL) {
         response.headers = &header_location;
     }
-    if (header_cookie.value != NULL) {
-        header_cookie.next = response.headers;
-        response.headers = &header_cookie;
+    if (header_cookie != NULL) {
+        header_cookie->next = response.headers;
+        response.headers = header_cookie;
     }
     
     retval = http_write_response(client_socket, &response);
-    free(header_cookie.value);
+    http_header_free(&header_cookie);
     return retval;
 }
 

@@ -59,6 +59,12 @@ http_error http_read_request(int socket, struct http_request **request);
  * @return 0 in case of success. */
 int http_write_response(int socket, const struct http_response *response);
 
+/* Send a 200 Ok response with a cookie */ 
+int http_send_response_200_cookie(int client_socket,
+        const char *cokie_name, const char *cookie_value,
+        const char *cookie_domain, const char *cookie_path,
+        const void *body, size_t body_length, const char *type);
+
 /* Send a 200 Ok response */ 
 int http_send_response_200(int client_socket,
         const void *body, size_t body_length, const char *type);

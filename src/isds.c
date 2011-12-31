@@ -1363,7 +1363,8 @@ isds_error isds_logout(struct isds_ctx *context) {
 #if HAVE_LIBCURL
     if (context->curl) {
         if (context->otp != NULL) {
-/*"https://DOMAINNAME/as/processLogout?uri=https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT"*/
+            isds_error err = _isds_invalidate_otp_cookie(context);
+            if (err) return err;
         }
 
         /* Close connection */

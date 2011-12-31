@@ -1272,6 +1272,69 @@ leave:
 }
 
 
+/* Invalidate session cookie for otp authenticated @context */
+_hidden isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context) {
+    isds_error err;
+    char *url = NULL;
+    int length, slashes;
+    long http_code;
+    void *response = NULL;
+    size_t response_length;
+
+    if (context == NULL || context->otp == NULL) return IE_INVALID_CONTEXT;
+    if (context->curl == NULL) return IE_CONNECTION_CLOSED;
+
+    /* Find length of base URL from context URL */
+    if (context->url == NULL) {
+        isds_log_message(context, _("Base URL could not have been determined "
+                    "from context URL"));
+        return IE_ERROR;
+    }
+    for (length = 0, slashes = 0; context->url[length] != '\0'; length++) {
+        if (context->url[length] == '/') slashes++;
+        if (slashes == 3) break;
+    }
+    if (slashes != 3) {
+        isds_log_message(context, _("Base URL could not have been determined "
+                    "from context URL"));
+        return IE_ERROR;
+    }
+    length++;
+    
+    /* Build logout URL */
+    /*"https://DOMAINNAME/as/processLogout?uri=https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT"*/
+    if (-1 == isds_asprintf(&url, "%1$.*2$sas/processLogout?uri=%1$sDS/dz",
+                context->url, length))
+        return IE_NOMEM;
+
+    /* Invalidate the cookie by GET request */
+    err = http(context,
+            url, 1,
+            NULL, 0,
+            &response, &response_length,
+            NULL, NULL, &http_code,
+            NULL);
+    free(response);
+    free(url);
+    if (err) {
+        /* long message set by http() */
+    } else if (http_code != 200) {
+        /* TODO: Specification does not define response for this request.
+         * Especially it does not state whether direct 200 or 302 redirect is
+         * sent. We need to check real implementation. */
+        err = IE_ISDS;
+        isds_printf_message(context, _("Cookie for OTP authenticated "
+                    "connection to <%s> could not been invalidated"),
+                context->url);
+    } else {
+        isds_log(ILF_SEC, ILL_DEBUG, _("Cookie for OTP authenticated "
+                    "connection to <%s> has been invalidated.\n"),
+                context->url);
+    }
+    return err;
+}
+
+
 /* LibXML functions:
  *
  * void xmlInitParser(void)

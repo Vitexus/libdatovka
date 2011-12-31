@@ -23,8 +23,22 @@ static int test_login(const isds_error error, struct isds_ctx *context,
 
     err = isds_login(context, url, username, password, pki_credentials, otp);
     if (error != err)
-        FAIL_TEST("Wrong return code: expected=%s, returned=%s",
-                isds_strerror(error), isds_strerror(err));
+        FAIL_TEST("Wrong return code: expected=%s, returned=%s (%s)",
+                isds_strerror(error), isds_strerror(err),
+                isds_long_message(context));
+
+
+    PASS_TEST;
+}
+
+static int test_logout(const isds_error error, struct isds_ctx *context) {
+    isds_error err;
+
+    err = isds_logout(context);
+    if (error != err)
+        FAIL_TEST("Wrong return code: expected=%s, returned=%s (%s)",
+                isds_strerror(error), isds_strerror(err),
+                isds_long_message(context));
 
     PASS_TEST;
 }
@@ -34,8 +48,9 @@ static int test_ping(const isds_error error, struct isds_ctx *context) {
 
     err = isds_ping(context);
     if (error != err)
-        FAIL_TEST("Wrong return code: expected=%s, returned=%s",
-                isds_strerror(error), isds_strerror(err));
+        FAIL_TEST("Wrong return code: expected=%s, returned=%s (%s)",
+                isds_strerror(error), isds_strerror(err),
+                isds_long_message(context));
 
     PASS_TEST;
 }
@@ -116,7 +131,8 @@ int main(int argc, char **argv) {
                 url, username, password, NULL, &otp_credentials);
         TEST("Ping after succesfull OTP log-in", test_ping,
                 IE_SUCCESS, context);
-        isds_logout(context);
+        TEST("Log-out after successfull log-in", test_logout,
+                IE_SUCCESS, context);
 
         TEST("Ping after log-out after succesfull OTP log-in", test_ping,
                 IE_CONNECTION_CLOSED, context);

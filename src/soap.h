@@ -25,4 +25,7 @@ isds_error _isds_soap(struct isds_ctx *context, const char *file,
         const xmlNodePtr request, xmlNodePtr *response,
         void **raw_response, size_t *raw_response_length);
 
+/* Invalidate session cookie for otp authenticated @context */
+isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context);
+
 #endif

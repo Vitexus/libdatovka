@@ -28,6 +28,7 @@ static const char *pong = "<?xml version='1.0' encoding='utf-8'?><SOAP-ENV:Envel
 
 static const char *as_path_sendsms = "/as/processLogin?type=totp&sendSms=true&uri=";
 static const char *as_path_dontsendsms = "/as/processLogin?type=totp&uri=";
+static const char *as_path_logout = "/as/processLogout?uri=";
 static const char *ws_path = "/apps/DS/dz";
 
 static const char *authorizaton_cookie_name = "IPCZ-X-COOKIE";
@@ -195,7 +196,7 @@ void server_basic_authentication(int server_socket,
 }
 
 
-/* Process first phase od TOTP request */
+/* Process first phase of TOTP request */
 static void do_as_sendsms(int client_socket, const struct http_request *request,
         const struct arguments_totp_authentication *arguments) {
     if (arguments == NULL) {
@@ -262,7 +263,7 @@ static void do_as_sendsms(int client_socket, const struct http_request *request,
 }
 
 
-/* Process second phase od TOTP request */
+/* Process second phase of TOTP request */
 static void do_as_dontsendsms(int client_socket, const struct http_request *request,
         const struct arguments_totp_authentication *arguments) {
     if (arguments == NULL) {
@@ -307,7 +308,7 @@ static void do_as_dontsendsms(int client_socket, const struct http_request *requ
                 /* TODO: Generate random cookie value */
                 /* XXX: Add Path parameter to cookie, otherwise
                  * different paths will not match.
-                 * FIXME: Domain argument does not work with cURL. Report bug. */
+                 * FIXME: Domain argument does not work with cURL. Report a bug. */
                 http_send_response_302_cookie(client_socket,
                         authorizaton_cookie_name,
                         authorizaton_cookie_value,
@@ -332,6 +333,41 @@ static void do_as_dontsendsms(int client_socket, const struct http_request *requ
         default:
             http_send_response_500(client_socket);
     }
+}
+
+
+/* Process OTP session cookie invalidation request */
+static void do_as_logout(int client_socket, const struct http_request *request,
+        const struct arguments_totp_authentication *arguments) {
+    if (arguments == NULL) {
+        http_send_response_500(client_socket);
+        return;
+    }
+
+    if (request->method != HTTP_METHOD_GET) {
+        http_send_response_400(client_socket,
+                "OTP cookie invalidation request must be GET");
+        return;
+    }
+
+    const char *received_cookie =
+        http_find_cookie(request, authorizaton_cookie_name);
+
+    if (received_cookie == NULL ||
+            strcmp(authorizaton_cookie_value, received_cookie)) {
+        http_send_response_403(client_socket);
+        return;
+    }
+
+    /* XXX: Add Path parameter to cookie, otherwise
+     * different paths will not match.
+     * FIXME: Domain argument does not work with cURL. Report a bug. */
+    http_send_response_200_cookie(client_socket,
+            authorizaton_cookie_name,
+            "",
+            /*http_find_host(request)*/ NULL,
+            /*NULL*/"/",
+            NULL, 0, NULL);
 }
 
 
@@ -385,6 +421,9 @@ void server_totp_authentication(int server_socket,
             } else if (!strncmp(request->uri, as_path_dontsendsms,
                         strlen(as_path_dontsendsms))) {
                 do_as_dontsendsms(client_socket, request, arguments);
+            } else if (!strncmp(request->uri, as_path_logout,
+                        strlen(as_path_logout))) {
+                do_as_logout(client_socket, request, arguments);
             } else if (!strcmp(request->uri, ws_path)) {
                 do_ws_with_cookie(client_socket, request, arguments);
             } else {
