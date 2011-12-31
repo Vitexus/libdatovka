@@ -152,7 +152,7 @@ typedef enum {
     OTP_RESOLUTION_TO_FAST,             /* OTP cannot be sent repeatedly
                                            at this rate (minimal delay
                                            depends on TOTP window setting) */
-    OTP_RESOLUTION_UNAUTHORIZED,        /* User name is not allows to
+    OTP_RESOLUTION_UNAUTHORIZED,        /* User name is not allowed to
                                            access requested URI */
     OTP_RESOLUTION_TOTP_SENT,           /* OTP has been generated and sent by
                                            ISDS */

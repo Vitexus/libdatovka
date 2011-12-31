@@ -39,7 +39,8 @@ TESTS = prepare_environment \
 if BUILD_CURL
 TESTS += isds-dbtype isds-sendertype isds-usertype \
 		 isds-datestring2tm isds-tm2datestring \
-		 isds-timeval2timestring
+		 isds-timeval2timestring \
+		 soap-string2isds_otp_resolution
 endif
 
 
@@ -86,6 +87,27 @@ if BUILD_CURL
 isds_common += $(LIBDIR)/soap.c $(LIBDIR)/soap.h
 endif
 
+# Omit soap.c
+soap_common = test.c test.h test-tools.h \
+	$(LIBDIR)/cdecode.c \
+	$(LIBDIR)/cencode.c \
+	$(LIBDIR)/crypto.c \
+	$(LIBDIR)/isds.c \
+	$(LIBDIR)/physxml.c \
+	$(LIBDIR)/utils.c \
+	$(LIBDIR)/validator.c \
+	$(LIBDIR)/cdecode.h \
+	$(LIBDIR)/cencode.h \
+	$(LIBDIR)/crypto.h \
+	$(LIBDIR)/isds.h \
+	$(LIBDIR)/isds_priv.h \
+	$(LIBDIR)/physxml.h \
+	$(LIBDIR)/utils.h \
+	$(LIBDIR)/validator.h
+if BUILD_CURL
+soap_common += $(LIBDIR)/soap.h
+endif
+
 # Access _hidden symbols
 b64decode_SOURCES 		= b64decode.c $(common)
 b64encode_SOURCES 		= b64encode.c $(common)
@@ -129,6 +151,10 @@ isds_timeval2timestring_SOURCES	= isds-timeval2timestring.c $(isds_common)
 isds_uint2isds_message_status_SOURCES	= isds-uint2isds_message_status.c \
 										  $(isds_common)
 isds_eventstring2event_SOURCES	= isds-eventstring2event.c $(isds_common)
+
+# Access static symbols from soap.c
+soap_string2isds_otp_resolution_SOURCES	= soap-string2isds_otp_resolution.c \
+										  $(soap_common)
 
 # Tests that need .gnupg
 guess_raw_type.log load_raw.log: prepare_environment.log
