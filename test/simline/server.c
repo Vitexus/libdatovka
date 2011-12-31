@@ -33,7 +33,7 @@ static const char *as_path_logout = "/as/processLogout?uri=";
 static const char *ws_path = "/apps/DS/dz";
 
 static const char *authorizaton_cookie_name = "IPCZ-X-COOKIE";
-static char *authorizaton_cookie_value = "6x7";
+static char *authorizaton_cookie_value = NULL;
 
 /* Save pointer to static error message if not yet set */
 void set_server_error(const char *message) {
@@ -317,7 +317,15 @@ static void do_as_phase_two(int client_socket, const struct http_request *reques
                 char *terminator = strchr(location, '&');
                 if (NULL != terminator) 
                     *terminator = '\0';
-                /* TODO: Generate random cookie value */
+                /* Generate pseudo-random cookie value. This is to prevent
+                 * client from reusing the cookie accidentally. We use the
+                 * same seed to get reproducible tests. */
+                if (-1 == test_asprintf(&authorizaton_cookie_value, "%d",
+                            rand())) {
+                    http_send_response_500(client_socket);
+                    free(location);
+                    return;
+                }
                 /* XXX: Add Path parameter to cookie, otherwise
                  * different paths will not match.
                  * FIXME: Domain argument does not work with cURL. Report a bug. */
@@ -365,7 +373,7 @@ static void do_as_logout(int client_socket, const struct http_request *request,
     const char *received_cookie =
         http_find_cookie(request, authorizaton_cookie_name);
 
-    if (received_cookie == NULL ||
+    if (authorizaton_cookie_value == NULL || received_cookie == NULL ||
             strcmp(authorizaton_cookie_value, received_cookie)) {
         http_send_response_403(client_socket);
         return;
@@ -389,7 +397,7 @@ static void do_ws_with_cookie(int client_socket, const struct http_request *requ
     const char *received_cookie =
         http_find_cookie(request, authorizaton_cookie_name);
 
-    if (received_cookie != NULL &&
+    if (authorizaton_cookie_value != NULL && received_cookie != NULL &&
             !strcmp(authorizaton_cookie_value, received_cookie))
         do_ws(client_socket, request);
     else
@@ -464,6 +472,7 @@ void server_otp_authentication(int server_socket,
     }
 
     close(server_socket);
+    free(authorizaton_cookie_value);
     exit(EXIT_SUCCESS);
 }
 
