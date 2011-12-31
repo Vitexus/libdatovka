@@ -80,13 +80,14 @@ int main(int argc, char **argv) {
 
     {
         const struct arguments_otp_authentication server_arguments = {
+            .method = AUTH_OTP_TIME,
             .username = username,
             .password = password,
             .otp = otp_code,
             .isds_deviations = 1
         };
         error = start_server(&server_process, &server_address,
-                server_totp_authentication, &server_arguments);
+                server_otp_authentication, &server_arguments);
         if (error == -1) {
             isds_ctx_free(&context);
             isds_cleanup();

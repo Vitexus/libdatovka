@@ -26,11 +26,6 @@ static const char *soap_mime_type = "text/xml"; /* SOAP/1.1 requires text/xml */
 /* DummyOperation respons */
 static const char *pong = "<?xml version='1.0' encoding='utf-8'?><SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><SOAP-ENV:Body><q:DummyOperationResponse xmlns:q=\"http://isds.czechpoint.cz/v20\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><q:dmStatus><q:dmStatusCode>0000</q:dmStatusCode><q:dmStatusMessage>Provedeno úspěšně.</q:dmStatusMessage></q:dmStatus></q:DummyOperationResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>";
 
-enum auth_otp_method {
-    AUTH_OTP_HASH = 0,
-    AUTH_OTP_TIME
-};
-
 static const char *as_path_hotp = "/as/processLogin?type=hotp&uri=";
 static const char *as_path_sendsms = "/as/processLogin?type=totp&sendSms=true&uri=";
 static const char *as_path_dontsendsms = "/as/processLogin?type=totp&uri=";
@@ -282,8 +277,7 @@ static const char *auth_otp_method2string(enum auth_otp_method method) {
 
 /* Process second phase of OTP request */
 static void do_as_phase_two(int client_socket, const struct http_request *request,
-        const struct arguments_otp_authentication *arguments,
-        enum auth_otp_method method) {
+        const struct arguments_otp_authentication *arguments) {
     if (arguments == NULL) {
         http_send_response_500(client_socket);
         return;
@@ -297,7 +291,7 @@ static void do_as_phase_two(int client_socket, const struct http_request *reques
 
     if (!http_client_authenticates(request)) {
         http_send_response_401_otp(client_socket,
-                auth_otp_method2string(method),
+                auth_otp_method2string(arguments->method),
                 "authentication.error.userIsNotAuthenticated",
                 "Client did not send any authentication header");
         return;
@@ -339,7 +333,7 @@ static void do_as_phase_two(int client_socket, const struct http_request *reques
         case HTTP_ERROR_CLIENT:
             if (arguments->isds_deviations)
                 http_send_response_401_otp(client_socket,
-                        auth_otp_method2string(method),
+                        auth_otp_method2string(arguments->method),
                         "authentication.error.userIsNotAuthenticated",
                         " Retry: Bad user name or password in second OTP phase.\r\n"
                         " This is very long header\r\n"
@@ -403,11 +397,12 @@ static void do_ws_with_cookie(int client_socket, const struct http_request *requ
 }
 
 
-/* Do the server protocol with HOTP authentication.
+/* Do the server protocol with OTP authentication.
  * @server_socket is listening TCP socket of the server
- * @server_arguments is pointer to struct arguments_otp_authentication
+ * @server_arguments is pointer to structure arguments_otp_authentication. It
+ * selects OTP method to enable.
  * Never returns. Terminates by exit(). */
-void server_hotp_authentication(int server_socket,
+void server_otp_authentication(int server_socket,
         const void *server_arguments) {
     int client_socket;
     const struct arguments_otp_authentication *arguments =
@@ -434,72 +429,17 @@ void server_hotp_authentication(int server_socket,
         }
 
         if (arguments->username != NULL) {
-            if (!strncmp(request->uri, as_path_hotp, strlen(as_path_hotp))) {
-                do_as_phase_two(client_socket, request, arguments, AUTH_OTP_HASH);
-            } else if (!strncmp(request->uri, as_path_logout,
-                        strlen(as_path_logout))) {
-                do_as_logout(client_socket, request, arguments);
-            } else if (!strcmp(request->uri, ws_path)) {
-                do_ws_with_cookie(client_socket, request, arguments);
-            } else {
-                http_send_response_400(client_socket,
-                        "Unknown path for TOTP authenticating service");
-            }            
-        } else {
-            if (!strcmp(request->uri, ws_path)) {
-                do_ws(client_socket, request);
-            } else {
-                http_send_response_400(client_socket,
-                        "Unknown path for TOTP authenticating service");
-            }            
-        }
-        http_request_free(&request);
-
-
-        close(client_socket);
-    }
-
-    close(server_socket);
-    exit(EXIT_SUCCESS);
-}
-
-
-/* Do the server protocol with TOTP authentication.
- * @server_socket is listening TCP socket of the server
- * @server_arguments is pointer to structure arguments_otp_authentication
- * Never returns. Terminates by exit(). */
-void server_totp_authentication(int server_socket,
-        const void *server_arguments) {
-    int client_socket;
-    const struct arguments_otp_authentication *arguments =
-        (const struct arguments_otp_authentication *) server_arguments;
-    struct http_request *request = NULL;
-    http_error error;
-
-    if (arguments == NULL) {
-        close(server_socket);
-        exit(EXIT_FAILURE);
-    }
-
-    while (0 <= (client_socket = accept(server_socket, NULL, NULL))) {
-        fprintf(stderr, "Connection accepted\n");
-        error = http_read_request(client_socket, &request);
-        if (error) {
-            fprintf(stderr, "Error while reading request\n");
-            if (error == HTTP_ERROR_CLIENT)
-                http_send_response_400(client_socket, "Error in request");
-            else
-                http_send_response_500(client_socket);
-            close(client_socket);
-            continue;
-        }
-
-        if (arguments->username != NULL) {
-            if (!strncmp(request->uri, as_path_sendsms, strlen(as_path_sendsms))) {
+            if (arguments->method == AUTH_OTP_HASH &&
+                    !strncmp(request->uri, as_path_hotp, strlen(as_path_hotp))) {
+                do_as_phase_two(client_socket, request, arguments);
+            } else if (arguments->method == AUTH_OTP_TIME &&
+                    !strncmp(request->uri, as_path_sendsms,
+                        strlen(as_path_sendsms))) {
                 do_as_sendsms(client_socket, request, arguments);
-            } else if (!strncmp(request->uri, as_path_dontsendsms,
+            } else if (arguments->method == AUTH_OTP_TIME &&
+                    !strncmp(request->uri, as_path_dontsendsms,
                         strlen(as_path_dontsendsms))) {
-                do_as_phase_two(client_socket, request, arguments, AUTH_OTP_TIME);
+                do_as_phase_two(client_socket, request, arguments);
             } else if (!strncmp(request->uri, as_path_logout,
                         strlen(as_path_logout))) {
                 do_as_logout(client_socket, request, arguments);

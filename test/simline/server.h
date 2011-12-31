@@ -36,7 +36,14 @@ void server_basic_authentication(int server_socket,
         const void *server_arguments);
 
 
+/* One-time password authentication method */
+enum auth_otp_method {
+    AUTH_OTP_HASH = 0,  /* Hash-based OTP */
+    AUTH_OTP_TIME       /* Time-based OTP */
+};
+
 struct arguments_otp_authentication {
+    enum auth_otp_method method;    /* Selects OTP method to enable */
     const char *username;   /* Sets required user name server has to require.
                                Set NULL to disable HTTP authentication. */
     const char *password;   /* Sets password server has to require */
@@ -48,18 +55,12 @@ struct arguments_otp_authentication {
                                as much as possible. */
 };
 
-/* Do the server protocol with HOTP authentication.
+/* Do the server protocol with OTP authentication.
  * @server_socket is listening TCP socket of the server
- * @server_arguments is pointer to structure:
+ * @server_arguments is pointer to structure arguments_otp_authentication. It
+ * selects OTP method to enable.
  * Never returns. Terminates by exit(). */
-void server_hotp_authentication(int server_socket,
-        const void *server_arguments);
-
-/* Do the server protocol with TOTP authentication.
- * @server_socket is listening TCP socket of the server
- * @server_arguments is pointer to structure:
- * Never returns. Terminates by exit(). */
-void server_totp_authentication(int server_socket,
+void server_otp_authentication(int server_socket,
         const void *server_arguments);
 
 /* Implementation of server that is out of order.
