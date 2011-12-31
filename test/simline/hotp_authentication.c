@@ -63,10 +63,10 @@ int main(int argc, char **argv) {
     char *url = NULL;
 
     struct isds_otp otp_credentials = {
-        .method = OTP_TIME
+        .method = OTP_HASH
     };
 
-    INIT_TEST("TOTP authentication");
+    INIT_TEST("HOTP authentication");
 
     if (isds_init()) {
         isds_cleanup();
@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
             .isds_deviations = 1
         };
         error = start_server(&server_process, &server_address,
-                server_totp_authentication, &server_arguments);
+                server_hotp_authentication, &server_arguments);
         if (error == -1) {
             isds_ctx_free(&context);
             isds_cleanup();
@@ -102,31 +102,31 @@ int main(int argc, char **argv) {
         free(server_address);
 
         otp_credentials.otp_code = NULL;
-        TEST("First phase with invalid password", test_login,
+        TEST("Invalid password and missing OTP code", test_login,
+                IE_NOT_LOGGED_IN, context,
+                url, "7777777", "nbuusr1", NULL, &otp_credentials);
+        isds_logout(context);
+
+        otp_credentials.otp_code = otp_code;
+        TEST("Invalid password and valid OTP code", test_login,
                 IE_NOT_LOGGED_IN, context,
                 url, "7777777", "nbuusr1", NULL, &otp_credentials);
         isds_logout(context);
 
         otp_credentials.otp_code = NULL;
-        TEST("First phase with valid password", test_login,
-                IE_PARTIAL_SUCCESS, context,
-                url, username, password, NULL, &otp_credentials);
-        isds_logout(context);
-
-        otp_credentials.otp_code = otp_code;
-        TEST("Second phase with invalid password", test_login,
+        TEST("Valid password but missing OTP code", test_login,
                 IE_NOT_LOGGED_IN, context,
-                url, "7777777", "nbuusr1", NULL, &otp_credentials);
+                url, username, password, NULL, &otp_credentials);
         isds_logout(context);
 
         otp_credentials.otp_code = "666";
-        TEST("Second phase with valid password but invalid OTP code", test_login,
+        TEST("Valid password but invalid OTP code", test_login,
                 IE_NOT_LOGGED_IN, context,
                 url, username, password, NULL, &otp_credentials);
         isds_logout(context);
 
         otp_credentials.otp_code = otp_code;
-        TEST("Second phase with valid password and valid OTP code", test_login,
+        TEST("Valid password and valid OTP code", test_login,
                 IE_SUCCESS, context,
                 url, username, password, NULL, &otp_credentials);
         TEST("Ping after succesfull OTP log-in", test_ping,

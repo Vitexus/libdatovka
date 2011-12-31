@@ -36,7 +36,7 @@ void server_basic_authentication(int server_socket,
         const void *server_arguments);
 
 
-struct arguments_totp_authentication {
+struct arguments_otp_authentication {
     const char *username;   /* Sets required user name server has to require.
                                Set NULL to disable HTTP authentication. */
     const char *password;   /* Sets password server has to require */
@@ -47,6 +47,13 @@ struct arguments_totp_authentication {
                                Otherwise server mimics real ISDS implementation
                                as much as possible. */
 };
+
+/* Do the server protocol with HOTP authentication.
+ * @server_socket is listening TCP socket of the server
+ * @server_arguments is pointer to structure:
+ * Never returns. Terminates by exit(). */
+void server_hotp_authentication(int server_socket,
+        const void *server_arguments);
 
 /* Do the server protocol with TOTP authentication.
  * @server_socket is listening TCP socket of the server

@@ -781,7 +781,7 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
  * @pki_credentials defines public key cryptographic material to use in client
  * authentication.
  * @otp selects one-time password authentication method to use, defines OTP
- * code and returns fine grade resolution of OTP procedure.
+ * code (if known) and returns fine grade resolution of OTP procedure.
  * @return:
  *  IE_SUCCESS if authentication succeeds
  *  IE_NOT_LOGGED_IN if authentication fails. If OTP authentication has been
@@ -789,8 +789,8 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
  *  message from server can be obtained by isds_long_message() call. 
  *  IE_PARTIAL_SUCCESS if time-based OTP authentication has been requested and
  *  server has sent OTP code through side channel. Application is expected to
- *  fill the code into @otp->otp_code and retry this call to complete second
- *  phase of TOTP authentication;
+ *  fill the code into @otp->otp_code, keep other arguments unchanged, and retry
+ *  this call to complete second phase of TOTP authentication;
  *  or other appropriate error. */
 isds_error isds_login(struct isds_ctx *context, const char *url,
         const char *username, const char *password,
