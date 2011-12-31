@@ -32,8 +32,8 @@ static const char *as_path_dontsendsms = "/as/processLogin?type=totp&uri=";
 static const char *as_path_logout = "/as/processLogout?uri=";
 static const char *ws_path = "/apps/DS/dz";
 
-static const char *authorizaton_cookie_name = "IPCZ-X-COOKIE";
-static char *authorizaton_cookie_value = NULL;
+static const char *authorization_cookie_name = "IPCZ-X-COOKIE";
+static char *authorization_cookie_value = NULL;
 
 /* Save pointer to static error message if not yet set */
 void set_server_error(const char *message) {
@@ -320,7 +320,7 @@ static void do_as_phase_two(int client_socket, const struct http_request *reques
                 /* Generate pseudo-random cookie value. This is to prevent
                  * client from reusing the cookie accidentally. We use the
                  * same seed to get reproducible tests. */
-                if (-1 == test_asprintf(&authorizaton_cookie_value, "%d",
+                if (-1 == test_asprintf(&authorization_cookie_value, "%d",
                             rand())) {
                     http_send_response_500(client_socket);
                     free(location);
@@ -330,8 +330,8 @@ static void do_as_phase_two(int client_socket, const struct http_request *reques
                  * different paths will not match.
                  * FIXME: Domain argument does not work with cURL. Report a bug. */
                 http_send_response_302_cookie(client_socket,
-                        authorizaton_cookie_name,
-                        authorizaton_cookie_value,
+                        authorization_cookie_name,
+                        authorization_cookie_value,
                         /*http_find_host(request)*/NULL,
                         /*NULL*/"/",
                         location);
@@ -371,10 +371,10 @@ static void do_as_logout(int client_socket, const struct http_request *request,
     }
 
     const char *received_cookie =
-        http_find_cookie(request, authorizaton_cookie_name);
+        http_find_cookie(request, authorization_cookie_name);
 
-    if (authorizaton_cookie_value == NULL || received_cookie == NULL ||
-            strcmp(authorizaton_cookie_value, received_cookie)) {
+    if (authorization_cookie_value == NULL || received_cookie == NULL ||
+            strcmp(authorization_cookie_value, received_cookie)) {
         http_send_response_403(client_socket);
         return;
     }
@@ -383,7 +383,7 @@ static void do_as_logout(int client_socket, const struct http_request *request,
      * different paths will not match.
      * FIXME: Domain argument does not work with cURL. Report a bug. */
     http_send_response_200_cookie(client_socket,
-            authorizaton_cookie_name,
+            authorization_cookie_name,
             "",
             /*http_find_host(request)*/ NULL,
             /*NULL*/"/",
@@ -395,10 +395,10 @@ static void do_as_logout(int client_socket, const struct http_request *request,
 static void do_ws_with_cookie(int client_socket, const struct http_request *request,
         const struct arguments_otp_authentication *arguments) {
     const char *received_cookie =
-        http_find_cookie(request, authorizaton_cookie_name);
+        http_find_cookie(request, authorization_cookie_name);
 
-    if (authorizaton_cookie_value != NULL && received_cookie != NULL &&
-            !strcmp(authorizaton_cookie_value, received_cookie))
+    if (authorization_cookie_value != NULL && received_cookie != NULL &&
+            !strcmp(authorization_cookie_value, received_cookie))
         do_ws(client_socket, request);
     else
         http_send_response_403(client_socket);
@@ -472,7 +472,7 @@ void server_otp_authentication(int server_socket,
     }
 
     close(server_socket);
-    free(authorizaton_cookie_value);
+    free(authorization_cookie_value);
     exit(EXIT_SUCCESS);
 }
 
