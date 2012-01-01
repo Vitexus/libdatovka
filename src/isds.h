@@ -162,11 +162,13 @@ typedef enum {
 
 /* One-time password to authenticate client */
 struct isds_otp {
+    /* Input members */
     isds_otp_method method;         /* Select OTP method to use */
     char *otp_code;                 /* One-time password to use. Pass NULL,
                                        if you do not know it yet (e.g. in case
                                        of first phase of time-based OTP to
                                        request new code from ISDS.) */
+    /* Output members */
     isds_otp_resolution resolution; /* Fine-grade resolution of OTP
                                        authentication attempt. */
 };
