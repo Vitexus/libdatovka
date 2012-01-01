@@ -14,19 +14,33 @@ int main(int argc, char **argv) {
     const char *request_url = url;
     const char *request_username = username();
     const char *request_password = password();
+    _Bool use_otp = 0;
+    struct isds_otp otp;
     
     setlocale(LC_ALL, "");
 
     if (argc > 1) {
-        if (argc != 4) {
-            printf("Usage: %s [ URL login password ]\n",
+        if (argc < 4 || argc > 6) {
+            printf("Usage: %s [URL LOGIN PASSWORD [{hotp OTP_CODE | totp [OTP_CODE]]\n",
                     (argv[0])?argv[0]: "");
-            exit(EXIT_SUCCESS);
+            exit(EXIT_FAILURE);
         }
 
         request_url = argv[1];
         request_username = argv[2];
         request_password = argv[3];
+
+        if (argc > 4) {
+            use_otp = 1;
+            if (!strcmp(argv[4], "hotp")) otp.method = OTP_HASH;
+            else if (!strcmp(argv[4], "totp")) otp.method = OTP_TIME;
+            else {
+                printf("Bad invocation: %s: Unknown OTP method\n", argv[4]);
+                exit(EXIT_FAILURE);
+            }
+            if (argc > 5) otp.otp_code = argv[5];
+            else otp.otp_code = NULL;
+        }
     }
 
 
@@ -49,8 +63,14 @@ int main(int argc, char **argv) {
     }
 
     err = isds_login(ctx, request_url, request_username, request_password,
-            NULL, NULL);
-    if (err) {
+            NULL, (use_otp) ? &otp : NULL);
+    if (err == IE_PARTIAL_SUCCESS) {
+        printf("isds_login() partially succeeded: %s: %s\n", isds_strerror(err),
+                isds_long_message(ctx));
+        if (use_otp && otp.resolution == OTP_RESOLUTION_TOTP_SENT)
+            printf("Redo log-in with OTP code to finish log-in procedure.\n");
+
+    } else if (err) {
         printf("isds_login() failed: %s: %s\n", isds_strerror(err),
                 isds_long_message(ctx));
     } else {

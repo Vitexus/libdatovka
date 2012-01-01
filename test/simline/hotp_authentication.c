@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
                 url, "7777777", "nbuusr1", NULL, &otp_credentials);
         isds_logout(context);
 
-        otp_credentials.otp_code = otp_code;
+        otp_credentials.otp_code = (char *) otp_code;
         TEST("Invalid password and valid OTP code", test_login,
                 IE_NOT_LOGGED_IN, context,
                 url, "7777777", "nbuusr1", NULL, &otp_credentials);
@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
                 url, username, password, NULL, &otp_credentials);
         isds_logout(context);
 
-        otp_credentials.otp_code = otp_code;
+        otp_credentials.otp_code = (char *) otp_code;
         TEST("Valid password and valid OTP code", test_login,
                 IE_SUCCESS, context,
                 url, username, password, NULL, &otp_credentials);
