@@ -6,6 +6,10 @@
 #define _BSD_SOURCE   /* For NI_MAXHOST */
 #endif
 
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 600   /* For unsetenv(3) */
+#endif
+
 #include "../test.h"
 #include "server.h"
 #include "isds.h"
@@ -39,6 +43,9 @@ int main(int argc, char **argv) {
 
     INIT_TEST("basic authentication");
 
+    if (unsetenv("http_proxy")) {
+        ABORT_UNIT("Could not remove http_proxy variable from environment\n");
+    }
     if (isds_init()) {
         isds_cleanup();
         ABORT_UNIT("isds_init() failed\n");

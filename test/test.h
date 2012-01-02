@@ -1,7 +1,9 @@
 #ifndef __ISDS_TEST_H
 #define __ISDS_TEST_H
 
+#ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 500
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <locale.h>
