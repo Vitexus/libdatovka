@@ -1203,6 +1203,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
         if (context->otp != NULL) {
             const char *authenticator_uri = NULL;
             char *new_url = NULL;
+            otp->resolution = OTP_RESOLUTION_UNKNOWN;
             switch (context->otp->method) {
                 case OTP_HASH: 
                     isds_log(ILF_SEC, ILL_INFO,

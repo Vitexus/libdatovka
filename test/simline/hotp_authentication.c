@@ -15,7 +15,8 @@ static const char *password = "42";
 static const char *otp_code = "314";
 
 
-static int test_login(const isds_error error, struct isds_ctx *context,
+static int test_login(const isds_error error,
+        const isds_otp_resolution resolution, struct isds_ctx *context,
         const char *url, const char *username, const char *password,
         const struct isds_pki_credentials *pki_credentials,
         struct isds_otp *otp) {
@@ -26,6 +27,9 @@ static int test_login(const isds_error error, struct isds_ctx *context,
         FAIL_TEST("Wrong return code: expected=%s, returned=%s (%s)",
                 isds_strerror(error), isds_strerror(err),
                 isds_long_message(context));
+    if (otp != NULL && resolution != otp->resolution)
+        FAIL_TEST("Wrong OTP resolution: expected=%d, returned=%d (%s)",
+                resolution, otp->resolution, isds_long_message(context));
 
 
     PASS_TEST;
@@ -104,31 +108,31 @@ int main(int argc, char **argv) {
 
         otp_credentials.otp_code = NULL;
         TEST("Invalid password and missing OTP code", test_login,
-                IE_NOT_LOGGED_IN, context,
+                IE_NOT_LOGGED_IN, OTP_RESOLUTION_BAD_AUTHENTICATION, context,
                 url, "7777777", "nbuusr1", NULL, &otp_credentials);
         isds_logout(context);
 
         otp_credentials.otp_code = (char *) otp_code;
         TEST("Invalid password and valid OTP code", test_login,
-                IE_NOT_LOGGED_IN, context,
+                IE_NOT_LOGGED_IN, OTP_RESOLUTION_BAD_AUTHENTICATION, context,
                 url, "7777777", "nbuusr1", NULL, &otp_credentials);
         isds_logout(context);
 
         otp_credentials.otp_code = NULL;
         TEST("Valid password but missing OTP code", test_login,
-                IE_NOT_LOGGED_IN, context,
+                IE_NOT_LOGGED_IN, OTP_RESOLUTION_BAD_AUTHENTICATION, context,
                 url, username, password, NULL, &otp_credentials);
         isds_logout(context);
 
         otp_credentials.otp_code = "666";
         TEST("Valid password but invalid OTP code", test_login,
-                IE_NOT_LOGGED_IN, context,
+                IE_NOT_LOGGED_IN, OTP_RESOLUTION_BAD_AUTHENTICATION, context,
                 url, username, password, NULL, &otp_credentials);
         isds_logout(context);
 
         otp_credentials.otp_code = (char *) otp_code;
         TEST("Valid password and valid OTP code", test_login,
-                IE_SUCCESS, context,
+                IE_SUCCESS, OTP_RESOLUTION_SUCCESS, context,
                 url, username, password, NULL, &otp_credentials);
         TEST("Ping after succesfull OTP log-in", test_ping,
                 IE_SUCCESS, context);
@@ -164,7 +168,8 @@ int main(int argc, char **argv) {
         free(server_address);
 
         otp_credentials.otp_code = "666";
-        TEST("log into out-of-order server", test_login, IE_SOAP, context,
+        TEST("log into out-of-order server", test_login,
+                IE_SOAP, OTP_RESOLUTION_UNKNOWN, context,
                 url, username, password, NULL, &otp_credentials);
         isds_logout(context);
 
