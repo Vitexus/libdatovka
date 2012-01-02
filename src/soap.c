@@ -639,16 +639,17 @@ static isds_error http(struct isds_ctx *context,
         curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEDATA, &body);
     }
 
-    if (response_otp_headers != NULL) {
-        /* Set get-response-headers function */
-        if (!curl_err) {
-            curl_err = curl_easy_setopt(context->curl, CURLOPT_HEADERFUNCTION,
-                    write_header);
-        }
-        if (!curl_err) {
-            curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEHEADER,
-                    response_otp_headers);
-        }
+    /* Set get-response-headers function if needed.
+     * XXX: Both CURLOPT_HEADERFUNCTION and CURLOPT_WRITEHEADER must be set or
+     * unset at the same time (see curl_easy_setopt(3)) ASAP, otherwise old
+     * invalid CURLOPT_WRITEHEADER value could be derefenced. */
+    if (!curl_err) {
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_HEADERFUNCTION,
+                (response_otp_headers == NULL) ? NULL: write_header);
+    }
+    if (!curl_err) {
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEHEADER,
+                response_otp_headers);
     }
 
     /* Set MIME types and headers requires by SOAP 1.1.
