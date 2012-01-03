@@ -1205,17 +1205,17 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
             char *new_url = NULL;
             otp->resolution = OTP_RESOLUTION_UNKNOWN;
             switch (context->otp->method) {
-                case OTP_HASH: 
+                case OTP_HMAC: 
                     isds_log(ILF_SEC, ILL_INFO,
                             _("Selected authentication method: "
-                                "Hash-based one time password\n"));
+                                "HMAC-based one-time password\n"));
                     authenticator_uri =
                         "%1$sas/processLogin?type=hotp&uri=%1$sapps/";
                     break;
                 case OTP_TIME: 
                     isds_log(ILF_SEC, ILL_INFO,
                             _("Selected authentication method: "
-                                "Time-based one time password\n"));
+                                "Time-based one-time password\n"));
                     if (context->otp->otp_code == NULL) {
                         isds_log(ILF_SEC, ILL_INFO,
                                 _("OTP code has not been provided by "

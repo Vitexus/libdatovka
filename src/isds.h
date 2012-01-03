@@ -135,8 +135,8 @@ struct isds_pki_credentials {
 
 /* One-time password authentication method */
 typedef enum {
-    OTP_HASH = 0,           /* Hash based OTP method */
-    OTP_TIME                /* Time based OTP method */
+    OTP_HMAC = 0,           /* HMAC-based OTP method */
+    OTP_TIME                /* Time-based OTP method */
 } isds_otp_method;
 
 /* One-time passwed authentication resolution */

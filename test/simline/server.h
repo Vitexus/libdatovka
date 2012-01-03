@@ -38,7 +38,7 @@ void server_basic_authentication(int server_socket,
 
 /* One-time password authentication method */
 enum auth_otp_method {
-    AUTH_OTP_HASH = 0,  /* Hash-based OTP */
+    AUTH_OTP_HMAC = 0,  /* HMAC-based OTP */
     AUTH_OTP_TIME       /* Time-based OTP */
 };
 

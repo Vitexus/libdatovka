@@ -268,7 +268,7 @@ static void do_as_sendsms(int client_socket, const struct http_request *request,
  * Or NULL in case of error. */
 static const char *auth_otp_method2string(enum auth_otp_method method) {
     switch (method) {
-        case AUTH_OTP_HASH: return "hotp";
+        case AUTH_OTP_HMAC: return "hotp";
         case AUTH_OTP_TIME: return "totp";
         default: return NULL;
     }
@@ -437,7 +437,7 @@ void server_otp_authentication(int server_socket,
         }
 
         if (arguments->username != NULL) {
-            if (arguments->method == AUTH_OTP_HASH &&
+            if (arguments->method == AUTH_OTP_HMAC &&
                     !strncmp(request->uri, as_path_hotp, strlen(as_path_hotp))) {
                 do_as_phase_two(client_socket, request, arguments);
             } else if (arguments->method == AUTH_OTP_TIME &&

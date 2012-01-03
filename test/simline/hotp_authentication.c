@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
     char *url = NULL;
 
     struct isds_otp otp_credentials = {
-        .method = OTP_HASH
+        .method = OTP_HMAC
     };
 
     INIT_TEST("HOTP authentication");
@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
 
     {
         const struct arguments_otp_authentication server_arguments = {
-            .method = AUTH_OTP_HASH,
+            .method = AUTH_OTP_HMAC,
             .username = username,
             .password = password,
             .otp = otp_code,

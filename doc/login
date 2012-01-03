@@ -64,7 +64,7 @@ Server HTTP header `X-Response-message-text' value is encoded according to RFC
 2047, method B (Base64) in UTF-8.
 
 Authentication process is sequence of challenge response HTTP messages that
-differ for Hash-based One Time Password (HOTP) and Time-based One Time Password
+differ for HMAC-Based One-Time Password (HOTP) and Time-based One-Time Password
 (TOTP) methods. They are described bellow.
 
 After successful OTP authentication, client obtains a cookie named
@@ -119,6 +119,9 @@ Location: https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT
 With cookie used to track session and redirects to new URL where client should
 resubmit its original POST request.
 
+Non-normative: The HMAC-based code is computed as specified in RFC 4226 (HOTP:
+An HMAC-Based One-Time Password Algorithm).
+
 
 HTTP TOTP Method
 ================
@@ -127,7 +130,7 @@ Client sends POST request to
 <https://DOMAINNAME/as/processLogin?type=totp&sendSms=true&uri=https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT>
 with user name and password in standard HTTP Basic authentication header.
 
-If credentials are valid, ISDS generates one time code and sends it through
+If credentials are valid, ISDS generates one-time code and sends it through
 SMS GSM gateway to user's predefined phone number (the phone number can be set
 on interactive web portal) and returns 302 response with redirect:
 

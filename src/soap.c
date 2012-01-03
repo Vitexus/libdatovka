@@ -104,7 +104,7 @@ static char *decode_header_value(const char *encoded_value) {
     char *method_name = NULL;
     
     switch (client_method) {
-        case OTP_HASH: method_name = "hotp"; break;
+        case OTP_HMAC: method_name = "hotp"; break;
         case OTP_TIME: method_name = "totp"; break;
         default: return 0;
     }

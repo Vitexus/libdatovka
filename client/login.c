@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
 
         if (argc > 4) {
             use_otp = 1;
-            if (!strcmp(argv[4], "hotp")) otp.method = OTP_HASH;
+            if (!strcmp(argv[4], "hotp")) otp.method = OTP_HMAC;
             else if (!strcmp(argv[4], "totp")) otp.method = OTP_TIME;
             else {
                 printf("Bad invocation: %s: Unknown OTP method\n", argv[4]);
