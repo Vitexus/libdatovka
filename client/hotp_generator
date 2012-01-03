@@ -1,0 +1,12 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+
+use Authen::OATH;
+
+if ($#ARGV != 1) {
+    print "Usage: hotp_generator SECRET COUNTER\n";
+    exit 1;
+}
+
+print Authen::OATH->new()->hotp(@ARGV[0..1]), "\n";
