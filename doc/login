@@ -7,6 +7,9 @@ Source: Vyhláška o stanovení podrobností užívání a provozování ISDS (
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
     version 2 (2009-06-25)
 Source: Podpora OTP autentizace v ISDS, version 1.0 (2011-06-10)
+Source: Přihlášení bezpečným kódem,
+    <https://www.mojedatovaschranka.cz/static/pages/prihlasovani_bezp_kod.html>
+    (2012-01-03)
 
 
 There are two authentication methods. One is stateless HTTP Basic method
