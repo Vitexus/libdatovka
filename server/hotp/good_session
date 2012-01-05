@@ -1,0 +1,155 @@
+Selected authentication method: no certificate, username and password
+Selected authentication method: HMAC-based one-time password
+Logging user 5nxu9j into server https://www.czebox.cz/
+SOAP request to sent to https://www.czebox.cz/as/processLogin?type=hotp&uri=https://www.czebox.cz/apps/DS/dz:
+<?xml version="1.0" encoding="UTF-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"><Body><DummyOperation xmlns="http://isds.czechpoint.cz/v20"/></Body></Envelope>
+
+End of SOAP request
+Cookies will be stored and send because context has been authorized by OTP.
+Sending POST request to <https://www.czebox.cz/as/processLogin?type=hotp&uri=https://www.czebox.cz/apps/DS/dz>
+POST body length: 179, content follows:
+<?xml version="1.0" encoding="UTF-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"><Body><DummyOperation xmlns="http://isds.czechpoint.cz/v20"/></Body></Envelope>
+
+End of POST body
+About to connect() to www.czebox.cz port 443 (#0)
+  Trying 90.182.204.24... connected
+successfully set certificate verify locations:
+  CAfile: none
+  CApath: /etc/ssl/certs
+SSLv3, TLS handshake, Client hello (1):
+SSLv3, TLS handshake, Server hello (2):
+SSLv3, TLS handshake, CERT (11):
+SSLv3, TLS handshake, Server key exchange (12):
+SSLv3, TLS handshake, Server finished (14):
+SSLv3, TLS handshake, Client key exchange (16):
+SSLv3, TLS change cipher, Client hello (1):
+SSLv3, TLS handshake, Finished (20):
+SSLv3, TLS change cipher, Client hello (1):
+SSLv3, TLS handshake, Finished (20):
+SSL connection using DHE-RSA-AES256-SHA
+Server certificate:
+         subject: C=CZ; O=Ministerstvo vnitra \U010CR-odbor ekonomicko-organiza\U010Dn� pro ICT [I\U010C 00007064]; OU=odbor rozvoje projekt\U016F a slu\U017Eeb eGovernment; CN=*.czebox.cz; serialNumber=S91490
+         start date: 2011-02-25 12:16:59 GMT
+         expire date: 2012-02-25 11:26:00 GMT
+         common name: *.czebox.cz (matched)
+         issuer: C=CZ; O=\U010Cesk� po\U0161ta, s.p. [I\U010C 47114983]; CN=PostSignum Public CA 2
+         SSL certificate verify ok.
+Server auth using Basic with user '5nxu9j'
+POST /as/processLogin?type=hotp&uri=https://www.czebox.cz/apps/DS/dz HTTP/1.1
+Authorization: Basic ****
+User-Agent: libisds/0.5
+Host: www.czebox.cz
+Accept: application/soap+xml,application/xml,text/xml
+Content-Type: text/xml
+Content-Length: 179
+
+<?xml version="1.0" encoding="UTF-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"><Body><DummyOperation xmlns="http://isds.czechpoint.cz/v20"/></Body></Envelope>
+upload completely sent off: 179 out of 179 bytes
+HTTP/1.1 302 Moved Temporarily
+Date: Thu, 05 Jan 2012 21:34:19 GMT
+Server: Apache-Coyote/1.1
+Location: https://www.czebox.cz/apps/DS/dz
+Content-Language: cs-CZ
+Content-Length: 0
+Added cookie IPCZ-X-COOKIE="00-d19d8c89758044fb9b2847e156307b9a" for domain czebox.cz, path /, expire 0
+Set-Cookie: IPCZ-X-COOKIE=00-d19d8c89758044fb9b2847e156307b9a; Domain=.czebox.cz; Path=/; secure; HttpOnly
+X-Frame-Options: Deny
+Cache-Control: no-store,no-transform,private,max-age=0
+Expires: 0
+Content-Type: text/plain
+
+Connection #0 to host www.czebox.cz left intact
+Final response to https://www.czebox.cz/as/processLogin?type=hotp&uri=https://www.czebox.cz/apps/DS/dz received
+Response body length: 0, content follows:
+
+End of response body
+OTP authentication headers received: method=(null), code=(null), message=(null)
+OTP authentication headers redirect to: <https://www.czebox.cz/apps/DS/dz>
+Server returned 302 HTTP code
+User name and password for server https://www.czebox.cz/as/processLogin?type=hotp&uri=https://www.czebox.cz/apps/have been unset.
+SOAP request to sent to https://www.czebox.cz/apps/DS/dz:
+<?xml version="1.0" encoding="UTF-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"><Body><DummyOperation xmlns="http://isds.czechpoint.cz/v20"/></Body></Envelope>
+
+End of SOAP request
+Cookies will be stored and send because context has been authorized by OTP.
+Sending POST request to <https://www.czebox.cz/apps/DS/dz>
+POST body length: 179, content follows:
+<?xml version="1.0" encoding="UTF-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"><Body><DummyOperation xmlns="http://isds.czechpoint.cz/v20"/></Body></Envelope>
+
+End of POST body
+Re-using existing connection! (#0) with host www.czebox.cz
+Connected to www.czebox.cz (90.182.204.24) port 443 (#0)
+POST /apps/DS/dz HTTP/1.1
+User-Agent: libisds/0.5
+Host: www.czebox.cz
+Cookie: IPCZ-X-COOKIE=00-d19d8c89758044fb9b2847e156307b9a
+Accept: application/soap+xml,application/xml,text/xml
+Content-Type: text/xml
+Content-Length: 179
+
+<?xml version="1.0" encoding="UTF-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"><Body><DummyOperation xmlns="http://isds.czechpoint.cz/v20"/></Body></Envelope>
+p://isds.czechpoint.cz/v20"/></Body></Envelope>
+upload completely sent off: 179 out of 179 bytes
+HTTP/1.1 200 OK
+Date: Thu, 05 Jan 2012 21:34:19 GMT
+Server: Apache-Coyote/1.1
+Content-Type: text/xml;charset=utf-8
+Cache-Control: no-store,no-transform,private,max-age=0
+Expires: 0
+Transfer-Encoding: chunked
+
+Connection #0 to host www.czebox.cz left intact
+Final response to https://www.czebox.cz/apps/DS/dz received
+Response body length: 482, content follows:
+<?xml version='1.0' encoding='utf-8'?><SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><SOAP-ENV:Body><q:DummyOperationResponse xmlns:q="http://isds.czechpoint.cz/v20" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><q:dmStatus><q:dmStatusCode>0000</q:dmStatusCode><q:dmStatusMessage>Provedeno úspěšně.</q:dmStatusMessage></q:dmStatus></q:DummyOperationResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>
+End of response body
+OTP authentication headers received: method=(null), code=(null), message=(null)
+Server returned 200 HTTP code
+SOAP response received:
+<?xml version='1.0' encoding='utf-8'?><SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><SOAP-ENV:Body><q:DummyOperationResponse xmlns:q="http://isds.czechpoint.cz/v20" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><q:dmStatus><q:dmStatusCode>0000</q:dmStatusCode><q:dmStatusMessage>Provedeno úspěšně.</q:dmStatusMessage></q:dmStatus></q:DummyOperationResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>
+End of SOAP response
+User 5nxu9j has been logged into server https://www.czebox.cz/ successfully
+Logged in :)
+Cookies will be stored and send because context has been authorized by OTP.
+Sending GET request to <https://www.czebox.cz/as/processLogout?uri=https://www.czebox.cz/apps/DS/dz>
+Re-using existing connection! (#0) with host www.czebox.cz
+Connected to www.czebox.cz (90.182.204.24) port 443 (#0)
+GET /as/processLogout?uri=https://www.czebox.cz/apps/DS/dz HTTP/1.1
+User-Agent: libisds/0.5
+Host: www.czebox.cz
+Cookie: IPCZ-X-COOKIE=00-d19d8c89758044fb9b2847e156307b9a
+Accept: application/soap+xml,application/xml,text/xml
+Content-Type: text/xml
+
+ncoding="UTF-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"><Body><DummyOperation xmlns="http://isds.czechpoint.cz/v20"/></Body></Envelope>
+p://isds.czechpoint.cz/v20"/></Body></Envelope>
+HTTP/1.1 200 OK
+Date: Thu, 05 Jan 2012 21:34:19 GMT
+Server: Apache-Coyote/1.1
+Content-Type: text/html;charset=utf-8
+Content-Language: cs-CZ
+Replaced cookie IPCZ-X-COOKIE="" for domain czebox.cz, path /, expire 1325799115
+Set-Cookie: IPCZ-X-COOKIE=; Domain=.czebox.cz; Path=/; Expires=Fri, 31-Dec-2010 23:59:59 GMT; Max-Age=0
+X-Frame-Options: Deny
+Cache-Control: no-store,no-transform,private,max-age=0
+Expires: 0
+Transfer-Encoding: chunked
+
+Connection #0 to host www.czebox.cz left intact
+Final response to https://www.czebox.cz/as/processLogout?uri=https://www.czebox.cz/apps/DS/dz received
+Response body length: 0, content follows:
+
+End of response body
+Cookie for OTP authenticated connection to <https://www.czebox.cz/apps/> has been invalidated.
+Closing connection #0
+SSLv3, TLS alert, Client hello (1):
+petr@frank:~/projekty/libisds/libisds-devel/client $ 
+Logged out from ISDS server
+petr@frank:~/projekty/libisds/libisds-devel/cliepetr@frank:~/projekty/libisds/li

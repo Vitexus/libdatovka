@@ -1,0 +1,76 @@
+Selected authentication method: no certificate, username and password
+Selected authentication method: HMAC-based one-time password
+Logging user 6nxu9j into server https://www.czebox.cz/
+SOAP request to sent to https://www.czebox.cz/as/processLogin?type=hotp&uri=https://www.czebox.cz/apps/DS/dz:
+<?xml version="1.0" encoding="UTF-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"><Body><DummyOperation xmlns="http://isds.czechpoint.cz/v20"/></Body></Envelope>
+
+End of SOAP request
+Cookies will be stored and send because context has been authorized by OTP.
+Sending POST request to <https://www.czebox.cz/as/processLogin?type=hotp&uri=https://www.czebox.cz/apps/DS/dz>
+POST body length: 179, content follows:
+<?xml version="1.0" encoding="UTF-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"><Body><DummyOperation xmlns="http://isds.czechpoint.cz/v20"/></Body></Envelope>
+
+End of POST body
+About to connect() to www.czebox.cz port 443 (#0)
+  Trying 90.182.204.24... connected
+successfully set certificate verify locations:
+  CAfile: none
+  CApath: /etc/ssl/certs
+SSLv3, TLS handshake, Client hello (1):
+SSLv3, TLS handshake, Server hello (2):
+SSLv3, TLS handshake, CERT (11):
+SSLv3, TLS handshake, Server key exchange (12):
+SSLv3, TLS handshake, Server finished (14):
+SSLv3, TLS handshake, Client key exchange (16):
+SSLv3, TLS change cipher, Client hello (1):
+SSLv3, TLS handshake, Finished (20):
+SSLv3, TLS change cipher, Client hello (1):
+SSLv3, TLS handshake, Finished (20):
+SSL connection using DHE-RSA-AES256-SHA
+Server certificate:
+         subject: C=CZ; O=Ministerstvo vnitra \U010CR-odbor ekonomicko-organiza\U010Dn� pro ICT [I\U010C 00007064]; OU=odbor rozvoje projekt\U016F a slu\U017Eeb eGovernment; CN=*.czebox.cz; serialNumber=S91490
+         start date: 2011-02-25 12:16:59 GMT
+         expire date: 2012-02-25 11:26:00 GMT
+         common name: *.czebox.cz (matched)
+         issuer: C=CZ; O=\U010Cesk� po\U0161ta, s.p. [I\U010C 47114983]; CN=PostSignum Public CA 2
+         SSL certificate verify ok.
+Server auth using Basic with user '6nxu9j'
+POST /as/processLogin?type=hotp&uri=https://www.czebox.cz/apps/DS/dz HTTP/1.1
+Authorization: Basic Nm54dTlqOmZvb2Jhcg==
+User-Agent: libisds/0.5
+Host: www.czebox.cz
+Accept: application/soap+xml,application/xml,text/xml
+Content-Type: text/xml
+Content-Length: 179
+
+<?xml version="1.0" encoding="UTF-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"><Body><DummyOperation xmlns="http://isds.czechpoint.cz/v20"/></Body></Envelope>
+upload completely sent off: 179 out of 179 bytes
+HTTP/1.1 401 Unauthorized
+Date: Thu, 05 Jan 2012 21:58:51 GMT
+Server: Apache-Coyote/1.1
+WWW-Authenticate: hotp
+X-Response-message-text: =?UTF-8?B?Q2h5YmEgcMWZaWhsw6HFoWVuw60sIHpub3Z1IHphZGVqdGUgw7pkYWplLg==?=
+X-Response-message-code: authentication.error.userIsNotAuthenticated
+Content-Type: text/html;charset=utf-8
+Content-Language: cs-CZ
+X-Frame-Options: Deny
+Cache-Control: no-store,no-transform,private,max-age=0
+Expires: 0
+Transfer-Encoding: chunked
+
+Connection #0 to host www.czebox.cz left intact
+Final response to https://www.czebox.cz/as/processLogin?type=hotp&uri=https://www.czebox.cz/apps/DS/dz received
+Response body length: 24, content follows:
+            
+        
+
+End of response body
+OTP authentication headers received: method=hotp, code=authentication.error.userIsNotAuthenticated, message==?UTF-8?B?Q2h5YmEgcMWZaWhsw6HFoWVuw60sIHpub3Z1IHphZGVqdGUgw7pkYWplLg==?=
+Server returned 401 HTTP code
+Closing connection #0
+SSLv3, TLS alert, Client hello (1):
+Connection to server https://www.czebox.cz/apps/ closed
+isds_login() failed: Not logged in: Authentication failed
