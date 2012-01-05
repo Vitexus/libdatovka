@@ -6,7 +6,7 @@ Source: Vyhláška o stanovení podrobností užívání a provozování ISDS (
     Coll.)
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
     version 2 (2009-06-25)
-Source: Podpora OTP autentizace v ISDS, version 1.0 (2011-06-10)
+Source: Podpora OTP autentizace v ISDS, version 1.5 (2011-10-14)
 Source: Přihlášení bezpečným kódem,
     <https://www.mojedatovaschranka.cz/static/pages/prihlasovani_bezp_kod.html>
     (2012-01-03)
@@ -66,7 +66,7 @@ SOAP services are relocated to
 Server HTTP header `X-Response-message-text' value is encoded according to RFC
 2047, method B (Base64) in UTF-8.
 
-Authentication process is sequence of challenge response HTTP messages that
+Authentication process is sequence of challenge-response HTTP messages that
 differ for HMAC-Based One-Time Password (HOTP) and Time-based One-Time Password
 (TOTP) methods. They are described bellow.
 
@@ -79,8 +79,15 @@ session by sending GET request to
 <https://DOMAINNAME/as/processLogout?uri=https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT>.
 
 The DOMAINNAME variable is one from server locators (e.g.
-`ws1.mojedatovaschranka.cz'). WEB_SERVICE_ENDPOINT is request-URI postfix
+`www.mojedatovaschranka.cz'). WEB_SERVICE_ENDPOINT is request-URI postfix
 specific for family of requested SOAP service (e.g `dz').
+
+Non-normative: Specification defines third part of DOMAINNAME as `www',
+despite non-OTP authentication methods do not use `www'.
+
+Specification requires client to send first POST request without
+WWW-Authenticate header and to receive 401 response and to resend the request
+with the authentication header delivering credentials again.
 
 
 HTTP HOTP Method
@@ -116,7 +123,7 @@ authentication.error.badRole                    User name is not permitted to
 If authentication succeeds, server will return 302 response:
 
 Set-Cookie:IPCZ-X-COOKIE=01-5c1047cb9f3545f68cf987e6750acac4;
-    Domain=.mojedatovaschranka.cz; secure
+    Domain=.mojedatovaschranka.cz; secure, HttpOnly
 Location: https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT
 
 With cookie used to track session and redirects to new URL where client should
