@@ -21,6 +21,14 @@ int main(int argc, char **argv) {
         "foo\r\n bar",
         "foo\r\n\tbar",
         "foo \r\n bar",
+        "(=?ISO-8859-1?Q?a?=)",
+        "(=?ISO-8859-1?Q?a?= b)",
+        "(=?ISO-8859-1?Q?a?= =?ISO-8859-1?Q?b?=)",
+        "(=?ISO-8859-1?Q?a?=  =?ISO-8859-1?Q?b?=)",
+        "(=?ISO-8859-1?Q?a?=\r\n    =?ISO-8859-1?Q?b?=)",
+        "(=?ISO-8859-1?Q?a_b?=)",
+        "(=?ISO-8859-1?Q?a?= =?ISO-8859-2?Q?_b?=)",
+        "=?UTF-8?B?SmVkbm9yw6F6b3bDvSBrw7NkIG9kZXNsw6FuLg==?="
     };
     const char *outputs[] = {
         "foo",
@@ -30,6 +38,14 @@ int main(int argc, char **argv) {
         "foo bar",
         "foo bar",
         "foo bar",
+        "(a)",
+        "(a b)",
+        "(ab)",
+        "(ab)",
+        "(ab)",
+        "(a b)",
+        "(a b)",
+        "Jednorázový kód odeslán."
     };
 
     INIT_TEST("HTTP header value decoder");
