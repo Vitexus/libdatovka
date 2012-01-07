@@ -40,7 +40,7 @@ if BUILD_CURL
 TESTS += isds-dbtype isds-sendertype isds-usertype \
 		 isds-datestring2tm isds-tm2datestring \
 		 isds-timeval2timestring \
-		 soap-string2isds_otp_resolution
+		 soap-decode_header_value soap-string2isds_otp_resolution
 endif
 
 
@@ -153,6 +153,7 @@ isds_uint2isds_message_status_SOURCES	= isds-uint2isds_message_status.c \
 isds_eventstring2event_SOURCES	= isds-eventstring2event.c $(isds_common)
 
 # Access static symbols from soap.c
+soap_decode_header_value_SOURCES	= soap-decode_header_value.c $(soap_common)
 soap_string2isds_otp_resolution_SOURCES	= soap-string2isds_otp_resolution.c \
 										  $(soap_common)
 

@@ -54,7 +54,7 @@ static const char *header_value(const char *line, const char *name) {
 }
 
 
-/* Decode HTTP header value per RFC ???
+/* Decode HTTP header value per RFC 2047.
  * @encoded_value is encoded HTTP header value terminated with NUL. It can
  * contain HTTP LWS separators that will be replaced with a space.
  * @return newly allocated decoded value without EOL, or return NULL */
@@ -75,7 +75,7 @@ static char *decode_header_value(const char *encoded_value) {
     /* Decode */
     /* RFC 2616, section 4.2: Remove surrounding LWS, replace inner ones with
      * a space. */
-    /* FIXME: Implement the RFC (?=UTF-8?B?...?) */
+    /* FIXME: Implement the RFC 2047 (=?UTF-8?B?...?=) */
     for(decoded_cursor = decoded; *encoded_value; encoded_value++) {
         if (*encoded_value == '\r' || *encoded_value == '\n' ||
                 *encoded_value == '\t' || *encoded_value == ' ') {
