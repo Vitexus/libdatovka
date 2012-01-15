@@ -4,6 +4,7 @@
 #include "utils.h"
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>    /* strncasecmp(3) */
 
 /* Private structure for write_body() call back */
 struct soap_body {
@@ -54,10 +55,105 @@ static const char *header_value(const char *line, const char *name) {
 }
 
 
+/* Try to decode header value per RFC 2047.
+ * @input is zero terminated input, it's updated to point all consumed
+ * input - 1.
+ * @output is buffer to store decoded value, it's updated to point after last
+ * written character. The buffer must be preallocated.
+ * @return 0 if input has been successfully decoded, then @input and @output
+ * poineres will be updated. Otherwise return non-zero value and keeps
+ * argument pointers and memory unchanged. */
+static int try_rfc2047_decode(const char **input, char **output) {
+    const char *encoded;
+    const char *charset_start, *encoding, *end;
+    size_t charset_length;
+    /* ISDS prescribes B encoding only, but RFC 2047 requires to support Q
+     * encoding too. ISDS prescribes UTF-8 charset only, RFC requiers to
+     * support any MIME charset. */
+    if (input == NULL || *input == NULL || output == NULL || *output == NULL)
+        return -1;
+
+    /* Start is "=?" */
+    encoded = *input;
+    if (encoded[0] != '=' || encoded[1] != '?')
+        return -1;
+
+    /* Then is "CHARSET?" */
+    charset_start = (encoded += 2);
+    while (*encoded != '?') {
+        if (*encoded == '\0')
+            return -1;
+        if (*encoded == ' ' || *encoded == '\t' || *encoded == '\r' || *encoded == '\n')
+            return -1;
+        encoded++;
+    }
+    encoded++;
+
+    /* Then is "ENCODING?", where ENCODING is /[BbQq]/ */
+    if (*encoded == '\0') return -1;
+    encoding = encoded++;
+    if (*encoded != '?')
+        return -1;
+    encoded++;
+
+    /* Then is "ENCODED_TEXT?=" */
+    while (*encoded != '?') {
+        if (*encoded == '\0')
+            return -1;
+        if (*encoded == ' ' || *encoded == '\t' || *encoded == '\r' || *encoded == '\n')
+            return -1;
+        encoded++;
+    }
+    end = encoded;
+    if (*(++encoded) != '=') return -1;
+
+    /* Now pointers are:
+     * "=?CHARSET?E?ENCODED_TEXT?="
+     *  | |       |             || 
+     *  | |       |             |\- encoded
+     *  | |       |             \- end
+     *  | |       \- encoding
+     *  | \- charset_start
+     *  \- *input
+     */
+    
+    /* We support UTF-8 charset only now. */
+    charset_length = encoding - charset_start - 1;
+    if (charset_length != 5 ||
+            strncasecmp(charset_start, "UTF-8", charset_length))
+        return -1;
+
+    /* We support B encoding only now */
+    if (*encoding != 'B' && *encoding != 'b')
+        return -1;
+
+    /* Decode Base-64 */
+    char *b64_stream = NULL;
+    char *plain_stream = NULL;
+    size_t b64_length, plain_length;
+    b64_length = end - encoding - 2;
+    if (NULL == (b64_stream =
+                malloc((b64_length + 1) * sizeof(*encoding))))
+        return -1;
+    memcpy(b64_stream, encoding + 2, b64_length);
+    b64_stream[b64_length] = '\0';
+    plain_length = _isds_b64decode(b64_stream, (void **)&plain_stream);
+    free(b64_stream);
+    if (plain_length == (size_t) -1)
+        return -1;
+    memcpy(*output, plain_stream, plain_length);
+    free(plain_stream);
+
+    *output += plain_length;
+    *input = encoded;
+    return 0;
+}
+
+
 /* Decode HTTP header value per RFC 2047.
  * @encoded_value is encoded HTTP header value terminated with NUL. It can
  * contain HTTP LWS separators that will be replaced with a space.
- * @return newly allocated decoded value without EOL, or return NULL */
+ * @return newly allocated decoded value without EOL, or return NULL. */
 static char *decode_header_value(const char *encoded_value) {
     char *decoded = NULL, *decoded_cursor;
     size_t content_length;
@@ -76,7 +172,7 @@ static char *decode_header_value(const char *encoded_value) {
     /* RFC 2616, section 4.2: Remove surrounding LWS, replace inner ones with
      * a space. */
     /* FIXME: Implement the RFC 2047 (=?UTF-8?B?...?=) */
-    for(decoded_cursor = decoded; *encoded_value; encoded_value++) {
+    for (decoded_cursor = decoded; *encoded_value; encoded_value++) {
         if (*encoded_value == '\r' || *encoded_value == '\n' ||
                 *encoded_value == '\t' || *encoded_value == ' ') {
             lws_seen = 1; 
@@ -86,7 +182,9 @@ static char *decode_header_value(const char *encoded_value) {
             lws_seen = 0;
             if (text_started) *(decoded_cursor++) = ' ';
         }
-        *(decoded_cursor++) = *encoded_value;
+        if (!(*encoded_value == '=' &&
+                !try_rfc2047_decode(&encoded_value, &decoded_cursor)))
+            *(decoded_cursor++) = *encoded_value;
         text_started = 1;
     }
     *decoded_cursor = '\0';
