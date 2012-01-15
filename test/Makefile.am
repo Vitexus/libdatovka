@@ -25,7 +25,7 @@ export HOME=@top_builddir@
 TESTS = prepare_environment \
 		b64decode b64encode \
 		compute_hash context guess_raw_type init_gpgpme isds_init load_raw \
-		normalize_mime_type  \
+		normalize_mime_type utf82locale \
 		isds_list_free isds_pki_credentials_free isds_hash_free \
 		isds_DbOwnerInfo_free isds_DbUserInfo_free isds_event_free \
 		isds_envelope_free isds_document_free isds_message_free \
@@ -118,6 +118,7 @@ init_gpgpme_SOURCES 	= init_gpgpme.c $(common)
 isds_init_SOURCES 		= isds_init.c $(common)
 load_raw_SOURCES 		= load_raw.c $(common)
 normalize_mime_type_SOURCES 		= normalize_mime_type.c $(common)
+utf82locale_SOURCES		= utf82locale.c $(common)
 isds_list_free_SOURCES 	= isds_list_free.c $(common)
 isds_pki_credentials_free_SOURCES 	= isds_pki_credentials_free.c $(common)
 isds_hash_free_SOURCES 	= isds_hash_free.c $(common)
