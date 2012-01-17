@@ -5619,7 +5619,8 @@ static isds_error build_send_dbid_request_check_response(
     request = xmlNewNode(NULL, service_name);
     if (!request) {
         isds_printf_message(context,
-                _("Could not build %s request"), service_name_locale);
+                _("Could not build %s request for %s box"), service_name_locale,
+                box_id_locale);
         err = IE_ERROR;
         goto leave;
     }
@@ -8034,7 +8035,8 @@ static isds_error build_send_check_message_request(struct isds_ctx *context,
     request = xmlNewNode(NULL, service_name);
     if (!request) {
         isds_printf_message(context,
-                _("Could not build %s request"), service_name_locale);
+                _("Could not build %s request for %s message ID"),
+                service_name_locale, message_id_locale);
         err = IE_ERROR;
         goto leave;
     }
