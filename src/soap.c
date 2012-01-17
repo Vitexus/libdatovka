@@ -909,10 +909,13 @@ static isds_error http(struct isds_ctx *context,
         
         if (response_otp_headers->message != NULL) {
             char *message_locale = _isds_utf82locale(response_otp_headers->message);
-            if (message_locale == NULL) {
+            /* _isds_utf82locale() return NULL on inconverable string. Do not
+             * panic on it.
+             * TODO: Escape such characters.
+             * if (message_locale == NULL) {
                 err = IE_NOMEM;
                 goto leave;
-            }
+            }*/
             isds_printf_message(context,
                     _("Server returned OTP authentication message: %s"),
                     message_locale);
