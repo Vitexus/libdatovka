@@ -1,4 +1,3 @@
-#define _POSIX_SOURCE   /* For strtok_r */
 #include "isds_priv.h"
 #include "physxml.h"
 #include "utils.h"

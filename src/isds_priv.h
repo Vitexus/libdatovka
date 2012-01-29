@@ -1,6 +1,20 @@
 #ifndef __ISDS_ISDS_PRIV_H__
 #define __ISDS_ISDS_PRIV_H__
 
+/* Feature macros to enable some declarations. This is kept here to align all
+ * header files to one shape. */
+#ifndef _XOPEN_SOURCE
+/* >= 500: strdup(3) from string.h, strptime(3) from time.h */
+/* >= 600: setenv(3) */
+/* >= 700: strndup(3) from string.h */
+#define _XOPEN_SOURCE 700
+#endif
+
+#ifndef _POSIX_SOURCE
+/* defined: strtok_r */
+#define _POSIX_SOURCE   
+#endif
+
 /* Structures not to export outside library */
 #include "../config.h"
 #include "isds.h"

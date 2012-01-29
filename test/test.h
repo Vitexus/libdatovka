@@ -2,7 +2,7 @@
 #define __ISDS_TEST_H
 
 #ifndef _XOPEN_SOURCE
-#define _XOPEN_SOURCE 500
+#define _XOPEN_SOURCE 700 /* strndup */
 #endif
 #include <stdlib.h>
 #include <stdio.h>

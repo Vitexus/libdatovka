@@ -1,5 +1,4 @@
-#define _XOPEN_SOURCE 500 /* For strdup(3) */
-#define _POSIX_C_SOURCE 200112L /* For setenv() */
+#include "isds_priv.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>

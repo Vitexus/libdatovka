@@ -1,4 +1,4 @@
-#define _XOPEN_SOURCE 500   /* strdup from string.h, strptime from time.h */
+#include "isds_priv.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -6,7 +6,6 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <limits.h>     /* Because of LONG_{MIN,MAX} constants */
-#include "isds_priv.h"
 #include "utils.h"
 #if HAVE_LIBCURL
     #include "soap.h"

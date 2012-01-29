@@ -1,4 +1,3 @@
-#define _XOPEN_SOURCE 500   /* strdup from string.h */
 #include "isds_priv.h"
 #include "utils.h"
 #include "gcrypt.h"
