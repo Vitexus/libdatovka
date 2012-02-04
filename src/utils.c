@@ -118,7 +118,7 @@ _hidden int isds_vasprintf(char **buffer, const char *format, va_list ap) {
  * memory.
  * @format format string as for printf(3)
  * @... variadic arguments
- * @Returns number of bytes printed. In case of error, -1 and NULL @buffer*/
+ * @Returns number of bytes printed. In case of error, -1 and NULL @buffer */
 _hidden int isds_asprintf(char **buffer, const char *format, ...) {
     int ret;
     va_list ap;
@@ -128,38 +128,42 @@ _hidden int isds_asprintf(char **buffer, const char *format, ...) {
     return ret;
 }
 
-
-/* Converts UTF8 string into locale encoded string.
- * @utf string int UTF-8 terminated by zero byte
- * @return allocated string encoded in locale specific encoding. You must free
- * it. In case of error or NULL @utf returns NULL. */
-_hidden char *_isds_utf82locale(const char *utf) {
+/* Converts a block from charset to charset.
+ * @from is input charset of @input block as known to iconv
+ * @to is output charset @input will be converted to @output 
+ * @input is block in @from charset/encoding of length @input_length
+ * @input_length is size of @input block in bytes
+ * @output is automatically allocated block of data converted from @input. No
+ * NUL is apended. Can be NULL, if resulting size is 0. You must free it.
+ * @return size of @output in bytes. In case of error returns (size_t) -1 and
+ * deallocates @output if this function allocated it in this call. */
+_hidden size_t _isds_any2any(const char *from, const char *to,
+        const void *input, size_t input_length, void **output) {
     iconv_t state;
-    size_t utf_length;
     char *buffer = NULL, *new_buffer;
     size_t buffer_length = 0, buffer_used = 0;
     char *inbuf, *outbuf;
     size_t inleft, outleft;
 
-    if (!utf) return NULL;
+    if (output != NULL) *output = NULL;
+    if (from == NULL || to == NULL || input == NULL || output == NULL)
+        return (size_t) -1;
 
-    /* nl_langinfo() is not thread-safe */
-    state = iconv_open(nl_langinfo(CODESET), "UTF-8");
-    if (state == (iconv_t) -1) return NULL;
+    state = iconv_open(to, from);
+    if (state == (iconv_t) -1) return (size_t) -1;
 
     /* Get the initial output buffer length */
-    utf_length = strlen(utf);
-    buffer_length = utf_length + 1;
+    buffer_length = input_length;
 
-    inbuf = (char *) utf;
-    inleft = utf_length + 1;
+    inbuf = (char *) input;
+    inleft = input_length;
 
     while (inleft > 0) {
         /* Extend buffer */
         new_buffer = realloc(buffer, buffer_length);
         if (!new_buffer) {
-            free(buffer);
-            buffer = NULL;
+            zfree(buffer);
+            buffer_used = (size_t) -1;
             goto leave;
         }
         buffer = new_buffer;
@@ -171,8 +175,8 @@ _hidden char *_isds_utf82locale(const char *utf) {
         /* Convert chunk of data */
         if ((size_t) -1 == iconv(state, &inbuf, &inleft, &outbuf, &outleft) &&
                 errno != E2BIG) {
-            free(buffer);
-            buffer = NULL;
+            zfree(buffer);
+            buffer_used = (size_t) -1;
             goto leave;
         }
 
@@ -183,7 +187,34 @@ _hidden char *_isds_utf82locale(const char *utf) {
 
 leave:
     iconv_close(state);
-    return buffer;
+    if (buffer_used == 0) zfree(buffer);
+    *output = buffer;
+    return buffer_used;
+}
+
+/* Converts UTF8 string into locale encoded string.
+ * @utf string int UTF-8 terminated by zero byte
+ * @return allocated string encoded in locale specific encoding. You must free
+ * it. In case of error or NULL @utf returns NULL. */
+_hidden char *_isds_utf82locale(const char *utf) {
+    char *output, *bigger_output;
+    size_t length;
+
+    if (utf == NULL) return NULL;
+
+    length = _isds_any2any("UTF-8", nl_langinfo(CODESET), utf, strlen(utf),
+            (void **) &output);
+    if (length == (size_t) -1) return NULL;
+
+    bigger_output = realloc(output, length + 1);
+    if (bigger_output == NULL) {
+        zfree(output);
+    } else {
+        output = bigger_output;
+        output[length] = '\0';
+    }
+    
+    return output;
 }
 
 

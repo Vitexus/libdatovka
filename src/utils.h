@@ -50,8 +50,20 @@ int isds_vasprintf(char **buffer, const char *format, va_list ap);
  * memory.
  * @format format string as for printf(3)
  * @... variadic arguments
- * @Returns number of bytes printed. In case of error, -1 and NULL @buffer*/
+ * @Returns number of bytes printed. In case of error, -1 and NULL @buffer */
 int isds_asprintf(char **buffer, const char *format, ...);
+
+/* Converts a block from charset to charset.
+ * @from is input charset of @input block as known to iconv
+ * @to is output charset @input will be converted to @output 
+ * @input is block in @from charset/encoding of length @input_length
+ * @input_length is size of @input block in bytes
+ * @output is automatically allocated block of data converted from @input. No
+ * NUL is apended. Can be NULL, if resulting size is 0. You must free it.
+ * @return size of @output in bytes. In case of error returns (size_t) -1 and
+ * deallocates @output if this function allocated it in this call. */
+_hidden size_t _isds_any2any(const char *from, const char *to,
+        const void *input, size_t input_length, void **output);
 
 /* Converts UTF8 string into locale encoded string.
  * @utf string int UTF-8 terminated by zero byte

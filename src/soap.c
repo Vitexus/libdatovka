@@ -66,6 +66,7 @@ static int try_rfc2047_decode(const char **input, char **output) {
     const char *encoded;
     const char *charset_start, *encoding, *end;
     size_t charset_length;
+    char *charset = NULL;
     /* ISDS prescribes B encoding only, but RFC 2047 requires to support Q
      * encoding too. ISDS prescribes UTF-8 charset only, RFC requiers to
      * support any MIME charset. */
@@ -116,34 +117,54 @@ static int try_rfc2047_decode(const char **input, char **output) {
      *  \- *input
      */
     
-    /* We support UTF-8 charset only now. */
     charset_length = encoding - charset_start - 1;
-    if (charset_length != 5 ||
-            strncasecmp(charset_start, "UTF-8", charset_length))
+    if (charset_length < 1)
+        return -1;
+    charset = strndup(charset_start, charset_length);
+    if (charset == NULL)
         return -1;
 
     /* We support B encoding only now */
-    if (*encoding != 'B' && *encoding != 'b')
+    if (*encoding != 'B' && *encoding != 'b') {
+        free(charset);
         return -1;
+    }
 
     /* Decode Base-64 */
     char *b64_stream = NULL;
-    char *plain_stream = NULL;
-    size_t b64_length, plain_length;
+    char *bit_stream = NULL;
+    size_t b64_length, bit_length;
     b64_length = end - encoding - 2;
     if (NULL == (b64_stream =
-                malloc((b64_length + 1) * sizeof(*encoding))))
+                malloc((b64_length + 1) * sizeof(*encoding)))) {
+        free(charset);
         return -1;
+    }
     memcpy(b64_stream, encoding + 2, b64_length);
     b64_stream[b64_length] = '\0';
-    plain_length = _isds_b64decode(b64_stream, (void **)&plain_stream);
+    bit_length = _isds_b64decode(b64_stream, (void **)&bit_stream);
     free(b64_stream);
-    if (plain_length == (size_t) -1)
+    if (bit_length == (size_t) -1) {
+        free(charset);
         return -1;
-    memcpy(*output, plain_stream, plain_length);
-    free(plain_stream);
+    }
+    
+    /* Convert to UTF-8 */
+    char *utf_stream = NULL;
+    size_t utf_length;
+    utf_length = _isds_any2any(charset, "UTF-8", bit_stream, bit_length,
+            (void **)&utf_stream);
+    free(bit_stream);
+    free(charset);
+    if (utf_length == (size_t) -1) {
+        return -1;
+    }
 
-    *output += plain_length;
+    /* Copy UTF-8 stream to output buffer */
+    memcpy(*output, utf_stream, utf_length);
+    free(utf_stream);
+    *output += utf_length;
+
     *input = encoded;
     return 0;
 }
