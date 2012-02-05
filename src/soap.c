@@ -124,27 +124,65 @@ static int try_rfc2047_decode(const char **input, char **output) {
     if (charset == NULL)
         return -1;
 
-    /* We support B encoding only now */
-    if (*encoding != 'B' && *encoding != 'b') {
-        free(charset);
-        return -1;
-    }
-
-    /* Decode Base-64 */
-    char *b64_stream = NULL;
+    /* Decode encoding */
     char *bit_stream = NULL;
-    size_t b64_length, bit_length;
-    b64_length = end - encoding - 2;
-    if (NULL == (b64_stream =
-                malloc((b64_length + 1) * sizeof(*encoding)))) {
-        free(charset);
-        return -1;
-    }
-    memcpy(b64_stream, encoding + 2, b64_length);
-    b64_stream[b64_length] = '\0';
-    bit_length = _isds_b64decode(b64_stream, (void **)&bit_stream);
-    free(b64_stream);
-    if (bit_length == (size_t) -1) {
+    size_t bit_length = 0;
+    size_t encoding_length = end - encoding - 2;
+
+    if (*encoding == 'B') {
+        /* Decode Base-64 */
+        char *b64_stream = NULL;
+        if (NULL == (b64_stream =
+                    malloc((encoding_length + 1) * sizeof(*encoding)))) {
+            free(charset);
+            return -1;
+        }
+        memcpy(b64_stream, encoding + 2, encoding_length);
+        b64_stream[encoding_length] = '\0';
+        bit_length = _isds_b64decode(b64_stream, (void **)&bit_stream);
+        free(b64_stream);
+        if (bit_length == (size_t) -1) {
+            free(charset);
+            return -1;
+        }
+    } else if (*encoding == 'Q') {
+        /* Decode Quoted-printable-like */
+        if (NULL == (bit_stream =
+                    malloc((encoding_length) * sizeof(*encoding)))) {
+            free(charset);
+            return -1;
+        }
+        for (size_t q = 2; q < encoding_length + 2; q++) {
+            if (encoding[q] == '_') {
+                bit_stream[bit_length] = '\x20';
+            } else if (encoding[q] == '=') {
+                int ordinar;
+                /* Validate "=HH", where H is hexadecimal digit */
+                if (q + 2 >= encoding_length + 2 ) {
+                    free(bit_stream);
+                    free(charset);
+                    return -1;
+                }
+                /* Convert =HH */
+                if ((ordinar = _isds_hex2i(encoding[++q])) < 0) {
+                    free(bit_stream);
+                    free(charset);
+                    return -1;
+                }
+                bit_stream[bit_length] = (ordinar << 4);
+                if ((ordinar = _isds_hex2i(encoding[++q])) < 0) {
+                    free(bit_stream);
+                    free(charset);
+                    return -1;
+                }
+                bit_stream[bit_length] += ordinar;
+            } else {
+                bit_stream[bit_length] = encoding[q];
+            }
+            bit_length++;
+        }
+    } else {
+        /* Unknown encoding */
         free(charset);
         return -1;
     }

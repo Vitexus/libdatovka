@@ -313,6 +313,19 @@ _hidden size_t _isds_b64decode(const char *encoded, void **plain) {
 }
 
 
+/* Convert hexadecimal digit to integer. Return negative value if character is
+ * not valid hexadecimal digit. */
+_hidden int _isds_hex2i(char digit) {
+    if (digit >= '0' && digit <= '9')
+        return digit - '0';
+    if (digit >= 'a' && digit <= 'f')
+        return digit - 'a' + 10;
+    if (digit >= 'A' && digit <= 'F')
+        return digit - 'A' + 10;
+    return -1;
+}
+
+
 /* Switches time zone to UTC.
  * XXX: This is not reentrant and not thread-safe */
 static void _isds_switch_tz_to_utc(void) {

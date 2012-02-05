@@ -87,6 +87,10 @@ char *_isds_b64encode(const void *plain, const size_t length);
  * allocation failure. */
 size_t _isds_b64decode(const char *encoded, void **plain);
 
+/* Convert hexadecimal digit to integer. Return negative value if character is
+ * not valid hexadecimal digit. */
+int _isds_hex2i(char digit);
+
 /* Convert UTC broken time to time_t.
  * @broken_utc it time in UTC in broken format. Despite its content is not
  * touched, it'sw not-const because underlying POSIX function has non-const
