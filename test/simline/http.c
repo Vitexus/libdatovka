@@ -185,7 +185,7 @@ static char *base64encode(const void *plain, const size_t length,
  * not valid hexadecimal digit. */
 static int hex2i(char digit) {
     if (digit >= '0' && digit <= '9')
-        return digit - 0;
+        return digit - '0';
     if (digit >= 'a' && digit <= 'f')
         return digit - 'a' + 10;
     if (digit >= 'A' && digit <= 'F')
@@ -216,7 +216,7 @@ static char *uri_decode(const char *coded) {
                 free(plain);
                 return NULL;
             }
-            *plain = (digit1 << 3) + digit2;
+            *plain = (digit1 << 4) + digit2;
             coded += 2;
         } else {
             *p = *coded;
