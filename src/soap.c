@@ -55,6 +55,8 @@ static const char *header_value(const char *line, const char *name) {
 
 
 /* Try to decode header value per RFC 2047.
+ * @prepend_space is true if a space should be inserted before decoded word
+ * into @output in case the word has been decoded successfully.
  * @input is zero terminated input, it's updated to point all consumed
  * input - 1.
  * @output is buffer to store decoded value, it's updated to point after last
@@ -62,7 +64,8 @@ static const char *header_value(const char *line, const char *name) {
  * @return 0 if input has been successfully decoded, then @input and @output
  * poineres will be updated. Otherwise return non-zero value and keeps
  * argument pointers and memory unchanged. */
-static int try_rfc2047_decode(const char **input, char **output) {
+static int try_rfc2047_decode(_Bool prepend_space, const char **input,
+        char **output) {
     const char *encoded;
     const char *charset_start, *encoding, *end;
     size_t charset_length;
@@ -199,6 +202,10 @@ static int try_rfc2047_decode(const char **input, char **output) {
     }
 
     /* Copy UTF-8 stream to output buffer */
+    if (prepend_space) {
+        **output = ' ';
+        (*output)++;
+    }
     memcpy(*output, utf_stream, utf_length);
     free(utf_stream);
     *output += utf_length;
@@ -215,7 +222,7 @@ static int try_rfc2047_decode(const char **input, char **output) {
 static char *decode_header_value(const char *encoded_value) {
     char *decoded = NULL, *decoded_cursor;
     size_t content_length;
-    _Bool text_started = 0, lws_seen = 0;
+    _Bool text_started = 0, lws_seen = 0, encoded_word_seen = 0;
 
     if (encoded_value == NULL) return NULL;
     content_length = strlen(encoded_value);
@@ -230,20 +237,26 @@ static char *decode_header_value(const char *encoded_value) {
     /* Decode */
     /* RFC 2616, section 4.2: Remove surrounding LWS, replace inner ones with
      * a space. */
-    /* FIXME: Implement the RFC 2047 (=?UTF-8?B?...?=) */
+    /* RFC 2047, section 6.2: LWS between adjacent encoded words is ignored.
+     * */ 
     for (decoded_cursor = decoded; *encoded_value; encoded_value++) {
         if (*encoded_value == '\r' || *encoded_value == '\n' ||
                 *encoded_value == '\t' || *encoded_value == ' ') {
             lws_seen = 1; 
             continue;
         }
-        if (lws_seen) {
-            lws_seen = 0;
-            if (text_started) *(decoded_cursor++) = ' ';
-        }
-        if (!(*encoded_value == '=' &&
-                !try_rfc2047_decode(&encoded_value, &decoded_cursor)))
+        if (*encoded_value == '=' &&
+                !try_rfc2047_decode(
+                    lws_seen && text_started && !encoded_word_seen,
+                    &encoded_value, &decoded_cursor)) {
+            encoded_word_seen = 1;
+        } else {
+            if (lws_seen && text_started)
+                *(decoded_cursor++) = ' ';
             *(decoded_cursor++) = *encoded_value;
+            encoded_word_seen = 0;
+        }
+        lws_seen = 0;
         text_started = 1;
     }
     *decoded_cursor = '\0';
