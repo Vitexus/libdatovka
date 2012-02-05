@@ -220,7 +220,8 @@ static char *decode_header_value(const char *encoded_value) {
     if (encoded_value == NULL) return NULL;
     content_length = strlen(encoded_value);
 
-    decoded = malloc(content_length + 1);
+    /* A character can occupy up to 6 bytes in UTF-8 */
+    decoded = malloc(content_length * 6 + 1);
     if (decoded == NULL) {
         /* ENOMEM */
         return NULL;
