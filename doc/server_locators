@@ -7,23 +7,29 @@ Source: Provozní řád ISDS, version 2011-06-19, Page 13
 Source: Podpora OTP autentizace v ISDS, version 2011-10-14, Page 3
 
 
-Production ISDS instance:
-    https://ws1.mojedatovaschranka.cz/DS/
+Servers are accessed by HTTPS protocol. Server fully qualified domain name varies on ISDS
+instance and authenticiation method.
 
-Testing ISDS instance:
-    https://ws1.czebox.cz/DS/
+Two ISDS instances exist. Each instance has unique two-level domain name:
+
+ISDS Instance           Base domain
+---------------------------------------------
+Production instance     mojedatovaschranka.cz
+Testing instance        czebox.cz
 
 
-Different log-in methods require different URL infixes:
+Different log-in methods require different subdomains and URL path infixes:
 
-    https://ws1.mojedatovaschranka.cz/DS/
-        HTTP basic authentication
-    https://ws1c.mojedatovaschranka.cz/cert/DS/
-        System certificate authentication
-    https://ws1c.mojedatovaschranka.cz/certds/DS/
-        Commercial certificate with HTTP basic authentication
-    https://ws1c.mojedatovaschranka.cz/hspis/DS/
-        Log-in from hosted third party solution by system certificate and
-        box ID
-    https://www.mojedatovaschranka.cz/apps/DS/
-        OTP authentication without client certificate
+Authentication method                   Subdomain   Path
+---------------------------------------------------------------
+HTTP basic                              ws1         /DS/
+System certificate                      ws1c        /cert/DS/
+Commercial certificate with HTTP basic  ws1c        /certds/DS/
+System certificate and box ID           ws1c        /hspis/DS/
+OTP without client certificate          www         /apps/DS/
+
+
+For example, when logging into production instance with HTTP basic
+authentication, the base URL is <https://ws1.mojedatovaschranka.cz/DS/>. When
+logging into testing instance with OTP method, the base URL is
+<https://www.czebox.cz/apps/DS/>.
