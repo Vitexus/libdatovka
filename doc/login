@@ -82,9 +82,6 @@ The DOMAINNAME variable is one from server locators (e.g.
 `www.mojedatovaschranka.cz'). WEB_SERVICE_ENDPOINT is request-URI postfix
 specific for family of requested SOAP service (e.g `dz').
 
-Non-normative: Specification defines third part of DOMAINNAME as `www',
-despite non-OTP authentication methods do not use `www'.
-
 Specification requires client to send first POST request without
 WWW-Authenticate header and to receive 401 response and to resend the request
 with the authentication header delivering credentials again.
