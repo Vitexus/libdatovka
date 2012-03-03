@@ -14,7 +14,8 @@ void change_password(struct isds_ctx *ctx,
         printf("(Same as old password)\n");
     if (!old_password)
         printf("(Old password omitted)\n");
-    isds_error err = isds_change_password(ctx, old_password, new_password);
+    isds_error err = isds_change_password(ctx, old_password, new_password,
+            NULL);
     if (err) {
         printf("isds_change_password() failed: %s: %s\n",
                 isds_strerror(err), isds_long_message(ctx));
@@ -58,7 +59,7 @@ int main(int argc, char **argv) {
     }
 
 
-    /* Try some invalid invocation that should fail */
+    /* Try some invalid invocations that should fail */
     change_password(ctx, password(), NULL);
     change_password(ctx, password(), "");
     change_password(ctx, password(), password());

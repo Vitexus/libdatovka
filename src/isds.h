@@ -830,9 +830,18 @@ isds_error isds_get_password_expiration(struct isds_ctx *context,
  * time, current session can continue. Password must fulfill some constraints.
  * @context is session context
  * @old_password is current password.
- * @new_password is requested new password */
+ * @new_password is requested new password
+ * @otp auxiliary data required if one-time password authentication is in use,
+ * defines OTP code (if known) and returns fine grade resolution of OTP
+ * procedure. Pass NULL, if one-time password authentication is not needed.
+ * Please note the @otp argument must much OTP method used at log-in time. See
+ * isds_login() function for more details.
+ * @return IE_SUCCESS, if password has been changed. Or returns appropriate
+ * error code. It can return IE_PARTIAL_SUCCESS if OTP is in use and server is
+ * awaiting OTP code that has been delivered by side channel to the user. */
 isds_error isds_change_password(struct isds_ctx *context,
-        const char *old_password, const char *new_password);
+        const char *old_password, const char *new_password,
+        struct isds_otp *otp);
 
 /* Create new box.
  * @context is session context
