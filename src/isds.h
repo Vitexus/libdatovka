@@ -25,9 +25,11 @@ extern "C" {
 /* Base URL of production ISDS instance */
 extern const char isds_locator[];       /* Without client certificate auth. */
 extern const char isds_cert_locator[];  /* With client certificate auth. */
+extern const char isds_otp_locator[];   /* With OTP authentication */
 /* Base URL of testing ISDS instance */
 extern const char isds_testing_locator[];       /* Without client certificate */
 extern const char isds_cert_testing_locator[];  /* With client certificate */
+extern const char isds_otp_testing_locator[];   /* With OTP authentication */
 
 
 struct isds_ctx;    /* Context for specific ISDS box */

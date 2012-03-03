@@ -19,10 +19,12 @@
 /* Base URL of production ISDS instance */
 const char isds_locator[] = "https://ws1.mojedatovaschranka.cz/";
 const char isds_cert_locator[] = "https://ws1c.mojedatovaschranka.cz/";
+const char isds_otp_locator[] = "https://www.mojedatovaschranka.cz/";
 
 /* Base URL of production ISDS instance */
 const char isds_testing_locator[] = "https://ws1.czebox.cz/";
 const char isds_cert_testing_locator[] = "https://ws1c.czebox.cz/";
+const char isds_otp_testing_locator[] = "https://www.czebox.cz/";
 
 /* Extension to MIME type map */
 static xmlChar *extension_map_mime[] = {
