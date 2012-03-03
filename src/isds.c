@@ -1142,10 +1142,11 @@ leave:
  * @url is base address of ISDS web service. Pass extern isds_locator
  * variable to use production ISDS instance without client certificate
  * authentication (or extern isds_cert_locator with client certificate
- * authentication). Passing NULL has the same effect, autoselection between
- * isds_locator and isds_cert_locator is performed in addition. You can pass
- * extern isds_testing_locator (or isds_cert_testing_locator) variable to
- * select testing instance. 
+ * authentication or extern isds_otp_locators with OTP authentication).
+ * Passing NULL has the same effect, autoselection between isds_locator,
+ * isds_cert_locator, and isds_otp_locator is performed in addition. You can
+ * pass extern isds_testing_locator (or isds_cert_testing_locator or
+ * isds_otp_testing_locator) variable to select testing instance. 
  * @username is user name of ISDS user or box ID
  * @password is user's secret password
  * @pki_credentials defines public key cryptographic material to use in client
@@ -1187,8 +1188,8 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     context->type = CTX_TYPE_ISDS;
     zfree(context->url);
 
-    /* Mangle base URI according requested authentication method */
-    if (!pki_credentials) {
+    /* Mangle base URI according to requested authentication method */
+    if (NULL == pki_credentials) {
         isds_log(ILF_SEC, ILL_INFO,
                 _("Selected authentication method: no certificate, "
                     "username and password\n"));
@@ -1197,13 +1198,14 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
                     _("Both username and password must be supplied"));
             return IE_INVAL;
         }
-        /* Default locator is official system (without client certificate) */
-        context->url = strdup((url) ? url : isds_locator);
-
         context->otp = otp;
-        if (context->otp != NULL) {
+        
+        if (NULL == context->otp) {
+            /* Default locator is official system (without certificate or
+             * OTP) */
+            context->url = strdup((NULL != url) ? url : isds_locator);
+        } else {
             const char *authenticator_uri = NULL;
-            char *new_url = NULL;
             otp->resolution = OTP_RESOLUTION_UNKNOWN;
             switch (context->otp->method) {
                 case OTP_HMAC: 
@@ -1241,13 +1243,13 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
                                 "method requested by application"));
                     return IE_ENUM;
             }
-            if (-1 == isds_asprintf(&new_url, authenticator_uri, context->url))
-                return IE_NOMEM;
-            zfree(context->url);
-            context->url = new_url;
+            if (-1 == isds_asprintf(&context->url, authenticator_uri,
+                        (url != NULL) ? url : isds_otp_locator))
+                return IE_NOMEM; 
         }
     } else {
         /* Default locator is official system (with client certificate) */
+        context->otp = NULL;
         if (!url) url = isds_cert_locator;
 
         if (!username) {

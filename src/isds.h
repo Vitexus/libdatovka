@@ -776,10 +776,11 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
  * @url is base address of ISDS web service. Pass extern isds_locator
  * variable to use production ISDS instance without client certificate
  * authentication (or extern isds_cert_locator with client certificate
- * authentication). Passing NULL has the same effect, autoselection between
- * isds_locator and isds_cert_locator is performed in addition. You can pass
- * extern isds_testing_locator (or isds_cert_testing_locator) variable to
- * select testing instance. 
+ * authentication or extern isds_otp_locators with OTP authentication).
+ * Passing NULL has the same effect, autoselection between isds_locator,
+ * isds_cert_locator, and isds_otp_locator is performed in addition. You can
+ * pass extern isds_testing_locator (or isds_cert_testing_locator or
+ * isds_otp_testing_locator) variable to select testing instance. 
  * @username is user name of ISDS user or box ID
  * @password is user's secret password
  * @pki_credentials defines public key cryptographic material to use in client
