@@ -4,7 +4,7 @@ Server locators
 Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2.16
     (2011-01-26), Page 5
 Source: Provozní řád ISDS, version 2011-06-19, Page 13
-Source: Podpora OTP autentizace v ISDS, version 2011-06-10, Page 4
+Source: Podpora OTP autentizace v ISDS, version 2011-10-14, Page 3
 
 
 Production ISDS instance:
@@ -25,9 +25,5 @@ Different log-in methods require different URL infixes:
     https://ws1c.mojedatovaschranka.cz/hspis/DS/
         Log-in from hosted third party solution by system certificate and
         box ID
-    https://ws1.mojedatovaschranka.cz/apps/DS/
+    https://www.mojedatovaschranka.cz/apps/DS/
         OTP authentication without client certificate
-        Non-normative: Specification lists www.mojedatovaschranka.cz domain
-        name and then it uses variable in examples. I think this is bug in
-        specification and the `www' domain should be `ws1'. Verification
-        needed.
