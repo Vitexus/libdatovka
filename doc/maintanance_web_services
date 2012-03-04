@@ -86,6 +86,17 @@ ChangeISDSPassword
     Change password
 
 
+ChangePassword.wsdl
+===================
+
+URL path: /asws/changePassword
+
+ChangePasswordOTP
+    Change password if one-time password authentication is in use
+SendSMSCode
+    Request delivering time-based OTP code through side channel
+
+
 CreateDataBox
 =============
 
@@ -446,3 +457,54 @@ Error codes:
     1090    Bad current password
     1091    Password matches one of older passwords
     9204    LDAP update error
+
+
+ChangePasswordOTP
+=================
+
+Change user password if OTP authentication is enabled and required by server.
+
+This service is meaningfull only with OTP authentication. Use
+`ChangeISDSPassword' instead, if authentication with static password is in
+use.
+
+This service resides on different URL path, not only on different path suffix.
+
+Input is current password in `dbOldPassword' element, new password in
+`dbOldPassword' element, and OTP method in `dbOTPType' element (known values
+are: `HOTP', `TOTP'). The selected OTP method must match log-in OTP method.
+
+This service is available without prior statefull log-in. This SOAP request
+must be accompanied with HTTP Basic authentication header delivering user
+name and current password concatenated with an OTP code.
+
+In case of time-based authentication, client can request delivering new OTP
+code through side channel by `SendSMSCode' service prior issuing this request.
+
+Details of user authentication are described in `login' document, `HTTP OTP
+Methods' section.
+
+Restrictions to new password and response format are the same as in
+`ChangeISDSPassword' service.
+
+There is new error code:
+    2300    Unexpected error
+
+
+SendSMSCode
+===========
+
+Ask server to send new OTP code through SMS gateway. Deliver code is intended
+as input to HTTP Basic authorization header for `ChangePasswordOTP' service.
+
+This service resides on different URL path, not only on different path suffix.
+
+This service is available without prior statefull log-in. This SOAP request
+must be accompanied with HTTP Basic authentication header delivering user
+name and current password.
+
+Error codes:
+    0000    Success
+    2300    Unexpected error
+    2301    One-time code cannot be re-send faster than once a 30 seconds
+    2302    One-time code could not been sent. Try later again.
