@@ -761,7 +761,7 @@ static isds_error http(struct isds_ctx *context,
     /* Set authorization cookie for OTP session */
     if (!curl_err && context->otp != NULL) {
         isds_log(ILF_SEC, ILL_INFO,
-                _("Cookies will be stored and send "
+                _("Cookies will be stored and sent "
                     "because context has been authorized by OTP.\n"));
         curl_err = curl_easy_setopt(context->curl, CURLOPT_COOKIEFILE, "");
     }
