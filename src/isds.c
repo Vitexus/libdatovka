@@ -1206,6 +1206,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
             context->url = strdup((NULL != url) ? url : isds_locator);
         } else {
             const char *authenticator_uri = NULL;
+            if (!url) url = isds_otp_locator;
             otp->resolution = OTP_RESOLUTION_UNKNOWN;
             switch (context->otp->method) {
                 case OTP_HMAC: 
@@ -1243,8 +1244,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
                                 "method requested by application"));
                     return IE_ENUM;
             }
-            if (-1 == isds_asprintf(&context->url, authenticator_uri,
-                        (url != NULL) ? url : isds_otp_locator))
+            if (-1 == isds_asprintf(&context->url, authenticator_uri, url))
                 return IE_NOMEM; 
         }
     } else {
