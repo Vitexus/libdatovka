@@ -4,8 +4,8 @@ Maintenance web services specification
 Source: Provozní řád ISDS, version 2010-01-22, Pages 14–15
 Source: Webové služby rozhraní ISDS pro správu datových schránek,
     version 2.15 (2010-11-19)
-Source: Webové služby související s přístupem do ISDS, version 1.2
-    (2010-05-12)
+Source: Webové služby související s přístupem do ISDS, version 1.9
+    (2011-09-11)
 Source: dbTypes.xsd, version 2.11 (2010-11-23)
 
 
@@ -426,7 +426,9 @@ Password must meet formal syntax rules assuring strong complexity:
     
     – Must not start with `qwert', `asdgf', or `12345'
 
-Service is meaningful only when user logs in with password.
+Service is meaningful only when user logs in with password but without
+additional one-time password authentication. In case OTP method, use
+`ChangePasswordOTP' SOAP service instead.
 
 After successful password update, client can continue in current session.
 Password change takes effect after propagation into whole ISDS cluster (about
@@ -436,8 +438,11 @@ Error codes:
     0000    Password changed successfully
     1066    Too short or too long
     1067    New password same as current one
+    1079    Password contains forbidden character
     1080    Does not contain lower cased letter, upper cased letter and a digit
     1081    Sequence of repeated character
     1082    Contains user ID
     1083    Too simple
+    1090    Bad current password
+    1091    Password matches one of older passwords
     9204    LDAP update error
