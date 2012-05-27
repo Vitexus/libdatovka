@@ -4795,6 +4795,31 @@ isds_error isds_change_password(struct isds_ctx *context,
     xmlNodePtr request = NULL, node;
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *message = NULL;
+    const xmlChar *codes[] = {
+        BAD_CAST "1066",
+        BAD_CAST "1067",
+        BAD_CAST "1079",
+        BAD_CAST "1080",
+        BAD_CAST "1081",
+        BAD_CAST "1082",
+        BAD_CAST "1083",
+        BAD_CAST "1090",
+        BAD_CAST "1091",
+        BAD_CAST "9204"
+    };
+    const char *meanings[] = {
+        N_("Password length must be between 8 and 32 characters"),
+        N_("New password must differ from the current one"),
+        N_("Password contains forbidden character"),
+        N_("Password must contain at least one upper-case letter, "
+                "one lower-case, and one digit"),
+        N_("Password cannot contain sequence of three identical characters"),
+        N_("Password cannot contain user identifier"),
+        N_("Password is too simmple"),
+        N_("Old password is not valid"),
+        N_("Passwords cannot be reused"),
+        N_("LDAP update error")
+    };
 #endif
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -4856,39 +4881,25 @@ isds_error isds_change_password(struct isds_ctx *context,
         goto leave;
     }
 
-    /* Request processed, but empty password refused */
-    if (!xmlStrcmp(code, BAD_CAST "1066")) {
-        char *code_locale = _isds_utf82locale((char*)code);
-        char *message_locale = _isds_utf82locale((char*)message);
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Server refused empty password on ChangeISDSPassword "
-                    "request (code=%s, message=%s)\n"),
-                code_locale, message_locale);
-        isds_log_message(context, _("Password must not be empty"));
-        free(code_locale);
-        free(message_locale);
-        err = IE_INVAL;
-        goto leave;
-    }
-
-    /* Request processed, but new password was reused */
-    else if (!xmlStrcmp(code, BAD_CAST "1067")) {
-        char *code_locale = _isds_utf82locale((char*)code);
-        char *message_locale = _isds_utf82locale((char*)message);
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Server refused the same new password on ChangeISDSPassword "
-                    "request (code=%s, message=%s)\n"),
-                code_locale, message_locale);
-        isds_log_message(context,
-                _("New password must differ from the current one"));
-        free(code_locale);
-        free(message_locale);
-        err = IE_INVAL;
-        goto leave;
+    /* Check for known error codes */
+    for (int i=0; i < sizeof(codes)/sizeof(*codes); i++) {
+        if (!xmlStrcmp(code, codes[i])) {
+            char *code_locale = _isds_utf82locale((char*)code);
+            char *message_locale = _isds_utf82locale((char*)message);
+            isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("Server refused empty password on ChangeISDSPassword "
+                        "request (code=%s, message=%s)\n"),
+                    code_locale, message_locale);
+            free(code_locale);
+            free(message_locale);
+            isds_log_message(context, _(meanings[i]));
+            err = IE_INVAL;
+            goto leave;
+        }
     }
 
     /* Other error */
-    else if (xmlStrcmp(code, BAD_CAST "0000")) {
+    if (xmlStrcmp(code, BAD_CAST "0000")) {
         char *code_locale = _isds_utf82locale((char*)code);
         char *message_locale = _isds_utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,

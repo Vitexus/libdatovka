@@ -28,6 +28,7 @@
 #include "gettext.h"
 
 #define _(x) ((const char *) dgettext(PACKAGE, (x)))
+#define N_(x) (x)
 
 #define SOAP_NS "http://schemas.xmlsoap.org/soap/envelope/"
 #define SOAP2_NS "http://www.w3.org/2003/05/soap-envelope"

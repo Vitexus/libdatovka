@@ -4,7 +4,6 @@
 * Implement news from 2011-10-16
     HOTP and TOTP password change
     NumOfMessages
-    Recognize all known errors on ChangeISDSPassword request
 * Implement news from 2011-11-29
     PDZInfo service and message subtypes
     New attributes for Create*Message
