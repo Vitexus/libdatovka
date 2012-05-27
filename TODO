@@ -1,5 +1,5 @@
+* Test TOTP authentication
 * Implement news defined from 2011-06-19 specification:
-    HOTP and TOTP authentication
     Convenience wrappers for publishing and ceasing government journals
 * Implement news from 2011-10-16
     HOTP and TOTP password change
