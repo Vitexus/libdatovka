@@ -5,7 +5,7 @@ Source: Provozní řád ISDS, version 2010-11-28, Pages 15–16
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
     version 2.16 (2011-01-26)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
-    version 2.15 (2010-11-19)
+    version 2.23 (2011-11-15)
 
 
 These services are intended for working with messages inside a box by
@@ -85,6 +85,8 @@ CheckDataBox (*)
     Return state of given box
 GetDataBoxList (*)
     Get list of all boxes
+PDZInfo
+    Rules for sending commercial messages of given box
 
 
 CreateMessage (*)
@@ -587,3 +589,41 @@ they will be escaped by a quotes (e.g. `"lazy, ""fox""' means `lazy, "fox"').
 
 Error codes:
     1004    Operation not permitted
+
+
+PDZInfo
+=======
+
+Return posibilities of sending commerical messages. Only if one of the possibility
+is the payer is recipient, then calling this service cause marking
+non-commercial messages as delivered.
+
+Input is a box ID.
+
+Ouput is orderer list of rules for sending commercial messages wrapped in
+dbPDZRecords. Each list item is a subtree:
+
+dbPDZRecord
+    + PDZType – rule type; see below for known values
+    + PDZRecip – only this recipient box ID is possible
+    + PDZPayer – the message is payed by this box ID owner
+    + PDZExpire – expiration time of this rule. Empty value means no
+    |   expiration.
+    + PDZCnt – number of remaining commecrial messages that can be sent based
+    |   on thid rule. Empty value means no limit.
+    + ODZIdent – identifier referring to message enabling sending pre-paid
+        answer. Must be added as dmRecipientRefNumber into sent message.
+
+Empty list means sending commerical messages is not restricted.
+
+PDZType     Meaning
+------------------------------
+O           Answer on a commercial message is pre-paid by PDZPayer. ODZIdent
+            value must be added into sent message to bind the message to the
+            payer and requesting message.
+G           PDZPayer owner pays for all commercial messages
+E           Another pre-paid type not yet specified and in use
+K           Commercial message paid by sender based on an aggreement with the
+            Czech Post.
+
+XXX: Documentation shows `xsi:nil="true"' text node instead of empty value.
