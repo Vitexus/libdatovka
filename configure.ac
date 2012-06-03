@@ -4,6 +4,7 @@
 AC_PREREQ([2.63])
 AC_INIT([libisds], [0.5], [petr.pisar@atlas.cz])
 AM_INIT_AUTOMAKE(libisds, 0.5)
+AC_LANG([C])
 AC_CONFIG_SRCDIR([src/isds.c])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
@@ -112,17 +113,17 @@ expat_min_micro="0"
 expat_min_version="${expat_min_major}.${expat_min_minor}.${expat_min_micro}"
 AC_MSG_CHECKING([for expat library version >= ${expat_min_version}])
 AC_COMPILE_IFELSE(
-        AC_LANG_PROGRAM(
-            [#define MIN_MAJOR ${expat_min_major}
+        [AC_LANG_PROGRAM(
+            [[#define MIN_MAJOR ${expat_min_major}
             #define MIN_MINOR ${expat_min_minor}
             #define MIN_MICRO ${expat_min_micro}
-            #include <expat.h>],
+            #include <expat.h>]],
             [[#if (XML_MAJOR_VERSION < MIN_MAJOR) || \
     (XML_MAJOR_VERSION == MIN_MAJOR && XML_MINOR_VERSION < MIN_MINOR) || \
     (XML_MAJOR_VERSION == MIN_MAJOR && XML_MINOR_VERSION == MIN_MINOR && \
-        XML_MICRO_VERSION < MIN_MICRO)
-#error "Expat library is too old"
-#endif]]),
+            XML_MICRO_VERSION < MIN_MICRO)
+            #error "Expat library is too old"
+            #endif]])],
         AC_MSG_RESULT([yes]),
         AC_MSG_FAILURE([Upgrade your expat to ${expat_min_version}])
 )
