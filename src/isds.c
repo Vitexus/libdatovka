@@ -370,6 +370,21 @@ void isds_credentials_delivery_free(
 }
 
 
+/* Deallocate struct isds_commercial_permission recursively and NULL it */
+void isds_commercial_permission_free(
+        struct isds_commercial_permission **permission) {
+    if (NULL == permission || NULL == *permission) return;
+
+    free((*permission)->recipient);
+    free((*permission)->payer);
+    free((*permission)->expiration);
+    free((*permission)->count);
+    free((*permission)->reply_identifier);
+
+    zfree(*permission);
+}
+
+
 /* *DUP_OR_ERROR macros needs error label */
 #define STRDUP_OR_ERROR(new, template) { \
     if (!template) { \

@@ -608,6 +608,30 @@ struct isds_message_status_change {
     struct timeval *time;                   /* When the state changed */
 };
 
+/* How outgoing commercial message gets paid */
+typedef enum {
+    PAYMENT_SENDER,     /* Payed by a sender */
+    PAYMENT_STAMP,      /* Pre-paid stamp by a sender; Not specified yet. */
+    PAYMENT_SPONSOR,    /* A sponsor pays all messages */
+    PAYMENT_RESPONSE    /* Recipient pays a response */
+} isds_payment_type;
+
+/* Permission to send commercial message */
+struct isds_commercial_permission {
+    isds_payment_type type;         /* Payment method */
+    char *recipient;                /* Only sent to this box ID;
+                                       NULL means to anybody. */
+    char *payer;                    /* Owner of this box ID pays */
+    struct timeval *expiration;     /* This permissions is valid until;
+                                       NULL means indefinitivly. */
+    int *count;                     /* Number of messages that can be sent
+                                       on this permission;
+                                       NULL means unlimited. */
+    char *reply_identifier;         /* Identifier to pair request and response
+                                       message. Meaningful only with type
+                                       PAYMENT_RESPONSE. */
+};
+
 /* General linked list */
 struct isds_list {
     struct isds_list *next;         /* Next list item,
@@ -1506,6 +1530,10 @@ void isds_message_status_change_free(
 
 /* Deallocate struct isds_approval recursively and NULL it */
 void isds_approval_free(struct isds_approval **approval);
+
+/* Deallocate struct isds_commercial_permission recursively and NULL it */
+void isds_commercial_permission_free(
+        struct isds_commercial_permission **permission);
 
 /* Deallocate struct isds_credentials_delivery recursively and NULL it.
  * The email string is deallocated too. */
