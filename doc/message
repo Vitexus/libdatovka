@@ -3,7 +3,7 @@ Message specification
 
 Source: Provozní řád ISDS, version 2010-11-28, Page 14
 Source: Webové služby rozhranní ISDS pro manipulaci s datovými zprávami,
-    version 2.18 (2011-04-14)
+    version 2.23 (2011-11-24)
 Source: MIME Media Types
     <http://www.iana.org/assignments/media-types/index.html>
 Source: O2. Datové schránky: Informace pro dodavatele aplikací, version
@@ -240,26 +240,44 @@ character.
 System messages
 ===============
 
-There exists special message type initiated by ISDS (i.e. from system, not from
-other box). Such message has reserved from-box `aaaaaaa' (7 × `a') value and
-sender type `0' and it contains always document of type HTML. There are
+There exists special message type initiated by ISDS (i.e. from system, not
+from other box). Such message has reserved from-box `aaaaaaa' (7 × `a') value
+and sender type `0' and it alwyas contains a document of type HTML and
+sometimes a document of type XML. The XML one provides structured reason of
+sending the system message, the HTML one is a human-readable form. There are
 following cases defined:
 
-1   Outgoing message contained malicious code
-2   You, administrator, deleted other user
-3   Outgoing message could not been delivered because recipient box had been
-    made inaccessible retrospectively.
-4   Outgoing commercial message has not been accepted by recipient
-5   User has been added to your box
-6   User permissions has been changed
-7   Box has been made temporary inaccessible on court desicion (e.g. user has
-    been found eligable unresponsible)
-8   Box has been made temporary inaccessible on box owner or administrator
-    request
-9   Box has been made permanently inaccessible because organization does not
-    exist anymore
-10  Box has been made temporary (??? specification says temporary, not
-    permanently) inaccessible because person has died
+Case    Meaning
+-------------------------------------------------------------------------------
+1       Outgoing message contained malicious code.
+2       You, administrator, deleted other user.
+3       Outgoing message could not been delivered because recipient box had
+        been made inaccessible retrospectively.
+4       Outgoing commercial message has been deleted before accepting it by the
+        recipient.
+5       User has been added to your box.
+6       User permissions has been changed.
+7       Box has been made temporary inaccessible on court desicion (e.g. user
+        has been found eligable unresponsible).
+8       Box has been made temporary inaccessible on box owner or administrator
+        request.
+9       Box has been made permanently inaccessible because organization does
+        not exist anymore.
+10      Box has been made permanently inaccessible because owner has died.
+11      Personal data of box owner does not match central register.
+
+The XML document has following structures:
+
+SystemMessage – Aattribute `type' is a number of case 1, 3, or 4.
+    + dmID – message ID
+    + dbIDRecipient – recipient box ID
+
+SystemMessage – Attribute `type' is a number of case 2, 5, or 6.
+    + userID – user ID
+    + userName – user proper name
+
+SystemMessage – Attribute `type' is a number of case 7, 8, 9, 10, or 11.
+    No elements are defined.
 
 
 Commercial messages
