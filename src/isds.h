@@ -619,7 +619,7 @@ typedef enum {
 /* Permission to send commercial message */
 struct isds_commercial_permission {
     isds_payment_type type;         /* Payment method */
-    char *recipient;                /* Only sent to this box ID;
+    char *recipient;                /* Send to this box ID only;
                                        NULL means to anybody. */
     char *payer;                    /* Owner of this box ID pays */
     struct timeval *expiration;     /* This permissions is valid until;
