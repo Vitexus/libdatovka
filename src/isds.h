@@ -610,10 +610,12 @@ struct isds_message_status_change {
 
 /* How outgoing commercial message gets paid */
 typedef enum {
-    PAYMENT_SENDER,     /* Payed by a sender */
-    PAYMENT_STAMP,      /* Pre-paid stamp by a sender; Not specified yet. */
-    PAYMENT_SPONSOR,    /* A sponsor pays all messages */
-    PAYMENT_RESPONSE    /* Recipient pays a response */
+    PAYMENT_SENDER,             /* Payed by a sender */
+    PAYMENT_STAMP,              /* Pre-paid stamp by a sender; Undocumented. */
+    PAYMENT_SPONSOR,            /* A sponsor pays all messages */
+    PAYMENT_RESPONSE,           /* Recipient pays a response */
+    PAYMENT_SPONSOR_LIMITED,    /* Undocumented */
+    PAYMENT_SPONSOR_EXTERNAL    /* Undocomented */
 } isds_payment_type;
 
 /* Permission to send commercial message */
@@ -624,7 +626,7 @@ struct isds_commercial_permission {
     char *payer;                    /* Owner of this box ID pays */
     struct timeval *expiration;     /* This permissions is valid until;
                                        NULL means indefinitivly. */
-    int *count;                     /* Number of messages that can be sent
+    unsigned int *count;            /* Number of messages that can be sent
                                        on this permission;
                                        NULL means unlimited. */
     char *reply_identifier;         /* Identifier to pair request and response
@@ -1078,6 +1080,20 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
  *  the box has been deleted, but ISDS still lists its former existence. */
 isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
         long int *box_status);
+
+/* Get list of permissions to send commercial messages.
+ * @context is ISDS session context.
+ * @box_id is UTF-8 encoded sender box identifier as zero terminated string
+ * @permissions is a reallocated list of permissions (struct
+ * isds_commercial_permission*) to send commercial messages from @box_id. The
+ * order of permissions is significant as the server applies the permissions
+ * and associated pre-paid credits in the order. Empty list means no
+ * permission.
+ * @return:
+ *  IE_SUCCESS if the list has been obtained correctly,
+ *  or other appropriate error. */
+isds_error isds_get_commercial_permissions(struct isds_ctx *context,
+        const char *box_id, struct isds_list **permissions);
 
 /* Switch box into state where box can receive commercial messages (off by
  * default)

@@ -1964,6 +1964,29 @@ static isds_error string2isds_sender_type(const xmlChar *string,
 }
 
 
+/* Convert UTF-8 @string representation of ISDS PDZType to enum @type */
+static isds_error string2isds_payment_type(const xmlChar *string,
+        isds_payment_type *type) {
+    if (!string || !type) return IE_INVAL;
+
+    if (!xmlStrcmp(string, BAD_CAST "K"))
+        *type = PAYMENT_SENDER;
+    else if (!xmlStrcmp(string, BAD_CAST "O"))
+        *type = PAYMENT_RESPONSE;
+    else if (!xmlStrcmp(string, BAD_CAST "G"))
+        *type = PAYMENT_SPONSOR;
+    else if (!xmlStrcmp(string, BAD_CAST "Z"))
+        *type = PAYMENT_SPONSOR_LIMITED;
+    else if (!xmlStrcmp(string, BAD_CAST "D"))
+        *type = PAYMENT_SPONSOR_EXTERNAL;
+    else if (!xmlStrcmp(string, BAD_CAST "E"))
+        *type = PAYMENT_STAMP;
+    else
+        return IE_ENUM;
+    return IE_SUCCESS;
+}
+
+
 /* Convert ISDS dmFileMetaType enum @type to UTF-8 string.
  * @Return pointer to static string, or NULL if unknown enum value */
 static const xmlChar *isds_FileMetaType2string(const isds_FileMetaType type) {
@@ -3103,6 +3126,79 @@ leave:
     free(string);
     return err;
 }
+
+
+/* Convert XSD:tPDZRec XML tree into structure
+ * @context is ISDS context
+ * @permission is automatically reallocated commercial permission structure
+ * @xpath_ctx is XPath context with current node as XSD:tPDZRec element
+ * In case of error @permission will be freed. */
+static isds_error extract_DbPDZRecord(struct isds_ctx *context,
+        struct isds_commercial_permission **permission,
+        xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!permission) return IE_INVAL;
+    isds_commercial_permission_free(permission);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *permission = calloc(1, sizeof(**permission));
+    if (!*permission) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    EXTRACT_STRING("isds:PDZType", string);
+    if (string) {
+        err = string2isds_payment_type((xmlChar *)string,
+                &(*permission)->type);
+        if (err) {
+            if (err == IE_ENUM) {
+                err = IE_ISDS;
+                char *string_locale = _isds_utf82locale(string);
+                isds_printf_message(context,
+                        _("Unknown isds:PDZType value: %s"), string_locale);
+                free(string_locale);
+            }
+            goto leave;
+        }
+        zfree(string);
+    }
+
+    EXTRACT_STRING("isds:PDZRecip", (*permission)->recipient);
+    EXTRACT_STRING("isds:PDZPayer", (*permission)->payer);
+
+    EXTRACT_STRING("isds:PDZExpire", string);
+    if (string) {
+        err = timestring2timeval((xmlChar *) string,
+                &((*permission)->expiration));
+        if (err) {
+            char *string_locale = _isds_utf82locale(string);
+            if (err == IE_DATE) err = IE_ISDS;
+            isds_printf_message(context,
+                    _("Could not convert PDZExpire as ISO time: %s"),
+                    string_locale);
+            free(string_locale);
+            goto leave;
+        }
+        zfree(string);
+    }
+
+    EXTRACT_ULONGINT("isds:PDZCnt", (*permission)->count, 0); 
+    EXTRACT_STRING("isds:ODZIdent", (*permission)->reply_identifier);
+
+leave:
+    if (err) isds_commercial_permission_free(permission);
+    free(string);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
 #endif /* HAVE_LIBCURL */
 
 
@@ -6673,6 +6769,109 @@ leave:
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("CheckDataBox request processed by server successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
+}
+
+
+/* Get list of permissions to send commercial messages.
+ * @context is ISDS session context.
+ * @box_id is UTF-8 encoded sender box identifier as zero terminated string
+ * @permissions is a reallocated list of permissions (struct
+ * isds_commercial_permission*) to send commercial messages from @box_id. The
+ * order of permissions is significant as the server applies the permissions
+ * and associated pre-paid credits in the order. Empty list means no
+ * permission.
+ * @return:
+ *  IE_SUCCESS if the list has been obtained correctly,
+ *  or other appropriate error. */
+isds_error isds_get_commercial_permissions(struct isds_ctx *context,
+        const char *box_id, struct isds_list **permissions) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    xmlDocPtr response = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+#endif
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (NULL == permissions) return IE_INVAL;
+    isds_list_free(permissions);
+    if (NULL == box_id) return IE_INVAL;
+
+#if HAVE_LIBCURL
+    /* Check if connection is established */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+    /* Do request and check for success */
+    err = build_send_dbid_request_check_response(context,
+            SERVICE_DB_SEARCH, BAD_CAST "PDZInfo", BAD_CAST box_id, NULL,
+            &response, NULL);
+    xmlFreeDoc(response);
+
+    if (!err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("PDZInfo request processed by server successfully.\n"));
+    }
+
+    /* Extract data */
+    /* Prepare structure */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    /* Set context node */
+    result = xmlXPathEvalExpression(BAD_CAST
+            "/isds:PDZInfoResponse/isds:dbPDZRecords/isds:dbPDZRecord",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        /* Iterate over all permission records */
+        for (long unsigned int i = 0; i < result->nodesetval->nodeNr; i++) {
+            struct isds_list *item, *prev_item = NULL;
+
+            /* Prepare structure */
+            item = calloc(1, sizeof(*item));
+            if (!item) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+            item->destructor = (void(*)(void**))isds_commercial_permission_free;
+            if (i == 0) *permissions = item;
+            else prev_item->next = item;
+            prev_item = item;
+
+            /* Extract it */
+            xpath_ctx->node = result->nodesetval->nodeTab[i];
+            err = extract_DbPDZRecord(context,
+                    (struct isds_commercial_permission **) (&item->data),
+                    xpath_ctx);
+            if (err) goto leave;
+        }
+    }
+
+leave:
+    if (err) {
+        isds_list_free(permissions);
+    }
+
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(response);
+
 #else /* not HAVE_LIBCURL */
     err = IE_NOTSUP;
 #endif

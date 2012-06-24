@@ -1,12 +1,13 @@
 * Parse system message XML documents describing what has happend
 * Test TOTP authentication
+* PDZInfo service
 * Implement news defined from 2011-06-19 specification:
     Convenience wrappers for publishing and ceasing government journals
 * Implement news from 2011-10-16
     HOTP and TOTP password change
     NumOfMessages
 * Implement news from 2011-11-29
-    PDZInfo service and message subtypes
+    Commercial message subtypes
     New attributes for Create*Message
 * Request for testing box in new testing environment
   (http://www.datoveschranky.info/spisova-sluzba/)
