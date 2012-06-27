@@ -25,7 +25,7 @@
 * Make function tests
     Cover all functions
     Simulate server?
-* Test X.509 authentication
+* Test X.509 authentication using hardware engine
 * Write high level documentation
     ISDS overview
     Gather comments from header files
