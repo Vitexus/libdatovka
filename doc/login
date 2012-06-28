@@ -184,6 +184,14 @@ Otherwise 401 response with WWW-Authenticate: totp header and
 X-Response-message-code header with one of values defined above in HOTP method
 will be delivered to client.
 
+Non-normative: The premium SMS costs CZK 3. The user can send `HELP' text to
+get more details or `STOP LOGINDEV' text to disable sending more codes. The
+destination SMS phone number is `90201' (available from Czech celular phone
+networks only). If the user sends the stop-message or looses his receiver or
+capability to receive premium messages, he will lose access to his data box
+effectivly and the only remedy will be to ask for reseting credentials on
+Czech POINT meeting place.
+
 
 ISDS unavailability
 ===================
