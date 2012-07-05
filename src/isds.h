@@ -626,7 +626,7 @@ struct isds_commercial_permission {
     char *payer;                    /* Owner of this box ID pays */
     struct timeval *expiration;     /* This permissions is valid until;
                                        NULL means indefinitivly. */
-    unsigned int *count;            /* Number of messages that can be sent
+    unsigned long int *count;       /* Number of messages that can be sent
                                        on this permission;
                                        NULL means unlimited. */
     char *reply_identifier;         /* Identifier to pair request and response
