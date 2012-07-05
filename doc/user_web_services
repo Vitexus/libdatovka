@@ -192,7 +192,6 @@ Retrieve incoming message identified by message ID.
 This service can return message without digital time-stamp (more precisely
 with empty dmQTimesamp element, see schema). 
 
-Commercial message must be accepted manually by ConfirmDelivery before.
 Commercial message has set dmReturnedMessage/@dmType="K".
 
 Error codes:
@@ -225,8 +224,6 @@ http://isds.czechpoint.cz/v20/ vs. http://isds.czechpoint.cz/v20/message:
      <q:dmAttachmentSize>260</q:dmAttachmentSize>
   </q:dmReturnedMessage>
 </q:MessageDownloadResponse>
-
-Commercial message must be accepted manually by ConfirmDelivery before.
 
 
 SignedSentMessageDownload
@@ -404,6 +401,9 @@ ConfirmDelivery
 ===============
 
 Mark commercial message as accepted by recipient.
+
+XXX: This service has been removed from ISDS because commercial messages get
+accepted by logging-in (since 2011-11).
 
 Changes message state from delivered (4) to accepted (6). Applicable only to
 commercial messages. Messages from public offices (municipalities, government
