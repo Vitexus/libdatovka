@@ -477,13 +477,51 @@ struct isds_envelope {
                                        delivered after (currently) 10 days.
                                        This is delivery through fiction.
                                        Applies only to OVM dbType sender. */
-    char *dmType;                   /* Message type:
-                                       "V" is public message
-                                       "K" is commercial message
-                                       Default value for outgoing message is "V"
-                                       Length: Exact 1 UTF-8 character if
-                                       defined;
-                                       As 2010-05-20, used as output only. */
+    char *dmType;                   /* Message type (commercial subtypes or
+                                       government message):
+                                       Input values (when sending a message):
+                                       "I" is commercial message offering
+                                           paying the response (initial message);
+                                           it's necessary to define
+                                           dmSenderRefNumber
+                                       "K" is commercial message paid by sender
+                                           if this message
+                                       "O" is commercial response paid by sender
+                                           of initial message; it's necessary to
+                                           copy value from dmSenderRefNumber if
+                                           initial message to
+                                           dmRecipientRefNumber of this message
+                                       "V" is noncommercial government message
+                                       Default value while sending is undefined
+                                       which has the same meaning as "V".
+                                       Output values (when retrieving
+                                       a message):
+                                       "A" is subsidied initial commercial
+                                           message which can pay a response
+                                       "B" is subsidied initial commercial
+                                           message which has already paid the
+                                           response 
+                                       "C" is subsidied initial commercial
+                                           message where the response offer has
+                                           expired
+                                       "D" is externally subsidied commercial
+                                           messsage
+                                       "E" is commercial message prepaid by
+                                           a stamp
+                                       "G" is commerical message paid by
+                                           a sponsor
+                                       "I"
+                                       "K"
+                                       "O"
+                                       "V"
+                                       "X" is initial commercial message where
+                                           the response offer has expired
+                                       "Y" initial commercial message which has
+                                           already paid the response
+                                       "Z" is limitly subsidied commercial
+                                           message
+                                       Length: Exactly 1 UTF-8 character if
+                                       defined; */
 
     /* Following members apply to outgoing messages only: */
     _Bool *dmOVM;                   /* OVM sending mode.
