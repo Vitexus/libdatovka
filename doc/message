@@ -1,7 +1,7 @@
 Message specification
 =====================
 
-Source: Provozní řád ISDS, version 2010-11-28, Page 14
+Source: Provozní řád ISDS, version 2011-11-29, Page 5, 14
 Source: Webové služby rozhranní ISDS pro manipulaci s datovými zprávami,
     version 2.23 (2011-11-24)
 Source: MIME Media Types
@@ -283,14 +283,15 @@ SystemMessage – Attribute `type' is a number of case 7, 8, 9, 10, or 11.
 Commercial messages
 ===================
 
-Users can allow commercial message receiving explicitly. Commercial message
-are not considered as accepted by recipient automatically (in opposite to
-standard messages), recipient must call ConfirmDelivery to move message from
-state Delivered (4) to state Received (6).
+Users can allow commercial message receiving explicitly in opposite to
+standard messages.
 
 User can request to assign permission to send commercial messages. Permission
-can be assigned by Czech Post. Commercial recipient can not be searched. Sender
-must know exact box ID.
+can be assigned by Czech Post. Or sending some commercial messages can be
+offered and paid by third party. Then user don't need special permission from
+Czech Post to send the specific commercial message. See PDZInfo service for
+more details. Commercial recipient can not be searched. Sender must know exact
+box ID.
 
 Incomming commercial message can be recognised by @dmType="K" in message
 envelope. If @dmType is "V" or attribute is missing, message is so called
