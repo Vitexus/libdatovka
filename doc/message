@@ -268,7 +268,7 @@ Case    Meaning
 
 The XML document has following structures:
 
-SystemMessage – Aattribute `type' is a number of case 1, 3, or 4.
+SystemMessage – Attribute `type' is a number of case 1, 3, or 4.
     + dmID – message ID
     + dbIDRecipient – recipient box ID
 
