@@ -5,8 +5,6 @@
 * Implement news from 2011-10-16
     HOTP and TOTP password change
     NumOfMessages
-* Request for testing box in new testing environment
-  (http://www.datoveschranky.info/spisova-sluzba/)
 * Test GetMessageAuthor (since 2011-02-05)
 * Test dmPublishOwnID element to CreateMessage{,Multiple}Message (since
   2011-02-05)
