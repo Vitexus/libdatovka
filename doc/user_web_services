@@ -101,8 +101,9 @@ dmAllowSubstDelivery, dmRecipientRefNumber, dmRecipientIdent,
 dmSenderRefNumber, dmSenderIdent, dmLegalTitleLaw, dmLegalTitleYear,
 dmLegalTitleSect, dmLegalTitlePar, dmLegalTitlePoint, dmOVM, dmPublishOwnID).
 
-Since 2010-05-20, outgoing message envelope can specify dmType. However it's
-currently ignored.
+Outgoing message envelope can specify dmType to declare subtype of commercial
+message. If dmType is `I', then dmSenderRefNumber must be defined. If dmType
+is `O', then dmRecipientRefNumber must be defined.
 
 Constraints: Sender must have PRIVIL_CREATE_DM permission.
 Constraints: Exactly one document in message must be main type.
@@ -157,6 +158,10 @@ CreateMultipleMessage
     |   + dmOVM – optional
     |   + dmPublishOwnID – optional
     + dmFiles
+
+It's not possible to send commercial message to multiple recipients. Though the
+dmEnvelope has @dmType attribute, so it should be possible to send a commercial
+message to one recient using CreateMultipleMessage service.
 
 ISDS outputs list of assigned message IDs (each copy gets independent ID),
 list of sent status for each message ID and one cumulative status of
