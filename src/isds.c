@@ -7137,7 +7137,7 @@ leave:
 
 #if HAVE_LIBCURL
 /* Insert struct isds_message data (envelope (recipient data optional) and
- * documents) into XML tree
+ * documents into XML tree
  * @context is session context
  * @outgoing_message is libisds structure with message data
  * @create_message is XML CreateMessage or CreateMultipleMessage element
