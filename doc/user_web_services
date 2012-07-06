@@ -86,7 +86,7 @@ CheckDataBox (*)
 GetDataBoxList (*)
     Get list of all boxes
 PDZInfo
-    Rules for sending commercial messages of given box
+    Get rules for sending commercial messages from given box
 
 
 CreateMessage (*)
