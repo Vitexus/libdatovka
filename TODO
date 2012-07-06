@@ -1,5 +1,5 @@
 * Parse system message XML documents describing what has happend
-* PDZInfo service
+* Test PDZInfo service
 * Implement news defined from 2011-06-19 specification:
     Convenience wrappers for publishing and ceasing government journals
 * Implement news from 2011-10-16
