@@ -2,7 +2,6 @@
     New error codes when working with messages
     Reread 90-day message life time
     New error when delivery takes long
-    Reread message authentication with respect to CAdES
 * Parse system message XML documents describing what has happend
 * Test PDZInfo service
 * Implement news defined from 2011-06-19 specification:
