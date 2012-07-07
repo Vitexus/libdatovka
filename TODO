@@ -1,6 +1,3 @@
-* Implement news from 2012-03-18
-    New error codes when working with messages
-    New error when delivery takes long
 * Parse system message XML documents describing what has happend
 * Test PDZInfo service
 * Implement news defined from 2011-06-19 specification:

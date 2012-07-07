@@ -17,10 +17,13 @@ Error Reporting
 Result code of web service operation is stored in dmStatus/@dmStatusCode.
 Known values:
 
-0000    means success
+Code    Meaning
+-----------------------------------------------------------------------------
+0000    Means success
 0002    FindDataBox: No box suits to search request (by name)
 0003    FindDataBox: To much boxes suit to search request (by name), response
             truncated
+3006    Marking messages as delivered takes too long. Try again.
 5001    FindDataBox: No such box exists (by box ID or registry identifier)
 
 NON-NORMATIVE: ISDS on bogus ISDS request but still valid SOAP request
