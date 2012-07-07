@@ -3,7 +3,7 @@ User web services specification
 
 Source: Provozní řád ISDS, version 2010-11-28, Pages 15–16
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
-    version 2.23 (2011-11-24)
+    version 2.26 (2012-03-15)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
     version 2.26 (2012-03-15)
 
@@ -39,7 +39,7 @@ SignedMessageDownload
     Download incoming message with digital signature of ministry of interiors
 SignedSentMessageDownload
     Download outgoing message with digital signature of ministry of interiors
-AuthenticateMessage (+)
+AuthenticateMessage (*+)
     Submit local message copy to ISDS to confirm message authenticity
 DummyOperation
     Void operation used to log in and to keep connection alive
@@ -51,7 +51,7 @@ dm_info.wsdl
 URL postfix: dx
 Constraints: Client must be authenticated in Access Manager
 
-VerifyMessage (+)
+VerifyMessage (*+)
     Verify local copy of message with remote original stored in ISDS
 MessageEnvelopeDownload (+)
     Download envelope of incoming message
@@ -348,7 +348,7 @@ GetMessageStateChangesResponse
     + dmStatus – global error code and textual description
 
 
-AuthenticateMessage (+)
+AuthenticateMessage (*+)
 ===================
 
 Allows to verify message authenticity by providing copy to ISDS.
@@ -364,7 +364,7 @@ contains has been signed by non-ISDS certificate or other error, non-zero
 error code will be returned.
 
 
-VerifyMessage (+)
+VerifyMessage (*+)
 =============
 
 Retrieve message hash (dmHash element) for given message from ISDS.
