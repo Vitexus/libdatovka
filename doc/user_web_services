@@ -5,7 +5,7 @@ Source: Provozní řád ISDS, version 2010-11-28, Pages 15–16
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
     version 2.23 (2011-11-24)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
-    version 2.23 (2011-11-15)
+    version 2.26 (2012-03-15)
 
 
 These services are intended for working with messages inside a box by
@@ -606,7 +606,8 @@ service will cause marking messages as delivered.
 Input is a box ID.
 
 Ouput is orderer list of rules for sending commercial messages wrapped in
-dbPDZRecords element. The list can be empty. Each list item is a subtree:
+dbPDZRecords element. The list can be empty what means no permission is
+available. Each list item is a subtree:
 
 dbPDZRecord
     + PDZType – rule type; see below for known values
@@ -620,7 +621,8 @@ dbPDZRecord
     + ODZIdent – identifier referring to message enabling sending pre-paid
         answer. Must be added as dmRecipientRefNumber into sent message.
 
-Empty list means sending commerical messages is not restricted.
+Non-normative: An example in the specification shows `xsi:nil=“true“' text
+node instead of empty element. I think this bug in the specificiation.
 
 PDZType     Meaning
 -------------------------------------------------------------------------------
