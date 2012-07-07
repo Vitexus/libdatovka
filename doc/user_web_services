@@ -19,8 +19,8 @@ Data types: dmBaseTypes.xsd (Appendix 1)
 Documentation: DataMessage_ws.pdf, DBSearch_ws.pdf (Appendix 2)
 
 List of SOAP requests follows. Those marked with asterisk DOES NOT MARK
-noncommercial incoming messages as delivered. Those marked with plus has
-access to envelopes of deleted messages.
+incoming messages as delivered. Those marked with plus has access to envelopes
+of deleted messages.
 
 
 dm_operations.wsdl
