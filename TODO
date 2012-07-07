@@ -1,6 +1,5 @@
 * Implement news from 2012-03-18
     New error codes when working with messages
-    New commercial message subtypes
     Reread 90-day message life time
     New error when delivery takes long
     Reread message authentication with respect to CAdES
