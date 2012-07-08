@@ -23,7 +23,7 @@ PO          20      Standard commercial organization (in trade registry)
 PO_ZAK      21      Other organization based on law
 PO_REQ      22      Organization with box assigned on request
 PFO         30      Person in bussiness
-PFO_ADVOK   31      Layer
+PFO_ADVOK   31      Lawyer
 PFO_DANPOR  32      Tax consultant
 PFO_INSSPR  33      Administrator of insolvency
 FO          40      Standard person
