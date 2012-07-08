@@ -481,30 +481,32 @@ struct isds_envelope {
                                        government message):
                                        Input values (when sending a message):
                                        "I" is commercial message offering
-                                           paying the response (initial message);
+                                           paying the response (initiatory
+                                           message);
                                            it's necessary to define
                                            dmSenderRefNumber
                                        "K" is commercial message paid by sender
                                            if this message
-                                       "O" is commercial response paid by sender
-                                           of initial message; it's necessary to
-                                           copy value from dmSenderRefNumber if
-                                           initial message to
-                                           dmRecipientRefNumber of this message
+                                       "O" is commercial response paid by
+                                           sender of initiatory message; it's
+                                           necessary to copy value from
+                                           dmSenderRefNumber of initiatory
+                                           message to dmRecipientRefNumber
+                                           of this message
                                        "V" is noncommercial government message
                                        Default value while sending is undefined
                                        which has the same meaning as "V".
                                        Output values (when retrieving
                                        a message):
-                                       "A" is subsidied initial commercial
+                                       "A" is subsidized initiatory commercial
                                            message which can pay a response
-                                       "B" is subsidied initial commercial
+                                       "B" is subsidized initiatory commercial
                                            message which has already paid the
                                            response 
-                                       "C" is subsidied initial commercial
+                                       "C" is subsidized initiatory commercial
                                            message where the response offer has
                                            expired
-                                       "D" is externally subsidied commercial
+                                       "D" is externally subsidized commercial
                                            messsage
                                        "E" is commercial message prepaid by
                                            a stamp
@@ -514,11 +516,11 @@ struct isds_envelope {
                                        "K"
                                        "O"
                                        "V"
-                                       "X" is initial commercial message where
-                                           the response offer has expired
-                                       "Y" initial commercial message which has
-                                           already paid the response
-                                       "Z" is limitly subsidied commercial
+                                       "X" is initiatory commercial message
+                                           where the response offer has expired
+                                       "Y" initiatory commercial message which
+                                           has already paid the response
+                                       "Z" is limitedly subsidized commercial
                                            message
                                        Length: Exactly 1 UTF-8 character if
                                        defined; */

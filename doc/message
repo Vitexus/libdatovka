@@ -308,38 +308,39 @@ When sending message, the commercial status can be refined by @dmType
 attribute in the message envelope:
 
 Value   Meaning
---------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 I       Commercial message offering paying the response instead of the
-        recipient (so called initial message)
+        recipient (so called initiatory message)
 K       Commercial message
-O       Commercial message as a response paid by sender of initial message
+O       Commercial message as a response paid by sender of initiatory message
 V       Noncommercial standard message
 
 Incoming message or downloaded sent message can have @dmType attribute in the
 message envelope with following meaning:
 
 Value   Meaning
---------------------------------------------------------------------------------
-A       Subsidied initial commercial message which can pay a response
-B       Subsidied initial commercial message which has already paid the response 
-C       Subsidied initial commercial message where the response offer has
+-----------------------------------------------------------------------------
+A       Subsidized initiatory commercial message which can pay a response
+B       Subsidized initiatory commercial message which has already paid the
+        response 
+C       Subsidized initiatory commercial message where the response offer has
         expired
-D       Externally subsidied commercial messsage
+D       Externally subsidized commercial messsage
 E       Prepaid stamp
 G       Paid by a sponsor
-I       Initial commercial message which can pay a response
+I       Initiatory commercial message which can pay a response
 K       Commercial message paid by sender
-O       Commercial message as a response paid by sended of initial message
-X       Initial commercial message where the response offer has expired
-Y       Initial commercial message which has already paid the response
-Z       Limitly subsidied commercial message
+O       Commercial message as a response paid by sended of initiatory message
+X       Initiatory commercial message where the response offer has expired
+Y       Initiatory commercial message which has already paid the response
+Z       Limitedly subsidized commercial message
 
 Missing @dmType attribute means noncommercial standard message.
 
-Relation between initial message and reply paid by initial message sender is
-established by an identifier defined in dmSenderRefNumber element of initial
-message and the same value copied into dmRecipientRefNumber element of
-response message.
+Relation between initiatory message and reply paid by initiatory message
+sender is established by an identifier defined in dmSenderRefNumber element of
+initiatory message and the same value copied into dmRecipientRefNumber element
+of response message.
 
 
 Message states

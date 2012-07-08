@@ -626,7 +626,7 @@ node instead of empty element. I think this bug in the specificiation.
 
 PDZType     Meaning
 -------------------------------------------------------------------------------
-D           Externally subsidied (undocumented)
+D           Externally subsidized (undocumented)
 E           Another pre-paid type not yet specified and in use
 G           PDZPayer owner pays for all commercial messages
 K           Commercial message paid by sender based on an agreement with the
@@ -634,7 +634,7 @@ K           Commercial message paid by sender based on an agreement with the
 O           Answer on a commercial message is pre-paid by PDZPayer. ODZIdent
             value must be added into an outgoing message to bind the message to
             the payer and requesting message.
-Z           Limitly subsidied (undocumented)
+Z           Limitedly subsidized (undocumented)
 
 XXX: Documentation shows `xsi:nil="true"' text node under PDZRecip element
 instead of no element.
