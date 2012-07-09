@@ -5815,7 +5815,7 @@ isds_error isds_GetDataBoxUsers(struct isds_ctx *context, const char *box_id,
 #if HAVE_LIBCURL
     /* Do request and check for success */
     err = build_send_dbid_request_check_response(context,
-            SERVICE_DB_MANIPULATION, NULL, BAD_CAST "GetDataBoxUsers",
+            SERVICE_DB_MANIPULATION, BAD_CAST "GetDataBoxUsers", NULL,
             BAD_CAST box_id, NULL, &response, NULL);
     if (err) goto leave;
 
