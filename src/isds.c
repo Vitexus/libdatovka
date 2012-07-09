@@ -6813,8 +6813,6 @@ isds_error isds_get_commercial_permissions(struct isds_ctx *context,
     err = build_send_dbid_request_check_response(context,
             SERVICE_DB_SEARCH, BAD_CAST "PDZInfo", BAD_CAST "PDZSender",
             BAD_CAST box_id, NULL, &response, NULL);
-    xmlFreeDoc(response);
-
     if (!err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("PDZInfo request processed by server successfully.\n"));
