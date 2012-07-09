@@ -5717,6 +5717,7 @@ leave:
  * @context is session context
  * @service is SOAP service
  * @service_name is name of request in @service
+ * @box_id_element is name of element to wrap the @box_id. NULL means "dbID".
  * @box_id is box ID of interest
  * @approval is optional external approval of box manipulation
  * @response is server SOAP body response as XML document
@@ -5726,8 +5727,8 @@ leave:
  * appropriately. */
 static isds_error build_send_dbid_request_check_response(
         struct isds_ctx *context, const isds_service service,
-        const xmlChar *service_name, const xmlChar *box_id,
-        const struct isds_approval *approval,
+        const xmlChar *service_name, const xmlChar *box_id_element,
+        const xmlChar *box_id, const struct isds_approval *approval,
         xmlDocPtr *response, xmlChar **refnumber) {
 
     isds_error err = IE_SUCCESS;
@@ -5772,7 +5773,8 @@ static isds_error build_send_dbid_request_check_response(
     xmlSetNs(request, isds_ns);
 
     /* Add XSD:tIdDbInput children */
-    INSERT_STRING(request, "dbID", box_id);
+    if (NULL == box_id_element) box_id_element = BAD_CAST "dbID";
+    INSERT_STRING(request, box_id_element, box_id);
     err = insert_GExtApproval(context, approval, request);
     if (err) goto leave;
 
@@ -5813,7 +5815,7 @@ isds_error isds_GetDataBoxUsers(struct isds_ctx *context, const char *box_id,
 #if HAVE_LIBCURL
     /* Do request and check for success */
     err = build_send_dbid_request_check_response(context,
-            SERVICE_DB_MANIPULATION, BAD_CAST "GetDataBoxUsers",
+            SERVICE_DB_MANIPULATION, NULL, BAD_CAST "GetDataBoxUsers",
             BAD_CAST box_id, NULL, &response, NULL);
     if (err) goto leave;
 
@@ -6809,8 +6811,8 @@ isds_error isds_get_commercial_permissions(struct isds_ctx *context,
 
     /* Do request and check for success */
     err = build_send_dbid_request_check_response(context,
-            SERVICE_DB_SEARCH, BAD_CAST "PDZInfo", BAD_CAST box_id, NULL,
-            &response, NULL);
+            SERVICE_DB_SEARCH, BAD_CAST "PDZInfo", BAD_CAST "PDZSender",
+            BAD_CAST box_id, NULL, &response, NULL);
     xmlFreeDoc(response);
 
     if (!err) {
@@ -6907,7 +6909,7 @@ static isds_error build_send_manipulationdbid_request_check_drop_response(
 
     /* Do request and check for success */
     err = build_send_dbid_request_check_response(context,
-            SERVICE_DB_MANIPULATION, service_name, box_id, approval,
+            SERVICE_DB_MANIPULATION, service_name, NULL, box_id, approval,
             &response, refnumber);
     xmlFreeDoc(response);
 

@@ -603,7 +603,7 @@ Return posibilities of sending commerical messages. Only if one of the
 possibility is the payer is the recipient (PDZType is `O'), then calling this
 service will cause marking messages as delivered.
 
-Input is a box ID.
+Input is `PDZSender' element with a box ID as the only text node child.
 
 Ouput is orderer list of rules for sending commercial messages wrapped in
 dbPDZRecords element. The list can be empty what means no permission is
