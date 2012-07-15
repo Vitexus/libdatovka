@@ -9,6 +9,7 @@
 #include "../test-tools.h"
 #include "http.h"
 #include "server.h"
+#include "service.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -21,10 +22,6 @@
 #include <wait.h>
 
 const char *server_error = NULL;
-
-static const char *soap_mime_type = "text/xml"; /* SOAP/1.1 requires text/xml */
-/* DummyOperation respons */
-static const char *pong = "<?xml version='1.0' encoding='utf-8'?><SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><SOAP-ENV:Body><q:DummyOperationResponse xmlns:q=\"http://isds.czechpoint.cz/v20\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><q:dmStatus><q:dmStatusCode>0000</q:dmStatusCode><q:dmStatusMessage>Provedeno úspěšně.</q:dmStatusMessage></q:dmStatus></q:DummyOperationResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>";
 
 static const char *as_path_hotp = "/as/processLogin?type=hotp&uri=";
 static const char *as_path_sendsms = "/as/processLogin?type=totp&sendSms=true&uri=";
@@ -121,7 +118,7 @@ static void do_ws(int client_socket, const struct http_request *request) {
         return;
     }
 
-    http_send_response_200(client_socket, pong, strlen(pong), soap_mime_type);
+    service_DummyOperation(client_socket, request->body, request->body_length);
 }
 
 

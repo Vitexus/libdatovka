@@ -22,7 +22,8 @@ endif
 
 noinst_PROGRAMS = $(TESTS)
 
-common = ../test.c ../test.h ../test-tools.h http.c http.h server.c server.h
+common = ../test.c ../test.h ../test-tools.h http.c http.h server.c server.h \
+		 service.c service.h
 
 # Access public API only
 basic_authentication_SOURCES = basic_authentication.c $(common)
