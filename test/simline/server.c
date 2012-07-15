@@ -113,7 +113,7 @@ char *socket2address(int socket) {
 }
 
 
-/* Process ISDS WS ping authorized by cookie */
+/* Process ISDS WS ping */
 static void do_ws(int client_socket, const struct http_request *request) {
     if (request->method != HTTP_METHOD_POST) {
         http_send_response_400(client_socket,
@@ -162,8 +162,7 @@ void server_basic_authentication(int server_socket,
                     switch(http_authenticate_basic(request,
                                 arguments->username, arguments->password)) {
                         case HTTP_ERROR_SUCCESS:
-                            http_send_response_200(client_socket,
-                                    pong, strlen(pong), soap_mime_type);
+                            do_ws(client_socket, request);
                             break;
                         case HTTP_ERROR_CLIENT:
                             if (arguments->isds_deviations)
@@ -178,8 +177,7 @@ void server_basic_authentication(int server_socket,
                     http_send_response_401_basic(client_socket);
                 }
             } else {
-                http_send_response_200(client_socket,
-                        pong, strlen(pong), soap_mime_type);
+                do_ws(client_socket, request);
             }
         } else {
             /* HTTP method unsupported per ISDS specification */
