@@ -44,7 +44,7 @@ static void service_DummyOperation(int socket, const xmlDocPtr soap_request,
 
 /* List of implemented services */
 static struct service services[] = {
-    { "dz", BAD_CAST "DummyOperation", service_DummyOperation },
+    { "DS/dz", BAD_CAST "DummyOperation", service_DummyOperation },
 };
 
 
@@ -90,7 +90,8 @@ static int register_namespaces(xmlXPathContextPtr xpath_ctx,
 
 /* Parse soap request, pass it to service endpoint and respond to it.
  * It sends final HTTP response. */
-void soap(int socket, const void *request, size_t request_length) {
+void soap(int socket, const void *request, size_t request_length,
+        const char *end_point) {
     xmlDocPtr request_doc = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr request_soap_body = NULL;
@@ -168,9 +169,9 @@ void soap(int socket, const void *request, size_t request_length) {
 
 
     /* Dispatch request to service */
-    /* TODO: Use end point */
     for (int i = 0; i < sizeof(services)/sizeof(services[0]); i++) {
-        if (!xmlStrcmp(services[i].name, isds_request->name)) {
+        if (!strcmp(services[i].end_point, end_point) &&
+                !xmlStrcmp(services[i].name, isds_request->name)) {
             services[i].function(socket, request_doc, xpath_ctx, isds_request);
             service_handled = 1;
             break;

@@ -29,6 +29,9 @@ static const char *as_path_dontsendsms = "/as/processLogin?type=totp&uri=";
 static const char *as_path_logout = "/as/processLogout?uri=";
 static const char *ws_path = "/apps/DS/dz";
 
+static const char *ws_base_path_basic = "/";
+static const char *ws_base_path_otp = "/apps/";
+
 static const char *authorization_cookie_name = "IPCZ-X-COOKIE";
 static char *authorization_cookie_value = NULL;
 
@@ -111,14 +114,27 @@ char *socket2address(int socket) {
 
 
 /* Process ISDS WS ping */
-static void do_ws(int client_socket, const struct http_request *request) {
+static void do_ws(int client_socket, const struct http_request *request,
+        const char *required_base_path) {
+    char *end_point = request->uri; /* Pointer to string in request */
+
     if (request->method != HTTP_METHOD_POST) {
         http_send_response_400(client_socket,
                 "Regular ISDS web service request must be POST");
         return;
     }
 
-    soap(client_socket, request->body, request->body_length);
+    if (required_base_path != NULL) {
+        size_t required_base_path_length = strlen(required_base_path);
+        if (strncmp(end_point, required_base_path, required_base_path_length)) {
+            http_send_response_400(client_socket,
+                    "Request sent to invalid path");
+            return;
+        }
+        end_point += required_base_path_length;
+    }
+
+    soap(client_socket, request->body, request->body_length, end_point);
 }
 
 
@@ -160,7 +176,7 @@ void server_basic_authentication(int server_socket,
                     switch(http_authenticate_basic(request,
                                 arguments->username, arguments->password)) {
                         case HTTP_ERROR_SUCCESS:
-                            do_ws(client_socket, request);
+                            do_ws(client_socket, request, ws_base_path_basic);
                             break;
                         case HTTP_ERROR_CLIENT:
                             if (arguments->isds_deviations)
@@ -177,7 +193,7 @@ void server_basic_authentication(int server_socket,
                     http_send_response_401_basic(client_socket);
                 }
             } else {
-                do_ws(client_socket, request);
+                do_ws(client_socket, request, ws_base_path_basic);
             }
         } else {
             /* HTTP method unsupported per ISDS specification */
@@ -400,13 +416,14 @@ static void do_as_logout(int client_socket, const struct http_request *request,
 
 /* Process ISDS WS ping authorized by cookie */
 static void do_ws_with_cookie(int client_socket, const struct http_request *request,
-        const struct arguments_otp_authentication *arguments) {
+        const struct arguments_otp_authentication *arguments,
+        const char *valid_base_path) {
     const char *received_cookie =
         http_find_cookie(request, authorization_cookie_name);
 
     if (authorization_cookie_value != NULL && received_cookie != NULL &&
             !strcmp(authorization_cookie_value, received_cookie))
-        do_ws(client_socket, request);
+        do_ws(client_socket, request, valid_base_path);
     else
         http_send_response_403(client_socket);
 }
@@ -459,14 +476,15 @@ void server_otp_authentication(int server_socket,
                         strlen(as_path_logout))) {
                 do_as_logout(client_socket, request, arguments);
             } else if (!strcmp(request->uri, ws_path)) {
-                do_ws_with_cookie(client_socket, request, arguments);
+                do_ws_with_cookie(client_socket, request, arguments,
+                        ws_base_path_otp);
             } else {
                 http_send_response_400(client_socket,
                         "Unknown path for TOTP authenticating service");
             }            
         } else {
             if (!strcmp(request->uri, ws_path)) {
-                do_ws(client_socket, request);
+                do_ws(client_socket, request, ws_base_path_otp);
             } else {
                 http_send_response_400(client_socket,
                         "Unknown path for TOTP authenticating service");
