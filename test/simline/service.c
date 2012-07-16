@@ -36,11 +36,58 @@ struct service {
             xmlDocPtr, xmlNodePtr);
 };
 
+/* Following INSERT_* macros expect @error and leave label */
+#define INSERT_STRING_WITH_NS(parent, ns, element, string) \
+    { \
+        xmlNodePtr node = xmlNewTextChild(parent, ns, BAD_CAST (element), \
+                (xmlChar *) (string)); \
+        if (NULL == node) { \
+            error = -1; \
+            goto leave; \
+        } \
+    }
+
+#define INSERT_STRING(parent, element, string) \
+    { INSERT_STRING_WITH_NS(parent, NULL, element, string) }
+
+#define INSERT_ELEMENT(child, parent, element) \
+    { \
+        (child) = xmlNewChild((parent), NULL, BAD_CAST (element), NULL); \
+        if (NULL == (child)) { \
+            error = -1; \
+            goto leave; \
+        } \
+    }
+
+/* Insert dmStatus or similar subtree
+ * @parent is element to insert to
+ * @dm is true for dmStatus, otherwise dbStatus
+ * @code is stautus code as string
+ * @message is UTF-8 encoded message
+ * @db_ref_number is optinal reference number propagated if not @dm
+ * @return 0 on success, otherwise non-0. */
+static int insert_isds_status(xmlNodePtr parent, _Bool dm,
+        const xmlChar * code, const xmlChar *message,
+        const xmlChar *db_ref_number) {
+    int error = 0;
+    xmlNodePtr status;
+    INSERT_ELEMENT(status, parent, (dm) ? "dmStatus" : "dbStatus");
+    INSERT_STRING(status, (dm) ? "dmStatusCode" : "dbStatusCode", "0000");
+    INSERT_STRING(status, (dm) ? "dmStatusMessage" : "dbStatusMessage", "Success");
+    if (!dm && NULL != db_ref_number) {
+        INSERT_STRING(status, "dbStatusRefNumber", db_ref_number);
+    }
+leave:
+    return error;
+}
+
+
 /* Parse and respond to DummyOperation */
 static int service_DummyOperation(int socket, const xmlDocPtr soap_request,
         xmlXPathContextPtr xpath_ctx, xmlNodePtr isds_request,
         xmlDocPtr soap_response, xmlNodePtr isds_response) {
-    return 0;
+    return insert_isds_status(isds_response, 1, BAD_CAST "0000",
+            BAD_CAST "Success", NULL);
 }
 
 
