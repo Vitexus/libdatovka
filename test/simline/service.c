@@ -182,7 +182,7 @@ void soap(int socket, const void *request, size_t request_length,
     xmlXPathFreeContext(xpath_ctx);
     xmlFreeDoc(request_doc);
 
-    if (service_handled) {
+    if (!service_handled) {
         http_send_response_500(socket,
                 "Requested ISDS service not implemented");
     }
