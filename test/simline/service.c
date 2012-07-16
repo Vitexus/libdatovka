@@ -1,12 +1,12 @@
+#include "../test-tools.h"
 #include "http.h"
 #include <string.h>
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
+#include <libxml/xmlsave.h>
 
 static const char *soap_mime_type = "text/xml"; /* SOAP/1.1 requires text/xml */
-/* DummyOperation response */
-static const char *pong = "<?xml version='1.0' encoding='utf-8'?><SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><SOAP-ENV:Body><q:DummyOperationResponse xmlns:q=\"http://isds.czechpoint.cz/v20\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><q:dmStatus><q:dmStatusCode>0000</q:dmStatusCode><q:dmStatusMessage>Provedeno úspěšně.</q:dmStatusMessage></q:dmStatus></q:DummyOperationResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>";
 
 /* Used to choose proper name space for message elements.
  * See _isds_register_namespaces(). */
@@ -32,13 +32,15 @@ typedef enum {
 struct service {
     const char *end_point;
     const xmlChar *name;
-    void (*function) (int, xmlDocPtr, xmlXPathContextPtr, xmlNodePtr);
+    int (*function) (int, xmlDocPtr, xmlXPathContextPtr, xmlNodePtr,
+            xmlDocPtr, xmlNodePtr);
 };
 
 /* Parse and respond to DummyOperation */
-static void service_DummyOperation(int socket, const xmlDocPtr soap_request,
-        xmlXPathContextPtr xpath_ctx, xmlNodePtr isds_request) {
-    http_send_response_200(socket, pong, strlen(pong), soap_mime_type);
+static int service_DummyOperation(int socket, const xmlDocPtr soap_request,
+        xmlXPathContextPtr xpath_ctx, xmlNodePtr isds_request,
+        xmlDocPtr soap_response, xmlNodePtr isds_response) {
+    return 0;
 }
 
 
@@ -96,7 +98,15 @@ void soap(int socket, const void *request, size_t request_length,
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr request_soap_body = NULL;
     xmlNodePtr isds_request = NULL; /* pointer only */
-    _Bool service_handled = 0;
+    _Bool service_handled = 0, service_passed = 0;
+    xmlDocPtr response_doc = NULL;
+    xmlNodePtr response_soap_envelope = NULL, response_soap_body = NULL,
+               isds_response = NULL;
+    xmlNsPtr soap_ns = NULL, isds_ns = NULL;
+    char *response_name = NULL;
+    xmlBufferPtr http_response_body = NULL;
+    xmlSaveCtxtPtr save_ctx = NULL;
+
 
     if (NULL == request || request_length == 0) {
         http_send_response_400(socket, "Client sent empty body");
@@ -167,16 +177,106 @@ void soap(int socket, const void *request, size_t request_length,
         return;
     }
 
+    /* Build SOAP response envelope */
+    response_doc = xmlNewDoc(BAD_CAST "1.0");
+    if (!response_doc) {
+        http_send_response_500(socket, "Could not build SOAP response document");
+        goto leave;
+    }
+    response_soap_envelope = xmlNewNode(NULL, BAD_CAST "Envelope");
+    if (!response_soap_envelope) {
+        http_send_response_500(socket, "Could not build SOAP response envelope");
+        goto leave;
+    }
+    xmlDocSetRootElement(response_doc, response_soap_envelope);
+    /* Only this way we get namespace definition as @xmlns:soap,
+     * otherwise we get namespace prefix without definition */
+    soap_ns = xmlNewNs(response_soap_envelope, BAD_CAST SOAP_NS, NULL);
+    if(NULL == soap_ns) {
+        http_send_response_500(socket, "Could not create SOAP name space");
+        goto leave;
+    }
+    xmlSetNs(response_soap_envelope, soap_ns);
+    response_soap_body = xmlNewChild(response_soap_envelope, NULL,
+            BAD_CAST "Body", NULL);
+    if (!response_soap_body) {
+        http_send_response_500(socket,
+                "Could not add Body to SOAP response envelope");
+        goto leave;
+    }
+    /* Append ISDS response element */
+    if (-1 == test_asprintf(&response_name, "%s%s", isds_request->name,
+                "Response")) {
+        http_send_response_500(socket,
+                "Could not buld ISDS resposne element name");
+        goto leave;
+    }
+    isds_response = xmlNewChild(response_soap_body, NULL,
+            BAD_CAST response_name, NULL);
+    free(response_name);
+    if (NULL == isds_response) {
+        http_send_response_500(socket,
+                "Could not add ISDS response element to SOAP response body");
+        goto leave;
+    }
+    isds_ns = xmlNewNs(isds_response, BAD_CAST ISDS_NS, NULL);
+    if(NULL == isds_ns) {
+        http_send_response_500(socket, "Could not create ISDS name space");
+        goto leave;
+    }
+    xmlSetNs(isds_response, isds_ns);
 
     /* Dispatch request to service */
     for (int i = 0; i < sizeof(services)/sizeof(services[0]); i++) {
         if (!strcmp(services[i].end_point, end_point) &&
                 !xmlStrcmp(services[i].name, isds_request->name)) {
-            services[i].function(socket, request_doc, xpath_ctx, isds_request);
             service_handled = 1;
+            if (!services[i].function(socket, request_doc, xpath_ctx, isds_request,
+                    response_doc, isds_response)) {
+                service_passed = 1;
+            } else {
+                http_send_response_500(socket,
+                        "Internal server error while processing ISDS request");
+            }
             break;
         }
     }
+    
+    /* Send response */
+    if (service_passed) {
+        /* Serialize the SOAP response */
+        http_response_body = xmlBufferCreate();
+        if (NULL == http_response_body) {
+            http_send_response_500(socket,
+                    "Could not create xmlBuffer for response serialization");
+            goto leave;
+        }
+        /* Last argument 1 means format the XML tree. This is pretty but it breaks
+         * XML document transport as it adds text nodes (indentiation) between
+         * elements. */
+        save_ctx = xmlSaveToBuffer(http_response_body, "UTF-8", 0);
+        if (NULL == save_ctx) {
+            http_send_response_500(socket, "Could not create XML serializer");
+            goto leave;
+        }
+        /* XXX: According LibXML documentation, this function does not return
+         * meaningful value yet */
+        xmlSaveDoc(save_ctx, response_doc);
+        if (-1 == xmlSaveFlush(save_ctx)) {
+            http_send_response_500(socket,
+                    "Could not serialize SOAP response");
+            goto leave;
+        }
+
+        http_send_response_200(socket, http_response_body->content,
+                http_response_body->use, soap_mime_type);
+    }
+
+leave:
+    xmlSaveClose(save_ctx);
+    xmlBufferFree(http_response_body);
+
+    xmlFreeDoc(response_doc);
 
     xmlXPathFreeObject(request_soap_body);
     xmlXPathFreeContext(xpath_ctx);
