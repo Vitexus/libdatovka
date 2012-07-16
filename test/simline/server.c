@@ -118,7 +118,7 @@ static void do_ws(int client_socket, const struct http_request *request) {
         return;
     }
 
-    service_DummyOperation(client_socket, request->body, request->body_length);
+    soap(client_socket, request->body, request->body_length);
 }
 
 
