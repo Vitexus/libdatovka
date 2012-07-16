@@ -93,8 +93,9 @@ int http_send_response_401_otp(int client_socket,
 /* Send a 403 Forbidden response */ 
 int http_send_response_403(int client_socket);
 
-/* Send a 500 Internal Server Error response */ 
-int http_send_response_500(int client_socket);
+/* Send a 500 Internal Server Error response.
+ * Use non-NULL @reason to override status message. */ 
+int http_send_response_500(int client_socket, const char *reason);
 
 /* Send a 503 Service Temporarily Unavailable response */ 
 int http_send_response_503(int client_socket,

@@ -147,7 +147,8 @@ void server_basic_authentication(int server_socket,
             if (error == HTTP_ERROR_CLIENT)
                 http_send_response_400(client_socket, "Error in request");
             else
-                http_send_response_500(client_socket);
+                http_send_response_500(client_socket,
+                        "Error while reading request");
             close(client_socket);
             continue;
         }
@@ -168,7 +169,9 @@ void server_basic_authentication(int server_socket,
                                 http_send_response_403(client_socket);
                             break;
                         default:
-                            http_send_response_500(client_socket);
+                            http_send_response_500(client_socket,
+                                    "Server error while verifying Basic "
+                                    "authentication");
                     }
                 } else {
                     http_send_response_401_basic(client_socket);
@@ -196,7 +199,8 @@ void server_basic_authentication(int server_socket,
 static void do_as_sendsms(int client_socket, const struct http_request *request,
         const struct arguments_otp_authentication *arguments) {
     if (arguments == NULL) {
-        http_send_response_500(client_socket);
+        http_send_response_500(client_socket,
+                "Third argument of do_as_sendsms() is NULL");
         return;
     }
 
@@ -228,7 +232,9 @@ static void do_as_sendsms(int client_socket, const struct http_request *request,
                 /* Build new location for second OTP phase */ 
                 char *location = NULL;
                 if (-1 == test_asprintf(&location, "%s%s", as_path_dontsendsms, uri)) {
-                    http_send_response_500(client_socket);
+                    http_send_response_500(client_socket,
+                            "Could not build new localtion for "
+                            "second OTP phase");
                     return;
                 }
                 char *terminator = strchr(uri, '&');
@@ -254,7 +260,8 @@ static void do_as_sendsms(int client_socket, const struct http_request *request,
                 http_send_response_403(client_socket);
             break;
         default:
-            http_send_response_500(client_socket);
+            http_send_response_500(client_socket,
+                    "Could not verify Basic authentication");
     }
 }
 
@@ -274,7 +281,8 @@ static const char *auth_otp_method2string(enum auth_otp_method method) {
 static void do_as_phase_two(int client_socket, const struct http_request *request,
         const struct arguments_otp_authentication *arguments) {
     if (arguments == NULL) {
-        http_send_response_500(client_socket);
+        http_send_response_500(client_socket,
+                "Third argument of do_as_phase_two() is NULL");
         return;
     }
 
@@ -306,7 +314,8 @@ static void do_as_phase_two(int client_socket, const struct http_request *reques
                 /* Build new location for final request */ 
                 char *location = NULL;
                 if (NULL == (location = strdup(uri))) {
-                    http_send_response_500(client_socket);
+                    http_send_response_500(client_socket,
+                            "Could not build new location for final request");
                     return;
                 }
                 char *terminator = strchr(location, '&');
@@ -317,7 +326,8 @@ static void do_as_phase_two(int client_socket, const struct http_request *reques
                  * same seed to get reproducible tests. */
                 if (-1 == test_asprintf(&authorization_cookie_value, "%d",
                             rand())) {
-                    http_send_response_500(client_socket);
+                    http_send_response_500(client_socket,
+                            "Could not generate cookie value");
                     free(location);
                     return;
                 }
@@ -346,7 +356,8 @@ static void do_as_phase_two(int client_socket, const struct http_request *reques
                 http_send_response_403(client_socket);
             break;
         default:
-            http_send_response_500(client_socket);
+            http_send_response_500(client_socket,
+                    "Could not verify OTP authentication");
     }
 }
 
@@ -355,7 +366,8 @@ static void do_as_phase_two(int client_socket, const struct http_request *reques
 static void do_as_logout(int client_socket, const struct http_request *request,
         const struct arguments_otp_authentication *arguments) {
     if (arguments == NULL) {
-        http_send_response_500(client_socket);
+        http_send_response_500(client_socket,
+                "Third argument of do_as_logout() is NULL");
         return;
     }
 
@@ -426,7 +438,7 @@ void server_otp_authentication(int server_socket,
             if (error == HTTP_ERROR_CLIENT)
                 http_send_response_400(client_socket, "Error in request");
             else
-                http_send_response_500(client_socket);
+                http_send_response_500(client_socket, "Could not read request");
             close(client_socket);
             continue;
         }

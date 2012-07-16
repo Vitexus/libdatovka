@@ -751,7 +751,8 @@ int http_send_response_200_cookie(int client_socket,
     if (cokie_name != NULL) {
         if (NULL == (header_cookie = http_build_setcookie_header(
                         cokie_name, cookie_value, cookie_domain, cookie_path)))
-            return http_send_response_500(client_socket);
+            return http_send_response_500(client_socket,
+                    "Could not build Set-Cookie header");
     }
 
     /* Link defined headers */
@@ -800,7 +801,8 @@ int http_send_response_302_cookie(int client_socket, const char *cokie_name,
     if (cokie_name != NULL) {
         if (NULL == (header_cookie = http_build_setcookie_header(
                         cokie_name, cookie_value, cookie_domain, cookie_path)))
-            return http_send_response_500(client_socket);
+            return http_send_response_500(client_socket,
+                    "Could not build Set-Cookie header");
     }
     
     /* Link defined headers */
@@ -925,7 +927,8 @@ int http_send_response_401_otp(int client_socket,
 
     if (-1 == test_asprintf(&header.value, "%s realm=\"SimulatedISDSServer\"",
                 method)) {
-        return http_send_response_500(client_socket);
+        return http_send_response_500(client_socket,
+                "Could not build WWW-Authenticate header value");
     }
     
     /* Link defined headers */
@@ -957,11 +960,12 @@ int http_send_response_403(int client_socket) {
 }
 
 
-/* Send a 500 Internal Server Error response */ 
-int http_send_response_500(int client_socket) {
+/* Send a 500 Internal Server Error response.
+ * Use non-NULL @reason to override status message. */ 
+int http_send_response_500(int client_socket, const char *reason) {
     struct http_response response = {
         .status = 500,
-        .reason = "Internal Server Error",
+        .reason = (NULL == reason) ? "Internal Server Error" : (char *) reason,
         .headers = NULL,
         .body_length = 0,
         .body = NULL
