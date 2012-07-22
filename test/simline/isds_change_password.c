@@ -30,7 +30,20 @@ static int test_login(const isds_error error, struct isds_ctx *context,
                 isds_strerror(error), isds_strerror(err),
                 isds_long_message(context));
 
-    isds_logout(context);
+    PASS_TEST;
+}
+
+static int test_isds_change_password(const isds_error error,
+        struct isds_ctx *context, const char *old_password,
+        const char *new_password, struct isds_otp *otp) {
+    isds_error err;
+
+    err = isds_change_password(context, old_password, new_password, otp);
+    if (error != err)
+        FAIL_TEST("Wrong return code: expected=%s, returned=%s (%s)",
+                isds_strerror(error), isds_strerror(err),
+                isds_long_message(context));
+
     PASS_TEST;
 }
 
@@ -41,7 +54,7 @@ int main(int argc, char **argv) {
     struct isds_ctx *context = NULL;
     char *url = NULL;
 
-    INIT_TEST("basic authentication");
+    INIT_TEST("isds_change_password");
 
     if (unsetenv("http_proxy")) {
         ABORT_UNIT("Could not remove http_proxy variable from environment\n");
@@ -59,6 +72,7 @@ int main(int argc, char **argv) {
     {
         const struct service_configuration services[] = {
             { SERVICE_DS_Dz_DummyOperation, NULL },
+            { SERVICE_DS_DsManage_ChangeISDSPassword, password },
             { SERVICE_END, NULL }
         };
         const struct arguments_basic_authentication server_arguments = {
@@ -83,11 +97,12 @@ int main(int argc, char **argv) {
         }
         free(server_address);
 
-        TEST("invalid credentials", test_login, IE_NOT_LOGGED_IN, context,
-                url, "7777777", "nbuusr1", NULL, NULL);
-
-        TEST("valid login", test_login, IE_SUCCESS, context,
+        TEST("login", test_login, IE_SUCCESS, context,
                 url, username, password, NULL, NULL);
+        TEST("bad old password", test_isds_change_password, IE_INVAL, context,
+                "bad old password", "h2k$aana", NULL);
+        TEST("valid request", test_isds_change_password, IE_SUCCESS, context,
+                password, "h2k$aana", NULL);
 
         if (-1 == stop_server(server_process)) {
             ABORT_UNIT(server_error);
@@ -97,34 +112,8 @@ int main(int argc, char **argv) {
         url = NULL;
     }
 
-    {
-        error = start_server(&server_process, &server_address,
-                server_out_of_order, NULL);
-        if (error == -1) {
-            isds_ctx_free(&context);
-            isds_cleanup();
-            ABORT_UNIT(server_error);
-        }
-        if (-1 == test_asprintf(&url, "http://%s/", server_address)) {
-            free(server_address);
-            stop_server(server_process);
-            isds_ctx_free(&context);
-            isds_cleanup();
-            ABORT_UNIT("Could not format ISDS URL");
-        }
-        free(server_address);
 
-        TEST("log into out-of-order server", test_login, IE_SOAP, context,
-                url, username, password, NULL, NULL);
-
-        if (-1 == stop_server(server_process)) {
-            ABORT_UNIT(server_error);
-        }
-    
-        free(url);
-        url = NULL;
-    }
-
+    isds_logout(context);
     isds_ctx_free(&context);
     isds_cleanup();
     SUM_TEST();

@@ -1,5 +1,7 @@
+#define _XOPEN_SOURCE 500 /* For strdup(3) */
 #include "../test-tools.h"
 #include "http.h"
+#include "services.h"
 #include <string.h>
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
@@ -30,11 +32,38 @@ typedef enum {
 
 
 struct service {
+    service_id id;
     const char *end_point;
     const xmlChar *name;
-    int (*function) (int, xmlDocPtr, xmlXPathContextPtr, xmlNodePtr,
-            xmlDocPtr, xmlNodePtr);
+    http_error (*function) (int, xmlDocPtr, xmlXPathContextPtr, xmlNodePtr,
+            xmlDocPtr, xmlNodePtr, const void *arguments);
 };
+
+/* Following EXTRACT_* macros expect @xpath_ctx, @message, and leave label */
+#define EXTRACT_STRING(element, string) { \
+    xmlXPathObjectPtr result = NULL; \
+    result = xmlXPathEvalExpression(BAD_CAST element "/text()", xpath_ctx); \
+    if (NULL == result) { \
+        error = HTTP_ERROR_SERVER; \
+        goto leave; \
+    } \
+    if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) { \
+        if (result->nodesetval->nodeNr > 1) { \
+            xmlXPathFreeObject(result); \
+            test_asprintf(&message, "Multiple %s element", element); \
+            error = HTTP_ERROR_CLIENT; \
+            goto leave; \
+        } \
+        (string) = (char *) \
+            xmlXPathCastNodeSetToString(result->nodesetval); \
+        if (!(string)) { \
+            xmlXPathFreeObject(result); \
+            error = HTTP_ERROR_SERVER; \
+            goto leave; \
+        } \
+    } \
+    xmlXPathFreeObject(result); \
+}
 
 /* Following INSERT_* macros expect @error and leave label */
 #define INSERT_STRING_WITH_NS(parent, ns, element, string) \
@@ -42,7 +71,7 @@ struct service {
         xmlNodePtr node = xmlNewTextChild(parent, ns, BAD_CAST (element), \
                 (xmlChar *) (string)); \
         if (NULL == node) { \
-            error = -1; \
+            error = HTTP_ERROR_SERVER; \
             goto leave; \
         } \
     }
@@ -54,7 +83,7 @@ struct service {
     { \
         (child) = xmlNewChild((parent), NULL, BAD_CAST (element), NULL); \
         if (NULL == (child)) { \
-            error = -1; \
+            error = HTTP_ERROR_SERVER; \
             goto leave; \
         } \
     }
@@ -66,34 +95,102 @@ struct service {
  * @message is UTF-8 encoded message
  * @db_ref_number is optinal reference number propagated if not @dm
  * @return 0 on success, otherwise non-0. */
-static int insert_isds_status(xmlNodePtr parent, _Bool dm,
-        const xmlChar * code, const xmlChar *message,
+static http_error insert_isds_status(xmlNodePtr parent, _Bool dm,
+        const xmlChar *code, const xmlChar *message,
         const xmlChar *db_ref_number) {
-    int error = 0;
+    http_error error = HTTP_ERROR_SUCCESS;
     xmlNodePtr status;
+    
+    if (NULL == code || NULL == message) {
+        error = HTTP_ERROR_SERVER;
+        goto leave;
+    }
+
     INSERT_ELEMENT(status, parent, (dm) ? "dmStatus" : "dbStatus");
-    INSERT_STRING(status, (dm) ? "dmStatusCode" : "dbStatusCode", "0000");
-    INSERT_STRING(status, (dm) ? "dmStatusMessage" : "dbStatusMessage", "Success");
+    INSERT_STRING(status, (dm) ? "dmStatusCode" : "dbStatusCode", code);
+    INSERT_STRING(status, (dm) ? "dmStatusMessage" : "dbStatusMessage", message);
     if (!dm && NULL != db_ref_number) {
         INSERT_STRING(status, "dbStatusRefNumber", db_ref_number);
     }
+
 leave:
     return error;
 }
 
 
-/* Parse and respond to DummyOperation */
-static int service_DummyOperation(int socket, const xmlDocPtr soap_request,
+/* Implement DummyOperation */
+static http_error service_DummyOperation(int socket, const xmlDocPtr soap_request,
         xmlXPathContextPtr xpath_ctx, xmlNodePtr isds_request,
-        xmlDocPtr soap_response, xmlNodePtr isds_response) {
+        xmlDocPtr soap_response, xmlNodePtr isds_response,
+        const void *arguments) {
     return insert_isds_status(isds_response, 1, BAD_CAST "0000",
             BAD_CAST "Success", NULL);
 }
 
 
+/* Implement ChangeISDSPassword.
+ * @arguments is current password as const char * */
+static http_error service_ChangeISDSPassword(int socket,
+        const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
+        const xmlNodePtr isds_request,
+        xmlDocPtr soap_response, xmlNodePtr isds_response,
+        const void *arguments) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    char *message = NULL;
+    const char *current_password = (const char *)arguments;
+    char *old_password = NULL, *new_password = NULL;
+
+    if (NULL == current_password) {
+        error = HTTP_ERROR_SERVER;
+        goto leave;
+    }
+
+    /* Parse request */
+    EXTRACT_STRING("isds:dbOldPassword", old_password);
+    if (NULL == old_password) {
+        message = strdup("Empty isds:dbOldPassword");
+        error = HTTP_ERROR_CLIENT;
+        goto leave;
+    }
+    EXTRACT_STRING("isds:dbNewPassword", new_password);
+    if (NULL == new_password) {
+        message = strdup("Empty isds:dbOldPassword");
+        error = HTTP_ERROR_CLIENT;
+        goto leave;
+    }
+
+    /* Check defined cases */
+    if (strcmp(current_password, old_password)) {
+        error = insert_isds_status(isds_response, 0, BAD_CAST "1090",
+                BAD_CAST "Bad current password", NULL);
+        if (error == HTTP_ERROR_SUCCESS) error = HTTP_ERROR_CLIENT;
+    } else {
+        error = insert_isds_status(isds_response, 0, BAD_CAST "0000",
+                BAD_CAST "Success", NULL);
+    }
+    goto end;
+leave:
+    if (HTTP_ERROR_CLIENT == error) {
+        http_error next_error = insert_isds_status(isds_response, 0,
+                BAD_CAST "9999", BAD_CAST message, NULL);
+        if (HTTP_ERROR_SUCCESS != next_error) error = next_error;
+    }
+end:
+    free(old_password);
+    free(new_password);
+    free(message);
+    return error;
+}
+
+
 /* List of implemented services */
 static struct service services[] = {
-    { "DS/dz", BAD_CAST "DummyOperation", service_DummyOperation },
+    { SERVICE_DS_Dz_DummyOperation,
+        "DS/dz", BAD_CAST "DummyOperation",
+        service_DummyOperation },
+    { SERVICE_DS_DsManage_ChangeISDSPassword,
+        "DS/DsManage", BAD_CAST "ChangeISDSPassword",
+        service_ChangeISDSPassword },
 };
 
 
@@ -139,8 +236,8 @@ static int register_namespaces(xmlXPathContextPtr xpath_ctx,
 
 /* Parse soap request, pass it to service endpoint and respond to it.
  * It sends final HTTP response. */
-void soap(int socket, const void *request, size_t request_length,
-        const char *end_point) {
+void soap(int socket, const struct service_configuration *configuration,
+        const void *request, size_t request_length, const char *end_point) {
     xmlDocPtr request_doc = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr request_soap_body = NULL;
@@ -154,6 +251,11 @@ void soap(int socket, const void *request, size_t request_length,
     xmlBufferPtr http_response_body = NULL;
     xmlSaveCtxtPtr save_ctx = NULL;
 
+
+    if (NULL == configuration) {
+        http_send_response_500(socket, "Second argument of soap() is NULL");
+        return;
+    }
 
     if (NULL == request || request_length == 0) {
         http_send_response_400(socket, "Client sent empty body");
@@ -277,13 +379,23 @@ void soap(int socket, const void *request, size_t request_length,
     for (int i = 0; i < sizeof(services)/sizeof(services[0]); i++) {
         if (!strcmp(services[i].end_point, end_point) &&
                 !xmlStrcmp(services[i].name, isds_request->name)) {
-            service_handled = 1;
-            if (!services[i].function(socket, request_doc, xpath_ctx, isds_request,
-                    response_doc, isds_response)) {
-                service_passed = 1;
-            } else {
-                http_send_response_500(socket,
-                        "Internal server error while processing ISDS request");
+            /* Check if the configuration is enabled and find configuration */
+            for (const struct service_configuration *service = configuration;
+                    service->name != SERVICE_END; service++) {
+                if (service->name == services[i].id) {
+                    service_handled = 1;
+                    xpath_ctx->node = isds_request;
+                    if (HTTP_ERROR_SERVER != services[i].function(socket,
+                                request_doc, xpath_ctx, isds_request,
+                                response_doc, isds_response,
+                                service->arguments)) {
+                        service_passed = 1;
+                    } else {
+                        http_send_response_500(socket,
+                                "Internal server error while processing "
+                                "ISDS request");
+                    }
+                }
             }
             break;
         }

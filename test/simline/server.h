@@ -1,6 +1,8 @@
 #ifndef __ISDS_SERVER_H
 #define __ISDS_SERVER_H
 
+#include "services.h"
+
 extern const char *server_error;
 
 /* Save pointer to static error message if not yet set */
@@ -26,6 +28,9 @@ struct arguments_basic_authentication {
                                if not conflicts with ISDS specification.
                                Otherwise server mimics real ISDS implementation
                                as much as possible. */
+    const struct service_configuration *services;   /* Array of enabled
+                                                       services. Last name must
+                                                       be SERVICE_END. */
 };
 
 /* Do the server protocol.
@@ -53,6 +58,9 @@ struct arguments_otp_authentication {
                                if not conflicts with ISDS specification.
                                Otherwise server mimics real ISDS implementation
                                as much as possible. */
+    const struct service_configuration *services;   /* Array of enabled
+                                                       services. Last name must
+                                                       be SERVICE_END. */
 };
 
 /* Do the server protocol with OTP authentication.

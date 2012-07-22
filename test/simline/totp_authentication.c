@@ -91,12 +91,17 @@ int main(int argc, char **argv) {
     }
 
     {
+        const struct service_configuration services[] = {
+            { SERVICE_DS_Dz_DummyOperation, NULL },
+            { SERVICE_END, NULL }
+        };
         const struct arguments_otp_authentication server_arguments = {
             .method = AUTH_OTP_TIME,
             .username = username,
             .password = password,
             .otp = (char *) otp_code,
-            .isds_deviations = 1
+            .isds_deviations = 1,
+            .services = services
         };
         error = start_server(&server_process, &server_address,
                 server_otp_authentication, &server_arguments);

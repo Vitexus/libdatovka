@@ -114,8 +114,9 @@ char *socket2address(int socket) {
 
 
 /* Process ISDS WS ping */
-static void do_ws(int client_socket, const struct http_request *request,
-        const char *required_base_path) {
+static void do_ws(int client_socket,
+        const struct service_configuration *ws_configuration,
+        const struct http_request *request, const char *required_base_path) {
     char *end_point = request->uri; /* Pointer to string in request */
 
     if (request->method != HTTP_METHOD_POST) {
@@ -134,7 +135,8 @@ static void do_ws(int client_socket, const struct http_request *request,
         end_point += required_base_path_length;
     }
 
-    soap(client_socket, request->body, request->body_length, end_point);
+    soap(client_socket, ws_configuration, request->body, request->body_length,
+            end_point);
 }
 
 
@@ -176,7 +178,8 @@ void server_basic_authentication(int server_socket,
                     switch(http_authenticate_basic(request,
                                 arguments->username, arguments->password)) {
                         case HTTP_ERROR_SUCCESS:
-                            do_ws(client_socket, request, ws_base_path_basic);
+                            do_ws(client_socket, arguments->services, request,
+                                    ws_base_path_basic);
                             break;
                         case HTTP_ERROR_CLIENT:
                             if (arguments->isds_deviations)
@@ -193,7 +196,8 @@ void server_basic_authentication(int server_socket,
                     http_send_response_401_basic(client_socket);
                 }
             } else {
-                do_ws(client_socket, request, ws_base_path_basic);
+                do_ws(client_socket, arguments->services, request,
+                        ws_base_path_basic);
             }
         } else {
             /* HTTP method unsupported per ISDS specification */
@@ -415,7 +419,8 @@ static void do_as_logout(int client_socket, const struct http_request *request,
 
 
 /* Process ISDS WS ping authorized by cookie */
-static void do_ws_with_cookie(int client_socket, const struct http_request *request,
+static void do_ws_with_cookie(int client_socket,
+        const struct http_request *request,
         const struct arguments_otp_authentication *arguments,
         const char *valid_base_path) {
     const char *received_cookie =
@@ -423,7 +428,7 @@ static void do_ws_with_cookie(int client_socket, const struct http_request *requ
 
     if (authorization_cookie_value != NULL && received_cookie != NULL &&
             !strcmp(authorization_cookie_value, received_cookie))
-        do_ws(client_socket, request, valid_base_path);
+        do_ws(client_socket, arguments->services, request, valid_base_path);
     else
         http_send_response_403(client_socket);
 }
@@ -484,7 +489,8 @@ void server_otp_authentication(int server_socket,
             }            
         } else {
             if (!strcmp(request->uri, ws_path)) {
-                do_ws(client_socket, request, ws_base_path_otp);
+                do_ws(client_socket, arguments->services, request,
+                        ws_base_path_otp);
             } else {
                 http_send_response_400(client_socket,
                         "Unknown path for TOTP authenticating service");
