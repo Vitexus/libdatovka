@@ -136,11 +136,14 @@ static http_error service_ChangeISDSPassword(int socket,
         xmlDocPtr soap_response, xmlNodePtr isds_response,
         const void *arguments) {
     http_error error = HTTP_ERROR_SUCCESS;
-    char *message = NULL;
-    const char *current_password = (const char *)arguments;
+    char *code = "9999", *message = NULL;
+    const struct arguments_DS_DsManage_ChangeISDSPassword *configuration =
+        (const struct arguments_DS_DsManage_ChangeISDSPassword *)arguments;
     char *old_password = NULL, *new_password = NULL;
+    size_t length;
 
-    if (NULL == current_password) {
+    if (NULL == configuration || NULL == configuration->username ||
+            NULL == configuration->current_password) {
         error = HTTP_ERROR_SERVER;
         goto leave;
     }
@@ -160,22 +163,100 @@ static http_error service_ChangeISDSPassword(int socket,
     }
 
     /* Check defined cases */
-    if (strcmp(current_password, old_password)) {
-        error = insert_isds_status(isds_response, 0, BAD_CAST "1090",
-                BAD_CAST "Bad current password", NULL);
-        if (error == HTTP_ERROR_SUCCESS) error = HTTP_ERROR_CLIENT;
-    } else {
-        error = insert_isds_status(isds_response, 0, BAD_CAST "0000",
-                BAD_CAST "Success", NULL);
+    if (strcmp(configuration->current_password, old_password)) {
+        code = "1090";
+        message = strdup("Bad current password");
+        error = HTTP_ERROR_CLIENT;
+        goto leave;
     }
-    goto end;
+
+    length = strlen(new_password);
+
+    if (length < 8 || length > 32) {
+        code = "1066";
+        message = strdup("Too short or too long");
+        error = HTTP_ERROR_CLIENT;
+        goto leave;
+    }
+
+    {
+        const char lower[] = "abcdefghijklmnopqrstuvwxyz";
+        const char upper[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const char digit[] = "0123456789";
+        const char special[] = "!#$%&()*+,-.:=?@[]_{}|~";
+        _Bool has_lower = 0, has_upper = 0, has_digit=0;
+
+        for (int i = 0; i < length; i++) {
+            if (NULL != strchr(lower, new_password[i]))
+                has_lower = 1;
+            else if (NULL != strchr(upper, new_password[i]))
+                has_upper = 1;
+            else if (NULL != strchr(digit, new_password[i]))
+                has_digit = 1;
+            else if (NULL == strchr(special, new_password[i])) {
+                code = "1079";
+                message = strdup("Password contains forbidden character");
+                error = HTTP_ERROR_CLIENT;
+                goto leave;
+            }
+        }
+
+        if (!has_lower || !has_upper || !has_digit) {
+            code = "1080";
+            message = strdup("Password does not contain lower cased letter, "
+                    "upper cased letter and a digit");
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+    }
+
+    if (!strcmp(old_password, new_password)) {
+        code = "1067";
+        message = strdup("New password same as current one");
+        error = HTTP_ERROR_CLIENT;
+        goto leave;
+    }
+
+    if (NULL != strstr(new_password, configuration->username)) {
+        code = "1082";
+        message = strdup("New password contains user ID");
+        error = HTTP_ERROR_CLIENT;
+        goto leave;
+    }
+
+    for (int i = 0; i < length - 2; i++) {
+        if (new_password[i] == new_password[i+1] &&
+                new_password[i] == new_password[i+2]) {
+            code = "1083";
+            message = strdup("Password contains sequence "
+                    "of three identical characters");
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+    }
+    
+    {
+        const char *forbidden_prefix[] = { "qwert", "asdgf", "12345" };
+        for (int i = 0; i < sizeof(forbidden_prefix)/sizeof(*forbidden_prefix);
+                i++) {
+            if (!strncmp(new_password, forbidden_prefix[i],
+                        strlen(forbidden_prefix[i]))) {
+                code = "1083";
+                message = strdup("Password has forbidden prefix");
+                error = HTTP_ERROR_CLIENT;
+                goto leave;
+            }
+        }
+    }
+
+    code = "0000";
+    message = strdup("Success");
 leave:
-    if (HTTP_ERROR_CLIENT == error) {
+    if (HTTP_ERROR_SERVER != error) {
         http_error next_error = insert_isds_status(isds_response, 0,
-                BAD_CAST "9999", BAD_CAST message, NULL);
+                BAD_CAST code, BAD_CAST message, NULL);
         if (HTTP_ERROR_SUCCESS != next_error) error = next_error;
     }
-end:
     free(old_password);
     free(new_password);
     free(message);
