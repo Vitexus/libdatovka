@@ -494,8 +494,9 @@ There is new error code:
 SendSMSCode
 ===========
 
-Ask server to send new OTP code through SMS gateway. Deliver code is intended
-as input to HTTP Basic authorization header for `ChangePasswordOTP' service.
+Ask server to send new OTP code through SMS gateway. Delivered code is
+intended as input to HTTP Basic authorization header for `ChangePasswordOTP'
+service.
 
 This service resides on different URL path, not only on different path suffix.
 
