@@ -4998,7 +4998,7 @@ isds_error isds_change_password(struct isds_ctx *context,
             char *code_locale = _isds_utf82locale((char*)code);
             char *message_locale = _isds_utf82locale((char*)message);
             isds_log(ILF_ISDS, ILL_DEBUG,
-                    _("Server refused empty password on ChangeISDSPassword "
+                    _("Server refused to change password on ChangeISDSPassword "
                         "request (code=%s, message=%s)\n"),
                     code_locale, message_locale);
             free(code_locale);
