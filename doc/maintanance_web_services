@@ -471,7 +471,7 @@ use.
 This service resides on different URL path, not only on different path suffix.
 
 Input is current password in `dbOldPassword' element, new password in
-`dbOldPassword' element, and OTP method in `dbOTPType' element (known values
+`dbNewPassword' element, and OTP method in `dbOTPType' element (known values
 are: `HOTP', `TOTP'). The selected OTP method must match log-in OTP method.
 
 This service is available without prior statefull log-in. This SOAP request
