@@ -487,6 +487,8 @@ Methods' section.
 Restrictions to new password and response format are the same as in
 `ChangeISDSPassword' service.
 
+Output has schema of `dbStatus' element.
+
 There is new error code:
     2300    Unexpected error
 
@@ -503,6 +505,8 @@ This service resides on different URL path, not only on different path suffix.
 This service is available without prior statefull log-in. This SOAP request
 must be accompanied with HTTP Basic authentication header delivering user
 name and current password.
+
+Output has schema of `dbStatus' element.
 
 Error codes:
     0000    Success
