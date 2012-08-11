@@ -25,6 +25,17 @@ isds_error _isds_soap(struct isds_ctx *context, const char *file,
         const xmlNodePtr request, xmlNodePtr *response,
         void **raw_response, size_t *raw_response_length);
 
+/* Build new URL from current @context and template.
+ * @context is context carrying an URL
+ * @template is printf(3) format string. First argument is string of base URL
+ * found in @context, second argument is length of the base URL.
+ * @new_url is newly allocated URL built from @template. Caller must free it.
+ * Return IE_SUCCESS, or corresponding error code and @new_url will not be
+ * allocated.
+ * */
+isds_error _isds_build_url_from_context(struct isds_ctx *context,
+        const char *template, char **new_url);
+
 /* Invalidate session cookie for otp authenticated @context */
 isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context);
 

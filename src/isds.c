@@ -792,8 +792,12 @@ static isds_error czp_do_close_connection(struct isds_ctx *context) {
 
 
 /* Discard credentials.
+ * @context is ISDS context
+ * @discard_saved_username is true for removing saved username, false for
+ * keeping it.
  * Only that. It does not cause log out, connection close or similar. */
-_hidden isds_error _isds_discard_credentials(struct isds_ctx *context) {
+_hidden isds_error _isds_discard_credentials(struct isds_ctx *context,
+        _Bool discard_saved_username) {
     if(!context) return IE_INVALID_CONTEXT;
 
     if (context->username) {
@@ -805,6 +809,10 @@ _hidden isds_error _isds_discard_credentials(struct isds_ctx *context) {
         zfree(context->password);
     }
     isds_pki_credentials_free(&context->pki_credentials);
+    if (discard_saved_username && context->saved_username) {
+        memset(context->saved_username, 0, strlen(context->saved_username));
+        zfree(context->saved_username);
+    }
 
     return IE_SUCCESS;
 }
@@ -829,7 +837,7 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
     }
 
     /* For sure */
-    _isds_discard_credentials(*context);
+    _isds_discard_credentials(*context, 1);
 
     /* Free other structures */
     free((*context)->tls_verify_server);
@@ -1312,18 +1320,25 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     /* Store credentials */
     /* FIXME: mlock password
      * (I have a library) */
-    _isds_discard_credentials(context);
-    if (username) context->username = strdup(username);
+    _isds_discard_credentials(context, 1);
+    if (username) {
+        context->username = strdup(username);
+        if (NULL != context->otp)
+            context->saved_username = strdup(context->username);
+    }
     if (password) {
-        if (context->otp == NULL)
+        if (NULL == context->otp)
             context->password = strdup(password);
         else
             context->password = _isds_astrcat(password, context->otp->otp_code);
     }
     context->pki_credentials = isds_pki_credentials_duplicate(pki_credentials);
-    if ((username && !context->username) || (password && !context->password) ||
-            (pki_credentials && !context->pki_credentials)) {
-        _isds_discard_credentials(context);
+    if ((NULL != username && NULL == context->username) ||
+            (NULL != password && NULL == context->password) ||
+            (NULL != pki_credentials && NULL == context->pki_credentials) ||
+            (NULL != context->otp && NULL != context->username &&
+             NULL == context->saved_username)) {
+        _isds_discard_credentials(context, 1);
         xmlFreeNode(request);
         return IE_NOMEM;
     }
@@ -1346,7 +1361,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     }
 
     /* Remove credentials */
-    _isds_discard_credentials(context);
+    _isds_discard_credentials(context, 0);
    
     /* Destroy log-in request */
     xmlFreeNode(request);
@@ -1391,12 +1406,12 @@ isds_error isds_logout(struct isds_ctx *context) {
 
         /* Discard credentials for sure. They should not survive isds_login(),
          * even successful .*/
-        _isds_discard_credentials(context);
+        _isds_discard_credentials(context, 1);
         zfree(context->url);
 
         isds_log(ILF_ISDS, ILL_DEBUG, _("Logged out from ISDS server\n"));
     } else {
-        _isds_discard_credentials(context);
+        _isds_discard_credentials(context, 1);
     }
     return IE_SUCCESS;
 #else /* not HAVE_LIBCURL */
@@ -4949,10 +4964,12 @@ isds_error isds_change_password(struct isds_ctx *context,
     }
 
     /* Build ChangeISDSPassword request */
-    request = xmlNewNode(NULL, BAD_CAST "ChangeISDSPassword");
+    request = xmlNewNode(NULL, (NULL == otp) ? BAD_CAST "ChangeISDSPassword" :
+            BAD_CAST "ChangePasswordOTP");
     if (!request) {
-        isds_log_message(context,
-                _("Could not build ChangeISDSPassword request"));
+        isds_log_message(context, (NULL == otp) ?
+                _("Could not build ChangeISDSPassword request") :
+                _("Could not build ChangePasswordOTP request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
@@ -4965,9 +4982,46 @@ isds_error isds_change_password(struct isds_ctx *context,
 
     INSERT_STRING(request, "dbOldPassword", old_password);
     INSERT_STRING(request, "dbNewPassword", new_password);
+    if (NULL != otp) {
+        switch (otp->method) {
+            case OTP_HMAC: 
+                isds_log(ILF_SEC, ILL_INFO,
+                        _("Selected authentication method: "
+                            "HMAC-based one-time password\n"));
+                INSERT_STRING(request, "dbOTPType", BAD_CAST "HOTP");
+                break;
+            case OTP_TIME: 
+                isds_log(ILF_SEC, ILL_INFO,
+                        _("Selected authentication method: "
+                            "Time-based one-time password\n"));
+                INSERT_STRING(request, "dbOTPType", BAD_CAST "TOTP");
+                if (context->otp->otp_code == NULL) {
+                    isds_log(ILF_SEC, ILL_INFO,
+                            _("OTP code has not been provided by "
+                                "application, requesting server for "
+                                "new one.\n"));
+                    /* FIXME: Send SendSMSCode */
+                } else {
+                    isds_log(ILF_SEC, ILL_INFO,
+                            _("OTP code has been provided by "
+                                "application, not requesting server "
+                                "for new one.\n"));
+                }
+                break;
+            default:
+                isds_log_message(context,
+                        _("Unknown one-time password authentication "
+                            "method requested by application"));
+                err = IE_ENUM;
+                goto leave;
+        }
+        /*authenticator_uri = "%1$sasws/changePassword";*/
+    }
 
 
-    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending CheckDataBox request to ISDS\n"));
+    isds_log(ILF_ISDS, ILL_DEBUG, (NULL == otp) ?
+            _("Sending ChangeISDSPassword request to ISDS\n") :
+            _("Sending ChangePasswordOTP request to ISDS\n"));
 
     /* Sent request */
     err = isds(context, SERVICE_DB_ACCESS, request, &response, NULL, NULL);
@@ -4976,8 +5030,10 @@ isds_error isds_change_password(struct isds_ctx *context,
     xmlFreeNode(request); request = NULL;
 
     if (err) {
-        isds_log(ILF_ISDS, ILL_DEBUG,
+        isds_log(ILF_ISDS, ILL_DEBUG, (NULL == otp) ?
                 _("Processing ISDS response on ChangeISDSPassword "
+                    "request failed\n") :
+                _("Processing ISDS response on ChangePasswordOTP "
                     "request failed\n"));
         goto leave;
     }
@@ -4986,8 +5042,10 @@ isds_error isds_change_password(struct isds_ctx *context,
     err = isds_response_status(context, SERVICE_DB_ACCESS, response,
             &code, &message, NULL);
     if (err) {
-        isds_log(ILF_ISDS, ILL_DEBUG,
+        isds_log(ILF_ISDS, ILL_DEBUG, (NULL == otp) ?
                 _("ISDS response on ChangeISDSPassword request is missing "
+                    "status\n") :
+                _("ISDS response on ChangePasswordOTP request is missing "
                     "status\n"));
         goto leave;
     }
@@ -4997,8 +5055,10 @@ isds_error isds_change_password(struct isds_ctx *context,
         if (!xmlStrcmp(code, codes[i])) {
             char *code_locale = _isds_utf82locale((char*)code);
             char *message_locale = _isds_utf82locale((char*)message);
-            isds_log(ILF_ISDS, ILL_DEBUG,
+            isds_log(ILF_ISDS, ILL_DEBUG, (NULL == otp) ?
                     _("Server refused to change password on ChangeISDSPassword "
+                        "request (code=%s, message=%s)\n") :
+                    _("Server refused to change password on ChangePasswordOTP "
                         "request (code=%s, message=%s)\n"),
                     code_locale, message_locale);
             free(code_locale);
@@ -5013,8 +5073,10 @@ isds_error isds_change_password(struct isds_ctx *context,
     if (xmlStrcmp(code, BAD_CAST "0000")) {
         char *code_locale = _isds_utf82locale((char*)code);
         char *message_locale = _isds_utf82locale((char*)message);
-        isds_log(ILF_ISDS, ILL_DEBUG,
+        isds_log(ILF_ISDS, ILL_DEBUG, (NULL == otp) ?
                 _("Server refused to change password on ChangeISDSPassword "
+                    "request (code=%s, message=%s)\n") :
+                _("Server refused to change password on ChangePasswordOTP "
                     "request (code=%s, message=%s)\n"),
                 code_locale, message_locale);
         isds_log_message(context, message_locale);
@@ -5033,8 +5095,10 @@ leave:
     xmlFreeNode(request);
 
     if (!err)
-        isds_log(ILF_ISDS, ILL_DEBUG,
+        isds_log(ILF_ISDS, ILL_DEBUG, (NULL == otp) ?
                 _("Password changed successfully on ChangeISDSPassword "
+                    "request.\n") :
+                _("Password changed successfully on ChangePasswordOTP "
                     "request.\n"));
 #else /* not HAVE_LIBCURL */
     err = IE_NOTSUP;

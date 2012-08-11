@@ -84,6 +84,8 @@ struct isds_ctx {
     char *password;
     struct isds_pki_credentials *pki_credentials;
     struct isds_otp *otp;   /* Pointer (no copy) to OTP credentials */
+    char *saved_username;   /* User name preserved after OTP log-in for OTP
+                               password change */
     CURL *curl;             /* CURL session handle */
     _Bool *tls_verify_server;   /* Verify the server? */
     isds_progress_callback progress_callback;  /* Call it during
@@ -130,8 +132,12 @@ isds_error _isds_register_namespaces(xmlXPathContextPtr xpath_ctx,
 
 #if HAVE_LIBCURL
 /* Discard credentials.
+ * @context is ISDS context
+ * @discard_saved_username is true for removing saved username, false for
+ * keeping it.
  * Only that. It does not cause log out, connection close or similar. */
-isds_error _isds_discard_credentials(struct isds_ctx *context);
+isds_error _isds_discard_credentials(struct isds_ctx *context,
+        _Bool discard_saved_username);
 #endif /* HAVE_LIBCURL */
 
 #endif

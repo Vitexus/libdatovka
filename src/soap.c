@@ -329,7 +329,7 @@ _hidden isds_error _isds_close_connection(struct isds_ctx *context) {
 }
 
 
-/* Remove username and password from context and CURL handle. */
+/* Remove username and password from context CURL handle. */
 static isds_error unset_http_authorization(struct isds_ctx *context) {
     isds_error error = IE_SUCCESS;
 
@@ -352,7 +352,7 @@ static isds_error unset_http_authorization(struct isds_ctx *context) {
                 context->url);
     else
         isds_log(ILF_HTTP, ILL_DEBUG, _("User name and password for server %s"
-                    "have been unset.\n"), context->url);
+                    "have been unset from CURL handle.\n"), context->url);
     return error;
 }
 
@@ -1216,7 +1216,7 @@ redirect:
                     free(url);
                     url = response_otp_headers.redirect;
                     response_otp_headers.redirect = NULL;
-                    _isds_discard_credentials(context);
+                    _isds_discard_credentials(context, 0);
                     err = unset_http_authorization(context);
                     if (err) {
                         isds_log_message(context, _("Could not remove "
@@ -1446,22 +1446,27 @@ leave:
 }
 
 
-/* Invalidate session cookie for otp authenticated @context */
-_hidden isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context) {
-    isds_error err;
-    char *url = NULL;
+/* Build new URL from current @context and template.
+ * @context is context carrying an URL
+ * @template is printf(3) format string. First argument is string of base URL
+ * found in @context, second argument is length of the base URL.
+ * @new_url is newly allocated URL built from @template. Caller must free it.
+ * Return IE_SUCCESS, or corresponding error code and @new_url will not be
+ * allocated.
+ * */
+_hidden isds_error _isds_build_url_from_context(struct isds_ctx *context,
+        const char *template, char **new_url) {
     int length, slashes;
-    long http_code;
-    void *response = NULL;
-    size_t response_length;
 
-    if (context == NULL || context->otp == NULL) return IE_INVALID_CONTEXT;
-    if (context->curl == NULL) return IE_CONNECTION_CLOSED;
-
+    if (NULL != new_url) *new_url = NULL;
+    if (NULL == context) return IE_INVALID_CONTEXT;
+    if (NULL == template) return IE_INVAL;
+    if (NULL == new_url) return IE_INVAL;
+    
     /* Find length of base URL from context URL */
     if (context->url == NULL) {
         isds_log_message(context, _("Base URL could not have been determined "
-                    "from context URL"));
+                    "from context URL because the was no URL set in the context"));
         return IE_ERROR;
     }
     for (length = 0, slashes = 0; context->url[length] != '\0'; length++) {
@@ -1475,11 +1480,30 @@ _hidden isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context) {
     }
     length++;
     
+    /* Build new URL */
+    if (-1 == isds_asprintf(new_url, template, context->url, length))
+        return IE_NOMEM;
+
+    return IE_SUCCESS;
+}
+
+
+/* Invalidate session cookie for otp authenticated @context */
+_hidden isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context) {
+    isds_error err;
+    char *url = NULL;
+    long http_code;
+    void *response = NULL;
+    size_t response_length;
+
+    if (context == NULL || context->otp == NULL) return IE_INVALID_CONTEXT;
+    if (context->curl == NULL) return IE_CONNECTION_CLOSED;
+
     /* Build logout URL */
     /*"https://DOMAINNAME/as/processLogout?uri=https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT"*/
-    if (-1 == isds_asprintf(&url, "%1$.*2$sas/processLogout?uri=%1$sDS/dz",
-                context->url, length))
-        return IE_NOMEM;
+    err = _isds_build_url_from_context(context,
+            "%1$.*2$sas/processLogout?uri=%1$sDS/dz", &url);
+    if (err) return err;
 
     /* Invalidate the cookie by GET request */
     err = http(context,
