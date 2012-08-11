@@ -1140,6 +1140,48 @@ leave:
 }
 
 
+#if HAVE_LIBCURL
+/* Copy credentials into context. Any non-NULL argument will be duplicated.
+ * Destination for NULL argument will not be touched.
+ * Destination pointers must be freed before calling this function.
+ * If @username is @context->saved_username, the saved_username will not be
+ * replaced. The saved_username is clobbered only if context has set otp
+ * member.
+ * Return IE_SUCCESS on success. */
+static isds_error _isds_store_credentials(struct isds_ctx *context,
+        const char *username, const char *password,
+        const struct isds_pki_credentials *pki_credentials) {
+    if (NULL == context) return IE_INVALID_CONTEXT;
+
+    /* FIXME: mlock password
+     * (I have a library) */
+
+    if (username) {
+        context->username = strdup(username);
+        if (NULL != context->otp && context->saved_username != username)
+            context->saved_username = strdup(username);
+    }
+    if (password) {
+        if (NULL == context->otp)
+            context->password = strdup(password);
+        else
+            context->password = _isds_astrcat(password, context->otp->otp_code);
+    }
+    context->pki_credentials = isds_pki_credentials_duplicate(pki_credentials);
+
+    if ((NULL != username && NULL == context->username) ||
+            (NULL != password && NULL == context->password) ||
+            (NULL != pki_credentials && NULL == context->pki_credentials) ||
+            (NULL != context->otp && NULL != context->username &&
+             NULL == context->saved_username)) {
+        return IE_NOMEM;
+    }
+
+    return IE_SUCCESS;
+}
+#endif
+
+
 /* Connect and log into ISDS server.
  * All required arguments will be copied, you do not have to keep them after
  * that.
@@ -1318,26 +1360,8 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     xmlSetNs(request, isds_ns);
 
     /* Store credentials */
-    /* FIXME: mlock password
-     * (I have a library) */
     _isds_discard_credentials(context, 1);
-    if (username) {
-        context->username = strdup(username);
-        if (NULL != context->otp)
-            context->saved_username = strdup(context->username);
-    }
-    if (password) {
-        if (NULL == context->otp)
-            context->password = strdup(password);
-        else
-            context->password = _isds_astrcat(password, context->otp->otp_code);
-    }
-    context->pki_credentials = isds_pki_credentials_duplicate(pki_credentials);
-    if ((NULL != username && NULL == context->username) ||
-            (NULL != password && NULL == context->password) ||
-            (NULL != pki_credentials && NULL == context->pki_credentials) ||
-            (NULL != context->otp && NULL != context->username &&
-             NULL == context->saved_username)) {
+    if (_isds_store_credentials(context, username, password, pki_credentials)) {
         _isds_discard_credentials(context, 1);
         xmlFreeNode(request);
         return IE_NOMEM;
@@ -4917,6 +4941,7 @@ isds_error isds_change_password(struct isds_ctx *context,
         struct isds_otp *otp) {
     isds_error err = IE_SUCCESS;
 #if HAVE_LIBCURL
+    char *saved_url = NULL; /* No copy */
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL, node;
     xmlDocPtr response = NULL;
@@ -4957,10 +4982,11 @@ isds_error isds_change_password(struct isds_ctx *context,
      * TODO: This check should be done downstairs. */
     if (!context->curl) return IE_CONNECTION_CLOSED;
 
-    if (otp != NULL) {
-        isds_log_message(context, _("Changing password if one-time password "
-                    "authentication method is in use is not implemented yet"));
-        return IE_NOTSUP;
+    if (NULL != context->otp && NULL == otp) {
+        isds_log_message(context, _("If one-time password authentication "
+                    "method is in use, changing password requires one-time "
+                    "credentials either"));
+        return IE_INVAL;
     }
 
     /* Build ChangeISDSPassword request */
@@ -4982,6 +5008,7 @@ isds_error isds_change_password(struct isds_ctx *context,
 
     INSERT_STRING(request, "dbOldPassword", old_password);
     INSERT_STRING(request, "dbNewPassword", new_password);
+
     if (NULL != otp) {
         switch (otp->method) {
             case OTP_HMAC: 
@@ -5015,17 +5042,40 @@ isds_error isds_change_password(struct isds_ctx *context,
                 err = IE_ENUM;
                 goto leave;
         }
-        /*authenticator_uri = "%1$sasws/changePassword";*/
-    }
 
+        /* Change URL temporarily for sending this request only */
+        saved_url = context->url;
+        context->url = NULL;
+        if ((err = _isds_build_url_from_context(context,
+                    "%1$.*2$sasws/changePassword", &context->url))) {
+            goto leave;
+        }
+
+        /* Store credentials for sending this request only */
+        context->otp = otp;
+        _isds_discard_credentials(context, 0);
+        if ((err = _isds_store_credentials(context, context->saved_username,
+                    old_password, NULL))) {
+            _isds_discard_credentials(context, 0);
+            goto leave;
+        }
+
+    }
 
     isds_log(ILF_ISDS, ILL_DEBUG, (NULL == otp) ?
             _("Sending ChangeISDSPassword request to ISDS\n") :
             _("Sending ChangePasswordOTP request to ISDS\n"));
 
     /* Sent request */
-    err = isds(context, SERVICE_DB_ACCESS, request, &response, NULL, NULL);
+    err = isds(context, (NULL == otp) ? SERVICE_DB_ACCESS : SERVICE_ASWS,
+            request, &response, NULL, NULL);
    
+    if (otp) {
+        /* Remove temporal credentials */
+        _isds_discard_credentials(context, 0);
+        /* Keep context->otp to keep signaling this is OTP session */
+    }
+
     /* Destroy request */
     xmlFreeNode(request); request = NULL;
 
@@ -5039,7 +5089,8 @@ isds_error isds_change_password(struct isds_ctx *context,
     }
 
     /* Check for response status */
-    err = isds_response_status(context, SERVICE_DB_ACCESS, response,
+    err = isds_response_status(context,
+            (NULL == otp) ? SERVICE_DB_ACCESS : SERVICE_ASWS, response,
             &code, &message, NULL);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG, (NULL == otp) ?
@@ -5089,6 +5140,12 @@ isds_error isds_change_password(struct isds_ctx *context,
     /* Otherwise password changed successfully */
 
 leave:
+    if (NULL != saved_url) {
+        /* Revert URL to original one */
+        zfree(context->url);
+        context->url = saved_url;
+    }
+
     free(code);
     free(message);
     xmlFreeDoc(response);
