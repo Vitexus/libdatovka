@@ -17,7 +17,7 @@ TESTS =
 
 if BUILD_CURL
 TESTS += basic_authentication hotp_authentication totp_authentication \
-		 isds_change_password
+		 isds_change_password totp_isds_change_password
 endif
 
 
@@ -31,6 +31,7 @@ basic_authentication_SOURCES = basic_authentication.c $(common)
 hotp_authentication_SOURCES = hotp_authentication.c $(common)
 totp_authentication_SOURCES = totp_authentication.c $(common)
 isds_change_password_SOURCES = isds_change_password.c $(common)
+totp_isds_change_password_SOURCES = totp_isds_change_password.c $(common)
 
 # Tests that need .gnupg
 #guess_raw_type.log load_raw.log: prepare_environment.log
