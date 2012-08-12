@@ -900,7 +900,7 @@ isds_error isds_get_password_expiration(struct isds_ctx *context,
  * @otp auxiliary data required if one-time password authentication is in use,
  * defines OTP code (if known) and returns fine grade resolution of OTP
  * procedure. Pass NULL, if one-time password authentication is not needed.
- * Please note the @otp argument must much OTP method used at log-in time. See
+ * Please note the @otp argument must match OTP method used at log-in time. See
  * isds_login() function for more details.
  * @return IE_SUCCESS, if password has been changed. Or returns appropriate
  * error code. It can return IE_PARTIAL_SUCCESS if OTP is in use and server is

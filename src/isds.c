@@ -4922,6 +4922,178 @@ leave:
 }
 
 
+#if HAVE_LIBCURL
+/* Request delivering new TOTP code from ISDS through side channel before
+ * changing password.
+ * @context is session context
+ * @password is current password.
+ * @otp auxiliary data required, returns fine grade resolution of OTP procedure.
+ * Please note the @otp argument must have TOTP OTP method. See isds_login()
+ * function for more details.
+ * @return IE_SUCCESS, if new TOTP code has been sent. Or returns appropriate
+ * error code. */
+static isds_error _isds_request_totp_code(struct isds_ctx *context,
+        const char *password, struct isds_otp *otp) {
+    isds_error err = IE_SUCCESS;
+    char *saved_url = NULL; /* No copy */
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+    const xmlChar *codes[] = {
+        BAD_CAST "2300",
+        BAD_CAST "2301",
+        BAD_CAST "2302"
+    };
+    const char *meanings[] = {
+        N_("Unexpected error"),
+        N_("One-time code cannot be re-send faster than once a 30 seconds"),
+        N_("One-time code could not been sent. Try later again.")
+    };
+
+    if (NULL == context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (NULL == password) return IE_INVAL;
+
+    /* Check if connection is established
+     * TODO: This check should be done downstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+    if (NULL == context->otp) {
+        isds_log_message(context, _("This function requires OTP-authenticated "
+                    "context"));
+        return IE_INVALID_CONTEXT;
+    }
+    if (NULL == otp) {
+        isds_log_message(context, _("If one-time password authentication "
+                    "method is in use, requesting new OTP code requires "
+                    "one-time credentials argument either"));
+        return IE_INVAL;
+    }
+    if (otp->method != OTP_TIME) {
+        isds_log_message(context, _("Requesting new time-based OTP code from "
+                    "server requires one-time password authentication "
+                    "method"));
+        return IE_INVAL;
+    }
+    if (context->otp->otp_code != NULL) {
+        isds_log_message(context, _("Requesting new time-based OTP code from "
+                    "server requires undefined OTP code member in "
+                    "one-time credentials argument"));
+        return IE_INVAL;
+    }
+
+
+    /* Build request */
+    request = xmlNewNode(NULL, BAD_CAST "SendSMSCode");
+    if (!request) {
+        isds_log_message(context, _("Could not build SendSMSCode request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    /* Change URL temporarily for sending this request only */
+    saved_url = context->url;
+    context->url = NULL;
+    if ((err = _isds_build_url_from_context(context,
+                "%1$.*2$sasws/changePassword", &context->url))) {
+        goto leave;
+    }
+
+    /* Store credentials for sending this request only */
+    context->otp = otp;
+    _isds_discard_credentials(context, 0);
+    if ((err = _isds_store_credentials(context, context->saved_username,
+                password, NULL))) {
+        _isds_discard_credentials(context, 0);
+        goto leave;
+    }
+
+    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending SendSMSCode request to ISDS\n"));
+
+    /* Sent request */
+    err = isds(context, SERVICE_ASWS, request, &response, NULL, NULL);
+   
+    if (otp) {
+        /* Remove temporal credentials */
+        _isds_discard_credentials(context, 0);
+        /* Keep context->otp to keep signaling this is OTP session */
+    }
+
+    /* Destroy request */
+    xmlFreeNode(request); request = NULL;
+
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Processing ISDS response on SendSMSCode request failed\n"));
+        goto leave;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, SERVICE_ASWS, response,
+            &code, &message, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("ISDS response on SendSMSCode request is missing "
+                    "status\n"));
+        goto leave;
+    }
+
+    /* Check for error */
+    if (xmlStrcmp(code, BAD_CAST "0000")) {
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
+        int i;
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server refused to send new code on SendSMSCode "
+                    "request (code=%s, message=%s)\n"),
+                code_locale, message_locale);
+
+        /* Check for known error codes */
+        for (i = 0; i < sizeof(codes)/sizeof(*codes); i++) {
+            if (!xmlStrcmp(code, codes[i])) break;
+        }
+        if (i < sizeof(codes)/sizeof(*codes))
+            isds_log_message(context, _(meanings[i]));
+        else
+            isds_log_message(context, message_locale);
+
+        free(code_locale);
+        free(message_locale);
+
+        err = IE_ISDS;
+        goto leave;
+    }
+    
+    /* Otherwise new code sent successfully */
+
+leave:
+    if (NULL != saved_url) {
+        /* Revert URL to original one */
+        zfree(context->url);
+        context->url = saved_url;
+    }
+
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+    xmlFreeNode(request);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("New OTP code has been sent successfully on SendSMSCode "
+                    "request.\n"));
+    return err;
+}
+#endif
+
+
 /* Change user password in ISDS.
  * User must supply old password, new password will takes effect after some
  * time, current session can continue. Password must fulfill some constraints.
@@ -4931,7 +5103,7 @@ leave:
  * @otp auxiliary data required if one-time password authentication is in use,
  * defines OTP code (if known) and returns fine grade resolution of OTP
  * procedure. Pass NULL, if one-time password authentication is not needed.
- * Please note the @otp argument must much OTP method used at log-in time. See
+ * Please note the @otp argument must match OTP method used at log-in time. See
  * isds_login() function for more details.
  * @return IE_SUCCESS, if password has been changed. Or returns appropriate
  * error code. It can return IE_PARTIAL_SUCCESS if OTP is in use and server is
@@ -4956,6 +5128,7 @@ isds_error isds_change_password(struct isds_ctx *context,
         BAD_CAST "1083",
         BAD_CAST "1090",
         BAD_CAST "1091",
+        BAD_CAST "2300",
         BAD_CAST "9204"
     };
     const char *meanings[] = {
@@ -4969,6 +5142,7 @@ isds_error isds_change_password(struct isds_ctx *context,
         N_("Password is too simmple"),
         N_("Old password is not valid"),
         N_("Passwords cannot be reused"),
+        N_("Unexpected error"),
         N_("LDAP update error")
     };
 #endif
@@ -5027,7 +5201,10 @@ isds_error isds_change_password(struct isds_ctx *context,
                             _("OTP code has not been provided by "
                                 "application, requesting server for "
                                 "new one.\n"));
-                    /* FIXME: Send SendSMSCode */
+                    err = _isds_request_totp_code(context, old_password, otp);
+                    if (err == IE_SUCCESS) err = IE_PARTIAL_SUCCESS;
+                    goto leave;
+
                 } else {
                     isds_log(ILF_SEC, ILL_INFO,
                             _("OTP code has been provided by "
