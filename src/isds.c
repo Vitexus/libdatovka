@@ -4999,11 +4999,14 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
     xmlSetNs(request, isds_ns);
 
     /* Change URL temporarily for sending this request only */
-    saved_url = context->url;
-    context->url = NULL;
-    if ((err = _isds_build_url_from_context(context,
-                "%1$.*2$sasws/changePassword", &context->url))) {
-        goto leave;
+    {
+        char *new_url = NULL;
+        if ((err = _isds_build_url_from_context(context,
+                    "%1$.*2$sasws/changePassword", &new_url))) {
+            goto leave;
+        }
+        saved_url = context->url;
+        context->url = new_url;
     }
 
     /* Store credentials for sending this request only */
@@ -5221,11 +5224,14 @@ isds_error isds_change_password(struct isds_ctx *context,
         }
 
         /* Change URL temporarily for sending this request only */
-        saved_url = context->url;
-        context->url = NULL;
-        if ((err = _isds_build_url_from_context(context,
-                    "%1$.*2$sasws/changePassword", &context->url))) {
-            goto leave;
+        {
+            char *new_url = NULL;
+            if ((err = _isds_build_url_from_context(context,
+                        "%1$.*2$sasws/changePassword", &new_url))) {
+                goto leave;
+            }
+            saved_url = context->url;
+            context->url = new_url;
         }
 
         /* Store credentials for sending this request only */

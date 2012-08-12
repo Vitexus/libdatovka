@@ -1464,9 +1464,10 @@ _hidden isds_error _isds_build_url_from_context(struct isds_ctx *context,
     if (NULL == new_url) return IE_INVAL;
     
     /* Find length of base URL from context URL */
-    if (context->url == NULL) {
+    if (NULL == context->url) {
         isds_log_message(context, _("Base URL could not have been determined "
-                    "from context URL because the was no URL set in the context"));
+                    "from context URL because there was no URL set in the "
+                    "context"));
         return IE_ERROR;
     }
     for (length = 0, slashes = 0; context->url[length] != '\0'; length++) {
