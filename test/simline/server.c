@@ -27,6 +27,7 @@ static const char *as_path_hotp = "/as/processLogin?type=hotp&uri=";
 static const char *as_path_sendsms = "/as/processLogin?type=totp&sendSms=true&uri=";
 static const char *as_path_dontsendsms = "/as/processLogin?type=totp&uri=";
 static const char *as_path_logout = "/as/processLogout?uri=";
+static const char *asws_path = "/asws/changePassword";
 static const char *ws_path = "/apps/DS/dz";
 
 static const char *ws_base_path_basic = "/";
@@ -382,6 +383,54 @@ static void do_as_phase_two(int client_socket, const struct http_request *reques
 }
 
 
+/* Process ASWS for changing OTP password request */
+/* TODO: Unify with do_as_phase_two(). */
+static void do_asws(int client_socket, const struct http_request *request,
+        const struct arguments_otp_authentication *arguments) {
+    if (arguments == NULL) {
+        http_send_response_500(client_socket,
+                "Third argument of do_asws() is NULL");
+        return;
+    }
+
+    if (request->method != HTTP_METHOD_POST) {
+        http_send_response_400(client_socket,
+                "ASWS request must be POST");
+        return;
+    }
+
+    if (!http_client_authenticates(request)) {
+        http_send_response_401_otp(client_socket,
+                auth_otp_method2string(arguments->method),
+                "authentication.error.userIsNotAuthenticated",
+                "Client did not send any authentication header");
+        return;
+    }
+
+    switch(http_authenticate_otp(request,
+                arguments->username, arguments->password, arguments->otp)) {
+        case HTTP_ERROR_SUCCESS:
+            do_ws(client_socket, arguments->services, request, NULL);
+            break;
+        case HTTP_ERROR_CLIENT:
+            if (arguments->isds_deviations)
+                http_send_response_401_otp(client_socket,
+                        auth_otp_method2string(arguments->method),
+                        "authentication.error.userIsNotAuthenticated",
+                        " Retry: Bad user name or password in second OTP phase.\r\n"
+                        " This is very long header\r\n"
+                        " which should span to more lines.\r\n"
+                        "   Surrounding LWS are meaning-less. ");
+            else
+                http_send_response_403(client_socket);
+            break;
+        default:
+            http_send_response_500(client_socket,
+                    "Could not verify OTP authentication");
+    }
+}
+
+
 /* Process OTP session cookie invalidation request */
 static void do_as_logout(int client_socket, const struct http_request *request,
         const struct arguments_otp_authentication *arguments) {
@@ -480,6 +529,9 @@ void server_otp_authentication(int server_socket,
             } else if (!strncmp(request->uri, as_path_logout,
                         strlen(as_path_logout))) {
                 do_as_logout(client_socket, request, arguments);
+            } else if (arguments->method == AUTH_OTP_TIME &&
+                    !strcmp(request->uri, asws_path)) {
+                do_asws(client_socket, request, arguments);
             } else if (!strcmp(request->uri, ws_path)) {
                 do_ws_with_cookie(client_socket, request, arguments,
                         ws_base_path_otp);

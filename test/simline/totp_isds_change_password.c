@@ -81,13 +81,14 @@ int main(int argc, char **argv) {
     }
 
     {
-        const struct arguments_DS_DsManage_ChangeISDSPassword service_arguments = {
+        const struct arguments_asws_changePassword_ChangePasswordOTP
+            service_arguments = {
             .username = username,
             .current_password = password
         };
         const struct service_configuration services[] = {
             { SERVICE_DS_Dz_DummyOperation, NULL },
-            { SERVICE_DS_DsManage_ChangeISDSPassword, &service_arguments },
+            { SERVICE_asws_changePassword_ChangePasswordOTP, &service_arguments },
             { SERVICE_END, NULL }
         };
         const struct arguments_otp_authentication server_arguments = {
@@ -118,7 +119,11 @@ int main(int argc, char **argv) {
         TEST("login", test_login, IE_SUCCESS, OTP_RESOLUTION_SUCCESS,
                 context, url, username, password, NULL, &otp_credentials);
 
-        TEST("bad old password", test_isds_change_password, IE_INVAL,
+        TEST("bad old password", test_isds_change_password, IE_NOT_LOGGED_IN,
+                context, "bad old password", "h2k$Aana", &otp_credentials);
+        /* FIXME: Client does not send authorization header on second attempt
+         * for uknown reason. */
+        TEST("bad old password2", test_isds_change_password, IE_NOT_LOGGED_IN,
                 context, "bad old password", "h2k$Aana", &otp_credentials);
         TEST("too short (7 characters)", test_isds_change_password, IE_INVAL,
                 context, password, "aB34567", &otp_credentials);
