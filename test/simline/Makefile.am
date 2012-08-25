@@ -21,12 +21,17 @@ TESTS += basic_authentication hotp_authentication totp_authentication \
 endif
 
 
-noinst_PROGRAMS = $(TESTS)
+noinst_PROGRAMS = server_cli $(TESTS)
 
-common = ../test.c ../test.h ../test-tools.h http.c http.h server.c server.h \
-		 service.c service.h services.h
+server_implementation = ../test.c ../test-tools.h http.c http.h \
+						server.c server.h service.c service.h \
+						services.h
+
+# Standalone server
+server_cli_SOURCES = server_cli.c $(server_implementation)
 
 # Access public API only
+common = ../test.h $(server_implementation)
 basic_authentication_SOURCES = basic_authentication.c $(common)
 hotp_authentication_SOURCES = hotp_authentication.c $(common)
 totp_authentication_SOURCES = totp_authentication.c $(common)

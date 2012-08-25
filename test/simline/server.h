@@ -1,6 +1,7 @@
 #ifndef __ISDS_SERVER_H
 #define __ISDS_SERVER_H
 
+#include <sys/types.h> /* For pid_t */
 #include "services.h"
 
 extern const char *server_error;

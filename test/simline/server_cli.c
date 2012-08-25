@@ -1,0 +1,144 @@
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE   /* For getopt(3) */
+#endif
+
+#include "server.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <signal.h>
+#include <sys/select.h>
+#include <sys/types.h> /* For pid_t */
+
+static const char *username = NULL;
+static const char *password = NULL;
+static const char *otp_code = NULL;
+static _Bool terminate = 0;
+static int otp_type = 'n';
+
+
+static void terminator(int signal) {
+    terminate = 1;
+}
+
+static void usage(const char *name) {
+    printf("Usage: %s OPTIONS\n", name);
+    printf(
+            "\t-h TOTP_CODE\n"
+            "\t-p PASSWORD\n"
+            "\t-t TOTP_CODE\n"
+            "\t-u USERNAME\n"
+            );
+}
+
+int main(int argc, char **argv) {
+    int error;
+    pid_t server_process;
+    char *server_address = NULL;
+    int option;
+
+    struct arguments_asws_changePassword_ChangePasswordOTP service_passwdotp_arguments;
+    struct arguments_DS_DsManage_ChangeISDSPassword service_passwdbase_arguments;
+    struct service_configuration services[] = {
+        { SERVICE_END, NULL }, /* This entry will be replaced later */
+        { SERVICE_DS_Dz_DummyOperation, NULL },
+        { SERVICE_END, NULL }
+    };
+    struct arguments_basic_authentication server_basic_arguments;
+    struct arguments_otp_authentication server_otp_arguments;
+
+    /* Parse arguments */
+    while (-1 != (option = getopt(argc, argv, "h:p:t:u:"))) {
+        switch (option) {
+            case 'h':
+                otp_type = 'h';
+                otp_code = optarg;
+                break;
+            case 'p':
+                password = optarg;
+                break;
+            case 't':
+                otp_type = 't';
+                otp_code = optarg;
+                break;
+            case 'u':
+                username = optarg;
+                break;
+            default:
+                usage((argv != NULL) ? argv[0] : NULL);
+                exit(EXIT_FAILURE);
+
+        }
+    }
+    if (optind != argc) {
+        fprintf(stderr, "Superfluous argument\n");
+        usage((argv != NULL) ? argv[0] : NULL);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Configure server */
+    if (otp_type == 'n') {
+        service_passwdbase_arguments.username = username;
+        service_passwdbase_arguments.current_password = password;
+        services[0].name = SERVICE_DS_DsManage_ChangeISDSPassword;
+        services[0].arguments = &service_passwdbase_arguments;
+        server_basic_arguments.username = username;
+        server_basic_arguments.password = password;
+        server_basic_arguments.isds_deviations = 1;
+        server_basic_arguments.services = services;
+    } else {
+        service_passwdotp_arguments.username = username;
+        service_passwdotp_arguments.current_password = password;
+        services[0].name = SERVICE_asws_changePassword_ChangePasswordOTP;
+        services[0].arguments = &service_passwdotp_arguments;
+        server_otp_arguments.otp = otp_code;
+        if (otp_type == 't') { 
+            server_otp_arguments.method = AUTH_OTP_TIME;
+        } else if (otp_type == 'h') {
+            server_otp_arguments.method = AUTH_OTP_HMAC;
+        }
+        server_otp_arguments.username = username;
+        server_otp_arguments.password = password;
+        server_otp_arguments.isds_deviations = 1;
+        server_otp_arguments.services = services;
+    }
+    
+    /* Spawn the server */
+    if ((SIG_ERR == signal(SIGTERM, terminator))) {
+        fprintf(stderr, "Could not register SIGTERM handler\n");
+        exit(EXIT_FAILURE);
+    }
+    if ((SIG_ERR == signal(SIGCHLD, terminator))) {
+        fprintf(stderr, "Could not register SIGCHLD handler\n");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Starting server on:\n");
+    if (otp_type == 'n') {
+        error = start_server(&server_process, &server_address,
+                server_basic_authentication, &server_basic_arguments);
+    } else {
+        error = start_server(&server_process, &server_address,
+                server_otp_authentication, &server_otp_arguments);
+    }
+    if (error == -1) {
+        fprintf(stderr, "Could not start server\n");
+        free(server_address);
+        exit(EXIT_FAILURE);
+    }
+    printf("http://%s/\n", server_address);
+    free(server_address);
+
+    printf("Waiting on SIGTERM...\n");
+    while (!terminate) {
+        select(0, NULL, NULL, NULL, NULL);
+    }
+
+    printf("Terminating...\n");
+    if (-1 == stop_server(server_process)) {
+        fprintf(stderr, "Could not stop server: %s\n", server_error);
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Terminated.\n");
+    exit(EXIT_SUCCESS);
+}
