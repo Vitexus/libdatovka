@@ -1,0 +1,27 @@
+#ifndef __ISDS_SERVICES_H
+#define __ISDS_SERVICES_H
+
+typedef enum {
+    SERVICE_END,
+    SERVICE_DS_Dz_DummyOperation,
+    SERVICE_DS_DsManage_ChangeISDSPassword,
+    SERVICE_asws_changePassword_ChangePasswordOTP
+} service_id;
+
+struct service_configuration {
+    service_id name;        /* Identifier of SOAP service */
+    const void *arguments;  /* Configuration for the service */
+};
+
+struct arguments_DS_DsManage_ChangeISDSPassword {
+    const char *username;           /* User ID */
+    const char *current_password;   /* User password */
+};
+
+struct arguments_asws_changePassword_ChangePasswordOTP {
+    const char *username;           /* User ID */
+    const char *current_password;   /* User password */
+    /* TODO: OTP method */
+};
+
+#endif
