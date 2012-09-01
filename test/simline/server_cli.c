@@ -88,6 +88,7 @@ int main(int argc, char **argv) {
     } else {
         service_passwdotp_arguments.username = username;
         service_passwdotp_arguments.current_password = password;
+        service_passwdotp_arguments.reference_number = NULL;
         services[0].name = SERVICE_asws_changePassword_ChangePasswordOTP;
         services[0].arguments = &service_passwdotp_arguments;
         server_otp_arguments.otp = otp_code;
@@ -96,6 +97,7 @@ int main(int argc, char **argv) {
         } else if (otp_type == 'h') {
             server_otp_arguments.method = AUTH_OTP_HMAC;
         }
+        service_passwdotp_arguments.method = server_otp_arguments.method;
         server_otp_arguments.username = username;
         server_otp_arguments.password = password;
         server_otp_arguments.isds_deviations = 1;

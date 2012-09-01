@@ -1,6 +1,8 @@
 #ifndef __ISDS_SERVICES_H
 #define __ISDS_SERVICES_H
 
+#include "server_types.h"
+
 typedef enum {
     SERVICE_END,
     SERVICE_DS_Dz_DummyOperation,
@@ -21,7 +23,8 @@ struct arguments_DS_DsManage_ChangeISDSPassword {
 struct arguments_asws_changePassword_ChangePasswordOTP {
     const char *username;           /* User ID */
     const char *current_password;   /* User password */
-    /* TODO: OTP method */
+    enum auth_otp_method method;    /* OTP method */
+    const char *reference_number;   /* Return this string if not NULL */
 };
 
 #endif

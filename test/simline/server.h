@@ -2,6 +2,7 @@
 #define __ISDS_SERVER_H
 
 #include <sys/types.h> /* For pid_t */
+#include "server_types.h"
 #include "services.h"
 
 extern const char *server_error;
@@ -41,12 +42,6 @@ struct arguments_basic_authentication {
 void server_basic_authentication(int server_socket,
         const void *server_arguments);
 
-
-/* One-time password authentication method */
-enum auth_otp_method {
-    AUTH_OTP_HMAC = 0,  /* HMAC-based OTP */
-    AUTH_OTP_TIME       /* Time-based OTP */
-};
 
 struct arguments_otp_authentication {
     enum auth_otp_method method;    /* Selects OTP method to enable */

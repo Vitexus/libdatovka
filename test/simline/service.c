@@ -128,25 +128,27 @@ static http_error service_DummyOperation(int socket, const xmlDocPtr soap_reques
 }
 
 
-/* Implement ChangeISDSPassword.
- * @arguments is current password as const char * */
-static http_error service_ChangeISDSPassword(int socket,
-        const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
-        const xmlNodePtr isds_request,
-        xmlDocPtr soap_response, xmlNodePtr isds_response,
-        const void *arguments) {
+/* Common part for ChangeISDSPassword and ChangePasswordOTP.
+ * @code is output pointer to static string
+ * @pass_message is output pointer to auto-allocated string
+ * @arguments is pointer to struct arguments_DS_DsManage_ChangeISDSPassword */
+static http_error check_passwd(
+        const char *username, const char *current_password,
+        xmlXPathContextPtr xpath_ctx,
+        char **code, char **pass_message) {
     http_error error = HTTP_ERROR_SUCCESS;
-    char *code = "9999", *message = NULL;
-    const struct arguments_DS_DsManage_ChangeISDSPassword *configuration =
-        (const struct arguments_DS_DsManage_ChangeISDSPassword *)arguments;
+    char *message = NULL;
     char *old_password = NULL, *new_password = NULL;
     size_t length;
 
-    if (NULL == configuration || NULL == configuration->username ||
-            NULL == configuration->current_password) {
+    if (NULL == username || NULL == current_password ||
+            NULL == code || NULL == pass_message) {
         error = HTTP_ERROR_SERVER;
         goto leave;
     }
+
+    *code = "9999";
+
 
     /* Parse request */
     EXTRACT_STRING("isds:dbOldPassword", old_password);
@@ -163,8 +165,8 @@ static http_error service_ChangeISDSPassword(int socket,
     }
 
     /* Check defined cases */
-    if (strcmp(configuration->current_password, old_password)) {
-        code = "1090";
+    if (strcmp(current_password, old_password)) {
+        *code = "1090";
         message = strdup("Bad current password");
         error = HTTP_ERROR_CLIENT;
         goto leave;
@@ -173,7 +175,7 @@ static http_error service_ChangeISDSPassword(int socket,
     length = strlen(new_password);
 
     if (length < 8 || length > 32) {
-        code = "1066";
+        *code = "1066";
         message = strdup("Too short or too long");
         error = HTTP_ERROR_CLIENT;
         goto leave;
@@ -194,7 +196,7 @@ static http_error service_ChangeISDSPassword(int socket,
             else if (NULL != strchr(digit, new_password[i]))
                 has_digit = 1;
             else if (NULL == strchr(special, new_password[i])) {
-                code = "1079";
+                *code = "1079";
                 message = strdup("Password contains forbidden character");
                 error = HTTP_ERROR_CLIENT;
                 goto leave;
@@ -202,7 +204,7 @@ static http_error service_ChangeISDSPassword(int socket,
         }
 
         if (!has_lower || !has_upper || !has_digit) {
-            code = "1080";
+            *code = "1080";
             message = strdup("Password does not contain lower cased letter, "
                     "upper cased letter and a digit");
             error = HTTP_ERROR_CLIENT;
@@ -211,14 +213,14 @@ static http_error service_ChangeISDSPassword(int socket,
     }
 
     if (!strcmp(old_password, new_password)) {
-        code = "1067";
+        *code = "1067";
         message = strdup("New password same as current one");
         error = HTTP_ERROR_CLIENT;
         goto leave;
     }
 
-    if (NULL != strstr(new_password, configuration->username)) {
-        code = "1082";
+    if (NULL != strstr(new_password, username)) {
+        *code = "1082";
         message = strdup("New password contains user ID");
         error = HTTP_ERROR_CLIENT;
         goto leave;
@@ -227,7 +229,7 @@ static http_error service_ChangeISDSPassword(int socket,
     for (int i = 0; i < length - 2; i++) {
         if (new_password[i] == new_password[i+1] &&
                 new_password[i] == new_password[i+2]) {
-            code = "1083";
+            *code = "1083";
             message = strdup("Password contains sequence "
                     "of three identical characters");
             error = HTTP_ERROR_CLIENT;
@@ -241,7 +243,7 @@ static http_error service_ChangeISDSPassword(int socket,
                 i++) {
             if (!strncmp(new_password, forbidden_prefix[i],
                         strlen(forbidden_prefix[i]))) {
-                code = "1083";
+                *code = "1083";
                 message = strdup("Password has forbidden prefix");
                 error = HTTP_ERROR_CLIENT;
                 goto leave;
@@ -249,17 +251,99 @@ static http_error service_ChangeISDSPassword(int socket,
         }
     }
 
-    code = "0000";
+    *code = "0000";
     message = strdup("Success");
+leave:
+    free(old_password);
+    free(new_password);
+    *pass_message = message;
+    return error;
+}
+
+
+/* Implement ChangeISDSPassword.
+ * @arguments is pointer to struct arguments_DS_DsManage_ChangeISDSPassword */
+static http_error service_ChangeISDSPassword(int socket,
+        const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
+        const xmlNodePtr isds_request,
+        xmlDocPtr soap_response, xmlNodePtr isds_response,
+        const void *arguments) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    char *code = "9999", *message = NULL;
+    const struct arguments_DS_DsManage_ChangeISDSPassword *configuration =
+        (const struct arguments_DS_DsManage_ChangeISDSPassword *)arguments;
+
+    if (NULL == configuration || NULL == configuration->username ||
+            NULL == configuration->current_password) {
+        error = HTTP_ERROR_SERVER;
+        goto leave;
+    }
+
+    /* Check for common password rules */
+    error = check_passwd(
+        configuration->username, configuration->current_password,
+        xpath_ctx, &code, &message);
+
 leave:
     if (HTTP_ERROR_SERVER != error) {
         http_error next_error = insert_isds_status(isds_response, 0,
                 BAD_CAST code, BAD_CAST message, NULL);
         if (HTTP_ERROR_SUCCESS != next_error) error = next_error;
     }
-    free(old_password);
-    free(new_password);
     free(message);
+    return error;
+}
+
+
+/* Implement ChangePasswordOTP.
+ * @arguments is pointer to struct
+ * arguments_asws_changePassword_ChangePasswordOTP */
+static http_error service_ChangePasswordOTP(int socket,
+        const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
+        const xmlNodePtr isds_request,
+        xmlDocPtr soap_response, xmlNodePtr isds_response,
+        const void *arguments) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    char *code = "9999", *message = NULL;
+    const struct arguments_asws_changePassword_ChangePasswordOTP *configuration
+        = (const struct arguments_asws_changePassword_ChangePasswordOTP *)
+        arguments;
+    char *method;
+
+    if (NULL == configuration || NULL == configuration->username ||
+            NULL == configuration->current_password) {
+        error = HTTP_ERROR_SERVER;
+        goto leave;
+    }
+
+    /* Chek for OTP method */
+    EXTRACT_STRING("isds:dbOTPType", method);
+    if (NULL == method) {
+        message = strdup("Empty isds:dbOTPType");
+        error = HTTP_ERROR_CLIENT;
+        goto leave;
+    }
+    if ((configuration->method == AUTH_OTP_HMAC && strcmp(method, "HOTP")) ||
+        (configuration->method == AUTH_OTP_TIME && strcmp(method, "TOTP"))) {
+        message = strdup("isds:dbOTPType does not match OTP method");
+        error = HTTP_ERROR_CLIENT;
+        goto leave;
+    }
+
+    /* Check for common password rules */
+    error = check_passwd(
+        configuration->username, configuration->current_password,
+        xpath_ctx, &code, &message);
+
+leave:
+    if (HTTP_ERROR_SERVER != error) {
+        http_error next_error = insert_isds_status(isds_response, 0,
+                BAD_CAST code, BAD_CAST message,
+                BAD_CAST configuration->reference_number);
+        if (HTTP_ERROR_SUCCESS != next_error) error = next_error;
+    }
+    free(message);
+    free(method);
     return error;
 }
 
@@ -272,6 +356,9 @@ static struct service services[] = {
     { SERVICE_DS_DsManage_ChangeISDSPassword,
         "DS/DsManage", BAD_CAST "ChangeISDSPassword",
         service_ChangeISDSPassword },
+    { SERVICE_asws_changePassword_ChangePasswordOTP,
+        "/asws/changePassword", BAD_CAST "ChangePasswordOTP",
+        service_ChangePasswordOTP },
 };
 
 

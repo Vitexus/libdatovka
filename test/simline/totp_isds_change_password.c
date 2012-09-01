@@ -88,7 +88,9 @@ int main(int argc, char **argv) {
         const struct arguments_asws_changePassword_ChangePasswordOTP
             service_arguments = {
             .username = username,
-            .current_password = password
+            .current_password = password,
+            .method = AUTH_OTP_TIME,
+            .reference_number = "42"
         };
         const struct service_configuration services[] = {
             { SERVICE_DS_Dz_DummyOperation, NULL },
