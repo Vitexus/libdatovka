@@ -5187,6 +5187,7 @@ isds_error isds_change_password(struct isds_ctx *context,
     INSERT_STRING(request, "dbNewPassword", new_password);
 
     if (NULL != otp) {
+        otp->resolution = OTP_RESOLUTION_UNKNOWN;
         switch (otp->method) {
             case OTP_HMAC: 
                 isds_log(ILF_SEC, ILL_INFO,
