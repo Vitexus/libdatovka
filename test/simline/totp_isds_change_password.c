@@ -41,8 +41,9 @@ static int test_login(const isds_error error,
 
 
 static int test_isds_change_password(const isds_error error,
-        struct isds_ctx *context, const char *old_password,
-        const char *new_password, struct isds_otp *otp) {
+        const isds_otp_resolution resolution, struct isds_ctx *context,
+        const char *old_password, const char *new_password,
+        struct isds_otp *otp) {
     isds_error err;
 
     err = isds_change_password(context, old_password, new_password, otp);
@@ -50,6 +51,9 @@ static int test_isds_change_password(const isds_error error,
         FAIL_TEST("Wrong return code: expected=%s, returned=%s (%s)",
                 isds_strerror(error), isds_strerror(err),
                 isds_long_message(context));
+    if (otp != NULL && resolution != otp->resolution)
+        FAIL_TEST("Wrong OTP resolution: expected=%d, returned=%d (%s)",
+                resolution, otp->resolution, isds_long_message(context));
 
     PASS_TEST;
 }
@@ -120,37 +124,54 @@ int main(int argc, char **argv) {
                 context, url, username, password, NULL, &otp_credentials);
 
         TEST("bad old password", test_isds_change_password, IE_NOT_LOGGED_IN,
+                OTP_RESOLUTION_BAD_AUTHENTICATION,
                 context, "bad old password", "h2k$Aana", &otp_credentials);
-        /* FIXME: Client does not send authorization header on second attempt
-         * for uknown reason. */
+        /* XXX: There is bug in curl < 7.28.0 when authorization header is not
+         * sent on second attempt after 401 response. Fixed by upstream commit
+         * ce8311c7e49eca93c136b58efa6763853541ec97. The only work-around is
+         * to use new CURL handle. */
         TEST("bad old password2", test_isds_change_password, IE_NOT_LOGGED_IN,
+                OTP_RESOLUTION_BAD_AUTHENTICATION,
                 context, "bad old password", "h2k$Aana", &otp_credentials);
         TEST("too short (7 characters)", test_isds_change_password, IE_INVAL,
+                OTP_RESOLUTION_SUCCESS,
                 context, password, "aB34567", &otp_credentials);
         TEST("too long (33 characters)", test_isds_change_password, IE_INVAL,
+                OTP_RESOLUTION_SUCCESS,
                 context, password, "aB3456789112345678921234567893123",
                 &otp_credentials);
         TEST("no upper case letter", test_isds_change_password, IE_INVAL,
+                OTP_RESOLUTION_SUCCESS,
                 context, password, "1bcdefgh", &otp_credentials);
         TEST("no lower case letter", test_isds_change_password, IE_INVAL,
+                OTP_RESOLUTION_SUCCESS,
                 context, password, "1BCDEFGH", &otp_credentials);
         TEST("no digit", test_isds_change_password, IE_INVAL,
+                OTP_RESOLUTION_SUCCESS,
                 context, password, "aBCDEFGH", &otp_credentials);
         TEST("forbidden space", test_isds_change_password, IE_INVAL,
+                OTP_RESOLUTION_SUCCESS,
                 context, password, " h2k$Aan", &otp_credentials);
         TEST("reused password", test_isds_change_password, IE_INVAL,
+                OTP_RESOLUTION_SUCCESS,
                 context, password, password, &otp_credentials);
         TEST("password contains user ID", test_isds_change_password, IE_INVAL,
+                OTP_RESOLUTION_SUCCESS,
                 context, password, username, &otp_credentials);
         TEST("sequence of the same characters", test_isds_change_password,
-                IE_INVAL, context, password, "h222k$Aa", &otp_credentials);
+                IE_INVAL, OTP_RESOLUTION_SUCCESS,
+                context, password, "h222k$Aa", &otp_credentials);
         TEST("forbiden prefix qwert", test_isds_change_password,
-                IE_INVAL, context, password, "qwert$A8", &otp_credentials);
+                IE_INVAL, OTP_RESOLUTION_SUCCESS,
+                context, password, "qwert$A8", &otp_credentials);
         TEST("forbiden prefix asdgf", test_isds_change_password,
-                IE_INVAL, context, password, "asdgf$A8", &otp_credentials);
+                IE_INVAL, OTP_RESOLUTION_SUCCESS,
+                context, password, "asdgf$A8", &otp_credentials);
         TEST("forbiden prefix 12345", test_isds_change_password,
-                IE_INVAL, context, password, "12345$Aa", &otp_credentials);
+                IE_INVAL, OTP_RESOLUTION_SUCCESS,
+                context, password, "12345$Aa", &otp_credentials);
         TEST("valid request", test_isds_change_password, IE_SUCCESS,
+                OTP_RESOLUTION_SUCCESS,
                 context, password, "h2k$Aana", &otp_credentials);
 
         isds_logout(context);
