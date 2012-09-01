@@ -114,11 +114,11 @@ char *socket2address(int socket) {
 }
 
 
-/* Process ISDS WS ping */
+/* Process ISDS web service */
 static void do_ws(int client_socket,
         const struct service_configuration *ws_configuration,
         const struct http_request *request, const char *required_base_path) {
-    char *end_point = request->uri; /* Pointer to string in request */
+    char *end_point = request->uri; /* Pointer to string in the request */
 
     if (request->method != HTTP_METHOD_POST) {
         http_send_response_400(client_socket,
