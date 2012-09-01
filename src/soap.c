@@ -759,7 +759,7 @@ static isds_error http(struct isds_ctx *context,
     }
 
     /* Set authorization cookie for OTP session */
-    if (!curl_err && context->otp != NULL) {
+    if (!curl_err && context->otp) {
         isds_log(ILF_SEC, ILL_INFO,
                 _("Cookies will be stored and sent "
                     "because context has been authorized by OTP.\n"));
@@ -1170,10 +1170,11 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
 
-    if (context->otp != NULL)
+    if (context->otp_credentials != NULL)
         memset(&response_otp_headers, 0, sizeof(response_otp_headers));
 redirect:
-    if (context->otp != NULL) auth_headers_free(&response_otp_headers);
+    if (context->otp_credentials != NULL)
+        auth_headers_free(&response_otp_headers);
     isds_log(ILF_SOAP, ILL_DEBUG,
             _("SOAP request to sent to %s:\n%.*s\nEnd of SOAP request\n"),
             url, http_request->use, http_request->content);
@@ -1181,7 +1182,7 @@ redirect:
     err = http(context, url, 0, http_request->content, http_request->use,
             &http_response, &response_length,
             &mime_type, NULL, &http_code,
-            (context->otp == NULL) ? NULL: &response_otp_headers);
+            (context->otp_credentials == NULL) ? NULL: &response_otp_headers);
 
     /* TODO: HTTP binding for SOAP prescribes non-200 HTTP return codes
      * to be processed too. */
@@ -1198,17 +1199,19 @@ redirect:
          * operation like downloading message without proper user
          * permissions. In that case we should keep connection opened. */
         case 302:
-            if (context->otp) {
+            if (context->otp_credentials) {
                 if (response_otp_headers.resolution == OTP_RESOLUTION_UNKNOWN)
-                    context->otp->resolution = OTP_RESOLUTION_SUCCESS;
+                    context->otp_credentials->resolution =
+                        OTP_RESOLUTION_SUCCESS;
                 else
-                    context->otp->resolution = response_otp_headers.resolution;
+                    context->otp_credentials->resolution =
+                        response_otp_headers.resolution;
                 err = IE_PARTIAL_SUCCESS;
                 isds_printf_message(context,
                         _("Server redirects on <%s> because OTP authentication "
                             "succeeded."),
                         url);
-                if (context->otp->otp_code != NULL &&
+                if (context->otp_credentials->otp_code != NULL &&
                         response_otp_headers.redirect != NULL) {
                     /* XXX: If OTP code is known, this must be second OTP phase, so
                      * send final POST request and unset Basic authentication
@@ -1240,8 +1243,9 @@ redirect:
         case 401:   /* ISDS server returns 401 even if Authorization
                        presents. */
         case 403:   /* HTTP/1.0 prescribes 403 if Authorization presents. */
-            if (context->otp)
-                context->otp->resolution = response_otp_headers.resolution;
+            if (context->otp_credentials)
+                context->otp_credentials->resolution =
+                    response_otp_headers.resolution;
             err = IE_NOT_LOGGED_IN;
             isds_log_message(context, _("Authentication failed"));
             goto leave;
@@ -1434,7 +1438,8 @@ leave:
     xmlXPathFreeObject(response_soap_headers);
     xmlXPathFreeContext(xpath_ctx);
     xmlFreeDoc(response_soap_doc);
-    if (context->otp != NULL) auth_headers_free(&response_otp_headers);
+    if (context->otp_credentials != NULL)
+        auth_headers_free(&response_otp_headers);
     free(mime_type);
     free(http_response);
     xmlSaveClose(save_ctx);
@@ -1497,7 +1502,7 @@ _hidden isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context) {
     void *response = NULL;
     size_t response_length;
 
-    if (context == NULL || context->otp == NULL) return IE_INVALID_CONTEXT;
+    if (context == NULL || !context->otp) return IE_INVALID_CONTEXT;
     if (context->curl == NULL) return IE_CONNECTION_CLOSED;
 
     /* Build logout URL */

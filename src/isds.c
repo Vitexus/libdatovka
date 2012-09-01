@@ -1158,21 +1158,22 @@ static isds_error _isds_store_credentials(struct isds_ctx *context,
 
     if (username) {
         context->username = strdup(username);
-        if (NULL != context->otp && context->saved_username != username)
+        if (context->otp && context->saved_username != username)
             context->saved_username = strdup(username);
     }
     if (password) {
-        if (NULL == context->otp)
+        if (NULL == context->otp_credentials)
             context->password = strdup(password);
         else
-            context->password = _isds_astrcat(password, context->otp->otp_code);
+            context->password = _isds_astrcat(password,
+                    context->otp_credentials->otp_code);
     }
     context->pki_credentials = isds_pki_credentials_duplicate(pki_credentials);
 
     if ((NULL != username && NULL == context->username) ||
             (NULL != password && NULL == context->password) ||
             (NULL != pki_credentials && NULL == context->pki_credentials) ||
-            (NULL != context->otp && NULL != context->username &&
+            (context->otp && NULL != context->username &&
              NULL == context->saved_username)) {
         return IE_NOMEM;
     }
@@ -1263,9 +1264,10 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
                     _("Both username and password must be supplied"));
             return IE_INVAL;
         }
-        context->otp = otp;
+        context->otp_credentials = otp;
+        context->otp = (NULL != context->otp_credentials);
         
-        if (NULL == context->otp) {
+        if (!context->otp) {
             /* Default locator is official system (without certificate or
              * OTP) */
             context->url = strdup((NULL != url) ? url : isds_locator);
@@ -1273,7 +1275,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
             const char *authenticator_uri = NULL;
             if (!url) url = isds_otp_locator;
             otp->resolution = OTP_RESOLUTION_UNKNOWN;
-            switch (context->otp->method) {
+            switch (context->otp_credentials->method) {
                 case OTP_HMAC: 
                     isds_log(ILF_SEC, ILL_INFO,
                             _("Selected authentication method: "
@@ -1285,7 +1287,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
                     isds_log(ILF_SEC, ILL_INFO,
                             _("Selected authentication method: "
                                 "Time-based one-time password\n"));
-                    if (context->otp->otp_code == NULL) {
+                    if (context->otp_credentials->otp_code == NULL) {
                         isds_log(ILF_SEC, ILL_INFO,
                                 _("OTP code has not been provided by "
                                     "application, requesting server for "
@@ -1314,7 +1316,8 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
         }
     } else {
         /* Default locator is official system (with client certificate) */
-        context->otp = NULL;
+        context->otp = 0;
+        context->otp_credentials = NULL;
         if (!url) url = isds_cert_locator;
 
         if (!username) {
@@ -1382,6 +1385,8 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
         if (context->url == NULL) {
             soap_err = IE_NOMEM;
         }
+        /* Detach pointer to OTP credentials from context */
+        context->otp_credentials = NULL;
     }
 
     /* Remove credentials */
@@ -1420,7 +1425,7 @@ isds_error isds_logout(struct isds_ctx *context) {
 
 #if HAVE_LIBCURL
     if (context->curl) {
-        if (context->otp != NULL) {
+        if (context->otp) {
             isds_error err = _isds_invalidate_otp_cookie(context);
             if (err) return err;
         }
@@ -4959,7 +4964,7 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
      * TODO: This check should be done downstairs. */
     if (!context->curl) return IE_CONNECTION_CLOSED;
 
-    if (NULL == context->otp) {
+    if (!context->otp) {
         isds_log_message(context, _("This function requires OTP-authenticated "
                     "context"));
         return IE_INVALID_CONTEXT;
@@ -4976,7 +4981,7 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
                     "method"));
         return IE_INVAL;
     }
-    if (context->otp->otp_code != NULL) {
+    if (otp->otp_code != NULL) {
         isds_log_message(context, _("Requesting new time-based OTP code from "
                     "server requires undefined OTP code member in "
                     "one-time credentials argument"));
@@ -5010,7 +5015,7 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
     }
 
     /* Store credentials for sending this request only */
-    context->otp = otp;
+    context->otp_credentials = otp;
     _isds_discard_credentials(context, 0);
     if ((err = _isds_store_credentials(context, context->saved_username,
                 password, NULL))) {
@@ -5026,7 +5031,9 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
     if (otp) {
         /* Remove temporal credentials */
         _isds_discard_credentials(context, 0);
-        /* Keep context->otp to keep signaling this is OTP session */
+        /* Detach pointer to OTP credentials from context */
+        context->otp_credentials = NULL;
+        /* Keep context->otp true to keep signaling this is OTP session */
     }
 
     /* Destroy request */
@@ -5159,7 +5166,7 @@ isds_error isds_change_password(struct isds_ctx *context,
      * TODO: This check should be done downstairs. */
     if (!context->curl) return IE_CONNECTION_CLOSED;
 
-    if (NULL != context->otp && NULL == otp) {
+    if (context->otp && NULL == otp) {
         isds_log_message(context, _("If one-time password authentication "
                     "method is in use, changing password requires one-time "
                     "credentials either"));
@@ -5200,7 +5207,7 @@ isds_error isds_change_password(struct isds_ctx *context,
                         _("Selected authentication method: "
                             "Time-based one-time password\n"));
                 INSERT_STRING(request, "dbOTPType", BAD_CAST "TOTP");
-                if (context->otp->otp_code == NULL) {
+                if (otp->otp_code == NULL) {
                     isds_log(ILF_SEC, ILL_INFO,
                             _("OTP code has not been provided by "
                                 "application, requesting server for "
@@ -5236,7 +5243,7 @@ isds_error isds_change_password(struct isds_ctx *context,
         }
 
         /* Store credentials for sending this request only */
-        context->otp = otp;
+        context->otp_credentials = otp;
         _isds_discard_credentials(context, 0);
         if ((err = _isds_store_credentials(context, context->saved_username,
                     old_password, NULL))) {
@@ -5257,7 +5264,9 @@ isds_error isds_change_password(struct isds_ctx *context,
     if (otp) {
         /* Remove temporal credentials */
         _isds_discard_credentials(context, 0);
-        /* Keep context->otp to keep signaling this is OTP session */
+        /* Detach pointer to OTP credentials from context */
+        context->otp_credentials = NULL;
+        /* Keep context->otp true to keep signaling this is OTP session */
     }
 
     /* Destroy request */

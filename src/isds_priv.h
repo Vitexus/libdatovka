@@ -83,7 +83,8 @@ struct isds_ctx {
     char *username;
     char *password;
     struct isds_pki_credentials *pki_credentials;
-    struct isds_otp *otp;   /* Pointer (no copy) to OTP credentials */
+    _Bool otp;              /* This is OTP-authenticated context */
+    struct isds_otp *otp_credentials;   /* Weak pointer to OTP credentials */
     char *saved_username;   /* User name preserved after OTP log-in for OTP
                                password change */
     CURL *curl;             /* CURL session handle */
