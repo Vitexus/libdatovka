@@ -125,16 +125,36 @@ int main(int argc, char **argv) {
         TEST("login", test_login, IE_SUCCESS, OTP_RESOLUTION_SUCCESS,
                 context, url, username, password, NULL, &otp_credentials);
 
-        TEST("bad old password", test_isds_change_password, IE_NOT_LOGGED_IN,
-                OTP_RESOLUTION_BAD_AUTHENTICATION,
-                context, "bad old password", "h2k$Aana", &otp_credentials);
+        /* First phase of authentication */
+        otp_credentials.otp_code = NULL;
+        TEST("First phase with invalid password", test_isds_change_password,
+                IE_NOT_LOGGED_IN, OTP_RESOLUTION_BAD_AUTHENTICATION,
+                context, "nbuusr1", "h2k$Aana", &otp_credentials);
+        otp_credentials.otp_code = NULL;
+        TEST("First phase with valid password", test_isds_change_password,
+                IE_PARTIAL_SUCCESS, OTP_RESOLUTION_TOTP_SENT,
+                context, password, "h2k$Aana", &otp_credentials);
+
+        /* Second phase of authentication */
+        otp_credentials.otp_code = (char *) otp_code;
+        TEST("Second phase with invalid password", test_isds_change_password,
+                IE_NOT_LOGGED_IN, OTP_RESOLUTION_BAD_AUTHENTICATION,
+                context, "nbuusr1", "h2k$Aana", &otp_credentials);
         /* XXX: There is bug in curl < 7.28.0 when authorization header is not
          * sent on second attempt after 401 response. Fixed by upstream commit
          * ce8311c7e49eca93c136b58efa6763853541ec97. The only work-around is
          * to use new CURL handle. */
-        TEST("bad old password2", test_isds_change_password, IE_NOT_LOGGED_IN,
-                OTP_RESOLUTION_BAD_AUTHENTICATION,
-                context, "bad old password", "h2k$Aana", &otp_credentials);
+        TEST("Second phase with invalid password 2", test_isds_change_password,
+                IE_NOT_LOGGED_IN, OTP_RESOLUTION_BAD_AUTHENTICATION,
+                context, "nbuusr2", "h2k$Aana", &otp_credentials);
+        otp_credentials.otp_code = "666";
+        TEST("Second phase with valid password but invalid OTP code",
+                test_isds_change_password,
+                IE_NOT_LOGGED_IN, OTP_RESOLUTION_BAD_AUTHENTICATION,
+                context, password, "h2k$Aana", &otp_credentials);
+
+        /* Checks for new password */
+        otp_credentials.otp_code = (char *) otp_code;
         TEST("too short (7 characters)", test_isds_change_password, IE_INVAL,
                 OTP_RESOLUTION_SUCCESS,
                 context, password, "aB34567", &otp_credentials);
