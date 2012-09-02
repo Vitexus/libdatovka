@@ -1191,6 +1191,9 @@ redirect:
         goto leave;
     }
 
+    if (NULL != context->otp_credentials)
+        context->otp_credentials->resolution = response_otp_headers.resolution;
+    
     /* Check for HTTP return code */
     isds_log(ILF_SOAP, ILL_DEBUG, _("Server returned %ld HTTP code\n"),
             http_code);
@@ -1198,14 +1201,20 @@ redirect:
         /* XXX: We must see which code is used for not permitted ISDS
          * operation like downloading message without proper user
          * permissions. In that case we should keep connection opened. */
-        case 302:
-            if (context->otp_credentials) {
-                if (response_otp_headers.resolution == OTP_RESOLUTION_UNKNOWN)
+        case 200:
+            if (NULL != context->otp_credentials) {
+                if (context->otp_credentials->resolution ==
+                        OTP_RESOLUTION_UNKNOWN)
                     context->otp_credentials->resolution =
                         OTP_RESOLUTION_SUCCESS;
-                else
+            }
+            break;
+        case 302:
+            if (NULL != context->otp_credentials) {
+                if (context->otp_credentials->resolution ==
+                        OTP_RESOLUTION_UNKNOWN)
                     context->otp_credentials->resolution =
-                        response_otp_headers.resolution;
+                        OTP_RESOLUTION_SUCCESS;
                 err = IE_PARTIAL_SUCCESS;
                 isds_printf_message(context,
                         _("Server redirects on <%s> because OTP authentication "
@@ -1243,9 +1252,6 @@ redirect:
         case 401:   /* ISDS server returns 401 even if Authorization
                        presents. */
         case 403:   /* HTTP/1.0 prescribes 403 if Authorization presents. */
-            if (context->otp_credentials)
-                context->otp_credentials->resolution =
-                    response_otp_headers.resolution;
             err = IE_NOT_LOGGED_IN;
             isds_log_message(context, _("Authentication failed"));
             goto leave;
