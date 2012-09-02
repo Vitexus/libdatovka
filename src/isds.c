@@ -4958,7 +4958,12 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
 
     if (NULL == context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
-    if (NULL == password) return IE_INVAL;
+    if (NULL == password) {
+        isds_log_message(context,
+                _("Second argument (password) of isds_change_password() "
+                    "is NULL"));
+        return IE_INVAL;
+    }
 
     /* Check if connection is established
      * TODO: This check should be done downstairs. */
@@ -5159,7 +5164,18 @@ isds_error isds_change_password(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
-    if (!old_password || !new_password) return IE_INVAL;
+    if (NULL == old_password) {
+        isds_log_message(context,
+                _("Second argument (old password) of isds_change_password() "
+                    "is NULL"));
+        return IE_INVAL;
+    }
+    if (NULL == new_password) {
+        isds_log_message(context,
+                _("Third argument (new password) of isds_change_password() "
+                    "is NULL"));
+        return IE_INVAL;
+    }
 
 #if HAVE_LIBCURL
     /* Check if connection is established
