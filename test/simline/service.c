@@ -348,6 +348,29 @@ leave:
 }
 
 
+/* Implement SendSMSCode.
+ * @arguments is pointer to struct arguments_asws_changePassword_SendSMSCode */
+static http_error service_SendSMSCode(int socket,
+        const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
+        const xmlNodePtr isds_request,
+        xmlDocPtr soap_response, xmlNodePtr isds_response,
+        const void *arguments) {
+    const struct arguments_asws_changePassword_SendSMSCode *configuration
+        = (const struct arguments_asws_changePassword_SendSMSCode *)
+        arguments;
+
+    if (NULL == configuration || NULL == configuration->status_code ||
+            NULL == configuration->status_message) {
+        return HTTP_ERROR_SERVER;
+    }
+
+    return insert_isds_status(isds_response, 0,
+                BAD_CAST configuration->status_code,
+                BAD_CAST configuration->status_message,
+                BAD_CAST configuration->reference_number);
+}
+
+
 /* List of implemented services */
 static struct service services[] = {
     { SERVICE_DS_Dz_DummyOperation,
@@ -359,6 +382,9 @@ static struct service services[] = {
     { SERVICE_asws_changePassword_ChangePasswordOTP,
         "/asws/changePassword", BAD_CAST "ChangePasswordOTP",
         service_ChangePasswordOTP },
+    { SERVICE_asws_changePassword_SendSMSCode,
+        "/asws/changePassword", BAD_CAST "SendSMSCode",
+        service_SendSMSCode },
 };
 
 

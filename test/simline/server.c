@@ -383,10 +383,16 @@ static void do_as_phase_two(int client_socket, const struct http_request *reques
 }
 
 
-/* Process ASWS for changing OTP password request */
-/* TODO: Unify with do_as_phase_two(). */
+/* Process ASWS for changing OTP password requests */
+/* FIXME: The ASWS URI hosts two services: for sending TOTP code for password
+ * change and for changing OTP password. The problem is the former one is
+ * basic-authenticated, the later one is otp-auhenticated. But we cannot decide
+ * which authentication to enforce without understadning request body. 
+ * I will just try both of them to choose the service.
+ * But I hope official server implementation does it in more clever way. */
 static void do_asws(int client_socket, const struct http_request *request,
         const struct arguments_otp_authentication *arguments) {
+    http_error error;
     if (arguments == NULL) {
         http_send_response_500(client_socket,
                 "Third argument of do_asws() is NULL");
@@ -407,27 +413,42 @@ static void do_asws(int client_socket, const struct http_request *request,
         return;
     }
 
-    switch(http_authenticate_otp(request,
-                arguments->username, arguments->password, arguments->otp)) {
-        case HTTP_ERROR_SUCCESS:
-            do_ws(client_socket, arguments->services, request, NULL);
-            break;
-        case HTTP_ERROR_CLIENT:
-            if (arguments->isds_deviations)
-                http_send_response_401_otp(client_socket,
-                        auth_otp_method2string(arguments->method),
-                        "authentication.error.userIsNotAuthenticated",
-                        " Retry: Bad user name or password in second OTP phase.\r\n"
-                        " This is very long header\r\n"
-                        " which should span to more lines.\r\n"
-                        "   Surrounding LWS are meaning-less. ");
-            else
-                http_send_response_403(client_socket);
-            break;
-        default:
-            http_send_response_500(client_socket,
-                    "Could not verify OTP authentication");
+    /* Try OTP */
+    error = http_authenticate_otp(request,
+                arguments->username, arguments->password, arguments->otp);
+    if (HTTP_ERROR_SUCCESS == error) {
+        /* This will be request for password change because OTP
+         * authentication succeeded. */
+        do_ws(client_socket, arguments->services, request, NULL);
+        return;
     }
+    
+    /* Try Basic */
+    error = http_authenticate_basic(request,
+                arguments->username, arguments->password);
+    if (HTTP_ERROR_SUCCESS == error) {
+        /* This will be request for time code for password change because
+         * basic authentication succeeded. */
+        do_ws(client_socket, arguments->services, request, NULL);
+        return;
+    }
+
+    if (HTTP_ERROR_CLIENT == error) {
+        if (arguments->isds_deviations)
+            http_send_response_401_otp(client_socket,
+                    auth_otp_method2string(arguments->method),
+                    "authentication.error.userIsNotAuthenticated",
+                    " Retry: Bad user name or password in Authorization.\r\n"
+                    " This is very long header\r\n"
+                    " which should span to more lines.\r\n"
+                    "   Surrounding LWS are meaning-less. ");
+        else
+            http_send_response_403(client_socket);
+        return;
+    }
+
+    http_send_response_500(client_socket,
+            "Could not verify OTP authentication");
 }
 
 

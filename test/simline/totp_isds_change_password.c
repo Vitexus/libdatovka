@@ -86,15 +86,22 @@ int main(int argc, char **argv) {
 
     {
         const struct arguments_asws_changePassword_ChangePasswordOTP
-            service_arguments = {
+            passwd_arguments = {
             .username = username,
             .current_password = password,
             .method = AUTH_OTP_TIME,
             .reference_number = "42"
         };
+        const struct arguments_asws_changePassword_SendSMSCode
+            sendsmscode_arguments = {
+            .status_code = "0000",
+            .status_message = "One-time password sent via SMS gateway",
+            .reference_number = "43"
+        };
         const struct service_configuration services[] = {
             { SERVICE_DS_Dz_DummyOperation, NULL },
-            { SERVICE_asws_changePassword_ChangePasswordOTP, &service_arguments },
+            { SERVICE_asws_changePassword_ChangePasswordOTP, &passwd_arguments },
+            { SERVICE_asws_changePassword_SendSMSCode, &sendsmscode_arguments },
             { SERVICE_END, NULL }
         };
         const struct arguments_otp_authentication server_arguments = {
@@ -135,6 +142,7 @@ int main(int argc, char **argv) {
                 IE_PARTIAL_SUCCESS, OTP_RESOLUTION_TOTP_SENT,
                 context, password, "h2k$Aana", &otp_credentials);
 
+#if 0
         /* Second phase of authentication */
         otp_credentials.otp_code = (char *) otp_code;
         TEST("Second phase with invalid password", test_isds_change_password,
@@ -195,6 +203,7 @@ int main(int argc, char **argv) {
         TEST("valid request", test_isds_change_password, IE_SUCCESS,
                 OTP_RESOLUTION_SUCCESS,
                 context, password, "h2k$Aana", &otp_credentials);
+#endif
 
         isds_logout(context);
         if (-1 == stop_server(server_process)) {
