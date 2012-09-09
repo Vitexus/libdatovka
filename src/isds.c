@@ -4955,6 +4955,11 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
         N_("One-time code cannot be re-send faster than once a 30 seconds"),
         N_("One-time code could not been sent. Try later again.")
     };
+    const isds_otp_resolution resolutions[] = {
+        OTP_RESOLUTION_UNKNOWN,
+        OTP_RESOLUTION_TO_FAST,
+        OTP_RESOLUTION_TOTP_NOT_SENT
+    };
 
     if (NULL == context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
@@ -5033,13 +5038,11 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
     /* Sent request */
     err = isds(context, SERVICE_ASWS, request, &response, NULL, NULL);
    
-    if (otp) {
-        /* Remove temporal credentials */
-        _isds_discard_credentials(context, 0);
-        /* Detach pointer to OTP credentials from context */
-        context->otp_credentials = NULL;
-        /* Keep context->otp true to keep signaling this is OTP session */
-    }
+    /* Remove temporal credentials */
+    _isds_discard_credentials(context, 0);
+    /* Detach pointer to OTP credentials from context */
+    context->otp_credentials = NULL;
+    /* Keep context->otp true to keep signaling this is OTP session */
 
     /* Destroy request */
     xmlFreeNode(request); request = NULL;
@@ -5074,9 +5077,14 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
         for (i = 0; i < sizeof(codes)/sizeof(*codes); i++) {
             if (!xmlStrcmp(code, codes[i])) break;
         }
-        if (i < sizeof(codes)/sizeof(*codes))
+        if (i < sizeof(codes)/sizeof(*codes)) {
             isds_log_message(context, _(meanings[i]));
-        else
+            /* Mimic otp->resolution according to the code, specification does
+             * prescribe OTP header to be available. */
+            if (OTP_RESOLUTION_SUCCESS == otp->resolution &&
+                    OTP_RESOLUTION_UNKNOWN != resolutions[i])
+                otp->resolution = resolutions[i];
+        } else
             isds_log_message(context, message_locale);
 
         free(code_locale);
@@ -5087,6 +5095,10 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
     }
     
     /* Otherwise new code sent successfully */
+    /* Mimic otp->resolution according to the code, specification does
+     * prescribe OTP header to be available. */
+    if (OTP_RESOLUTION_SUCCESS == otp->resolution)
+        otp->resolution = OTP_RESOLUTION_TOTP_SENT;
 
 leave:
     if (NULL != saved_url) {
