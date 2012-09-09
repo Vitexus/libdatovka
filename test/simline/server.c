@@ -423,14 +423,16 @@ static void do_asws(int client_socket, const struct http_request *request,
         return;
     }
     
-    /* Try Basic */
-    error = http_authenticate_basic(request,
-                arguments->username, arguments->password);
-    if (HTTP_ERROR_SUCCESS == error) {
-        /* This will be request for time code for password change because
-         * basic authentication succeeded. */
-        do_ws(client_socket, arguments->services, request, NULL);
-        return;
+    if (AUTH_OTP_TIME == arguments->method) {
+        /* Try Basic */
+        error = http_authenticate_basic(request,
+                    arguments->username, arguments->password);
+        if (HTTP_ERROR_SUCCESS == error) {
+            /* This will be request for time code for password change because
+             * basic authentication succeeded. */
+            do_ws(client_socket, arguments->services, request, NULL);
+            return;
+        }
     }
 
     if (HTTP_ERROR_CLIENT == error) {
@@ -550,15 +552,14 @@ void server_otp_authentication(int server_socket,
             } else if (!strncmp(request->uri, as_path_logout,
                         strlen(as_path_logout))) {
                 do_as_logout(client_socket, request, arguments);
-            } else if (arguments->method == AUTH_OTP_TIME &&
-                    !strcmp(request->uri, asws_path)) {
+            } else if (!strcmp(request->uri, asws_path)) {
                 do_asws(client_socket, request, arguments);
             } else if (!strcmp(request->uri, ws_path)) {
                 do_ws_with_cookie(client_socket, request, arguments,
                         ws_base_path_otp);
             } else {
                 http_send_response_400(client_socket,
-                        "Unknown path for TOTP authenticating service");
+                        "Unknown path for OTP authenticating service");
             }            
         } else {
             if (!strcmp(request->uri, ws_path)) {
@@ -566,7 +567,7 @@ void server_otp_authentication(int server_socket,
                         ws_base_path_otp);
             } else {
                 http_send_response_400(client_socket,
-                        "Unknown path for TOTP authenticating service");
+                        "Unknown path for OTP authenticating service");
             }            
         }
         http_request_free(&request);
