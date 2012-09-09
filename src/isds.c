@@ -5182,7 +5182,7 @@ isds_error isds_change_password(struct isds_ctx *context,
                     "is NULL"));
         return IE_INVAL;
     }
-    if (NULL == new_password) {
+    if (NULL == otp && NULL == new_password) {
         isds_log_message(context,
                 _("Third argument (new password) of isds_change_password() "
                     "is NULL"));
