@@ -36,13 +36,22 @@ int main(int argc, char **argv) {
     char *server_address = NULL;
     int option;
 
-    struct arguments_asws_changePassword_ChangePasswordOTP service_passwdotp_arguments;
+    struct arguments_asws_changePassword_ChangePasswordOTP
+        service_passwdotp_arguments;
+    const struct arguments_asws_changePassword_SendSMSCode
+            service_sendsms_arguments = {
+        .status_code = "0000",
+        .status_message = "OTP code sent",
+        .reference_number = "42"
+    };
     struct arguments_DS_DsManage_ChangeISDSPassword service_passwdbase_arguments;
     struct service_configuration services[] = {
-        { SERVICE_END, NULL }, /* This entry will be replaced later */
         { SERVICE_DS_Dz_DummyOperation, NULL },
+        { SERVICE_END, NULL }, /* This entry could be replaced later */
+        { SERVICE_END, NULL }, /* This entry could be replaced later */
         { SERVICE_END, NULL }
     };
+    int last_service = sizeof(services)/sizeof(services[0]) - 1;
     struct arguments_basic_authentication server_basic_arguments;
     struct arguments_otp_authentication server_otp_arguments;
 
@@ -79,8 +88,8 @@ int main(int argc, char **argv) {
     if (otp_type == 'n') {
         service_passwdbase_arguments.username = username;
         service_passwdbase_arguments.current_password = password;
-        services[0].name = SERVICE_DS_DsManage_ChangeISDSPassword;
-        services[0].arguments = &service_passwdbase_arguments;
+        services[last_service-2].name = SERVICE_DS_DsManage_ChangeISDSPassword;
+        services[last_service-2].arguments = &service_passwdbase_arguments;
         server_basic_arguments.username = username;
         server_basic_arguments.password = password;
         server_basic_arguments.isds_deviations = 1;
@@ -89,8 +98,12 @@ int main(int argc, char **argv) {
         service_passwdotp_arguments.username = username;
         service_passwdotp_arguments.current_password = password;
         service_passwdotp_arguments.reference_number = NULL;
-        services[0].name = SERVICE_asws_changePassword_ChangePasswordOTP;
-        services[0].arguments = &service_passwdotp_arguments;
+        services[last_service-2].name =
+            SERVICE_asws_changePassword_ChangePasswordOTP;
+        services[last_service-2].arguments = &service_passwdotp_arguments;
+        services[last_service-1].name =
+            SERVICE_asws_changePassword_SendSMSCode;
+        services[last_service-1].arguments = &service_sendsms_arguments;
         server_otp_arguments.otp = otp_code;
         if (otp_type == 't') { 
             server_otp_arguments.method = AUTH_OTP_TIME;
