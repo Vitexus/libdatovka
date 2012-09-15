@@ -23,10 +23,10 @@ static void terminator(int signal) {
 static void usage(const char *name) {
     printf("Usage: %s OPTIONS\n", name);
     printf(
-            "\t-h TOTP_CODE\n"
-            "\t-p PASSWORD\n"
-            "\t-t TOTP_CODE\n"
-            "\t-u USERNAME\n"
+            "\t-h HOTP_CODE     Define HMAC-based OTP code\n"
+            "\t-p PASSWORD      Define password\n"
+            "\t-t TOTP_CODE     Define time-based OTP code\n"
+            "\t-u USERNAME      Define user name\n"
             );
 }
 
