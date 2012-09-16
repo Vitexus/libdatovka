@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
             service_sendsms_arguments = {
         .status_code = "0000",
         .status_message = "OTP code sent",
-        .reference_number = "42"
+        .reference_number = "43"
     };
     struct arguments_DS_DsManage_ChangeISDSPassword service_passwdbase_arguments;
     struct service_configuration services[] = {
@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
     } else {
         service_passwdotp_arguments.username = username;
         service_passwdotp_arguments.current_password = password;
-        service_passwdotp_arguments.reference_number = NULL;
+        service_passwdotp_arguments.reference_number = "42";
         services[last_service-2].name =
             SERVICE_asws_changePassword_ChangePasswordOTP;
         services[last_service-2].arguments = &service_passwdotp_arguments;
