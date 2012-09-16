@@ -15,7 +15,7 @@ void change_password(struct isds_ctx *ctx,
     if (!old_password)
         printf("(Old password omitted)\n");
     isds_error err = isds_change_password(ctx, old_password, new_password,
-            NULL);
+            NULL, NULL);
     if (err) {
         printf("isds_change_password() failed: %s: %s\n",
                 isds_strerror(err), isds_long_message(ctx));

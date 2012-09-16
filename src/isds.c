@@ -4935,10 +4935,12 @@ leave:
  * @otp auxiliary data required, returns fine grade resolution of OTP procedure.
  * Please note the @otp argument must have TOTP OTP method. See isds_login()
  * function for more details.
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.
  * @return IE_SUCCESS, if new TOTP code has been sent. Or returns appropriate
  * error code. */
 static isds_error _isds_request_totp_code(struct isds_ctx *context,
-        const char *password, struct isds_otp *otp) {
+        const char *password, struct isds_otp *otp, char **refnumber) {
     isds_error err = IE_SUCCESS;
     char *saved_url = NULL; /* No copy */
     xmlNsPtr isds_ns = NULL;
@@ -5055,7 +5057,7 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
 
     /* Check for response status */
     err = isds_response_status(context, SERVICE_ASWS, response,
-            &code, &message, NULL);
+            &code, &message, (xmlChar **)refnumber);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("ISDS response on SendSMSCode request is missing "
@@ -5132,12 +5134,14 @@ leave:
  * procedure. Pass NULL, if one-time password authentication is not needed.
  * Please note the @otp argument must match OTP method used at log-in time. See
  * isds_login() function for more details.
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.
  * @return IE_SUCCESS, if password has been changed. Or returns appropriate
  * error code. It can return IE_PARTIAL_SUCCESS if OTP is in use and server is
  * awaiting OTP code that has been delivered by side channel to the user. */
 isds_error isds_change_password(struct isds_ctx *context,
         const char *old_password, const char *new_password,
-        struct isds_otp *otp) {
+        struct isds_otp *otp, char **refnumber) {
     isds_error err = IE_SUCCESS;
 #if HAVE_LIBCURL
     char *saved_url = NULL; /* No copy */
@@ -5176,6 +5180,8 @@ isds_error isds_change_password(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    if (NULL != refnumber)
+        zfree(*refnumber);
     if (NULL == old_password) {
         isds_log_message(context,
                 _("Second argument (old password) of isds_change_password() "
@@ -5240,7 +5246,8 @@ isds_error isds_change_password(struct isds_ctx *context,
                             _("OTP code has not been provided by "
                                 "application, requesting server for "
                                 "new one.\n"));
-                    err = _isds_request_totp_code(context, old_password, otp);
+                    err = _isds_request_totp_code(context, old_password, otp,
+                            refnumber);
                     if (err == IE_SUCCESS) err = IE_PARTIAL_SUCCESS;
                     goto leave;
 
@@ -5312,7 +5319,7 @@ isds_error isds_change_password(struct isds_ctx *context,
     /* Check for response status */
     err = isds_response_status(context,
             (NULL == otp) ? SERVICE_DB_ACCESS : SERVICE_ASWS, response,
-            &code, &message, NULL);
+            &code, &message, (xmlChar **)refnumber);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG, (NULL == otp) ?
                 _("ISDS response on ChangeISDSPassword request is missing "

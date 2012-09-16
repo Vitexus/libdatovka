@@ -902,12 +902,14 @@ isds_error isds_get_password_expiration(struct isds_ctx *context,
  * procedure. Pass NULL, if one-time password authentication is not needed.
  * Please note the @otp argument must match OTP method used at log-in time. See
  * isds_login() function for more details.
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.
  * @return IE_SUCCESS, if password has been changed. Or returns appropriate
  * error code. It can return IE_PARTIAL_SUCCESS if OTP is in use and server is
  * awaiting OTP code that has been delivered by side channel to the user. */
 isds_error isds_change_password(struct isds_ctx *context,
         const char *old_password, const char *new_password,
-        struct isds_otp *otp);
+        struct isds_otp *otp, char **refnumber);
 
 /* Create new box.
  * @context is session context

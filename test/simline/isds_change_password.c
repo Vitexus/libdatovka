@@ -35,10 +35,11 @@ static int test_login(const isds_error error, struct isds_ctx *context,
 
 static int test_isds_change_password(const isds_error error,
         struct isds_ctx *context, const char *old_password,
-        const char *new_password, struct isds_otp *otp) {
+        const char *new_password, struct isds_otp *otp, char **refnum) {
     isds_error err;
 
-    err = isds_change_password(context, old_password, new_password, otp);
+    err = isds_change_password(context, old_password, new_password, otp,
+            refnum);
     if (error != err)
         FAIL_TEST("Wrong return code: expected=%s, returned=%s (%s)",
                 isds_strerror(error), isds_strerror(err),
@@ -104,33 +105,33 @@ int main(int argc, char **argv) {
         TEST("login", test_login, IE_SUCCESS,
                 context, url, username, password, NULL, NULL);
         TEST("bad old password", test_isds_change_password, IE_INVAL,
-                context, "bad old password", "h2k$Aana", NULL);
+                context, "bad old password", "h2k$Aana", NULL, NULL);
         TEST("too short (7 characters)", test_isds_change_password, IE_INVAL,
-                context, password, "aB34567", NULL);
+                context, password, "aB34567", NULL, NULL);
         TEST("too long (33 characters)", test_isds_change_password, IE_INVAL,
-                context, password, "aB3456789112345678921234567893123", NULL);
+                context, password, "aB3456789112345678921234567893123", NULL, NULL);
         TEST("no upper case letter", test_isds_change_password, IE_INVAL,
-                context, password, "1bcdefgh", NULL);
+                context, password, "1bcdefgh", NULL, NULL);
         TEST("no lower case letter", test_isds_change_password, IE_INVAL,
-                context, password, "1BCDEFGH", NULL);
+                context, password, "1BCDEFGH", NULL, NULL);
         TEST("no digit", test_isds_change_password, IE_INVAL,
-                context, password, "aBCDEFGH", NULL);
+                context, password, "aBCDEFGH", NULL, NULL);
         TEST("forbidden space", test_isds_change_password, IE_INVAL,
-                context, password, " h2k$Aan", NULL);
+                context, password, " h2k$Aan", NULL, NULL);
         TEST("reused password", test_isds_change_password, IE_INVAL,
-                context, password, password, NULL);
+                context, password, password, NULL, NULL);
         TEST("password contains user ID", test_isds_change_password, IE_INVAL,
-                context, password, username, NULL);
+                context, password, username, NULL, NULL);
         TEST("sequence of the same characters", test_isds_change_password,
-                IE_INVAL, context, password, "h222k$Aa", NULL);
+                IE_INVAL, context, password, "h222k$Aa", NULL, NULL);
         TEST("forbiden prefix qwert", test_isds_change_password,
-                IE_INVAL, context, password, "qwert$A8", NULL);
+                IE_INVAL, context, password, "qwert$A8", NULL, NULL);
         TEST("forbiden prefix asdgf", test_isds_change_password,
-                IE_INVAL, context, password, "asdgf$A8", NULL);
+                IE_INVAL, context, password, "asdgf$A8", NULL, NULL);
         TEST("forbiden prefix 12345", test_isds_change_password,
-                IE_INVAL, context, password, "12345$Aa", NULL);
+                IE_INVAL, context, password, "12345$Aa", NULL, NULL);
         TEST("valid request", test_isds_change_password, IE_SUCCESS,
-                context, password, "h2k$Aana", NULL);
+                context, password, "h2k$Aana", NULL, NULL);
 
         if (-1 == stop_server(server_process)) {
             ABORT_UNIT(server_error);
