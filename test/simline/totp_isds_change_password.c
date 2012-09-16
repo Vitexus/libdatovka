@@ -67,6 +67,33 @@ int main(int argc, char **argv) {
     struct isds_otp otp_credentials = {
         .method = OTP_TIME
     };
+    const struct arguments_asws_changePassword_ChangePasswordOTP
+        passwd_arguments = {
+        .username = username,
+        .current_password = password,
+        .method = AUTH_OTP_TIME,
+        .reference_number = "42"
+    };
+    struct arguments_asws_changePassword_SendSMSCode
+        sendsmscode_arguments = {
+        .status_code = "0000",
+        .status_message = "One-time password sent via SMS gateway",
+        .reference_number = "43"
+    };
+    const struct service_configuration services[] = {
+        { SERVICE_DS_Dz_DummyOperation, NULL },
+        { SERVICE_asws_changePassword_ChangePasswordOTP, &passwd_arguments },
+        { SERVICE_asws_changePassword_SendSMSCode, &sendsmscode_arguments },
+        { SERVICE_END, NULL }
+    };
+    const struct arguments_otp_authentication server_arguments = {
+        .method = AUTH_OTP_TIME,
+        .username = username,
+        .password = password,
+        .otp = (char *) otp_code,
+        .isds_deviations = 1,
+        .services = services
+    };
 
 
     INIT_TEST("isds_change_password with TOTP");
@@ -85,33 +112,9 @@ int main(int argc, char **argv) {
     }
 
     {
-        const struct arguments_asws_changePassword_ChangePasswordOTP
-            passwd_arguments = {
-            .username = username,
-            .current_password = password,
-            .method = AUTH_OTP_TIME,
-            .reference_number = "42"
-        };
-        const struct arguments_asws_changePassword_SendSMSCode
-            sendsmscode_arguments = {
-            .status_code = "0000",
-            .status_message = "One-time password sent via SMS gateway",
-            .reference_number = "43"
-        };
-        const struct service_configuration services[] = {
-            { SERVICE_DS_Dz_DummyOperation, NULL },
-            { SERVICE_asws_changePassword_ChangePasswordOTP, &passwd_arguments },
-            { SERVICE_asws_changePassword_SendSMSCode, &sendsmscode_arguments },
-            { SERVICE_END, NULL }
-        };
-        const struct arguments_otp_authentication server_arguments = {
-            .method = AUTH_OTP_TIME,
-            .username = username,
-            .password = password,
-            .otp = (char *) otp_code,
-            .isds_deviations = 1,
-            .services = services
-        };
+        sendsmscode_arguments.status_code = "0000";
+        sendsmscode_arguments.status_message =
+            "One-time password sent via SMS gateway";
         error = start_server(&server_process, &server_address,
                 server_otp_authentication, &server_arguments);
         if (error == -1) {
@@ -213,34 +216,9 @@ int main(int argc, char **argv) {
     }
 
     {
-        const struct arguments_asws_changePassword_ChangePasswordOTP
-            passwd_arguments = {
-            .username = username,
-            .current_password = password,
-            .method = AUTH_OTP_TIME,
-            .reference_number = "42"
-        };
-        const struct arguments_asws_changePassword_SendSMSCode
-            sendsmscode_arguments = {
-            .status_code = "2301",
-            .status_message = "One-time code cannot be re-send "
-                "faster than once a 30 seconds",
-            .reference_number = "43"
-        };
-        const struct service_configuration services[] = {
-            { SERVICE_DS_Dz_DummyOperation, NULL },
-            { SERVICE_asws_changePassword_ChangePasswordOTP, &passwd_arguments },
-            { SERVICE_asws_changePassword_SendSMSCode, &sendsmscode_arguments },
-            { SERVICE_END, NULL }
-        };
-        const struct arguments_otp_authentication server_arguments = {
-            .method = AUTH_OTP_TIME,
-            .username = username,
-            .password = password,
-            .otp = (char *) otp_code,
-            .isds_deviations = 1,
-            .services = services
-        };
+        sendsmscode_arguments.status_code = "2301";
+        sendsmscode_arguments.status_message =
+            "One-time code cannot be re-send faster than once a 30 seconds";
         error = start_server(&server_process, &server_address,
                 server_otp_authentication, &server_arguments);
         if (error == -1) {
@@ -276,34 +254,9 @@ int main(int argc, char **argv) {
     }
 
     {
-        const struct arguments_asws_changePassword_ChangePasswordOTP
-            passwd_arguments = {
-            .username = username,
-            .current_password = password,
-            .method = AUTH_OTP_TIME,
-            .reference_number = "42"
-        };
-        const struct arguments_asws_changePassword_SendSMSCode
-            sendsmscode_arguments = {
-            .status_code = "2302",
-            .status_message = "One-time code could not been sent. "
-                "Try later again.",
-            .reference_number = "43"
-        };
-        const struct service_configuration services[] = {
-            { SERVICE_DS_Dz_DummyOperation, NULL },
-            { SERVICE_asws_changePassword_ChangePasswordOTP, &passwd_arguments },
-            { SERVICE_asws_changePassword_SendSMSCode, &sendsmscode_arguments },
-            { SERVICE_END, NULL }
-        };
-        const struct arguments_otp_authentication server_arguments = {
-            .method = AUTH_OTP_TIME,
-            .username = username,
-            .password = password,
-            .otp = (char *) otp_code,
-            .isds_deviations = 1,
-            .services = services
-        };
+        sendsmscode_arguments.status_code = "2302";
+        sendsmscode_arguments.status_message =
+            "One-time code could not been sent. Try later again.";
         error = start_server(&server_process, &server_address,
                 server_otp_authentication, &server_arguments);
         if (error == -1) {
