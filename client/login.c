@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
 
     if (argc > 1) {
         if (argc < 4 || argc > 6) {
-            printf("Usage: %s [URL LOGIN PASSWORD [{hotp OTP_CODE | totp [OTP_CODE]]\n",
+            printf("Usage: %s [URL LOGIN PASSWORD [{hotp OTP_CODE} | {totp [OTP_CODE]}]\n",
                     (argv[0])?argv[0]: "");
             exit(EXIT_FAILURE);
         }
