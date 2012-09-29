@@ -1,3 +1,7 @@
+* Implement news from 2012-07-29
+    Add EraseMessage
+    Remove PRIVIL_READ_VAULT permission?
+    Add access interface log-in method as specified in 6th appendix
 * Export reference number of OTP-authenticated password change (Adding new
   argument is good way)
 * Support RMD160 hash algorithm as requested by 212/2012 Coll.
