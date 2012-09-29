@@ -4943,6 +4943,9 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
         const char *password, struct isds_otp *otp, char **refnumber) {
     isds_error err = IE_SUCCESS;
     char *saved_url = NULL; /* No copy */
+#if HAVE_CURL_REAUTHORIZATION_BUG
+    CURL *saved_curl = NULL; /* No copy */
+#endif
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
     xmlDocPtr response = NULL;
@@ -5034,6 +5037,18 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
         _isds_discard_credentials(context, 0);
         goto leave;
     }
+#if HAVE_CURL_REAUTHORIZATION_BUG
+    saved_curl = context->curl;
+    context->curl = curl_easy_init();
+    if (NULL == context->curl) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (context->timeout) {
+        err = isds_set_timeout(context, context->timeout);
+        if (err) goto leave;
+    }
+#endif
 
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending SendSMSCode request to ISDS\n"));
 
@@ -5108,6 +5123,12 @@ leave:
         zfree(context->url);
         context->url = saved_url;
     }
+#if HAVE_CURL_REAUTHORIZATION_BUG
+    if (NULL != saved_curl) {
+        if (context->curl != NULL) curl_easy_cleanup(context->curl);
+        context->curl = saved_curl;
+    }
+#endif
 
     free(code);
     free(message);
@@ -5145,6 +5166,9 @@ isds_error isds_change_password(struct isds_ctx *context,
     isds_error err = IE_SUCCESS;
 #if HAVE_LIBCURL
     char *saved_url = NULL; /* No copy */
+#if HAVE_CURL_REAUTHORIZATION_BUG
+    CURL *saved_curl = NULL; /* No copy */
+#endif
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL, node;
     xmlDocPtr response = NULL;
@@ -5285,7 +5309,18 @@ isds_error isds_change_password(struct isds_ctx *context,
             _isds_discard_credentials(context, 0);
             goto leave;
         }
-
+#if HAVE_CURL_REAUTHORIZATION_BUG
+        saved_curl = context->curl;
+        context->curl = curl_easy_init();
+        if (NULL == context->curl) {
+            err = IE_ERROR;
+            goto leave;
+        }
+        if (context->timeout) {
+            err = isds_set_timeout(context, context->timeout);
+            if (err) goto leave;
+        }
+#endif
     }
 
     isds_log(ILF_ISDS, ILL_DEBUG, (NULL == otp) ?
@@ -5373,6 +5408,12 @@ leave:
         zfree(context->url);
         context->url = saved_url;
     }
+#if HAVE_CURL_REAUTHORIZATION_BUG
+    if (NULL != saved_curl) {
+        if (context->curl != NULL) curl_easy_cleanup(context->curl);
+        context->curl = saved_curl;
+    }
+#endif
 
     free(code);
     free(message);

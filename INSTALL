@@ -45,6 +45,14 @@ Additional configure options:
         messages and delivery details. Library will not be able to connect to
         ISDS server in this mode.
 
+    --enable-curlreauthorizationbug
+
+        Compile in work-around for HTTP reauthorization bug in cURL library.
+        This is disabled by default. This bug will be fixed in cURL 7.28.0
+        by cURL commit ce8311c7e49eca93c136b58efa6763853541ec97. This bug
+        affects changing ISDS password while OTP authentication method is in
+        use. 
+
 Large File Support (LFS) Notice: libisds uses GPGME, and GPGME is compiled
 with LFS on usually. You need to keep LFS compatibility on reverse dependencies
 (libisds library, your application using libisds), otherwise strange things

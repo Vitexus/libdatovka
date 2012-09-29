@@ -88,6 +88,18 @@ AS_IF([test -z "$LIBCURL"],
     ])
 AM_CONDITIONAL([BUILD_CURL], [test -n "$LIBCURL"])
 
+dnl libcurl < 7.28.0 suffers from re-authorization bug, unfortunally there is
+dnl no way how to re-check libcurl version. Thus we use explicit switch.
+AC_ARG_ENABLE(curlreauthorizationbug,
+              [AS_HELP_STRING([--enable-curlreauthorizationbug],
+                        [Compile in work-around for re-authorization bug in
+                         curl < 7.28.0. Fixed by libcurl commit
+                         ce8311c7e49eca93c136b58efa6763853541ec97.])])
+AS_IF([test "$enable_curlreauthorizationbug" = "yes"],
+      AC_DEFINE([HAVE_CURL_REAUTHORIZATION_BUG], [1],
+                [Define if you want work-aroung re-autorization bug in libcurl])
+      )
+
 dnl On-line tests requires libcurl
 AM_CONDITIONAL([BUILD_ONLINE_TEST],
                [test -n "$LIBCURL" -a "$enable_test" = "yes" \
