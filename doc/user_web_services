@@ -2,8 +2,8 @@ User web services specification
 ===============================
 
 Source: Provozní řád ISDS, version 2010-11-28, Pages 15–16
-Source: Webové služby ISDS pro manipulaci s datovými zprávami,
-    version 2.26 (2012-03-15)
+Source: Webové služby rozhraní ISDS pro manipulaci s datovými zprávami,
+    version 2.28 (2012-07-27)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
     version 2.26 (2012-03-15)
 
@@ -59,6 +59,8 @@ MarkMessageAsDownloaded
     Mark message as read
 ConfirmDelivery
     Mark commercial message as accepted by recipient
+EraseMessage (*)
+    Remove message from long term storage
 GetDeliveryInfo (+)
     Download info-sheet about message post and delivery
 GetSignedDeliveryInfo (+)
@@ -417,6 +419,27 @@ triggering most of SOAP operations.
 
 Must be called before downloading (signed or unsigned) incoming message
 [Signed]MessageDownload.
+
+
+EraseMessage (*)
+============
+
+Delete a message from long term storage (know as data safe formerly).
+
+Input is message ID in `dmID' element and boolean in `dmIncoming' element
+(true for incoming message, false for outgoing mesage).
+
+Output is standard `dmStatus' subtree.
+
+Only message in long term storage can be removed on user request through
+this service. Other message cannot be removed on request, they get removed
+automatically after 90-days period.
+
+Error codes:
+    1211    The message belongs to other (= not currently logged-in user) box
+    1218    Insufficient permissions (PRIVIL_ERASE_VAULT) to remove the message
+    1219    The message is not in long term storage or is not incoming or
+            outgoing as requested.
 
 
 GetDeliveryInfo (+)
