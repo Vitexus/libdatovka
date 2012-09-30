@@ -42,9 +42,10 @@ PRIVIL_VIEW_INFO            8   Permission to download list of messages, to
                                 acceptance (`Doručenka')
 PRIVIL_SEARCH_DB            16  Permission to search boxes
 PRIVIL_OWNER_ADM            32  Permission to maintane a box (add users etc.)
-PRIVIL_READ_VAULT           64  Permission to read messages from data safe
-                                (does not exists since 2012-05)
-PRIVIL_ERASE_VAULT          128 Permission to delete messages from data safe
+PRIVIL_READ_VAULT           64  Permission to read messages from long term
+                                storage (does not exists since 2012-05)
+PRIVIL_ERASE_VAULT          128 Permission to delete messages from long term
+                                storage
 
 User type ADMINSTRATOR has implicit non-revokable permission PRIVIL_OWNER_ADM.
 Administrator can add other permissions to anybody, even to himself.
@@ -74,7 +75,8 @@ PRIVIL_AD_DELIV         2097152     Store timestamp about credentials delivery
                                     by off-line chanel
 PRIVIL_ACTIVATE         8388608     Activate credentials on-line
 PRIVIL_POST             524288      Access to help desk IS of Czech POST
-PRIVIL_VAULT            33554432    Manage safe and commercial message switcher
+PRIVIL_VAULT            33554432    Manage long term storage and commercial
+                                    message switcher
 PRIVIL_BILLING          67108864    Access to billing data
 PRIVIL_CONFIG           4194304     Low level configuration allowed (see
                                     `Administrator manual for ISDS application

@@ -217,9 +217,11 @@ typedef enum {
     PRIVIL_OWNER_ADM = 0x20,        /* Can administer his box (add/remove
                                        permitted users and theirs
                                        permissions) */
-    PRIVIL_READ_VAULT = 0x40,       /* Can read message stored in data safe
-                                       (does not exists since 2012-05) */
-    PRIVIL_ERASE_VAULT = 0x80       /* Can delete messages from data safe */ 
+    PRIVIL_READ_VAULT = 0x40,       /* Can read message stored in long term
+                                       storage (does not exists since
+                                       2012-05) */
+    PRIVIL_ERASE_VAULT = 0x80       /* Can delete messages from long term
+                                       storage */ 
 } isds_priviledges;
 
 /* Message status */
@@ -240,8 +242,7 @@ typedef enum {
                                            (e.g. recipient box has been made
                                            inaccessible meantime) */
     MESSAGESTATE_REMOVED = 0x200,       /* Message content deleted */
-    MESSAGESTATE_IN_SAFE = 0x400        /* Message stored in data safe */
-
+    MESSAGESTATE_IN_SAFE = 0x400        /* Message stored in long term storage */
 } isds_message_status;
 #define MESSAGESTATE_ANY 0x7FE          /* Union of all isds_message_status
                                            values */

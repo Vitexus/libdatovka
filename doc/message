@@ -358,4 +358,4 @@ Value   Meaning
 8       Message could not been delivered (e.g. recipient box has been made
         inaccessible meantime)
 9       Message content deleted (thus can not be obtained on-line)
-10      Message stored into data safe (this is optional commercial service)
+10      Message saved in long term storage (this is optional commercial service)
