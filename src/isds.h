@@ -1469,6 +1469,19 @@ isds_error isds_verify_message_hash(struct isds_ctx *context,
 isds_error isds_authenticate_message(struct isds_ctx *context,
         const void *message, size_t length);
 
+/* Erase message specified by @message_id from long term storage. Other
+ * message cannot be erased on user request.
+ * @context is session context
+ * @message_id is message identifier.
+ * @incoming is true for incoming message, false for outgoing message.
+ * @return
+ *  IE_SUCCESS  if message has ben removed
+ *  IE_INVAL    if message does not exist in long term storage or message
+ *              belongs to different box
+ * TODO: IE_NOEPRM  if user has no permission to erase a message */
+isds_error isds_delete_message_from_storage(struct isds_ctx *context,
+        const char *message_id, _Bool incoming);
+
 /* Mark message as read. This is a transactional commit function to acknowledge
  * to ISDS the message has been downloaded and processed by client properly.
  * @context is session context

@@ -10043,6 +10043,116 @@ leave:
 }
 
 
+/* Erase message specified by @message_id from long term storage. Other
+ * message cannot be erased on user request.
+ * @context is session context
+ * @message_id is message identifier.
+ * @incoming is true for incoming message, false for outgoing message.
+ * @return
+ *  IE_SUCCESS  if message has ben removed
+ *  IE_INVAL    if message does not exist in long term storage or message
+ *              belongs to different box
+ * TODO: IE_NOEPRM  if user has no permission to erase a message */
+isds_error isds_delete_message_from_storage(struct isds_ctx *context,
+        const char *message_id, _Bool incoming) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    xmlNodePtr request = NULL, node;
+    xmlNsPtr isds_ns = NULL;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *status_message = NULL;
+#endif
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (NULL == message_id) return IE_INVAL;
+   
+#if HAVE_LIBCURL
+    /* Build request */
+    request = xmlNewNode(NULL, BAD_CAST "EraseMessage");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build EraseMessage request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    err = validate_message_id_length(context, (xmlChar *) message_id);
+    if (err) goto leave;
+    INSERT_STRING(request, "dmID", message_id);
+
+    INSERT_SCALAR_BOOLEAN(request, "dmIncoming", incoming);
+
+
+    /* Send request */
+    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending EraseMessage request for "
+                "message ID %s to ISDS\n"), message_id);
+    err = isds(context, SERVICE_DM_INFO, request, &response, NULL, NULL);
+    xmlFreeNode(request); request = NULL;
+    
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("Processing ISDS response on EraseMessage request "
+                        "failed\n"));
+        goto leave;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, SERVICE_DM_INFO, response,
+            &code, &status_message, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("ISDS response on EraseMessage request is missing "
+                        "status\n"));
+        goto leave;
+    }
+
+    /* Check server status code */
+    if (!xmlStrcmp(code, BAD_CAST "1211")) {
+        isds_log_message(context, _("Message to erase belongs to other box"));
+        err = IE_INVAL;
+    } else if (!xmlStrcmp(code, BAD_CAST "1219")) {
+        isds_log_message(context, _("Message to erase is not saved in "
+                    "long term storage or the direction does not match"));
+        err = IE_INVAL;
+    } else if (xmlStrcmp(code, BAD_CAST "0000")) {
+        char *code_locale = _isds_utf82locale((char*) code);
+        char *message_locale = _isds_utf82locale((char*) status_message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("Server refused EraseMessage request "
+                        "(code=%s, message=%s)\n"),
+                code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+leave:
+    free(code);
+    free(status_message);
+    xmlFreeDoc(response);
+    xmlFreeNode(request);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                    _("EraseMessage request processed by server "
+                        "successfully.\n")
+                );
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+    return err;
+}
+
+
 /* Mark message as read. This is a transactional commit function to acknowledge
  * to ISDS the message has been downloaded and processed by client properly.
  * @context is session context
