@@ -1,8 +1,10 @@
 User specification
-=================
+==================
 
 Source: Webové služby rozhraní ISDS pro správu datových schránkek,
     version 2.19 (2011-05-05)
+Source: Webové služby rozhraní ISDS pro manipulaci s datovými zprávami,
+    version 2.28 (2012-07-27), pages 6–7
 
 
 User types
@@ -41,10 +43,11 @@ PRIVIL_VIEW_INFO            8   Permission to download list of messages, to
 PRIVIL_SEARCH_DB            16  Permission to search boxes
 PRIVIL_OWNER_ADM            32  Permission to maintane a box (add users etc.)
 PRIVIL_READ_VAULT           64  Permission to read messages from data safe
+                                (does not exists since 2012-05)
 PRIVIL_ERASE_VAULT          128 Permission to delete messages from data safe
 
 User type ADMINSTRATOR has implicit non-revokable permission PRIVIL_OWNER_ADM.
-Administrator can add other permissions to anybody, even to himselv.
+Administrator can add other permissions to anybody, even to himself.
 
 User type PRIMARY_USER has implicit (non-revokable?) permissions 1–32.
 
