@@ -1450,7 +1450,7 @@ isds_error isds_logout(struct isds_ctx *context) {
 
 
 /* Verify connection to ISDS is alive and server is responding.
- * Sent dummy request to ISDS and expect dummy response. */
+ * Send dummy request to ISDS and expect dummy response. */
 isds_error isds_ping(struct isds_ctx *context) {
 #if HAVE_LIBCURL
     isds_error soap_err;

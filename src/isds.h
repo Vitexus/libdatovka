@@ -874,7 +874,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 isds_error isds_logout(struct isds_ctx *context);
 
 /* Verify connection to ISDS is alive and server is responding.
- * Sent dummy request to ISDS and expect dummy response. */
+ * Send dummy request to ISDS and expect dummy response. */
 isds_error isds_ping(struct isds_ctx *context);
 
 /* Get data about logged in user and his box. */
