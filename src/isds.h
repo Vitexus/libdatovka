@@ -1546,9 +1546,9 @@ const struct isds_document *isds_find_document_by_id(
  * ISDS servers pass invalid MIME types (e.g. "pdf"). This function tries to
  * guess regular MIME type (e.g. "application/pdf").
  * @mime_type is UTF-8 encoded MIME type to fix
- * @return original @mime_type if no better interpretation exists, or array to
+ * @return original @mime_type if no better interpretation exists, or
  * constant static UTF-8 encoded string with proper MIME type. */
-char *isds_normalize_mime_type(const char* mime_type);
+const char *isds_normalize_mime_type(const char *mime_type);
 
 /* Deallocate structure isds_pki_credentials and NULL it.
  * Pass-phrase is discarded.

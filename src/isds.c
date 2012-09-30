@@ -27,7 +27,7 @@ const char isds_cert_testing_locator[] = "https://ws1c.czebox.cz/";
 const char isds_otp_testing_locator[] = "https://www.czebox.cz/";
 
 /* Extension to MIME type map */
-static xmlChar *extension_map_mime[] = {
+static const xmlChar *extension_map_mime[] = {
     BAD_CAST "cer", BAD_CAST "application/x-x509-ca-cert",
     BAD_CAST "crt", BAD_CAST "application/x-x509-ca-cert",
     BAD_CAST "der", BAD_CAST "application/x-x509-ca-cert",
@@ -3606,11 +3606,12 @@ static isds_error extract_document(struct isds_ctx *context,
     /* Extract document meta data */
     EXTRACT_STRING_ATTRIBUTE("dmMimeType", (*document)->dmMimeType, 1)
     if (context->normalize_mime_type) {
-        char *normalized_type =
+        const char *normalized_type =
             isds_normalize_mime_type((*document)->dmMimeType);
-        if (normalized_type && normalized_type != (*document)->dmMimeType) {
+        if (NULL != normalized_type &&
+                normalized_type != (*document)->dmMimeType) {
             char *new_type = strdup(normalized_type);
-            if (!new_type) {
+            if (NULL == new_type) {
                 isds_printf_message(context,
                         _("Not enough memory to normalize document MIME type"));
                 err = IE_NOMEM;
@@ -10776,19 +10777,19 @@ const struct isds_document *isds_find_document_by_id(
  * ISDS servers pass invalid MIME types (e.g. "pdf"). This function tries to
  * guess regular MIME type (e.g. "application/pdf").
  * @mime_type is UTF-8 encoded MIME type to fix
- * @return original @mime_type if no better interpretation exists, or array to
+ * @return original @mime_type if no better interpretation exists, or 
  * constant static UTF-8 encoded string with proper MIME type. */
-char *isds_normalize_mime_type(const char* mime_type) {
+const char *isds_normalize_mime_type(const char *mime_type) {
     if (!mime_type) return NULL;
 
     for (int offset = 0;
             offset < sizeof(extension_map_mime)/sizeof(extension_map_mime[0]);
             offset += 2) {
         if (!xmlStrcmp((const xmlChar*) mime_type, extension_map_mime[offset]))
-            return (char *) extension_map_mime[offset + 1];
+            return (const char *) extension_map_mime[offset + 1];
     }
 
-    return (char *) mime_type;
+    return mime_type;
 }
 
 
