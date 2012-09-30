@@ -308,7 +308,7 @@ static http_error service_ChangePasswordOTP(int socket,
     const struct arguments_asws_changePassword_ChangePasswordOTP *configuration
         = (const struct arguments_asws_changePassword_ChangePasswordOTP *)
         arguments;
-    char *method;
+    char *method = NULL;
 
     if (NULL == configuration || NULL == configuration->username ||
             NULL == configuration->current_password) {
