@@ -217,7 +217,8 @@ typedef enum {
     PRIVIL_OWNER_ADM = 0x20,        /* Can administer his box (add/remove
                                        permitted users and theirs
                                        permissions) */
-    PRIVIL_READ_VAULT = 0x40,       /* Can read message stored in data safe */
+    PRIVIL_READ_VAULT = 0x40,       /* Can read message stored in data safe
+                                       (does not exists since 2012-05) */
     PRIVIL_ERASE_VAULT = 0x80       /* Can delete messages from data safe */ 
 } isds_priviledges;
 
