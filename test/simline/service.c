@@ -65,6 +65,38 @@ struct service {
     xmlXPathFreeObject(result); \
 }
 
+#define EXTRACT_BOOLEAN(element, booleanPtr) { \
+    char *string = NULL; \
+    EXTRACT_STRING(element, string); \
+     \
+    if (NULL != string) { \
+        (booleanPtr) = calloc(1, sizeof(*(booleanPtr))); \
+        if (NULL == (booleanPtr)) { \
+            free(string); \
+            error = HTTP_ERROR_SERVER; \
+            goto leave; \
+        } \
+         \
+        if (!xmlStrcmp((xmlChar *)string, BAD_CAST "true") || \
+                !xmlStrcmp((xmlChar *)string, BAD_CAST "1")) \
+            *(booleanPtr) = 1; \
+        else if (!xmlStrcmp((xmlChar *)string, BAD_CAST "false") || \
+                !xmlStrcmp((xmlChar *)string, BAD_CAST "0")) \
+            *(booleanPtr) = 0; \
+        else { \
+            test_asprintf(&message, \
+                    "%s value is not valid boolean: %s", \
+                    element, string); \
+            free(string); \
+            error = HTTP_ERROR_CLIENT; \
+            goto leave; \
+        } \
+         \
+        free(string); \
+    } \
+} 
+
+
 /* Following INSERT_* macros expect @error and leave label */
 #define INSERT_STRING_WITH_NS(parent, ns, element, string) \
     { \
@@ -125,6 +157,67 @@ static http_error service_DummyOperation(int socket, const xmlDocPtr soap_reques
         const void *arguments) {
     return insert_isds_status(isds_response, 1, BAD_CAST "0000",
             BAD_CAST "Success", NULL);
+}
+
+
+/* Implement EraseMessage.
+ * @arguments is pointer to struct arguments_DS_DsManage_ChangeISDSPassword */
+static http_error service_EraseMessage(int socket,
+        const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
+        const xmlNodePtr isds_request,
+        xmlDocPtr soap_response, xmlNodePtr isds_response,
+        const void *arguments) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    char *code = "9999", *message = NULL;
+    const struct arguments_DS_Dx_EraseMessage *configuration =
+        (const struct arguments_DS_Dx_EraseMessage *)arguments;
+    char *message_id = NULL;
+    _Bool *incoming = NULL;
+
+    if (NULL == configuration || NULL == configuration->message_id) {
+        error = HTTP_ERROR_SERVER;
+        goto leave;
+    }
+
+    EXTRACT_STRING("isds:dmID", message_id);
+    if (NULL == message_id) {
+        message = strdup("Missing isds:dmID");
+        error = HTTP_ERROR_CLIENT;
+        goto leave;
+    }
+    EXTRACT_BOOLEAN("isds:dmIncoming", incoming);
+    if (NULL == incoming) {
+        message = strdup("Missing isds:dmIncoming");
+        error = HTTP_ERROR_CLIENT;
+        goto leave;
+    }
+
+    if (xmlStrcmp((const xmlChar *) configuration->message_id,
+                (const xmlChar *) message_id)) {
+        code = "1219";
+        message = strdup("Message is not in the long term storage");
+        error = HTTP_ERROR_CLIENT;
+        goto leave;
+    }
+    if (configuration->incoming != *incoming) {
+        code = "1219";
+        message = strdup("Message direction mismatches");
+        error = HTTP_ERROR_CLIENT;
+        goto leave;
+    }
+    
+    code = "0000";
+    message = strdup("Success");
+leave:
+    if (HTTP_ERROR_SERVER != error) {
+        http_error next_error = insert_isds_status(isds_response, 1,
+                BAD_CAST code, BAD_CAST message, NULL);
+        if (HTTP_ERROR_SUCCESS != next_error) error = next_error;
+    }
+    free(incoming);
+    free(message_id);
+    free(message);
+    return error;
 }
 
 
@@ -379,6 +472,9 @@ static struct service services[] = {
     { SERVICE_DS_DsManage_ChangeISDSPassword,
         "DS/DsManage", BAD_CAST "ChangeISDSPassword",
         service_ChangeISDSPassword },
+    { SERVICE_DS_Dx_EraseMessage,
+        "DS/dx", BAD_CAST "EraseMessage",
+        service_EraseMessage },
     { SERVICE_asws_changePassword_ChangePasswordOTP,
         "/asws/changePassword", BAD_CAST "ChangePasswordOTP",
         service_ChangePasswordOTP },
