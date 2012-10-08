@@ -45,7 +45,13 @@ int main(int argc, char **argv) {
         .reference_number = "43"
     };
     struct arguments_DS_DsManage_ChangeISDSPassword service_passwdbase_arguments;
+    const struct arguments_DS_Dx_EraseMessage
+            service_erasemessage_arguments = {
+        .message_id = "1234567",
+        .incoming = 1
+    };
     struct service_configuration services[] = {
+        { SERVICE_DS_Dx_EraseMessage, &service_erasemessage_arguments },
         { SERVICE_DS_Dz_DummyOperation, NULL },
         { SERVICE_END, NULL }, /* This entry could be replaced later */
         { SERVICE_END, NULL }, /* This entry could be replaced later */
