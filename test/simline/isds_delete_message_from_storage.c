@@ -100,6 +100,8 @@ int main(int argc, char **argv) {
         }
         free(server_address);
 
+        TEST("prior logging in", test_isds_delete_message_from_storage,
+                IE_CONNECTION_CLOSED, context, "1234567", 1);
         TEST("login", test_login, IE_SUCCESS,
                 context, url, username, password, NULL, NULL);
         TEST("bad message ID", test_isds_delete_message_from_storage, IE_INVAL,

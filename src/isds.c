@@ -10067,6 +10067,10 @@ isds_error isds_delete_message_from_storage(struct isds_ctx *context,
     zfree(context->long_message);
     if (NULL == message_id) return IE_INVAL;
    
+    /* Check if connection is established
+     * TODO: This check should be done downstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
 #if HAVE_LIBCURL
     /* Build request */
     request = xmlNewNode(NULL, BAD_CAST "EraseMessage");
