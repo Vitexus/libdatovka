@@ -5011,7 +5011,7 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
         isds_log_message(context, _("Could not build SendSMSCode request"));
         return IE_ERROR;
     }
-    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    isds_ns = xmlNewNs(request, BAD_CAST OISDS_NS, NULL);
     if(!isds_ns) {
         isds_log_message(context, _("Could not create ISDS name space"));
         xmlFreeNode(request);
@@ -5241,7 +5241,9 @@ isds_error isds_change_password(struct isds_ctx *context,
                 _("Could not build ChangePasswordOTP request"));
         return IE_ERROR;
     }
-    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    isds_ns = xmlNewNs(request,
+            (NULL == otp) ? BAD_CAST ISDS_NS : BAD_CAST OISDS_NS,
+            NULL);
     if(!isds_ns) {
         isds_log_message(context, _("Could not create ISDS name space"));
         xmlFreeNode(request);
@@ -10947,6 +10949,8 @@ _hidden isds_error _isds_register_namespaces(xmlXPathContextPtr xpath_ctx,
     if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "soap", BAD_CAST SOAP_NS))
         return IE_ERROR;
     if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "isds", BAD_CAST ISDS_NS))
+        return IE_ERROR;
+    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "oisds", BAD_CAST OISDS_NS))
         return IE_ERROR;
     if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "sisds", message_namespace))
         return IE_ERROR;

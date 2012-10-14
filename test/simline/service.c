@@ -17,13 +17,15 @@ typedef enum {
     MESSAGE_NS_UNSIGNED,
     MESSAGE_NS_SIGNED_INCOMING,
     MESSAGE_NS_SIGNED_OUTGOING,
-    MESSAGE_NS_SIGNED_DELIVERY
+    MESSAGE_NS_SIGNED_DELIVERY,
+    MESSAGE_NS_OTP
 } message_ns_type;
 
 #define SOAP_NS "http://schemas.xmlsoap.org/soap/envelope/"
 #define SOAP2_NS "http://www.w3.org/2003/05/soap-envelope"
 #define ISDS1_NS "http://isds.czechpoint.cz"
 #define ISDS_NS "http://isds.czechpoint.cz/v20"
+#define OISDS_NS "http://isds.czechpoint.cz/v20/asws"
 #define SISDS_INCOMING_NS "http://isds.czechpoint.cz/v20/message"
 #define SISDS_OUTGOING_NS "http://isds.czechpoint.cz/v20/SentMessage"
 #define SISDS_DELIVERY_NS "http://isds.czechpoint.cz/v20/delivery"
@@ -34,6 +36,7 @@ typedef enum {
 struct service {
     service_id id;
     const char *end_point;
+    const xmlChar *name_space;
     const xmlChar *name;
     http_error (*function) (int, xmlDocPtr, xmlXPathContextPtr, xmlNodePtr,
             xmlDocPtr, xmlNodePtr, const void *arguments);
@@ -467,33 +470,42 @@ static http_error service_SendSMSCode(int socket,
 /* List of implemented services */
 static struct service services[] = {
     { SERVICE_DS_Dz_DummyOperation,
-        "DS/dz", BAD_CAST "DummyOperation",
+        "DS/dz", BAD_CAST ISDS_NS, BAD_CAST "DummyOperation",
         service_DummyOperation },
     { SERVICE_DS_DsManage_ChangeISDSPassword,
-        "DS/DsManage", BAD_CAST "ChangeISDSPassword",
+        "DS/DsManage", BAD_CAST ISDS_NS, BAD_CAST "ChangeISDSPassword",
         service_ChangeISDSPassword },
     { SERVICE_DS_Dx_EraseMessage,
-        "DS/dx", BAD_CAST "EraseMessage",
+        "DS/dx", BAD_CAST ISDS_NS, BAD_CAST "EraseMessage",
         service_EraseMessage },
     { SERVICE_asws_changePassword_ChangePasswordOTP,
-        "/asws/changePassword", BAD_CAST "ChangePasswordOTP",
+        "/asws/changePassword", BAD_CAST OISDS_NS, BAD_CAST "ChangePasswordOTP",
         service_ChangePasswordOTP },
     { SERVICE_asws_changePassword_SendSMSCode,
-        "/asws/changePassword", BAD_CAST "SendSMSCode",
+        "/asws/changePassword", BAD_CAST OISDS_NS, BAD_CAST "SendSMSCode",
         service_SendSMSCode },
 };
 
 
 /* Makes known all relevant namespaces to given XPath context
  * @xpath_ctx is XPath context
+ * @otp_ns selects name space for the request and response know as "isds".
+ * Use true for OTP-authenticated password change services, otherwise false.
  * @message_ns selects proper message name space. Unsigned and signed
  * messages and delivery info's differ in prefix and URI.
  * @return 0 in success, otherwise not 0. */
 static int register_namespaces(xmlXPathContextPtr xpath_ctx,
-        const message_ns_type message_ns) {
+        const _Bool otp_ns, const message_ns_type message_ns) {
+    const xmlChar *service_namespace = NULL;
     const xmlChar *message_namespace = NULL;
 
     if (!xpath_ctx) return -1;
+
+    if (otp_ns) {
+        service_namespace = BAD_CAST OISDS_NS;
+    } else {
+        service_namespace = BAD_CAST ISDS_NS;
+    }
 
     switch(message_ns) {
         case MESSAGE_NS_1:
@@ -512,7 +524,7 @@ static int register_namespaces(xmlXPathContextPtr xpath_ctx,
 
     if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "soap", BAD_CAST SOAP_NS))
         return -1;
-    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "isds", BAD_CAST ISDS_NS))
+    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "isds", service_namespace))
         return -1;
     if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "sisds", message_namespace))
         return -1;
@@ -565,7 +577,7 @@ void soap(int socket, const struct service_configuration *configuration,
         return;
     }
 
-    if (register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (register_namespaces(xpath_ctx, 0, MESSAGE_NS_UNSIGNED)) {
         xmlXPathFreeContext(xpath_ctx);
         xmlFreeDoc(request_doc);
         http_send_response_500(socket,
@@ -607,12 +619,12 @@ void soap(int socket, const struct service_configuration *configuration,
         return;
     }
     if (isds_request->type != XML_ELEMENT_NODE || isds_request->ns == NULL ||
-            xmlStrcmp(isds_request->ns->href, BAD_CAST ISDS_NS)) {
+            NULL == isds_request->ns->href) {
         xmlXPathFreeObject(request_soap_body);
         xmlXPathFreeContext(xpath_ctx);
         xmlFreeDoc(request_doc);
         http_send_response_400(socket,
-                "SOAP body does not contain an ISDS elment");
+                "SOAP body does not contain a name-space-qualified element");
         return;
     }
 
@@ -658,9 +670,10 @@ void soap(int socket, const struct service_configuration *configuration,
                 "Could not add ISDS response element to SOAP response body");
         goto leave;
     }
-    isds_ns = xmlNewNs(isds_response, BAD_CAST ISDS_NS, NULL);
+    isds_ns = xmlNewNs(isds_response, isds_request->ns->href, NULL);
     if(NULL == isds_ns) {
-        http_send_response_500(socket, "Could not create ISDS name space");
+        http_send_response_500(socket,
+                "Could not create a name space for the response body");
         goto leave;
     }
     xmlSetNs(isds_response, isds_ns);
@@ -668,12 +681,23 @@ void soap(int socket, const struct service_configuration *configuration,
     /* Dispatch request to service */
     for (int i = 0; i < sizeof(services)/sizeof(services[0]); i++) {
         if (!strcmp(services[i].end_point, end_point) &&
+                !xmlStrcmp(services[i].name_space, isds_request->ns->href) &&
                 !xmlStrcmp(services[i].name, isds_request->name)) {
             /* Check if the configuration is enabled and find configuration */
             for (const struct service_configuration *service = configuration;
                     service->name != SERVICE_END; service++) {
                 if (service->name == services[i].id) {
                     service_handled = 1;
+                    if (!xmlStrcmp(services[i].name_space, BAD_CAST OISDS_NS)) {
+                        /* Alias "isds" XPath identifier to OISDS_NS */
+                        if (register_namespaces(xpath_ctx, 1,
+                                    MESSAGE_NS_UNSIGNED)) {
+                            http_send_response_500(socket,
+                                    "Could not register name spaces to the "
+                                    "XPath context");
+                            break;
+                        }
+                    }
                     xpath_ctx->node = isds_request;
                     if (HTTP_ERROR_SERVER != services[i].function(socket,
                                 request_doc, xpath_ctx, isds_request,

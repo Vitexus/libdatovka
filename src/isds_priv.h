@@ -34,6 +34,7 @@
 #define SOAP2_NS "http://www.w3.org/2003/05/soap-envelope"
 #define ISDS1_NS "http://isds.czechpoint.cz"
 #define ISDS_NS "http://isds.czechpoint.cz/v20"
+#define OISDS_NS "http://isds.czechpoint.cz/v20/asws"
 #define SISDS_INCOMING_NS "http://isds.czechpoint.cz/v20/message"
 #define SISDS_OUTGOING_NS "http://isds.czechpoint.cz/v20/SentMessage"
 #define SISDS_DELIVERY_NS "http://isds.czechpoint.cz/v20/delivery"

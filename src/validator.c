@@ -43,11 +43,16 @@ _hidden isds_error isds_response_status(struct isds_ctx *context,
         case SERVICE_DB_SEARCH:
         case SERVICE_DB_ACCESS:
         case SERVICE_DB_MANIPULATION:
-        case SERVICE_ASWS:
             status_code_expr = BAD_CAST
                 "/*/isds:dbStatus/isds:dbStatusCode/text()";
             status_message_expr = BAD_CAST
                 "/*/isds:dbStatus/isds:dbStatusMessage/text()";
+            break;
+        case SERVICE_ASWS:
+            status_code_expr = BAD_CAST
+                "/*/oisds:dbStatus/oisds:dbStatusCode/text()";
+            status_message_expr = BAD_CAST
+                "/*/oisds:dbStatus/oisds:dbStatusMessage/text()";
             break;
         default:
             err = IE_NOTSUP;
@@ -112,7 +117,9 @@ _hidden isds_error isds_response_status(struct isds_ctx *context,
         zfree(*refnumber);
         xmlXPathFreeObject(result);
         result = xmlXPathEvalExpression(
-                BAD_CAST "/*/isds:dbStatus/isds:dbStatusRefNumber/text()",
+                (SERVICE_ASWS == service) ?
+                    BAD_CAST "/*/oisds:dbStatus/oisds:dbStatusRefNumber/text()":
+                    BAD_CAST "/*/isds:dbStatus/isds:dbStatusRefNumber/text()",
                 xpath_ctx);
         if (!result) {
             err = IE_ERROR;
@@ -155,6 +162,7 @@ _hidden isds_error isds(struct isds_ctx *context, const isds_service service,
     isds_error err = IE_SUCCESS;
     xmlNodePtr response_body = NULL, isds_node;
     char *file = NULL;
+    const char *name_space = ISDS_NS;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!response) return IE_INVAL;
@@ -174,6 +182,12 @@ _hidden isds_error isds(struct isds_ctx *context, const isds_service service,
         }
     }
 
+    /* Also name space differs in some cases */
+    if (CTX_TYPE_TESTING_REQUEST_COLLECTOR == context->type)
+        name_space = ISDS1_NS;
+    else if (SERVICE_ASWS == service)
+        name_space = OISDS_NS;
+
     err = _isds_soap(context, file, request, &response_body,
             raw_response, raw_response_length);
 
@@ -188,16 +202,15 @@ _hidden isds_error isds(struct isds_ctx *context, const isds_service service,
     for (isds_node = response_body; isds_node; isds_node = isds_node->next) {
         if (isds_node->type == XML_ELEMENT_NODE &&
                 isds_node->ns &&
-                !xmlStrcmp(isds_node->ns->href,
-                    (context->type == CTX_TYPE_TESTING_REQUEST_COLLECTOR) ?
-                        BAD_CAST ISDS1_NS : BAD_CAST ISDS_NS))
+                !xmlStrcmp(isds_node->ns->href, BAD_CAST name_space))
             break;
     }
     if (!isds_node) {
-        isds_log_message(context,
-                (context->type == CTX_TYPE_TESTING_REQUEST_COLLECTOR) ?
-                    _("SOAP response does not contain ISDS1 element") :
-                    _("SOAP response does not contain ISDS element"));
+        char *name_space_local = _isds_utf82locale(name_space);
+        isds_printf_message(context,
+                _("SOAP response does not contain element from name space %s"),
+                name_space_local);
+        free(name_space_local);
         err = IE_ISDS;
         goto leave;
     }
@@ -214,10 +227,7 @@ _hidden isds_error isds(struct isds_ctx *context, const isds_service service,
     /* Build XML document */
     *response = xmlNewDoc(BAD_CAST "1.0");
     if (!*response) {
-        isds_log_message(context,
-                (context->type == CTX_TYPE_TESTING_REQUEST_COLLECTOR) ?
-                    _("Could not build ISDS1 response document") :
-                    _("Could not build ISDS response document"));
+        isds_log_message(context, _("Could not build ISDS response document"));
         err = IE_ERROR;
         goto leave;
     }
