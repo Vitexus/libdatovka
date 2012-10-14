@@ -14,6 +14,7 @@
 #include <strings.h> /* strcasecmp() */
 #include <stdint.h> /* int8_t */
 #include <stddef.h> /* size_t, NULL */
+#include <ctype.h> /* isprint() */
 
 /*
 Base64 encoder is part of the libb64 project, and has been placed in the public domain.
@@ -578,6 +579,22 @@ static int find_content_length(struct http_request *request) {
 }
 
 
+/* Print binary stream to STDERR with some escapes */
+static void dump_body(const void *data, size_t length) {
+    fprintf(stderr, "===BEGIN BODY===\n");
+    if (length > 0 && NULL != data) {
+        for (size_t i = 0; i < length; i++) {
+            if (isprint(((const unsigned char *)data)[i])) 
+                fprintf(stderr, "%c", ((const unsigned char *)data)[i]);
+            else
+                fprintf(stderr, "\\x%02x", ((const unsigned char*)data)[i]);
+        }
+        fprintf(stderr, "\n");
+    }
+    fprintf(stderr, "===END BODY===\n");
+}
+
+
 /* Read a HTTP request from connected socket.
  * @http_request is heap-allocated received HTTP request,
  * or NULL in case of error.
@@ -631,9 +648,9 @@ http_error http_read_request(int socket, struct http_request **request) {
         fprintf(stderr, "Could not read request body\n");
         goto leave;
     }
-    fprintf(stderr, "Body of size %zu B has been received\n",
+    fprintf(stderr, "Body of size %zu B has been received:\n",
             (*request)->body_length);
-    /* TODO: Decode body*/
+    dump_body((*request)->body, (*request)->body_length);
 
 leave:
     free(line);
@@ -676,8 +693,9 @@ int http_write_response(int socket, const struct http_response *response) {
         error = http_write_bulk(socket, response->body, response->body_length);
         if (error) return error;
     }
-    fprintf(stderr, "Body of size %zu B has been sent\n",
+    fprintf(stderr, "Body of size %zu B has been sent:\n",
             response->body_length);
+    dump_body(response->body, response->body_length);
 
     free(buffer);
     return HTTP_ERROR_SUCCESS;
