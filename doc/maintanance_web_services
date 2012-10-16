@@ -491,8 +491,15 @@ Restrictions to new password and response format are the same as in
 
 Output has schema of `dbStatus' element.
 
-There is new error code:
+Error codes:
+    1066    Too short or too long
+    1067    Password matches one of older passwords
+    1082    Contains user ID
+    1083    Too simple
     2300    Unexpected error
+
+Non-normative: Be ware ChangeISDSPassword case with code 1091 is reported by
+ChangePasswordOTP as code 1067.
 
 
 SendSMSCode

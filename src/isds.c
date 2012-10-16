@@ -5189,7 +5189,8 @@ isds_error isds_change_password(struct isds_ctx *context,
     };
     const char *meanings[] = {
         N_("Password length must be between 8 and 32 characters"),
-        N_("New password must differ from the current one"),
+        N_("Password cannot be reused"), /* Server does not distinguish 1067
+                                            and 1091 on ChangePasswordOTP */
         N_("Password contains forbidden character"),
         N_("Password must contain at least one upper-case letter, "
                 "one lower-case, and one digit"),
@@ -5197,7 +5198,7 @@ isds_error isds_change_password(struct isds_ctx *context,
         N_("Password cannot contain user identifier"),
         N_("Password is too simmple"),
         N_("Old password is not valid"),
-        N_("Passwords cannot be reused"),
+        N_("Password cannot be reused"),
         N_("Unexpected error"),
         N_("LDAP update error")
     };
