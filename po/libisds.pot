@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libisds 0.6\n"
 "Report-Msgid-Bugs-To: petr.pisar@atlas.cz\n"
-"POT-Creation-Date: 2012-10-21 10:40+0200\n"
+"POT-Creation-Date: 2012-10-21 21:30+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1698,13 +1698,14 @@ msgstr ""
 #: src/soap.c:350
 #, c-format
 msgid ""
-"Error while unsetting user name andpassword from CURL handle for connection "
+"Error while unsetting user name and password from CURL handle for connection "
 "to server %s.\n"
 msgstr ""
 
 #: src/soap.c:354
 #, c-format
-msgid "User name and password for server %shave been unset from CURL handle.\n"
+msgid ""
+"User name and password for server %s have been unset from CURL handle.\n"
 msgstr ""
 
 #: src/soap.c:429
@@ -1852,7 +1853,7 @@ msgid "OTP authentication headers redirect to: <%s>\n"
 msgstr ""
 
 #: src/soap.c:1094
-msgid "could not build soap request document"
+msgid "Could not build soap request document"
 msgstr ""
 
 #: src/soap.c:1100
