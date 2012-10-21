@@ -347,11 +347,11 @@ static isds_error unset_http_authorization(struct isds_ctx *context) {
 #endif /* not HAVE_DECL_CURLOPT_USERNAME */
 
     if (error) 
-        isds_log(ILF_HTTP, ILL_ERR, _("Error while unsetting user name and"
+        isds_log(ILF_HTTP, ILL_ERR, _("Error while unsetting user name and "
                     "password from CURL handle for connection to server %s.\n"),
                 context->url);
     else
-        isds_log(ILF_HTTP, ILL_DEBUG, _("User name and password for server %s"
+        isds_log(ILF_HTTP, ILL_DEBUG, _("User name and password for server %s "
                     "have been unset from CURL handle.\n"), context->url);
     return error;
 }
@@ -1091,7 +1091,7 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
     /* Build SOAP request envelope */
     request_soap_doc = xmlNewDoc(BAD_CAST "1.0");
     if (!request_soap_doc) {
-        isds_log_message(context, _("could not build soap request document"));
+        isds_log_message(context, _("Could not build soap request document"));
         err = IE_ERROR;
         goto leave;
     }
