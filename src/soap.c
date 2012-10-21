@@ -1091,7 +1091,7 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
     /* Build SOAP request envelope */
     request_soap_doc = xmlNewDoc(BAD_CAST "1.0");
     if (!request_soap_doc) {
-        isds_log_message(context, _("Could not build soap request document"));
+        isds_log_message(context, _("Could not build SOAP request document"));
         err = IE_ERROR;
         goto leave;
     }

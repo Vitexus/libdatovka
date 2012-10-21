@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libisds 0.6\n"
 "Report-Msgid-Bugs-To: petr.pisar@atlas.cz\n"
-"POT-Creation-Date: 2012-10-21 21:30+0200\n"
+"POT-Creation-Date: 2012-10-21 21:32+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1853,7 +1853,7 @@ msgid "OTP authentication headers redirect to: <%s>\n"
 msgstr ""
 
 #: src/soap.c:1094
-msgid "Could not build soap request document"
+msgid "Could not build SOAP request document"
 msgstr ""
 
 #: src/soap.c:1100
