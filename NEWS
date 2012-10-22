@@ -1,3 +1,55 @@
+Version 0.6
+===========
+
+• ABI changed due to changes in specification. Some functions got additional
+parameters or return codes.
+
+• One-time password (OTP) authentication implemented. There is a new argument
+at isds_login() and isds_change_password() functions of type struct isds_otp*.
+Pass NULL if do not request OTP authentication.  The structure is used to
+select OTP method (HMAC- or time-based code), to pass the OTP code (use NULL
+to ask server for new time-based code), and to retrieve fine state of OTP
+authentication. The functions can return IE_PARTIAL_SUCCESS if time-based
+method is selected and server sent the new OTP code successfully.
+OTP-authenticated context resides on URL different from others (use NULL or
+isds_otp_locator for official instance or isds_otp_testing_locator for testing
+instance). You can try client/login tool to check OTP-authenticated log-in.
+You can use client/hotp_generator tool to generate series of HMAC-based OTP
+codes (requires Perl Authen::OATH module).  There is a bug in cURL < 7.28.0
+preventing from correct re-authentication. If you have unpatched cURL,
+configure libisds with `--enable-curlreauthorizationbug' option. (See INSTALL
+for more details.)
+
+• isds_change_password() has additional argument to retrieve reference number
+of the request assigned by the server. Pass NULL if you do not care.
+
+• Internal tests check log-in procedure against simulated ISDS server. You can
+run the simulated server as standalone executable in test/simline/server_cli
+to check another clients. The server implements besides authentication
+DummyRequest, services for changing passwords and EraseMessage.
+
+• New DeleteDataBoxPromptly service implemented as isds_delete_box_promptly().
+(This service is not documented in the specification).
+
+• New PDZInfo service implemented as isds_get_commercial_permissions(). This
+service enables application to know whether it can send commercial messages,
+which subtypes of commercial messages can send (there are differences on
+payment type), and to retrieve tokens for sending such messages.
+
+• New service EraseMessage implemented as isds_delete_message_from_storage().
+This function can be used to delete messages stored in long term storage (also
+known as safe previously). Only messages in the long term storage can be
+explicitly deleted.
+
+• New user types USERTYPE_LIQUIDATOR (company liquidator) and
+USERTYPE_OFFICIAL_CERT (undocumented in specification) added.
+
+• Return value of isds_normalize_mime_type() is pointer to constant string now
+to discourage application from fiddling with the value.
+
+• Autoconf m4 macros have been updated (curl-7.26.0, gettext-0.18.1.1,
+gpgme-1.3.1, libgcrypt-1.5.0, libtool-2.4.2, libxml2-2.8.0).
+
 Version 0.5
 ===========
 
