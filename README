@@ -23,9 +23,9 @@ gpgme to process CMS).  Build system preparation from VCS requires
 
 Applications linked against this library need to be linked to libxml2 too.
 
-It has been tested on GNU/Linux (Linux 2.6.36, glibc-2.12.2, gcc-4.5.2) with
-libxml2-2.7.8, curl-7.21.4, libgcrypt-1.4.6, gpgme-1.3.0, expat-2.0.1 and
-gnupg-2.0.17 on n32 MIPS64 architecture.
+It has been tested on GNU/Linux (Linux 3.6.1, glibc-2.15, gcc-4.6.3) with
+libxml2-2.8.0, curl-7.28.0, libgcrypt-1.5.0, gpgme-1.3.2, expat-2.1.0 and
+gnupg-2.0.19 on n32 MIPS64 architecture.
 
 Latest code can be obtained from GIT repository
 <http://repo.or.cz/w/libisds.git> (web interface).
