@@ -27,7 +27,7 @@ noinst_PROGRAMS = server_cli $(TESTS)
 
 server_implementation = ../test.c ../test-tools.h http.c http.h \
 						server.c server.h service.c service.h \
-						services.h
+						services.h server_types.h
 
 # Standalone server
 server_cli_SOURCES = server_cli.c $(server_implementation)
