@@ -1,3 +1,9 @@
+Version 0.6.1
+=============
+
+• Missing test/simline/server_types.h files has been added into distribution
+to fix test suite compilation.
+
 Version 0.6
 ===========
 
