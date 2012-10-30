@@ -2,11 +2,12 @@ AUTOMAKE_OPTIONS = color-tests parallel-tests
 export VERBOSE=1
 
 libdirpath = src
-LIBDIR = $(top_srcdir)/$(libdirpath)
+INCLUDEDIR = $(top_srcdir)/$(libdirpath)
+LIBDIR = $(top_builddir)/$(libdirpath)
 localedir = $(datadir)/locale
 
 AM_CPPFLAGS = @XML_CPPFLAGS@
-AM_CFLAGS = -I$(srcdir)/$(LIBDIR) -DSRCDIR=\"$(top_srcdir)\"
+AM_CFLAGS = -I$(INCLUDEDIR) -DSRCDIR=\"$(top_srcdir)\"
 LDADD = $(LIBDIR)/libisds.la -L$(LIBDIR) @XML_LIBS@
 
 # To fake home dir for gnupg2
