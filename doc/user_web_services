@@ -3,7 +3,7 @@ User web services specification
 
 Source: Provozní řád ISDS, version 2010-11-28, Pages 15–16
 Source: Webové služby rozhraní ISDS pro manipulaci s datovými zprávami,
-    version 2.28 (2012-07-27)
+    version 2.31 (2012-09-20)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
     version 2.26 (2012-03-15)
 
@@ -55,7 +55,7 @@ VerifyMessage (*+)
     Verify local copy of message with remote original stored in ISDS
 MessageEnvelopeDownload (+)
     Download envelope of incoming message
-MarkMessageAsDownloaded
+MarkMessageAsDownloaded (*)
     Mark message as read
 ConfirmDelivery
     Mark commercial message as accepted by recipient
@@ -395,7 +395,7 @@ Returned hash and time-stamp are computed from whole message. You must get
 complete message including documents to be able to verify them.
 
 
-MarkMessageAsDownloaded
+MarkMessageAsDownloaded (*)
 =======================
 
 Change status of a message identified by its ID as read.
