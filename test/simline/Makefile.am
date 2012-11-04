@@ -32,6 +32,7 @@ server_implementation = ../test.c ../test-tools.h http.c http.h \
 
 # Standalone server
 server_cli_SOURCES = server_cli.c $(server_implementation)
+server_cli_LDADD = @XML_LIBS@
 
 # Access public API only
 common = ../test.h $(server_implementation)
