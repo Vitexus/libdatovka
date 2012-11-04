@@ -37,5 +37,5 @@ data and message examples are stored in `server/messages' directory.
 
 Credentials for testing account can be passed to example clients and on-line
 tests by environmental variables `ISDS_USERNAME' and `ISDS_PASSWORD' or by
-saving them into `testing_credentials' in build root directory (first line is
+saving them into `test_credentials' in build root directory (first line is
 user name, second line is password). Environmental variables take precedence.
