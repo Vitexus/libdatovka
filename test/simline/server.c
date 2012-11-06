@@ -386,8 +386,8 @@ static void do_as_phase_two(int client_socket, const struct http_request *reques
 /* Process ASWS for changing OTP password requests */
 /* FIXME: The ASWS URI hosts two services: for sending TOTP code for password
  * change and for changing OTP password. The problem is the former one is
- * basic-authenticated, the later one is otp-auhenticated. But we cannot decide
- * which authentication to enforce without understadning request body. 
+ * basic-authenticated, the later one is otp-authenticated. But we cannot
+ * decide which authentication to enforce without understadning request body. 
  * I will just try both of them to choose the service.
  * But I hope official server implementation does it in more clever way. */
 static void do_asws(int client_socket, const struct http_request *request,
