@@ -6,6 +6,7 @@ INCLUDEDIR = $(top_srcdir)/$(libdirpath)
 LIBDIR = $(top_builddir)/$(libdirpath)
 localedir = $(datadir)/locale
 
+AM_CPPFLAGS = @XML_CPPFLAGS@
 AM_CFLAGS = -I$(INCLUDEDIR) -DSRCDIR=\"$(top_srcdir)\"
 LDADD = -L$(LIBDIR) $(LIBDIR)/libisds.la -L. ./libserver.la
 
