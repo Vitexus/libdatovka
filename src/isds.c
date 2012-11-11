@@ -2359,8 +2359,9 @@ static isds_error eventstring2event(const xmlChar *string,
 /* Following EXTRACT_* macros expect @result, @xpath_ctx, @err, @context
  * and leave label */
 #define EXTRACT_STRING(element, string) { \
+    xmlXPathFreeObject(result); \
     result = xmlXPathEvalExpression(BAD_CAST element "/text()", xpath_ctx); \
-    if (!result) { \
+    if (NULL == (result)) { \
         err = IE_ERROR; \
         goto leave; \
     } \
@@ -2372,7 +2373,7 @@ static isds_error eventstring2event(const xmlChar *string,
         } \
         (string) = (char *) \
             xmlXPathCastNodeSetToString(result->nodesetval); \
-        if (!(string)) { \
+        if (NULL == (string)) { \
             err = IE_ERROR; \
             goto leave; \
         } \
