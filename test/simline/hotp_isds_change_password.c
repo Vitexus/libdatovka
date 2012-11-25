@@ -102,6 +102,7 @@ int main(int argc, char **argv) {
             { SERVICE_END, NULL }
         };
         const struct arguments_otp_authentication server_arguments = {
+            .tls = NULL,
             .method = AUTH_OTP_HMAC,
             .username = username,
             .password = password,

@@ -62,6 +62,7 @@ int main(int argc, char **argv) {
             { SERVICE_END, NULL }
         };
         const struct arguments_basic_authentication server_arguments = {
+            .tls = NULL,
             .username = username,
             .password = password,
             .isds_deviations = 1,

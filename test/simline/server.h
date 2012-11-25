@@ -21,7 +21,19 @@ int listen_on_socket(void);
 char *socket2address(int socket);
 
 
+struct tls_authentication {
+    const char *authority_certificate;  /* PEM CA certificate file name */
+    const char *server_certificate;     /* PEM server certificate file name */
+    const char *server_key;             /* PEM server private key file name */
+    const char *client_name;            /* Client distinguished name.
+                                           NULL if you do not want to
+                                           authenticate a client using X.509 */
+};
+
+
 struct arguments_basic_authentication {
+    const struct tls_authentication *tls;   /* TLS settings.
+                                               NULL for plain HTTP. */
     const char *username;   /* Sets required user name server has to require.
                                Set NULL to disable HTTP authentication. */
     const char *password;   /* sets required password server has to require */
@@ -44,6 +56,8 @@ void server_basic_authentication(int server_socket,
 
 
 struct arguments_otp_authentication {
+    const struct tls_authentication *tls;   /* TLS settings.
+                                               NULL for plain HTTP. */
     enum auth_otp_method method;    /* Selects OTP method to enable */
     const char *username;   /* Sets required user name server has to require.
                                Set NULL to disable HTTP authentication. */
