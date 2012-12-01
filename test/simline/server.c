@@ -20,6 +20,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <wait.h>
+#include <gnutls/gnutls.h>
 
 const char *server_error = NULL;
 

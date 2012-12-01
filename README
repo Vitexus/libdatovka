@@ -19,7 +19,8 @@ This code is written in ISO99 C language and requires libxml2, (optional but
 strongly recommended) cURL, libgcrypt, GPGME, and >=expat-2.0.0 libraries at
 compilation time. gnupg2 is required at run time (provides gpgsm that uses
 gpgme to process CMS).  Build system preparation from VCS requires
->=automake-1.11, autoconf and libtool in addition.
+>=automake-1.11, autoconf and libtool in addition. Tests require GnuTLS
+library.
 
 Applications linked against this library need to be linked to libxml2 too.
 

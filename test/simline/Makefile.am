@@ -27,8 +27,8 @@ noinst_LTLIBRARIES = libserver.la
 libserver_la_SOURCES = ../test.c ../test-tools.h http.c http.h \
 						server.c server.h service.c service.h \
 						services.h server_types.h
-libserver_la_CPPFLAGS = @XML_CPPFLAGS@
-libserver_la_LIBADD = @XML_LIBS@
+libserver_la_CPPFLAGS = @XML_CPPFLAGS@ @LIBGNUTLS_CFLAGS@
+libserver_la_LIBADD = @XML_LIBS@ @LIBGNUTLS_LIBS@
 
 # Standalone server
 noinst_PROGRAMS = server_cli $(TESTS)

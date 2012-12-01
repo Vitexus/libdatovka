@@ -105,6 +105,14 @@ AM_CONDITIONAL([BUILD_ONLINE_TEST],
                [test -n "$LIBCURL" -a "$enable_test" = "yes" \
                     -a "$enable_online_test" = "yes"])
 
+dnl Simulated tests require gnutls
+PKG_PROG_PKG_CONFIG()
+AS_IF([test "$enable_test" = "yes"], [
+    PKG_CHECK_MODULES([LIBGNUTLS], [gnutls])
+    AC_SUBST(LIBGNUTLS_CFLAGS)
+    AC_SUBST(LIBGNUTLS_LIBS)
+    ])
+
 #TODO: Determine minimal version
 AM_PATH_LIBGCRYPT([1:1.4.0])
 
