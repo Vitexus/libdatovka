@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     struct arguments_otp_authentication server_otp_arguments;
 
     /* Parse arguments */
-    while (-1 != (option = getopt(argc, argv, "h:p:t:u:"))) {
+    while (-1 != (option = getopt(argc, argv, "h:p:t:u:a:s:S:c:"))) {
         switch (option) {
             case 'h':
                 otp_type = 'h';

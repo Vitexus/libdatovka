@@ -108,7 +108,7 @@ AM_CONDITIONAL([BUILD_ONLINE_TEST],
 dnl Simulated tests require gnutls
 PKG_PROG_PKG_CONFIG()
 AS_IF([test "$enable_test" = "yes"], [
-    PKG_CHECK_MODULES([LIBGNUTLS], [gnutls])
+    PKG_CHECK_MODULES([LIBGNUTLS], [gnutls >= 2.12.0])
     AC_SUBST(LIBGNUTLS_CFLAGS)
     AC_SUBST(LIBGNUTLS_LIBS)
     ])
