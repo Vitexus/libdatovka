@@ -166,7 +166,7 @@ int main(int argc, char **argv) {
                 &tls_arguments);
     }
     if (error == -1) {
-        fprintf(stderr, "Could not start server\n");
+        fprintf(stderr, "Could not start server: %s\n", server_error);
         free(server_address);
         exit(EXIT_FAILURE);
     }
