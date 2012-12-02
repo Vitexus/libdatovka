@@ -95,7 +95,6 @@ int main(int argc, char **argv) {
             { SERVICE_END, NULL }
         };
         const struct arguments_otp_authentication server_arguments = {
-            .tls = NULL,
             .method = AUTH_OTP_HMAC,
             .username = username,
             .password = password,
@@ -104,7 +103,7 @@ int main(int argc, char **argv) {
             .services = services
         };
         error = start_server(&server_process, &server_address,
-                server_otp_authentication, &server_arguments);
+                server_otp_authentication, &server_arguments, NULL);
         if (error == -1) {
             isds_ctx_free(&context);
             isds_cleanup();
@@ -165,7 +164,7 @@ int main(int argc, char **argv) {
 
     {
         error = start_server(&server_process, &server_address,
-                server_out_of_order, NULL);
+                server_out_of_order, NULL, NULL);
         if (error == -1) {
             isds_ctx_free(&context);
             isds_cleanup();

@@ -622,18 +622,24 @@ void server_out_of_order(int server_socket,
 /* Start sever in separate process.
  * @server_process is PID of forked server
  * @server_address is automatically allocated TCP address of listening server
- * @username sets required user name server has to require. Set NULL to
- * disable HTTP authentication.
- * @password sets required password server has to require
- * socket.
- * @isds_deviations is flag to set conformance level. If false, server is
- * compliant to standards (HTTP, SOAP) if not conflicts with ISDS
- * specification. Otherwise server mimics real ISDS implementation as much
- * as possible.
+ * @server_implementation points to kind of server to implement. Valid values
+ * are addresses of server_basic_authentication(),
+ * server_otp_authentication(), or server_out_of_order().
+ * @server_arguments is pointer to argument pass to @server_implementation. It
+ * usually contains:
+ *  @username sets required user name server has to require. Set NULL to
+ *  disable HTTP authentication.
+ *  @password sets required password server has to require
+ *  socket.
+ *  @isds_deviations is flag to set conformance level. If false, server is
+ *  compliant to standards (HTTP, SOAP) if not conflicts with ISDS
+ *  specification. Otherwise server mimics real ISDS implementation as much
+ *  as possible.
+ * @tls sets TLS layer. Pass NULL for plain HTTP.
  * @return -1 in case of error. */
 int start_server(pid_t *server_process, char **server_address,
         void (*server_implementation)(int, const void *),
-        const void *server_arguments) {
+        const void *server_arguments, const struct tls_authentication *tls) {
     int server_socket;
     
     if (server_address == NULL) {

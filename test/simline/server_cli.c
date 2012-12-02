@@ -118,7 +118,6 @@ int main(int argc, char **argv) {
         service_passwdbase_arguments.current_password = password;
         services[last_service-2].name = SERVICE_DS_DsManage_ChangeISDSPassword;
         services[last_service-2].arguments = &service_passwdbase_arguments;
-        server_basic_arguments.tls = &tls_arguments;
         server_basic_arguments.username = username;
         server_basic_arguments.password = password;
         server_basic_arguments.isds_deviations = 1;
@@ -133,7 +132,6 @@ int main(int argc, char **argv) {
         services[last_service-1].name =
             SERVICE_asws_changePassword_SendSMSCode;
         services[last_service-1].arguments = &service_sendsms_arguments;
-        server_otp_arguments.tls = &tls_arguments;
         server_otp_arguments.otp = otp_code;
         if (otp_type == 't') { 
             server_otp_arguments.method = AUTH_OTP_TIME;
@@ -160,10 +158,12 @@ int main(int argc, char **argv) {
     printf("Starting server on:\n");
     if (otp_type == 'n') {
         error = start_server(&server_process, &server_address,
-                server_basic_authentication, &server_basic_arguments);
+                server_basic_authentication, &server_basic_arguments,
+                &tls_arguments);
     } else {
         error = start_server(&server_process, &server_address,
-                server_otp_authentication, &server_otp_arguments);
+                server_otp_authentication, &server_otp_arguments,
+                &tls_arguments);
     }
     if (error == -1) {
         fprintf(stderr, "Could not start server\n");

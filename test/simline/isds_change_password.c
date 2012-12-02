@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
             .services = services
         };
         error = start_server(&server_process, &server_address,
-                server_basic_authentication, &server_arguments);
+                server_basic_authentication, &server_arguments, NULL);
         if (error == -1) {
             isds_ctx_free(&context);
             isds_cleanup();

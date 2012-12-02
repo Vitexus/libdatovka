@@ -91,7 +91,6 @@ int main(int argc, char **argv) {
         { SERVICE_END, NULL }
     };
     const struct arguments_otp_authentication server_arguments = {
-        .tls = NULL,
         .method = AUTH_OTP_TIME,
         .username = username,
         .password = password,
@@ -121,7 +120,7 @@ int main(int argc, char **argv) {
         sendsmscode_arguments.status_message =
             "One-time password sent via SMS gateway";
         error = start_server(&server_process, &server_address,
-                server_otp_authentication, &server_arguments);
+                server_otp_authentication, &server_arguments, NULL);
         if (error == -1) {
             isds_ctx_free(&context);
             isds_cleanup();
@@ -227,7 +226,7 @@ int main(int argc, char **argv) {
         sendsmscode_arguments.status_message =
             "One-time code cannot be re-send faster than once a 30 seconds";
         error = start_server(&server_process, &server_address,
-                server_otp_authentication, &server_arguments);
+                server_otp_authentication, &server_arguments, NULL);
         if (error == -1) {
             isds_ctx_free(&context);
             isds_cleanup();
@@ -267,7 +266,7 @@ int main(int argc, char **argv) {
         sendsmscode_arguments.status_message =
             "One-time code could not been sent. Try later again.";
         error = start_server(&server_process, &server_address,
-                server_otp_authentication, &server_arguments);
+                server_otp_authentication, &server_arguments, NULL);
         if (error == -1) {
             isds_ctx_free(&context);
             isds_cleanup();
