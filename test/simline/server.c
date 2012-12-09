@@ -692,8 +692,9 @@ int start_server(pid_t *server_process, char **server_address,
                     gnutls_strerror(error));
             return -1;
         }
-        if ((error = gnutls_certificate_set_x509_trust_file(x509_credentials,
-                    tls->authority_certificate, GNUTLS_X509_FMT_PEM))) {
+        if (0 > (error = gnutls_certificate_set_x509_trust_file(
+                        x509_credentials, tls->authority_certificate,
+                        GNUTLS_X509_FMT_PEM))) {
             close(server_socket);
             gnutls_certificate_free_credentials(x509_credentials);
             gnutls_global_deinit();
