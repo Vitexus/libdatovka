@@ -15,6 +15,7 @@
 #include <stdint.h> /* int8_t */
 #include <stddef.h> /* size_t, NULL */
 #include <ctype.h> /* isprint() */
+#include <sys/socket.h> /* send(2) */
 
 /*
 Base64 encoder is part of the libb64 project, and has been placed in the public domain.
@@ -314,7 +315,7 @@ static int http_write_bulk(int socket, const void *data, size_t length) {
     if (data == NULL && length > 0) return HTTP_ERROR_SERVER;
 
     for (end = data + length; data != end; data += written, length -= written) {
-        written = write(socket, data, length);
+        written = send(socket, data, length, MSG_NOSIGNAL);
         if (written == -1 && errno != EINTR) return HTTP_ERROR_CLIENT;
     }
 
