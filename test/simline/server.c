@@ -707,13 +707,47 @@ int start_server(pid_t *server_process, char **server_address,
 
     if (*server_process == 0) {
         int client_socket;
+        gnutls_session_t tls_session;
         struct http_request *request = NULL;
         http_error error;
         int terminate = 0;
 
-        while (terminate ||
-                0 <= (client_socket = accept(server_socket, NULL, NULL))) {
+        while (!terminate) {
+            if (NULL != tls) {
+                if ((error = gnutls_init(&tls_session, GNUTLS_SERVER))) {
+                    set_server_error("Could not initialize TLS session: %s",
+                            gnutls_strerror(error));
+                    terminate = -1;
+                    continue;
+                }
+                if ((error = gnutls_priority_set(tls_session,
+                                priority_cache))) {
+                    set_server_error(
+                            "Could not set priorities to TLS session: %s",
+                            gnutls_strerror(error));
+                    terminate = -1;
+                    continue;
+                }
+                if ((error = gnutls_credentials_set(tls_session,
+                                GNUTLS_CRD_CERTIFICATE, x509_credentials))) {
+                    set_server_error("Could not set X509 credentials to TLS "
+                            "session: %s", gnutls_strerror(error));
+                    terminate = -1;
+                    continue;
+                }
+                /* XXX: Credentials are linked from session now.
+                 * Deinitializition muse free session before x509_credentials.
+                 */
+                /* TODO: Implement client authentication by certificate 
+                gnutls_certificate_server_set_request(tls_session, GNUTLS_CERT_REQUIRE);*/
+            }
+
+            if (0 > (client_socket = accept(server_socket, NULL, NULL))) {
+                terminate = -1;
+                continue;
+            }
             fprintf(stderr, "Connection accepted\n");
+
             error = http_read_request(client_socket, &request);
             if (error) {
                 fprintf(stderr, "Error while reading request\n");
@@ -730,8 +764,14 @@ int start_server(pid_t *server_process, char **server_address,
 
             http_request_free(&request);
             close(client_socket);
+            if (NULL != tls) {
+                gnutls_deinit(tls_session);
+            }
         }
 
+        if (NULL != tls) {
+            gnutls_deinit(tls_session);
+        }
         close(server_socket);
         free(authorization_cookie_value);
         exit(EXIT_SUCCESS);
