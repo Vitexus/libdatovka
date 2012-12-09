@@ -152,77 +152,54 @@ static void do_ws(int client_socket,
 
 
 /* Do the server protocol.
- * @server_socket is listening TCP socket of the server
+ * @client_socket is accpeted TCP socket
  * @server_arguments is pointer to structure:
- * Never returns. Terminates by exit(). */
-void server_basic_authentication(int server_socket,
-        const void *server_arguments) {
-    int client_socket;
+ * @request is parsed HTTP client request
+ * @return 0 to accept new client, return -1 in case of fatal error. */
+int server_basic_authentication(int client_socket,
+        const void *server_arguments, const struct http_request *request) {
     const struct arguments_basic_authentication *arguments =
         (const struct arguments_basic_authentication *) server_arguments;
-    struct http_request *request = NULL;
-    http_error error;
 
-    if (arguments == NULL) {
-        close(server_socket);
-        exit(EXIT_FAILURE);
+    if (NULL == arguments || NULL == request) {
+        return -1;
     }
 
-    while (0 <= (client_socket = accept(server_socket, NULL, NULL))) {
-        fprintf(stderr, "Connection accepted\n");
-        error = http_read_request(client_socket, &request);
-        if (error) {
-            fprintf(stderr, "Error while reading request\n");
-            if (error == HTTP_ERROR_CLIENT)
-                http_send_response_400(client_socket, "Error in request");
-            else
-                http_send_response_500(client_socket,
-                        "Error while reading request");
-            close(client_socket);
-            continue;
-        }
-
-        if (request->method == HTTP_METHOD_POST) {
-            /* Only POST requests are used in Basic authentication mode */
-            if (arguments->username != NULL) {
-                if (http_client_authenticates(request)) {
-                    switch(http_authenticate_basic(request,
-                                arguments->username, arguments->password)) {
-                        case HTTP_ERROR_SUCCESS:
-                            do_ws(client_socket, arguments->services, request,
-                                    ws_base_path_basic);
-                            break;
-                        case HTTP_ERROR_CLIENT:
-                            if (arguments->isds_deviations)
-                                http_send_response_401_basic(client_socket);
-                            else
-                                http_send_response_403(client_socket);
-                            break;
-                        default:
-                            http_send_response_500(client_socket,
-                                    "Server error while verifying Basic "
-                                    "authentication");
-                    }
-                } else {
-                    http_send_response_401_basic(client_socket);
+    if (request->method == HTTP_METHOD_POST) {
+        /* Only POST requests are used in Basic authentication mode */
+        if (arguments->username != NULL) {
+            if (http_client_authenticates(request)) {
+                switch(http_authenticate_basic(request,
+                            arguments->username, arguments->password)) {
+                    case HTTP_ERROR_SUCCESS:
+                        do_ws(client_socket, arguments->services, request,
+                                ws_base_path_basic);
+                        break;
+                    case HTTP_ERROR_CLIENT:
+                        if (arguments->isds_deviations)
+                            http_send_response_401_basic(client_socket);
+                        else
+                            http_send_response_403(client_socket);
+                        break;
+                    default:
+                        http_send_response_500(client_socket,
+                                "Server error while verifying Basic "
+                                "authentication");
                 }
             } else {
-                do_ws(client_socket, arguments->services, request,
-                        ws_base_path_basic);
+                http_send_response_401_basic(client_socket);
             }
         } else {
-            /* HTTP method unsupported per ISDS specification */
-            http_send_response_400(client_socket,
-                    "Only POST method is allowed");
+            do_ws(client_socket, arguments->services, request,
+                    ws_base_path_basic);
         }
-        http_request_free(&request);
-
-
-        close(client_socket);
+    } else {
+        /* HTTP method unsupported per ISDS specification */
+        http_send_response_400(client_socket,
+                "Only POST method is allowed");
     }
 
-    close(server_socket);
-    exit(EXIT_SUCCESS);
+    return 0;
 }
 
 
@@ -517,114 +494,72 @@ static void do_ws_with_cookie(int client_socket,
 
 
 /* Do the server protocol with OTP authentication.
- * @server_socket is listening TCP socket of the server
+ * @client_socket is accepted TCP socket
  * @server_arguments is pointer to structure arguments_otp_authentication. It
  * selects OTP method to enable.
- * Never returns. Terminates by exit(). */
-void server_otp_authentication(int server_socket,
-        const void *server_arguments) {
-    int client_socket;
+ * @request is parsed HTTP client requrest
+ * @return 0 to accept new client, return -1 in case of fatal error. */
+int server_otp_authentication(int client_socket,
+        const void *server_arguments, const struct http_request *request) {
     const struct arguments_otp_authentication *arguments =
         (const struct arguments_otp_authentication *) server_arguments;
-    struct http_request *request = NULL;
-    http_error error;
 
-    if (arguments == NULL) {
-        close(server_socket);
-        exit(EXIT_FAILURE);
+    if (NULL == arguments || NULL == request) {
+        return(-1);
     }
 
-    while (0 <= (client_socket = accept(server_socket, NULL, NULL))) {
-        fprintf(stderr, "Connection accepted\n");
-        error = http_read_request(client_socket, &request);
-        if (error) {
-            fprintf(stderr, "Error while reading request\n");
-            if (error == HTTP_ERROR_CLIENT)
-                http_send_response_400(client_socket, "Error in request");
-            else
-                http_send_response_500(client_socket, "Could not read request");
-            close(client_socket);
-            continue;
-        }
-
-        if (arguments->username != NULL) {
-            if (arguments->method == AUTH_OTP_HMAC &&
-                    !strncmp(request->uri, as_path_hotp, strlen(as_path_hotp))) {
-                do_as_phase_two(client_socket, request, arguments);
-            } else if (arguments->method == AUTH_OTP_TIME &&
-                    !strncmp(request->uri, as_path_sendsms,
-                        strlen(as_path_sendsms))) {
-                do_as_sendsms(client_socket, request, arguments);
-            } else if (arguments->method == AUTH_OTP_TIME &&
-                    !strncmp(request->uri, as_path_dontsendsms,
-                        strlen(as_path_dontsendsms))) {
-                do_as_phase_two(client_socket, request, arguments);
-            } else if (!strncmp(request->uri, as_path_logout,
-                        strlen(as_path_logout))) {
-                do_as_logout(client_socket, request, arguments);
-            } else if (!strcmp(request->uri, asws_path)) {
-                do_asws(client_socket, request, arguments);
-            } else if (!strcmp(request->uri, ws_path)) {
-                do_ws_with_cookie(client_socket, request, arguments,
-                        ws_base_path_otp);
-            } else {
-                http_send_response_400(client_socket,
-                        "Unknown path for OTP authenticating service");
-            }            
+    if (arguments->username != NULL) {
+        if (arguments->method == AUTH_OTP_HMAC &&
+                !strncmp(request->uri, as_path_hotp, strlen(as_path_hotp))) {
+            do_as_phase_two(client_socket, request, arguments);
+        } else if (arguments->method == AUTH_OTP_TIME &&
+                !strncmp(request->uri, as_path_sendsms,
+                    strlen(as_path_sendsms))) {
+            do_as_sendsms(client_socket, request, arguments);
+        } else if (arguments->method == AUTH_OTP_TIME &&
+                !strncmp(request->uri, as_path_dontsendsms,
+                    strlen(as_path_dontsendsms))) {
+            do_as_phase_two(client_socket, request, arguments);
+        } else if (!strncmp(request->uri, as_path_logout,
+                    strlen(as_path_logout))) {
+            do_as_logout(client_socket, request, arguments);
+        } else if (!strcmp(request->uri, asws_path)) {
+            do_asws(client_socket, request, arguments);
+        } else if (!strcmp(request->uri, ws_path)) {
+            do_ws_with_cookie(client_socket, request, arguments,
+                    ws_base_path_otp);
         } else {
-            if (!strcmp(request->uri, ws_path)) {
-                do_ws(client_socket, arguments->services, request,
-                        ws_base_path_otp);
-            } else {
-                http_send_response_400(client_socket,
-                        "Unknown path for OTP authenticating service");
-            }            
-        }
-        http_request_free(&request);
-
-
-        close(client_socket);
+            http_send_response_400(client_socket,
+                    "Unknown path for OTP authenticating service");
+        }            
+    } else {
+        if (!strcmp(request->uri, ws_path)) {
+            do_ws(client_socket, arguments->services, request,
+                    ws_base_path_otp);
+        } else {
+            http_send_response_400(client_socket,
+                    "Unknown path for OTP authenticating service");
+        }            
     }
 
-    close(server_socket);
-    free(authorization_cookie_value);
-    exit(EXIT_SUCCESS);
+    return 0;
 }
 
 
 /* Implementation of server that is out of order.
  * It always sends back SOAP Fault with HTTP error 503.
- * @server_socket is listening TCP socket of the server
+ * @client_socket is accepted TCP socket
  * @server_arguments is ununsed pointer
- * Never returns. Terminates by exit(). */
-void server_out_of_order(int server_socket,
-        const void *server_arguments) {
-    int client_socket;
-    struct http_request *request = NULL;
-    http_error error;
+ * @request is parsed HTTP client request
+ * @return 0 to accept new client, return -1 in case of fatal error. */
+int server_out_of_order(int client_socket,
+        const void *server_arguments, const struct http_request *request) {
     const char *soap_mime_type = "text/xml"; /* SOAP/1.1 requires text/xml */
     const char *fault = "<?xml version='1.0' encoding='UTF-8'?><SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsi=\"http://www.w3.org/1999/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/1999/XMLSchema\"><SOAP-ENV:Body><SOAP-ENV:Fault><faultcode xsi:type=\"xsd:string\">Probíhá plánovaná údržba</faultcode><faultstring xsi:type=\"xsd:string\">Omlouváme se všem uživatelům datových schránek za dočasné omezení přístupu do systému datových schránek z důvodu plánované údržby systému. Děkujeme za pochopení.</faultstring></SOAP-ENV:Fault></SOAP-ENV:Body></SOAP-ENV:Envelope>";
 
-    while (0 <= (client_socket = accept(server_socket, NULL, NULL))) {
-        fprintf(stderr, "Connection accepted\n");
-        error = http_read_request(client_socket, &request);
-        if (error) {
-            fprintf(stderr, "Error while reading request\n");
-            if (error == HTTP_ERROR_CLIENT)
-                http_send_response_400(client_socket, "Error in request");
-            close(client_socket);
-            continue;
-        }
-
-        http_send_response_503(client_socket, fault, strlen(fault),
-                soap_mime_type);
-        http_request_free(&request);
-
-        close(client_socket);
-    }
-
-    close(server_socket);
-    exit(EXIT_SUCCESS);
+    http_send_response_503(client_socket, fault, strlen(fault),
+            soap_mime_type);
+    return 0;
 }
 
 
@@ -647,7 +582,8 @@ void server_out_of_order(int server_socket,
  * @tls sets TLS layer. Pass NULL for plain HTTP.
  * @return -1 in case of error. */
 int start_server(pid_t *server_process, char **server_address,
-        void (*server_implementation)(int, const void *),
+        int (*server_implementation)(int, const void *,
+            const struct http_request *),
         const void *server_arguments, const struct tls_authentication *tls) {
     int server_socket;
     int error;
@@ -770,7 +706,35 @@ int start_server(pid_t *server_process, char **server_address,
     }
 
     if (*server_process == 0) {
-        server_implementation(server_socket, server_arguments);
+        int client_socket;
+        struct http_request *request = NULL;
+        http_error error;
+        int terminate = 0;
+
+        while (terminate ||
+                0 <= (client_socket = accept(server_socket, NULL, NULL))) {
+            fprintf(stderr, "Connection accepted\n");
+            error = http_read_request(client_socket, &request);
+            if (error) {
+                fprintf(stderr, "Error while reading request\n");
+                if (error == HTTP_ERROR_CLIENT)
+                    http_send_response_400(client_socket, "Error in request");
+                else
+                    http_send_response_500(client_socket, "Could not read request");
+                close(client_socket);
+                continue;
+            }
+
+            terminate = server_implementation(client_socket, server_arguments,
+                    request);
+
+            http_request_free(&request);
+            close(client_socket);
+        }
+
+        close(server_socket);
+        free(authorization_cookie_value);
+        exit(EXIT_SUCCESS);
         /* Does not return */
     }
 

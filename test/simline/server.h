@@ -5,6 +5,7 @@
 #include "server_types.h"
 #include "services.h"
 
+struct http_request;    /* Declare opaque not to export http.h */
 extern char *server_error;
 
 /* Save error message if not yet set. The message will be duplicated.
@@ -47,11 +48,12 @@ struct arguments_basic_authentication {
 };
 
 /* Do the server protocol.
- * @server_socket is listening TCP socket of the server
+ * @client_socket is accpeted TCP socket
  * @server_arguments is pointer to structure:
- * Never returns. Terminates by exit(). */
-void server_basic_authentication(int server_socket,
-        const void *server_arguments);
+ * @request is parsed HTTP client request
+ * @return 0 to accept new client, return -1 in case of fatal error. */
+int server_basic_authentication(int client_socket,
+        const void *server_arguments, const struct http_request *request);
 
 
 struct arguments_otp_authentication {
@@ -71,20 +73,22 @@ struct arguments_otp_authentication {
 };
 
 /* Do the server protocol with OTP authentication.
- * @server_socket is listening TCP socket of the server
+ * @client_socket is accepted TCP socket
  * @server_arguments is pointer to structure arguments_otp_authentication. It
  * selects OTP method to enable.
- * Never returns. Terminates by exit(). */
-void server_otp_authentication(int server_socket,
-        const void *server_arguments);
+ * @request is parsed HTTP client requrest
+ * @return 0 to accept new client, return -1 in case of fatal error. */
+int server_otp_authentication(int client_socket,
+        const void *server_arguments, const struct http_request *request);
 
 /* Implementation of server that is out of order.
  * It always sends back SOAP Fault with HTTP error 503.
- * @server_socket is listening TCP socket of the server
+ * @client_socket is accepted TCP socket
  * @server_arguments is ununsed pointer
- * Never returns. Terminates by exit(). */
-void server_out_of_order(int server_socket,
-        const void *server_arguments);
+ * @request is parsed HTTP client request
+ * @return 0 to accept new client, return -1 in case of fatal error. */
+int server_out_of_order(int client_socket,
+        const void *server_arguments, const struct http_request *request);
 
 
 /* Start sever in separate process.
@@ -106,7 +110,8 @@ void server_out_of_order(int server_socket,
  * @tls sets TLS layer. Pass NULL for plain HTTP.
  * @return -1 in case of error. */
 int start_server(pid_t *server_process, char **server_address,
-        void (*server_implementation)(int, const void *),
+        int (*server_implementation)(int, const void *,
+            const struct http_request *),
         const void *server_arguments, const struct tls_authentication *tls);
 
 
