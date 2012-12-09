@@ -612,6 +612,10 @@ int start_server(pid_t *server_process, char **server_address,
         return -1;
     }
 
+    if (NULL != tls && NULL == tls->server_certificate) {
+        /* XXX: X.509 TLS server requires server certificate. */
+        tls = NULL;
+    }
     if (NULL != tls) {
         const char *error_position;
         if ((error = gnutls_global_init())) {
@@ -628,15 +632,17 @@ int start_server(pid_t *server_process, char **server_address,
                     gnutls_strerror(error));
             return -1;
         }
-        if (0 > (error = gnutls_certificate_set_x509_trust_file(
-                        x509_credentials, tls->authority_certificate,
-                        GNUTLS_X509_FMT_PEM))) {
-            close(server_socket);
-            gnutls_certificate_free_credentials(x509_credentials);
-            gnutls_global_deinit();
-            set_server_error("Could not load authority certificate `%s': %s",
-                    tls->authority_certificate, gnutls_strerror(error));
-            return -1;
+        if (NULL != tls->authority_certificate) {
+            if (0 > (error = gnutls_certificate_set_x509_trust_file(
+                            x509_credentials, tls->authority_certificate,
+                            GNUTLS_X509_FMT_PEM))) {
+                close(server_socket);
+                gnutls_certificate_free_credentials(x509_credentials);
+                gnutls_global_deinit();
+                set_server_error("Could not load authority certificate `%s': %s",
+                        tls->authority_certificate, gnutls_strerror(error));
+                return -1;
+            }
         }
         if ((error = gnutls_certificate_set_x509_key_file(x509_credentials,
                     tls->server_certificate, tls->server_key,
