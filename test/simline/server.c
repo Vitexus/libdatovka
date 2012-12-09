@@ -761,6 +761,8 @@ int start_server(pid_t *server_process, char **server_address,
         close(server_socket);
         if (NULL != tls) {
             gnutls_certificate_free_credentials(x509_credentials);
+            gnutls_priority_deinit(priority_cache);
+            gnutls_dh_params_deinit(dh_parameters);
             gnutls_global_deinit();
         }
         set_server_error("Server could not been forked");
