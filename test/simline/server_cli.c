@@ -167,6 +167,7 @@ int main(int argc, char **argv) {
     }
     if (error == -1) {
         fprintf(stderr, "Could not start server: %s\n", server_error);
+        free(server_error);
         free(server_address);
         exit(EXIT_FAILURE);
     }
@@ -181,6 +182,7 @@ int main(int argc, char **argv) {
     printf("Terminating...\n");
     if (-1 == stop_server(server_process)) {
         fprintf(stderr, "Could not stop server: %s\n", server_error);
+        free(server_error);
         exit(EXIT_FAILURE);
     }
 

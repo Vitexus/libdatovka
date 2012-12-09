@@ -5,10 +5,11 @@
 #include "server_types.h"
 #include "services.h"
 
-extern const char *server_error;
+extern char *server_error;
 
-/* Save pointer to static error message if not yet set */
-void set_server_error(const char *message);
+/* Save error message if not yet set. The message will be duplicated.
+ * @message is printf(3) formatting string. */
+void set_server_error(const char *message, ...);
 
 
 /* Creates listening TCP socket on localhost.

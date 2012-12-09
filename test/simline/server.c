@@ -22,7 +22,7 @@
 #include <wait.h>
 #include <gnutls/gnutls.h>
 
-const char *server_error = NULL;
+char *server_error = NULL;
 
 static const char *as_path_hotp = "/as/processLogin?type=hotp&uri=";
 static const char *as_path_sendsms = "/as/processLogin?type=totp&sendSms=true&uri=";
@@ -42,10 +42,14 @@ static gnutls_certificate_credentials_t x509_credentials;
 static gnutls_priority_t priority_cache;
 static gnutls_dh_params_t dh_parameters;
 
-/* Save pointer to static error message if not yet set */
-void set_server_error(const char *message) {
+/* Save error message if not yet set. The message will be duplicated.
+ * @message is printf(3) formatting string. */
+void set_server_error(const char *message, ...) {
     if (server_error == NULL) {
-        server_error = message;
+        va_list ap;
+        va_start(ap, message);
+        test_vasprintf(&server_error, message, ap);
+        va_end(ap);
     }
 }
 
@@ -646,6 +650,7 @@ int start_server(pid_t *server_process, char **server_address,
         void (*server_implementation)(int, const void *),
         const void *server_arguments, const struct tls_authentication *tls) {
     int server_socket;
+    int error;
     
     if (server_address == NULL) {
         set_server_error("start_server(): Got invalid server_address pointer");
@@ -672,63 +677,77 @@ int start_server(pid_t *server_process, char **server_address,
     }
 
     if (NULL != tls) {
-        if (gnutls_global_init()) {
+        const char *error_position;
+        if ((error = gnutls_global_init())) {
             close(server_socket);
-            set_server_error("Could not initialize GnuTLS");
+            set_server_error("Could not initialize GnuTLS: %s",
+                    gnutls_strerror(error));
             return -1;
         }
-        if (gnutls_certificate_allocate_credentials(&x509_credentials)) {
+        if ((error =
+                gnutls_certificate_allocate_credentials(&x509_credentials))) {
             close(server_socket);
             gnutls_global_deinit();
-            set_server_error("Could not allocate X.509 credentials");
+            set_server_error("Could not allocate X.509 credentials: %s",
+                    gnutls_strerror(error));
             return -1;
         }
-        if (gnutls_certificate_set_x509_trust_file(x509_credentials,
-                    tls->authority_certificate, GNUTLS_X509_FMT_PEM)) {
+        if ((error = gnutls_certificate_set_x509_trust_file(x509_credentials,
+                    tls->authority_certificate, GNUTLS_X509_FMT_PEM))) {
             close(server_socket);
             gnutls_certificate_free_credentials(x509_credentials);
             gnutls_global_deinit();
-            set_server_error("Could not load authority certificate");
+            set_server_error("Could not load authority certificate `%s': %s",
+                    tls->authority_certificate, gnutls_strerror(error));
             return -1;
         }
-        if (gnutls_certificate_set_x509_key_file(x509_credentials,
+        if ((error = gnutls_certificate_set_x509_key_file(x509_credentials,
                     tls->server_certificate, tls->server_key,
-                    GNUTLS_X509_FMT_PEM)) {
+                    GNUTLS_X509_FMT_PEM))) {
             close(server_socket);
             gnutls_certificate_free_credentials(x509_credentials);
             gnutls_global_deinit();
             set_server_error("Could not load server certificate or "
-                    "private key");
+                    "private key `%s': %s", tls->server_certificate,
+                    gnutls_strerror(error));
             return -1;
         }
-        if (gnutls_priority_init(&priority_cache,
-                    "PERFORMANCE:%SERVER_PRECEDENCE", NULL)) {
+        if ((error = gnutls_priority_init(&priority_cache,
+                    "PERFORMANCE:%SERVER_PRECEDENCE", &error_position))) {
             close(server_socket);
             gnutls_certificate_free_credentials(x509_credentials);
             gnutls_global_deinit();
-            set_server_error("Could not set TLS algorithm preferences");
+            if (error == GNUTLS_E_INVALID_REQUEST) {
+                set_server_error("Could not set TLS algorithm preferences: "
+                            "%s: error at `%s'",
+                        gnutls_strerror(error), error_position);
+                set_server_error("Could not set TLS algorithm preferences: %s",
+                        gnutls_strerror(error));
+            }
             return -1;
         }
         /* XXX: priority_cache is linked from x509_credentials now.
          * Deinitialization must free x509_credentials before priority_cache. */
 
-        if (gnutls_dh_params_init(&dh_parameters)) {
+        if ((error = gnutls_dh_params_init(&dh_parameters))) {
             close(server_socket);
             gnutls_certificate_free_credentials(x509_credentials);
             gnutls_priority_deinit(priority_cache);
             gnutls_global_deinit();
-            set_server_error("Could not allocate Diffie-Hellman parameters");
+            set_server_error("Could not allocate Diffie-Hellman parameters: "
+                    "%s", gnutls_strerror(error));
             return -1;
         }
-        if (gnutls_dh_params_generate2(dh_parameters,
+        if ((error = gnutls_dh_params_generate2(dh_parameters,
                 gnutls_sec_param_to_pk_bits(GNUTLS_PK_DH,
-                    GNUTLS_SEC_PARAM_LOW))) {
+                    GNUTLS_SEC_PARAM_LOW)))) {
             close(server_socket);
             gnutls_certificate_free_credentials(x509_credentials);
             gnutls_priority_deinit(priority_cache);
             gnutls_dh_params_deinit(dh_parameters);
             gnutls_global_deinit();
-            set_server_error("Could not generate Diffie-Hellman parameters");
+            set_server_error("Could not generate Diffie-Hellman parameters: %s",
+                    gnutls_strerror(error));
             return -1;
         }
         gnutls_certificate_set_dh_params(x509_credentials, dh_parameters);
