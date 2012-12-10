@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
         TEST("good ID and direction", test_isds_delete_message_from_storage,
                 IE_SUCCESS, context, "1234567", 1);
 
-        if (-1 == stop_server(server_process)) {
+        if (stop_server(server_process)) {
             ABORT_UNIT(server_error);
         }
     

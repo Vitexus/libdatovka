@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
         TEST("valid login", test_login, IE_SUCCESS, context,
                 url, username, password, NULL, NULL);
 
-        if (-1 == stop_server(server_process)) {
+        if (stop_server(server_process)) {
             ABORT_UNIT(server_error);
         }
     
@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
         TEST("log into out-of-order server", test_login, IE_SOAP, context,
                 url, username, password, NULL, NULL);
 
-        if (-1 == stop_server(server_process)) {
+        if (stop_server(server_process)) {
             ABORT_UNIT(server_error);
         }
     

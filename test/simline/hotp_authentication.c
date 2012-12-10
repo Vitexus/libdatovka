@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
         TEST("Ping after log-out after succesfull OTP log-in", test_ping,
                 IE_CONNECTION_CLOSED, context);
 
-        if (-1 == stop_server(server_process)) {
+        if (stop_server(server_process)) {
             ABORT_UNIT(server_error);
         }
     
@@ -185,7 +185,7 @@ int main(int argc, char **argv) {
                 url, username, password, NULL, &otp_credentials);
         isds_logout(context);
 
-        if (-1 == stop_server(server_process)) {
+        if (stop_server(server_process)) {
             ABORT_UNIT(server_error);
         }
     

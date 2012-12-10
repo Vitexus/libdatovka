@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
         free(refnum);
         refnum = NULL;
         isds_logout(context);
-        if (-1 == stop_server(server_process)) {
+        if (stop_server(server_process)) {
             ABORT_UNIT(server_error);
         }
     
@@ -254,7 +254,7 @@ int main(int argc, char **argv) {
         free(refnum);
         refnum = NULL;
         isds_logout(context);
-        if (-1 == stop_server(server_process)) {
+        if (stop_server(server_process)) {
             ABORT_UNIT(server_error);
         }
         free(url);
@@ -294,7 +294,7 @@ int main(int argc, char **argv) {
         free(refnum);
         refnum = NULL;
         isds_logout(context);
-        if (-1 == stop_server(server_process)) {
+        if (stop_server(server_process)) {
             ABORT_UNIT(server_error);
         }
         free(url);

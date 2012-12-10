@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
         TEST("valid request", test_isds_change_password, IE_SUCCESS,
                 context, password, "h2k$Aana", NULL, NULL);
 
-        if (-1 == stop_server(server_process)) {
+        if (stop_server(server_process)) {
             ABORT_UNIT(server_error);
         }
     
