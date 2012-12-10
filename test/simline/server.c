@@ -656,7 +656,7 @@ int start_server(pid_t *server_process, char **server_address,
             return -1;
         }
         if ((error = gnutls_priority_init(&priority_cache,
-                    "PERFORMANCE:%SERVER_PRECEDENCE", &error_position))) {
+                    "PERFORMANCE", &error_position))) {
             close(server_socket);
             gnutls_certificate_free_credentials(x509_credentials);
             gnutls_global_deinit();
