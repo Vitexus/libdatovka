@@ -764,7 +764,7 @@ int start_server(pid_t *server_process, char **server_address,
                  * <http://web.archiveorange.com/archive/v/ManYkPKvLD3AjPzzuOI7>
                  */
                 gnutls_transport_set_ptr(tls_session,
-                        (gnutls_transport_ptr_t)(long)client_socket);
+                        (gnutls_transport_ptr_t)(uintptr_t)client_socket);
                 do {
                     error = gnutls_handshake(tls_session);
                 } while (error < 0 && !gnutls_error_is_fatal(error));
