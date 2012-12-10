@@ -720,6 +720,7 @@ int start_server(pid_t *server_process, char **server_address,
 
         while (!terminate) {
             if (NULL != tls) {
+                gnutls_deinit(tls_session);
                 if ((error = gnutls_init(&tls_session, GNUTLS_SERVER))) {
                     set_server_error("Could not initialize TLS session: %s",
                             gnutls_strerror(error));
@@ -753,6 +754,24 @@ int start_server(pid_t *server_process, char **server_address,
                 continue;
             }
             fprintf(stderr, "Connection accepted\n");
+
+            if (NULL != tls) {
+                /* XXX: The double type caset is to silent warning due to flaw
+                 * GnuTLS API
+                 * <http://web.archiveorange.com/archive/v/ManYkPKvLD3AjPzzuOI7>
+                 */
+                gnutls_transport_set_ptr(tls_session,
+                        (gnutls_transport_ptr_t)(long)client_socket);
+                do {
+                    error = gnutls_handshake(tls_session);
+                } while (error < 0 && !gnutls_error_is_fatal(error));
+                if (error < 0) {
+                    fprintf(stderr, "TLS handshake failed: %s\n",
+                            gnutls_strerror(error));
+                    close(client_socket);
+                    continue;
+                }
+            }
 
             error = http_read_request(client_socket, &request);
             if (error) {
