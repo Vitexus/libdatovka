@@ -116,7 +116,8 @@ int start_server(pid_t *server_process, char **server_address,
 
 
 /* Kill the server process.
- * Return -1 in case of error. */
+ * Return 0. Return -1 if server could not been stopped. Return 1 if server
+ * crashed. */
 int stop_server(pid_t server_process);
 
 #endif

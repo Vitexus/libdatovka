@@ -808,8 +808,10 @@ int start_server(pid_t *server_process, char **server_address,
 
 
 /* Kill the server process.
- * Return -1 in case of error. */
+ * Return 0. Return -1 if server could not been stopped. Return 1 if server
+ * crashed. */
 int stop_server(pid_t server_process) {
+    int status;
     if (server_process <= 0) {
         set_server_error("Invalid server PID to kill");
         return -1;
@@ -818,9 +820,14 @@ int stop_server(pid_t server_process) {
         set_server_error("Could not terminate server");
         return -1;
     }
-    if (-1 == waitpid(server_process, NULL, 0)) {
+    if (-1 == waitpid(server_process, &status, 0)) {
         set_server_error("Could not wait for server termination");
         return -1;
+    }
+    if (WIFSIGNALED(status) && WTERMSIG(status) != SIGTERM) {
+        set_server_error("Server terminated by signal %d violently",
+                WTERMSIG(status));
+        return 1;
     }
     return 0;
 }

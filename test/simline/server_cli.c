@@ -180,8 +180,13 @@ int main(int argc, char **argv) {
     }
 
     printf("Terminating...\n");
-    if (-1 == stop_server(server_process)) {
+    error = stop_server(server_process);
+    if (-1 == error) {
         fprintf(stderr, "Could not stop server: %s\n", server_error);
+        free(server_error);
+        exit(EXIT_FAILURE);
+    } else if (error) {
+        fprintf(stderr, "Server crashed: %s\n", server_error);
         free(server_error);
         exit(EXIT_FAILURE);
     }
