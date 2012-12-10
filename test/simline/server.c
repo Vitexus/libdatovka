@@ -662,7 +662,7 @@ int start_server(pid_t *server_process, char **server_address,
             gnutls_global_deinit();
             if (error == GNUTLS_E_INVALID_REQUEST) {
                 set_server_error("Could not set TLS algorithm preferences: "
-                            "%s: error at `%s'",
+                            "%s Error at `%s'.",
                         gnutls_strerror(error), error_position);
                 set_server_error("Could not set TLS algorithm preferences: %s",
                         gnutls_strerror(error));
