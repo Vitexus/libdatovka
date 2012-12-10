@@ -720,7 +720,6 @@ int start_server(pid_t *server_process, char **server_address,
 
         while (!terminate) {
             if (NULL != tls) {
-                gnutls_deinit(tls_session);
                 if ((error = gnutls_init(&tls_session, GNUTLS_SERVER))) {
                     set_server_error("Could not initialize TLS session: %s",
                             gnutls_strerror(error));
@@ -733,6 +732,7 @@ int start_server(pid_t *server_process, char **server_address,
                             "Could not set priorities to TLS session: %s",
                             gnutls_strerror(error));
                     terminate = -1;
+                    gnutls_deinit(tls_session);
                     continue;
                 }
                 if ((error = gnutls_credentials_set(tls_session,
@@ -740,6 +740,7 @@ int start_server(pid_t *server_process, char **server_address,
                     set_server_error("Could not set X509 credentials to TLS "
                             "session: %s", gnutls_strerror(error));
                     terminate = -1;
+                    gnutls_deinit(tls_session);
                     continue;
                 }
                 /* XXX: Credentials are linked from session now.
@@ -751,6 +752,8 @@ int start_server(pid_t *server_process, char **server_address,
 
             if (0 > (client_socket = accept(server_socket, NULL, NULL))) {
                 terminate = -1;
+                if (NULL != tls)
+                    gnutls_deinit(tls_session);
                 continue;
             }
             fprintf(stderr, "Connection accepted\n");
@@ -769,6 +772,7 @@ int start_server(pid_t *server_process, char **server_address,
                     fprintf(stderr, "TLS handshake failed: %s\n",
                             gnutls_strerror(error));
                     close(client_socket);
+                    gnutls_deinit(tls_session);
                     continue;
                 }
             }
@@ -781,6 +785,8 @@ int start_server(pid_t *server_process, char **server_address,
                 else
                     http_send_response_500(client_socket, "Could not read request");
                 close(client_socket);
+                if (NULL != tls)
+                    gnutls_deinit(tls_session);
                 continue;
             }
 
@@ -794,9 +800,6 @@ int start_server(pid_t *server_process, char **server_address,
             }
         }
 
-        if (NULL != tls) {
-            gnutls_deinit(tls_session);
-        }
         close(server_socket);
         free(authorization_cookie_value);
         exit(EXIT_SUCCESS);
