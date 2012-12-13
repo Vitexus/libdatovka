@@ -566,10 +566,11 @@ int server_out_of_order(int client_socket,
 
 /* Call-back for HTTP to receive data from socket
  * API is equivalent to recv(2) except automatic interrupt handling. */
-static ssize_t recv_plain(int socket, void *buffer, size_t length, int flags) {
+static ssize_t recv_plain(void *context, void *buffer, size_t length,
+        int flags) {
     ssize_t retval;
     do {
-        retval = recv(socket, buffer, length, flags);
+        retval = recv(*(int *)context, buffer, length, flags);
     } while (-1 == retval && EINTR == errno);
     return retval;
 }
@@ -577,13 +578,48 @@ static ssize_t recv_plain(int socket, void *buffer, size_t length, int flags) {
 
 /* Call-back for HTTP to sending data to socket
  * API is equivalent to send(2) except automatic interrupt handling. */
-static ssize_t send_plain(int socket, const void *buffer, size_t length,
+static ssize_t send_plain(void *context, const void *buffer, size_t length,
         int flags) {
     ssize_t retval;
     do {
-        retval = send(socket, buffer, length, flags);
+        retval = send(*(int *)context, buffer, length, flags);
     } while (-1 == retval && EINTR == errno);
     return retval;
+}
+
+
+/* Call-back for HTTP to receive data from TLS socket
+ * API is equivalent to recv(2) except automatic interrupt handling. */
+static ssize_t recv_tls(void *context, void *buffer, size_t length,
+        int flags) {
+    ssize_t retval;
+    do {
+        retval = gnutls_record_recv(context, buffer, length);
+        if (GNUTLS_E_REHANDSHAKE == retval) {
+            int error;
+            do {
+                error = gnutls_handshake(context);
+            } while (error < 0 && !gnutls_error_is_fatal(error));
+            if (error < 0) {
+                fprintf(stderr, "TLS rehandshake failed: %s\n",
+                        gnutls_strerror(error));
+                return -1;
+            }
+        }
+    } while (GNUTLS_E_INTERRUPTED == retval || GNUTLS_E_AGAIN == retval);
+    return (retval < 0) ? -1 : retval;
+}
+
+
+/* Call-back for HTTP to sending data to TLS socket
+ * API is equivalent to send(2) except automatic interrupt handling. */
+static ssize_t send_tls(void *context, const void *buffer, size_t length,
+        int flags) {
+    ssize_t retval;
+    do {
+        retval = gnutls_record_send(context, buffer, length);
+    } while (GNUTLS_E_INTERRUPTED == retval || GNUTLS_E_AGAIN == retval);
+    return (retval < 0) ? -1 : retval;
 }
 
 
@@ -612,9 +648,6 @@ int start_server(pid_t *server_process, char **server_address,
     int server_socket;
     int error;
  
-    http_recv_callback = recv_plain;
-    http_send_callback = send_plain;
-
     if (server_address == NULL) {
         set_server_error("start_server(): Got invalid server_address pointer");
         return -1;
@@ -785,7 +818,11 @@ int start_server(pid_t *server_process, char **server_address,
             }
             fprintf(stderr, "Connection accepted\n");
 
-            if (NULL != tls) {
+            if (NULL == tls) {
+                http_recv_callback = recv_plain;
+                http_send_callback = send_plain;
+                http_recv_context = http_send_context = &client_socket;
+            } else {
                 /* XXX: The double type caset is to silent warning due to flaw
                  * GnuTLS API
                  * <http://web.archiveorange.com/archive/v/ManYkPKvLD3AjPzzuOI7>
@@ -802,6 +839,9 @@ int start_server(pid_t *server_process, char **server_address,
                     gnutls_deinit(tls_session);
                     continue;
                 }
+                http_recv_callback = recv_tls;
+                http_send_callback = send_tls;
+                http_recv_context = http_send_context = tls_session;
             }
 
             error = http_read_request(client_socket, &request);

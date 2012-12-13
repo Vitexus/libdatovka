@@ -3,17 +3,21 @@
 
 #include <sys/types.h>
 
-/* Call-back type for non-interrupting receving from socket. See recv(2). */
-typedef ssize_t (*http_recv_callback_t) (int socket, void *buffer,
+/* Call-back type for non-interrupting receiving from socket. See recv(2).
+ * @context is opaque pointer passed to the call-back. */
+typedef ssize_t (*http_recv_callback_t) (void *context, void *buffer,
         size_t length, int flags);
-/* Application must set this pointer. */
+/* Application must set these pointers. */
 extern http_recv_callback_t http_recv_callback;
+extern void *http_recv_context;
 
-/* Call-back type for non-interrupting sending to socket. See send(2). */
-typedef ssize_t (*http_send_callback_t) (int socket, const void *buffer,
+/* Call-back type for non-interrupting sending to socket. See send(2).
+ * @context is opaque pointer passed to the call-back. */
+typedef ssize_t (*http_send_callback_t) (void *context, const void *buffer,
         size_t length, int flags);
-/* Application must set this pointer. */
+/* Application must set these pointers. */
 extern http_send_callback_t http_send_callback;
+extern void *http_send_context;
 
 typedef enum {
     HTTP_ERROR_SERVER = -1,

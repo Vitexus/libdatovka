@@ -233,6 +233,8 @@ static char *uri_decode(const char *coded) {
 /* Call-backs set by application */
 http_recv_callback_t http_recv_callback = NULL;
 http_send_callback_t http_send_callback = NULL;
+void *http_recv_context = NULL;
+void *http_send_context = NULL;
 
 /* Read a line from HTTP socket.
  * @socket is descriptor to read from.
@@ -292,7 +294,7 @@ static int http_read_line(int socket, char **line,
         }
 
         /* Read data */
-        got = http_recv_callback(socket, *buffer + *buffer_used,
+        got = http_recv_callback(http_recv_context, *buffer + *buffer_used,
                 *buffer_size - *buffer_used, 0);
         if (got == -1) return HTTP_ERROR_CLIENT;
 
@@ -320,7 +322,8 @@ static int http_write_bulk(int socket, const void *data, size_t length) {
     if (data == NULL && length > 0) return HTTP_ERROR_SERVER;
 
     for (end = data + length; data != end; data += written, length -= written) {
-        written = http_send_callback(socket, data, length, MSG_NOSIGNAL);
+        written = http_send_callback(http_send_context, data, length,
+                MSG_NOSIGNAL);
         if (written == -1) return HTTP_ERROR_CLIENT;
     }
 
@@ -401,7 +404,7 @@ static int http_read_bulk(int socket, void **data, size_t data_length,
         }
 
         /* Read data */
-        got = http_recv_callback(socket, *buffer + *buffer_used,
+        got = http_recv_callback(http_recv_context, *buffer + *buffer_used,
                 *buffer_size - *buffer_used, 0);
         if (got == -1) return HTTP_ERROR_CLIENT;
 
