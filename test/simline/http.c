@@ -15,7 +15,7 @@
 #include <stdint.h> /* int8_t */
 #include <stddef.h> /* size_t, NULL */
 #include <ctype.h> /* isprint() */
-#include <sys/socket.h> /* send(2) */
+#include <sys/socket.h> /* MSG_NOSIGNAL for http_send_callback() */
 
 /*
 Base64 encoder is part of the libb64 project, and has been placed in the public domain.
@@ -230,6 +230,10 @@ static char *uri_decode(const char *coded) {
 }
 
 
+/* Call-backs set by application */
+http_recv_callback_t http_recv_callback = NULL;
+http_send_callback_t http_send_callback = NULL;
+
 /* Read a line from HTTP socket.
  * @socket is descriptor to read from.
  * @line is auto-allocated just read line. Will be NULL if EOF has been
@@ -288,8 +292,9 @@ static int http_read_line(int socket, char **line,
         }
 
         /* Read data */
-        got = read(socket, *buffer + *buffer_used, *buffer_size - *buffer_used);
-        if (got == -1 && errno != EINTR) return HTTP_ERROR_CLIENT;
+        got = http_recv_callback(socket, *buffer + *buffer_used,
+                *buffer_size - *buffer_used, 0);
+        if (got == -1) return HTTP_ERROR_CLIENT;
 
         /* Check for EOF */
         if (got == 0) return HTTP_ERROR_CLIENT;
@@ -315,8 +320,8 @@ static int http_write_bulk(int socket, const void *data, size_t length) {
     if (data == NULL && length > 0) return HTTP_ERROR_SERVER;
 
     for (end = data + length; data != end; data += written, length -= written) {
-        written = send(socket, data, length, MSG_NOSIGNAL);
-        if (written == -1 && errno != EINTR) return HTTP_ERROR_CLIENT;
+        written = http_send_callback(socket, data, length, MSG_NOSIGNAL);
+        if (written == -1) return HTTP_ERROR_CLIENT;
     }
 
     return HTTP_ERROR_SUCCESS;
@@ -396,8 +401,9 @@ static int http_read_bulk(int socket, void **data, size_t data_length,
         }
 
         /* Read data */
-        got = read(socket, *buffer + *buffer_used, *buffer_size - *buffer_used);
-        if (got == -1 && errno != EINTR) return HTTP_ERROR_CLIENT;
+        got = http_recv_callback(socket, *buffer + *buffer_used,
+                *buffer_size - *buffer_used, 0);
+        if (got == -1) return HTTP_ERROR_CLIENT;
 
         /* Check for EOF */
         if (got == 0) return HTTP_ERROR_CLIENT;

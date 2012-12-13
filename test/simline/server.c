@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <errno.h>  /* For EINTR */
 #include <netdb.h>
 #include <string.h>
 #include <signal.h>
@@ -563,6 +564,29 @@ int server_out_of_order(int client_socket,
 }
 
 
+/* Call-back for HTTP to receive data from socket
+ * API is equivalent to recv(2) except automatic interrupt handling. */
+static ssize_t recv_plain(int socket, void *buffer, size_t length, int flags) {
+    ssize_t retval;
+    do {
+        retval = recv(socket, buffer, length, flags);
+    } while (-1 == retval && EINTR == errno);
+    return retval;
+}
+
+
+/* Call-back for HTTP to sending data to socket
+ * API is equivalent to send(2) except automatic interrupt handling. */
+static ssize_t send_plain(int socket, const void *buffer, size_t length,
+        int flags) {
+    ssize_t retval;
+    do {
+        retval = send(socket, buffer, length, flags);
+    } while (-1 == retval && EINTR == errno);
+    return retval;
+}
+
+
 /* Start sever in separate process.
  * @server_process is PID of forked server
  * @server_address is automatically allocated TCP address of listening server
@@ -587,7 +611,10 @@ int start_server(pid_t *server_process, char **server_address,
         const void *server_arguments, const struct tls_authentication *tls) {
     int server_socket;
     int error;
-    
+ 
+    http_recv_callback = recv_plain;
+    http_send_callback = send_plain;
+
     if (server_address == NULL) {
         set_server_error("start_server(): Got invalid server_address pointer");
         return -1;
