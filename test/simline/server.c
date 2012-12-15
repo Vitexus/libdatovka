@@ -623,6 +623,14 @@ static ssize_t send_tls(void *context, const void *buffer, size_t length,
 }
 
 
+/* Call-back fot GnuTLS to send data to TCP socket.
+ * GnuTLS does not call send(2) with MSG_NOSIGNAL, we must do it manually */
+static ssize_t tls_push(gnutls_transport_ptr_t context, const void* buffer,
+        size_t length) {
+    return send((int)context, buffer, length, MSG_NOSIGNAL);
+}
+
+
 /* Start sever in separate process.
  * @server_process is PID of forked server
  * @server_address is automatically allocated TCP address of listening server
@@ -842,6 +850,7 @@ int start_server(pid_t *server_process, char **server_address,
                 http_recv_callback = recv_tls;
                 http_send_callback = send_tls;
                 http_recv_context = http_send_context = tls_session;
+                gnutls_transport_set_push_function(tls_session, tls_push);
             }
 
             error = http_read_request(client_socket, &request);
