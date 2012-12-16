@@ -3,21 +3,32 @@
 
 #include <sys/types.h>
 
+/* Forward declarations */
+struct http_connection;
+
 /* Call-back type for non-interrupting receiving from socket. See recv(2).
- * @context is opaque pointer passed to the call-back. */
-typedef ssize_t (*http_recv_callback_t) (void *context, void *buffer,
-        size_t length, int flags);
-/* Application must set these pointers. */
-extern http_recv_callback_t http_recv_callback;
-extern void *http_recv_context;
+ * @buffer is data to send by the call-back
+ * @lentgh is number of bytes to send
+ * @connection carries socket and callback_data. */
+typedef ssize_t (*http_recv_callback_t) (
+        const struct http_connection *connection, void *buffer, size_t length);
 
 /* Call-back type for non-interrupting sending to socket. See send(2).
- * @context is opaque pointer passed to the call-back. */
-typedef ssize_t (*http_send_callback_t) (void *context, const void *buffer,
-        size_t length, int flags);
-/* Application must set these pointers. */
-extern http_send_callback_t http_send_callback;
-extern void *http_send_context;
+ * @buffer is memory to store received data by the call-back
+ * @lentgh is size of the @buffer in bytes
+ * @connection carries socket and callback_data. */
+typedef ssize_t (*http_send_callback_t) (
+        const struct http_connection *connection, const void *buffer,
+        size_t length);
+
+struct http_connection {
+    int socket;     /* Accepted TCP client socket */
+    http_recv_callback_t recv_callback; /* Non-interrupting reading
+                                           from socket */
+    http_send_callback_t send_callback; /* Non-interrupting writing
+                                           to socket */
+    void *callback_data;    /* Pointer to pass to callbacks */
+};
 
 typedef enum {
     HTTP_ERROR_SERVER = -1,
@@ -65,56 +76,61 @@ void http_request_free(struct http_request **request);
 /* Free HTTP response and set it to NULL */
 void http_response_free(struct http_response **response);
 
-/* Read a HTTP request from connected socket.
+/* Read a HTTP request from connection.
  * @http_request is heap-allocated received HTTP request,
  * or NULL in case of error.
  * @return http_error code. */
-http_error http_read_request(int socket, struct http_request **request);
+http_error http_read_request(const struct http_connection *connection,
+        struct http_request **request);
 
-/* Write a HTTP response to connected socket. Auto-add Content-Length header.
+/* Write a HTTP response to connection. Auto-add Content-Length header.
  * @return 0 in case of success. */
-int http_write_response(int socket, const struct http_response *response);
+int http_write_response(const struct http_connection *connection,
+        const struct http_response *response);
 
 /* Send a 200 Ok response with a cookie */ 
-int http_send_response_200_cookie(int client_socket,
+int http_send_response_200_cookie(const struct http_connection *connection,
         const char *cokie_name, const char *cookie_value,
         const char *cookie_domain, const char *cookie_path,
         const void *body, size_t body_length, const char *type);
 
 /* Send a 200 Ok response */ 
-int http_send_response_200(int client_socket,
+int http_send_response_200(const struct http_connection *connection,
         const void *body, size_t body_length, const char *type);
 
 /* Send a 302 Found response setting a cookie */ 
-int http_send_response_302_cookie(int client_socket, const char *cokie_name,
-        const char *cookie_value, const char *cookie_domain,
-        const char *cookie_path, const char *location);
+int http_send_response_302_cookie(const struct http_connection *connection,
+        const char *cokie_name, const char *cookie_value,
+        const char *cookie_domain, const char *cookie_path,
+        const char *location);
 
 /* Send a 302 Found response with totp authentication scheme header */ 
-int http_send_response_302_totp(int client_socket,
+int http_send_response_302_totp(const struct http_connection *connection,
         const char *code, const char *text, const char *location);
 
 /* Send a 400 Bad Request response.
  * Use non-NULL @reason to override status message. */ 
-int http_send_response_400(int client_socket, const char *reason);
+int http_send_response_400(const struct http_connection *connection,
+        const char *reason);
 
 /* Send a 401 Unauthorized response with Basic authentication scheme header */ 
-int http_send_response_401_basic(int client_socket);
+int http_send_response_401_basic(const struct http_connection *connection);
 
 /* Send a 401 Unauthorized response with OTP authentication scheme header for
  * given @method. */ 
-int http_send_response_401_otp(int client_socket,
+int http_send_response_401_otp(const struct http_connection *connection,
         const char *method, const char *code, const char *text);
 
 /* Send a 403 Forbidden response */ 
-int http_send_response_403(int client_socket);
+int http_send_response_403(const struct http_connection *connection);
 
 /* Send a 500 Internal Server Error response.
  * Use non-NULL @reason to override status message. */ 
-int http_send_response_500(int client_socket, const char *reason);
+int http_send_response_500(const struct http_connection *connection,
+        const char *reason);
 
 /* Send a 503 Service Temporarily Unavailable response */ 
-int http_send_response_503(int client_socket,
+int http_send_response_503(const struct http_connection *connection,
         const void *body, size_t body_length, const char *type);
 
 /* Returns true if request carries WWW-Authenticate header */

@@ -38,8 +38,9 @@ struct service {
     const char *end_point;
     const xmlChar *name_space;
     const xmlChar *name;
-    http_error (*function) (int, xmlDocPtr, xmlXPathContextPtr, xmlNodePtr,
-            xmlDocPtr, xmlNodePtr, const void *arguments);
+    http_error (*function) (const struct http_connection *, xmlDocPtr,
+            xmlXPathContextPtr, xmlNodePtr, xmlDocPtr, xmlNodePtr,
+            const void *arguments);
 };
 
 /* Following EXTRACT_* macros expect @xpath_ctx, @message, and leave label */
@@ -154,7 +155,8 @@ leave:
 
 
 /* Implement DummyOperation */
-static http_error service_DummyOperation(int socket, const xmlDocPtr soap_request,
+static http_error service_DummyOperation(
+        const struct http_connection *connection, const xmlDocPtr soap_request,
         xmlXPathContextPtr xpath_ctx, xmlNodePtr isds_request,
         xmlDocPtr soap_response, xmlNodePtr isds_response,
         const void *arguments) {
@@ -165,7 +167,7 @@ static http_error service_DummyOperation(int socket, const xmlDocPtr soap_reques
 
 /* Implement EraseMessage.
  * @arguments is pointer to struct arguments_DS_DsManage_ChangeISDSPassword */
-static http_error service_EraseMessage(int socket,
+static http_error service_EraseMessage(const struct http_connection *connection,
         const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
         const xmlNodePtr isds_request,
         xmlDocPtr soap_response, xmlNodePtr isds_response,
@@ -359,7 +361,8 @@ leave:
 
 /* Implement ChangeISDSPassword.
  * @arguments is pointer to struct arguments_DS_DsManage_ChangeISDSPassword */
-static http_error service_ChangeISDSPassword(int socket,
+static http_error service_ChangeISDSPassword(
+        const struct http_connection *connection,
         const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
         const xmlNodePtr isds_request,
         xmlDocPtr soap_response, xmlNodePtr isds_response,
@@ -394,7 +397,8 @@ leave:
 /* Implement ChangePasswordOTP.
  * @arguments is pointer to struct
  * arguments_asws_changePassword_ChangePasswordOTP */
-static http_error service_ChangePasswordOTP(int socket,
+static http_error service_ChangePasswordOTP(
+        const struct http_connection *connection,
         const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
         const xmlNodePtr isds_request,
         xmlDocPtr soap_response, xmlNodePtr isds_response,
@@ -446,7 +450,8 @@ leave:
 
 /* Implement SendSMSCode.
  * @arguments is pointer to struct arguments_asws_changePassword_SendSMSCode */
-static http_error service_SendSMSCode(int socket,
+static http_error service_SendSMSCode(
+        const struct http_connection *connection,
         const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
         const xmlNodePtr isds_request,
         xmlDocPtr soap_response, xmlNodePtr isds_response,
@@ -538,7 +543,8 @@ static int register_namespaces(xmlXPathContextPtr xpath_ctx,
 
 /* Parse soap request, pass it to service endpoint and respond to it.
  * It sends final HTTP response. */
-void soap(int socket, const struct service_configuration *configuration,
+void soap(const struct http_connection *connection,
+        const struct service_configuration *configuration,
         const void *request, size_t request_length, const char *end_point) {
     xmlDocPtr request_doc = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
@@ -555,32 +561,33 @@ void soap(int socket, const struct service_configuration *configuration,
 
 
     if (NULL == configuration) {
-        http_send_response_500(socket, "Second argument of soap() is NULL");
+        http_send_response_500(connection,
+                "Second argument of soap() is NULL");
         return;
     }
 
     if (NULL == request || request_length == 0) {
-        http_send_response_400(socket, "Client sent empty body");
+        http_send_response_400(connection, "Client sent empty body");
         return;
     }
 
     request_doc = xmlParseMemory(request, request_length);
     if (NULL == request_doc) {
-        http_send_response_400(socket, "Client sent invalid XML document");
+        http_send_response_400(connection, "Client sent invalid XML document");
         return;
     }
     
     xpath_ctx = xmlXPathNewContext(request_doc);
     if (NULL == xpath_ctx) {
         xmlFreeDoc(request_doc);
-        http_send_response_500(socket, "Could not create XPath context");
+        http_send_response_500(connection, "Could not create XPath context");
         return;
     }
 
     if (register_namespaces(xpath_ctx, 0, MESSAGE_NS_UNSIGNED)) {
         xmlXPathFreeContext(xpath_ctx);
         xmlFreeDoc(request_doc);
-        http_send_response_500(socket,
+        http_send_response_500(connection,
                 "Could not register name spaces to the XPath context");
         return;
     }
@@ -591,14 +598,14 @@ void soap(int socket, const struct service_configuration *configuration,
     if (NULL == request_soap_body) {
         xmlXPathFreeContext(xpath_ctx);
         xmlFreeDoc(request_doc);
-        http_send_response_400(socket, "Client sent invalid SOAP request");
+        http_send_response_400(connection, "Client sent invalid SOAP request");
         return;
     }
     if (xmlXPathNodeSetIsEmpty(request_soap_body->nodesetval)) {
         xmlXPathFreeObject(request_soap_body);
         xmlXPathFreeContext(xpath_ctx);
         xmlFreeDoc(request_doc);
-        http_send_response_400(socket,
+        http_send_response_400(connection,
                 "SOAP request does not contain SOAP Body element");
         return;
     }
@@ -606,7 +613,7 @@ void soap(int socket, const struct service_configuration *configuration,
         xmlXPathFreeObject(request_soap_body);
         xmlXPathFreeContext(xpath_ctx);
         xmlFreeDoc(request_doc);
-        http_send_response_400(socket,
+        http_send_response_400(connection,
                 "SOAP response has more than one Body element");
         return;
     }
@@ -615,7 +622,7 @@ void soap(int socket, const struct service_configuration *configuration,
         xmlXPathFreeObject(request_soap_body);
         xmlXPathFreeContext(xpath_ctx);
         xmlFreeDoc(request_doc);
-        http_send_response_400(socket, "SOAP body has more than one child");
+        http_send_response_400(connection, "SOAP body has more than one child");
         return;
     }
     if (isds_request->type != XML_ELEMENT_NODE || isds_request->ns == NULL ||
@@ -623,7 +630,7 @@ void soap(int socket, const struct service_configuration *configuration,
         xmlXPathFreeObject(request_soap_body);
         xmlXPathFreeContext(xpath_ctx);
         xmlFreeDoc(request_doc);
-        http_send_response_400(socket,
+        http_send_response_400(connection,
                 "SOAP body does not contain a name-space-qualified element");
         return;
     }
@@ -631,12 +638,14 @@ void soap(int socket, const struct service_configuration *configuration,
     /* Build SOAP response envelope */
     response_doc = xmlNewDoc(BAD_CAST "1.0");
     if (!response_doc) {
-        http_send_response_500(socket, "Could not build SOAP response document");
+        http_send_response_500(connection,
+                "Could not build SOAP response document");
         goto leave;
     }
     response_soap_envelope = xmlNewNode(NULL, BAD_CAST "Envelope");
     if (!response_soap_envelope) {
-        http_send_response_500(socket, "Could not build SOAP response envelope");
+        http_send_response_500(connection,
+                "Could not build SOAP response envelope");
         goto leave;
     }
     xmlDocSetRootElement(response_doc, response_soap_envelope);
@@ -644,21 +653,21 @@ void soap(int socket, const struct service_configuration *configuration,
      * otherwise we get namespace prefix without definition */
     soap_ns = xmlNewNs(response_soap_envelope, BAD_CAST SOAP_NS, NULL);
     if(NULL == soap_ns) {
-        http_send_response_500(socket, "Could not create SOAP name space");
+        http_send_response_500(connection, "Could not create SOAP name space");
         goto leave;
     }
     xmlSetNs(response_soap_envelope, soap_ns);
     response_soap_body = xmlNewChild(response_soap_envelope, NULL,
             BAD_CAST "Body", NULL);
     if (!response_soap_body) {
-        http_send_response_500(socket,
+        http_send_response_500(connection,
                 "Could not add Body to SOAP response envelope");
         goto leave;
     }
     /* Append ISDS response element */
     if (-1 == test_asprintf(&response_name, "%s%s", isds_request->name,
                 "Response")) {
-        http_send_response_500(socket,
+        http_send_response_500(connection,
                 "Could not buld ISDS resposne element name");
         goto leave;
     }
@@ -666,13 +675,13 @@ void soap(int socket, const struct service_configuration *configuration,
             BAD_CAST response_name, NULL);
     free(response_name);
     if (NULL == isds_response) {
-        http_send_response_500(socket,
+        http_send_response_500(connection,
                 "Could not add ISDS response element to SOAP response body");
         goto leave;
     }
     isds_ns = xmlNewNs(isds_response, isds_request->ns->href, NULL);
     if(NULL == isds_ns) {
-        http_send_response_500(socket,
+        http_send_response_500(connection,
                 "Could not create a name space for the response body");
         goto leave;
     }
@@ -692,20 +701,20 @@ void soap(int socket, const struct service_configuration *configuration,
                         /* Alias "isds" XPath identifier to OISDS_NS */
                         if (register_namespaces(xpath_ctx, 1,
                                     MESSAGE_NS_UNSIGNED)) {
-                            http_send_response_500(socket,
+                            http_send_response_500(connection,
                                     "Could not register name spaces to the "
                                     "XPath context");
                             break;
                         }
                     }
                     xpath_ctx->node = isds_request;
-                    if (HTTP_ERROR_SERVER != services[i].function(socket,
+                    if (HTTP_ERROR_SERVER != services[i].function(connection,
                                 request_doc, xpath_ctx, isds_request,
                                 response_doc, isds_response,
                                 service->arguments)) {
                         service_passed = 1;
                     } else {
-                        http_send_response_500(socket,
+                        http_send_response_500(connection,
                                 "Internal server error while processing "
                                 "ISDS request");
                     }
@@ -720,7 +729,7 @@ void soap(int socket, const struct service_configuration *configuration,
         /* Serialize the SOAP response */
         http_response_body = xmlBufferCreate();
         if (NULL == http_response_body) {
-            http_send_response_500(socket,
+            http_send_response_500(connection,
                     "Could not create xmlBuffer for response serialization");
             goto leave;
         }
@@ -729,19 +738,19 @@ void soap(int socket, const struct service_configuration *configuration,
          * elements. */
         save_ctx = xmlSaveToBuffer(http_response_body, "UTF-8", 0);
         if (NULL == save_ctx) {
-            http_send_response_500(socket, "Could not create XML serializer");
+            http_send_response_500(connection, "Could not create XML serializer");
             goto leave;
         }
         /* XXX: According LibXML documentation, this function does not return
          * meaningful value yet */
         xmlSaveDoc(save_ctx, response_doc);
         if (-1 == xmlSaveFlush(save_ctx)) {
-            http_send_response_500(socket,
+            http_send_response_500(connection,
                     "Could not serialize SOAP response");
             goto leave;
         }
 
-        http_send_response_200(socket, http_response_body->content,
+        http_send_response_200(connection, http_response_body->content,
                 http_response_body->use, soap_mime_type);
     }
 
@@ -756,7 +765,7 @@ leave:
     xmlFreeDoc(request_doc);
 
     if (!service_handled) {
-        http_send_response_500(socket,
+        http_send_response_500(connection,
                 "Requested ISDS service not implemented");
     }
 

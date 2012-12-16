@@ -230,14 +230,8 @@ static char *uri_decode(const char *coded) {
 }
 
 
-/* Call-backs set by application */
-http_recv_callback_t http_recv_callback = NULL;
-http_send_callback_t http_send_callback = NULL;
-void *http_recv_context = NULL;
-void *http_send_context = NULL;
-
 /* Read a line from HTTP socket.
- * @socket is descriptor to read from.
+ * @connection is HTTP connection to read from.
  * @line is auto-allocated just read line. Will be NULL if EOF has been
  * reached or error occured.
  * @buffer is automatically reallocated buffer for the socket. It can preserve
@@ -245,14 +239,17 @@ void *http_send_context = NULL;
  * @buffer_size is allocated size of @buffer
  * @buffer_length is size of head of the buffer that holds read data.
  * @return 0 in success. */
-static int http_read_line(int socket, char **line,
-        char **buffer, size_t *buffer_size, size_t *buffer_used) {
+static int http_read_line(const struct http_connection *connection,
+        char **line, char **buffer, size_t *buffer_size,
+        size_t *buffer_used) {
     ssize_t got;
     char *p, *tmp;
 
     if (line == NULL) return HTTP_ERROR_SERVER;
     *line = NULL;
 
+    if (connection == NULL || connection->recv_callback == NULL)
+        return HTTP_ERROR_SERVER;
     if (buffer == NULL || buffer_size == NULL || buffer_used == NULL)
         return HTTP_ERROR_SERVER;
     if (*buffer == NULL && *buffer_size > 0) return HTTP_ERROR_SERVER;
@@ -294,8 +291,8 @@ static int http_read_line(int socket, char **line,
         }
 
         /* Read data */
-        got = http_recv_callback(http_recv_context, *buffer + *buffer_used,
-                *buffer_size - *buffer_used, 0);
+        got = connection->recv_callback(connection, *buffer + *buffer_used,
+                *buffer_size - *buffer_used);
         if (got == -1) return HTTP_ERROR_CLIENT;
 
         /* Check for EOF */
@@ -311,19 +308,21 @@ static int http_read_line(int socket, char **line,
 
 
 /* Write a bulk data into HTTP socket.
- * @socket is descriptor to write to.
+ * @connection is HTTP connection to write to.
  * @data are bitstream to send to client.
  * @length is size of @data in bytes.
  * @return 0 in success. */
-static int http_write_bulk(int socket, const void *data, size_t length) {
+static int http_write_bulk(const struct http_connection *connection,
+        const void *data, size_t length) {
     ssize_t written;
     const void *end;
 
+    if (connection == NULL || connection->send_callback == NULL)
+        return HTTP_ERROR_SERVER;
     if (data == NULL && length > 0) return HTTP_ERROR_SERVER;
 
     for (end = data + length; data != end; data += written, length -= written) {
-        written = http_send_callback(http_send_context, data, length,
-                MSG_NOSIGNAL);
+        written = connection->send_callback(connection, data, length);
         if (written == -1) return HTTP_ERROR_CLIENT;
     }
 
@@ -332,21 +331,22 @@ static int http_write_bulk(int socket, const void *data, size_t length) {
 
 
 /* Write a line into HTTP socket.
- * @socket is descriptor to write to.
+ * @connection is HTTP connection to write to.
  * @line is NULL terminated string to send to client. HTTP EOL will be added.
  * @return 0 in success. */
-static int http_write_line(int socket, const char *line) {
+static int http_write_line(const struct http_connection *connection,
+        const char *line) {
     int error;
     if (line == NULL) return HTTP_ERROR_SERVER;
 
     fprintf(stderr, "Response: <%s>\n", line);
 
     /* Send the line */
-    if ((error = http_write_bulk(socket, line, strlen(line))))
+    if ((error = http_write_bulk(connection, line, strlen(line))))
         return error;
 
     /* Send EOL */
-    if ((error = http_write_bulk(socket, "\r\n", 2)))
+    if ((error = http_write_bulk(connection, "\r\n", 2)))
         return error;
 
     return HTTP_ERROR_SUCCESS;
@@ -354,7 +354,7 @@ static int http_write_line(int socket, const char *line) {
 
 
 /* Read data of given length from HTTP socket.
- * @socket is descriptor to read from.
+ * @connection is HTTP connection to read from.
  * @data is auto-allocated just read data bulk. Will be NULL if EOF has been
  * reached or error occured.
  * @data_length is size of bytes to read.
@@ -363,7 +363,8 @@ static int http_write_line(int socket, const char *line) {
  * @buffer_size is allocated size of @buffer
  * @buffer_length is size of head of the buffer that holds read data.
  * @return 0 in success. */
-static int http_read_bulk(int socket, void **data, size_t data_length,
+static int http_read_bulk(const struct http_connection *connection,
+        void **data, size_t data_length,
         char **buffer, size_t *buffer_size, size_t *buffer_used) {
     ssize_t got;
     char *tmp;
@@ -371,6 +372,8 @@ static int http_read_bulk(int socket, void **data, size_t data_length,
     if (data == NULL) return HTTP_ERROR_SERVER;
     *data = NULL;
 
+    if (connection == NULL || connection->recv_callback == NULL)
+        return HTTP_ERROR_SERVER;
     if (buffer == NULL || buffer_size == NULL || buffer_used == NULL)
         return HTTP_ERROR_SERVER;
     if (*buffer == NULL && *buffer_size > 0) return HTTP_ERROR_SERVER;
@@ -404,8 +407,8 @@ static int http_read_bulk(int socket, void **data, size_t data_length,
         }
 
         /* Read data */
-        got = http_recv_callback(http_recv_context, *buffer + *buffer_used,
-                *buffer_size - *buffer_used, 0);
+        got = connection->recv_callback(connection, *buffer + *buffer_used,
+                *buffer_size - *buffer_used);
         if (got == -1) return HTTP_ERROR_CLIENT;
 
         /* Check for EOF */
@@ -456,7 +459,7 @@ static int http_parse_request_header(char *line,
 
 /* Send HTTP response status line to client.
  * @return 0 if success. */
-static int http_write_response_status(int socket,
+static int http_write_response_status(const struct http_connection *connection,
         const struct http_response *response) {
     char *buffer = NULL;
     int error;
@@ -466,7 +469,7 @@ static int http_write_response_status(int socket,
     if (-1 == test_asprintf(&buffer, "HTTP/1.0 %u %s", response->status,
                 (response->reason == NULL) ? "" : response->reason))
         return HTTP_ERROR_SERVER;
-    error = http_write_line(socket, buffer);
+    error = http_write_line(connection, buffer);
     free(buffer);
     
     return error;
@@ -540,7 +543,8 @@ static int http_parse_header(char *line, struct http_request *request) {
 
 /* Send HTTP header to client.
  * @return 0 if success. */
-static int http_write_header(int socket, const struct http_header *header) {
+static int http_write_header(const struct http_connection *connection,
+        const struct http_header *header) {
     char *buffer = NULL;
     int error;
 
@@ -552,7 +556,7 @@ static int http_write_header(int socket, const struct http_header *header) {
     if (-1 == test_asprintf(&buffer, "%s: %s", header->name,
                 (header->value == NULL) ? "" : header->value))
         return HTTP_ERROR_SERVER;
-    error = http_write_line(socket, buffer);
+    error = http_write_line(connection, buffer);
     free(buffer);
     
     return error;
@@ -605,11 +609,12 @@ static void dump_body(const void *data, size_t length) {
 }
 
 
-/* Read a HTTP request from connected socket.
+/* Read a HTTP request from connection.
  * @http_request is heap-allocated received HTTP request,
  * or NULL in case of error.
  * @return http_error code. */
-http_error http_read_request(int socket, struct http_request **request) {
+http_error http_read_request(const struct http_connection *connection,
+        struct http_request **request) {
     char *line = NULL;
     char *buffer = NULL;
     size_t buffer_size = 0, buffer_used = 0;
@@ -621,7 +626,7 @@ http_error http_read_request(int socket, struct http_request **request) {
     if (*request == NULL) return HTTP_ERROR_SERVER;
 
     /* Get request header */
-    if ((error = http_read_line(socket, &line, &buffer, &buffer_size,
+    if ((error = http_read_line(connection, &line, &buffer, &buffer_size,
                 &buffer_used)))
         goto leave;
     if ((error = http_parse_request_header(line, *request)))
@@ -629,7 +634,7 @@ http_error http_read_request(int socket, struct http_request **request) {
 
     /* Get other headers */
     while (1) {
-        if ((error = http_read_line(socket, &line, &buffer, &buffer_size,
+        if ((error = http_read_line(connection, &line, &buffer, &buffer_size,
                     &buffer_used))) {
             fprintf(stderr, "Error while reading HTTP request line\n");
             goto leave;
@@ -652,7 +657,7 @@ http_error http_read_request(int socket, struct http_request **request) {
         fprintf(stderr, "Could not determine length of body\n");
         goto leave;
     }
-    if ((error = http_read_bulk(socket,
+    if ((error = http_read_bulk(connection,
                     &(*request)->body, (*request)->body_length,
                     &buffer, &buffer_size, &buffer_used))) {
         fprintf(stderr, "Could not read request body\n");
@@ -670,37 +675,39 @@ leave:
 }
 
 
-/* Write a HTTP response to connected socket. Auto-add Content-Length header.
+/* Write a HTTP response to connection. Auto-add Content-Length header.
  * @return 0 in case of success. */
-int http_write_response(int socket, const struct http_response *response) {
+int http_write_response(const struct http_connection *connection,
+        const struct http_response *response) {
     char *buffer = NULL;
     int error = -1;
 
     if (response == NULL) return HTTP_ERROR_SERVER;
 
     /* Status line */
-    error = http_write_response_status(socket, response);
+    error = http_write_response_status(connection, response);
     if (error) return error;
     
     /* Headers */
     for (struct http_header *header = response->headers; header != NULL;
             header = header->next) {
-        error = http_write_header(socket, header);
+        error = http_write_header(connection, header);
         if (error) return error;
     }
     if (-1 == test_asprintf(&buffer, "Content-Length: %u",
                 response->body_length))
         return HTTP_ERROR_SERVER;
-    error = http_write_line(socket, buffer);
+    error = http_write_line(connection, buffer);
     if (error) return error;
 
     /* Headers trailer */
-    error = http_write_line(socket, "");
+    error = http_write_line(connection, "");
     if (error) return error;
 
     /* Body */
     if (response->body_length > 0) {
-        error = http_write_bulk(socket, response->body, response->body_length);
+        error = http_write_bulk(connection, response->body,
+                response->body_length);
         if (error) return error;
     }
     fprintf(stderr, "Body of size %zu B has been sent:\n",
@@ -757,7 +764,7 @@ ok:
     
 
 /* Send a 200 Ok response with a cookie */ 
-int http_send_response_200_cookie(int client_socket,
+int http_send_response_200_cookie(const struct http_connection *connection,
         const char *cokie_name, const char *cookie_value,
         const char *cookie_domain, const char *cookie_path,
         const void *body, size_t body_length, const char *type) {
@@ -779,7 +786,7 @@ int http_send_response_200_cookie(int client_socket,
     if (cokie_name != NULL) {
         if (NULL == (header_cookie = http_build_setcookie_header(
                         cokie_name, cookie_value, cookie_domain, cookie_path)))
-            return http_send_response_500(client_socket,
+            return http_send_response_500(connection,
                     "Could not build Set-Cookie header");
     }
 
@@ -792,25 +799,26 @@ int http_send_response_200_cookie(int client_socket,
         response.headers = header_cookie;
     }
     
-    retval = http_write_response(client_socket, &response);
+    retval = http_write_response(connection, &response);
     http_header_free(&header_cookie);
     return retval;
 }
 
 
 /* Send a 200 Ok response */ 
-int http_send_response_200(int client_socket,
+int http_send_response_200(const struct http_connection *connection,
         const void *body, size_t body_length, const char *type) {
-    return http_send_response_200_cookie(client_socket,
+    return http_send_response_200_cookie(connection,
             NULL, NULL, NULL, NULL,
             body, body_length, type);
 }
 
 
 /* Send a 302 Found response setting a cookie */ 
-int http_send_response_302_cookie(int client_socket, const char *cokie_name,
-        const char *cookie_value, const char *cookie_domain,
-        const char *cookie_path, const char *location) {
+int http_send_response_302_cookie(const struct http_connection *connection,
+        const char *cokie_name, const char *cookie_value,
+        const char *cookie_domain, const char *cookie_path,
+        const char *location) {
     int retval;
     struct http_header *header_cookie = NULL;
     struct http_header header_location = {
@@ -829,7 +837,7 @@ int http_send_response_302_cookie(int client_socket, const char *cokie_name,
     if (cokie_name != NULL) {
         if (NULL == (header_cookie = http_build_setcookie_header(
                         cokie_name, cookie_value, cookie_domain, cookie_path)))
-            return http_send_response_500(client_socket,
+            return http_send_response_500(connection,
                     "Could not build Set-Cookie header");
     }
     
@@ -842,14 +850,14 @@ int http_send_response_302_cookie(int client_socket, const char *cokie_name,
         response.headers = header_cookie;
     }
     
-    retval = http_write_response(client_socket, &response);
+    retval = http_write_response(connection, &response);
     http_header_free(&header_cookie);
     return retval;
 }
 
 
 /* Send a 302 Found response with totp authentication scheme header */ 
-int http_send_response_302_totp(int client_socket,
+int http_send_response_302_totp(const struct http_connection *connection,
         const char *code, const char *text, const char *location) {
     struct http_header header_code = {
         .name = "X-Response-message-code",
@@ -887,13 +895,14 @@ int http_send_response_302_totp(int client_socket,
         response.headers = &header_code;
     }
     
-    return http_write_response(client_socket, &response);
+    return http_write_response(connection, &response);
 }
 
 
 /* Send a 400 Bad Request response.
  * Use non-NULL @reason to override status message. */ 
-int http_send_response_400(int client_socket, const char *reason) {
+int http_send_response_400(const struct http_connection *connection,
+        const char *reason) {
     struct http_response response = {
         .status = 400,
         .reason = (reason == NULL) ? "Bad Request" : (char *) reason,
@@ -902,12 +911,12 @@ int http_send_response_400(int client_socket, const char *reason) {
         .body = NULL
     };
     
-    return http_write_response(client_socket, &response);
+    return http_write_response(connection, &response);
 }
 
 
 /* Send a 401 Unauthorized response with Basic authentication scheme header */ 
-int http_send_response_401_basic(int client_socket) {
+int http_send_response_401_basic(const struct http_connection *connection) {
     struct http_header header = {
         .name = "WWW-Authenticate",
         .value = "Basic realm=\"SimulatedISDSServer\"",
@@ -921,13 +930,13 @@ int http_send_response_401_basic(int client_socket) {
         .body = NULL
     };
     
-    return http_write_response(client_socket, &response);
+    return http_write_response(connection, &response);
 }
 
 
 /* Send a 401 Unauthorized response with OTP authentication scheme header for
  * given @method. */ 
-int http_send_response_401_otp(int client_socket,
+int http_send_response_401_otp(const struct http_connection *connection,
         const char *method, const char *code, const char *text) {
     int retval;
     struct http_header header = {
@@ -955,7 +964,7 @@ int http_send_response_401_otp(int client_socket,
 
     if (-1 == test_asprintf(&header.value, "%s realm=\"SimulatedISDSServer\"",
                 method)) {
-        return http_send_response_500(client_socket,
+        return http_send_response_500(connection,
                 "Could not build WWW-Authenticate header value");
     }
     
@@ -968,14 +977,14 @@ int http_send_response_401_otp(int client_socket,
             header.next = &header_text;
     }
 
-    retval = http_write_response(client_socket, &response);
+    retval = http_write_response(connection, &response);
     free(header.value);
     return retval;
 }
 
 
 /* Send a 403 Forbidden response */ 
-int http_send_response_403(int client_socket) {
+int http_send_response_403(const struct http_connection *connection) {
     struct http_response response = {
         .status = 403,
         .reason = "Forbidden",
@@ -984,13 +993,14 @@ int http_send_response_403(int client_socket) {
         .body = NULL
     };
     
-    return http_write_response(client_socket, &response);
+    return http_write_response(connection, &response);
 }
 
 
 /* Send a 500 Internal Server Error response.
  * Use non-NULL @reason to override status message. */ 
-int http_send_response_500(int client_socket, const char *reason) {
+int http_send_response_500(const struct http_connection *connection,
+        const char *reason) {
     struct http_response response = {
         .status = 500,
         .reason = (NULL == reason) ? "Internal Server Error" : (char *) reason,
@@ -999,12 +1009,12 @@ int http_send_response_500(int client_socket, const char *reason) {
         .body = NULL
     };
     
-    return http_write_response(client_socket, &response);
+    return http_write_response(connection, &response);
 }
 
 
 /* Send a 503 Service Temporarily Unavailable response */ 
-int http_send_response_503(int client_socket,
+int http_send_response_503(const struct http_connection *connection,
         const void *body, size_t body_length, const char *type) {
     struct http_header header = {
         .name = "Content-Type",
@@ -1018,7 +1028,7 @@ int http_send_response_503(int client_socket,
         .body = (void *)body
     };
     
-    return http_write_response(client_socket, &response);
+    return http_write_response(connection, &response);
 }
 
 
