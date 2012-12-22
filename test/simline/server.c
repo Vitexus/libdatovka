@@ -829,8 +829,20 @@ int start_server(pid_t *server_process, char **server_address,
                 /* XXX: Credentials are linked from session now.
                  * Deinitializition muse free session before x509_credentials.
                  */
-                /* TODO: Implement client authentication by certificate 
-                gnutls_certificate_server_set_request(tls_session, GNUTLS_CERT_REQUIRE);*/
+                if (NULL != tls->client_name) {
+                    gnutls_certificate_server_set_request(tls_session,
+                            GNUTLS_CERT_REQUIRE);
+                    /* TODO: Register peer verification routine: 
+                     void gnutls_certificate_set_verify_function(
+                         gnutls_certificate_credentials_t CRED,
+                         gnutls_certificate_verify_function *FUNC);
+                     Call-back is: int (*FUNC)(gnutls_session_t);
+                     Call-back can use: gnutls_certificate_verify_peers2() ,
+                         gnutls_certificate_type_get(),
+                         gnutls_certificate_get_peers()
+                     Return value is 0 for acception, other value for denial.
+                    */
+                } 
             }
 
             if (0 > (client_socket = accept(server_socket, NULL, NULL))) {
