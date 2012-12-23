@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <wait.h>
 #include <gnutls/gnutls.h>
+#include <gnutls/x509.h>
 
 char *server_error = NULL;
 
@@ -645,6 +646,61 @@ static ssize_t tls_push(gnutls_transport_ptr_t context, const void* buffer,
 }
 
 
+/* Verify client certificate from current TLS session.
+ * @tls_session is session in TLS handshake when client sent certificate
+ * @return 0 for acceptance, return non-0 for denial. */
+static int tls_verify_client(gnutls_session_t tls_session) {
+    /* Call-back can use:
+        gnutls_certificate_verify_peers2() ,
+        gnutls_certificate_type_get(),
+        gnutls_certificate_get_peers()
+    */
+    const gnutls_datum_t *chain; /* Pointer to static data */
+    unsigned int chain_length;
+    gnutls_x509_crt_t certificate;
+    gnutls_datum_t certificate_text;
+    int error;
+
+    chain = gnutls_certificate_get_peers(tls_session, &chain_length);
+    if (NULL == chain) {
+        fprintf(stderr, "Error while obtaining client's certificate\n");
+        return 0;
+    }
+    if (chain_length < 1) {
+        fprintf(stderr, "Client did not send any certificate\n");
+        return 0;
+    }
+
+    error = gnutls_x509_crt_init(&certificate);
+    if (error) {
+        fprintf(stderr, "Could not initialize certificate storage: %s\n",
+                gnutls_strerror(error));
+        return 0;
+    }
+    error = gnutls_x509_crt_import(certificate, chain,
+            GNUTLS_X509_FMT_DER);
+    if (error) {
+        fprintf(stderr, "Could not parse client's X.509 certificate: %s\n",
+                gnutls_strerror(error));
+        gnutls_x509_crt_deinit(certificate);
+        return 0;
+    }
+    error = gnutls_x509_crt_print(certificate, GNUTLS_CRT_PRINT_ONELINE,
+            &certificate_text);
+    if (error) {
+        fprintf(stderr, "Could not print client's certificate: %s\n",
+                gnutls_strerror(error));
+        gnutls_x509_crt_deinit(certificate);
+        return 0;
+    }
+    fprintf(stderr, "Client sent certificate: %s\n", certificate_text.data);
+    gnutls_free(certificate_text.data);
+
+    gnutls_x509_crt_deinit(certificate);
+    return 0;
+}
+
+
 /* Start sever in separate process.
  * @server_process is PID of forked server
  * @server_address is automatically allocated TCP address of listening server
@@ -830,18 +886,12 @@ int start_server(pid_t *server_process, char **server_address,
                  * Deinitializition muse free session before x509_credentials.
                  */
                 if (NULL != tls->client_name) {
+                    /* Require client certificate */
                     gnutls_certificate_server_set_request(tls_session,
                             GNUTLS_CERT_REQUIRE);
-                    /* TODO: Register peer verification routine: 
-                     void gnutls_certificate_set_verify_function(
-                         gnutls_certificate_credentials_t CRED,
-                         gnutls_certificate_verify_function *FUNC);
-                     Call-back is: int (*FUNC)(gnutls_session_t);
-                     Call-back can use: gnutls_certificate_verify_peers2() ,
-                         gnutls_certificate_type_get(),
-                         gnutls_certificate_get_peers()
-                     Return value is 0 for acception, other value for denial.
-                    */
+                    /* And verify it in TLS handshake */
+                    gnutls_certificate_set_verify_function(x509_credentials,
+                         tls_verify_client);
                 } 
             }
 
