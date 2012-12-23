@@ -43,6 +43,7 @@ static char *authorization_cookie_value = NULL;
 static gnutls_certificate_credentials_t x509_credentials;
 static gnutls_priority_t priority_cache;
 static gnutls_dh_params_t dh_parameters;
+static const char *client_required_dn = NULL;
 
 /* Save error message if not yet set. The message will be duplicated.
  * @message is printf(3) formatting string. */
@@ -655,6 +656,8 @@ static int tls_verify_client(gnutls_session_t tls_session) {
     gnutls_x509_crt_t certificate;
     gnutls_datum_t certificate_text;
     unsigned int status;
+    char *dn_text;
+    size_t dn_size;
     int error;
 
     /* Obtain client's certificate chain */
@@ -693,21 +696,60 @@ static int tls_verify_client(gnutls_session_t tls_session) {
     }
     fprintf(stderr, "Client sent certificate: %s\n", certificate_text.data);
     gnutls_free(certificate_text.data);
-    gnutls_x509_crt_deinit(certificate);
 
     /* Verify certificate signature and path */
     error = gnutls_certificate_verify_peers2(tls_session, &status);
     if (error) {
         fprintf(stderr, "Could not verify client's certificate: %s\n",
                 gnutls_strerror(error));
+        gnutls_x509_crt_deinit(certificate);
         return -1;
     }
     if (status) {
         fprintf(stderr, "Client's certificate is not valid.\n");
+        gnutls_x509_crt_deinit(certificate);
         return -1;
     } else {
         fprintf(stderr, "Client's certificate is valid.\n");
     }
+
+    /* Authorize client */
+    error = gnutls_x509_crt_get_dn(certificate, NULL, &dn_size);
+    if (error != GNUTLS_E_SHORT_MEMORY_BUFFER) {
+        fprintf(stderr, "Could not determine client's "
+                "distinguished name size: %s.\n",
+                gnutls_strerror(error));
+        gnutls_x509_crt_deinit(certificate);
+        return -1;
+    }
+    dn_text = gnutls_malloc(dn_size);
+    if (NULL == dn_text) {
+        fprintf(stderr, "Could not allocate memory for client's "
+                "distinguished name.\n");
+        gnutls_x509_crt_deinit(certificate);
+        return -1;
+    }
+    error = gnutls_x509_crt_get_dn(certificate, dn_text, &dn_size);
+    if (error) {
+        fprintf(stderr, "Could obtain client's "
+                "distinguished name size: %s.\n",
+                gnutls_strerror(error));
+        gnutls_free(dn_text);
+        gnutls_x509_crt_deinit(certificate);
+        return -1;
+    }
+    gnutls_x509_crt_deinit(certificate);
+    if (client_required_dn != NULL &&
+            strcmp(client_required_dn, dn_text)) {
+        fprintf(stderr, "Client is not authorized: "
+                "Client's distinguished name `%s' does not match "
+                "required name `%s'.\n",
+                dn_text, client_required_dn);
+        gnutls_free(dn_text);
+        return -1;
+    }
+    fprintf(stderr, "Client is authorized.\n");
+    gnutls_free(dn_text);
     return 0;
 }
 
@@ -897,6 +939,7 @@ int start_server(pid_t *server_process, char **server_address,
                  * Deinitializition must free session before x509_credentials.
                  */
                 if (NULL != tls->client_name) {
+                    client_required_dn = tls->client_name;
                     /* Require client certificate */
                     gnutls_certificate_server_set_request(tls_session,
                             GNUTLS_CERT_REQUIRE);
