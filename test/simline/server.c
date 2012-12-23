@@ -650,32 +650,30 @@ static ssize_t tls_push(gnutls_transport_ptr_t context, const void* buffer,
  * @tls_session is session in TLS handshake when client sent certificate
  * @return 0 for acceptance, return non-0 for denial. */
 static int tls_verify_client(gnutls_session_t tls_session) {
-    /* Call-back can use:
-        gnutls_certificate_verify_peers2() ,
-        gnutls_certificate_type_get(),
-        gnutls_certificate_get_peers()
-    */
     const gnutls_datum_t *chain; /* Pointer to static data */
     unsigned int chain_length;
     gnutls_x509_crt_t certificate;
     gnutls_datum_t certificate_text;
+    unsigned int status;
     int error;
 
+    /* Obtain client's certificate chain */
     chain = gnutls_certificate_get_peers(tls_session, &chain_length);
     if (NULL == chain) {
         fprintf(stderr, "Error while obtaining client's certificate\n");
-        return 0;
+        return -1;
     }
     if (chain_length < 1) {
         fprintf(stderr, "Client did not send any certificate\n");
-        return 0;
+        return -1;
     }
 
+    /* Print client's certificate */
     error = gnutls_x509_crt_init(&certificate);
     if (error) {
         fprintf(stderr, "Could not initialize certificate storage: %s\n",
                 gnutls_strerror(error));
-        return 0;
+        return -1;
     }
     error = gnutls_x509_crt_import(certificate, chain,
             GNUTLS_X509_FMT_DER);
@@ -683,7 +681,7 @@ static int tls_verify_client(gnutls_session_t tls_session) {
         fprintf(stderr, "Could not parse client's X.509 certificate: %s\n",
                 gnutls_strerror(error));
         gnutls_x509_crt_deinit(certificate);
-        return 0;
+        return -1;
     }
     error = gnutls_x509_crt_print(certificate, GNUTLS_CRT_PRINT_ONELINE,
             &certificate_text);
@@ -691,12 +689,25 @@ static int tls_verify_client(gnutls_session_t tls_session) {
         fprintf(stderr, "Could not print client's certificate: %s\n",
                 gnutls_strerror(error));
         gnutls_x509_crt_deinit(certificate);
-        return 0;
+        return -1;
     }
     fprintf(stderr, "Client sent certificate: %s\n", certificate_text.data);
     gnutls_free(certificate_text.data);
-
     gnutls_x509_crt_deinit(certificate);
+
+    /* Verify certificate signature and path */
+    error = gnutls_certificate_verify_peers2(tls_session, &status);
+    if (error) {
+        fprintf(stderr, "Could not verify client's certificate: %s\n",
+                gnutls_strerror(error));
+        return -1;
+    }
+    if (status) {
+        fprintf(stderr, "Client's certificate is not valid.\n");
+        return -1;
+    } else {
+        fprintf(stderr, "Client's certificate is valid.\n");
+    }
     return 0;
 }
 
