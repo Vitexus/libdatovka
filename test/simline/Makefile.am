@@ -16,6 +16,7 @@ export HOME=@top_builddir@
 TESTS =
 if BUILD_CURL
 TESTS += basic_authentication hotp_authentication totp_authentication \
+		 certificate_user_password_authentication \
 		 isds_change_password hotp_isds_change_password \
 		 totp_isds_change_password \
 		 isds_delete_message_from_storage
@@ -40,6 +41,8 @@ common = ../test.h
 basic_authentication_SOURCES = basic_authentication.c $(common)
 hotp_authentication_SOURCES = hotp_authentication.c $(common)
 totp_authentication_SOURCES = totp_authentication.c $(common)
+certificate_user_password_authentication_SOURCES = \
+	certificate_user_password_authentication.c $(common)
 isds_change_password_SOURCES = isds_change_password.c $(common)
 hotp_isds_change_password_SOURCES = hotp_isds_change_password.c $(common)
 totp_isds_change_password_SOURCES = totp_isds_change_password.c $(common)
