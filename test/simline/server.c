@@ -883,7 +883,7 @@ int start_server(pid_t *server_process, char **server_address,
                     continue;
                 }
                 /* XXX: Credentials are linked from session now.
-                 * Deinitializition muse free session before x509_credentials.
+                 * Deinitializition must free session before x509_credentials.
                  */
                 if (NULL != tls->client_name) {
                     /* Require client certificate */
