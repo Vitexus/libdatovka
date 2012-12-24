@@ -762,6 +762,8 @@ const char *isds_strerror(const isds_error error) {
             return(_("Some suboperations failed")); break;
         case IE_ABORTED:
             return(_("Operation aborted")); break;
+        case IE_SECURITY:
+            return(_("Security problem")); break;
         default:
             return(_("Unknown error"));
     }

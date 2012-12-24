@@ -900,12 +900,29 @@ static isds_error http(struct isds_ctx *context,
             &content_type);
 
     if (curl_err) {
+        /* TODO: Use curl_easy_setopt(CURLOPT_ERRORBUFFER) to obtain detailed
+         * error message. */
         /* TODO: CURL is not internationalized yet. Collect CURL messages for
          * I18N. */
         isds_printf_message(context,
                 _("%s: %s"), url, _(curl_easy_strerror(curl_err)));
         if (curl_err == CURLE_ABORTED_BY_CALLBACK)
             err = IE_ABORTED;
+        else if (
+                curl_err == CURLE_SSL_CONNECT_ERROR ||
+                curl_err == CURLE_SSL_ENGINE_NOTFOUND ||
+                curl_err == CURLE_SSL_ENGINE_SETFAILED ||
+                curl_err == CURLE_SSL_CERTPROBLEM ||
+                curl_err == CURLE_SSL_CIPHER ||
+                curl_err == CURLE_SSL_CACERT ||
+                curl_err == CURLE_USE_SSL_FAILED ||
+                curl_err == CURLE_SSL_ENGINE_INITFAILED ||
+                curl_err == CURLE_SSL_CACERT_BADFILE ||
+                curl_err == CURLE_SSL_SHUTDOWN_FAILED ||
+                curl_err == CURLE_SSL_CRL_BADFILE ||
+                curl_err == CURLE_SSL_ISSUER_ERROR
+                )
+            err = IE_SECURITY;
         else
             err = IE_NETWORK;
         goto leave;

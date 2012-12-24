@@ -107,10 +107,10 @@ int main(int argc, char **argv) {
             ABORT_UNIT(server_error);
         }
 
-        TEST("no client certificate", test_login, IE_NOT_LOGGED_IN, context,
+        TEST("no client certificate", test_login, IE_SECURITY, context,
                 url, username, password, NULL, NULL);
 
-        TEST("wrong client certificate", test_login, IE_NOT_LOGGED_IN, context,
+        TEST("wrong client certificate", test_login, IE_SECURITY, context,
                 url, username, password, &pki_credentials, NULL);
 
         pki_credentials.certificate = client_certificate;
