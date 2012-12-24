@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
         free(server_address);
         exit(EXIT_FAILURE);
     }
-    printf("http://%s/\n", server_address);
+    printf("%s\n", server_address);
     free(server_address);
 
     printf("Waiting on SIGTERM...\n");

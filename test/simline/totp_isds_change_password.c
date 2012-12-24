@@ -64,7 +64,6 @@ static int test_isds_change_password(const isds_error error,
 int main(int argc, char **argv) {
     int error;
     pid_t server_process;
-    char *server_address = NULL;
     struct isds_ctx *context = NULL;
     char *url = NULL;
     char *refnum = NULL;
@@ -119,21 +118,13 @@ int main(int argc, char **argv) {
         sendsmscode_arguments.status_code = "0000";
         sendsmscode_arguments.status_message =
             "One-time password sent via SMS gateway";
-        error = start_server(&server_process, &server_address,
+        error = start_server(&server_process, &url,
                 server_otp_authentication, &server_arguments, NULL);
         if (error == -1) {
             isds_ctx_free(&context);
             isds_cleanup();
             ABORT_UNIT(server_error);
         }
-        if (-1 == test_asprintf(&url, "http://%s/", server_address)) {
-            free(server_address);
-            stop_server(server_process);
-            isds_ctx_free(&context);
-            isds_cleanup();
-            ABORT_UNIT("Could not format ISDS URL");
-        }
-        free(server_address);
 
         otp_credentials.otp_code = (char *) otp_code;
         TEST("login", test_login, IE_SUCCESS, OTP_RESOLUTION_SUCCESS,
@@ -225,21 +216,13 @@ int main(int argc, char **argv) {
         sendsmscode_arguments.status_code = "2301";
         sendsmscode_arguments.status_message =
             "One-time code cannot be re-send faster than once a 30 seconds";
-        error = start_server(&server_process, &server_address,
+        error = start_server(&server_process, &url,
                 server_otp_authentication, &server_arguments, NULL);
         if (error == -1) {
             isds_ctx_free(&context);
             isds_cleanup();
             ABORT_UNIT(server_error);
         }
-        if (-1 == test_asprintf(&url, "http://%s/", server_address)) {
-            free(server_address);
-            stop_server(server_process);
-            isds_ctx_free(&context);
-            isds_cleanup();
-            ABORT_UNIT("Could not format ISDS URL");
-        }
-        free(server_address);
 
         otp_credentials.otp_code = (char *) otp_code;
         TEST("login", test_login, IE_SUCCESS, OTP_RESOLUTION_SUCCESS,
@@ -265,21 +248,13 @@ int main(int argc, char **argv) {
         sendsmscode_arguments.status_code = "2302";
         sendsmscode_arguments.status_message =
             "One-time code could not been sent. Try later again.";
-        error = start_server(&server_process, &server_address,
+        error = start_server(&server_process, &url,
                 server_otp_authentication, &server_arguments, NULL);
         if (error == -1) {
             isds_ctx_free(&context);
             isds_cleanup();
             ABORT_UNIT(server_error);
         }
-        if (-1 == test_asprintf(&url, "http://%s/", server_address)) {
-            free(server_address);
-            stop_server(server_process);
-            isds_ctx_free(&context);
-            isds_cleanup();
-            ABORT_UNIT("Could not format ISDS URL");
-        }
-        free(server_address);
 
         otp_credentials.otp_code = (char *) otp_code;
         TEST("login", test_login, IE_SUCCESS, OTP_RESOLUTION_SUCCESS,

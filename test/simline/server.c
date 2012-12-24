@@ -127,6 +127,33 @@ char *socket2address(int socket) {
 }
 
 
+/* Format HTTP(s) socket address as printable URL string.
+ * @socket is listening TCP socket of HTTP server
+ * @tls is true for HTTPS, false for plain HTTP
+ * @return allocated string or NULL in case of error. */
+static char *socket2url(int socket, _Bool tls) {
+    char *socket_address = NULL;
+    char *address = NULL;
+
+    socket_address = socket2address(socket);
+    if (NULL == socket_address) {
+        set_server_error("Could not format server address");
+        free(socket_address);
+        return NULL;
+    }
+
+    if (-1 == test_asprintf(&address, "%s://%s/",
+            (tls) ? "https" : "http", socket_address)) {
+        set_server_error("Could not format server address");
+        free(socket_address);
+        return NULL;
+    }
+
+    free(socket_address);
+    return address;
+}
+
+
 /* Process ISDS web service */
 static void do_ws(const struct http_connection *connection,
         const struct service_configuration *ws_configuration,
@@ -790,23 +817,24 @@ int start_server(pid_t *server_process, char **server_address,
         return -1;
     }
 
+    if (NULL != tls && NULL == tls->server_certificate) {
+        /* XXX: X.509 TLS server requires server certificate. */
+        tls = NULL;
+    }
+
     server_socket = listen_on_socket();
     if (server_socket == -1) {
         set_server_error("Could not create listening socket");
         return -1;
     }
 
-    *server_address = socket2address(server_socket);
+    *server_address = socket2url(server_socket, NULL != tls);
     if (*server_address == NULL) {
         close(server_socket);
         set_server_error("Could not format address of listening socket");
         return -1;
     }
 
-    if (NULL != tls && NULL == tls->server_certificate) {
-        /* XXX: X.509 TLS server requires server certificate. */
-        tls = NULL;
-    }
     if (NULL != tls) {
         const char *error_position;
         if ((error = gnutls_global_init())) {

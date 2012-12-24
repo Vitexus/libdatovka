@@ -37,7 +37,6 @@ static int test_login(const isds_error error, struct isds_ctx *context,
 int main(int argc, char **argv) {
     int error;
     pid_t server_process;
-    char *server_address = NULL;
     struct isds_ctx *context = NULL;
     char *url = NULL;
 
@@ -67,21 +66,13 @@ int main(int argc, char **argv) {
             .isds_deviations = 1,
             .services = services
         };
-        error = start_server(&server_process, &server_address,
+        error = start_server(&server_process, &url,
                 server_basic_authentication, &server_arguments, NULL);
         if (error == -1) {
             isds_ctx_free(&context);
             isds_cleanup();
             ABORT_UNIT(server_error);
         }
-        if (-1 == test_asprintf(&url, "http://%s/", server_address)) {
-            free(server_address);
-            stop_server(server_process);
-            isds_ctx_free(&context);
-            isds_cleanup();
-            ABORT_UNIT("Could not format ISDS URL");
-        }
-        free(server_address);
 
         TEST("invalid credentials", test_login, IE_NOT_LOGGED_IN, context,
                 url, "7777777", "nbuusr1", NULL, NULL);
@@ -98,21 +89,13 @@ int main(int argc, char **argv) {
     }
 
     {
-        error = start_server(&server_process, &server_address,
+        error = start_server(&server_process, &url,
                 server_out_of_order, NULL, NULL);
         if (error == -1) {
             isds_ctx_free(&context);
             isds_cleanup();
             ABORT_UNIT(server_error);
         }
-        if (-1 == test_asprintf(&url, "http://%s/", server_address)) {
-            free(server_address);
-            stop_server(server_process);
-            isds_ctx_free(&context);
-            isds_cleanup();
-            ABORT_UNIT("Could not format ISDS URL");
-        }
-        free(server_address);
 
         TEST("log into out-of-order server", test_login, IE_SOAP, context,
                 url, username, password, NULL, NULL);
