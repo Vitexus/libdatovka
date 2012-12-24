@@ -44,6 +44,7 @@ static char *authorization_cookie_value = NULL;
 static gnutls_certificate_credentials_t x509_credentials;
 static gnutls_priority_t priority_cache;
 static gnutls_dh_params_t dh_parameters;
+static gnutls_datum_t ticket_key;
 static const char *client_required_dn = NULL;
 
 /* Save error message if not yet set. The message will be duplicated.
@@ -943,12 +944,18 @@ int start_server(pid_t *server_process, char **server_address,
         gnutls_certificate_set_dh_params(x509_credentials, dh_parameters);
         /* XXX: dh_parameters are linked from x509_credentials now.
          * Deinitialization must free x509_credentials before dh_parameters. */
+        if ((error = gnutls_session_ticket_key_generate(&ticket_key))) {
+            fprintf(stderr, "Could not generate TLS session ticket key: %s\n",
+                    gnutls_strerror(error));
+            ticket_key.data = NULL;
+        }
     }
 
     *server_process = fork();
     if (*server_process == -1) {
         close(server_socket);
         if (NULL != tls) {
+            gnutls_free(ticket_key.data);
             gnutls_certificate_free_credentials(x509_credentials);
             gnutls_priority_deinit(priority_cache);
             gnutls_dh_params_deinit(dh_parameters);
@@ -990,6 +997,13 @@ int start_server(pid_t *server_process, char **server_address,
                     terminate = -1;
                     gnutls_deinit(tls_session);
                     continue;
+                }
+                if (NULL != ticket_key.data) {
+                    if ((error = gnutls_session_ticket_enable_server(
+                                    tls_session, &ticket_key))) {
+                        fprintf(stderr, "Could not register ticket key to "
+                                "TLS session: %s\n", gnutls_strerror(error));
+                    }
                 }
                 /* XXX: Credentials are linked from session now.
                  * Deinitializition must free session before x509_credentials.
@@ -1062,6 +1076,11 @@ int start_server(pid_t *server_process, char **server_address,
             }
         }
 
+        if (NULL != tls) {
+            if (NULL != ticket_key.data) {
+                gnutls_free(ticket_key.data);
+            }
+        }
         close(server_socket);
         free(authorization_cookie_value);
         exit(EXIT_SUCCESS);
