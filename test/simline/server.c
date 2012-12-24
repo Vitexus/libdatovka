@@ -799,7 +799,7 @@ int start_server(pid_t *server_process, char **server_address,
     *server_address = socket2address(server_socket);
     if (*server_address == NULL) {
         close(server_socket);
-        set_server_error("Could not format address of listening address");
+        set_server_error("Could not format address of listening socket");
         return -1;
     }
 
