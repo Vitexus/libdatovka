@@ -65,7 +65,12 @@ int main(int argc, char **argv) {
     if (isds_set_opt(context, IOPT_TLS_CA_FILE, ca_certificate)) {
         isds_ctx_free(&context);
         isds_cleanup();
-        ABORT_UNIT("isds_ctx_create() failed\n");
+        ABORT_UNIT("Setting CA failed\n");
+    }
+    if (isds_set_opt(context, IOPT_TLS_VERIFY_SERVER, 0)) {
+        isds_ctx_free(&context);
+        isds_cleanup();
+        ABORT_UNIT("Disabling server hostname verification failed\n");
     }
 
     {
