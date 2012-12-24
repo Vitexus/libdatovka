@@ -50,12 +50,20 @@ struct arguments_basic_authentication {
 
 /* Do the server protocol.
  * @connection is HTTP connection
- * @server_arguments is pointer to structure:
+ * @server_arguments is pointer to structure arguments_basic_authentication
  * @request is parsed HTTP client request
  * @return 0 to accept new client, return -1 in case of fatal error. */
 int server_basic_authentication(const struct http_connection *connection,
         const void *server_arguments, const struct http_request *request);
 
+/* Do the server protocol.
+ * @connection is HTTP connection
+ * @server_arguments is pointer to structure arguments_basic_authentication
+ * @request is parsed HTTP client request
+ * @return 0 to accept new client, return -1 in case of fatal error. */
+int server_certificate_with_password_authentication(
+        const struct http_connection *connection,
+        const void *server_arguments, const struct http_request *request);
 
 struct arguments_otp_authentication {
     enum auth_otp_method method;    /* Selects OTP method to enable */

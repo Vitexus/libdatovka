@@ -99,8 +99,8 @@ int main(int argc, char **argv) {
             .passphrase = NULL
         };
         error = start_server(&server_process, &url,
-                server_basic_authentication, &server_arguments,
-                &tls_arguments);
+                server_certificate_with_password_authentication,
+                &server_arguments, &tls_arguments);
         if (error == -1) {
             isds_ctx_free(&context);
             isds_cleanup();

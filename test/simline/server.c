@@ -34,6 +34,7 @@ static const char *asws_path = "/asws/changePassword";
 static const char *ws_path = "/apps/DS/dz";
 
 static const char *ws_base_path_basic = "/";
+static const char *ws_base_path_commercial_certificate_with_password = "/certds/";
 static const char *ws_base_path_otp = "/apps/";
 
 static const char *authorization_cookie_name = "IPCZ-X-COOKIE";
@@ -182,15 +183,17 @@ static void do_ws(const struct http_connection *connection,
 
 /* Do the server protocol.
  * @connection is HTTP connection
- * @server_arguments is pointer to structure:
+ * @server_arguments is pointer to structure arguments_basic_authentication
  * @request is parsed HTTP client request
+ * @prefix is HTTP URI path prefix (directory) where all ISDS services live
  * @return 0 to accept new client, return -1 in case of fatal error. */
-int server_basic_authentication(const struct http_connection *connection,
-        const void *server_arguments, const struct http_request *request) {
+static int server_prefixed_basic_authentication(
+        const struct http_connection *connection, const void *server_arguments,
+        const struct http_request *request, const char *prefix) {
     const struct arguments_basic_authentication *arguments =
         (const struct arguments_basic_authentication *) server_arguments;
 
-    if (NULL == arguments || NULL == request) {
+    if (NULL == arguments || NULL == request || NULL == prefix) {
         return -1;
     }
 
@@ -202,7 +205,7 @@ int server_basic_authentication(const struct http_connection *connection,
                             arguments->username, arguments->password)) {
                     case HTTP_ERROR_SUCCESS:
                         do_ws(connection, arguments->services, request,
-                                ws_base_path_basic);
+                                prefix);
                         break;
                     case HTTP_ERROR_CLIENT:
                         if (arguments->isds_deviations)
@@ -220,7 +223,7 @@ int server_basic_authentication(const struct http_connection *connection,
             }
         } else {
             do_ws(connection, arguments->services, request,
-                    ws_base_path_basic);
+                    prefix);
         }
     } else {
         /* HTTP method unsupported per ISDS specification */
@@ -229,6 +232,31 @@ int server_basic_authentication(const struct http_connection *connection,
     }
 
     return 0;
+}
+
+
+/* Do the server protocol.
+ * @connection is HTTP connection
+ * @server_arguments is pointer to structure arguments_basic_authentication
+ * @request is parsed HTTP client request
+ * @return 0 to accept new client, return -1 in case of fatal error. */
+int server_basic_authentication(const struct http_connection *connection,
+        const void *server_arguments, const struct http_request *request) {
+    return server_prefixed_basic_authentication(connection, server_arguments,
+            request, ws_base_path_basic);
+}
+
+
+/* Do the server protocol.
+ * @connection is HTTP connection
+ * @server_arguments is pointer to structure arguments_basic_authentication
+ * @request is parsed HTTP client request
+ * @return 0 to accept new client, return -1 in case of fatal error. */
+int server_certificate_with_password_authentication(
+        const struct http_connection *connection,
+        const void *server_arguments, const struct http_request *request) {
+    return server_prefixed_basic_authentication(connection, server_arguments,
+            request, ws_base_path_commercial_certificate_with_password);
 }
 
 
