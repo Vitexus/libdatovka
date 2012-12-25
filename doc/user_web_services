@@ -3,7 +3,7 @@ User web services specification
 
 Source: Provozní řád ISDS, version 2010-11-28, Pages 15–16
 Source: Webové služby rozhraní ISDS pro manipulaci s datovými zprávami,
-    version 2.31 (2012-09-20)
+    version 2.32 (2012-10-05)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
     version 2.26 (2012-03-15)
 
@@ -41,6 +41,8 @@ SignedSentMessageDownload
     Download outgoing message with digital signature of ministry of interiors
 AuthenticateMessage (*+)
     Submit local message copy to ISDS to confirm message authenticity
+Re-signISDSDocument (*)
+    Replace CMS signature of old message signed without time stamp
 DummyOperation
     Void operation used to log in and to keep connection alive
 
@@ -364,6 +366,29 @@ has is unkown to ISDS. In both cases 0000 error code will be returned.
 If message cannot be processed (e.g. broken CMS or XML syntax) or message
 contains has been signed by non-ISDS certificate or other error, non-zero
 error code will be returned.
+
+
+Re-signISDSDocument (*)
+===================
+
+Re-sign old message or delivery info that has been generated with CMS without
+time stamp. These messages have been produced before 2011-04-16.
+
+Input is dmDoc element carrying Base64-encoded original signed message or
+delivery info in text node.
+
+Output is dmResultDoc element with Base64-encoded re-signed message or
+delivery info supplied in request, optional dmValidTo element of xs:date type,
+and dmStatus of tStatus type. dmValidTo advertises end of validity of
+time stamp added into CMS.
+
+Error codes:
+    0000    Message has been re-signed and returned in CadES-T CMS format
+    2200    Input message is not bad
+    2201    Input message is not original (see AuthenticateMessage service)
+    2204    Input message already contains time stamp in CAdES-EPES or CAdES-T
+            CMS envelope
+    2207    Time stamp could not been generated in time
 
 
 VerifyMessage (*+)
