@@ -3279,7 +3279,7 @@ static isds_error append_GMessageEnvelopeSub(struct isds_ctx *context,
         zfree((*envelope)->dmSenderOrgUnitNum);
         zfree((*envelope)->dbIDRecipient);
         zfree((*envelope)->dmRecipientOrgUnit);
-        zfree((*envelope)->dmSenderOrgUnitNum);
+        zfree((*envelope)->dmRecipientOrgUnitNum);
         zfree((*envelope)->dmToHands);
         zfree((*envelope)->dmAnnotation);
         zfree((*envelope)->dmRecipientRefNumber);
@@ -3303,7 +3303,7 @@ static isds_error append_GMessageEnvelopeSub(struct isds_ctx *context,
     EXTRACT_STRING("isds:dbIDRecipient", (*envelope)->dbIDRecipient);
     EXTRACT_STRING("isds:dmRecipientOrgUnit", (*envelope)->dmRecipientOrgUnit);
     EXTRACT_LONGINT("isds:dmRecipientOrgUnitNum",
-            (*envelope)->dmSenderOrgUnitNum, 0);
+            (*envelope)->dmRecipientOrgUnitNum, 0);
     EXTRACT_STRING("isds:dmToHands", (*envelope)->dmToHands);
     EXTRACT_STRING("isds:dmAnnotation", (*envelope)->dmAnnotation);
     EXTRACT_STRING("isds:dmRecipientRefNumber",
