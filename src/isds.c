@@ -90,6 +90,14 @@ static const xmlChar *extension_map_mime[] = {
     BAD_CAST "zfo", BAD_CAST "application/vnd.software602.filler.form-xml-zip"
 };
 
+/* Structure type to hold conversion table from status code to isds_error and
+ * long message */
+struct code_map_isds_error {
+    const xmlChar **codes;     /* NULL terminated array of status codes */
+    const char **meanings;     /* Mapping to non-localized long messages */
+    const isds_error *errors;  /* Mapping to isds_error code */
+};
+
 /* Deallocate structure isds_pki_credentials and NULL it.
  * Pass-phrase is discarded.
  * @pki  credentials to to free */
@@ -5145,6 +5153,49 @@ leave:
                     "request.\n"));
     return err;
 }
+
+
+/* Convert response status code to isds_error code and set long message
+ * @context is context to save long message to
+ * @map is mapping from codes to errors and messages. Pass NULL for generic
+ * handling.
+ * @code is status code to translate
+ * @message is non-localized status message to put into long message in case
+ * of uknown error. It can be NULL if server did not provide any.
+ * @return desired isds_error or IE_ISDS for unknown code or IE_INVAL for
+ * invalid invocation. */
+static isds_error statuscode2isds_error(struct isds_ctx *context,
+        const struct code_map_isds_error *map,
+        const xmlChar *code, const xmlChar *message) {
+    if (NULL == code) {
+        isds_log_message(context,
+                _("NULL status code passed to statuscode2isds_error()"));
+        return IE_INVAL;
+    }
+
+    if (NULL != map) {
+        /* Check for known error codes */
+        for (int i=0; map->codes[i] != NULL; i++) {
+            if (!xmlStrcmp(code, map->codes[i])) {
+                isds_log_message(context, _(map->meanings[i]));
+                return map->errors[i];
+            }
+        }
+    }
+
+    /* Other error */
+    if (xmlStrcmp(code, BAD_CAST "0000")) {
+        char *message_locale = _isds_utf82locale((char*)message);
+        if (NULL == message_locale)
+            isds_log_message(context, _("ISDS server returned unknown error"));
+        else
+            isds_log_message(context, message_locale);
+        free(message_locale);
+        return IE_ISDS;
+    }
+
+    return IE_SUCCESS;
+}
 #endif
 
 
@@ -5450,11 +5501,14 @@ leave:
  * @request is XML tree with request. Will be freed to save memory.
  * @response is XML document outputting ISDS response.
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * @map is mapping from status code to library error. Pass NULL if no special
+ * handling is requested.
  * NULL, if you don't care. */
 static isds_error send_destroy_request_check_response(
         struct isds_ctx *context,
         const isds_service service, const xmlChar *service_name, 
-        xmlNodePtr *request, xmlDocPtr *response, xmlChar **refnumber) {
+        xmlNodePtr *request, xmlDocPtr *response, xmlChar **refnumber,
+        const struct code_map_isds_error *map) {
     isds_error err = IE_SUCCESS;
     char *service_name_locale = NULL;
     xmlChar *code = NULL, *message = NULL;
@@ -5499,6 +5553,8 @@ static isds_error send_destroy_request_check_response(
         goto leave;
     }
 
+    err = statuscode2isds_error(context, map, code, message);
+
     /* Request processed, but server failed */
     if (xmlStrcmp(code, BAD_CAST "0000")) {
         char *code_locale = _isds_utf82locale((char*) code);
@@ -5506,10 +5562,8 @@ static isds_error send_destroy_request_check_response(
         isds_log(ILF_ISDS, ILL_DEBUG,
                     _("Server refused %s request (code=%s, message=%s)\n"),
                 service_name_locale, code_locale, message_locale);
-        isds_log_message(context, message_locale);
         free(code_locale);
         free(message_locale);
-        err = IE_ISDS;
         goto leave;
     }
 
@@ -5554,7 +5608,7 @@ static isds_error send_request_check_drop_response(
 
     /* Send request and check response*/
     err = send_destroy_request_check_response(context,
-            service, service_name, request, &response, refnumber);
+            service, service_name, request, &response, refnumber, NULL);
 
     xmlFreeDoc(response);
 
@@ -5841,7 +5895,7 @@ isds_error isds_add_box(struct isds_ctx *context,
     /* Send it to server and process response */
     err = send_destroy_request_check_response(context,
             SERVICE_DB_MANIPULATION, BAD_CAST "CreateDataBox", &request,
-            &response, (xmlChar **) refnumber);
+            &response, (xmlChar **) refnumber, NULL);
 
     /* Extract box ID */
     xpath_ctx = xmlXPathNewContext(response);
@@ -6177,7 +6231,7 @@ static isds_error build_send_dbid_request_check_response(
 
     /* Send request and check response*/
     err = send_destroy_request_check_response(context,
-            service, service_name, &request, response, refnumber);
+            service, service_name, &request, response, refnumber, NULL);
 
 leave:
     free(service_name_locale);
@@ -6400,7 +6454,7 @@ isds_error isds_activate(struct isds_ctx *context,
     /* Send request and check response*/
     err = send_destroy_request_check_response(context,
             SERVICE_DB_MANIPULATION, BAD_CAST "Activate", &request,
-            &response, NULL);
+            &response, NULL, NULL);
     if (err) goto leave;
 
 
@@ -6536,7 +6590,7 @@ isds_error isds_reset_password(struct isds_ctx *context,
     /* Send request and check response*/
     err = send_destroy_request_check_response(context,
             SERVICE_DB_MANIPULATION, BAD_CAST "NewAccessData", &request,
-            &response, (xmlChar **) refnumber);
+            &response, (xmlChar **) refnumber, NULL);
     if (err) goto leave;
 
 
@@ -6636,7 +6690,8 @@ static isds_error build_send_manipulationboxuser_request_check_drop_response(
 
     /* Send request and check response*/
     err = send_destroy_request_check_response(context,
-            SERVICE_DB_MANIPULATION, service_name, &request, &response, refnumber);
+            SERVICE_DB_MANIPULATION, service_name, &request, &response,
+            refnumber, NULL);
 
     xmlFreeNode(request);
     request = NULL;
@@ -6763,7 +6818,7 @@ isds_error isds_get_box_list_archive(struct isds_ctx *context,
     /* Send request to server and process response */
     err = send_destroy_request_check_response(context,
             SERVICE_DB_SEARCH, BAD_CAST "GetDataBoxList", &request,
-            &response, NULL);
+            &response, NULL, NULL);
     if (err) goto leave;
 
 
@@ -8543,7 +8598,7 @@ isds_error isds_get_list_of_sent_message_state_changes(
     /* Sent request */
     err = send_destroy_request_check_response(context,
             SERVICE_DM_INFO, BAD_CAST "GetMessageStateChanges", &request,
-            &response, NULL);
+            &response, NULL, NULL);
     if (err) goto leave;
 
 
@@ -10520,7 +10575,7 @@ isds_error isds_request_new_testing_box(struct isds_ctx *context,
     /* Send it to server and process response */
     err = send_destroy_request_check_response(context,
             SERVICE_DB_MANIPULATION, BAD_CAST "CreateDataBox", &request,
-            &response, (xmlChar **) refnumber);
+            &response, (xmlChar **) refnumber, NULL);
     if (err) goto leave;
 
     /* Extract box ID */
@@ -10608,7 +10663,7 @@ isds_error isds_authenticate_message(struct isds_ctx *context,
     /* Send request to server and process response */
     err = send_destroy_request_check_response(context,
             SERVICE_DM_OPERATIONS, BAD_CAST "AuthenticateMessage", &request,
-            &response, NULL);
+            &response, NULL, NULL);
     if (err) goto leave;
 
 
@@ -10643,6 +10698,194 @@ isds_error isds_authenticate_message(struct isds_ctx *context,
 
 leave:
     free(authentic);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    xmlFreeDoc(response);
+    xmlFreeNode(request);
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
+}
+
+
+/* Submit CMS signed message or delivery info to ISDS to re-sign the content
+ * including adding new CMS time stamp. Only CMS blobs without time stamp can
+ * be re-signed.
+ * @context is session context
+ * @input_data is memory with raw CMS signed message or delivery info bit
+ * stream to re-sign
+ * @input_length is @input_data size in bytes
+ * @output_data is pointer to auto-allocated memory where to store re-signed
+ * input data blob. Caller must free it.
+ * @output_data is pointer where to store @output_data size in bytes
+ * @valid_to is pointer to auto-allocated date of time stamp expiration.
+ * Only tm_year, tm_mon and tm_mday will be set. Pass NULL, if you don't care.
+ * @return
+ *  IE_SUCCESS  if CMS blob has been re-signed successfully
+ *  other code  for other errors */
+isds_error isds_resign_message(struct isds_ctx *context,
+        const void *input_data, size_t input_length,
+        void **output_data, size_t *output_length, struct tm **valid_to) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlDocPtr response = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+    const xmlChar *codes[] = {
+        BAD_CAST "2200",
+        BAD_CAST "2201",
+        BAD_CAST "2204",
+        BAD_CAST "2207",
+        NULL
+    };
+    const char *meanings[] = {
+        "Message is bad",
+        "Message is not original",
+        "Message already contains time stamp in CAdES-EPES or CAdES-T CMS structure",
+        "Time stamp could not been generated in time"
+    };
+    const isds_error errors[] = {
+        IE_INVAL,
+        IE_NOTUNIQ,
+        IE_INVAL,
+        IE_ISDS,
+    };
+    struct code_map_isds_error map = {
+        .codes = codes,
+        .meanings = meanings,
+        .errors = errors
+    };
+#endif
+
+    if (NULL != output_data) *output_data = NULL;
+    if (NULL != output_length) *output_length = 0;
+    if (NULL != valid_to) *valid_to = NULL;
+
+    if (NULL == context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (NULL == input_data || 0 == input_length) {
+        isds_log_message(context, _("Empty CMS blob on input"));
+        return IE_INVAL;
+    }
+    if (NULL == output_data || NULL == output_length) {
+        isds_log_message(context,
+                _("NULL pointer provided for output CMS blob"));
+        return IE_INVAL;
+    }
+
+#if HAVE_LIBCURL
+    /* Check if connection is established
+     * TODO: This check should be done downstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Build Re-signISDSDocument request */
+    request = xmlNewNode(NULL, BAD_CAST "Re-signISDSDocument");
+    if (!request) {
+        isds_log_message(context,
+                _("Could not build Re-signISDSDocument request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    /* Insert Base64 encoded CMS blob */
+    err = insert_base64_encoded_string(context, request, NULL, "dmDoc",
+            input_data, input_length);
+    if (err) goto leave;
+
+    /* Send request to server and process response */
+    err = send_destroy_request_check_response(context,
+            SERVICE_DM_OPERATIONS, BAD_CAST "Re-signISDSDocument", &request,
+            &response, NULL, &map);
+    if (err) goto leave;
+
+
+    /* Extract re-signed data */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(
+            BAD_CAST "/isds:Re-signISDSDocumentResponse", xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context,
+                _("Missing Re-signISDSDocumentResponse element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    if (result->nodesetval->nodeNr > 1) {
+        isds_log_message(context,
+                _("Multiple Re-signISDSDocumentResponse element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+    xmlXPathFreeObject(result); result = NULL;
+
+    EXTRACT_STRING("isds:dmResultDoc", string);
+    /* Decode non-empty data */
+    if (NULL != string && string[0] != '\0') {
+        *output_length = _isds_b64decode(string, output_data);
+        if (*output_length == (size_t) -1) {
+            isds_log_message(context,
+                    _("Error while Base64-decoding re-signed data"));
+            err = IE_ERROR;
+            goto leave;
+        }
+    } else {
+        isds_log_message(context, _("Server did not send re-signed data"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    zfree(string);
+
+    if (NULL != valid_to) {
+        /* Get time stamp expiration date */
+        EXTRACT_STRING("isds:dmValidTo", string);
+        if (NULL != string) {
+            *valid_to = calloc(1, sizeof(**valid_to));
+            if (!*valid_to) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+            err = datestring2tm((xmlChar *)string, *valid_to);
+            if (err) {
+                if (err == IE_NOTSUP) {
+                    err = IE_ISDS;
+                    char *string_locale = _isds_utf82locale(string);
+                    isds_printf_message(context,
+                            _("Invalid dmValidTo value: %s"), string_locale);
+                    free(string_locale);
+                }
+                goto leave;
+            }
+        }
+    }
+
+leave:
+    free(string);
+
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
 

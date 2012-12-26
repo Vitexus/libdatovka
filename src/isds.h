@@ -1470,6 +1470,25 @@ isds_error isds_verify_message_hash(struct isds_ctx *context,
 isds_error isds_authenticate_message(struct isds_ctx *context,
         const void *message, size_t length);
 
+/* Submit CMS signed message or delivery info to ISDS to re-sign the content
+ * including adding new CMS time stamp. Only CMS blobs without time stamp can
+ * be re-signed.
+ * @context is session context
+ * @input_data is memory with raw CMS signed message or delivery info bit
+ * stream to re-sign
+ * @input_length is @input_data size in bytes
+ * @output_data is pointer to auto-allocated memory where to store re-signed
+ * input data blob. Caller must free it.
+ * @output_data is pointer where to store @output_data size in bytes
+ * @valid_to is pointer to auto-allocated date of time stamp expiration.
+ * Only tm_year, tm_mon and tm_mday will be set. Pass NULL, if you don't care.
+ * @return
+ *  IE_SUCCESS  if CMS blob has been re-signed successfully
+ *  other code  for other errors */
+isds_error isds_resign_message(struct isds_ctx *context,
+        const void *input_data, size_t input_length,
+        void **output_data, size_t *output_length, struct tm **valid_to);
+
 /* Erase message specified by @message_id from long term storage. Other
  * message cannot be erased on user request.
  * @context is session context

@@ -384,7 +384,7 @@ time stamp added into CMS.
 
 Error codes:
     0000    Message has been re-signed and returned in CadES-T CMS format
-    2200    Input message is not bad
+    2200    Input message is bad
     2201    Input message is not original (see AuthenticateMessage service)
     2204    Input message already contains time stamp in CAdES-EPES or CAdES-T
             CMS envelope

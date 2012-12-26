@@ -8,6 +8,7 @@
 #include <signal.h>
 #include <sys/select.h>
 #include <sys/types.h> /* For pid_t */
+#include <string.h> /* memset() */
 
 static const char *username = NULL;
 static const char *password = NULL;
@@ -54,9 +55,17 @@ int main(int argc, char **argv) {
         .message_id = "1234567",
         .incoming = 1
     };
+    struct tm date;
+    const struct arguments_DS_Dz_ResignISDSDocument
+            service_resigndocument_arguments = {
+        .status_code = "0000",
+        .status_message = "Document re-signed successfully",
+        .valid_to = &date
+    };
     struct service_configuration services[] = {
         { SERVICE_DS_Dx_EraseMessage, &service_erasemessage_arguments },
         { SERVICE_DS_Dz_DummyOperation, NULL },
+        { SERVICE_DS_Dz_ResignISDSDocument, &service_resigndocument_arguments },
         { SERVICE_END, NULL }, /* This entry could be replaced later */
         { SERVICE_END, NULL }, /* This entry could be replaced later */
         { SERVICE_END, NULL }
@@ -70,6 +79,11 @@ int main(int argc, char **argv) {
     };
     struct arguments_basic_authentication server_basic_arguments;
     struct arguments_otp_authentication server_otp_arguments;
+
+    memset(&date, 0, sizeof(date));
+    date.tm_year = 42;
+    date.tm_mon = 1;
+    date.tm_mday = 1;
 
     /* Parse arguments */
     while (-1 != (option = getopt(argc, argv, "h:p:t:u:a:s:S:c:"))) {

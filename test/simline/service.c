@@ -127,7 +127,7 @@ struct service {
 /* Insert dmStatus or similar subtree
  * @parent is element to insert to
  * @dm is true for dmStatus, otherwise dbStatus
- * @code is stautus code as string
+ * @code is status code as string
  * @message is UTF-8 encoded message
  * @db_ref_number is optinal reference number propagated if not @dm
  * @return 0 on success, otherwise non-0. */
@@ -154,6 +154,18 @@ leave:
 }
 
 
+/* Convert struct tm *@time to UTF-8 ISO 8601 date @string. */
+static http_error tm2datestring(const struct tm *time, char **string) {
+    if (NULL == time || NULL == string) return HTTP_ERROR_SERVER;
+
+    if (-1 == test_asprintf(string, "%d-%02d-%02d",
+                time->tm_year + 1900, time->tm_mon + 1, time->tm_mday))
+        return HTTP_ERROR_SERVER;
+
+    return HTTP_ERROR_SUCCESS;
+}
+
+
 /* Implement DummyOperation */
 static http_error service_DummyOperation(
         const struct http_connection *connection, const xmlDocPtr soap_request,
@@ -162,6 +174,67 @@ static http_error service_DummyOperation(
         const void *arguments) {
     return insert_isds_status(isds_response, 1, BAD_CAST "0000",
             BAD_CAST "Success", NULL);
+}
+
+
+/* Implement Re-signISDSDocument.
+ * It sends document from request back.
+ * @arguments is pointer to struct arguments_DS_Dz_ResignISDSDocument */
+static http_error service_ResignISDSDocument(
+        const struct http_connection *connection,
+        const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
+        const xmlNodePtr isds_request,
+        xmlDocPtr soap_response, xmlNodePtr isds_response,
+        const void *arguments) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    const char *code = "9999";
+    char *message = NULL;
+    const struct arguments_DS_Dz_ResignISDSDocument *configuration =
+        (const struct arguments_DS_Dz_ResignISDSDocument *)arguments;
+    char *data = NULL;
+
+    if (NULL == configuration || NULL == configuration->status_code ||
+            NULL == configuration->status_message) {
+        error = HTTP_ERROR_SERVER;
+        goto leave;
+    }
+
+    EXTRACT_STRING("isds:dmDoc", data);
+    if (NULL == data) {
+        message = strdup("Missing isds:dmDoc");
+        error = HTTP_ERROR_CLIENT;
+        goto leave;
+    }
+
+
+    /* dmResultDoc is mandatory in response */
+    if (xmlStrcmp(BAD_CAST configuration->status_code, BAD_CAST "0000")) {
+        free(data);
+        data = NULL;
+    }
+    INSERT_STRING(isds_response, "dmResultDoc", data);
+
+    if (configuration->valid_to != NULL) {
+        error = tm2datestring(configuration->valid_to, &data);
+        if (error) {
+            message = strdup("Could not format date");
+            goto leave;
+        }
+        INSERT_STRING(isds_response, "dmValidTo", data);
+    }
+
+    code = configuration->status_code;
+    message = strdup(configuration->status_message);
+
+leave:
+    if (HTTP_ERROR_SERVER != error) {
+        http_error next_error = insert_isds_status(isds_response, 1,
+                BAD_CAST code, BAD_CAST message, NULL);
+        if (HTTP_ERROR_SUCCESS != next_error) error = next_error;
+    }
+    free(data);
+    free(message);
+    return error;
 }
 
 
@@ -477,6 +550,9 @@ static struct service services[] = {
     { SERVICE_DS_Dz_DummyOperation,
         "DS/dz", BAD_CAST ISDS_NS, BAD_CAST "DummyOperation",
         service_DummyOperation },
+    { SERVICE_DS_Dz_ResignISDSDocument,
+        "DS/dz", BAD_CAST ISDS_NS, BAD_CAST "Re-signISDSDocument",
+        service_ResignISDSDocument },
     { SERVICE_DS_DsManage_ChangeISDSPassword,
         "DS/DsManage", BAD_CAST ISDS_NS, BAD_CAST "ChangeISDSPassword",
         service_ChangeISDSPassword },

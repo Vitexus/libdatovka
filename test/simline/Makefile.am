@@ -19,7 +19,7 @@ TESTS += basic_authentication hotp_authentication totp_authentication \
 		 certificate_user_password_authentication \
 		 isds_change_password hotp_isds_change_password \
 		 totp_isds_change_password \
-		 isds_delete_message_from_storage
+		 isds_delete_message_from_storage isds_resign_message
 endif
 
 
@@ -47,4 +47,5 @@ isds_change_password_SOURCES = isds_change_password.c $(common)
 hotp_isds_change_password_SOURCES = hotp_isds_change_password.c $(common)
 totp_isds_change_password_SOURCES = totp_isds_change_password.c $(common)
 isds_delete_message_from_storage_SOURCES = isds_delete_message_from_storage.c $(common)
+isds_resign_message_SOURCES = isds_resign_message.c $(common)
 
