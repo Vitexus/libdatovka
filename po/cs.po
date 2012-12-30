@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: libisds 0.6\n"
+"Project-Id-Version: libisds 0.7\n"
 "Report-Msgid-Bugs-To: petr.pisar@atlas.cz\n"
 "POT-Creation-Date: 2012-12-30 18:16+0100\n"
-"PO-Revision-Date: 2012-10-21 21:40+0200\n"
+"PO-Revision-Date: 2012-12-30 18:21+0100\n"
 "Last-Translator: Petr Pisar <petr.pisar@atlas.cz>\n"
 "Language-Team: Czech <translation-team-cs@lists.sourceforge.net>\n"
 "Language: cs\n"
@@ -313,9 +313,8 @@ msgid "Operation aborted"
 msgstr "Operace zrušena"
 
 #: src/isds.c:774
-#, fuzzy
 msgid "Security problem"
-msgstr "Problém se sítí"
+msgstr "Bezpečnostní problém"
 
 #: src/isds.c:776
 msgid "Unknown error"
@@ -879,11 +878,11 @@ msgstr ""
 
 #: src/isds.c:5172
 msgid "NULL status code passed to statuscode2isds_error()"
-msgstr ""
+msgstr "Funkci statuscode2isds_error() byl předán stavový kód NULL"
 
 #: src/isds.c:5190
 msgid "ISDS server returned unknown error"
-msgstr ""
+msgstr "Server ISDS vrátil neznámou chybu"
 
 #: src/isds.c:5245
 msgid "Password length must be between 8 and 32 characters"
@@ -1707,40 +1706,36 @@ msgstr "ISDS takovou zprávu nezná"
 
 #: src/isds.c:10773
 msgid "Empty CMS blob on input"
-msgstr ""
+msgstr "Na vstupu je prázdná struktura CMS"
 
 #: src/isds.c:10778
 msgid "NULL pointer provided for output CMS blob"
-msgstr ""
+msgstr "Pro výstupní strukturu CMS byl předán ukazatel NULL"
 
 #: src/isds.c:10792
-#, fuzzy
 msgid "Could not build Re-signISDSDocument request"
-msgstr "Požadavek na přihlášení do ISDS nebylo možné sestavit"
+msgstr "Požadavek Re-signISDSDocument nebylo možné sestavit"
 
 #: src/isds.c:10833
-#, fuzzy
 msgid "Missing Re-signISDSDocumentResponse element"
-msgstr "Chybí element CreateMessageResponse"
+msgstr "Chybí element Re-signISDSDocumentResponse"
 
 #: src/isds.c:10839
-#, fuzzy
 msgid "Multiple Re-signISDSDocumentResponse element"
-msgstr "Násobný element CreateMessageResponse"
+msgstr "Násobný element Re-signISDSDocumentResponse"
 
 #: src/isds.c:10852
-#, fuzzy
 msgid "Error while Base64-decoding re-signed data"
-msgstr "Chyba při dekódování hodnoty hashe z Base64"
+msgstr "Chyba při dekódování přepodepsaných dat z Base64"
 
 #: src/isds.c:10857
 msgid "Server did not send re-signed data"
-msgstr ""
+msgstr "Server nezaslal přepodepsaná data"
 
 #: src/isds.c:10878
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid dmValidTo value: %s"
-msgstr "Neplatná hodnota dbType: %d"
+msgstr "Neplatná hodnota dmValidTo: %s"
 
 #: src/isds.c:10940
 msgid "Message does not carry raw representation"
