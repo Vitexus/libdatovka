@@ -1,3 +1,25 @@
+Version 0.7
+===========
+
+• New ISDS service Re-signISDSDocument has been implemented as
+isds_resign_message() function. This can be used for adding time stamp to
+already signed message or delivery details that had been produced without the
+time stamp.
+
+• TLS errors from cURL library are reported as IE_SECURITY to libisds
+applications now. This is new isds_error value and it denotes any security
+problem leading to abort of requested operation.
+
+• This release is ABI-compatible with previous version 0.6. However
+applications built against 0.7 are not guaranteed to work with 0.6.
+
+• Internal test suite checks TLS authentication. GnuTLS is needed for
+building tests now.
+
+• Parsing dmRecipientOrgUnitNum value from message envelope has been fixed.
+
+• A memory leak when using XPath has been fixed.
+
 Version 0.6.2
 =============
 
