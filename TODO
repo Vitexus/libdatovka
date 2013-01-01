@@ -1,4 +1,5 @@
 * Test Re-signISDSDocument service
+    Testing instance seems refusing any input as not-a-message
 * Implement news from 2012-07-29
     Add access interface log-in method as specified in 6th appendix
 * Support RMD160 hash algorithm as requested by 212/2012 Coll.
@@ -7,9 +8,6 @@
     Convenience wrappers for publishing and ceasing government journals
 * Implement news from 2011-10-16
     NumOfMessages
-* Test GetMessageAuthor (since 2011-02-05)
-* Test dmPublishOwnID element to CreateMessage{,Multiple}Message (since
-  2011-02-05)
 * Provide a mapping from country codes to full English names (to allow
   binding to Debian ISO 3166 catalogues)
 * Asynchronous interface
