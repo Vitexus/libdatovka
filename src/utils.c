@@ -273,8 +273,8 @@ _hidden size_t _isds_b64decode(const char *encoded, void **plain) {
     int plain_length;
     char *buffer;
 
-    if (!encoded || !plain) {
-        if (plain && *plain) zfree(*plain);
+    if (NULL == encoded || NULL == plain) {
+        if (NULL != plain) zfree(*plain);
         return ((size_t) -1);
     }
 
@@ -289,7 +289,7 @@ _hidden size_t _isds_b64decode(const char *encoded, void **plain) {
 
     /* Allocate buffer */
     buffer = realloc(*plain, encoded_length);
-    if (!buffer) {
+    if (NULL == buffer) {
         zfree(*plain);
         return ((size_t) -1);
     }
@@ -304,10 +304,13 @@ _hidden size_t _isds_b64decode(const char *encoded, void **plain) {
     }
 
     /* Shrink the buffer */
-    buffer = realloc(*plain, plain_length);
-    if (!buffer) *plain = buffer;
-    /* realloc(, 0) can return NULL or pointer designed to free() */
-    if (plain_length == 0) zfree(*plain);
+    if (0 == plain_length) {
+        zfree(*plain);
+    } else {
+        buffer = realloc(*plain, plain_length);
+        /* realloc() can move pointer even when shrinking */
+        if (NULL != buffer) *plain = buffer;
+    }
 
     return plain_length;
 }
