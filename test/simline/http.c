@@ -232,7 +232,7 @@ static char *uri_decode(const char *coded) {
 
 /* Read a line from HTTP socket.
  * @connection is HTTP connection to read from.
- * @line is auto-allocated just read line. Will be NULL if EOF has been
+ * @line is auto-reallocated just read line. Will be NULL if EOF has been
  * reached or error occured.
  * @buffer is automatically reallocated buffer for the socket. It can preserve
  * prematurately read socket data.
@@ -246,6 +246,7 @@ static int http_read_line(const struct http_connection *connection,
     char *p, *tmp;
 
     if (line == NULL) return HTTP_ERROR_SERVER;
+    free(*line);
     *line = NULL;
 
     if (connection == NULL || connection->recv_callback == NULL)
