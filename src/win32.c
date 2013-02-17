@@ -153,10 +153,24 @@ ssize_t getline(char **bufptr, size_t *length, FILE *fp) {
         *bufptr = malloc(*length * sizeof(char));
     }
 
+    if (!*bufptr) {
+        *length = 0;
+        return -1;
+    }
+
     do {
         if (ret) {
             *length *= 2;
-            *bufptr = realloc(*bufptr, *length * sizeof(char));
+            ret = realloc(*bufptr, *length * sizeof(char));
+
+            if (!ret) {
+                free(*bufptr);
+                *bufptr = NULL;
+                *length = 0;
+                return -1;
+            }
+
+            *bufptr = ret;
         }
 
         ret = fgets(*bufptr + pos, *length, fp);
@@ -166,5 +180,5 @@ ssize_t getline(char **bufptr, size_t *length, FILE *fp) {
         }
     } while (ret && (*bufptr)[pos - 1] != '\n');
 
-    return pos;
+    return pos || ret ? pos : -1;
 }

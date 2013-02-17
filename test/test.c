@@ -82,6 +82,7 @@ int test_asprintf(char **buffer, const char *format, ...) {
 #ifdef _WIN32
 int test_mmap_file(const char *file, int *fd, void **buffer, size_t *length) {
     struct stat file_info;
+    int ret, pos = 0;
 
     if (!file || !fd || !buffer || !length) return -1;
 
@@ -113,7 +114,22 @@ int test_mmap_file(const char *file, int *fd, void **buffer, size_t *length) {
         return -1;
     }
 
-    read(*fd, *buffer, *length);
+    do {
+        ret = read(*fd, *buffer + pos, *length - pos);
+
+        if (ret > 0) {
+            pos += ret;
+        }
+    } while ((ret < 0 && errno == EINTR) || (ret > 0 && pos < *length));
+
+    if (ret < 0) {
+        fprintf(stderr, "%s: Could not map file to memory: %s\n", file,
+                strerror(errno));
+        free(*buffer);
+        *buffer = NULL;
+        close(*fd);
+        return -1;
+    }
 
     return 0;
 }
