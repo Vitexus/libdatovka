@@ -1,7 +1,10 @@
 AUTOMAKE_OPTIONS = color-tests parallel-tests
 export VERBOSE=1
 
-SUBDIRS = offline simline
+SUBDIRS = offline
+if !WIN32
+SUBDIRS += simline
+endif
 if BUILD_ONLINE_TEST
 SUBDIRS += online
 endif

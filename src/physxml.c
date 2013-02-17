@@ -1,6 +1,7 @@
 #include "isds_priv.h"
 #include "physxml.h"
 #include "utils.h"
+#include "system.h"
 
 #include <string.h>
 #include <expat.h>

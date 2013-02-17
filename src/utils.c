@@ -3,14 +3,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iconv.h>
+#ifndef _WIN32
 #include <langinfo.h>
+#endif
 #include <time.h>
 #include <errno.h>
 #include "utils.h"
 #include "cencode.h"
 #include "cdecode.h"
-
-char *tz_orig; /* Copy of original TZ variable */
+#include "system.h"
 
 /* Concatenate two strings into newly allocated buffer.
  * You must free() them, when you don't need it anymore.
@@ -328,55 +329,3 @@ _hidden int _isds_hex2i(char digit) {
     return -1;
 }
 
-
-/* Switches time zone to UTC.
- * XXX: This is not reentrant and not thread-safe */
-static void _isds_switch_tz_to_utc(void) {
-    char *tz;
-
-    tz = getenv("TZ");
-    if (tz) {
-        tz_orig = strdup(tz);
-        if (!tz_orig) 
-            PANIC("Can not back original time zone up");
-    } else {
-        tz_orig = NULL;
-    }
-
-    if (setenv("TZ", "", 1))
-            PANIC("Can not change time zone to UTC temporarily");
-
-    tzset();
-}
-
-
-/* Switches time zone to original value.
- * XXX: This is not reentrant and not thread-safe */
-static void _isds_switch_tz_to_native(void) {
-    if (tz_orig) {
-        if (setenv("TZ", tz_orig, 1))
-            PANIC("Can not restore time zone by setting TZ variable");
-        free(tz_orig);
-        tz_orig = NULL;
-    } else {
-        if(unsetenv("TZ"))
-            PANIC("Can not restore time zone by unsetting TZ variable");
-    }
-    tzset();
-}
-
-
-/* Convert UTC broken time to time_t.
- * @broken_utc it time in UTC in broken format. Despite its content is not
- * touched, it'sw not-const because underlying POSIX function has non-const
- * signature.
- * @return (time_t) -1 in case of error */
-_hidden time_t _isds_timegm(struct tm *broken_utc) {
-    time_t time; 
-
-    _isds_switch_tz_to_utc();
-    time = mktime(broken_utc);
-    _isds_switch_tz_to_native();
-
-    return time;
-}

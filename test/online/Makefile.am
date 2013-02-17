@@ -36,6 +36,11 @@ common = ../test.c ../test.h ../test-tools.h common.c common.h \
 	$(LIBDIR)/soap.h \
 	$(LIBDIR)/utils.h \
 	$(LIBDIR)/validator.h
+if WIN32
+common += $(LIBDIR)/win32.c $(LIBDIR)/win32.h
+else
+common += $(LIBDIR)/unix.c $(LIBDIR)/unix.h
+endif
 
 # Omit isds.c
 isds_common = ../test.c ../test.h ../test-tools.h \
@@ -55,6 +60,11 @@ isds_common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/soap.h \
 	$(LIBDIR)/utils.h \
 	$(LIBDIR)/validator.h
+if WIN32
+isds_common += $(LIBDIR)/win32.c $(LIBDIR)/win32.h
+else
+isds_common += $(LIBDIR)/unix.c $(LIBDIR)/unix.h
+endif
 
 # Access _hidden symbols
 #compute_hash_SOURCES 	= compute_hash.c $(common)

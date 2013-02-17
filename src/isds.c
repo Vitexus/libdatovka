@@ -14,6 +14,7 @@
 #include "crypto.h"
 #include <gpg-error.h> /* Because of ksba or gpgme */
 #include "physxml.h"
+#include "system.h"
 
 /* Locators */
 /* Base URL of production ISDS instance */
@@ -2100,29 +2101,6 @@ static isds_error string2isds_hash_algorithm(const xmlChar *string,
 
 
 #if HAVE_LIBCURL
-/* Convert UTF-8 @string representation of ISO 8601 date to @time.
- * XXX: Not all ISO formats are supported */
-static isds_error datestring2tm(const xmlChar *string, struct tm *time) {
-    char *offset;
-    if (!string || !time) return IE_INVAL;
-    
-    /* xsd:date is ISO 8601 string, thus ASCII */
-    offset = strptime((char*)string, "%Y-%m-%d", time);
-    if (offset && *offset == '\0')
-        return IE_SUCCESS;
-
-    offset = strptime((char*)string, "%Y%m%d", time);
-    if (offset && *offset == '\0')
-        return IE_SUCCESS;
-
-    offset = strptime((char*)string, "%Y-%j", time);
-    if (offset && *offset == '\0')
-        return IE_SUCCESS;
-
-    return IE_NOTSUP;
-}
-
-
 /* Convert struct tm *@time to UTF-8 ISO 8601 date @string. */
 static isds_error tm2datestring(const struct tm *time, xmlChar **string) {
     if (!time || !string) return IE_INVAL;
@@ -2171,7 +2149,7 @@ static isds_error timestring2timeval(const xmlChar *string,
     char *offset, *delim, *endptr;
     char subseconds[7];
     int offset_hours, offset_minutes;
-    int i;
+    int i, tmp;
     
     if (!time) return IE_INVAL;
     if (!string) {
@@ -2192,12 +2170,27 @@ static isds_error timestring2timeval(const xmlChar *string,
     /* xsd:date is ISO 8601 string, thus ASCII */
     /*TODO: negative year */
 
+#ifdef _WIN32
+    i = 0;
+    if ((tmp = sscanf((const char*)string, "%d-%d-%dT%d:%d:%d%n",
+        &broken.tm_year, &broken.tm_mon, &broken.tm_mday,
+        &broken.tm_hour, &broken.tm_min, &broken.tm_sec,
+        &i)) < 6) {
+        zfree(*time);
+        return IE_DATE;
+    }
+
+    broken.tm_year -= 1900;
+    broken.tm_mon--;
+    offset = (char*)string + i;
+#else
     /* Parse date and time without subseconds and offset */
     offset = strptime((char*)string, "%Y-%m-%dT%T", &broken);
     if (!offset) {
         zfree(*time);
         return IE_DATE;
     }
+#endif
     
     /* Get subseconds */
     if (*offset == '.' ) {

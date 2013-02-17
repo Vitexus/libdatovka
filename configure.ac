@@ -46,6 +46,8 @@ AS_IF([test "$enable_debug" = "yes"],
                 [Define if you want include debugging code])
       )
 
+AC_CHECK_DECL([_WIN32])
+AM_CONDITIONAL([WIN32], [test "$ac_cv_have_decl__WIN32" = "yes"])
 
 # Checks for libraries.
 #TODO: Verify minimal version. libxml2-2.6.26 is just a guess.

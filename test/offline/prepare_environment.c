@@ -8,6 +8,10 @@
 
 #define GNUPG_DIR ".gnupg"
 
+#ifdef _WIN32
+#define mkdir(x,y) mkdir(x)
+#endif
+
 static int test_setup_gnupg(void) {
     char *home, *path = NULL;
     char tmpfile[] = "XXXXXX";
@@ -37,6 +41,7 @@ static int test_setup_gnupg(void) {
         return 1;
     }
 
+#ifndef _WIN32
     if (-1 == (tmpfd = mkstemp(tmpfile))) {
         FAILURE_REASON("Directory `%s' is not writable: %s", path,
                 strerror(errno));
@@ -46,6 +51,7 @@ static int test_setup_gnupg(void) {
 
     close(tmpfd);
     unlink(tmpfile);
+#endif
 
     free(path);
     PASS_TEST;

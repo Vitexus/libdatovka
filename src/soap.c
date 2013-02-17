@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>    /* strncasecmp(3) */
+#include "system.h"
 
 /* Private structure for write_body() call back */
 struct soap_body {

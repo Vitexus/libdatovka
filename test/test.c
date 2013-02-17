@@ -6,7 +6,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+#ifndef _WIN32
 #include <sys/mman.h>
+#endif
+
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
@@ -75,6 +79,58 @@ int test_asprintf(char **buffer, const char *format, ...) {
 }
 
 
+#ifdef _WIN32
+int test_mmap_file(const char *file, int *fd, void **buffer, size_t *length) {
+    struct stat file_info;
+
+    if (!file || !fd || !buffer || !length) return -1;
+
+    *fd = open(file, O_RDONLY);
+    if (*fd == -1) {
+        fprintf(stderr, "%s: Could not open file: %s\n", file, strerror(errno));
+        return -1;
+    }
+
+    if (-1 == fstat(*fd, &file_info)) {
+        fprintf(stderr, "%s: Could not get file size: %s\n", file,
+                strerror(errno));
+        close(*fd);
+        return -1;
+    }
+    if (file_info.st_size < 0) {
+        fprintf(stderr, "File `%s' has negative size: %jd\n", file,
+                (intmax_t) file_info.st_size);
+        close(*fd);
+        return -1;
+    }
+    *length = file_info.st_size;
+    *buffer = malloc(*length);
+
+    if (!*buffer) {
+        fprintf(stderr, "%s: Could not allocate memory for file mapping: %s\n",
+                file, strerror(errno));
+        close(*fd);
+        return -1;
+    }
+
+    read(*fd, *buffer, *length);
+
+    return 0;
+}
+
+int test_munmap_file(int fd, void *buffer, size_t length) {
+    int err = 0;
+    free(buffer);
+
+    err = close(fd);
+    if (err) {
+        fprintf(stderr, "Could close file descriptor %d: %s\n", fd,
+                strerror(errno));
+    }
+
+    return err;
+}
+#else
 int test_mmap_file(const char *file, int *fd, void **buffer, size_t *length) {
     struct stat file_info;
 
@@ -134,4 +190,5 @@ int test_munmap_file(int fd, void *buffer, size_t length) {
 
     return err;
 }
+#endif
 

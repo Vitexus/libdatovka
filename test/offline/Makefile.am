@@ -61,6 +61,11 @@ common = ../test.c ../test.h ../test-tools.h \
 if BUILD_CURL
 common += $(LIBDIR)/soap.c $(LIBDIR)/soap.h
 endif
+if WIN32
+common += $(LIBDIR)/win32.c $(LIBDIR)/win32.h
+else
+common += $(LIBDIR)/unix.c $(LIBDIR)/unix.h
+endif
 
 # Omit isds.c
 isds_common = ../test.c ../test.h ../test-tools.h \
@@ -80,6 +85,11 @@ isds_common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/validator.h
 if BUILD_CURL
 isds_common += $(LIBDIR)/soap.c $(LIBDIR)/soap.h
+endif
+if WIN32
+isds_common += $(LIBDIR)/win32.c $(LIBDIR)/win32.h
+else
+isds_common += $(LIBDIR)/unix.c $(LIBDIR)/unix.h
 endif
 
 # Omit soap.c
@@ -101,6 +111,11 @@ soap_common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/validator.h
 if BUILD_CURL
 soap_common += $(LIBDIR)/soap.h
+endif
+if WIN32
+soap_common += $(LIBDIR)/win32.c $(LIBDIR)/win32.h
+else
+soap_common += $(LIBDIR)/unix.c $(LIBDIR)/unix.h
 endif
 
 # Access _hidden symbols
