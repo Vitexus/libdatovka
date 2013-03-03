@@ -1,0 +1,20 @@
+Coding Style
+============
+
+Maximal line length is 80 columns. (I hate endless lines.)
+
+Indent by 4 spaces. No tabulators. (Because width limit.)
+
+Use ISO C 99 languge and POSIX or Single UNIX Specification functions.
+(Portability.)
+
+Opening parentheses remains at the end of line. (Consistency.)
+
+Each non-static function has to have a prefix. `isds_' prefix for public
+functions, `_isds_' for internal functions shared between objects. (Not to
+polute name space, especially with static linkage.)
+
+Internal functions shared beetween objects but not in public API have to have
+`_hidden' marker on function definition to exclude the symbol from exporting
+to symbol table. (Run-time optimization.)
+
