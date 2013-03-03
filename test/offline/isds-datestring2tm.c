@@ -5,9 +5,9 @@ static int test_datestring2tm(const xmlChar *date, const isds_error error,
         const struct tm *correct_tm, struct tm *new_tm) {
     isds_error err;
 
-    err = datestring2tm(date, new_tm);
+    err = _isds_datestring2tm(date, new_tm);
     if (err != error)
-        FAIL_TEST("datestring2tm() returned unexpected code: "
+        FAIL_TEST("_isds_datestring2tm() returned unexpected code: "
                 "expected=%s got=%s", isds_strerror(error), isds_strerror(err));
 
     if (err)

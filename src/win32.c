@@ -26,7 +26,7 @@ static void yday2mday(struct tm *time) {
 
 /* Convert UTF-8 @string representation of ISO 8601 date to @time.
  * XXX: Not all ISO formats are supported */
-isds_error datestring2tm(const xmlChar *string, struct tm *time) {
+isds_error _isds_datestring2tm(const xmlChar *string, struct tm *time) {
     char *ptr;
     int len, tmp;
     if (!string || !time) return IE_INVAL;

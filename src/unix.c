@@ -1,8 +1,8 @@
+#include "isds_priv.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include "isds.h"
-#include "isds_priv.h"
 #include "utils.h"
 
 static char *tz_orig; /* Copy of original TZ variable */
@@ -10,9 +10,8 @@ static char *tz_orig; /* Copy of original TZ variable */
 #if HAVE_LIBCURL
 /* Convert UTF-8 @string representation of ISO 8601 date to @time.
  * XXX: Not all ISO formats are supported */
-isds_error datestring2tm(const xmlChar *string, struct tm *time) {
+_hidden isds_error _isds_datestring2tm(const xmlChar *string, struct tm *time) {
     char *offset;
-    int len;
     if (!string || !time) return IE_INVAL;
 
     /* xsd:date is ISO 8601 string, thus ASCII */

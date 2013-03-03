@@ -9,5 +9,5 @@
 #include "unix.h"
 #endif
 
-isds_error datestring2tm(const xmlChar *string, struct tm *time);
+isds_error _isds_datestring2tm(const xmlChar *string, struct tm *time);
 #endif

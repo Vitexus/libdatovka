@@ -2149,7 +2149,10 @@ static isds_error timestring2timeval(const xmlChar *string,
     char *offset, *delim, *endptr;
     char subseconds[7];
     int offset_hours, offset_minutes;
-    int i, tmp;
+    int i;
+#ifdef _WIN32
+    int tmp;
+#endif
     
     if (!time) return IE_INVAL;
     if (!string) {
@@ -2815,7 +2818,7 @@ static isds_error extract_BiDate(struct isds_ctx *context,
             err = IE_NOMEM;
             goto leave;
         }
-        err = datestring2tm((xmlChar *)string, *biDate);
+        err = _isds_datestring2tm((xmlChar *)string, *biDate);
         if (err) {
             if (err == IE_NOTSUP) {
                 err = IE_ISDS;
@@ -10452,7 +10455,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
             err = IE_NOMEM;
             goto leave;
         }
-        err = datestring2tm((xmlChar *)string, *date);
+        err = _isds_datestring2tm((xmlChar *)string, *date);
         if (err) {
             if (err == IE_NOTSUP) {
                 err = IE_ISDS;
@@ -10862,7 +10865,7 @@ isds_error isds_resign_message(struct isds_ctx *context,
                 err = IE_NOMEM;
                 goto leave;
             }
-            err = datestring2tm((xmlChar *)string, *valid_to);
+            err = _isds_datestring2tm((xmlChar *)string, *valid_to);
             if (err) {
                 if (err == IE_NOTSUP) {
                     err = IE_ISDS;
