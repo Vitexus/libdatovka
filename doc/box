@@ -6,6 +6,8 @@ Source: Webové služby ISDS pro vyhledávání datových schránek, version 2.1
     (2011-01-25)
 Source: Webové služby ISDS pro manipulaci s datovými schránkami, version 2.6
     (2010-01-18) [DataMessage_ws.pdf], Page 6
+Source Webové služby rozhraní ISDS pro správu datových schránek, version 2.35
+    (2013-04-10), Page 23
 
 Box types
 =========
@@ -33,17 +35,16 @@ Box states
 ==========
 
 Value       Description 
------------------------------------------------------
+-------------------------------------------------------
 0 or empty  Error occurred while retrieving box state
 1           Box is accessible.
-2           Temporarily inaccessible
+2           Temporarily inaccessible (on owner's request)
 3           Not yet active
 4           Permanently inaccessible
 5           Box has been removed
+6           Temporarily inaccessible (by law)
 
-Non-normative:
-6           Temporary inaccesible by law; State 2 is shifted to `by request'
-            (Source: <http://www.datoveschranky.info/clanek/386>)
+Although state 6 exists, ISDS returns state 2 instead.
 
 Only state 1 means box is capable of receiving messages.
 User can log in even into inaccessible box. However some operations, like
