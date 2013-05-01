@@ -654,7 +654,7 @@ struct isds_message_status_change {
 /* How outgoing commercial message gets paid */
 typedef enum {
     PAYMENT_SENDER,             /* Payed by a sender */
-    PAYMENT_STAMP,              /* Pre-paid stamp by a sender; Undocumented. */
+    PAYMENT_STAMP,              /* Pre-paid by a sender */
     PAYMENT_SPONSOR,            /* A sponsor pays all messages */
     PAYMENT_RESPONSE,           /* Recipient pays a response */
     PAYMENT_SPONSOR_LIMITED,    /* Undocumented */

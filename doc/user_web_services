@@ -5,7 +5,7 @@ Source: Provozní řád ISDS, version 2010-11-28, Pages 15–16
 Source: Webové služby rozhraní ISDS pro manipulaci s datovými zprávami,
     version 2.32 (2012-10-05)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
-    version 2.26 (2012-03-15)
+    version 2.35 (2013-04-16)
 
 
 These services are intended for working with messages inside a box by
@@ -675,7 +675,7 @@ node instead of empty element. I think this bug in the specificiation.
 PDZType     Meaning
 -------------------------------------------------------------------------------
 D           Externally subsidized (undocumented)
-E           Another pre-paid type not yet specified and in use
+E           Commercial message pre-paid by the sender
 G           PDZPayer owner pays for all commercial messages
 K           Commercial message paid by sender based on an agreement with the
             Czech Post.
