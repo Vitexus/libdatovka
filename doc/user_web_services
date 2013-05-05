@@ -570,6 +570,7 @@ Error codes:
     0002    No box suits to search request (by other criteria)
     0003    To much boxes suit to search request (by other criteria),
             response truncated. Returned list of boxes is still valid.
+    1109    More than one box matches the search request
     5001    No such box exists (by box ID or registry identifier)
 Non-normative error codes:
     1101    Box type (dbType) must be specified
