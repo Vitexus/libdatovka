@@ -672,9 +672,6 @@ dbPDZRecord
     + ODZIdent – identifier referring to message enabling sending pre-paid
         answer. Must be added as dmRecipientRefNumber into sent message.
 
-Non-normative: An example in the specification shows `xsi:nil=“true“' text
-node instead of empty element. I think this bug in the specificiation.
-
 PDZType     Meaning
 -------------------------------------------------------------------------------
 D           Externally subsidized (undocumented)
@@ -686,9 +683,6 @@ O           Answer on a commercial message is pre-paid by PDZPayer. ODZIdent
             value must be added into an outgoing message to bind the message to
             the payer and requesting message.
 Z           Limitedly subsidized (undocumented)
-
-XXX: Documentation shows `xsi:nil="true"' text node under PDZRecip element
-instead of no element.
 
 
 DataBoxCreditInfo
