@@ -242,7 +242,7 @@ System messages
 
 There exists special message type initiated by ISDS (i.e. from system, not
 from other box). Such message has reserved from-box `aaaaaaa' (7 × `a') value
-and sender type `0' and it alwyas contains a document of type HTML and
+and sender type `0' and it always contains a document of type HTML and
 sometimes a document of type XML. The XML one provides structured reason of
 sending the system message, the HTML one is a human-readable form. There are
 following cases defined:
@@ -278,6 +278,17 @@ SystemMessage – Attribute `type' is a number of case 2, 5, or 6.
 
 SystemMessage – Attribute `type' is a number of case 7, 8, 9, 10, or 11.
     No elements are defined.
+
+
+Notification messages
+=====================
+
+ISDS administrator can send business messages from dedicated box `zzzzzzq'.
+Such a message contains a PDF document with a notification about business
+activities of the ISDS administrator. Business activity is e.g. a support
+for commercial messages.
+
+Non-normative: The originating box as well as the message are of type system.
 
 
 Commercial messages
