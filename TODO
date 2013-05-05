@@ -2,6 +2,9 @@
     Testing instance seems refusing any input as not-a-message
 * Implement news from 2012-07-29
     Add access interface log-in method as specified in 6th appendix
+* Implement news from 2013-04-21
+    CheckDataBox can return 1007 or 2011 codes 
+    Add DataBoxCreditInfo service 
 * Support RMD160 hash algorithm as requested by 212/2012 Coll.
 * Parse system message XML documents describing what has happend
 * Implement news defined from 2011-06-19 specification:
