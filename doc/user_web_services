@@ -18,9 +18,9 @@ Data types: dmBaseTypes.xsd (Appendix 1)
 
 Documentation: DataMessage_ws.pdf, DBSearch_ws.pdf (Appendix 2)
 
-List of SOAP requests follows. Those marked with asterisk DOES NOT MARK
-incoming messages as delivered. Those marked with plus has access to envelopes
-of deleted messages.
+List of SOAP requests follows. Those marked with asterisk DO NOT MARK incoming
+messages as delivered. Those marked with plus has access to envelopes of
+deleted messages.
 
 
 dm_operations.wsdl
@@ -91,6 +91,8 @@ GetDataBoxList (*)
     Get list of all boxes
 PDZInfo
     Get rules for sending commercial messages from given box
+DataBoxCreditInfo (*)
+    Get details about credit for comercial services
 
 
 CreateMessage (*)
@@ -686,3 +688,63 @@ Z           Limitedly subsidized (undocumented)
 
 XXX: Documentation shows `xsi:nil="true"' text node under PDZRecip element
 instead of no element.
+
+
+DataBoxCreditInfo
+=================
+
+Return current credit value and and history of credit changes for given box
+and time interval.
+
+Input is `dbID' element with box ID which credit you want to obtain and
+optional elements `ciFromDate' and `ciTodate' carrying start and end date
+(inclusive) for history records to obtain.
+
+Output is `currentCredit' element delivering current credit value,
+`notifEmail' element delivering e-mail address to send notifications
+about changes in the commercial services to and `ciRecords' tree with history
+of changes that occurred in given interval. All these elements are optional.
+
+The `ciRecords' element contains possibly (if inteval is not defined) empty
+list of `ciRecord' trees:
+
+ciRecord
+    + ciEventTime – time of the change
+    + ciEventType – type of the change expressed as an integer
+    + ciCreditChange – value of the credit change
+    + ciCreditAfter – value of the credit after the change
+
+ciEventType     Meaning                 
+------------------------------------------
+1               Charge credit
+2               Discharge credit
+3               Sending commercial message
+4               Setting long term storage
+5               Credit expiration
+
+`ciRecord' contains other elements depending on `ciEventType':
+
+Element         ciEventType     Meaning
+------------------------------------------------------------------
+ciTransID       1, 2            String; not specified
+ciRecipientID   3               Recipient's box ID of the sent message
+ciPDZID         3               ID of the sent message
+ciNewCapacity   4               Integer; new capacity of storage in messages
+ciNewFrom       4               Date when the new capacity is effective
+ciNewTo         4               Date when the new capacity expires
+ciOldCapacity   4               Integer, optional; former capacity in messages
+ciOldFrom       4               Date, optional
+ciOldTo         4               Date, optional
+ciDoneBy        4               String, optional; Name of user who initiated
+                                the change
+
+All credit values are integers in hundredths of Czech Crowns.
+
+Output carries standard `dbStatus' tree with status code and status message.
+
+Error codes (codes are not normative):
+            Insufficient priviledges for the box
+            The box does not exist
+            Date is too long (history is not available after 15 months)
+            Interval is too long (limit is 3 months)
+            Invalid date
