@@ -587,7 +587,7 @@ capable of receiving messages.
 
 Error codes:
     5001    Box does not exist
-Non-normative:
+    1007    Box ID malformed
     2011    Box ID malformed
 
 
