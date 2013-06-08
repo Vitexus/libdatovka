@@ -677,6 +677,74 @@ struct isds_commercial_permission {
                                        PAYMENT_RESPONSE. */
 };
 
+/* Type of credit change event */
+typedef enum {
+    ISDS_CREDIT_CHARGED,        /* Credit has been charged */
+    ISDS_CREDIT_DISCHARGED,     /* Credit has been discharged */
+    ISDS_CREDIT_MESSAGE_SENT,   /* Credit has been spent for sending
+                                   a commerical message */
+    ISDS_CREDIT_STORAGE_SET,    /* Credit has been spent for setting
+                                   a long-term storage */
+    ISDS_CREDIT_EXPIRED         /* Credit has expired */
+} isds_credit_event_type;
+
+/* Data specific for ISDS_CREDIT_CHARGED isds_credit_event_type */
+struct isds_credit_event_charged {
+    char *transaction;              /* Transaction identified;
+                                       NULL-terminated string. */
+};
+
+/* Data specific for ISDS_CREDIT_DISCHARGED isds_credit_event_type */
+struct isds_credit_event_discharged {
+    char *transaction;              /* Transaction identified;
+                                       NULL-terminated string. */
+};
+
+/* Data specific for ISDS_CREDIT_MESSAGE_SENT isds_credit_event_type */
+struct isds_credit_event_message_sent {
+    char *recipient;                /* Recipent's box ID of the sent message */
+    char *message_id;               /* ID of the sent message */
+};
+
+/* Data specific for ISDS_CREDIT_STORAGE_SET isds_credit_event_type */
+struct isds_credit_event_storage_set {
+    long int new_capacity;          /* New storage capacity. The unit is
+                                       a message. */
+    struct tm *new_valid_from;      /* The new capacity is available since
+                                       date. */
+    struct tm *new_valid_to;        /* The new capacity expires on date. */
+    long int *old_capacity;         /* Previous storage capacity; Optional.
+                                       The unit is a message. */
+    struct tm *old_valid_from;      /* Date; Optional; Only tm_year,
+                                       tm_mon, and tm_mday carry sane value. */
+    struct tm *old_valid_to;        /* Date; Optional. */
+    char *initiator;                /* Name of a user who initiated this
+                                       change; Optional. */
+};
+
+/* Event about change of credit for sending commerical services */
+struct isds_credit_event {
+    /* Common fields */
+    struct timeval *time;           /* When the credit was changed. */
+    long int credit_change;         /* Difference in credit value caused by
+                                       this event. The unit is 1/100 CZK. */
+    long int new_credit;            /* Credit value after this event.
+                                       The unit is 1/100 CZK. */
+    isds_credit_event_type type;    /* Type of the event */
+
+    /* Datails specific for the type */
+    union {
+        struct isds_credit_event_charged charged;
+                                                /* ISDS_CREDIT_CHARGED */
+        struct isds_credit_event_discharged discharged;
+                                                /* ISDS_CREDIT_DISCHAGED */
+        struct isds_credit_event_message_sent message_sent;
+                                                /* ISDS_CREDIT_MESSAGE_SENT */
+        struct isds_credit_event_storage_set storage_set;
+                                                /* ISDS_CREDIT_STORAGE_SET */
+    } details;
+};
+
 /* General linked list */
 struct isds_list {
     struct isds_list *next;         /* Next list item,
@@ -1139,6 +1207,30 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
  *  or other appropriate error. */
 isds_error isds_get_commercial_permissions(struct isds_ctx *context,
         const char *box_id, struct isds_list **permissions);
+
+/* Get details about credit for sending pre-paid commercial messages.
+ * @context is ISDS session context.
+ * @box_id is UTF-8 encoded sender box identifier as zero terminated string.
+ * @from_date is first day of credit history to return in @history. Only
+ * tm_year, tm_mon and tm_mday carry sane value.
+ * @to_date is last day of credit history to return in @history. Only
+ * tm_year, tm_mon and tm_mday carry sane value.
+ * @credit outputs current credit value into pre-allocated memory. Pass NULL
+ * if you don't care.
+ * @email outputs notification e-mail address where notifications about credit
+ * are sent. This is automatically reallocated string.
+ * Pass NULL if you don't care. It can return NULL if no address is defined.
+ * @history outputs auto-reallocated list of pointers to struct
+ * isds_credit_event. Events in closed interval @from_time to @to_time are
+ * returned. Pass NULL @to_time and @from_time if you don't care.
+ * @return:
+ *  IE_SUCCESS if the credit details have been obtained correctly,
+ *  or other appropriate error. Please note that server allows to retrieve
+ *  only limited history of events. */
+isds_error isds_get_commercial_credit(struct isds_ctx *context,
+        const char *box_id,
+        const struct tm *from_date, const struct tm *to_date,
+        long int *credit, char **email, struct isds_list **history);
 
 /* Switch box into state where box can receive commercial messages (off by
  * default)
@@ -1627,6 +1719,9 @@ void isds_approval_free(struct isds_approval **approval);
 /* Deallocate struct isds_commercial_permission recursively and NULL it */
 void isds_commercial_permission_free(
         struct isds_commercial_permission **permission);
+
+/* Deallocate struct isds_credit_event recursively and NULL it */
+void isds_credit_event_free(struct isds_credit_event **event);
 
 /* Deallocate struct isds_credentials_delivery recursively and NULL it.
  * The email string is deallocated too. */

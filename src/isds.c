@@ -394,6 +394,38 @@ void isds_commercial_permission_free(
 }
 
 
+/* Deallocate struct isds_credit_event recursively and NULL it */
+void isds_credit_event_free(struct isds_credit_event **event) {
+    if (NULL == event || NULL == *event) return;
+
+    free((*event)->time);
+    switch ((*event)->type) {
+        case ISDS_CREDIT_CHARGED:
+            free((*event)->details.charged.transaction);
+            break;
+        case ISDS_CREDIT_DISCHARGED:
+            free((*event)->details.discharged.transaction);
+            break;
+        case ISDS_CREDIT_MESSAGE_SENT:
+            free((*event)->details.message_sent.recipient);
+            free((*event)->details.message_sent.message_id);
+            break;
+        case ISDS_CREDIT_STORAGE_SET:
+            free((*event)->details.storage_set.new_valid_from);
+            free((*event)->details.storage_set.new_valid_to);
+            free((*event)->details.storage_set.old_capacity);
+            free((*event)->details.storage_set.old_valid_from);
+            free((*event)->details.storage_set.old_valid_to);
+            free((*event)->details.storage_set.initiator);
+            break;
+        case ISDS_CREDIT_EXPIRED:
+            break;
+    }
+
+    zfree(*event);
+}
+
+
 /* *DUP_OR_ERROR macros needs error label */
 #define STRDUP_OR_ERROR(new, template) { \
     if (!template) { \
@@ -2042,6 +2074,29 @@ static isds_error string2isds_payment_type(const xmlChar *string,
 }
 
 
+/* Convert UTF-8 @string representation of ISDS ciEventType to enum @type.
+ * ciEventType is integer but we convert it from string representation
+ * directly. */
+static isds_error string2isds_credit_event_type(const xmlChar *string,
+        isds_credit_event_type *type) {
+    if (!string || !type) return IE_INVAL;
+
+    if (!xmlStrcmp(string, BAD_CAST "1"))
+        *type = ISDS_CREDIT_CHARGED;
+    else if (!xmlStrcmp(string, BAD_CAST "2"))
+        *type = ISDS_CREDIT_DISCHARGED;
+    else if (!xmlStrcmp(string, BAD_CAST "3"))
+        *type = ISDS_CREDIT_MESSAGE_SENT;
+    else if (!xmlStrcmp(string, BAD_CAST "4"))
+        *type = ISDS_CREDIT_STORAGE_SET;
+    else if (!xmlStrcmp(string, BAD_CAST "5"))
+        *type = ISDS_CREDIT_EXPIRED;
+    else
+        return IE_ENUM;
+    return IE_SUCCESS;
+}
+
+
 /* Convert ISDS dmFileMetaType enum @type to UTF-8 string.
  * @Return pointer to static string, or NULL if unknown enum value */
 static const xmlChar *isds_FileMetaType2string(const isds_FileMetaType type) {
@@ -2515,6 +2570,34 @@ static isds_error eventstring2event(const xmlChar *string,
             *(ulongintPtr) = number; \
         } \
     }
+
+#define EXTRACT_DATE(element, tmPtr) { \
+    char *string = NULL; \
+    EXTRACT_STRING(element, string); \
+    if (NULL != string) { \
+        (tmPtr) = calloc(1, sizeof(*(tmPtr))); \
+        if (NULL == (tmPtr)) { \
+            free(string); \
+            err = IE_NOMEM; \
+            goto leave; \
+        } \
+        err = _isds_datestring2tm((xmlChar *)string, (tmPtr)); \
+        if (err) { \
+            if (err == IE_NOTSUP) { \
+                err = IE_ISDS; \
+                char *string_locale = _isds_utf82locale(string); \
+                char *element_locale = _isds_utf82locale(element); \
+                isds_printf_message(context, _("Invalid %s value: %s"), \
+                        element_locale, string_locale); \
+                free(string_locale); \
+                free(element_locale); \
+            } \
+            free(string); \
+            goto leave; \
+        } \
+        free(string); \
+    } \
+}
 
 #define EXTRACT_STRING_ATTRIBUTE(attribute, string, required) { \
     (string) = (char *) xmlGetNsProp(xpath_ctx->node, ( BAD_CAST attribute), \
@@ -3244,6 +3327,112 @@ static isds_error extract_DbPDZRecord(struct isds_ctx *context,
 
 leave:
     if (err) isds_commercial_permission_free(permission);
+    free(string);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
+/* Convert XSD:tCiRecord XML tree into structure
+ * @context is ISDS context
+ * @event is automatically reallocated commercial credit event structure
+ * @xpath_ctx is XPath context with current node as XSD:tCiRecord element
+ * In case of error @event will be freed. */
+static isds_error extract_CiRecord(struct isds_ctx *context,
+        struct isds_credit_event **event,
+        xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+    long int *number_ptr;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!event) return IE_INVAL;
+    isds_credit_event_free(event);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *event = calloc(1, sizeof(**event));
+    if (!*event) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    EXTRACT_STRING("isds:ciEventTime", string);
+    if (string) {
+        err = timestring2timeval((xmlChar *) string,
+                &(*event)->time);
+        if (err) {
+            char *string_locale = _isds_utf82locale(string);
+            if (err == IE_DATE) err = IE_ISDS;
+            isds_printf_message(context,
+                    _("Could not convert ciEventTime as ISO time: %s"),
+                    string_locale);
+            free(string_locale);
+            goto leave;
+        }
+        zfree(string);
+    }
+
+    EXTRACT_STRING("isds:ciEventType", string);
+    if (string) {
+        err = string2isds_credit_event_type((xmlChar *)string,
+                &(*event)->type);
+        if (err) {
+            if (err == IE_ENUM) {
+                err = IE_ISDS;
+                char *string_locale = _isds_utf82locale(string);
+                isds_printf_message(context,
+                        _("Unknown isds:ciEventType value: %s"), string_locale);
+                free(string_locale);
+            }
+            goto leave;
+        }
+        zfree(string);
+    }
+
+    number_ptr = &((*event)->credit_change);
+    EXTRACT_LONGINT("isds:ciCreditChange", number_ptr, 1);
+    number_ptr = &(*event)->new_credit;
+    EXTRACT_LONGINT("isds:ciCreditAfter", number_ptr, 1);
+
+    switch((*event)->type) {
+        case ISDS_CREDIT_CHARGED:
+            EXTRACT_STRING("isds:ciTransID",
+                    (*event)->details.charged.transaction);
+            break;
+        case ISDS_CREDIT_DISCHARGED:
+            EXTRACT_STRING("isds:ciTransID",
+                    (*event)->details.discharged.transaction);
+            break;
+        case ISDS_CREDIT_MESSAGE_SENT:
+            EXTRACT_STRING("isds:ciRecipientID",
+                (*event)->details.message_sent.recipient);
+            EXTRACT_STRING("isds:ciPDZID",
+                (*event)->details.message_sent.message_id);
+            break;
+        case ISDS_CREDIT_STORAGE_SET:
+            number_ptr = &((*event)->details.storage_set.new_capacity);
+            EXTRACT_LONGINT("isds:ciNewCapacity", number_ptr, 1);
+            EXTRACT_DATE("isds:ciNewFrom",
+                (*event)->details.storage_set.new_valid_from);
+            EXTRACT_DATE("isds:ciNewTo",
+                (*event)->details.storage_set.new_valid_to);
+            EXTRACT_LONGINT("isds:ciOldCapacity",
+                (*event)->details.storage_set.old_capacity, 0);
+            EXTRACT_DATE("isds:ciOldFrom",
+                (*event)->details.storage_set.old_valid_from);
+            EXTRACT_DATE("isds:ciOldTo",
+                (*event)->details.storage_set.old_valid_to);
+            EXTRACT_STRING("isds:ciDoneBy",
+                    (*event)->details.storage_set.initiator);
+            break; 
+        case ISDS_CREDIT_EXPIRED:
+            break;
+    }
+
+leave:
+    if (err) isds_credit_event_free(event);
     free(string);
     xmlXPathFreeObject(result);
     return err;
@@ -7316,6 +7505,228 @@ leave:
         isds_list_free(permissions);
     }
 
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(response);
+
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
+}
+
+
+/* Get details about credit for sending pre-paid commercial messages.
+ * @context is ISDS session context.
+ * @box_id is UTF-8 encoded sender box identifier as zero terminated string.
+ * @from_date is first day of credit history to return in @history. Only
+ * tm_year, tm_mon and tm_mday carry sane value.
+ * @to_date is last day of credit history to return in @history. Only
+ * tm_year, tm_mon and tm_mday carry sane value.
+ * @credit outputs current credit value into pre-allocated memory. Pass NULL
+ * if you don't care.
+ * @email outputs notification e-mail address where notifications about credit
+ * are sent. This is automatically reallocated string.
+ * Pass NULL if you don't care. It can return NULL if no address is defined.
+ * @history outputs auto-reallocated list of pointers to struct
+ * isds_credit_event. Events in closed interval @from_time to @to_time are
+ * returned. Pass NULL @to_time and @from_time if you don't care.
+ * @return:
+ *  IE_SUCCESS if the credit details have been obtained correctly,
+ *  or other appropriate error. Please note that server allows to retrieve
+ *  only limited history of events. */
+isds_error isds_get_commercial_credit(struct isds_ctx *context,
+        const char *box_id,
+        const struct tm *from_date, const struct tm *to_date,
+        long int *credit, char **email, struct isds_list **history) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    char *box_id_locale = NULL;
+    xmlNodePtr request = NULL, node;
+    xmlNsPtr isds_ns = NULL;
+    xmlChar *string = NULL;
+
+    xmlDocPtr response = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+
+    const xmlChar *codes[] = {
+        /* TODO: Gather codes by experiment */
+        BAD_CAST "",
+        BAD_CAST "",
+        BAD_CAST "",
+        BAD_CAST "",
+        BAD_CAST "",
+        NULL
+    };
+    const char *meanings[] = {
+        "Insufficient priviledges for the box",
+        "The box does not exist",
+        "Date is too long (history is not available after 15 months)",
+        "Interval is too long (limit is 3 months)",
+        "Invalid date"
+    };
+    const isds_error errors[] = {
+        IE_ISDS,
+        IE_NOEXIST,
+        IE_DATE,
+        IE_DATE,
+        IE_DATE,
+    };
+    struct code_map_isds_error map = {
+        .codes = codes,
+        .meanings = meanings,
+        .errors = errors
+    };
+#endif
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+
+    /* Free output argument */
+    if (NULL != credit) *credit = 0;
+    if (NULL != email) zfree(*email);
+    isds_list_free(history);
+
+    if (NULL == box_id) return IE_INVAL;
+
+#if HAVE_LIBCURL
+    /* Check if connection is established */
+    if (NULL == context->curl) return IE_CONNECTION_CLOSED;
+
+    box_id_locale = _isds_utf82locale((char*)box_id);
+    if (NULL == box_id_locale) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    /* Build request */
+    request = xmlNewNode(NULL, BAD_CAST "DataBoxCreditInfo");
+    if (NULL == request) {
+        isds_printf_message(context,
+                _("Could not build DataBoxCreditInfo request for %s box"),
+                box_id_locale);
+        err = IE_ERROR;
+        goto leave;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    xmlSetNs(request, isds_ns);
+
+    /* Add mandatory XSD:tIdDbInput child */
+    INSERT_STRING(request, BAD_CAST "dbID", box_id);
+    /* Add optional dates */
+    if (from_date) {
+        err = tm2datestring(from_date, &string);
+        if (err) {
+            isds_log_message(context,
+                    _("Could not convert `from_date' argument to ISO date "
+                        "string"));
+            goto leave;
+        }
+        INSERT_STRING(request, "ciFromDate", string);
+        zfree(string);
+    }
+    if (to_date) {
+        err = tm2datestring(to_date, &string);
+        if (err) {
+            isds_log_message(context,
+                    _("Could not convert `to_date' argument to ISO date "
+                        "string"));
+            goto leave;
+        }
+        INSERT_STRING(request, "ciTodate", string);
+        zfree(string);
+    }
+
+    /* Send request and check response*/
+    err = send_destroy_request_check_response(context,
+            SERVICE_DB_SEARCH, BAD_CAST "DataBoxCreditInfo",
+            &request, &response, NULL, &map);
+    if (!err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("DataBoxCreditInfo request processed by server successfully.\n"));
+    }
+
+    /* Extract data */
+    /* Set context to the root */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(BAD_CAST "/isds:DataBoxCreditInfoResponse",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context, _("Missing DataBoxCreditInfoResponse element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    if (result->nodesetval->nodeNr > 1) {
+        isds_log_message(context, _("Multiple DataBoxCreditInfoResponse element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+    xmlXPathFreeObject(result); result = NULL;
+
+    /* Extract common data */
+    if (NULL != credit) EXTRACT_LONGINT("isds:currentCredit", credit, 1);
+    if (NULL != email) EXTRACT_STRING("isds:notifEmail", *email);
+
+    /* Extract records */
+    if (NULL == history) goto leave;
+    result = xmlXPathEvalExpression(BAD_CAST "isds:ciRecords/isds:ciRecord",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        /* Iterate over all records */
+        for (long unsigned int i = 0; i < result->nodesetval->nodeNr; i++) {
+            struct isds_list *item, *prev_item = NULL;
+
+            /* Prepare structure */
+            item = calloc(1, sizeof(*item));
+            if (!item) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+            item->destructor = (void(*)(void**))isds_credit_event_free;
+            if (i == 0) *history = item;
+            else prev_item->next = item;
+            prev_item = item;
+
+            /* Extract it */
+            xpath_ctx->node = result->nodesetval->nodeTab[i];
+            err = extract_CiRecord(context,
+                    (struct isds_credit_event **) (&item->data),
+                    xpath_ctx);
+            if (err) goto leave;
+        }
+    }
+
+leave:
+    if (err) {
+        isds_list_free(history);
+        zfree(*email)
+    }
+
+    free(box_id_locale);
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
     xmlFreeDoc(response);
