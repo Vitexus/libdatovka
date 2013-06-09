@@ -26,6 +26,7 @@ TESTS = prepare_environment \
 		isds_envelope_free isds_document_free isds_message_free \
 		isds_message_copy_free isds_message_status_change_free isds_approval_free \
 		isds_commercial_permission_free isds_credentials_delivery_free \
+		isds_credit_event_free \
 		isds_PersonName_duplicate isds_Address_duplicate \
 		isds_DbOwnerInfo_duplicate isds_DbUserInfo_duplicate \
 		isds-filemetatype isds-hash_algorithm \
@@ -146,6 +147,7 @@ isds_commercial_permission_free_SOURCES = isds_commercial_permission_free.c \
 										  $(common)
 isds_credentials_delivery_free_SOURCES 	= isds_credentials_delivery_free.c \
 										  $(common)
+isds_credit_event_free_SOURCES 	= isds_credit_event_free.c $(common)
 isds_PersonName_duplicate_SOURCES	= isds_PersonName_duplicate.c $(common)
 isds_Address_duplicate_SOURCES	= isds_Address_duplicate.c $(common)
 isds_DbOwnerInfo_duplicate_SOURCES	= isds_DbOwnerInfo_duplicate.c $(common)
