@@ -34,7 +34,7 @@ TESTS = prepare_environment \
 		isds-uint2isds_message_status isds-eventstring2event
 if BUILD_CURL
 TESTS += isds-dbtype isds-sendertype isds-usertype isds-paymenttype\
-		 isds-datestring2tm isds-tm2datestring \
+		 isds-crediteventtype isds-datestring2tm isds-tm2datestring \
 		 isds-timeval2timestring \
 		 soap-decode_header_value soap-string2isds_otp_resolution
 endif
@@ -160,6 +160,7 @@ isds_hash_algorithm_SOURCES = isds-hash_algorithm.c $(isds_common)
 isds_sendertype_SOURCES 	= isds-sendertype.c $(isds_common)
 isds_usertype_SOURCES 		= isds-usertype.c $(isds_common)
 isds_paymenttype_SOURCES 	= isds-paymenttype.c $(isds_common)
+isds_crediteventtype_SOURCES 	= isds-crediteventtype.c $(isds_common)
 isds_datestring2tm_SOURCES 	= isds-datestring2tm.c $(isds_common)
 isds_tm2datestring_SOURCES 	= isds-tm2datestring.c $(isds_common)
 isds_timestring2timeval_SOURCES = isds-timestring2timeval.c $(isds_common)
