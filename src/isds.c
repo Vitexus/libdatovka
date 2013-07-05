@@ -7648,10 +7648,8 @@ isds_error isds_get_commercial_credit(struct isds_ctx *context,
     err = send_destroy_request_check_response(context,
             SERVICE_DB_SEARCH, BAD_CAST "DataBoxCreditInfo",
             &request, &response, NULL, &map);
-    if (!err) {
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("DataBoxCreditInfo request processed by server successfully.\n"));
-    }
+    if (err) goto leave;
+
 
     /* Extract data */
     /* Set context to the root */
@@ -7721,6 +7719,10 @@ isds_error isds_get_commercial_credit(struct isds_ctx *context,
     }
 
 leave:
+    if (!err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("DataBoxCreditInfo request processed by server successfully.\n"));
+    }
     if (err) {
         isds_list_free(history);
         zfree(*email)
