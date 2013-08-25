@@ -15,8 +15,8 @@ static int test_isds_DbUserInfo_duplicate(struct isds_DbUserInfo *origin) {
                 "pointer to copy");
 
     TEST_STRING_DUPLICITY(origin->userID, copy->userID);
-    TEST_INT_DUPLICITY(origin->userType, copy->userType);
-    TEST_INT_DUPLICITY(origin->userPrivils, copy->userPrivils);
+    TEST_INTPTR_DUPLICITY(origin->userType, copy->userType);
+    TEST_INTPTR_DUPLICITY(origin->userPrivils, copy->userPrivils);
 
     /* Name of person */
     TEST_POINTER_DUPLICITY(origin->personName, copy->personName);
@@ -63,12 +63,12 @@ static int test_isds_DbUserInfo_duplicate(struct isds_DbUserInfo *origin) {
                     origin->biDate->tm_mday, copy->biDate->tm_mday);
     }
 
-    TEST_INT_DUPLICITY(origin->ic, copy->ic);
-    TEST_INT_DUPLICITY(origin->firmName, copy->firmName);
-    TEST_INT_DUPLICITY(origin->caStreet, copy->caStreet);
-    TEST_INT_DUPLICITY(origin->caCity, copy->caCity);
-    TEST_INT_DUPLICITY(origin->caZipCode, copy->caZipCode);
-    TEST_INT_DUPLICITY(origin->caState, copy->caState);
+    TEST_INTPTR_DUPLICITY(origin->ic, copy->ic);
+    TEST_INTPTR_DUPLICITY(origin->firmName, copy->firmName);
+    TEST_INTPTR_DUPLICITY(origin->caStreet, copy->caStreet);
+    TEST_INTPTR_DUPLICITY(origin->caCity, copy->caCity);
+    TEST_INTPTR_DUPLICITY(origin->caZipCode, copy->caZipCode);
+    TEST_INTPTR_DUPLICITY(origin->caState, copy->caState);
 
     PASS_TEST;
 }

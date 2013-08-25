@@ -2,21 +2,111 @@
 #define __ISDS_SERVICES_H
 
 #include <time.h>           /* struct tm */
+#include <sys/time.h>       /* struct timeval */
 #include "server_types.h"
 
 typedef enum {
     SERVICE_END,
-    SERVICE_DS_Dz_DummyOperation,
-    SERVICE_DS_Dz_ResignISDSDocument,
+    SERVICE_asws_changePassword_ChangePasswordOTP,
+    SERVICE_asws_changePassword_SendSMSCode,
+    SERVICE_DS_df_DataBoxCreditInfo,
     SERVICE_DS_DsManage_ChangeISDSPassword,
     SERVICE_DS_Dx_EraseMessage,
-    SERVICE_asws_changePassword_ChangePasswordOTP,
-    SERVICE_asws_changePassword_SendSMSCode
+    SERVICE_DS_Dz_DummyOperation,
+    SERVICE_DS_Dz_ResignISDSDocument,
 } service_id;
 
 struct service_configuration {
     service_id name;        /* Identifier of SOAP service */
     const void *arguments;  /* Configuration for the service */
+};
+
+/* Type of credit change event */
+typedef enum {
+    SERVER_CREDIT_CHARGED,        /* Credit has been charged */
+    SERVER_CREDIT_DISCHARGED,     /* Credit has been discharged */
+    SERVER_CREDIT_MESSAGE_SENT,   /* Credit has been spent for sending
+                                   a commerical message */
+    SERVER_CREDIT_STORAGE_SET,    /* Credit has been spent for setting
+                                   a long-term storage */
+    SERVER_CREDIT_EXPIRED         /* Credit has expired */
+} server_credit_event_type;
+
+/* Data specific for SERVER_CREDIT_CHARGED server_credit_event_type */
+struct server_credit_event_charged {
+    char *transaction;              /* Transaction identified;
+                                       NULL-terminated string. */
+};
+
+/* Data specific for SERVER_CREDIT_DISCHARGED server_credit_event_type */
+struct server_credit_event_discharged {
+    char *transaction;              /* Transaction identified;
+                                       NULL-terminated string. */
+};
+
+/* Data specific for SERVER_CREDIT_MESSAGE_SENT server_credit_event_type */
+struct server_credit_event_message_sent {
+    char *recipient;                /* Recipent's box ID of the sent message */
+    char *message_id;               /* ID of the sent message */
+};
+
+/* Data specific for SERVER_CREDIT_STORAGE_SET server_credit_event_type */
+struct server_credit_event_storage_set {
+    long int new_capacity;          /* New storage capacity. The unit is
+                                       a message. */
+    struct tm *new_valid_from;      /* The new capacity is available since
+                                       date. */
+    struct tm *new_valid_to;        /* The new capacity expires on date. */
+    long int *old_capacity;         /* Previous storage capacity; Optional.
+                                       The unit is a message. */
+    struct tm *old_valid_from;      /* Date; Optional; Only tm_year,
+                                       tm_mon, and tm_mday carry sane value. */
+    struct tm *old_valid_to;        /* Date; Optional. */
+    char *initiator;                /* Name of a user who initiated this
+                                       change; Optional. */
+};
+
+/* Event about change of credit for sending commerical services */
+struct server_credit_event {
+    /* Common fields */
+    struct timeval *time;           /* When the credit was changed. */
+    long int credit_change;         /* Difference in credit value caused by
+                                       this event. The unit is 1/100 CZK. */
+    long int new_credit;            /* Credit value after this event.
+                                       The unit is 1/100 CZK. */
+    server_credit_event_type type;    /* Type of the event */
+
+    /* Datails specific for the type */
+    union {
+        struct server_credit_event_charged charged;
+                                                /* SERVER_CREDIT_CHARGED */
+        struct server_credit_event_discharged discharged;
+                                                /* SERVER_CREDIT_DISCHAGED */
+        struct server_credit_event_message_sent message_sent;
+                                                /* SERVER_CREDIT_MESSAGE_SENT */
+        struct server_credit_event_storage_set storage_set;
+                                                /* SERVER_CREDIT_STORAGE_SET */
+    } details;
+};
+
+/* General linked list */
+struct server_list {
+    struct server_list *next;       /* Next list item,
+                                       or NULL if current is last */
+    void *data;                     /* Payload */
+    void (*destructor) (void **);   /* Payload deallocator;
+                                       Use NULL to have static data member. */
+};
+
+struct arguments_DS_df_DataBoxCreditInfo {
+    const char *status_code; 
+    const char *status_message;
+    const char *box_id;             /* Require this dbID in request */
+    const struct tm *from_date;     /* Require this ciFromDate in request */
+    const struct tm *to_date;       /* Require this ciTodate in request */
+    const long int current_credit;  /* Return this currentCredit */
+    const char *email;              /* Return this notifEmail */
+    const struct server_list *history;  /* Return this ciRecords */
 };
 
 struct arguments_DS_Dz_ResignISDSDocument {

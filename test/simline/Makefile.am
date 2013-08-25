@@ -17,8 +17,8 @@ TESTS =
 if BUILD_CURL
 TESTS += basic_authentication hotp_authentication totp_authentication \
 		 certificate_user_password_authentication \
-		 isds_change_password hotp_isds_change_password \
-		 totp_isds_change_password \
+		 isds_change_password isds_get_commercial_credit \
+		 hotp_isds_change_password totp_isds_change_password \
 		 isds_delete_message_from_storage isds_resign_message
 endif
 
@@ -44,6 +44,7 @@ totp_authentication_SOURCES = totp_authentication.c $(common)
 certificate_user_password_authentication_SOURCES = \
 	certificate_user_password_authentication.c $(common)
 isds_change_password_SOURCES = isds_change_password.c $(common)
+isds_get_commercial_credit_SOURCES = isds_get_commercial_credit.c $(common)
 hotp_isds_change_password_SOURCES = hotp_isds_change_password.c $(common)
 totp_isds_change_password_SOURCES = totp_isds_change_password.c $(common)
 isds_delete_message_from_storage_SOURCES = isds_delete_message_from_storage.c $(common)

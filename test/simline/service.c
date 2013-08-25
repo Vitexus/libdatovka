@@ -115,6 +115,49 @@ struct service {
 #define INSERT_STRING(parent, element, string) \
     { INSERT_STRING_WITH_NS(parent, NULL, element, string) }
 
+#define INSERT_LONGINTPTR(parent, element, longintPtr) { \
+    if ((longintPtr)) { \
+        char *buffer = NULL; \
+        /* FIXME: locale sensitive */ \
+        if (-1 == test_asprintf(&buffer, "%ld", *(longintPtr))) { \
+            error = HTTP_ERROR_SERVER; \
+            goto leave; \
+        } \
+        INSERT_STRING(parent, element, buffer) \
+        free(buffer); \
+    } else { INSERT_STRING(parent, element, NULL) } \
+}
+
+#define INSERT_TIMEVALPTR(parent, element, timevalPtr) { \
+    if (NULL != (timevalPtr)) { \
+        char *buffer = NULL; \
+        error = timeval2timestring(timevalPtr, &buffer); \
+        if (error) { \
+            free(buffer); \
+            goto leave; \
+        } \
+        INSERT_STRING(parent, element, buffer); \
+        free(buffer); \
+    } else { \
+        INSERT_STRING(parent, element, NULL); \
+    } \
+}
+
+#define INSERT_TMPTR(parent, element, tmPtr) { \
+    if (NULL != (tmPtr)) { \
+        char *buffer = NULL; \
+        error = tm2datestring(tmPtr, &buffer); \
+        if (error) { \
+            free(buffer); \
+            goto leave; \
+        } \
+        INSERT_STRING(parent, element, buffer); \
+        free(buffer); \
+    } else { \
+        INSERT_STRING(parent, element, NULL); \
+    } \
+}
+
 #define INSERT_ELEMENT(child, parent, element) \
     { \
         (child) = xmlNewChild((parent), NULL, BAD_CAST (element), NULL); \
@@ -123,6 +166,7 @@ struct service {
             goto leave; \
         } \
     }
+
 
 /* Insert dmStatus or similar subtree
  * @parent is element to insert to
@@ -160,6 +204,32 @@ static http_error tm2datestring(const struct tm *time, char **string) {
 
     if (-1 == test_asprintf(string, "%d-%02d-%02d",
                 time->tm_year + 1900, time->tm_mon + 1, time->tm_mday))
+        return HTTP_ERROR_SERVER;
+
+    return HTTP_ERROR_SUCCESS;
+}
+
+
+/* Convert struct timeval *@time to UTF-8 ISO 8601 date-time @string. It
+ * respects the @time microseconds too. */
+static http_error timeval2timestring(const struct timeval *time,
+        char **string) {
+    struct tm broken;
+
+    if (!time || !string) return HTTP_ERROR_SERVER;
+
+    if (!gmtime_r(&time->tv_sec, &broken)) return HTTP_ERROR_SERVER;
+    if (time->tv_usec < 0 || time->tv_usec > 999999) return HTTP_ERROR_SERVER;
+
+    /* TODO: small negative year should be formatted as "-0012". This is not
+     * true for glibc "%04d". We should implement it.
+     * TODO: What's type of time->tv_usec exactly? Unsigned? Absolute?
+     * See <http://www.w3.org/TR/2001/REC-xmlschema-2-20010502/#dateTime> */ 
+    if (-1 == test_asprintf(string,
+                "%04d-%02d-%02dT%02d:%02d:%02d.%06ld",
+                broken.tm_year + 1900, broken.tm_mon + 1, broken.tm_mday,
+                broken.tm_hour, broken.tm_min, broken.tm_sec,
+                time->tv_usec))
         return HTTP_ERROR_SERVER;
 
     return HTTP_ERROR_SUCCESS;
@@ -294,6 +364,137 @@ leave:
     }
     free(incoming);
     free(message_id);
+    free(message);
+    return error;
+}
+
+
+/* Insert list of credit info as XSD:tCiRecord XML tree.
+ * @isds_response is XML node with the response
+ * @history is list of struct server_credit_event. If NULL, no ciRecord XML
+ * subtree will be created. */
+static http_error insert_ciRecords(xmlNodePtr isds_response,
+        const struct server_list *history) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    xmlNodePtr records, record;
+
+    if (NULL == isds_response) return HTTP_ERROR_SERVER;
+    if (NULL == history) return HTTP_ERROR_SUCCESS;
+
+    INSERT_ELEMENT(records, isds_response, "ciRecords");
+    for (const struct server_list *item = history; NULL != item;
+            item = item->next) {
+        const struct server_credit_event *event =
+            (struct server_credit_event*)item->data;
+        
+        INSERT_ELEMENT(record, records, "ciRecord");
+        if (NULL == event) continue;
+
+        INSERT_TIMEVALPTR(record, "ciEventTime", event->time);
+        switch(event->type) {
+            case SERVER_CREDIT_CHARGED:
+                INSERT_STRING(record, "ciEventType", "1");
+                INSERT_STRING(record, "ciTransID",
+                        event->details.charged.transaction);
+                break;
+            case SERVER_CREDIT_DISCHARGED:
+                INSERT_STRING(record, "ciEventType", "2");
+                INSERT_STRING(record, "ciTransID",
+                        event->details.discharged.transaction);
+                break;
+            case SERVER_CREDIT_MESSAGE_SENT:
+                INSERT_STRING(record, "ciEventType", "3");
+                INSERT_STRING(record, "ciRecipientID",
+                        event->details.message_sent.recipient);
+                INSERT_STRING(record, "ciPDZID",
+                        event->details.message_sent.message_id);
+                break;
+            case SERVER_CREDIT_STORAGE_SET:
+                INSERT_STRING(record, "ciEventType", "4");
+                INSERT_LONGINTPTR(record, "ciNewCapacity",
+                        &event->details.storage_set.new_capacity);
+                INSERT_TMPTR(record, "ciNewFrom",
+                        event->details.storage_set.new_valid_from);
+                INSERT_TMPTR(record, "ciNewTo",
+                        event->details.storage_set.new_valid_to);
+                INSERT_LONGINTPTR(record, "ciOldCapacity",
+                        event->details.storage_set.old_capacity);
+                INSERT_TMPTR(record, "ciOldFrom",
+                        event->details.storage_set.old_valid_from);
+                INSERT_TMPTR(record, "ciOldTo",
+                        event->details.storage_set.old_valid_to);
+                INSERT_STRING(record, "ciDoneBy",
+                        event->details.storage_set.initiator);
+                break;
+            case SERVER_CREDIT_EXPIRED:
+                INSERT_STRING(record, "ciEventType", "5");
+                break;
+            default:
+                error = HTTP_ERROR_SERVER;
+                goto leave;
+        }
+        INSERT_LONGINTPTR(record, "ciCreditChange", &event->credit_change);
+        INSERT_LONGINTPTR(record, "ciCreditAfter", &event->new_credit);
+
+    }
+
+leave:
+    return error;
+}
+
+
+/* Implement DataBoxCreditInfo.
+ * @arguments is pointer to struct arguments_DS_df_DataBoxCreditInfo */
+static http_error service_DataBoxCreditInfo(
+        const struct http_connection *connection,
+        const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
+        const xmlNodePtr isds_request,
+        xmlDocPtr soap_response, xmlNodePtr isds_response,
+        const void *arguments) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    const char *code = "9999";
+    char *message = NULL;
+    const struct arguments_DS_df_DataBoxCreditInfo *configuration =
+        (const struct arguments_DS_df_DataBoxCreditInfo *)arguments;
+    char *box_id = NULL;
+
+    if (NULL == configuration || NULL == configuration->status_code ||
+            NULL == configuration->status_message) {
+        error = HTTP_ERROR_SERVER;
+        goto leave;
+    }
+
+    EXTRACT_STRING("isds:dbID", box_id);
+    if (NULL == box_id) {
+        message = strdup("Missing isds:dbID");
+        error = HTTP_ERROR_CLIENT;
+        goto leave;
+    }
+    if (NULL != configuration->box_id &&
+            xmlStrcmp(BAD_CAST configuration->box_id,
+                    BAD_CAST box_id)) {
+        code = "9999";
+        message = strdup("Unexpected isds:dbID value");
+        error = HTTP_ERROR_CLIENT;
+        goto leave;
+    }
+
+    INSERT_LONGINTPTR(isds_response, "currentCredit",
+        &configuration->current_credit);
+    INSERT_STRING(isds_response, "notifEmail", configuration->email);
+    if ((error = insert_ciRecords(isds_response, configuration->history))) {
+        goto leave;
+    }
+
+    code = configuration->status_code;
+    message = strdup(configuration->status_message);
+leave:
+    if (HTTP_ERROR_SERVER != error) {
+        http_error next_error = insert_isds_status(isds_response, 0,
+                BAD_CAST code, BAD_CAST message, NULL);
+        if (HTTP_ERROR_SUCCESS != next_error) error = next_error;
+    }
+    free(box_id);
     free(message);
     return error;
 }
@@ -553,6 +754,9 @@ static struct service services[] = {
     { SERVICE_DS_Dz_ResignISDSDocument,
         "DS/dz", BAD_CAST ISDS_NS, BAD_CAST "Re-signISDSDocument",
         service_ResignISDSDocument },
+    { SERVICE_DS_df_DataBoxCreditInfo,
+        "DS/df", BAD_CAST ISDS_NS, BAD_CAST "DataBoxCreditInfo",
+        service_DataBoxCreditInfo },
     { SERVICE_DS_DsManage_ChangeISDSPassword,
         "DS/DsManage", BAD_CAST ISDS_NS, BAD_CAST "ChangeISDSPassword",
         service_ChangeISDSPassword },

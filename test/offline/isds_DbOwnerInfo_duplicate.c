@@ -15,7 +15,7 @@ static int test_isds_DbOwnerInfo_duplicate(struct isds_DbOwnerInfo *origin) {
                 "pointer to copy");
 
     TEST_STRING_DUPLICITY(origin->dbID, copy->dbID);
-    TEST_INT_DUPLICITY(origin->dbType, copy->dbType);
+    TEST_INTPTR_DUPLICITY(origin->dbType, copy->dbType);
     TEST_STRING_DUPLICITY(origin->ic, copy->ic);
 
     /* Name of person */
@@ -84,9 +84,9 @@ static int test_isds_DbOwnerInfo_duplicate(struct isds_DbOwnerInfo *origin) {
     TEST_STRING_DUPLICITY(origin->telNumber, copy->telNumber);
     TEST_STRING_DUPLICITY(origin->identifier, copy->identifier);
     TEST_STRING_DUPLICITY(origin->registryCode, copy->registryCode);
-    TEST_INT_DUPLICITY(origin->dbState, copy->dbState);
-    TEST_BOOLEAN_DUPLICITY(origin->dbEffectiveOVM, copy->dbEffectiveOVM);
-    TEST_BOOLEAN_DUPLICITY(origin->dbOpenAddressing, copy->dbOpenAddressing);
+    TEST_INTPTR_DUPLICITY(origin->dbState, copy->dbState);
+    TEST_BOOLEANPTR_DUPLICITY(origin->dbEffectiveOVM, copy->dbEffectiveOVM);
+    TEST_BOOLEANPTR_DUPLICITY(origin->dbOpenAddressing, copy->dbOpenAddressing);
 
     PASS_TEST;
 }

@@ -105,6 +105,11 @@ unsigned int passed, failed;
 }
  
 #define TEST_INT_DUPLICITY(x, y) { \
+    if ((x) != (y)) \
+        FAIL_TEST(STR(y) " differs: expected=%ld is=%ld", (x), (y)); \
+}
+
+#define TEST_INTPTR_DUPLICITY(x, y) { \
     TEST_POINTER_DUPLICITY(x, y); \
     if (x != NULL && y != NULL) { \
         if (*(x) != *(y)) \
@@ -113,6 +118,11 @@ unsigned int passed, failed;
 }
 
 #define TEST_BOOLEAN_DUPLICITY(x, y) { \
+    if ((x) != (y)) \
+        FAIL_TEST(STR(y) " differs: expected=%d is=%d", !!(x), !!(y)); \
+}
+
+#define TEST_BOOLEANPTR_DUPLICITY(x, y) { \
     TEST_POINTER_DUPLICITY(x, y); \
     if (x != NULL && y != NULL) { \
         if (*(x) != *(y)) \
@@ -120,4 +130,30 @@ unsigned int passed, failed;
     } \
 }
 
+#define TEST_TIMEVALPTR_DUPLICITY(x, y) { \
+    TEST_POINTER_DUPLICITY(x, y); \
+    if ((x) != NULL && (y) != NULL) { \
+        if ((x)->tv_sec != (y)->tv_sec) \
+            FAIL_TEST("struct timeval * differs in tv_sec: " \
+                    "expected=%d, got=%d", (x)->tv_sec, (y)->tv_sec); \
+        if ((x)->tv_usec != (y)->tv_usec) \
+            FAIL_TEST("struct timeval * differs in tv_usec: " \
+                    "expected=%d, got=%d", (x)->tv_usec, (y)->tv_usec); \
+    } \
+}
+
+#define TEST_TMPTR_DUPLICITY(x, y) { \
+    TEST_POINTER_DUPLICITY(x, y); \
+    if ((x) != NULL && (y) != NULL) { \
+        if ((x)->tm_year != (y)->tm_year) \
+            FAIL_TEST("struct tm * differs in tm_year: " \
+                    "expected=%d, got=%d", (x)->tm_year, (y)->tm_year); \
+        if ((x)->tm_mon != (y)->tm_mon) \
+            FAIL_TEST("struct tm * differs in tm_mon: " \
+                    "expected=%d, got=%d", (x)->tm_mon, (y)->tm_mon); \
+        if ((x)->tm_mday != (y)->tm_mday) \
+            FAIL_TEST("struct tm * differs in tm_mday: " \
+                    "expected=%d, got=%d", (x)->tm_mday, (y)->tm_mday); \
+    } \
+}
 #endif
