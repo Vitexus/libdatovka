@@ -32,6 +32,8 @@ int main(int argc, char **argv) {
 
     TEST("NULL is idempotent", test_normalize, NULL, NULL);
     TEST("X-Invalid is idempotent", test_normalize, "X-Invalid", "X-Invalid");
+    TEST("Normalization is not case-sensitive",
+            test_normalize, "PdF", "application/pdf");
 
     TEST("cer", test_normalize, "cer", "application/x-x509-ca-cert");
     TEST("crt", test_normalize, "crt", "application/x-x509-ca-cert");
