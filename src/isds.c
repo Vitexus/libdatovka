@@ -11557,7 +11557,8 @@ const char *isds_normalize_mime_type(const char *mime_type) {
     for (int offset = 0;
             offset < sizeof(extension_map_mime)/sizeof(extension_map_mime[0]);
             offset += 2) {
-        if (!xmlStrcmp((const xmlChar*) mime_type, extension_map_mime[offset]))
+        if (!xmlStrcasecmp((const xmlChar*) mime_type,
+                extension_map_mime[offset]))
             return (const char *) extension_map_mime[offset + 1];
     }
 
