@@ -172,11 +172,119 @@ int main(int argc, char **argv) {
             .tm_mon = 4,
             .tm_mday = 6
         };
+        struct tm new_valid_from = {
+            .tm_year = 2,
+            .tm_mon = 2,
+            .tm_mday = 7
+        };
+        struct tm new_valid_to = {
+            .tm_year = 3,
+            .tm_mon = 3,
+            .tm_mday = 8
+        };
+        struct tm old_valid_from = {
+            .tm_year = 5,
+            .tm_mon = 5,
+            .tm_mday = 9
+        };
+        struct tm old_valid_to = {
+            .tm_year = 6,
+            .tm_mon = 6,
+            .tm_mday = 10
+        };
         const long int credit = 42;
+        long int old_capacity = 43;
         const char *email = "joe@example.com";
         struct timeval event_time = {
             .tv_sec = 981173106,
             .tv_usec = 123456
+        };
+
+        struct isds_credit_event event_credit_expired = {
+            .time = &event_time,
+            .credit_change = 133,
+            .new_credit = 244,
+            .type = ISDS_CREDIT_EXPIRED,
+        };
+        struct server_credit_event server_event_credit_expired = {
+            .time = &event_time,
+            .credit_change = 133,
+            .new_credit = 244,
+            .type = SERVER_CREDIT_EXPIRED,
+        };
+        struct isds_list history_expired = {
+            .next = NULL,
+            .data = &event_credit_expired,
+            .destructor = NULL
+        };
+        struct server_list server_history_expired = {
+            .next = NULL,
+            .data = &server_event_credit_expired,
+            .destructor = NULL
+        };
+
+        struct isds_credit_event event_credit_storage_set = {
+            .time = &event_time,
+            .credit_change = 133,
+            .new_credit = 244,
+            .type = ISDS_CREDIT_STORAGE_SET,
+            .details.storage_set.new_capacity = 41,
+            .details.storage_set.new_valid_from = &new_valid_from,
+            .details.storage_set.new_valid_to = &new_valid_to,
+            .details.storage_set.old_capacity = &old_capacity,
+            .details.storage_set.old_valid_from = &old_valid_from,
+            .details.storage_set.old_valid_to = &old_valid_to,
+            .details.storage_set.initiator = "Foo",
+        };
+        struct server_credit_event server_event_credit_storage_set = {
+            .time = &event_time,
+            .credit_change = 133,
+            .new_credit = 244,
+            .type = SERVER_CREDIT_STORAGE_SET,
+            .details.storage_set.new_capacity = 41,
+            .details.storage_set.new_valid_from = &new_valid_from,
+            .details.storage_set.new_valid_to = &new_valid_to,
+            .details.storage_set.old_capacity = &old_capacity,
+            .details.storage_set.old_valid_from = &old_valid_from,
+            .details.storage_set.old_valid_to = &old_valid_to,
+            .details.storage_set.initiator = "Foo",
+        };
+        struct isds_list history_storage_set = {
+            .next = &history_expired,
+            .data = &event_credit_storage_set,
+            .destructor = NULL
+        };
+        struct server_list server_history_storage_set = {
+            .next = &server_history_expired,
+            .data = &server_event_credit_storage_set,
+            .destructor = NULL
+        };
+
+        struct isds_credit_event event_credit_message_sent = {
+            .time = &event_time,
+            .credit_change = 133,
+            .new_credit = 244,
+            .type = ISDS_CREDIT_MESSAGE_SENT,
+            .details.message_sent.recipient = "Foo",
+            .details.message_sent.message_id = "ijklmnop",
+        };
+        struct server_credit_event server_event_credit_message_sent = {
+            .time = &event_time,
+            .credit_change = 133,
+            .new_credit = 244,
+            .type = SERVER_CREDIT_MESSAGE_SENT,
+            .details.message_sent.recipient = "Foo",
+            .details.message_sent.message_id = "ijklmnop",
+        };
+        struct isds_list history_message_sent = {
+            .next = &history_storage_set,
+            .data = &event_credit_message_sent,
+            .destructor = NULL
+        };
+        struct server_list server_history_message_sent = {
+            .next = &server_history_storage_set,
+            .data = &server_event_credit_message_sent,
+            .destructor = NULL
         };
 
         struct isds_credit_event event_credit_discharged = {
@@ -194,12 +302,12 @@ int main(int argc, char **argv) {
             .details.discharged.transaction = "Foo"
         };
         struct isds_list history_discharged = {
-            .next = NULL,
+            .next = &history_message_sent,
             .data = &event_credit_discharged,
             .destructor = NULL
         };
         struct server_list server_history_discharged = {
-            .next = NULL,
+            .next = &server_history_message_sent,
             .data = &server_event_credit_discharged,
             .destructor = NULL
         };
