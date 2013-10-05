@@ -690,13 +690,13 @@ typedef enum {
 
 /* Data specific for ISDS_CREDIT_CHARGED isds_credit_event_type */
 struct isds_credit_event_charged {
-    char *transaction;              /* Transaction identified;
+    char *transaction;              /* Transaction identifier;
                                        NULL-terminated string. */
 };
 
 /* Data specific for ISDS_CREDIT_DISCHARGED isds_credit_event_type */
 struct isds_credit_event_discharged {
-    char *transaction;              /* Transaction identified;
+    char *transaction;              /* Transaction identifier;
                                        NULL-terminated string. */
 };
 
