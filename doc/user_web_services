@@ -697,11 +697,11 @@ optional elements `ciFromDate' and `ciTodate' carrying start and end date
 
 Output is `currentCredit' element delivering current credit value,
 `notifEmail' element delivering e-mail address to send notifications
-about changes in the commercial services to and `ciRecords' tree with history
-of changes that occurred in given interval. All these elements are optional.
+about changes in the commercial services to, and `ciRecords' tree with history
+of changes that occurred in the given interval. All these elements are optional.
 
-The `ciRecords' element contains possibly (if inteval is not defined) empty
-list of `ciRecord' trees:
+The `ciRecords' element contains possibly (if interval is not defined) empty
+time-sorted list of `ciRecord' trees:
 
 ciRecord
     + ciEventTime – time of the change

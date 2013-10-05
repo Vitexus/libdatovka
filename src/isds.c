@@ -7527,11 +7527,12 @@ leave:
  * @credit outputs current credit value into pre-allocated memory. Pass NULL
  * if you don't care.
  * @email outputs notification e-mail address where notifications about credit
- * are sent. This is automatically reallocated string.
- * Pass NULL if you don't care. It can return NULL if no address is defined.
+ * are sent. This is automatically reallocated string. Pass NULL if you don't
+ * care. It can return NULL if no address is defined.
  * @history outputs auto-reallocated list of pointers to struct
  * isds_credit_event. Events in closed interval @from_time to @to_time are
- * returned. Pass NULL @to_time and @from_time if you don't care.
+ * returned. Pass NULL @to_time and @from_time if you don't care. The events
+ * are sorted by time.
  * @return:
  *  IE_SUCCESS if the credit details have been obtained correctly,
  *  or other appropriate error. Please note that server allows to retrieve
