@@ -1216,7 +1216,8 @@ isds_error isds_get_commercial_permissions(struct isds_ctx *context,
  * @to_date is last day of credit history to return in @history. Only
  * tm_year, tm_mon and tm_mday carry sane value.
  * @credit outputs current credit value into pre-allocated memory. Pass NULL
- * if you don't care.
+ * if you don't care. This and all other credit values are integers in
+ * hundredths of Czech Crowns.
  * @email outputs notification e-mail address where notifications about credit
  * are sent. This is automatically reallocated string. Pass NULL if you don't
  * care. It can return NULL if no address is defined.
