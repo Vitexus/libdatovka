@@ -284,6 +284,18 @@ static http_error timeval2timestring(const struct timeval *time,
 }
 
 
+/* Compare dates represented by pointer to struct tm.
+ * @return 0 if equalued, non-0 otherwise. */
+static int datecmp(const struct tm *a, const struct tm *b) {
+    if (NULL == a && b == NULL) return 0;
+    if ((NULL == a && b != NULL) || (NULL != a && b == NULL)) return 1;
+    if (a->tm_year != b->tm_year) return 1;
+    if (a->tm_mon != b->tm_mon) return 1;
+    if (a->tm_mday != b->tm_mday) return 1;
+    return 0;
+}
+
+
 /* Implement DummyOperation */
 static http_error service_DummyOperation(
         const struct http_connection *connection, const xmlDocPtr soap_request,
@@ -530,9 +542,19 @@ static http_error service_DataBoxCreditInfo(
     
     ELEMENT_EXISTS("isds:ciFromDate", 0);
     EXTRACT_DATE("isds:ciFromDate", from_date);
+    if (datecmp(configuration->from_date, from_date)) {
+        code = "9999";
+        message = strdup("Unexpected isds:ciFromDate value");
+        error = HTTP_ERROR_CLIENT;
+    }
+
     ELEMENT_EXISTS("isds:ciTodate", 0);
     EXTRACT_DATE("isds:ciTodate", to_date);
-    /* FIXME: Check for date values */
+    if (datecmp(configuration->to_date, to_date)) {
+        code = "9999";
+        message = strdup("Unexpected isds:ciTodate value");
+        error = HTTP_ERROR_CLIENT;
+    }
 
     INSERT_LONGINTPTR(isds_response, "currentCredit",
         &configuration->current_credit);
