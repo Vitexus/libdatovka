@@ -7554,12 +7554,11 @@ isds_error isds_get_commercial_credit(struct isds_ctx *context,
     xmlXPathObjectPtr result = NULL;
 
     const xmlChar *codes[] = {
-        /* TODO: Gather codes by experiment */
-        BAD_CAST "",
-        BAD_CAST "",
-        BAD_CAST "",
-        BAD_CAST "",
-        BAD_CAST "",
+        BAD_CAST "1004",
+        BAD_CAST "2011",
+        BAD_CAST "1093",
+        BAD_CAST "1137",
+        BAD_CAST "1058",
         NULL
     };
     const char *meanings[] = {

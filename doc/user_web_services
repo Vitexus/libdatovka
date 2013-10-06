@@ -738,8 +738,8 @@ All credit values are integers in hundredths of Czech Crowns.
 Output carries standard `dbStatus' tree with status code and status message.
 
 Error codes (codes are not normative):
-            Insufficient priviledges for the box
-            The box does not exist
-            Date is too long (history is not available after 15 months)
-            Interval is too long (limit is 3 months)
-            Invalid date
+    1004    Insufficient priviledges for the box
+    2011    The box does not exist
+    1093    Date is too long (history is not available after 15 months)
+    1137    Interval is too long (limit is 3 months)
+    1058    Invalid date
