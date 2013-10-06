@@ -18,7 +18,6 @@
     Allow formatted message appending, preserve deep messages
 * Make function tests
     Cover all functions
-    Simulate server?
 * Test X.509 authentication using hardware engine
 * Write high level documentation
     ISDS overview
