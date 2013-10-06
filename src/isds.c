@@ -7270,10 +7270,31 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL, db_id;
     xmlDocPtr response = NULL;
-    xmlChar *code = NULL, *message = NULL;
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     xmlChar *string = NULL;
+
+    const xmlChar *codes[] = {
+        BAD_CAST "5001",
+        BAD_CAST "1007",
+        BAD_CAST "2011",
+        NULL
+    };
+    const char *meanings[] = {
+        "The box does not exist",
+        "Box ID is malformed",
+        "Box ID malformed",
+    };
+    const isds_error errors[] = {
+        IE_NOEXIST,
+        IE_INVAL,
+        IE_INVAL,
+    };
+    struct code_map_isds_error map = {
+        .codes = codes,
+        .meanings = meanings,
+        .errors = errors
+    };
 #endif
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -7309,60 +7330,12 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
     }
 
 
-    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending CheckDataBox request to ISDS\n"));
+    /* Send request and check response*/
+    err = send_destroy_request_check_response(context,
+            SERVICE_DB_SEARCH, BAD_CAST "CheckDataBox",
+            &request, &response, NULL, &map);
+    if (err) goto leave;
 
-    /* Sent request */
-    err = isds(context, SERVICE_DB_SEARCH, request, &response, NULL, NULL);
-   
-    /* Destroy request */
-    xmlFreeNode(request);
-
-    if (err) {
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Processing ISDS response on CheckDataBox "
-                    "request failed\n"));
-        goto leave;
-    }
-
-    /* Check for response status */
-    err = isds_response_status(context, SERVICE_DB_SEARCH, response,
-            &code, &message, NULL);
-    if (err) {
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("ISDS response on CheckDataBox request is missing status\n"));
-        goto leave;
-    }
-
-    /* Request processed, but nothing found */
-    if (!xmlStrcmp(code, BAD_CAST "5001")) {
-        char *box_id_locale = _isds_utf82locale((char*)box_id);
-        char *code_locale = _isds_utf82locale((char*)code);
-        char *message_locale = _isds_utf82locale((char*)message);
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Server did not found box %s on CheckDataBox request "
-                    "(code=%s, message=%s)\n"),
-                box_id_locale, code_locale, message_locale);
-        isds_log_message(context, message_locale);
-        free(box_id_locale);
-        free(code_locale);
-        free(message_locale);
-        err = IE_NOEXIST;
-        goto leave;
-    }
-
-    /* Other error */
-    else if (xmlStrcmp(code, BAD_CAST "0000")) {
-        char *code_locale = _isds_utf82locale((char*)code);
-        char *message_locale = _isds_utf82locale((char*)message);
-        isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Server refused CheckDataBox request "
-                    "(code=%s, message=%s)\n"), code_locale, message_locale);
-        isds_log_message(context, message_locale);
-        free(code_locale);
-        free(message_locale);
-        err = IE_ISDS;
-        goto leave;
-    }
 
     /* Extract data */
     xpath_ctx = xmlXPathNewContext(response);
@@ -7401,8 +7374,6 @@ leave:
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
 
-    free(code);
-    free(message);
     xmlFreeDoc(response);
 
     if (!err)
