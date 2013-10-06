@@ -377,6 +377,8 @@ int main(int argc, char **argv) {
         TEST("Wrong box_id", test_isds_get_commercial_credit, IE_ISDS,
                 context, "1", &from_date, &to_date, &credit, &email,
                 &history);
+        TEST("No history", test_isds_get_commercial_credit, IE_SUCCESS,
+                context, box_id, NULL, NULL, &credit, &email, NULL);
 
         if (stop_server(server_process)) {
             ABORT_UNIT(server_error);

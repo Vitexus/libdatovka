@@ -28,6 +28,12 @@ noinst_LTLIBRARIES = libserver.la
 libserver_la_SOURCES = ../test.c ../test-tools.h http.c http.h \
 						server.c server.h service.c service.h \
 						services.h server_types.h
+if WIN32
+libserver_la_SOURCES += win32.c win32.h
+else
+libserver_la_SOURCES += unix.c unix.h
+endif
+
 libserver_la_CPPFLAGS = @XML_CPPFLAGS@ @LIBGNUTLS_CFLAGS@
 libserver_la_LIBADD = @XML_LIBS@ @LIBGNUTLS_LIBS@
 

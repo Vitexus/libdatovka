@@ -2,6 +2,7 @@
 #include "../test-tools.h"
 #include "http.h"
 #include "services.h"
+#include "system.h"
 #include <string.h>
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
@@ -43,7 +44,31 @@ struct service {
             const void *arguments);
 };
 
-/* Following EXTRACT_* macros expect @xpath_ctx, @message, and leave label */
+/* Following EXTRACT_* macros expect @xpath_ctx, @error, @message,
+ * and leave label. */
+#define ELEMENT_EXISTS(element, allow_multiple) { \
+    xmlXPathObjectPtr result = NULL; \
+    result = xmlXPathEvalExpression(BAD_CAST element, xpath_ctx); \
+    if (NULL == result) { \
+        error = HTTP_ERROR_SERVER; \
+        goto leave; \
+    } \
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) { \
+            xmlXPathFreeObject(result); \
+            test_asprintf(&message, "Element %s does not exist", element); \
+            error = HTTP_ERROR_CLIENT; \
+            goto leave; \
+    } else { \
+        if (!allow_multiple && result->nodesetval->nodeNr > 1) { \
+            xmlXPathFreeObject(result); \
+            test_asprintf(&message, "Multiple %s element", element); \
+            error = HTTP_ERROR_CLIENT; \
+            goto leave; \
+        } \
+    } \
+    xmlXPathFreeObject(result); \
+}
+
 #define EXTRACT_STRING(element, string) { \
     xmlXPathObjectPtr result = NULL; \
     result = xmlXPathEvalExpression(BAD_CAST element "/text()", xpath_ctx); \
@@ -100,6 +125,29 @@ struct service {
     } \
 } 
 
+
+#define EXTRACT_DATE(element, tmPtr) { \
+    char *string = NULL; \
+    EXTRACT_STRING(element, string); \
+    if (NULL != string) { \
+        (tmPtr) = calloc(1, sizeof(*(tmPtr))); \
+        if (NULL == (tmPtr)) { \
+            free(string); \
+            error = HTTP_ERROR_SERVER; \
+            goto leave; \
+        } \
+        error = _server_datestring2tm(string, (tmPtr)); \
+        if (error) { \
+            if (error == HTTP_ERROR_CLIENT) { \
+                test_asprintf(&message, "%s value is not a valid date: %s", \
+                        element, string); \
+            } \
+            free(string); \
+            goto leave; \
+        } \
+        free(string); \
+    } \
+}
 
 /* Following INSERT_* macros expect @error and leave label */
 #define INSERT_STRING_WITH_NS(parent, ns, element, string) \
@@ -457,6 +505,7 @@ static http_error service_DataBoxCreditInfo(
     const struct arguments_DS_df_DataBoxCreditInfo *configuration =
         (const struct arguments_DS_df_DataBoxCreditInfo *)arguments;
     char *box_id = NULL;
+    struct tm *from_date = NULL, *to_date = NULL;
 
     if (NULL == configuration || NULL == configuration->status_code ||
             NULL == configuration->status_message) {
@@ -478,6 +527,12 @@ static http_error service_DataBoxCreditInfo(
         error = HTTP_ERROR_CLIENT;
         goto leave;
     }
+    
+    ELEMENT_EXISTS("isds:ciFromDate", 0);
+    EXTRACT_DATE("isds:ciFromDate", from_date);
+    ELEMENT_EXISTS("isds:ciTodate", 0);
+    EXTRACT_DATE("isds:ciTodate", to_date);
+    /* FIXME: Check for date values */
 
     INSERT_LONGINTPTR(isds_response, "currentCredit",
         &configuration->current_credit);
@@ -495,6 +550,8 @@ leave:
         if (HTTP_ERROR_SUCCESS != next_error) error = next_error;
     }
     free(box_id);
+    free(from_date);
+    free(to_date);
     free(message);
     return error;
 }

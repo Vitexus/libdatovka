@@ -691,9 +691,9 @@ DataBoxCreditInfo
 Return current credit value and and history of credit changes for given box
 and time interval.
 
-Input is `dbID' element with box ID which credit you want to obtain and
-optional elements `ciFromDate' and `ciTodate' carrying start and end date
-(inclusive) for history records to obtain.
+Input is `dbID' element with box ID whose credit you want to obtain and
+possibly empty elements `ciFromDate' and `ciTodate' carrying start and end
+date (inclusive) for history records to obtain.
 
 Output is `currentCredit' element delivering current credit value,
 `notifEmail' element delivering e-mail address to send notifications

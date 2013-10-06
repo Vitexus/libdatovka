@@ -7622,7 +7622,7 @@ isds_error isds_get_commercial_credit(struct isds_ctx *context,
 
     /* Add mandatory XSD:tIdDbInput child */
     INSERT_STRING(request, BAD_CAST "dbID", box_id);
-    /* Add optional dates */
+    /* Add mandatory dates elements with optional values */
     if (from_date) {
         err = tm2datestring(from_date, &string);
         if (err) {
@@ -7633,6 +7633,8 @@ isds_error isds_get_commercial_credit(struct isds_ctx *context,
         }
         INSERT_STRING(request, "ciFromDate", string);
         zfree(string);
+    } else {
+        INSERT_STRING(request, "ciFromDate", NULL);
     }
     if (to_date) {
         err = tm2datestring(to_date, &string);
@@ -7644,6 +7646,8 @@ isds_error isds_get_commercial_credit(struct isds_ctx *context,
         }
         INSERT_STRING(request, "ciTodate", string);
         zfree(string);
+    } else {
+        INSERT_STRING(request, "ciTodate", NULL);
     }
 
     /* Send request and check response*/

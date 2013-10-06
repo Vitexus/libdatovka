@@ -4,6 +4,15 @@
 #include <stdarg.h> /* va_list */
 #include <stddef.h> /* size_t, NULL */
 
+/* _hidden macro marks library private symbols. GCC can exclude them from
+ * global
+ *  * symbols table */
+#if defined(__GNUC__) && (__GNUC__ >= 4) && !defined(_WIN32)
+#define _hidden __attribute__((visibility("hidden")))
+#else
+#define _hidden
+#endif
+
 /* Print formated string into automtically reallocated @uffer.
  * @buffer automatically reallocated buffer. Must be &NULL or preallocated
  * memory.
