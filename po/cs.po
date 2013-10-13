@@ -1,14 +1,14 @@
 # Czech translation of libisds.
 # Copyright (C) 2010 Petr Písař
 # This file is distributed under the same license as the libisds package.
-# Petr Pisar <petr.pisar@atlas.cz>, 2010, 2011, 2012.
+# Petr Pisar <petr.pisar@atlas.cz>, 2010, 2011, 2012, 2013.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: libisds 0.7\n"
+"Project-Id-Version: libisds 0.8\n"
 "Report-Msgid-Bugs-To: petr.pisar@atlas.cz\n"
 "POT-Creation-Date: 2013-10-13 15:12+0200\n"
-"PO-Revision-Date: 2012-12-30 18:21+0100\n"
+"PO-Revision-Date: 2013-10-13 15:19+0200\n"
 "Last-Translator: Petr Pisar <petr.pisar@atlas.cz>\n"
 "Language-Team: Czech <translation-team-cs@lists.sourceforge.net>\n"
 "Language: cs\n"
@@ -517,9 +517,9 @@ msgid "%s value is negative: %ld"
 msgstr "Hodnota %s je záporná: %ld"
 
 #: src/isds.c:2590
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid %s value: %s"
-msgstr "Neplatná hodnota"
+msgstr "Neplatná hodnota %s: %s"
 
 #: src/isds.c:2610
 #, c-format
@@ -598,14 +598,14 @@ msgid "Could not convert PDZExpire as ISO time: %s"
 msgstr "PDZExpire nebylo možné převést jako ISO čas: %s"
 
 #: src/isds.c:3369
-#, fuzzy, c-format
+#, c-format
 msgid "Could not convert ciEventTime as ISO time: %s"
-msgstr "dmEventTime nebylo možné převést jako ISO čas: %s"
+msgstr "ciEventTime nebylo možné převést jako ISO čas: %s"
 
 #: src/isds.c:3386
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown isds:ciEventType value: %s"
-msgstr "Neznámá hodnota isds:userType: %s"
+msgstr "Neznámá hodnota isds:ciEventType: %s"
 
 #: src/isds.c:3629
 msgid "Missing mandatory sisds:dmMessageStatus integer"
@@ -1181,34 +1181,29 @@ msgid "PDZInfo request processed by server successfully.\n"
 msgstr "Požadavek PDZInfo úspěšně zpracován serverem.\n"
 
 #: src/isds.c:7580
-#, fuzzy, c-format
+#, c-format
 msgid "Could not build DataBoxCreditInfo request for %s box"
-msgstr "Požadavek %s pro schránku %s nebylo možné sestavit"
+msgstr "Požadavek DataBoxCreditInfo pro schránku %s nebylo možné sestavit"
 
 #: src/isds.c:7600
-#, fuzzy
 msgid "Could not convert `from_date' argument to ISO date string"
-msgstr "Argument „since“ nebylo možné převést na ISO datum"
+msgstr "Argument „from_date“ nebylo možné převést na ISO datum"
 
 #: src/isds.c:7613
-#, fuzzy
 msgid "Could not convert `to_date' argument to ISO date string"
-msgstr "Argument „since“ nebylo možné převést na ISO datum"
+msgstr "Argument „to_date“ nebylo možné převést na ISO datum"
 
 #: src/isds.c:7648
-#, fuzzy
 msgid "Missing DataBoxCreditInfoResponse element"
-msgstr "Chybí element GetPasswordInfoResponse"
+msgstr "Chybí element DataBoxCreditInfoResponse"
 
 #: src/isds.c:7653
-#, fuzzy
 msgid "Multiple DataBoxCreditInfoResponse element"
-msgstr "Násobný element GetPasswordInfoResponse"
+msgstr "Násobný element DataBoxCreditInfoResponse"
 
 #: src/isds.c:7702
-#, fuzzy
 msgid "DataBoxCreditInfo request processed by server successfully.\n"
-msgstr "Požadavek GetDataBoxList úspěšně zpracován serverem.\n"
+msgstr "Požadavek DataBoxCreditInfo úspěšně zpracován serverem.\n"
 
 #: src/isds.c:8000
 #, c-format
