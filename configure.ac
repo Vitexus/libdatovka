@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.63])
 AC_INIT([libisds], [0.8], [petr.pisar@atlas.cz])
-AM_INIT_AUTOMAKE(libisds, 0.8)
+AM_INIT_AUTOMAKE
 AC_LANG([C])
 AC_CONFIG_SRCDIR([src/isds.c])
 AC_CONFIG_MACRO_DIR([m4])
