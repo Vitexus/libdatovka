@@ -33,7 +33,7 @@ AM_CONDITIONAL([BUILD_TEST], [test "$enable_test" = "yes"])
 AC_ARG_ENABLE(online-test, [AS_HELP_STRING([--enable-online-test],
                               [Enable on-line internal library tests])])
 # Enable gettext
-AM_GNU_GETTEXT_VERSION([0.18.1])
+AM_GNU_GETTEXT_VERSION([0.18.2])
 AM_GNU_GETTEXT([external])
 
 # Enable debug
