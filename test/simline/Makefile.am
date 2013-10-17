@@ -27,7 +27,7 @@ endif
 noinst_LTLIBRARIES = libserver.la
 libserver_la_SOURCES = ../test.c ../test-tools.h http.c http.h \
 						server.c server.h service.c service.h \
-						services.h server_types.h
+						services.h server_types.h system.h
 if WIN32
 libserver_la_SOURCES += win32.c win32.h
 else
