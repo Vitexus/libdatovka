@@ -1,3 +1,32 @@
+Version 0.8
+===========
+
+• New ISDS service DataBoxCreditInfo has been implemented as
+isds_get_commercial_credit(). This allows to retrieve current credit amount
+available to the box owner for commercial activities like sending commercial
+messages or using long term storage. It also allows to obtain recent history
+of credit changes.
+
+• Preliminary support for building with MinGW tool-chain has been added. Not
+all tests have been ported yet.
+
+• The MIME type normalization is case insensitive now.
+
+• Status codes 1007 and 2011 of CheckDataBox ISDS service, bad box ID, are
+recognized now and reported to the application as IE_INVAL.
+
+• This release is binary compatible with previous version 0.7. However
+applications built against 0.8 are not guaranteed to work with 0.7.
+
+• The build system, autotools and gettext scripts namely, has been updated.
+
+• NULL pointer dereference while parsing second and next permissions for
+sending commercial messages has been fixed in the
+isds_get_commercial_permissions() function.
+
+• Bad arguments handling at isds_get_message_sender() function that could lead
+to crash has been fixed.
+
 Version 0.7
 ===========
 
