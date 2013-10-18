@@ -4723,12 +4723,12 @@ leave:
  * code
  * @context is session context
  * @service_name is name of SERVICE_DB_ACCESS
- * @response is server SOAP body response as XML document
- * @raw_response is automatically reallocated bit stream with response body. Use
+ * @response is reallocated server SOAP body response as XML document
+ * @raw_response is reallocated bit stream with response body. Use
  * NULL if you don't care
  * @raw_response_length is size of @raw_response in bytes
- * @code is ISDS status code
- * @status_message is ISDS status message
+ * @code is reallocated ISDS status code
+ * @status_message is reallocated ISDS status message
  * @return error coded from lower layer, context message will be set up
  * appropriately. */
 static isds_error build_send_check_dbdummy_request(struct isds_ctx *context,
@@ -4749,8 +4749,8 @@ static isds_error build_send_check_dbdummy_request(struct isds_ctx *context,
     /* Free output argument */
     xmlFreeDoc(*response); *response = NULL;
     if (raw_response) zfree(*raw_response);
-    free(*code);
-    free(*status_message);
+    zfree(*code);
+    zfree(*status_message);
 
 
     /* Check if connection is established
