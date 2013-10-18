@@ -7447,9 +7447,11 @@ isds_error isds_get_commercial_permissions(struct isds_ctx *context,
         goto leave;
     }
     if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        struct isds_list *prev_item = NULL;
+
         /* Iterate over all permission records */
         for (long unsigned int i = 0; i < result->nodesetval->nodeNr; i++) {
-            struct isds_list *item, *prev_item = NULL;
+            struct isds_list *item;
 
             /* Prepare structure */
             item = calloc(1, sizeof(*item));
