@@ -9755,6 +9755,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
     zfree(context->long_message);
    
     /* Free former message if any */
+    if (NULL == message) return IE_INVAL;
     if (message) isds_message_free(message);
 
 #if HAVE_LIBCURL
