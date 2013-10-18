@@ -4,7 +4,7 @@
 static int test_string2isds_payment_type(const xmlChar *string,
         isds_error error, isds_payment_type *type) {
     isds_error err;
-    isds_payment_type new_type;
+    isds_payment_type new_type = 0;
 
     err = string2isds_payment_type(string, (type) ? &new_type : NULL);
     if (err != error)
@@ -14,7 +14,7 @@ static int test_string2isds_payment_type(const xmlChar *string,
     if (err != IE_SUCCESS)
         PASS_TEST;
 
-    if (*type != new_type)
+    if (type && *type != new_type)
         FAIL_TEST("string2isds_payment_type() returned wrong type: "
                 "expected=%d, got=%d", *type, new_type);
 
