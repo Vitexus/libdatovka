@@ -7703,7 +7703,7 @@ leave:
     }
     if (err) {
         isds_list_free(history);
-        zfree(*email)
+        if (NULL != email) zfree(*email)
     }
 
     free(box_id_locale);
