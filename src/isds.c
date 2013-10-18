@@ -10351,14 +10351,14 @@ isds_error isds_get_message_sender(struct isds_ctx *context,
 
     /* Fill output arguments in */
     EXTRACT_STRING("isds:userType", type_string);
-    if (type_string) {
-        *sender_type = calloc(1, sizeof(**sender_type));
-        if (!*sender_type) {
-            err = IE_NOMEM;
-            goto leave;
-        }
+    if (NULL != type_string) {
+        if (NULL != sender_type) {
+            *sender_type = calloc(1, sizeof(**sender_type));
+            if (NULL == *sender_type) {
+                err = IE_NOMEM;
+                goto leave;
+            }
 
-        if (sender_type) {
             err = string2isds_sender_type((xmlChar *)type_string,
                     *sender_type);
             if (err) {
@@ -10374,16 +10374,16 @@ isds_error isds_get_message_sender(struct isds_ctx *context,
             }
         }
     }
-    if (sender_type)
+    if (NULL != sender_name)
         EXTRACT_STRING("isds:authorName", *sender_name);
 
 leave:
     if (err) {
-        if (sender_type) zfree(*sender_type);
+        if (NULL != sender_type) zfree(*sender_type);
         zfree(type_string);
-        if (sender_name) zfree(*sender_name);
+        if (NULL != sender_name) zfree(*sender_name);
     }
-    if (raw_sender_type) *raw_sender_type = type_string;
+    if (NULL != raw_sender_type) *raw_sender_type = type_string;
 
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(xpath_ctx);
