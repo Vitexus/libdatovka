@@ -3785,13 +3785,14 @@ static isds_error extract_document(struct isds_ctx *context,
         struct isds_document **document, xmlXPathContextPtr xpath_ctx) {
     isds_error err = IE_SUCCESS;
     xmlXPathObjectPtr result = NULL;
-    xmlNodePtr file_node = xpath_ctx->node;
+    xmlNodePtr file_node;
     char *string = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!document) return IE_INVAL;
     isds_document_free(document);
     if (!xpath_ctx) return IE_INVAL;
+    file_node = xpath_ctx->node;
 
     *document = calloc(1, sizeof(**document));
     if (!*document) {
@@ -3935,13 +3936,14 @@ static isds_error extract_documents(struct isds_ctx *context,
         struct isds_list **documents, xmlXPathContextPtr xpath_ctx) {
     isds_error err = IE_SUCCESS;
     xmlXPathObjectPtr result = NULL;
-    xmlNodePtr files_node = xpath_ctx->node;
+    xmlNodePtr files_node;
     struct isds_list *document, *prev_document = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!documents) return IE_INVAL;
     isds_list_free(documents);
     if (!xpath_ctx) return IE_INVAL;
+    files_node = xpath_ctx->node;
 
     /* Find documents */
     result = xmlXPathEvalExpression(BAD_CAST "isds:dmFile", xpath_ctx);
@@ -4344,13 +4346,14 @@ static isds_error extract_event(struct isds_ctx *context,
         struct isds_event **event, xmlXPathContextPtr xpath_ctx) {
     isds_error err = IE_SUCCESS;
     xmlXPathObjectPtr result = NULL;
-    xmlNodePtr event_node = xpath_ctx->node;
+    xmlNodePtr event_node;
     char *string = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!event) return IE_INVAL;
     isds_event_free(event);
     if (!xpath_ctx) return IE_INVAL;
+    event_node = xpath_ctx->node;
 
     *event = calloc(1, sizeof(**event));
     if (!*event) {
@@ -4402,12 +4405,13 @@ static isds_error extract_events(struct isds_ctx *context,
         struct isds_list **events, xmlXPathContextPtr xpath_ctx) {
     isds_error err = IE_SUCCESS;
     xmlXPathObjectPtr result = NULL;
-    xmlNodePtr events_node = xpath_ctx->node;
+    xmlNodePtr events_node;
     struct isds_list *event, *prev_event = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!events) return IE_INVAL;
     if (!xpath_ctx) return IE_INVAL;
+    events_node = xpath_ctx->node;
 
     /* Free old list */
     isds_list_free(events);
