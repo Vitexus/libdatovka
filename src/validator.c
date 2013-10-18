@@ -86,7 +86,7 @@ _hidden isds_error isds_response_status(struct isds_ctx *context,
         goto leave;
     }
     *code = xmlXPathCastNodeSetToString(result->nodesetval);
-    if (!code) {
+    if (NULL == *code) {
         err = IE_ERROR;
         goto leave;
     }
@@ -105,7 +105,7 @@ _hidden isds_error isds_response_status(struct isds_ctx *context,
             *message = NULL;
         } else {
             *message = xmlXPathCastNodeSetToString(result->nodesetval);
-            if (!message) {
+            if (NULL == *message) {
                 err = IE_ERROR;
                 goto leave;
             }
@@ -129,7 +129,7 @@ _hidden isds_error isds_response_status(struct isds_ctx *context,
             *refnumber = NULL;
         } else {
             *refnumber = xmlXPathCastNodeSetToString(result->nodesetval);
-            if (!message) {
+            if (NULL == *refnumber) {
                 err = IE_ERROR;
                 goto leave;
             }
