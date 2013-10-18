@@ -869,6 +869,20 @@ static isds_error http(struct isds_ctx *context,
         }
     }
 
+    {
+        /* Debug cURL if requested */
+        _Bool debug_curl =
+            ((log_facilities & ILF_HTTP) && (log_level >= ILL_DEBUG));
+        if (!curl_err) {
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_VERBOSE,
+                    (debug_curl) ? 1 : 0);
+        }
+        if (!curl_err) {
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_DEBUGFUNCTION,
+                    (debug_curl) ? log_curl : NULL);
+        }
+    }
+
     /* Check for errors so far */
     if (curl_err) {
         isds_log_message(context, curl_easy_strerror(curl_err));
@@ -883,13 +897,6 @@ static isds_error http(struct isds_ctx *context,
                 _("POST body length: %zu, content follows:\n"), request_length);
         isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n", request_length, request);
         isds_log(ILF_HTTP, ILL_DEBUG, _("End of POST body\n"));
-    }
-    if ((log_facilities & ILF_HTTP) && (log_level >= ILL_DEBUG) ) {
-        curl_easy_setopt(context->curl, CURLOPT_VERBOSE, 1);
-        curl_easy_setopt(context->curl, CURLOPT_DEBUGFUNCTION, log_curl);
-    } else {
-        curl_easy_setopt(context->curl, CURLOPT_VERBOSE, 0);
-        curl_easy_setopt(context->curl, CURLOPT_DEBUGFUNCTION, NULL);
     }
     
 
