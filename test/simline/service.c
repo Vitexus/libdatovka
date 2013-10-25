@@ -594,8 +594,7 @@ static http_error check_passwd(
 
     if (NULL == username || NULL == current_password ||
             NULL == code || NULL == pass_message) {
-        error = HTTP_ERROR_SERVER;
-        goto leave;
+        return HTTP_ERROR_SERVER;
     }
 
     *code = "9999";
