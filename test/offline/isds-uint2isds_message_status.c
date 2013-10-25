@@ -53,9 +53,12 @@ int main(int argc, char **argv) {
     };
 
 
-    isds_init();
+    if (isds_init())
+        ABORT_UNIT("isds_init() failed\n");
+
     context = isds_ctx_create();
-    if (!context) ABORT_UNIT("Could not create ISDS context");
+    if (!context)
+        ABORT_UNIT("Could not create ISDS context");
 
     /* Valid input */
     for (int i = 0; i < sizeof(numbers)/sizeof(numbers[0]); i++) {

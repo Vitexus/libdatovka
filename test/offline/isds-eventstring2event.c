@@ -68,7 +68,8 @@ int main(int argc, char **argv) {
     };
 
 
-    isds_init();
+    if (isds_init())
+        ABORT_UNIT("isds_init() failed\n");
 
     /* Known event prefixes */
     input = BAD_CAST "EV0: some text";
