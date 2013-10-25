@@ -577,7 +577,7 @@ static int find_content_length(struct http_request *request) {
 
     if (header != NULL && header->value != NULL) {
         char *p;
-        long long int value = strtol(header->value, &p, 10);
+        long long int value = strtoll(header->value, &p, 10);
         if (*p != '\0')
             return HTTP_ERROR_CLIENT;
         if ((value == LLONG_MIN || value == LLONG_MAX) && errno == ERANGE)
