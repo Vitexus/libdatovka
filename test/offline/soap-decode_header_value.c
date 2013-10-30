@@ -6,6 +6,7 @@ static int test_decode_header_value(const char *input,
     char *decoded;
 
     decoded = decode_header_value(input);
+    TEST_DESTRUCTOR(free, decoded);
     TEST_STRING_DUPLICITY(correct_output, decoded);
     PASS_TEST;
 }
