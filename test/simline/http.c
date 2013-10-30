@@ -509,7 +509,10 @@ static int http_parse_header(char *line, struct http_request *request) {
         if (new_header == NULL) return HTTP_ERROR_SERVER;
 
         char *p = strstr(line, ": ");
-        if (p == NULL) return HTTP_ERROR_CLIENT;
+        if (p == NULL) {
+            http_header_free(&new_header);
+            return HTTP_ERROR_CLIENT;
+        }
 
         size_t length = p - line;
         new_header->name = malloc(sizeof(line[0]) * (length + 1));
