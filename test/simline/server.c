@@ -82,13 +82,18 @@ int listen_on_socket(void) {
         if (fd == -1) continue;
 
         retval = bind(fd, address->ai_addr, address->ai_addrlen);
-        if (retval != 0) continue;
+        if (retval != 0) {
+            close(fd);
+            continue;
+        }
 
         retval = listen(fd, 0);
         if (retval == 0) {
             freeaddrinfo(addresses);
             return fd;
         }
+
+        close(fd);
     }
 
     freeaddrinfo(addresses);
