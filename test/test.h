@@ -15,6 +15,8 @@
 
 char *unit_name, *reason = NULL;
 unsigned int passed, failed;
+void (*test_destructor_function)(void *) = NULL;
+void *test_destructor_argument;
 
 #define INIT_TEST(name) { \
     setlocale(LC_ALL, "C"); \
@@ -29,7 +31,14 @@ unsigned int passed, failed;
     exit(failed ? EXIT_FAILURE : EXIT_SUCCESS ); \
 }
 
+#define TEST_DESTRUCTOR(function, argument) { \
+    test_destructor_function = function; \
+    test_destructor_argument = argument; \
+}
+
 #define PASS_TEST { \
+    if (NULL != test_destructor_function) \
+        test_destructor_function(test_destructor_argument); \
     return 0; \
 } \
 
@@ -40,6 +49,8 @@ unsigned int passed, failed;
 
 #define FAIL_TEST(...) { \
     FAILURE_REASON(__VA_ARGS__); \
+    if (NULL != test_destructor_function) \
+        test_destructor_function(test_destructor_argument); \
     return 1; \
 }
 
@@ -52,6 +63,7 @@ unsigned int passed, failed;
 #define TEST(name, function, ...) { \
     const char *test_message; \
     free(reason); reason = NULL; \
+    test_destructor_function = NULL; \
     int status = (function)(__VA_ARGS__); \
     if (status) { \
         failed++; \
