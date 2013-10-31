@@ -145,7 +145,7 @@ void isds_hash_free(struct isds_hash **hash) {
 
 
 /* Deallocate structure isds_PersonName recursively and NULL it */
-static void isds_PersonName_free(struct isds_PersonName **person_name) {
+void isds_PersonName_free(struct isds_PersonName **person_name) {
     if (!person_name || !*person_name) return;
 
     free((*person_name)->pnFirstName);
@@ -159,7 +159,7 @@ static void isds_PersonName_free(struct isds_PersonName **person_name) {
 
 
 /* Deallocate structure isds_BirthInfo recursively and NULL it */
-static void isds_BirthInfo_free(struct isds_BirthInfo **birth_info) {
+void isds_BirthInfo_free(struct isds_BirthInfo **birth_info) {
     if (!birth_info || !*birth_info) return;
 
     free((*birth_info)->biDate);
@@ -173,7 +173,7 @@ static void isds_BirthInfo_free(struct isds_BirthInfo **birth_info) {
 
 
 /* Deallocate structure isds_Address recursively and NULL it */
-static void isds_Address_free(struct isds_Address **address) {
+void isds_Address_free(struct isds_Address **address) {
     if (!address || !*address) return;
 
     free((*address)->adCity);

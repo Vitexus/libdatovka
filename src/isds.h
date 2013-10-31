@@ -1690,6 +1690,15 @@ void isds_list_free(struct isds_list **list);
  * @hash  hash to to free */
 void isds_hash_free(struct isds_hash **hash);
 
+/* Deallocate structure isds_PersonName recursively and NULL it */
+void isds_PersonName_free(struct isds_PersonName **person_name);
+
+/* Deallocate structure isds_BirthInfo recursively and NULL it */
+void isds_BirthInfo_free(struct isds_BirthInfo **birth_info);
+
+/* Deallocate structure isds_Address recursively and NULL it */
+void isds_Address_free(struct isds_Address **address);
+
 /* Deallocate structure isds_DbOwnerInfo recursively and NULL it */
 void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info);
 
