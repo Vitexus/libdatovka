@@ -22,7 +22,7 @@ TESTS = prepare_environment \
 		compute_hash context guess_raw_type init_gpgpme isds_init load_raw \
 		normalize_mime_type utf82locale \
 		isds_list_free isds_pki_credentials_free isds_hash_free \
-		isds_PersonName_free isds_BirthInfo_free \
+		isds_PersonName_free isds_BirthInfo_free isds_Address_free \
 		isds_DbOwnerInfo_free isds_DbUserInfo_free isds_event_free \
 		isds_envelope_free isds_document_free isds_message_free \
 		isds_message_copy_free isds_message_status_change_free isds_approval_free \
@@ -136,6 +136,7 @@ isds_pki_credentials_free_SOURCES 	= isds_pki_credentials_free.c $(common)
 isds_hash_free_SOURCES 	= isds_hash_free.c $(common)
 isds_PersonName_free_SOURCES 	= isds_PersonName_free.c $(common)
 isds_BirthInfo_free_SOURCES 	= isds_BirthInfo_free.c $(common)
+isds_Address_free_SOURCES 	= isds_Address_free.c $(common)
 isds_DbOwnerInfo_free_SOURCES 	= isds_DbOwnerInfo_free.c $(common)
 isds_DbUserInfo_free_SOURCES 	= isds_DbUserInfo_free.c $(common)
 isds_event_free_SOURCES 	= isds_event_free.c $(common)
