@@ -153,7 +153,6 @@ int main(int argc, char **argv) {
     int error;
     pid_t server_process;
     struct isds_ctx *context = NULL;
-    char *url = NULL;
 
     INIT_TEST("isds_get_commercial_credit");
 
@@ -171,6 +170,7 @@ int main(int argc, char **argv) {
     }
 
     {
+        char *url = NULL;
         const char *box_id = "abcefgh";
         const struct tm from_date = {
             .tm_year = 1,
@@ -376,9 +376,10 @@ int main(int argc, char **argv) {
             isds_cleanup();
             ABORT_UNIT(server_error);
         }
-
         TEST("login", test_login, IE_SUCCESS,
                 context, url, username, password, NULL, NULL);
+        free(url);
+
         TEST("NULL box_id", test_isds_get_commercial_credit, IE_INVAL,
                 context, NULL, NULL, NULL, NULL, NULL, NULL);
         TEST("All data", test_isds_get_commercial_credit, IE_SUCCESS,
@@ -388,15 +389,60 @@ int main(int argc, char **argv) {
                 context, "1", &from_date, &to_date, &credit, &email,
                 &history);
         TEST("No history", test_isds_get_commercial_credit, IE_SUCCESS,
+                context, box_id, &from_date, &to_date, &credit, &email, NULL);
+
+        isds_logout(context);
+        if (stop_server(server_process)) {
+            ABORT_UNIT(server_error);
+        }
+    }
+
+
+    {
+        char *url = NULL;
+        const char *box_id = "abcefgh";
+        const long int credit = 42;
+        const char *email = "joe@example.com";
+
+        const struct arguments_DS_df_DataBoxCreditInfo service_arguments = {
+            .status_code = "0000",
+            .status_message = "Ok.",
+            .box_id = box_id,
+            .from_date = NULL,
+            .to_date = NULL,
+            .current_credit = credit,
+            .email = email,
+            .history = NULL
+        };
+        const struct service_configuration services[] = {
+            { SERVICE_DS_Dz_DummyOperation, NULL },
+            { SERVICE_DS_df_DataBoxCreditInfo, &service_arguments },
+            { SERVICE_END, NULL }
+        };
+        const struct arguments_basic_authentication server_arguments = {
+            .username = username,
+            .password = password,
+            .isds_deviations = 1,
+            .services = services
+        };
+        error = start_server(&server_process, &url,
+                server_basic_authentication, &server_arguments, NULL);
+        if (error == -1) {
+            isds_ctx_free(&context);
+            isds_cleanup();
+            ABORT_UNIT(server_error);
+        }
+        TEST("login", test_login, IE_SUCCESS,
+                context, url, username, password, NULL, NULL);
+        free(url);
+
+        TEST("No dates", test_isds_get_commercial_credit, IE_SUCCESS,
                 context, box_id, NULL, NULL, &credit, &email, NULL);
 
         isds_logout(context);
         if (stop_server(server_process)) {
             ABORT_UNIT(server_error);
         }
-    
-        free(url);
-        url = NULL;
     }
 
 

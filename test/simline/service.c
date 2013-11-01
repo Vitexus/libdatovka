@@ -546,6 +546,7 @@ static http_error service_DataBoxCreditInfo(
         code = "9999";
         message = strdup("Unexpected isds:ciFromDate value");
         error = HTTP_ERROR_CLIENT;
+        goto leave;
     }
 
     ELEMENT_EXISTS("isds:ciTodate", 0);
@@ -554,6 +555,7 @@ static http_error service_DataBoxCreditInfo(
         code = "9999";
         message = strdup("Unexpected isds:ciTodate value");
         error = HTTP_ERROR_CLIENT;
+        goto leave;
     }
 
     INSERT_LONGINTPTR(isds_response, "currentCredit",
