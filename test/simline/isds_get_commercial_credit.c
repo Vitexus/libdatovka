@@ -33,6 +33,19 @@ static int test_login(const isds_error error, struct isds_ctx *context,
     PASS_TEST;
 }
 
+struct test_destructor_argument {
+    char *returned_email;
+    struct isds_list *returned_history;
+};
+
+static void test_destructor(void *argument) {
+    if (NULL == argument) return;
+    free(((struct test_destructor_argument *)argument)->returned_email); 
+    isds_list_free(
+            &((struct test_destructor_argument *)argument)->returned_history
+    ); 
+}
+
 static int test_isds_get_commercial_credit(const isds_error error,
         struct isds_ctx *context, const char *box_id,
         const struct tm *from_date, const struct tm *to_date,
@@ -40,8 +53,12 @@ static int test_isds_get_commercial_credit(const isds_error error,
         const struct isds_list *history) {
     isds_error returned_error;
     long int returned_credit = -1;
-    char *returned_email = strdup("foo");
-    struct isds_list *returned_history = NULL;
+
+    struct test_destructor_argument allocated = {
+        .returned_email = strdup("foo"),
+        .returned_history = NULL
+    };
+
     const struct isds_list *item;
     struct isds_list *returned_item;
     const struct isds_credit_event *event;
@@ -50,29 +67,29 @@ static int test_isds_get_commercial_credit(const isds_error error,
     returned_error = isds_get_commercial_credit(context, box_id,
             from_date, to_date,
             (NULL == credit) ? NULL : &returned_credit,
-            (NULL == email) ? NULL : &returned_email,
-            (NULL == history) ? NULL : &returned_history);
+            (NULL == email) ? NULL : &allocated.returned_email,
+            (NULL == history) ? NULL : &allocated.returned_history);
+    TEST_DESTRUCTOR(test_destructor, &allocated);
 
     if (error != returned_error) {
-        FAILURE_REASON("Wrong return code: expected=%s, returned=%s (%s)",
+        FAIL_TEST("Wrong return code: expected=%s, returned=%s (%s)",
                 isds_strerror(error), isds_strerror(returned_error),
                 isds_long_message(context));
-        goto fail;
     }
 
     if (IE_SUCCESS != returned_error) {
-        if (NULL != email && NULL != returned_email)
+        if (NULL != email && NULL != allocated.returned_email)
             FAIL_TEST("email is not NULL on error");
-        if (NULL != history && NULL != returned_history)
+        if (NULL != history && NULL != allocated.returned_history)
             FAIL_TEST("history is not NULL on error");
         PASS_TEST;
     }
 
     if (NULL != email)
-        TEST_STRING_DUPLICITY(*email, returned_email);
+        TEST_STRING_DUPLICITY(*email, allocated.returned_email);
     if (NULL != credit)
         TEST_INT_DUPLICITY(*credit, returned_credit);
-    for (item = history, returned_item = returned_history;
+    for (item = history, returned_item = allocated.returned_history;
             NULL != item;
             item = item->next, returned_item = returned_item->next) {
         if (NULL == returned_item)
@@ -129,14 +146,7 @@ static int test_isds_get_commercial_credit(const isds_error error,
         FAIL_TEST("Returned history has too many items");
 
     
-    free(returned_email);
-    isds_list_free(&returned_history);
     PASS_TEST;
-
-fail:
-    free(returned_email);
-    isds_list_free(&returned_history);
-    return 1;
 }
 
 int main(int argc, char **argv) {
@@ -380,6 +390,7 @@ int main(int argc, char **argv) {
         TEST("No history", test_isds_get_commercial_credit, IE_SUCCESS,
                 context, box_id, NULL, NULL, &credit, &email, NULL);
 
+        isds_logout(context);
         if (stop_server(server_process)) {
             ABORT_UNIT(server_error);
         }
@@ -389,7 +400,6 @@ int main(int argc, char **argv) {
     }
 
 
-    isds_logout(context);
     isds_ctx_free(&context);
     isds_cleanup();
     SUM_TEST();
