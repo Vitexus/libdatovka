@@ -1,8 +1,10 @@
 #include "../test.h"
 #include "isds.h"
+#include <string.h>
 
 static int test_isds_DbOwnerInfo_duplicate(struct isds_DbOwnerInfo *origin) {
     struct isds_DbOwnerInfo *copy = isds_DbOwnerInfo_duplicate(origin);
+    TEST_DESTRUCTOR((void(*)(void*))isds_DbOwnerInfo_free, &copy);
 
     if (!origin) {
         if (copy) 
@@ -100,9 +102,9 @@ int main(int argc, char **argv) {
     
     TEST("NULL", test_isds_DbOwnerInfo_duplicate, NULL);
 
-    struct isds_DbOwnerInfo *empty;
-    TEST_CALLOC(empty);
-    TEST("Empty structure", test_isds_DbOwnerInfo_duplicate, empty);
+    struct isds_DbOwnerInfo empty;
+    memset(&empty, 0, sizeof(empty));
+    TEST("Empty structure", test_isds_DbOwnerInfo_duplicate, &empty);
 
     /* Full structure */
     isds_DbType dbType = 2;
