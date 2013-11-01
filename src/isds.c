@@ -206,6 +206,7 @@ void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info) {
     free((*db_owner_info)->registryCode);
     free((*db_owner_info)->dbState);
     free((*db_owner_info)->dbEffectiveOVM);
+    free((*db_owner_info)->dbOpenAddressing);
     
     free(*db_owner_info);
     *db_owner_info = NULL;
