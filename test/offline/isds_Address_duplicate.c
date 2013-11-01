@@ -1,8 +1,10 @@
 #include "../test.h"
 #include "isds.h"
+#include <string.h>
 
 static int test_isds_Address_duplicate(struct isds_Address *origin) {
     struct isds_Address *copy = isds_Address_duplicate(origin);
+    TEST_DESTRUCTOR((void(*)(void*))isds_Address_free, (void *)&copy);
 
     if (!origin) {
         if (copy) 
@@ -34,9 +36,9 @@ int main(int argc, char **argv) {
     
     TEST("NULL", test_isds_Address_duplicate, NULL);
 
-    struct isds_Address *empty;
-    TEST_CALLOC(empty);
-    TEST("Empty structure", test_isds_Address_duplicate, empty);
+    struct isds_Address empty;
+    memset(&empty, 0, sizeof(empty));
+    TEST("Empty structure", test_isds_Address_duplicate, &empty);
 
     /* Full structure */
     struct isds_Address full = {
