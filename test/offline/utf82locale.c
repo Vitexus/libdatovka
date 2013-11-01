@@ -23,10 +23,10 @@ static int test_utf82locale(const void *input, const void *correct) {
     void *output = NULL;
 
     output = _isds_utf82locale(input);
+    TEST_DESTRUCTOR(free, output);
 
     TEST_STRING_DUPLICITY(correct, output);
 
-    free(output);
     PASS_TEST;
 }
 
