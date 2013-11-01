@@ -1,35 +1,36 @@
 #include "../test.h"
 #include "isds.c"
 
+static void test_destructor(void *argument) {
+    if (NULL != argument) zfree(*(void **)argument);
+}
+
 static int test_timeval2timestring(const struct timeval* time,
         const isds_error error, const xmlChar *correct_string,
         xmlChar **new_string) {
     isds_error err;
 
     err = timeval2timestring(time, new_string);
-    if (err != error) {
-        if (new_string) zfree(*new_string);
+    TEST_DESTRUCTOR(test_destructor, new_string);
+
+    if (err != error)
         FAIL_TEST("timeval2timetring() returned unexpected code: "
                 "expected=%s got=%s", isds_strerror(error), isds_strerror(err));
-    }
 
-    if (err) {
-        if (new_string) zfree(*new_string);
-        PASS_TEST;
-    }
-
-    if (!*new_string && !correct_string)
+    if (err)
         PASS_TEST;
 
-    if (!correct_string || !*new_string ||
-            xmlStrcmp(correct_string, *new_string)) {
-        FAILURE_REASON("Wrong time string returned: expected=`%s', got=`%s'",
+    if (NULL == new_string)
+        PASS_TEST;
+
+    if (NULL == correct_string && NULL == *new_string)
+        PASS_TEST;
+
+    if (NULL == correct_string || NULL == *new_string ||
+            xmlStrcmp(correct_string, *new_string))
+        FAIL_TEST("Wrong time string returned: expected=`%s', got=`%s'",
                 correct_string, *new_string);
-        if (new_string) zfree(*new_string);
-        return 1;
-    }
 
-    if (new_string) zfree(*new_string);
     PASS_TEST;
 }
 
