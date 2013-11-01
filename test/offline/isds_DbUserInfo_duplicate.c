@@ -50,21 +50,7 @@ static int test_isds_DbUserInfo_duplicate(struct isds_DbUserInfo *origin) {
                 copy->address->adState);
     }
 
-    /* Date of birth */
-    TEST_POINTER_DUPLICITY(origin->biDate,
-            copy->biDate);
-    if(origin->biDate && copy->biDate) {
-        if (origin->biDate->tm_year != copy->biDate->tm_year)
-            FAIL_TEST("biDate differs in tm_year: expected=%d, got=%d",
-                    origin->biDate->tm_year, copy->biDate->tm_year);
-        if (origin->biDate->tm_mon != copy->biDate->tm_mon)
-            FAIL_TEST("biDate differs in tm_mon: expected=%d, got=%d",
-                    origin->biDate->tm_mon, copy->biDate->tm_mon);
-        if (origin->biDate->tm_mday != copy->biDate->tm_mday)
-            FAIL_TEST("biDate differs in tm_mday: expected=%d, got=%d",
-                    origin->biDate->tm_mday, copy->biDate->tm_mday);
-    }
-
+    TEST_TMPTR_DUPLICITY(origin->biDate, copy->biDate);
     TEST_INTPTR_DUPLICITY(origin->ic, copy->ic);
     TEST_INTPTR_DUPLICITY(origin->firmName, copy->firmName);
     TEST_INTPTR_DUPLICITY(origin->caStreet, copy->caStreet);
