@@ -151,6 +151,9 @@ int main(int argc, char **argv) {
             server_otp_arguments.method = AUTH_OTP_TIME;
         } else if (otp_type == 'h') {
             server_otp_arguments.method = AUTH_OTP_HMAC;
+        } else {
+            fprintf(stderr, "Internal error: Uknown OTP type: %c\n", otp_type);
+            exit(EXIT_FAILURE);
         }
         service_passwdotp_arguments.method = server_otp_arguments.method;
         server_otp_arguments.username = username;
