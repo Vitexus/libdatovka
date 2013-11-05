@@ -1,34 +1,35 @@
 #include "../test.h"
 #include "isds.c"
 
+static void test_destructor(void *string) {
+    if (NULL != string) zfree(*(void **)string);
+}
+
 static int test_tm2datestring(const struct tm* date, const isds_error error,
         const xmlChar *correct_string, xmlChar **new_string) {
     isds_error err;
 
     err = tm2datestring(date, new_string);
-    if (err != error) {
-        if (new_string) zfree(*new_string);
+    TEST_DESTRUCTOR(test_destructor, new_string);
+
+    if (err != error)
         FAIL_TEST("tm2datestring() returned unexpected code: "
                 "expected=%s got=%s", isds_strerror(error), isds_strerror(err));
-    }
 
-    if (err) {
-        if (new_string) zfree(*new_string);
-        PASS_TEST;
-    }
-
-    if (!*new_string && !correct_string)
+    if (err)
         PASS_TEST;
 
-    if (!correct_string || !*new_string ||
-            xmlStrcmp(correct_string, *new_string)) {
-        if (new_string) zfree(*new_string);
-        FAILURE_REASON("Wrong date string returned: expected=`%s', got=`%s'",
+    if (NULL == new_string)
+        PASS_TEST;
+
+    if (NULL == *new_string && NULL != correct_string)
+        PASS_TEST;
+
+    if (NULL == correct_string || NULL == *new_string ||
+            xmlStrcmp(correct_string, *new_string))
+        FAIL_TEST("Wrong date string returned: expected=`%s', got=`%s'",
                 correct_string, *new_string);
-        return 1;
-    }
 
-    if (new_string) zfree(*new_string);
     PASS_TEST;
 }
 
