@@ -35,9 +35,6 @@ static int test_b64decode(const void *input, const void *correct,
         FAIL_TEST("Output length differs: expected=%zd, got=%zd",
                 correct_length, length);
     }
-
-    free(output);
-    FAIL_TEST("Test could not been judged -- Internal test error");
 }
 
 
