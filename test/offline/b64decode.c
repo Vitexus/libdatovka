@@ -8,19 +8,16 @@ static int test_b64decode(const void *input, const void *correct,
     size_t length;
 
     length = _isds_b64decode(input, &output);
+    TEST_DESTRUCTOR(free, output);
 
     if (length == correct_length) {
         if (length != -1) {
             if (!memcmp(correct, output, length)) {
-                free(output);
                 PASS_TEST;
             } else {
-                free(output);
                 FAIL_TEST("Output length matches, but content differs");
             }
         } else {
-            free(output);
-
             if (output == NULL) {
                 PASS_TEST;
             } else {
@@ -29,7 +26,6 @@ static int test_b64decode(const void *input, const void *correct,
             }
         }
     } else {
-        free(output);
         /* Format as signed to get -1 as error. Big positive numbers should
          * not occure in these tests */
         FAIL_TEST("Output length differs: expected=%zd, got=%zd",
