@@ -594,7 +594,7 @@ Error codes:
 GetDataBoxList (*)
 ==============
 
-Get comma-separete list of all boxes of given type.
+Get comma-separate list of all boxes of given type.
 
 Input is type of boxes of interrest (dblType element):
 
