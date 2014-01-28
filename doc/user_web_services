@@ -5,7 +5,7 @@ Source: Provozní řád ISDS, version 2010-11-28, Pages 15–16
 Source: Webové služby rozhraní ISDS pro manipulaci s datovými zprávami,
     version 2.32 (2012-10-05)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
-    version 2.35 (2013-04-16)
+    version 2.37 (2014-01-14)
 
 
 These services are intended for working with messages inside a box by
@@ -600,11 +600,17 @@ Input is type of boxes of interrest (dblType element):
 
 Value   Description             File name           Permission
 -------------------------------------------------------------------------------
-ALL     All types of boxes      actdsYYYYMMDD.csv   OVM or OVM_REQ user
+ALL     All active boxes        actdsYYYYMMDD.csv   OVM or OVM_REQ user
                                                     authenticated by commercial
                                                     certificate or user with
                                                     PRIVIL_BILLING permission
-UPG     Effectively OVM boxes   effovmYYYYMMDD.csv  Anybody
+UPG     Effectively OVM active  effovmYYYYMMDD.csv  Anybody
+        boxes   
+
+Non-normative: Following types are not documented anymore.
+
+Value   Description             File name           Permission
+-------------------------------------------------------------------------------
 OVM     OVM gross type boxes    ovmYYYYMMDD.csv     PRIVIL_BILLING only
 OPN     Boxes that allow to     opendsYYYYMMDD.csv  PRIVIL_BILLING only
         receive commercial
