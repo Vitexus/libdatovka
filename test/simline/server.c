@@ -3,7 +3,10 @@
 #endif
 
 #ifndef _BSD_SOURCE
-#define _BSD_SOURCE   /* For NI_MAXHOST */
+#define _BSD_SOURCE   /* For NI_MAXHOST up to glibc-2.19 */
+#endif
+#ifndef _DEFAULT_SOURCE
+#define _DEFAULT_SOURCE   /* For NI_MAXHOST since glibc-2.20 */
 #endif
 
 #include "../test-tools.h"
