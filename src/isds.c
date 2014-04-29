@@ -474,18 +474,18 @@ error:
 
 /* Copy structure isds_PersonName recursively */
 struct isds_PersonName *isds_PersonName_duplicate(
-        const struct isds_PersonName *template) {
+        const struct isds_PersonName *src) {
     struct isds_PersonName *new = NULL;
 
-    if (!template) return NULL;
+    if (!src) return NULL;
 
     new = calloc(1, sizeof(*new));
     if (!new) return NULL;
 
-    STRDUP_OR_ERROR(new->pnFirstName, template->pnFirstName);
-    STRDUP_OR_ERROR(new->pnMiddleName, template->pnMiddleName);
-    STRDUP_OR_ERROR(new->pnLastName, template->pnLastName);
-    STRDUP_OR_ERROR(new->pnLastNameAtBirth, template->pnLastNameAtBirth);
+    STRDUP_OR_ERROR(new->pnFirstName, src->pnFirstName);
+    STRDUP_OR_ERROR(new->pnMiddleName, src->pnMiddleName);
+    STRDUP_OR_ERROR(new->pnLastName, src->pnLastName);
+    STRDUP_OR_ERROR(new->pnLastNameAtBirth, src->pnLastNameAtBirth);
 
     return new;
     
@@ -520,21 +520,21 @@ error:
 
 /* Copy structure isds_Address recursively */
 struct isds_Address *isds_Address_duplicate(
-        const struct isds_Address *template) {
+        const struct isds_Address *src) {
     struct isds_Address *new = NULL;
 
-    if (!template) return NULL;
+    if (!src) return NULL;
 
     new = calloc(1, sizeof(*new));
     if (!new) return NULL;
 
-    STRDUP_OR_ERROR(new->adCity, template->adCity);
-    STRDUP_OR_ERROR(new->adStreet, template->adStreet);
-    STRDUP_OR_ERROR(new->adNumberInStreet, template->adNumberInStreet);
+    STRDUP_OR_ERROR(new->adCity, src->adCity);
+    STRDUP_OR_ERROR(new->adStreet, src->adStreet);
+    STRDUP_OR_ERROR(new->adNumberInStreet, src->adNumberInStreet);
     STRDUP_OR_ERROR(new->adNumberInMunicipality,
-            template->adNumberInMunicipality);
-    STRDUP_OR_ERROR(new->adZipCode, template->adZipCode);
-    STRDUP_OR_ERROR(new->adState, template->adState);
+            src->adNumberInMunicipality);
+    STRDUP_OR_ERROR(new->adZipCode, src->adZipCode);
+    STRDUP_OR_ERROR(new->adState, src->adState);
     
     return new;
     
@@ -546,44 +546,44 @@ error:
 
 /* Copy structure isds_DbOwnerInfo recursively */
 struct isds_DbOwnerInfo *isds_DbOwnerInfo_duplicate(
-        const struct isds_DbOwnerInfo *template) {
+        const struct isds_DbOwnerInfo *src) {
     struct isds_DbOwnerInfo *new = NULL;
-    if (!template) return NULL;
+    if (!src) return NULL;
 
     new = calloc(1, sizeof(*new));
     if (!new) return NULL;
 
-    STRDUP_OR_ERROR(new->dbID, template->dbID);
-    FLATDUP_OR_ERROR(new->dbType, template->dbType);
-    STRDUP_OR_ERROR(new->ic, template->ic);
+    STRDUP_OR_ERROR(new->dbID, src->dbID);
+    FLATDUP_OR_ERROR(new->dbType, src->dbType);
+    STRDUP_OR_ERROR(new->ic, src->ic);
 
-    if (template->personName) {
+    if (src->personName) {
         if (!(new->personName =
-                    isds_PersonName_duplicate(template->personName)))
+                    isds_PersonName_duplicate(src->personName)))
             goto error;
     }
 
-    STRDUP_OR_ERROR(new->firmName, template->firmName);
+    STRDUP_OR_ERROR(new->firmName, src->firmName);
 
-    if (template->birthInfo) {
+    if (src->birthInfo) {
         if (!(new->birthInfo =
-                    isds_BirthInfo_duplicate(template->birthInfo)))
+                    isds_BirthInfo_duplicate(src->birthInfo)))
             goto error;
     }
 
-    if (template->address) {
-        if (!(new->address = isds_Address_duplicate(template->address)))
+    if (src->address) {
+        if (!(new->address = isds_Address_duplicate(src->address)))
             goto error;
     }
     
-    STRDUP_OR_ERROR(new->nationality, template->nationality);
-    STRDUP_OR_ERROR(new->email, template->email);
-    STRDUP_OR_ERROR(new->telNumber, template->telNumber);
-    STRDUP_OR_ERROR(new->identifier, template->identifier);
-    STRDUP_OR_ERROR(new->registryCode, template->registryCode);
-    FLATDUP_OR_ERROR(new->dbState, template->dbState);
-    FLATDUP_OR_ERROR(new->dbEffectiveOVM, template->dbEffectiveOVM);
-    FLATDUP_OR_ERROR(new->dbOpenAddressing, template->dbOpenAddressing);
+    STRDUP_OR_ERROR(new->nationality, src->nationality);
+    STRDUP_OR_ERROR(new->email, src->email);
+    STRDUP_OR_ERROR(new->telNumber, src->telNumber);
+    STRDUP_OR_ERROR(new->identifier, src->identifier);
+    STRDUP_OR_ERROR(new->registryCode, src->registryCode);
+    FLATDUP_OR_ERROR(new->dbState, src->dbState);
+    FLATDUP_OR_ERROR(new->dbEffectiveOVM, src->dbEffectiveOVM);
+    FLATDUP_OR_ERROR(new->dbOpenAddressing, src->dbOpenAddressing);
 
     return new;
     
@@ -595,35 +595,35 @@ error:
 
 /* Copy structure isds_DbUserInfo recursively */
 struct isds_DbUserInfo *isds_DbUserInfo_duplicate(
-        const struct isds_DbUserInfo *template) {
+        const struct isds_DbUserInfo *src) {
     struct isds_DbUserInfo *new = NULL;
-    if (!template) return NULL;
+    if (!src) return NULL;
 
     new = calloc(1, sizeof(*new));
     if (!new) return NULL;
 
-    STRDUP_OR_ERROR(new->userID, template->userID);
-    FLATDUP_OR_ERROR(new->userType, template->userType);
-    FLATDUP_OR_ERROR(new->userPrivils, template->userPrivils);
+    STRDUP_OR_ERROR(new->userID, src->userID);
+    FLATDUP_OR_ERROR(new->userType, src->userType);
+    FLATDUP_OR_ERROR(new->userPrivils, src->userPrivils);
 
-    if (template->personName) {
+    if (src->personName) {
         if (!(new->personName =
-                    isds_PersonName_duplicate(template->personName)))
+                    isds_PersonName_duplicate(src->personName)))
             goto error;
     }
 
-    if (template->address) {
-        if (!(new->address = isds_Address_duplicate(template->address)))
+    if (src->address) {
+        if (!(new->address = isds_Address_duplicate(src->address)))
             goto error;
     }
     
-    FLATDUP_OR_ERROR(new->biDate, template->biDate);
-    STRDUP_OR_ERROR(new->ic, template->ic);
-    STRDUP_OR_ERROR(new->firmName, template->firmName);
-    STRDUP_OR_ERROR(new->caStreet, template->caStreet);
-    STRDUP_OR_ERROR(new->caCity, template->caCity);
-    STRDUP_OR_ERROR(new->caZipCode, template->caZipCode);
-    STRDUP_OR_ERROR(new->caState, template->caState);
+    FLATDUP_OR_ERROR(new->biDate, src->biDate);
+    STRDUP_OR_ERROR(new->ic, src->ic);
+    STRDUP_OR_ERROR(new->firmName, src->firmName);
+    STRDUP_OR_ERROR(new->caStreet, src->caStreet);
+    STRDUP_OR_ERROR(new->caCity, src->caCity);
+    STRDUP_OR_ERROR(new->caZipCode, src->caZipCode);
+    STRDUP_OR_ERROR(new->caState, src->caState);
 
     return new;
     

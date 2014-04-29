@@ -1741,19 +1741,19 @@ void isds_credentials_delivery_free(
 
 /* Copy structure isds_PersonName recursively */
 struct isds_PersonName *isds_PersonName_duplicate(
-        const struct isds_PersonName *template);
+        const struct isds_PersonName *src);
 
 /* Copy structure isds_Address recursively */
 struct isds_Address *isds_Address_duplicate(
-        const struct isds_Address *template);
+        const struct isds_Address *src);
 
 /* Copy structure isds_DbOwnerInfo recursively */
 struct isds_DbOwnerInfo *isds_DbOwnerInfo_duplicate(
-        const struct isds_DbOwnerInfo *template);
+        const struct isds_DbOwnerInfo *src);
 
 /* Copy structure isds_DbUserInfo recursively */
 struct isds_DbUserInfo *isds_DbUserInfo_duplicate(
-        const struct isds_DbUserInfo *template);
+        const struct isds_DbUserInfo *src);
 
 #ifdef __cplusplus  /* For C++ linker sake */
 }
