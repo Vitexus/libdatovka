@@ -16,6 +16,16 @@
 #include "physxml.h"
 #include "system.h"
 
+/* Global variables.
+ * Allocated in isds_init() and deallocated in isds_cleanup(). */
+unsigned int log_facilities;
+isds_log_level log_level;
+isds_log_callback log_callback;
+void *log_callback_data;
+const char *version_gpgme;
+const char *version_gcrypt;
+const char *version_expat;
+
 /* Locators */
 /* Base URL of production ISDS instance */
 const char isds_locator[] = "https://ws1.mojedatovaschranka.cz/";

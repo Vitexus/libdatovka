@@ -63,16 +63,16 @@ typedef enum {
 
 /* Global variables.
  * Allocated in isds_init() and deallocated in isds_cleanup(). */
-unsigned int log_facilities;
-isds_log_level log_level;
-isds_log_callback log_callback;     /* Pass global log message to application.
-                                       NULL to log to stderr itself */
-void *log_callback_data;            /* Application specific data to pass to
-                                       registered log_callback function */
-const char *version_gpgme;          /* Static string with GPGME version */
-const char *version_gcrypt;         /* Static string with gcrypt version */
-const char *version_expat;          /* Static string with expat version */
-
+extern unsigned int log_facilities;
+extern isds_log_level log_level;
+extern isds_log_callback log_callback;  /* Pass global log message to
+                                           application. NULL to log to stderr
+                                           itself */
+extern void *log_callback_data;         /* Application specific data to pass to
+                                           registered log_callback function */
+extern const char *version_gpgme;       /* Static string with GPGME version */
+extern const char *version_gcrypt;      /* Static string with gcrypt version */
+extern const char *version_expat;       /* Static string with expat version */
 /* End of global variables */
 
 /* Context */
