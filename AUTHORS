@@ -6,3 +6,6 @@ Base64 transformation <http://sourceforge.net/projects/libb64>:
 
 MinGW support:
     Martin Doucha <doucha@integri.cz>
+
+C++ and OS X portability:
+    Karel Slany <karel.slany@nic.cz>
