@@ -21,5 +21,5 @@ libisds_la_HEADERS = isds.h
 libisds_la_CPPFLAGS = @XML_CPPFLAGS@ @LIBCURL_CPPFLAGS@ \
 					  -DLOCALEDIR=\"$(localedir)\"
 libisds_la_CFLAGS = @LIBGCRYPT_CFLAGS@ @GPGME_CFLAGS@
-libisds_la_LDFLAGS = -version-info 7:0:2 @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ \
+libisds_la_LDFLAGS = -version-info 8:0:3 @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ \
 	@GPGME_LIBS@ @EXPAT_LIBS@ @LTLIBINTL@
