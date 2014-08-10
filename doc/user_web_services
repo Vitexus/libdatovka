@@ -605,7 +605,7 @@ ALL     All active boxes        actdsYYYYMMDD.csv   OVM or OVM_REQ user
                                                     certificate or user with
                                                     PRIVIL_BILLING permission
 UPG     Effectively OVM active  effovmYYYYMMDD.csv  Anybody
-        boxes   
+        boxes
 
 Non-normative: Following types are not documented anymore.
 
