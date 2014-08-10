@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.63])
-AC_INIT([libisds], [0.8], [petr.pisar@atlas.cz])
+AC_INIT([libisds], [0.9], [petr.pisar@atlas.cz])
 AM_INIT_AUTOMAKE
 AC_LANG([C])
 AC_CONFIG_SRCDIR([src/isds.c])

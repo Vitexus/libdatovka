@@ -1,3 +1,32 @@
+Version 0.9
+===========
+
+• New functions isds_PersonName_free(), isds_BirthInfo_free(), and
+isds_Address_free() have been added. Applications can use them for deallocating
+isds_PersonName, isds_BirthInfo, and isds_Address structures.
+
+• A memory leak in isds_DbOwnerInfo_free() has been fixed.
+
+• A new glibc feature-macro _DEFAULT_SOURCE is used to silent warnings about
+deprecated _SVID_SOURCE and _BSD_SOURCE macros. This is will be needed since
+glibc-2.20 although current manual pages do not document this change.
+
+• `template' identifier has been renamed in header files not to clash with C++
+keywords.
+
+• Global variable definitions have been moved from a private header file into
+compilation units to satisfy strict OS X linker.
+
+• This release is binary compatible with previous version 0.8. However
+applications built against 0.9 are not guaranteed to work with 0.8.
+
+• Documentation for GetDataBoxList SOAP service has been updated to align with
+specification released on 2014-01-14.
+
+• Internal test suite encountered many improvements (more return value checks,
+NULL pointer dereference and memory leaks fixes, closing sockets fixed, some
+code was simplified).
+
 Version 0.8
 ===========
 
