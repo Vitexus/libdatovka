@@ -1,10 +1,12 @@
 #include "../test.h"
 #include "isds.c"
 
-static int test_string2hashalgorithm(const xmlChar *name, const isds_error error,
-        const isds_hash_algorithm type) {
+static int test_string2hashalgorithm(const xmlChar *name,
+        const isds_error error, const isds_hash_algorithm type) {
     isds_error err;
-    isds_hash_algorithm new_type;
+    isds_hash_algorithm new_type = -1; /* ??? GCC-4.7.3 at -O3 complains on
+                                          possibly undefined new_type in the
+                                          `type != new_type' code. */
 
     err = string2isds_hash_algorithm(name, &new_type);
     if (err != error)
