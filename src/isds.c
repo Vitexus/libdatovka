@@ -12,7 +12,6 @@
 #endif
 #include "validator.h"
 #include "crypto.h"
-#include <gpg-error.h> /* Because of ksba or gpgme */
 #include "physxml.h"
 #include "system.h"
 
@@ -22,9 +21,9 @@ unsigned int log_facilities;
 isds_log_level log_level;
 isds_log_callback log_callback;
 void *log_callback_data;
-const char *version_gpgme;
-const char *version_gcrypt;
-const char *version_expat;
+const char *version_gpgme = "n/a";
+const char *version_gcrypt = "n/a";
+const char *version_expat = "n/a";
 
 /* Locators */
 /* Base URL of production ISDS instance */
@@ -690,24 +689,10 @@ isds_error isds_init(void) {
     }
 #endif /* HAVE_LIBCURL */
 
-    /* Initialize gpg-error because of gpgme and ksba */
-    if (gpg_err_init()) {
+    /* Initialise cryptographic back-ends. */
+    if (IE_SUCCESS != _isds_init_crypto()) {
         isds_log(ILF_ISDS, ILL_CRIT,
-                _("gpg-error library initialization failed\n"));
-        return IE_ERROR;
-    }
-
-    /* Initialize GPGME */
-    if (_isds_init_gpgme(&version_gpgme)) {
-        isds_log(ILF_ISDS, ILL_CRIT,
-                _("GPGME library initialization failed\n"));
-        return IE_ERROR;
-    }
-
-    /* Initialize gcrypt */
-    if (_isds_init_gcrypt(&version_gcrypt)) {
-        isds_log(ILF_ISDS, ILL_CRIT,
-                _("gcrypt library initialization failed\n"));
+                _("initialisation of cryptographic back-end failed\n"));
         return IE_ERROR;
     }
 

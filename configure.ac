@@ -150,6 +150,12 @@ AC_COMPILE_IFELSE(
         AC_MSG_FAILURE([Upgrade your expat to ${expat_min_version}])
 )
 
+# FIXME -- Check for openssl.
+_openssl_cflags=`pkg-config --cflags openssl`
+_openssl_ldflags=`shell pkg-config --libs openssl`
+CFLAGS="${CFLAGS} ${_openssl_cflags}"
+LDFLAGS="${LDFLAGS} ${_openssl_ldflags}"
+AM_CONDITIONAL([USE_OPENSSL], [true])
 
 # Do not consider compiler warnings as errors
 # This harms libxml configure test

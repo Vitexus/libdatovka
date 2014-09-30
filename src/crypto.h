@@ -3,10 +3,9 @@
 
 #include "isds.h"
 
-/* Initialize libgrcypt if not yet done by application or other library.
- * @current_version is static string describing current gcrypt version
- * @return IE_SUCCESS if everything is O.k. */
-isds_error _isds_init_gcrypt(const char **current_version);
+/* Initialise all cryptographic libraries which libisds depends on.
+ * @return IE_SUCCESS if everything went all-right. */
+isds_error _isds_init_crypto(void);
 
 /* Computes hash from @input with @length and store it into @hash.
  * The hash algorithm is defined inside @hash.
@@ -16,11 +15,6 @@ isds_error _isds_init_gcrypt(const char **current_version);
  * reallocated, it's always valid pointer or NULL (before and after call) */
 isds_error _isds_compute_hash(const void *input, const size_t length,
         struct isds_hash *hash);
-
-/* Initialize GPGME.
- * @current_version is pointer to static string describing current gpgme
- * @return IE_SUCCESS if everything is O.k. */
-isds_error _isds_init_gpgme(const char **current_version);
 
 /* Free CMS data buffer allocated inside _isds_extract_cms_data().
  * This is necessary because GPGME.

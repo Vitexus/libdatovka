@@ -1,343 +1,123 @@
-#include "isds_priv.h"
+
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "crypto.h"
 #include "utils.h"
-#include "gcrypt.h"
 
-#ifdef ISDS_USE_KSBA
-    #include <ksba.h>
-#endif
 
-#include <gpgme.h>
-#include <locale.h>
+/*
+ * Testing via result comparison.
+ * The only purpose of this file is to test the two cryptographic back-ends.
+ * This functions are not intended to be used in production.
+ * */
 
-/* Initialize libgrcypt if not yet done by application or other library.
- * @current_version is static string describing current gcrypt version
- * @return IE_SUCCESS if everything is O.k. */
-_hidden isds_error _isds_init_gcrypt(const char **current_version) {
-    const char *gcrypt_version;
-    
-    /* Check version and initialize gcrypt */
-    gcrypt_version = gcry_check_version(NULL);
-    if (current_version) *current_version = gcrypt_version;
-    if (!gcrypt_version)  {
-        isds_log(ILF_SEC, ILL_CRIT, _("Could not check gcrypt version\n"));
+
+isds_error _isds_init_crypto_gpg(void);
+isds_error _isds_init_crypto_openssl(void);
+
+_hidden isds_error _isds_init_crypto(void)
+{
+    if (IE_SUCCESS != _isds_init_crypto_gpg()) {
         return IE_ERROR;
     }
 
-    /* Finalize initialization if not yet done */
-    if (!gcry_control(GCRYCTL_INITIALIZATION_FINISHED_P)) {
-        /* Disable secure memory */
-        /* TODO: Allow it when implementing key authentication */
-        gcry_control (GCRYCTL_DISABLE_SECMEM, 0);
-        /* Finish initialization */
-        gcry_control(GCRYCTL_INITIALIZATION_FINISHED, 0);
+    if (IE_SUCCESS != _isds_init_crypto_openssl()) {
+        return IE_ERROR;
     }
-
-    isds_log(ILF_SEC, ILL_INFO, _("gcrypt version in use: %s\n"),
-            gcrypt_version);
 
     return IE_SUCCESS;
 }
 
 
-/* Computes hash from @input with @length and store it into @hash.
- * The hash algorithm is defined inside @hash.
- * @input is input block to hash
- * @length is @input block length in bytes
- * @hash input algorithm, output hash value and hash length; hash value will be
- * reallocated, it's always valid pointer or NULL (before and after call) */
+isds_error _isds_compute_hash_gpg(const void *input, const size_t length,
+        struct isds_hash *hash);
+isds_error _isds_compute_hash_openssl(const void *input, const size_t length,
+        struct isds_hash *hash);
+
 _hidden isds_error _isds_compute_hash(const void *input, const size_t length,
-        struct isds_hash *hash) {
-    int g_algorithm;
-    void *buffer;
+        struct isds_hash *hash)
+{
+    isds_error retval_gpg = IE_SUCCESS;
+    isds_error retval_openssl = IE_SUCCESS;
+    isds_error retval = IE_SUCCESS;
+    void *orig_hash_val = NULL;
+    size_t orig_hash_len = 0;
 
-    if ((length != 0 && !input) || !hash) return IE_INVAL;
+    retval_gpg = _isds_compute_hash_gpg(input, length, hash);
 
-    isds_log(ILF_SEC, ILL_DEBUG,
-            _("Data hash requested, length=%zu, content:\n%*s\n"
-                "End of data to hash\n"), length, length, input);
+    orig_hash_val = hash->value; hash->value = NULL;
+    orig_hash_len = hash->length; hash->length = 0;
 
-    /* Select algorithm */
-    switch (hash->algorithm) {
-        case HASH_ALGORITHM_MD5:        g_algorithm = GCRY_MD_MD5; break;
-        case HASH_ALGORITHM_SHA_1:      g_algorithm = GCRY_MD_SHA1; break;
-        case HASH_ALGORITHM_SHA_224:    g_algorithm = GCRY_MD_SHA224; break;
-        case HASH_ALGORITHM_SHA_256:    g_algorithm = GCRY_MD_SHA256; break;
-        case HASH_ALGORITHM_SHA_384:    g_algorithm = GCRY_MD_SHA384; break;
-        case HASH_ALGORITHM_SHA_512:    g_algorithm = GCRY_MD_SHA512; break;
-        default:                        return IE_NOTSUP;
+    retval_openssl = _isds_compute_hash_openssl(input, length, hash);
+
+    if (retval_gpg != retval_openssl) {
+        fprintf(stderr, "%s: Return values differ.\n", __func__);
+        assert(0);
+        retval = IE_ERROR;
+        goto fail;
     }
 
-    /* Test it's available */
-    if (gcry_md_test_algo(g_algorithm)) return IE_NOTSUP;
+    if (IE_SUCCESS != retval_gpg) {
+       retval = retval_gpg;
+       goto fail;
+    }
 
-    /* Get known the hash length and allocate buffer for hash value */
-    hash->length = gcry_md_get_algo_dlen(g_algorithm);
-    buffer = realloc(hash->value, hash->length);
-    if (!buffer) return IE_NOMEM;
-    hash->value = buffer;
+    if (orig_hash_len != hash->length) {
+        fprintf(stderr, "%s: Hash size differs %lu %lu.\n", __func__,
+            orig_hash_len, hash->length);
+        assert(0);
+        retval = IE_ERROR;
+        goto fail;
+    }
 
-    /* Compute the hash */
-    gcry_md_hash_buffer(g_algorithm, hash->value, (length)?input:"", length);
+    if (orig_hash_val == hash->value) {
+        fprintf(stderr, "%s: Hashes are in the same location.\n", __func__);
+        assert(0);
+        retval = IE_ERROR;
+        goto fail;
+    }
+
+    if (0 != memcmp(orig_hash_val, hash->value, hash->length)) {
+        fprintf(stderr, "%s: Hash value differ.\n", __func__);
+        assert(0);
+        retval = IE_ERROR;
+        goto fail;
+    }
+
+    free(orig_hash_val); orig_hash_val = NULL; orig_hash_len = 0;
 
     return IE_SUCCESS;
-}
 
-
-/* Initialize GPGME.
- * @current_version is pointer to static string describing current gpgme
- * @return IE_SUCCESS if everything is O.k. */
-_hidden isds_error _isds_init_gpgme(const char **current_version) {
-    const char *gpgme_version;
-    gpgme_error_t err;
-    
-    /* Check version and initialize GPGME */
-    gpgme_version = gpgme_check_version(NULL);
-    if (current_version) *current_version = gpgme_version;
-    if (!gpgme_version)  {
-        isds_log(ILF_SEC, ILL_CRIT, _("GPGME initialization failed\n"));
-        return IE_ERROR;
+fail:
+    if (NULL != orig_hash_val) {
+        free(orig_hash_val);
     }
-
-    isds_log(ILF_SEC, ILL_INFO, _("GPGME version in use: %s\n"),
-            gpgme_version);
-    /* Needed to propagate locale to remote processes like pinentry */
-    gpgme_set_locale (NULL, LC_CTYPE, setlocale(LC_CTYPE, NULL));
-#ifdef LC_MESSAGES
-    gpgme_set_locale (NULL, LC_MESSAGES, setlocale(LC_MESSAGES, NULL));
-#endif
-
-    /* Check for engines */
-    err = gpgme_engine_check_version(GPGME_PROTOCOL_CMS);
-    if (err) {
-        isds_log(ILF_SEC, ILL_CRIT, _("GPGME does not support CMS\n"));
-
-        if (gpgme_err_code(err) == GPG_ERR_INV_ENGINE) {
-            gpgme_engine_info_t info; /* Do not free it */
-
-            err = gpgme_get_engine_info (&info);
-            if (!err) {
-                while (info && info->protocol != GPGME_PROTOCOL_CMS)
-                    info = info->next;
-                if (!info)
-                    isds_log(ILF_SEC, ILL_CRIT,
-                                _("GPGME compiled without support for "
-                                    "protocol %s\n"),
-                                gpgme_get_protocol_name(GPGME_PROTOCOL_CMS));
-                else if (info->file_name && !info->version)
-                    isds_log(ILF_SEC, ILL_CRIT,
-                            _("Engine %s not installed properly\n"),
-                            info->file_name);
-                else if (info->file_name && info->version && info->req_version)
-                    isds_log(ILF_SEC, ILL_CRIT,
-                            _("Engine %s version %s installed, "
-                            "but at least version %s required\n"),
-                            info->file_name, info->version, info->req_version);
-                else
-                    isds_log(ILF_SEC, ILL_CRIT,
-                        _("Unknown problem with engine for protocol %s\n"),
-                        gpgme_get_protocol_name(GPGME_PROTOCOL_CMS));
-            }
-        }
-
-        return IE_ERROR;
-    }
-
-    return IE_SUCCESS;
+    return retval;
 }
 
 
-/* Free CMS data buffer allocated inside _isds_extract_cms_data().
- * This is necessary because GPGME.
- * @buffer is pointer to memory to free */
-_hidden void _isds_cms_data_free(void *buffer) {
-#ifdef ISDS_USE_KSBA
-    free(buffer);
-#else
-    if (buffer) gpgme_free(buffer);
-#endif
+void _isds_cms_data_free_gpg(void *buffer);
+void _isds_cms_data_free_opnssl(void *buffer);
+
+_hidden void _isds_cms_data_free(void *buffer)
+{
+    _isds_cms_data_free_gpg(buffer);
 }
 
 
-/* Extract data from CMS (successor of PKCS#7)
- * @context is session context
- * @cms is input block with CMS structure
- * @cms_length is @cms block length in bytes
- * @data are automatically reallocated bit stream with data found in @cms
- * You must free them with _isds_cms_data_free().
- * @data_length is length of @data in bytes */
+isds_error _isds_extract_cms_data_gpg(struct isds_ctx *context,
+        const void *cms, const size_t cms_length,
+        void **data, size_t *data_length);
+isds_error _isds_extract_cms_data_openssl(struct isds_ctx *context,
+        const void *cms, const size_t cms_length,
+        void **data, size_t *data_length);
+
 _hidden isds_error _isds_extract_cms_data(struct isds_ctx *context,
         const void *cms, const size_t cms_length,
-        void **data, size_t *data_length) {
-    isds_error err = IE_SUCCESS;
-
-    if (!cms || !data || !data_length) return IE_INVAL;
-
-    zfree(*data);
-    *data_length = 0;
-
-#ifdef ISDS_USE_KSBA
-    ksba_cms_t cms_handler = NULL;
-    ksba_reader_t cms_reader = NULL;
-    ksba_writer_t cms_writer = NULL;
-    gpg_error_t gerr;
-    char gpg_error_string[128];
-    ksba_stop_reason_t stop_reason;
-
-    if (ksba_cms_new(&cms_handler)) {
-        isds_log_message(context, _("Could not allocate CMS parser handler"));
-        err = IE_NOMEM;
-        goto leave;
-    }
-    if (ksba_reader_new(&cms_reader)) {
-        isds_log_message(context, _("Could not allocate CMS reader"));
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (ksba_reader_set_mem(cms_reader, cms, cms_length)) {
-        isds_log_message(context,
-                _("Could not bind CMS reader to PKCS#7 structure"));
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (ksba_writer_new(&cms_writer)) {
-        isds_log_message(context, _("Could not allocate CMS writer"));
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (ksba_writer_set_mem(cms_writer, 0)) {
-        isds_log_message(context,
-                _("Could not bind CMS reader to PKCS#7 structure"));
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (ksba_cms_set_reader_writer(cms_handler, cms_reader, cms_writer)) {
-        isds_log_message(context,
-                _("Could not register CMS reader to CMS handler"));
-        err = IE_ERROR;
-        goto leave;
-    }
-
-
-    /* FIXME: This cycle stops with: Missing action on KSBA_CT_SIGNED_DATA
-     * I don't know how to program the KSBA cycle.
-     * TODO: Use gpgme's verify call to extract data. The only problem is it
-     * gpgme verifies signature always. We don't need it now and it's slow.
-     * We should find out how to use KSBA. */
-    do {
-        gerr = ksba_cms_parse(cms_handler, &stop_reason);
-        if (gerr) {
-            gpg_strerror_r(gerr, gpg_error_string, sizeof(gpg_error_string));
-            gpg_error_string[sizeof(gpg_error_string)/sizeof(char) - 1] = '\0';
-            isds_printf_message(context,
-                    _("Error while parsing PKCS#7 structure: %s"),
-                    gpg_error_string);
-            return IE_ERROR;
-        }
-        if (stop_reason == KSBA_SR_BEGIN_DATA) {
-            isds_log(ILF_SEC, ILL_DEBUG, _("CMS: Data beginning found\n"));
-        }
-        if (stop_reason == KSBA_SR_GOT_CONTENT) {
-            char *type;
-            switch (ksba_cms_get_content_type(cms_handler, 0)) {
-                case KSBA_CT_NONE: type = _("unknown data"); break;
-                case KSBA_CT_DATA: type = _("plain data"); break;
-                case KSBA_CT_SIGNED_DATA: type = _("signed data"); break;
-                case KSBA_CT_ENVELOPED_DATA:
-                        type = _("encrypted data by session key"); break;
-                case KSBA_CT_DIGESTED_DATA: type = _("digest data"); break;
-                case KSBA_CT_ENCRYPTED_DATA: type = _("encrypted data"); break;
-                case KSBA_CT_AUTH_DATA: type = _("auth data"); break;
-                default: type = _("other data");
-            }
-            isds_log(ILF_SEC, ILL_DEBUG, _("CMS: Data type: %s\n"), type);
-        }
-        if (stop_reason == KSBA_SR_END_DATA) {
-            isds_log(ILF_SEC, ILL_DEBUG, _("CMS: Data end found\n"));
-        }
-    } while (stop_reason != KSBA_SR_READY);
-
-    *data = ksba_writer_snatch_mem(cms_writer, data_length);
-    if (!*data) {
-        isds_log_message(context, _("Getting CMS writer buffer failed"));
-        err = IE_ERROR;
-        goto leave;
-    }
-
-leave:
-    ksba_cms_release(cms_handler);
-    ksba_writer_release(cms_writer);
-    ksba_reader_release(cms_reader);
-#else /* ndef ISDS_USE_KSBA */
-    gpgme_ctx_t gctx = NULL;
-    gpgme_error_t gerr;
-    char gpgme_error_string[128];
-    gpgme_data_t cms_handler = NULL, plain_handler = NULL;
-
-#define GET_GPGME_ERROR_STRING \
-    gpgme_strerror_r(gerr, gpgme_error_string, sizeof(gpgme_error_string)); \
-    gpgme_error_string[sizeof(gpgme_error_string)/sizeof(char) - 1] = '\0'; \
-
-#define FAIL_ON_GPGME_ERROR(code, message) \
-    if (code) { \
-        GET_GPGME_ERROR_STRING; \
-        isds_printf_message(context, message, gpgme_error_string); \
-        if ((code) == GPG_ERR_ENOMEM) err = IE_NOMEM; \
-        else err = IE_ERROR; \
-        goto leave; \
-    }
-
-    /* Create GPGME context */
-    gerr = gpgme_new(&gctx);
-    FAIL_ON_GPGME_ERROR(gerr, _("Could not create GPGME context: %s"));
-
-    gerr = gpgme_set_protocol(gctx, GPGME_PROTOCOL_CMS);
-    FAIL_ON_GPGME_ERROR(gerr, 
-                _("Could not set CMS protocol for GPGME context: %s"));
-
-    /* Create data handlers */
-    gerr = gpgme_data_new_from_mem(&cms_handler, cms, cms_length, 0);
-    FAIL_ON_GPGME_ERROR(gerr, _("Could not create data handler for "
-                "signed message in CMS structure: %s"));
-    gerr = gpgme_data_set_encoding(cms_handler, GPGME_DATA_ENCODING_BINARY);
-    FAIL_ON_GPGME_ERROR(gerr, _("Could not explain to GPGME "
-                "that CMS structure was packed in DER binary format: %s"));
-
-    gerr = gpgme_data_new(&plain_handler);
-    FAIL_ON_GPGME_ERROR(gerr, _("Could not create data handler for "
-                "plain message extracted from CMS structure: %s"));
-
-    /* Verify signature */
-    gerr = gpgme_op_verify(gctx, cms_handler, NULL, plain_handler);
-    if (gerr) {
-        GET_GPGME_ERROR_STRING;
-        isds_printf_message(context,
-                _("CMS verification failed: %s"),
-                gpgme_error_string);
-        err = IE_ERROR;
-        goto leave;
-    }
-
-    /* Get extracted plain message
-     * XXX: One must free *data with gpgme_free() because of clashing
-     * possibly different allocators. */
-    *data = gpgme_data_release_and_get_mem(plain_handler, data_length);
-    plain_handler = NULL;
-    if (!*data) {
-        /* No data or error occurred */
-        isds_printf_message(context,
-                _("Could not get plain data from GPGME "
-                    "after verifying CMS structure"));
-        err = IE_ERROR;
-        goto leave;
-    }
-
-leave:
-    if (gctx) gpgme_release(gctx);
-    if (plain_handler) gpgme_data_release(plain_handler);
-    if (cms_handler) gpgme_data_release(cms_handler);
-#undef FAIL_ON_GPGME_ERROR
-#undef GET_GPGME_ERROR_STRING
-#endif /* ndef ISDS_USE_KSBA */
-    return err;
+        void **data, size_t *data_length)
+{
+    return _isds_extract_cms_data_gpg(context, cms, cms_length, data,
+        data_length);
 }
-

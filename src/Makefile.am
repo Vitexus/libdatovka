@@ -2,19 +2,47 @@ libisds_ladir = $(includedir)
 localedir = $(datadir)/locale
 
 lib_LTLIBRARIES = libisds.la
-libisds_la_SOURCES = cdecode.c cencode.c crypto.c isds.c physxml.c \
-					 utils.c validator.c \
-					 cdecode.h cencode.h crypto.h gettext.h isds.h \
-					 isds_priv.h physxml.h utils.h validator.h \
-					 system.h
+libisds_la_SOURCES = \
+	cdecode.c \
+	cdecode.h \
+	cencode.c \
+	cencode.h \
+	crypto.c \
+	crypto.h \
+	gettext.h \
+	isds.c \
+	isds.h \
+	isds_priv.h \
+	physxml.c \
+	physxml.h \
+	utils.c \
+	utils.h \
+	validator.c \
+	validator.h \
+	system.h
+
+#if USE_OPENSSL
+libisds_la_SOURCES += \
+	crypto_openssl.c
+#else
+libisds_la_SOURCES += \
+	crypto_gpg.c
+#endif
+
 if BUILD_CURL
-libisds_la_SOURCES += soap.c soap.h
+libisds_la_SOURCES += \
+	soap.c \
+	soap.h
 endif
 
 if WIN32
-libisds_la_SOURCES += win32.c win32.h
+libisds_la_SOURCES += \
+	win32.c \
+	win32.h
 else
-libisds_la_SOURCES += unix.c unix.h
+libisds_la_SOURCES += \
+	unix.c \
+	unix.h
 endif
 
 libisds_la_HEADERS = isds.h

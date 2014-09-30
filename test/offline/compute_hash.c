@@ -46,8 +46,8 @@ int main(int argc, char **argv) {
 
     INIT_TEST("compute_hash");
 
-    if (_isds_init_gcrypt(NULL))
-        ABORT_UNIT("init_gcrypt() failed");
+    if (_isds_init_crypto())
+        ABORT_UNIT("init_crypto() failed");
 
     char input[] = "42";
     struct isds_hash test = {

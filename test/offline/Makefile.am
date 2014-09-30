@@ -47,6 +47,8 @@ common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/crypto.c \
+	$(LIBDIR)/crypto_gpg.c \
+	$(LIBDIR)/crypto_openssl.c \
 	$(LIBDIR)/isds.c \
 	$(LIBDIR)/physxml.c \
 	$(LIBDIR)/utils.c \
@@ -74,6 +76,8 @@ isds_common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/crypto.c \
+	$(LIBDIR)/crypto_gpg.c \
+	$(LIBDIR)/crypto_openssl.c \
 	$(LIBDIR)/physxml.c \
 	$(LIBDIR)/utils.c \
 	$(LIBDIR)/validator.c \
@@ -99,6 +103,8 @@ soap_common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/crypto.c \
+	$(LIBDIR)/crypto_gpg.c \
+	$(LIBDIR)/crypto_openssl.c \
 	$(LIBDIR)/isds.c \
 	$(LIBDIR)/physxml.c \
 	$(LIBDIR)/utils.c \
