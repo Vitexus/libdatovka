@@ -60,8 +60,8 @@ _hidden isds_error _isds_compute_hash(const void *input, const size_t length,
     }
 
     if (IE_SUCCESS != retval_gpg) {
-       retval = retval_gpg;
-       goto fail;
+        retval = retval_gpg;
+        goto fail;
     }
 
     if (orig_hash_len != hash->length) {
@@ -99,10 +99,11 @@ fail:
 
 
 void _isds_cms_data_free_gpg(void *buffer);
-void _isds_cms_data_free_opnssl(void *buffer);
+void _isds_cms_data_free_openssl(void *buffer);
 
 _hidden void _isds_cms_data_free(void *buffer)
 {
+    /* FIXME -- Use the correct function. */
     _isds_cms_data_free_gpg(buffer);
 }
 
@@ -118,6 +119,48 @@ _hidden isds_error _isds_extract_cms_data(struct isds_ctx *context,
         const void *cms, const size_t cms_length,
         void **data, size_t *data_length)
 {
-    return _isds_extract_cms_data_gpg(context, cms, cms_length, data,
+    void *data_openssl = NULL;
+    size_t data_len_openssl = 0;
+    isds_error retval_gpg, retval_openssl, retval;
+
+    retval_gpg = _isds_extract_cms_data_gpg(context, cms, cms_length, data,
         data_length);
+
+    retval_openssl = _isds_extract_cms_data_openssl(context, cms, cms_length,
+        &data_openssl, &data_len_openssl);
+
+    if (retval_gpg != retval_openssl) {
+        fprintf(stderr, "%s: Return values differ.\n", __func__);
+        assert(0);
+        retval = IE_ERROR;
+        goto fail;
+    }
+
+    if (IE_SUCCESS != retval_gpg) {
+        retval = retval_gpg;
+        goto fail;
+    }
+
+    if (*data_length != data_len_openssl) {
+        fprintf(stderr, "%s: Content sizes differ: GPG %lu, OpenSSL %lu.\n",
+            __func__, *data_length, data_len_openssl);
+        retval = retval_gpg;
+        goto fail;
+    }
+
+    if (0 != memcmp(*data, data_openssl, *data_length)) {
+        fprintf(stderr, "%s: Content differs.\n", __func__);
+        retval = retval_gpg;
+        goto fail;
+    }
+
+    _isds_cms_data_free_openssl(data_openssl); data_openssl = NULL;
+
+    return IE_SUCCESS;
+
+fail:
+    if (NULL != data_openssl) {
+        _isds_cms_data_free_openssl(data_openssl);
+    }
+    return retval;
 }

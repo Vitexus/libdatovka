@@ -1,9 +1,13 @@
 
 #include <assert.h>
 #include <locale.h>
+#include <openssl/bio.h>
+#include <openssl/cms.h>
 #include <openssl/err.h>
 #include <openssl/md5.h>
+#include <openssl/pkcs7.h>
 #include <openssl/sha.h>
+#include <openssl/x509.h>
 
 #include "isds_priv.h"
 #include "utils.h"
@@ -19,6 +23,7 @@
 _hidden isds_error _isds_init_crypto_openssl(void)
 {
     ERR_load_crypto_strings();
+    //ERR_load_CMS_strings();
 
     return IE_SUCCESS;
 }
@@ -29,8 +34,8 @@ _hidden isds_error _isds_init_crypto_openssl(void)
  * @length is @input block length in bytes
  * @hash input algorithm, output hash value and hash length; hash value will be
  * reallocated, it's always valid pointer or NULL (before and after call) */
-_hidden isds_error _isds_compute_hash_openssl(const void *input, const size_t length,
-        struct isds_hash *hash)
+_hidden isds_error _isds_compute_hash_openssl(const void *input,
+    const size_t length, struct isds_hash *hash)
 {
     void *hash_buf = NULL;
     size_t hash_len = 0;
@@ -99,6 +104,7 @@ _hidden isds_error _isds_compute_hash_openssl(const void *input, const size_t le
  * @buffer is pointer to memory to free */
 _hidden void _isds_cms_data_free_openssl(void *buffer)
 {
+    free(buffer);
 }
 
 /* Extract data from CMS (successor of PKCS#7)
@@ -112,6 +118,14 @@ _hidden isds_error _isds_extract_cms_data_openssl(struct isds_ctx *context,
         const void *cms, const size_t cms_length,
         void **data, size_t *data_length)
 {
+    unsigned long err;
+    isds_error retval = IE_SUCCESS;
+    BIO *bio = NULL;
+    CMS_ContentInfo *cms_ci = NULL;
+    const ASN1_OBJECT *asn1_obj;
+    ASN1_OCTET_STRING **pos;
+    int nid;
+
     assert(NULL != context);
 
     if ((NULL == cms) || (0 == cms_length) ||
@@ -119,7 +133,72 @@ _hidden isds_error _isds_extract_cms_data_openssl(struct isds_ctx *context,
         return IE_INVAL;
     }
 
-    /* TODO */
+    zfree(*data);
+    *data_length = 0;
 
-    return IE_ERROR;
+    bio = BIO_new_mem_buf((void *) cms, cms_length);
+    if (NULL == bio) {
+        isds_log_message(context, _("Creating CMS reader BIO failed."));
+        while (0 != (err = ERR_get_error())) {
+            isds_log_message(context, ERR_error_string(err, NULL));
+        }
+        retval = IE_ERROR;
+        goto fail;
+    }
+
+    cms_ci = d2i_CMS_bio(bio, NULL);
+    if (NULL == cms_ci) {
+        fprintf(stderr, "Cannot parse CMS.\n");
+        isds_log_message(context, _("Cannot parse CMS."));
+        while (0 != (err = ERR_get_error())) {
+            isds_log_message(context, ERR_error_string(err, NULL));
+        }
+        retval = IE_ERROR;
+        goto fail;
+    }
+
+    BIO_free(bio); bio = NULL;
+
+    asn1_obj = CMS_get0_type(cms_ci);
+    nid = OBJ_obj2nid(asn1_obj);
+    switch (nid) {
+    case NID_pkcs7_data:
+    case NID_id_smime_ct_compressedData:
+    case NID_id_smime_ct_authData:
+    case NID_pkcs7_enveloped:
+    case NID_pkcs7_encrypted:
+    case NID_pkcs7_digest:
+        assert(0);
+        break;
+    case NID_pkcs7_signed:
+        pos = CMS_get0_content(cms_ci);
+        if ((NULL == pos) || (NULL == *pos)) {
+            assert(0);
+        }
+        break;
+    default:
+        assert(0);
+        break;
+    }
+
+    *data = malloc((*pos)->length);
+    if (NULL == *data) {
+        retval = IE_NOMEM;
+        goto fail;
+    }
+    *data_length = (*pos)->length;
+    memcpy(*data, (*pos)->data, (*pos)->length);
+
+    CMS_ContentInfo_free(cms_ci); cms_ci = NULL;
+
+    return IE_SUCCESS;
+
+fail:
+    if (NULL != bio) {
+        BIO_free(bio);
+    }
+    if (NULL != cms_ci) {
+        CMS_ContentInfo_free(cms_ci);
+    }
+    return retval;
 }

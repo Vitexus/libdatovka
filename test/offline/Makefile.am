@@ -19,7 +19,7 @@ export HOME=@top_builddir@
 
 TESTS = prepare_environment \
 		b64decode b64encode \
-		compute_hash context guess_raw_type init_gpgpme isds_init load_raw \
+		compute_hash context guess_raw_type init_crypto isds_init load_raw \
 		normalize_mime_type utf82locale \
 		isds_list_free isds_pki_credentials_free isds_hash_free \
 		isds_PersonName_free isds_BirthInfo_free isds_Address_free \
@@ -132,7 +132,7 @@ b64encode_SOURCES 		= b64encode.c $(common)
 compute_hash_SOURCES 	= compute_hash.c $(common)
 context_SOURCES 		= context.c $(common)
 guess_raw_type_SOURCES 	= guess_raw_type.c $(common)
-init_gpgpme_SOURCES 	= init_gpgpme.c $(common)
+init_crypto_SOURCES 	= init_crypto.c $(common)
 isds_init_SOURCES 		= isds_init.c $(common)
 load_raw_SOURCES 		= load_raw.c $(common)
 normalize_mime_type_SOURCES 		= normalize_mime_type.c $(common)
