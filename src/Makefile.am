@@ -7,7 +7,6 @@ libisds_la_SOURCES = \
 	cdecode.h \
 	cencode.c \
 	cencode.h \
-	crypto.c \
 	crypto.h \
 	gettext.h \
 	isds.c \
@@ -21,13 +20,13 @@ libisds_la_SOURCES = \
 	validator.h \
 	system.h
 
-#if USE_OPENSSL
+if USE_OPENSSL_BACKEND
 libisds_la_SOURCES += \
 	crypto_openssl.c
-#else
+else
 libisds_la_SOURCES += \
 	crypto_gpg.c
-#endif
+endif
 
 if BUILD_CURL
 libisds_la_SOURCES += \

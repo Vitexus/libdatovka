@@ -46,9 +46,6 @@ noinst_PROGRAMS = $(TESTS)
 common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
-	$(LIBDIR)/crypto.c \
-	$(LIBDIR)/crypto_gpg.c \
-	$(LIBDIR)/crypto_openssl.c \
 	$(LIBDIR)/isds.c \
 	$(LIBDIR)/physxml.c \
 	$(LIBDIR)/utils.c \
@@ -62,6 +59,13 @@ common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/physxml.h \
 	$(LIBDIR)/utils.h \
 	$(LIBDIR)/validator.h
+if USE_OPENSSL_BACKEND
+common += \
+	$(LIBDIR)/crypto_openssl.c
+else
+common += \
+	$(LIBDIR)/crypto_gpg.c
+endif
 if BUILD_CURL
 common += $(LIBDIR)/soap.c $(LIBDIR)/soap.h
 endif
@@ -75,9 +79,6 @@ endif
 isds_common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
-	$(LIBDIR)/crypto.c \
-	$(LIBDIR)/crypto_gpg.c \
-	$(LIBDIR)/crypto_openssl.c \
 	$(LIBDIR)/physxml.c \
 	$(LIBDIR)/utils.c \
 	$(LIBDIR)/validator.c \
@@ -89,6 +90,13 @@ isds_common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/physxml.h \
 	$(LIBDIR)/utils.h \
 	$(LIBDIR)/validator.h
+if USE_OPENSSL_BACKEND
+isds_common += \
+	$(LIBDIR)/crypto_openssl.c
+else
+isds_common += \
+	$(LIBDIR)/crypto_gpg.c
+endif
 if BUILD_CURL
 isds_common += $(LIBDIR)/soap.c $(LIBDIR)/soap.h
 endif
@@ -102,9 +110,6 @@ endif
 soap_common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
-	$(LIBDIR)/crypto.c \
-	$(LIBDIR)/crypto_gpg.c \
-	$(LIBDIR)/crypto_openssl.c \
 	$(LIBDIR)/isds.c \
 	$(LIBDIR)/physxml.c \
 	$(LIBDIR)/utils.c \
@@ -117,6 +122,13 @@ soap_common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/physxml.h \
 	$(LIBDIR)/utils.h \
 	$(LIBDIR)/validator.h
+if USE_OPENSSL_BACKEND
+soap_common += \
+	$(LIBDIR)/crypto_openssl.c
+else
+soap_common += \
+	$(LIBDIR)/crypto_gpg.c
+endif
 if BUILD_CURL
 soap_common += $(LIBDIR)/soap.h
 endif

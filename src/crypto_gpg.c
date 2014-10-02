@@ -27,7 +27,7 @@ static isds_error _isds_init_gpgme(const char **current_version);
 
 /* Initialise all cryptographic libraries which libisds depends on.
  * @return IE_SUCCESS if everything went all-right. */
-_hidden isds_error _isds_init_crypto_gpg(void) {
+_hidden isds_error _isds_init_crypto(void) {
     /* Initialize gpg-error because of gpgme and ksba */
     if (gpg_err_init()) {
         isds_log(ILF_ISDS, ILL_CRIT,
@@ -89,7 +89,7 @@ static isds_error _isds_init_gcrypt(const char **current_version) {
  * @length is @input block length in bytes
  * @hash input algorithm, output hash value and hash length; hash value will be
  * reallocated, it's always valid pointer or NULL (before and after call) */
-_hidden isds_error _isds_compute_hash_gpg(const void *input, const size_t length,
+_hidden isds_error _isds_compute_hash(const void *input, const size_t length,
         struct isds_hash *hash) {
     int g_algorithm;
     void *buffer;
@@ -193,7 +193,7 @@ static isds_error _isds_init_gpgme(const char **current_version) {
 /* Free CMS data buffer allocated inside _isds_extract_cms_data().
  * This is necessary because GPGME.
  * @buffer is pointer to memory to free */
-_hidden void _isds_cms_data_free_gpg(void *buffer) {
+_hidden void _isds_cms_data_free(void *buffer) {
 #ifdef ISDS_USE_KSBA
     free(buffer);
 #else
@@ -209,7 +209,7 @@ _hidden void _isds_cms_data_free_gpg(void *buffer) {
  * @data are automatically reallocated bit stream with data found in @cms
  * You must free them with _isds_cms_data_free().
  * @data_length is length of @data in bytes */
-_hidden isds_error _isds_extract_cms_data_gpg(struct isds_ctx *context,
+_hidden isds_error _isds_extract_cms_data(struct isds_ctx *context,
         const void *cms, const size_t cms_length,
         void **data, size_t *data_length) {
     isds_error err = IE_SUCCESS;

@@ -99,7 +99,7 @@ AC_ARG_ENABLE(curlreauthorizationbug,
                          ce8311c7e49eca93c136b58efa6763853541ec97.])])
 AS_IF([test "$enable_curlreauthorizationbug" = "yes"],
       AC_DEFINE([HAVE_CURL_REAUTHORIZATION_BUG], [1],
-                [Define if you want work-aroung re-autorization bug in libcurl])
+                [Define if you want work-around re-authorization bug in libcurl])
       )
 
 dnl On-line tests requires libcurl
@@ -107,22 +107,34 @@ AM_CONDITIONAL([BUILD_ONLINE_TEST],
                [test -n "$LIBCURL" -a "$enable_test" = "yes" \
                     -a "$enable_online_test" = "yes"])
 
-dnl Simulated tests require gnutls
-PKG_PROG_PKG_CONFIG()
-AS_IF([test "$enable_test" = "yes"], [
+AC_ARG_ENABLE([openssl-backend],
+  AS_HELP_STRING([--enable-openssl-backend], [Enable OpenSSL as cryptographic back-end.]))
+AS_IF([test "x${enable_openssl_backend}" = "xyes"], [
+  dnl Use OpenSSL cryptographic back-end.
+
+  AC_DEFINE([USE_OPENSSL_BACKEND], [1], [Define if you want to use OpenSSL as cryptographic back-end.])
+  AC_SEARCH_LIBS([CMS_get0_content], [crypto], [], [AC_MSG_ERROR([OpenSSl librypto not found.])])
+], [
+  dnl Use default cryptographic back-end.
+
+  dnl Simulated tests require gnutls
+  PKG_PROG_PKG_CONFIG()
+  AS_IF([test "$enable_test" = "yes"], [
     PKG_CHECK_MODULES([LIBGNUTLS], [gnutls >= 2.12.0])
     AC_SUBST(LIBGNUTLS_CFLAGS)
     AC_SUBST(LIBGNUTLS_LIBS)
     ])
 
-#TODO: Determine minimal version
-AM_PATH_LIBGCRYPT([1:1.4.0])
+  #TODO: Determine minimal version
+  AM_PATH_LIBGCRYPT([1:1.4.0])
 
-# GPGME is compiled with large file support by default. We need to follow not
-# to break ABI.
-AC_SYS_LARGEFILE
-#TODO: Determine minimal version
-AM_PATH_GPGME()
+  # GPGME is compiled with large file support by default. We need to follow not
+  # to break ABI.
+  AC_SYS_LARGEFILE
+  #TODO: Determine minimal version
+  AM_PATH_GPGME()
+])
+AM_CONDITIONAL([USE_OPENSSL_BACKEND], [test "x${enable_openssl_backend}" = "xyes"])
 
 # Check for expat
 AC_CHECK_LIB([expat], [XML_ExpatVersionInfo],
@@ -149,13 +161,6 @@ AC_COMPILE_IFELSE(
         AC_MSG_RESULT([yes]),
         AC_MSG_FAILURE([Upgrade your expat to ${expat_min_version}])
 )
-
-# FIXME -- Check for openssl.
-_openssl_cflags=`pkg-config --cflags openssl`
-_openssl_ldflags=`shell pkg-config --libs openssl`
-CFLAGS="${CFLAGS} ${_openssl_cflags}"
-LDFLAGS="${LDFLAGS} ${_openssl_ldflags}"
-AM_CONDITIONAL([USE_OPENSSL], [true])
 
 # Do not consider compiler warnings as errors
 # This harms libxml configure test

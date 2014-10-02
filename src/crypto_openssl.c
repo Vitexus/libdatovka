@@ -20,7 +20,7 @@
 
 /* Initialise all cryptographic libraries which libisds depends on.
  * @return IE_SUCCESS if everything went all-right. */
-_hidden isds_error _isds_init_crypto_openssl(void)
+_hidden isds_error _isds_init_crypto(void)
 {
     ERR_load_crypto_strings();
     //ERR_load_CMS_strings();
@@ -34,7 +34,7 @@ _hidden isds_error _isds_init_crypto_openssl(void)
  * @length is @input block length in bytes
  * @hash input algorithm, output hash value and hash length; hash value will be
  * reallocated, it's always valid pointer or NULL (before and after call) */
-_hidden isds_error _isds_compute_hash_openssl(const void *input,
+_hidden isds_error _isds_compute_hash(const void *input,
     const size_t length, struct isds_hash *hash)
 {
     void *hash_buf = NULL;
@@ -102,7 +102,7 @@ _hidden isds_error _isds_compute_hash_openssl(const void *input,
 /* Free CMS data buffer allocated inside _isds_extract_cms_data().
  * This is necessary because GPGME.
  * @buffer is pointer to memory to free */
-_hidden void _isds_cms_data_free_openssl(void *buffer)
+_hidden void _isds_cms_data_free(void *buffer)
 {
     free(buffer);
 }
@@ -114,7 +114,7 @@ _hidden void _isds_cms_data_free_openssl(void *buffer)
  * @data are automatically reallocated bit stream with data found in @cms
  * You must free them with _isds_cms_data_free().
  * @data_length is length of @data in bytes */
-_hidden isds_error _isds_extract_cms_data_openssl(struct isds_ctx *context,
+_hidden isds_error _isds_extract_cms_data(struct isds_ctx *context,
         const void *cms, const size_t cms_length,
         void **data, size_t *data_length)
 {
