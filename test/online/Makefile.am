@@ -20,7 +20,6 @@ noinst_PROGRAMS = $(TESTS)
 common = ../test.c ../test.h ../test-tools.h common.c common.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
-	$(LIBDIR)/crypto.c \
 	$(LIBDIR)/isds.c \
 	$(LIBDIR)/physxml.c \
 	$(LIBDIR)/soap.c \
@@ -36,6 +35,13 @@ common = ../test.c ../test.h ../test-tools.h common.c common.h \
 	$(LIBDIR)/soap.h \
 	$(LIBDIR)/utils.h \
 	$(LIBDIR)/validator.h
+if USE_OPENSSL_BACKEND
+common += \
+	$(LIBDIR)/crypto_openssl.c
+else
+common += \
+	$(LIBDIR)/crypto_gpg.c
+endif
 if WIN32
 common += $(LIBDIR)/win32.c $(LIBDIR)/win32.h
 else
@@ -46,7 +52,6 @@ endif
 isds_common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
-	$(LIBDIR)/crypto.c \
 	$(LIBDIR)/physxml.c \
 	$(LIBDIR)/soap.c \
 	$(LIBDIR)/utils.c \
@@ -60,6 +65,13 @@ isds_common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/soap.h \
 	$(LIBDIR)/utils.h \
 	$(LIBDIR)/validator.h
+if USE_OPENSSL_BACKEND
+isds_common += \
+	$(LIBDIR)/crypto_openssl.c
+else
+isds_common += \
+	$(LIBDIR)/crypto_gpg.c
+endif
 if WIN32
 isds_common += $(LIBDIR)/win32.c $(LIBDIR)/win32.h
 else
