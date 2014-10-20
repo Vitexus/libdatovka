@@ -116,7 +116,7 @@ AS_IF([test "x${enable_openssl_backend}" = "xyes"], [
   dnl Use OpenSSL cryptographic back-end.
 
   AC_DEFINE([USE_OPENSSL_BACKEND], [1], [Define if you want to use OpenSSL as cryptographic back-end.])
-  AC_SEARCH_LIBS([CMS_get0_content], [crypto], [], [AC_MSG_ERROR([OpenSSl librypto not found.])])
+  AC_SEARCH_LIBS([CMS_get0_content], [crypto], [], [AC_MSG_ERROR([OpenSSL librypto not found.])])
 ], [
   dnl Use default cryptographic back-end.
 
