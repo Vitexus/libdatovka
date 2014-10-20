@@ -3,6 +3,7 @@
 #include <locale.h>
 #include <openssl/bio.h>
 #include <openssl/cms.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/md5.h>
 #include <openssl/pkcs7.h>
@@ -24,6 +25,8 @@ _hidden isds_error _isds_init_crypto(void)
 {
     ERR_load_crypto_strings();
     //ERR_load_CMS_strings();
+
+    version_openssl = SSLeay_version(SSLEAY_VERSION);
 
     return IE_SUCCESS;
 }

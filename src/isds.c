@@ -23,6 +23,7 @@ isds_log_callback log_callback;
 void *log_callback_data;
 const char *version_gpgme = "n/a";
 const char *version_gcrypt = "n/a";
+const char *version_openssl = "n/a";
 const char *version_expat = "n/a";
 
 /* Locators */
@@ -736,15 +737,27 @@ char *isds_version(void) {
 
     isds_asprintf(&buffer,
 #if HAVE_LIBCURL
+#  ifndef USE_OPENSSL_BACKEND
             _("%s (%s, GPGME %s, gcrypt %s, %s, libxml2 %s)"),
+#  else
+            _("%s (%s, %s, %s, libxml2 %s)"),
+#  endif
 #else
+#  ifndef USE_OPENSSL_BACKEND
             _("%s (GPGME %s, gcrypt %s, %s, libxml2 %s)"),
+#  else
+            _("%s (%s, %s, libxml2 %s)"),
+#  endif
 #endif
             PACKAGE_VERSION,
 #if HAVE_LIBCURL
             curl_version(),
 #endif
+#ifndef USE_OPENSSL_BACKEND
             version_gpgme, version_gcrypt,
+#else
+            version_openssl,
+#endif
             version_expat, xmlParserVersion);
     return buffer;
 }

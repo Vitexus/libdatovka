@@ -72,6 +72,7 @@ extern void *log_callback_data;         /* Application specific data to pass to
                                            registered log_callback function */
 extern const char *version_gpgme;       /* Static string with GPGME version */
 extern const char *version_gcrypt;      /* Static string with gcrypt version */
+extern const char *version_openssl;     /* Static string with OpenSSL version */
 extern const char *version_expat;       /* Static string with expat version */
 /* End of global variables */
 
