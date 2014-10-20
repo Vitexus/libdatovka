@@ -126,6 +126,7 @@ _hidden isds_error _isds_extract_cms_data(struct isds_ctx *context,
     const ASN1_OBJECT *asn1_obj;
     ASN1_OCTET_STRING **pos;
     int nid;
+    char *locale_str;
 
     assert(NULL != context);
 
@@ -141,7 +142,11 @@ _hidden isds_error _isds_extract_cms_data(struct isds_ctx *context,
     if (NULL == bio) {
         isds_log_message(context, _("Creating CMS reader BIO failed."));
         while (0 != (err = ERR_get_error())) {
-            isds_log_message(context, ERR_error_string(err, NULL));
+            locale_str = _isds_utf82locale(ERR_error_string(err, NULL));
+            if (NULL != locale_str) {
+                isds_log_message(context, locale_str);
+                free(locale_str);
+            }
         }
         retval = IE_ERROR;
         goto fail;
@@ -152,7 +157,11 @@ _hidden isds_error _isds_extract_cms_data(struct isds_ctx *context,
         fprintf(stderr, "Cannot parse CMS.\n");
         isds_log_message(context, _("Cannot parse CMS."));
         while (0 != (err = ERR_get_error())) {
-            isds_log_message(context, ERR_error_string(err, NULL));
+            locale_str = _isds_utf82locale(ERR_error_string(err, NULL));
+            if (NULL != locale_str) {
+                isds_log_message(context, locale_str);
+                free(locale_str);
+            }
         }
         retval = IE_ERROR;
         goto fail;
