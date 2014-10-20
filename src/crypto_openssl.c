@@ -83,8 +83,6 @@ _hidden isds_error _isds_compute_hash(const void *input,
             return IE_NOTSUP;
     }
 
-    assert(0 != hash_len);
-
     /* Get known the hash length and allocate buffer for hash value */
     hash->length = hash_len;
     hash_buf = realloc(hash->value, hash->length);
@@ -172,15 +170,21 @@ _hidden isds_error _isds_extract_cms_data(struct isds_ctx *context,
         case NID_pkcs7_encrypted:
         case NID_pkcs7_digest:
             assert(0);
+            retval = IE_ERROR;
+            goto fail;
             break;
         case NID_pkcs7_signed:
             pos = CMS_get0_content(cms_ci);
             if ((NULL == pos) || (NULL == *pos)) {
                 assert(0);
+                retval = IE_ERROR;
+                goto fail;
             }
             break;
         default:
             assert(0);
+            retval = IE_ERROR;
+            goto fail;
             break;
     }
 
