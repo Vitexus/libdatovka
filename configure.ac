@@ -107,6 +107,9 @@ AM_CONDITIONAL([BUILD_ONLINE_TEST],
                [test -n "$LIBCURL" -a "$enable_test" = "yes" \
                     -a "$enable_online_test" = "yes"])
 
+dnl Simulated tests require gnutls
+PKG_PROG_PKG_CONFIG()
+
 AC_ARG_ENABLE([openssl-backend],
   AS_HELP_STRING([--enable-openssl-backend], [Enable OpenSSL as cryptographic back-end.]))
 AS_IF([test "x${enable_openssl_backend}" = "xyes"], [
@@ -117,8 +120,6 @@ AS_IF([test "x${enable_openssl_backend}" = "xyes"], [
 ], [
   dnl Use default cryptographic back-end.
 
-  dnl Simulated tests require gnutls
-  PKG_PROG_PKG_CONFIG()
   AS_IF([test "$enable_test" = "yes"], [
     PKG_CHECK_MODULES([LIBGNUTLS], [gnutls >= 2.12.0])
     AC_SUBST(LIBGNUTLS_CFLAGS)
