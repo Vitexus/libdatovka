@@ -55,32 +55,32 @@ _hidden isds_error _isds_compute_hash(const void *input,
 
     /* Select algorithm */
     switch (hash->algorithm) {
-    case HASH_ALGORITHM_MD5:
-        hash_len = MD5_DIGEST_LENGTH;
-        hash_func = MD5;
-        break;
-    case HASH_ALGORITHM_SHA_1:
-        hash_len = SHA1_DIGEST_LENGTH;
-        hash_func = SHA1;
-        break;
-    case HASH_ALGORITHM_SHA_224:
-        hash_len = SHA224_DIGEST_LENGTH;
-        hash_func = SHA224;
-        break;
-    case HASH_ALGORITHM_SHA_256:
-        hash_len = SHA256_DIGEST_LENGTH;
-        hash_func = SHA256;
-        break;
-    case HASH_ALGORITHM_SHA_384:
-        hash_len = SHA384_DIGEST_LENGTH;
-        hash_func = SHA384;
-        break;
-    case HASH_ALGORITHM_SHA_512:
-        hash_len = SHA512_DIGEST_LENGTH;
-        hash_func = SHA512;
-        break;
-    default:
-        return IE_NOTSUP;
+        case HASH_ALGORITHM_MD5:
+            hash_len = MD5_DIGEST_LENGTH;
+            hash_func = MD5;
+            break;
+        case HASH_ALGORITHM_SHA_1:
+            hash_len = SHA1_DIGEST_LENGTH;
+            hash_func = SHA1;
+            break;
+        case HASH_ALGORITHM_SHA_224:
+            hash_len = SHA224_DIGEST_LENGTH;
+            hash_func = SHA224;
+            break;
+        case HASH_ALGORITHM_SHA_256:
+            hash_len = SHA256_DIGEST_LENGTH;
+            hash_func = SHA256;
+            break;
+        case HASH_ALGORITHM_SHA_384:
+            hash_len = SHA384_DIGEST_LENGTH;
+            hash_func = SHA384;
+            break;
+        case HASH_ALGORITHM_SHA_512:
+            hash_len = SHA512_DIGEST_LENGTH;
+            hash_func = SHA512;
+            break;
+        default:
+            return IE_NOTSUP;
     }
 
     assert(0 != hash_len);
@@ -165,23 +165,23 @@ _hidden isds_error _isds_extract_cms_data(struct isds_ctx *context,
     asn1_obj = CMS_get0_type(cms_ci);
     nid = OBJ_obj2nid(asn1_obj);
     switch (nid) {
-    case NID_pkcs7_data:
-    case NID_id_smime_ct_compressedData:
-    case NID_id_smime_ct_authData:
-    case NID_pkcs7_enveloped:
-    case NID_pkcs7_encrypted:
-    case NID_pkcs7_digest:
-        assert(0);
-        break;
-    case NID_pkcs7_signed:
-        pos = CMS_get0_content(cms_ci);
-        if ((NULL == pos) || (NULL == *pos)) {
+        case NID_pkcs7_data:
+        case NID_id_smime_ct_compressedData:
+        case NID_id_smime_ct_authData:
+        case NID_pkcs7_enveloped:
+        case NID_pkcs7_encrypted:
+        case NID_pkcs7_digest:
             assert(0);
-        }
-        break;
-    default:
-        assert(0);
-        break;
+            break;
+        case NID_pkcs7_signed:
+            pos = CMS_get0_content(cms_ci);
+            if ((NULL == pos) || (NULL == *pos)) {
+                assert(0);
+            }
+            break;
+        default:
+            assert(0);
+            break;
     }
 
     *data = malloc((*pos)->length);
