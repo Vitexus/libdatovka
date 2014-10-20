@@ -16,46 +16,6 @@
 /* Initialize libgrcypt if not yet done by application or other library.
  * @current_version is static string describing current gcrypt version
  * @return IE_SUCCESS if everything is O.k. */
-static isds_error _isds_init_gcrypt(const char **current_version);
-
-
-/* Initialize GPGME.
- * @current_version is pointer to static string describing current gpgme
- * @return IE_SUCCESS if everything is O.k. */
-static isds_error _isds_init_gpgme(const char **current_version);
-
-
-/* Initialise all cryptographic libraries which libisds depends on.
- * @return IE_SUCCESS if everything went all-right. */
-_hidden isds_error _isds_init_crypto(void) {
-    /* Initialize gpg-error because of gpgme and ksba */
-    if (gpg_err_init()) {
-        isds_log(ILF_ISDS, ILL_CRIT,
-                _("gpg-error library initialization failed\n"));
-        return IE_ERROR;
-    }
-
-    /* Initialize GPGME */
-    if (_isds_init_gpgme(&version_gpgme)) {
-        isds_log(ILF_ISDS, ILL_CRIT,
-                _("GPGME library initialization failed\n"));
-        return IE_ERROR;
-    }
-
-    /* Initialize gcrypt */
-    if (_isds_init_gcrypt(&version_gcrypt)) {
-        isds_log(ILF_ISDS, ILL_CRIT,
-                _("gcrypt library initialization failed\n"));
-        return IE_ERROR;
-    }
-
-    return IE_SUCCESS;
-}
-
-
-/* Initialize libgrcypt if not yet done by application or other library.
- * @current_version is static string describing current gcrypt version
- * @return IE_SUCCESS if everything is O.k. */
 static isds_error _isds_init_gcrypt(const char **current_version) {
     const char *gcrypt_version;
     
@@ -183,6 +143,34 @@ static isds_error _isds_init_gpgme(const char **current_version) {
             }
         }
 
+        return IE_ERROR;
+    }
+
+    return IE_SUCCESS;
+}
+
+
+/* Initialise all cryptographic libraries which libisds depends on.
+ * @return IE_SUCCESS if everything went all-right. */
+_hidden isds_error _isds_init_crypto(void) {
+    /* Initialize gpg-error because of gpgme and ksba */
+    if (gpg_err_init()) {
+        isds_log(ILF_ISDS, ILL_CRIT,
+                _("gpg-error library initialization failed\n"));
+        return IE_ERROR;
+    }
+
+    /* Initialize GPGME */
+    if (_isds_init_gpgme(&version_gpgme)) {
+        isds_log(ILF_ISDS, ILL_CRIT,
+                _("GPGME library initialization failed\n"));
+        return IE_ERROR;
+    }
+
+    /* Initialize gcrypt */
+    if (_isds_init_gcrypt(&version_gcrypt)) {
+        isds_log(ILF_ISDS, ILL_CRIT,
+                _("gcrypt library initialization failed\n"));
         return IE_ERROR;
     }
 
