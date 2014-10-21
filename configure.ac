@@ -109,6 +109,11 @@ AM_CONDITIONAL([BUILD_ONLINE_TEST],
 
 dnl Simulated tests require gnutls
 PKG_PROG_PKG_CONFIG()
+AS_IF([test "$enable_test" = "yes"], [
+     PKG_CHECK_MODULES([LIBGNUTLS], [gnutls >= 2.12.0])
+     AC_SUBST(LIBGNUTLS_CFLAGS)
+     AC_SUBST(LIBGNUTLS_LIBS)
+     ])
 
 AC_ARG_ENABLE([openssl-backend],
   AS_HELP_STRING([--enable-openssl-backend], [Enable OpenSSL as cryptographic back-end.]))
@@ -119,12 +124,6 @@ AS_IF([test "x${enable_openssl_backend}" = "xyes"], [
   AC_SEARCH_LIBS([CMS_get0_content], [crypto], [], [AC_MSG_ERROR([OpenSSL librypto not found.])])
 ], [
   dnl Use default cryptographic back-end.
-
-  AS_IF([test "$enable_test" = "yes"], [
-    PKG_CHECK_MODULES([LIBGNUTLS], [gnutls >= 2.12.0])
-    AC_SUBST(LIBGNUTLS_CFLAGS)
-    AC_SUBST(LIBGNUTLS_LIBS)
-    ])
 
   #TODO: Determine minimal version
   AM_PATH_LIBGCRYPT([1:1.4.0])
