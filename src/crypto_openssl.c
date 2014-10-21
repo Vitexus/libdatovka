@@ -5,9 +5,8 @@
 #include <openssl/cms.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
-#include <openssl/md5.h>
+#include <openssl/evp.h>
 #include <openssl/pkcs7.h>
-#include <openssl/sha.h>
 #include <openssl/x509.h>
 
 #include "isds_priv.h"
@@ -23,6 +22,8 @@
  * @return IE_SUCCESS if everything went all-right. */
 _hidden isds_error _isds_init_crypto(void)
 {
+    OpenSSL_add_all_digests(); /* Loads all digest algorithms. */
+
     ERR_load_crypto_strings();
     //ERR_load_CMS_strings();
 
@@ -40,10 +41,13 @@ _hidden isds_error _isds_init_crypto(void)
 _hidden isds_error _isds_compute_hash(const void *input,
     const size_t length, struct isds_hash *hash)
 {
+    isds_error retval = IE_SUCCESS;
     void *hash_buf = NULL;
     size_t hash_len = 0;
-    unsigned char * (*hash_func)(const unsigned char *, size_t n,
-        unsigned char *) = NULL;
+    EVP_MD_CTX *mdctx = NULL;
+    const char *hash_name = NULL;
+    const EVP_MD *md;
+    unsigned int md_len;
 
     if (((0 != length) && (NULL == input)) || (NULL == hash)) {
         return IE_INVAL;
@@ -55,49 +59,61 @@ _hidden isds_error _isds_compute_hash(const void *input,
 
     /* Select algorithm */
     switch (hash->algorithm) {
-        case HASH_ALGORITHM_MD5:
-            hash_len = MD5_DIGEST_LENGTH;
-            hash_func = MD5;
-            break;
-        case HASH_ALGORITHM_SHA_1:
-            hash_len = SHA1_DIGEST_LENGTH;
-            hash_func = SHA1;
-            break;
-        case HASH_ALGORITHM_SHA_224:
-            hash_len = SHA224_DIGEST_LENGTH;
-            hash_func = SHA224;
-            break;
-        case HASH_ALGORITHM_SHA_256:
-            hash_len = SHA256_DIGEST_LENGTH;
-            hash_func = SHA256;
-            break;
-        case HASH_ALGORITHM_SHA_384:
-            hash_len = SHA384_DIGEST_LENGTH;
-            hash_func = SHA384;
-            break;
-        case HASH_ALGORITHM_SHA_512:
-            hash_len = SHA512_DIGEST_LENGTH;
-            hash_func = SHA512;
-            break;
+        case HASH_ALGORITHM_MD5: hash_name = "MD5"; break;
+        case HASH_ALGORITHM_SHA_1: hash_name = "SHA1"; break;
+        case HASH_ALGORITHM_SHA_224: hash_name = "SHA224"; break;
+        case HASH_ALGORITHM_SHA_256: hash_name = "SHA256"; break;
+        case HASH_ALGORITHM_SHA_384: hash_name = "SHA384"; break;
+        case HASH_ALGORITHM_SHA_512: hash_name = "SHA512"; break;
         default:
-            return IE_NOTSUP;
+            retval = IE_NOTSUP;
+            goto fail;
     }
 
-    /* Get known the hash length and allocate buffer for hash value */
-    hash->length = hash_len;
-    hash_buf = realloc(hash->value, hash->length);
+    md = EVP_get_digestbyname(hash_name);
+    if (NULL == md) {
+        retval = IE_NOTSUP;
+        goto fail;
+    }
+
+    mdctx = malloc(sizeof(*mdctx));
+    if (NULL == mdctx) {
+        retval = IE_NOMEM;
+        goto fail;
+    }
+    EVP_MD_CTX_init(mdctx);
+    if (!EVP_DigestInit(mdctx, md)) {
+        retval = IE_ERROR;
+        goto fail;
+    }
+    if (!EVP_DigestUpdate(mdctx, input, length)) {
+        retval = IE_ERROR;
+        goto fail;
+    }
+
+    hash_len = EVP_MD_size(md);
+    hash_buf = realloc(hash->value, hash_len);
     if (NULL == hash_buf) {
-        return IE_NOMEM;
+        retval = IE_NOMEM;
+        goto fail;
     }
     hash->value = hash_buf;
+    hash->length = hash_len;
 
-    assert(NULL != hash->value);
-    assert(NULL != hash_func);
+    if (!EVP_DigestFinal_ex(mdctx, hash->value, &md_len)) {
+        retval = IE_ERROR;
+        goto fail;
+    }
 
-    /* Compute the hash */
-    hash_func(input, length, hash->value);
+    EVP_MD_CTX_cleanup(mdctx); free(mdctx); mdctx = NULL;
 
     return IE_SUCCESS;
+
+fail:
+    if (NULL != mdctx) {
+        EVP_MD_CTX_cleanup(mdctx); free(mdctx);
+    }
+    return retval;
 }
 
 /* Free CMS data buffer allocated inside _isds_extract_cms_data().
