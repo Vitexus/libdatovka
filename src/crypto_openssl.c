@@ -170,7 +170,6 @@ _hidden isds_error _isds_extract_cms_data(struct isds_ctx *context,
 
     cms_ci = d2i_CMS_bio(bio, NULL);
     if (NULL == cms_ci) {
-        fprintf(stderr, "Cannot parse CMS.\n");
         isds_log_message(context, _("Cannot parse CMS."));
         while (0 != (err = ERR_get_error())) {
             locale_str = _isds_utf82locale(ERR_error_string(err, NULL));
@@ -199,18 +198,19 @@ _hidden isds_error _isds_extract_cms_data(struct isds_ctx *context,
             goto fail;
             break;
         case NID_pkcs7_signed:
-            pos = CMS_get0_content(cms_ci);
-            if ((NULL == pos) || (NULL == *pos)) {
-                assert(0);
-                retval = IE_ERROR;
-                goto fail;
-            }
             break;
         default:
             assert(0);
             retval = IE_ERROR;
             goto fail;
             break;
+    }
+
+    pos = CMS_get0_content(cms_ci);
+    if ((NULL == pos) || (NULL == *pos)) {
+        assert(0);
+        retval = IE_ERROR;
+        goto fail;
     }
 
     *data = malloc((*pos)->length);
