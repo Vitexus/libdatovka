@@ -17,10 +17,11 @@ details.
 
 
 This code is written in ISO99 C language and requires libxml2, (optional but
-strongly recommended) cURL, libgcrypt, GPGME, and >=expat-2.0.0 libraries at
-compilation time. gnupg2 is required at run time (provides gpgsm that uses
-gpgme to process CMS).  Build system preparation from VCS requires
->=automake-1.11, autoconf and libtool in addition. Tests require
+strongly recommended) cURL, (libgcrypt and GPGME) or OpenSSL, and
+>=expat-2.0.0 libraries at compilation time. gnupg2 is required at run time
+(provides gpgsm that uses gpgme to process CMS) if GPGME cryptographic
+back-end is selected. Build system preparation from VCS requires
+>=automake-1.11, autoconf, and libtool in addition. Tests require
 >=GnuTLS-2.12.0 library.
 
 Applications linked against this library need to be linked to libxml2 too.
