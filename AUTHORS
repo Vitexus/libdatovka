@@ -8,4 +8,5 @@ MinGW support:
     Martin Doucha <doucha@integri.cz>
 
 C++ and OS X portability:
+OpenSSL back-end:
     Karel Slany <karel.slany@nic.cz>
