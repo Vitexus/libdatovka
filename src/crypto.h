@@ -22,6 +22,7 @@ isds_error _isds_compute_hash(const void *input, const size_t length,
 void _isds_cms_data_free(void *buffer);
 
 /* Extract data from CMS (successor of PKCS#7)
+ * The CMS' signature is is not verified.
  * @context is session context
  * @cms is input block with CMS structure
  * @cms_length is @cms block length in bytes
