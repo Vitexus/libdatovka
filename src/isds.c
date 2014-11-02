@@ -21,10 +21,10 @@ unsigned int log_facilities;
 isds_log_level log_level;
 isds_log_callback log_callback;
 void *log_callback_data;
-const char *version_gpgme = "n/a";
-const char *version_gcrypt = "n/a";
-const char *version_openssl = "n/a";
-const char *version_expat = "n/a";
+const char *version_gpgme = N_("n/a");
+const char *version_gcrypt = N_("n/a");
+const char *version_openssl = N_("n/a");
+const char *version_expat = N_("n/a");
 
 /* Locators */
 /* Base URL of production ISDS instance */
