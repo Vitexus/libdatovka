@@ -1425,6 +1425,12 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     isds_log(ILF_ISDS, ILL_DEBUG, _("Logging user %s into server %s\n"),
             username, url);
 
+    /* XXX: ISDS documentation does not specify response body for
+     * DummyOperation request.  However real server sends back
+     * DummyOperationResponse.  Therefore we cannot check for the SOAP body
+     * content and we call _isds_soap() instead of isds().  isds() checks for
+     * SOAP body content, e.g. the dmStatus element. */
+
     /* Send log-in request */
     soap_err = _isds_soap(context, "DS/dz", request, &response, NULL, NULL);
    
@@ -1535,7 +1541,13 @@ isds_error isds_ping(struct isds_ctx *context) {
 
     isds_log(ILF_ISDS, ILL_DEBUG, _("Pinging ISDS server\n"));
 
-    /* Sent dummy request */
+    /* XXX: ISDS documentation does not specify response body for
+     * DummyOperation request.  However real server sends back
+     * DummyOperationResponse.  Therefore we cannot check for the SOAP body
+     * content and we call _isds_soap() instead of isds().  isds() checks for
+     * SOAP body content, e.g. the dmStatus element. */
+
+    /* Send dummy request */
     soap_err = _isds_soap(context, "DS/dz", request, &response, NULL, NULL);
    
     /* Destroy log-in request */
@@ -1550,9 +1562,7 @@ isds_error isds_ping(struct isds_ctx *context) {
 
     /* XXX: Until we don't propagate HTTP code 500 or 4xx, we can be sure
      * authentication succeeded if soap_err == IE_SUCCESS */
-    /* TODO: ISDS documentation does not specify response body.
-     * However real server sends back DummyOperationResponse */
-    
+
 
     xmlFreeNodeList(response);
 
