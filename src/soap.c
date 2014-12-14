@@ -1071,16 +1071,22 @@ leave:
  * @request is XML node set with SOAP request body. 
  * @file must be NULL, @request should be NULL rather than empty, if they should
  * not be signaled in the SOAP request.
- * @reponse is automatically allocated() node set with SOAP response body.
- * You must xmlFreeNodeList() it. This is literal body, empty (NULL), one node
- * or more nodes can be returned.
+ * @response_document is an automatically allocated XML document whose subtree
+ * identified by @response_node_list holds the SOAP response body content. You
+ * must xmlFreeDoc() it. If you don't care pass NULL and also
+ * NULL @response_node_list.
+ * @response_node_list is a pointer to node set with SOAP response body
+ * content. The returned pointer points into @response_document to the first
+ * child of SOAP Body element. Pass NULL and NULL @response_document, if you
+ * don't care.
  * @raw_response is automatically allocated bit stream with response body. Use
  * NULL if you don't care
  * @raw_response_length is size of @raw_response in bytes
  * In case of error the response will be deallocated automatically.
  * Side effect: message buffer */
 _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
-        const xmlNodePtr request, xmlNodePtr *response,
+        const xmlNodePtr request,
+        xmlDocPtr *response_document, xmlNodePtr *response_node_list,
         void **raw_response, size_t *raw_response_length) {
 
     isds_error err = IE_SUCCESS;
@@ -1103,11 +1109,13 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
 
 
     if (!context) return IE_INVALID_CONTEXT;
-    if (!response) return IE_INVAL;
+    if ( (NULL == response_document && NULL != response_node_list) ||
+            (NULL != response_document && NULL == response_node_list))
+        return IE_INVAL;
     if (!raw_response_length && raw_response) return IE_INVAL;
 
-    xmlFreeNodeList(*response);
-    *response = NULL;
+    if (response_document) *response_document = NULL;
+    if (response_node_list) *response_node_list = NULL;
     if (raw_response) *raw_response = NULL;
 
     url = _isds_astrcat(context->url, file);
@@ -1436,19 +1444,21 @@ redirect:
     }
 
 
-    /* Extract XML Tree with ISDS response from SOAP envelope and return it.
-     * XXX: response_soap_body is Body, we need children which may not exist
-     * (i.e. empty Body). */
-    /* TODO: Destroy SOAP response but Body children. This is more memory
-     * friendly than copying (potentially) fat body */
-    if (response_soap_body->nodesetval->nodeTab[0]->children) {
-        *response = xmlDocCopyNodeList(response_soap_doc,
-                response_soap_body->nodesetval->nodeTab[0]->children);
-        if (!*response) {
-            err = IE_NOMEM;
-            goto leave;
-        }
-    } else *response = NULL;
+    /* Extract XML tree with ISDS response from SOAP envelope and return it.
+     * XXX: response_soap_body lists only one Body element here. We need
+     * children which may not exist (i.e. empty Body) or being more than one
+     * (this is not the case of ISDS payload, but let's support generic SOAP).
+     * XXX: We will return the XML document and children as a node list for
+     * two reasons:
+     * (1) We won't to do expensive xmlDocCopyNodeList(),
+     * (2) Any node is unusable after calling xmlFreeDoc() on it's document
+     * because the document holds a dictionary with identifiers. Caller always
+     * can do xmlDocCopyNodeList() on a fresh document later. */
+    if (NULL != response_document && NULL != response_node_list) {
+        *response_document = response_soap_doc;
+        *response_node_list =
+            response_soap_body->nodesetval->nodeTab[0]->children;
+    }
 
     /* Save raw response */
     if (raw_response) {
@@ -1459,16 +1469,13 @@ redirect:
 
 
 leave:
-    if (err) {
-        xmlFreeNodeList(*response);
-        *response = NULL;
-    }
-
     xmlXPathFreeObject(response_soap_fault);
     xmlXPathFreeObject(response_soap_body);
     xmlXPathFreeObject(response_soap_headers);
     xmlXPathFreeContext(xpath_ctx);
-    xmlFreeDoc(response_soap_doc);
+    if (NULL == response_document || NULL == *response_document) {
+        xmlFreeDoc(response_soap_doc);
+    }
     if (context->otp_credentials != NULL)
         auth_headers_free(&response_otp_headers);
     free(mime_type);

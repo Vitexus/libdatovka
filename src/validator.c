@@ -160,7 +160,8 @@ _hidden isds_error _isds(struct isds_ctx *context, const isds_service service,
         const xmlNodePtr request, xmlDocPtr *response,
         void **raw_response, size_t *raw_response_length) {
     isds_error err = IE_SUCCESS;
-    xmlNodePtr response_body = NULL, isds_node;
+    xmlDocPtr response_document = NULL;
+    xmlNodePtr response_body, isds_node;
     char *file = NULL;
     const char *name_space = ISDS_NS;
 
@@ -188,7 +189,7 @@ _hidden isds_error _isds(struct isds_ctx *context, const isds_service service,
     else if (SERVICE_ASWS == service)
         name_space = OISDS_NS;
 
-    err = _isds_soap(context, file, request, &response_body,
+    err = _isds_soap(context, file, request, &response_document, &response_body,
             raw_response, raw_response_length);
 
     if (err) goto leave;
@@ -215,13 +216,6 @@ _hidden isds_error _isds(struct isds_ctx *context, const isds_service service,
         goto leave;
     }
 
-    /* Destroy other nodes */
-    if (isds_node == response_body)
-        response_body = response_body->next;
-    xmlUnlinkNode(isds_node);
-    xmlFreeNodeList(response_body);
-    response_body = NULL;
-
     /* TODO: validate the response */
 
     /* Build XML document */
@@ -238,7 +232,7 @@ leave:
         xmlFreeDoc(*response);
         if (raw_response) zfree(*raw_response);
     }
-    xmlFreeNodeList(response_body);
+    xmlFreeDoc(response_document);
 
     return err;
 }
@@ -351,12 +345,14 @@ isds_error validate_message_id_length(struct isds_ctx *context,
 _hidden isds_error _czp_czpdeposit(struct isds_ctx *context,
         const xmlNodePtr request, xmlDocPtr *response) {
     isds_error err = IE_SUCCESS;
+    xmlDocPtr response_document = NULL;
     xmlNodePtr response_body = NULL, deposit_node;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!response) return IE_INVAL;
 
-    err = _isds_soap(context, NULL, request, &response_body, NULL, NULL);
+    err = _isds_soap(context, NULL, request,
+            &response_document, &response_body, NULL, NULL);
 
     if (err) goto leave;
 
@@ -381,13 +377,6 @@ _hidden isds_error _czp_czpdeposit(struct isds_ctx *context,
         goto leave;
     }
 
-    /* Destroy other nodes */
-    if (deposit_node == response_body)
-        response_body = response_body->next;
-    xmlUnlinkNode(deposit_node);
-    xmlFreeNodeList(response_body);
-    response_body = NULL;
-
     /* Build XML document */
     *response = xmlNewDoc(BAD_CAST "1.0");
     if (!*response) {
@@ -402,7 +391,7 @@ leave:
     if (err) {
         xmlFreeDoc(*response);
     }
-    xmlFreeNodeList(response_body);
+    xmlFreeDoc(response_document);
 
     return err;
 }

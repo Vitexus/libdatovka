@@ -13,16 +13,22 @@ isds_error _isds_close_connection(struct isds_ctx *context);
  * @request is XML node set with SOAP request body. 
  * @file must be NULL, @request should be NULL rather than empty, if they should
  * not be signaled in the SOAP request.
- * @reponse is automatically allocated() node set with SOAP response body.
- * You must xmlFreeNodeList() it. This is literal body, empty (NULL), one node
- * or more nodes can be returned.
+ * @response_document is an automatically allocated XML document whose subtree
+ * identified by @response_node_list holds the SOAP response body content. You
+ * must xmlFreeDoc() it. If you don't care pass NULL and also
+ * NULL @response_node_list.
+ * @response_node_list is a pointer to node set with SOAP response body
+ * content. The returned pointer points into @response_document to the first
+ * child of SOAP Body element. Pass NULL and NULL @response_document, if you
+ * don't care.
  * @raw_response is automatically allocated bit stream with response body. Use
  * NULL if you don't care
  * @raw_response_length is size of @raw_response in bytes
  * In case of error the response will be deallocated automatically.
  * Side effect: message buffer */
 isds_error _isds_soap(struct isds_ctx *context, const char *file,
-        const xmlNodePtr request, xmlNodePtr *response,
+        const xmlNodePtr request,
+        xmlDocPtr *response_document, xmlNodePtr *response_node_list,
         void **raw_response, size_t *raw_response_length);
 
 /* Build new URL from current @context and template.

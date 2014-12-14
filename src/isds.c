@@ -1290,7 +1290,6 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     isds_error soap_err;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
-    xmlNodePtr response = NULL;
 #endif /* HAVE_LIBCURL */
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -1432,7 +1431,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
      * SOAP body content, e.g. the dmStatus element. */
 
     /* Send log-in request */
-    soap_err = _isds_soap(context, "DS/dz", request, &response, NULL, NULL);
+    soap_err = _isds_soap(context, "DS/dz", request, NULL, NULL, NULL, NULL);
    
     if (context->otp) {
         /* Revert context URL from OTP authentication service URL to OTP web
@@ -1454,7 +1453,6 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     xmlFreeNode(request);
 
     if (soap_err) {
-        xmlFreeNodeList(response);
         _isds_close_connection(context);
         return soap_err;
     }
@@ -1462,8 +1460,6 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     /* XXX: Until we don't propagate HTTP code 500 or 4xx, we can be sure
      * authentication succeeded if soap_err == IE_SUCCESS */
     err = IE_SUCCESS;
-
-    xmlFreeNodeList(response);
 
     if (!err) 
         isds_log(ILF_ISDS, ILL_DEBUG,
@@ -1514,7 +1510,6 @@ isds_error isds_ping(struct isds_ctx *context) {
     isds_error soap_err;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
-    xmlNodePtr response = NULL;
 #endif /* HAVE_LIBCURL */
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -1548,7 +1543,7 @@ isds_error isds_ping(struct isds_ctx *context) {
      * SOAP body content, e.g. the dmStatus element. */
 
     /* Send dummy request */
-    soap_err = _isds_soap(context, "DS/dz", request, &response, NULL, NULL);
+    soap_err = _isds_soap(context, "DS/dz", request, NULL, NULL, NULL, NULL);
    
     /* Destroy log-in request */
     xmlFreeNode(request);
@@ -1556,15 +1551,12 @@ isds_error isds_ping(struct isds_ctx *context) {
     if (soap_err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("ISDS server could not be contacted\n"));
-        xmlFreeNodeList(response);
         return soap_err;
     }
 
     /* XXX: Until we don't propagate HTTP code 500 or 4xx, we can be sure
      * authentication succeeded if soap_err == IE_SUCCESS */
 
-
-    xmlFreeNodeList(response);
 
     isds_log(ILF_ISDS, ILL_DEBUG, _("ISDS server alive\n"));
 
