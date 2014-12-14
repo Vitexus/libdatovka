@@ -892,6 +892,7 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
     _isds_discard_credentials(*context, 1);
 
     /* Free other structures */
+    free((*context)->url);
     free((*context)->tls_verify_server);
     free((*context)->tls_ca_file);
     free((*context)->tls_ca_dir);
@@ -1490,12 +1491,12 @@ isds_error isds_logout(struct isds_ctx *context) {
         /* Discard credentials for sure. They should not survive isds_login(),
          * even successful .*/
         _isds_discard_credentials(context, 1);
-        zfree(context->url);
 
         isds_log(ILF_ISDS, ILL_DEBUG, _("Logged out from ISDS server\n"));
     } else {
         _isds_discard_credentials(context, 1);
     }
+    zfree(context->url);
     return IE_SUCCESS;
 #else /* not HAVE_LIBCURL */
     return IE_NOTSUP;
