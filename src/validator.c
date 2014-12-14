@@ -156,7 +156,7 @@ leave:
  * @raw_response_length is size of @raw_response in bytes
  * In case of error, @response and @raw_response will be deallocated.
  * */
-_hidden isds_error isds(struct isds_ctx *context, const isds_service service,
+_hidden isds_error _isds(struct isds_ctx *context, const isds_service service,
         const xmlNodePtr request, xmlDocPtr *response,
         void **raw_response, size_t *raw_response_length) {
     isds_error err = IE_SUCCESS;

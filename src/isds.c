@@ -1428,7 +1428,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     /* XXX: ISDS documentation does not specify response body for
      * DummyOperation request.  However real server sends back
      * DummyOperationResponse.  Therefore we cannot check for the SOAP body
-     * content and we call _isds_soap() instead of isds().  isds() checks for
+     * content and we call _isds_soap() instead of _isds().  _isds() checks for
      * SOAP body content, e.g. the dmStatus element. */
 
     /* Send log-in request */
@@ -1544,7 +1544,7 @@ isds_error isds_ping(struct isds_ctx *context) {
     /* XXX: ISDS documentation does not specify response body for
      * DummyOperation request.  However real server sends back
      * DummyOperationResponse.  Therefore we cannot check for the SOAP body
-     * content and we call _isds_soap() instead of isds().  isds() checks for
+     * content and we call _isds_soap() instead of _isds().  _isds() checks for
      * SOAP body content, e.g. the dmStatus element. */
 
     /* Send dummy request */
@@ -1615,7 +1615,7 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending bogus request to ISDS\n"));
 
     /* Sent bogus request */
-    err = isds(context, SERVICE_DM_OPERATIONS, request, &response, NULL, NULL);
+    err = _isds(context, SERVICE_DM_OPERATIONS, request, &response, NULL, NULL);
    
     /* Destroy request */
     xmlFreeNode(request);
@@ -4807,7 +4807,7 @@ static isds_error build_send_check_dbdummy_request(struct isds_ctx *context,
             service_name_locale);
 
     /* Send request */
-    err = isds(context, SERVICE_DB_ACCESS, request, response,
+    err = _isds(context, SERVICE_DB_ACCESS, request, response,
             raw_response, raw_response_length);
     xmlFreeNode(request); request = NULL;
     
@@ -5273,7 +5273,7 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending SendSMSCode request to ISDS\n"));
 
     /* Sent request */
-    err = isds(context, SERVICE_ASWS, request, &response, NULL, NULL);
+    err = _isds(context, SERVICE_ASWS, request, &response, NULL, NULL);
    
     /* Remove temporal credentials */
     _isds_discard_credentials(context, 0);
@@ -5594,7 +5594,7 @@ isds_error isds_change_password(struct isds_ctx *context,
             _("Sending ChangePasswordOTP request to ISDS\n"));
 
     /* Sent request */
-    err = isds(context, (NULL == otp) ? SERVICE_DB_ACCESS : SERVICE_ASWS,
+    err = _isds(context, (NULL == otp) ? SERVICE_DB_ACCESS : SERVICE_ASWS,
             request, &response, NULL, NULL);
    
     if (otp) {
@@ -5741,7 +5741,7 @@ static isds_error send_destroy_request_check_response(
             service_name_locale);
 
     /* Send request */
-    err = isds(context, service, *request, response, NULL, NULL);
+    err = _isds(context, service, *request, response, NULL, NULL);
     xmlFreeNode(*request); *request = NULL;
     
     if (err) {
@@ -7144,7 +7144,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending FindDataBox request to ISDS\n"));
 
     /* Sent request */
-    err = isds(context, SERVICE_DB_SEARCH, request, &response, NULL, NULL);
+    err = _isds(context, SERVICE_DB_SEARCH, request, &response, NULL, NULL);
    
     /* Destroy request */
     xmlFreeNode(request); request = NULL;
@@ -8213,7 +8213,7 @@ isds_error isds_send_message(struct isds_ctx *context,
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending CreateMessage request to ISDS\n"));
 
     /* Sent request */
-    err = isds(context, SERVICE_DM_OPERATIONS, request, &response, NULL, NULL);
+    err = _isds(context, SERVICE_DM_OPERATIONS, request, &response, NULL, NULL);
    
     /* Don't' destroy request, we want to provide it to application later */
 
@@ -8468,7 +8468,7 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
             _("Sending CreateMultipleMessage request to ISDS\n"));
 
     /* Sent request */
-    err = isds(context, SERVICE_DM_OPERATIONS, request, &response, NULL, NULL);
+    err = _isds(context, SERVICE_DM_OPERATIONS, request, &response, NULL, NULL);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Processing ISDS response on CreateMultipleMessage "
@@ -8722,7 +8722,7 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
             );
 
     /* Sent request */
-    err = isds(context, SERVICE_DM_INFO, request, &response, NULL, NULL);
+    err = _isds(context, SERVICE_DM_INFO, request, &response, NULL, NULL);
     xmlFreeNode(request); request = NULL;
     
     if (err) {
@@ -9166,7 +9166,7 @@ static isds_error build_send_check_message_request(struct isds_ctx *context,
                 service_name_locale, message_id_locale);
 
     /* Send request */
-    err = isds(context, service, request, response,
+    err = _isds(context, service, request, response,
             raw_response, raw_response_length);
     xmlFreeNode(request); request = NULL;
     
@@ -10571,7 +10571,7 @@ isds_error isds_delete_message_from_storage(struct isds_ctx *context,
     /* Send request */
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending EraseMessage request for "
                 "message ID %s to ISDS\n"), message_id);
-    err = isds(context, SERVICE_DM_INFO, request, &response, NULL, NULL);
+    err = _isds(context, SERVICE_DM_INFO, request, &response, NULL, NULL);
     xmlFreeNode(request); request = NULL;
     
     if (err) {
