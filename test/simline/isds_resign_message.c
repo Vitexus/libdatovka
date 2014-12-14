@@ -153,6 +153,8 @@ static void test_error(const char *code, const isds_error expected_error,
 
     isds_logout(context);
     if (stop_server(server_process)) {
+        isds_ctx_free(&context);
+        isds_cleanup();
         ABORT_UNIT(server_error);
     }
     free(url);
@@ -227,6 +229,8 @@ int main(int argc, char **argv) {
 
         isds_logout(context);
         if (stop_server(server_process)) {
+            isds_ctx_free(&context);
+            isds_cleanup();
             ABORT_UNIT(server_error);
         }
         free(url);

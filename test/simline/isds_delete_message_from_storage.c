@@ -106,6 +106,8 @@ int main(int argc, char **argv) {
                 IE_SUCCESS, context, "1234567", 1);
 
         if (stop_server(server_process)) {
+            isds_ctx_free(&context);
+            isds_cleanup();
             ABORT_UNIT(server_error);
         }
     

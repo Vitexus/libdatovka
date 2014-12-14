@@ -99,8 +99,11 @@ static int test_isds_get_commercial_credit(const isds_error error,
             FAIL_TEST("Returned history has too few items");
         event = (struct isds_credit_event *)item->data;
         returned_event = (struct isds_credit_event *)returned_item->data;
-        if (NULL == event)
+        if (NULL == event) {
+            isds_ctx_free(&context);
+            isds_cleanup();
             ABORT_UNIT("History event is not defined");
+        }
         if (NULL == returned_item)
             FAIL_TEST("Returned history event is NULL and it shouldn't be");
         TEST_TIMEVALPTR_DUPLICITY(event->time, returned_event->time);
@@ -396,6 +399,8 @@ int main(int argc, char **argv) {
 
         isds_logout(context);
         if (stop_server(server_process)) {
+            isds_ctx_free(&context);
+            isds_cleanup();
             ABORT_UNIT(server_error);
         }
     }
@@ -444,6 +449,8 @@ int main(int argc, char **argv) {
 
         isds_logout(context);
         if (stop_server(server_process)) {
+            isds_ctx_free(&context);
+            isds_cleanup();
             ABORT_UNIT(server_error);
         }
     }

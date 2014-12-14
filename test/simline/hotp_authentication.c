@@ -149,6 +149,8 @@ int main(int argc, char **argv) {
                 IE_CONNECTION_CLOSED, context);
 
         if (stop_server(server_process)) {
+            isds_ctx_free(&context);
+            isds_cleanup();
             ABORT_UNIT(server_error);
         }
     
@@ -172,6 +174,8 @@ int main(int argc, char **argv) {
         isds_logout(context);
 
         if (stop_server(server_process)) {
+            isds_ctx_free(&context);
+            isds_cleanup();
             ABORT_UNIT(server_error);
         }
     

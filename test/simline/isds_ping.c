@@ -102,6 +102,8 @@ int main(int argc, char **argv) {
         /* Terminate server without loggin out, we will exhibit calls on the
          * logged-in context later. */
         if (stop_server(server_process)) {
+            isds_ctx_free(&context);
+            isds_cleanup();
             ABORT_UNIT(server_error);
         }
         free(url);
@@ -110,6 +112,8 @@ int main(int argc, char **argv) {
 
     /* Shorten network timeout to make tests faster */
     if (isds_set_timeout(context, 500) != IE_SUCCESS) {
+        isds_ctx_free(&context);
+        isds_cleanup();
         ABORT_UNIT("isds_set_timeout() failed");
     }
     TEST("when server disappears", test_isds_ping,
