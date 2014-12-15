@@ -3,7 +3,7 @@ Message specification
 
 Source: Provozní řád ISDS, version 2011-11-29, Page 5, 14
 Source: Webové služby rozhranní ISDS pro manipulaci s datovými zprávami,
-    version 2.23 (2011-11-24)
+    version 2.40 (2014-08-25)
 Source: MIME Media Types
     <http://www.iana.org/assignments/media-types/index.html>
 Source: O2. Datové schránky: Informace pro dodavatele aplikací, version
@@ -203,15 +203,20 @@ digitally signed ISDS message or delivery info. The digital signature is
 Base64-encoded BER CMS. (xmldsig is not used to avoid expensive XML
 canonicalization).
 
-The CMS should carry one certificate and one signed body. Since 2011-04,
-a time stamp is embedded into the CMS (get-message responses currently only).
-The data structure is compliant with RFC 5126 (CMS Advanced Electronic
-Signatures (CAdES)) and RFC 3161 (Internet X.509 Public Key Infrastructure
-Time-Stamp Protocol (TSP)).
+The CMS should carry one certificate and one signed body.
+
+Since 2011-04, a time stamp is embedded into the CMS (get-message responses
+currently only). The data structure is compliant with RFC 5126 (CMS Advanced
+Electronic Signatures (CAdES)) and RFC 3161 (Internet X.509 Public Key
+Infrastructure Time-Stamp Protocol (TSP)).
 
 Stamp is stored in id-aa-signatureTimeStampToken object (iso(1).
 member-body(2).us(840).rsadsi(113549).pkcs(1).pkcs-9(9).smime(16).
 id-aa(2).14). Input for stamp is CMS SignerInfo.SignatureValue object.
+
+Since 2014-09, the time stamp conforms to ATSv3 format defined by CAdES
+Signatures Baseline Profile, ETSI TS 103 173, version 2.2.1. See
+<http://webapp.etsi.org/workprogram/Report_WorkItem.asp?WKI_ID=41927>.
 
 The signature and time stamp is computed on-the-fly, for each reponse again.
 
