@@ -5,7 +5,7 @@ Source: Provozní řád ISDS, version 2010-11-28, Pages 15–16
 Source: Webové služby rozhraní ISDS pro manipulaci s datovými zprávami,
     version 2.32 (2012-10-05)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
-    version 2.37 (2014-01-14)
+    version 2.41 (2014-12-08)
 
 
 These services are intended for working with messages inside a box by
@@ -93,6 +93,8 @@ PDZInfo
     Get rules for sending commercial messages from given box
 DataBoxCreditInfo (*)
     Get details about credit for comercial services
+ISDSSearch2 (*)
+    Search for boxes conforming to full text criteria
 
 
 CreateMessage (*)
@@ -749,3 +751,121 @@ Error codes (codes are not normative):
     1093    Date is too long (history is not available after 15 months)
     1137    Interval is too long (limit is 3 months)
     1058    Invalid date
+
+
+ISDSSearch2
+===========
+
+Return list of boxes matching a full text criteria.
+
+The search is perfomed on an index cached each 3 hours.
+
+The search phrase is splitted on word boundaries and the words are looked up
+in the index. Only whole words matches. All search phrase words must be found
+in the same box metadata (not necessarily in the same attribute and in the
+same order). Diacritics supplementing, case folding, and lemmatization is
+supported.
+
+Non-OVM users still cannot see FO boxes which cannot receive commercial
+messages and whose owners forbade listing on a public index.
+
+Input is this list of these elements:
+
+Element         Type                    Details
+--------------------------------------------------------------------------------
+searchText      String                  Mandatory, non-empty 
+searchType      Enumerated string       Mandatory, can be empty,
+                                        defaults to GENERAL
+searchScope     Enumerated string       Mandatory, can be empty,
+                                        defaults to ALL
+page            Non-negative integer    Mandatory, can be empty,
+                                        defaults to 0, counts from 0
+pageSize        Non-negative integer    Mandatory, can be empty,
+                                        defaults to 50, counts from 0,
+                                        server clamps the value to 100
+highlighting    Boolean                 Optional, can be empty,
+                                        defaults to false
+
+Acceptable values for `searchType' element are:
+
+Value       Meaning
+--------------------------------------------------------------------------
+GENERAL     Search a phrase in names, addresses, organization identifiers,
+            and box IDs
+ADDRESS     Search a phrase in addresses only
+ICO         Search in organization identifiers only by equivalence
+DBID        Search in box IDs only by equivalence
+
+If `searchType' is `ICO' or `DBID', `searchScope' restriction is ignored.
+
+`searchScope' element restricts box types. See `Box types' section in `box'
+file for the semantics, acceptable values are:
+
+Value       Meaning
+-------------------------------------
+ALL         Search over all box types
+OVM
+OVM_REQ
+OVM_NOTAR
+OVM_EXEKUT
+PO
+PO_ZAK
+PO_REQ
+PFO
+PFO_ADVOK
+PFO_INSSPR
+PFO_DANPOR
+FO
+
+Output is this list of these optional elements
+
+Element         Type                    Meaning
+------------------------------------------------------------------------
+totalCount      Non-negative integer    Number of matching boxes
+currentCount    Non-negative integer    Number of boxes in this response
+position        Non-negative integer    Ordinal number of first box in this
+                                        response, counts from 0
+lastPage        Boolean                 True if no more boxes match
+dbResults       List of elements
+
+Last mandatory element is the standard response status of the service call
+`dbStatus' element with status code and status message.
+
+`dbResults' content is a possibly empty list of `dbResult' elements.
+The list is sorted according to a search relevance. The `dbResult' element
+consists of:
+
+dbResult
+    + dbID – box ID
+    + dbType – box type
+    + dbName – box name
+    + dbAddress – residence address as one string
+    + dbBiDate – can be empty, date of birth
+    + dbICO – can be empty, identifier of an organization
+    + dbEffectiveOVM – boolean, true for a box upgraded to an OVM role 
+    + dbSendOptions – enumerated string, capability to deliver different
+        kinds of messages, it depends on querrier's box type and the found box
+
+Acceptable values for `dbSendOptions' element are:
+
+Value       Meaning
+-------------------
+DZ          Only noncommecrial messages can be sent
+ALL         Noncommercial and commercial messages can be sent
+PDZ         Only commercial messages can be sent
+NONE        No message can be sent
+DISABLED    The box is not active
+
+If input `highlighting' is true, output `dbName' and `dbAddress' can contain
+delimeters highlighting the phrase found in the strings. The start of the
+phrase is marked by `|$*HL_START*$|' string, the end of the phrase is marked
+by `|$*HL_END*$|' string.
+
+Error codes:
+    1004    Not allowed to search
+    1152    `searchText' is empty
+    1153    Searched box ID is malformed
+    1154    Searched organization ID is malformed
+    1155    Invalid input
+    1156    `pageSize' is too large
+    9002    Search engine internal error
