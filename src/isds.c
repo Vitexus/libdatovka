@@ -437,6 +437,25 @@ void isds_credit_event_free(struct isds_credit_event **event) {
 }
 
 
+/* Deallocate struct isds_fulltext_result recursively and NULL it */
+void isds_fulltext_result_free(
+        struct isds_fulltext_result **result) {
+    if (NULL == result || NULL == *result) return;
+
+    free((*result)->dbID);
+    free((*result)->name);
+    isds_list_free(&((*result)->name_match_start));
+    isds_list_free(&((*result)->name_match_end));
+    free((*result)->address);
+    isds_list_free(&((*result)->address_match_start));
+    isds_list_free(&((*result)->address_match_end));
+    free((*result)->ic);
+    free((*result)->biDate);
+
+    zfree(*result);
+}
+
+
 /* *DUP_OR_ERROR macros needs error label */
 #define STRDUP_OR_ERROR(new, template) { \
     if (!template) { \
@@ -2120,6 +2139,21 @@ static const xmlChar *isds_FileMetaType2string(const isds_FileMetaType type) {
             default: return NULL; break;
         }
 }
+
+
+/* Convert dmFileMetaType enum @type to UTF-8 string for ISDSSearch2/searchType
+ * value.
+ * @Return pointer to static string, or NULL if unknown enum value */
+static const xmlChar *isds_fulltext_target2string(
+        const isds_fulltext_target type) {
+     switch(type) {
+            case FULLTEXT_ALL: return(BAD_CAST "GENERAL"); break;
+            case FULLTEXT_ADDRESS: return(BAD_CAST "ADDRESS"); break;
+            case FULLTEXT_IC: return(BAD_CAST "ICO"); break;
+            case FULLTEXT_BOX_ID: return(BAD_CAST "DBID"); break;
+            default: return NULL; break;
+        }
+}
 #endif /* HAVE_LIBCURL */
 
 
@@ -2486,6 +2520,36 @@ static isds_error eventstring2event(const xmlChar *string,
             free(string); \
         } \
     } 
+
+#define EXTRACT_BOOLEANNOPTR(element, boolean) \
+    { \
+        char *string = NULL; \
+        EXTRACT_STRING(element, string); \
+         \
+        if (NULL == string) { \
+            isds_printf_message(context, _("%s element is empty"), element); \
+            err = IE_ERROR; \
+            goto leave; \
+        } \
+        if (!xmlStrcmp((xmlChar *)string, BAD_CAST "true") || \
+                !xmlStrcmp((xmlChar *)string, BAD_CAST "1")) \
+            (boolean) = 1; \
+        else if (!xmlStrcmp((xmlChar *)string, BAD_CAST "false") || \
+                !xmlStrcmp((xmlChar *)string, BAD_CAST "0")) \
+            (boolean) = 0; \
+        else { \
+            char *string_locale = _isds_utf82locale((char*)string); \
+            isds_printf_message(context, \
+                    _("%s value is not valid boolean: %s"), \
+                    element, string_locale); \
+            free(string_locale); \
+            free(string); \
+            err = IE_ERROR; \
+            goto leave; \
+        } \
+         \
+        free(string); \
+    }
 
 #define EXTRACT_LONGINT(element, longintPtr, preallocated) \
     { \
@@ -7258,6 +7322,427 @@ leave:
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("FindDataBox request processed by server successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
+}
+
+
+#if HAVE_LIBCURL
+/* Convert a string with match markers into a plain string with list of
+ * pointers to the matches
+ * @string is an UTF-8 encoded with match markers "|$*HL_START*$|" for start
+ * and "|$*HL_END*$|" for end of a match. The markers will be removed from the
+ * string.
+ * @starts is a reallocated list of static pointers into the @string pointing
+ * to places where match start markers occured.
+ * @ends is a reallocated list of static pointers into the @string pointing
+ * to places where match end markers occured
+ * @return IE_SUCCESS in case of no failure. */
+static isds_error interpret_matches(xmlChar *string,
+        struct isds_list **starts, struct isds_list **ends) {
+    isds_error err = IE_SUCCESS;
+    xmlChar *pointer, *destination, *source;
+    struct isds_list *item, *prev_start = NULL, *prev_end = NULL;
+
+    isds_list_free(starts);
+    isds_list_free(ends);
+    if (NULL == starts || NULL == ends) return IE_INVAL;
+    if (NULL == string) return IE_SUCCESS;
+
+    for (pointer = string; *pointer != '\0';) {
+        if (!xmlStrncmp(pointer, BAD_CAST "|$*HL_START*$|", 14)) {
+            /* Remove the start marker */
+            for (source = pointer + 14, destination = pointer;
+                    *source != '\0'; source++, destination++) {
+                *destination = *source;
+            }
+            /* Append the pointer into the list */
+            item = calloc(1, sizeof(*item));
+            if (!item) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+            item->destructor = (void (*)(void **))NULL;
+            item->data = pointer;
+            if (NULL == prev_start) *starts = item;
+            else prev_start->next = item;
+            prev_start = item;
+        } else if (!xmlStrncmp(pointer, BAD_CAST "|$*HL_END*$|", 12)) {
+            /* Remove the end marker */
+            for (source = pointer + 12, destination = pointer;
+                    *source != '\0'; source++, destination++) {
+                *destination = *source;
+            }
+            /* Append the pointer into the list */
+            item = calloc(1, sizeof(*item));
+            if (!item) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+            item->destructor = (void (*)(void **))NULL;
+            item->data = pointer;
+            if (NULL == prev_end) *ends = item;
+            else prev_end->next = item;
+            prev_end = item;
+        } else {
+            pointer++;
+        }
+    }
+
+leave:
+    if (err) {
+        isds_list_free(starts);
+        isds_list_free(ends);
+    }
+    return err;
+}
+
+
+/* Convert isds:dbResult XML tree into structure
+ * @context is ISDS context.
+ * @fulltext_result is automatically reallocated found box structure.
+ * @xpath_ctx is XPath context with current node as isds:dbResult element.
+ * @collect_matches is true to interpret match markers.
+ * In case of error @result will be freed. */
+static isds_error extract_dbResult(struct isds_ctx *context,
+        struct isds_fulltext_result **fulltext_result,
+        xmlXPathContextPtr xpath_ctx, _Bool collect_matches) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+
+    if (NULL == context) return IE_INVALID_CONTEXT;
+    if (NULL == fulltext_result) return IE_INVAL;
+    isds_fulltext_result_free(fulltext_result);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *fulltext_result = calloc(1, sizeof(**fulltext_result));
+    if (NULL == *fulltext_result) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    /* Extract data */
+    EXTRACT_STRING("isds:dbID", (*fulltext_result)->dbID);
+
+    EXTRACT_STRING("isds:dbType", string);
+    if (NULL == string) {
+        err = IE_ISDS;
+        isds_log_message(context, _("Empty isds:dbType element"));
+        goto leave;
+    }
+    err = string2isds_DbType((xmlChar *)string, &(*fulltext_result)->dbType);
+    if (err) {
+        if (err == IE_ENUM) {
+            err = IE_ISDS;
+            char *string_locale = _isds_utf82locale(string);
+            isds_printf_message(context, _("Unknown isds:dbType: %s"),
+                string_locale);
+            free(string_locale);
+        }
+        goto leave;
+    }
+    zfree(string);
+
+    EXTRACT_STRING("isds:dbName", (*fulltext_result)->name);
+    EXTRACT_STRING("isds:dbAddress", (*fulltext_result)->address);
+
+    err = extract_BiDate(context, &(*fulltext_result)->biDate, xpath_ctx);
+    if (err) goto leave;
+
+    EXTRACT_STRING("isds:dbICO", (*fulltext_result)->ic);
+    EXTRACT_BOOLEANNOPTR("isds:dbEffectiveOVM",
+            (*fulltext_result)->dbEffectiveOVM);
+
+    EXTRACT_STRING("isds:dbSendOptions", string);
+    if (NULL == string) {
+        err = IE_ISDS;
+        isds_log_message(context, _("Empty isds:dbSendOptions element"));
+        goto leave;
+    }
+    if (!xmlStrcmp(BAD_CAST string, BAD_CAST "DZ")) {
+        (*fulltext_result)->active = 1;
+        (*fulltext_result)->public_sending = 1;
+        (*fulltext_result)->commercial_sending = 0;
+    } else if (!xmlStrcmp(BAD_CAST string, BAD_CAST "ALL")) {
+        (*fulltext_result)->active = 1;
+        (*fulltext_result)->public_sending = 1;
+        (*fulltext_result)->commercial_sending = 1;
+    } else if (!xmlStrcmp(BAD_CAST string, BAD_CAST "PDZ")) {
+        (*fulltext_result)->active = 1;
+        (*fulltext_result)->public_sending = 0;
+        (*fulltext_result)->commercial_sending = 0;
+    } else if (!xmlStrcmp(BAD_CAST string, BAD_CAST "NONE")) {
+        (*fulltext_result)->active = 1;
+        (*fulltext_result)->public_sending = 0;
+        (*fulltext_result)->commercial_sending = 0;
+    } else if (!xmlStrcmp(BAD_CAST string, BAD_CAST "DISABLED")) {
+        (*fulltext_result)->active = 0;
+        (*fulltext_result)->public_sending = 0;
+        (*fulltext_result)->commercial_sending = 0;
+    } else {
+        err = IE_ISDS;
+        char *string_locale = _isds_utf82locale(string);
+        isds_printf_message(context, _("Unknown isds:dbSendOptions value: %s"),
+            string_locale);
+        free(string_locale);
+        goto leave;
+    }
+    zfree(string);
+
+    /* Interpret match marks */
+    if (collect_matches) {
+        err = interpret_matches(BAD_CAST (*fulltext_result)->name,
+                &((*fulltext_result)->name_match_start),
+                &((*fulltext_result)->name_match_end));
+        if (err) goto leave;
+        err = interpret_matches(BAD_CAST (*fulltext_result)->address,
+                &((*fulltext_result)->address_match_start),
+                &((*fulltext_result)->address_match_end));
+        if (err) goto leave;
+    }
+
+leave:
+    if (err) isds_fulltext_result_free(fulltext_result);
+    free(string);
+    xmlXPathFreeObject(result);
+    return err;
+}
+#endif /* HAVE_LIBCURL */
+
+
+/* Find boxes matching a given full-text criteria.
+ * @context is a session context
+ * @query is a non-empty string which consists of words to search
+ * @target selects box attributes to search for @query words. Pass NULL if you
+ * don't care.
+ * @box_type restricts searching to given box type. Value DBTYPE_SYSTEM means
+ * to search in all box types. Pass NULL to let server to use default value
+ * which is DBTYPE_SYSTEM.
+ * @page_size defines count of boxes to constitute a response page. It counts
+ * from zero. Pass NULL to let server to use a default value (50 now).
+ * @page_number defines ordinar number of the response page to return. It
+ * counts from zero. Pass NULL to let server to use a default value (0 now).
+ * @track_matches points to true for marking @query words found in the box
+ * attributes. It points to false for not marking. Pass NULL to let the server
+ * to use default value (false now).
+ * @total_matching_boxes outputs number of all boxes matching the query. Pass
+ * NULL if you don't care.
+ * @current_page_beginning outputs ordinar number of first box in this @boxes
+ * page. It counts from zero. Pass NULL if you don't care.
+ * @current_page_size outputs count of boxes in the this @boxes page. Pass
+ * NULL if you don't care.
+ * @last_page outputs true if this page is the last one, false otherwise. Pass
+ * NULL if you don't care.
+ * @boxes is automatically reallocated list of isds_fulltext_result structures,
+ * possibly empty.
+ * @return:
+ *  IE_SUCCESS if search succeeded, @boxes contains useful data
+ *  IE_2BIG if @page_size is too large
+ *  other code if something bad happens. @boxes will be NULL. */
+isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
+        const char *query,
+        isds_fulltext_target *target,
+        const isds_DbType *box_type,
+        const unsigned long int *page_size,
+        const unsigned long int *page_number,
+        const _Bool *track_matches,
+        unsigned long int *total_matching_boxes,
+        unsigned long int *current_page_beginning,
+        unsigned long int *current_page_size,
+        _Bool *last_page,
+        struct isds_list **boxes) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlDocPtr response = NULL;
+    xmlNodePtr node;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    const xmlChar *static_string = NULL;
+    xmlChar *string = NULL;
+
+    const xmlChar *codes[] = {
+        BAD_CAST "1004",
+        BAD_CAST "1152",
+        BAD_CAST "1153",
+        BAD_CAST "1154",
+        BAD_CAST "1155",
+        BAD_CAST "1156",
+        BAD_CAST "9002",
+        NULL
+    };
+    const char *meanings[] = {
+        N_("You are not allowed to perform the search"),
+        N_("The query string is empty"),
+        N_("Searched box ID is malformed"),
+        N_("Searched organization ID is malformed"),
+        N_("Invalid input"),
+        N_("Requested page size is too large"),
+        N_("Search engine internal error")
+    };
+    const isds_error errors[] = {
+        IE_ISDS,
+        IE_INVAL,
+        IE_INVAL,
+        IE_INVAL,
+        IE_INVAL,
+        IE_2BIG,
+        IE_ISDS
+    };
+    struct code_map_isds_error map = {
+        .codes = codes,
+        .meanings = meanings,
+        .errors = errors
+    };
+#endif
+
+
+    if (NULL == context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+
+    if (NULL == boxes) return IE_INVAL;
+    isds_list_free(boxes);
+
+    if (NULL == query || !xmlStrcmp(BAD_CAST query, BAD_CAST "")) {
+        isds_log_message(context, _("Query string must be non-empty"));
+        return IE_INVAL;
+    }
+
+#if HAVE_LIBCURL
+    /* Check if connection is established
+     * TODO: This check should be done downstairs. */
+    if (NULL == context->curl) return IE_CONNECTION_CLOSED;
+
+    /* Build FindDataBox request */
+    request = xmlNewNode(NULL, BAD_CAST "ISDSSearch2");
+    if (NULL == request) {
+        isds_log_message(context,
+                _("Could build ISDSSearch2 request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(NULL == isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    INSERT_STRING(request, "searchText", query);
+
+    if (NULL != target) {
+        static_string = isds_fulltext_target2string(*(target));
+        if (NULL == static_string) {
+            isds_printf_message(context, _("Invalid target value: %d"),
+                    *(target));
+            err = IE_ENUM;
+            goto leave;
+        }
+    }
+    INSERT_STRING(request, "searchType", static_string);
+    static_string = NULL;
+
+    if (NULL != box_type) {
+        /* XXX: Handle DBTYPE_SYSTEM value as "ALL" */
+        if (DBTYPE_SYSTEM == *box_type) {
+            static_string = BAD_CAST "ALL";
+        } else {
+            static_string = isds_DbType2string(*(box_type));
+            if (NULL == static_string) {
+                isds_printf_message(context, _("Invalid box type value: %d"),
+                        *(box_type));
+                err = IE_ENUM;
+                goto leave;
+            }
+        }
+    }
+    INSERT_STRING(request, "searchScope", static_string);
+    static_string = NULL;
+
+    INSERT_ULONGINT(request, "page", page_number, string);
+    INSERT_ULONGINT(request, "pageSize", page_size, string);
+    INSERT_BOOLEAN(request, "highlighting", track_matches);
+
+    /* Send request and check response */
+    err = send_destroy_request_check_response(context,
+            SERVICE_DB_SEARCH, BAD_CAST "ISDSSearch2",
+            &request, &response, NULL, &map);
+    if (err) goto leave;
+
+    /* Parse response */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (NULL == xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    /* Extract counters */
+    if (NULL != total_matching_boxes) {
+        EXTRACT_ULONGINT("isds:totalCount", total_matching_boxes, 1);
+    }
+    if (NULL != current_page_size) {
+        EXTRACT_ULONGINT("isds:currentCount", current_page_size, 1);
+    }
+    if (NULL != current_page_beginning) {
+        EXTRACT_ULONGINT("isds:position", current_page_beginning, 1);
+    }
+    if (NULL != last_page) {
+        EXTRACT_BOOLEAN("isds:lastPage", last_page);
+    }
+
+    /* Extract boxes if they present */
+    result = xmlXPathEvalExpression(BAD_CAST
+            "/isds:ISDSSearch2/isds:dbResults/isds:dbResult", xpath_ctx);
+    if (NULL == result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        struct isds_list *item, *prev_item = NULL;
+        for (int i = 0; i < result->nodesetval->nodeNr; i++) {
+            item = calloc(1, sizeof(*item));
+            if (!item) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+
+            item->destructor = (void (*)(void **))isds_fulltext_result_free;
+            if (i == 0) *boxes = item;
+            else prev_item->next = item;
+            prev_item = item;
+
+            xpath_ctx->node = result->nodesetval->nodeTab[i];
+            err = extract_dbResult(context,
+                    (struct isds_fulltext_result **) &(item->data), xpath_ctx,
+                    (NULL == track_matches) ? 0 : *track_matches);
+            if (err) goto leave;
+        }
+    }
+
+leave:
+    if (err) {
+        isds_list_free(boxes);
+    }
+
+    free(string);
+    xmlFreeNode(request);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("ISDSSearch2 request processed by server successfully.\n"));
 #else /* not HAVE_LIBCURL */
     err = IE_NOTSUP;
 #endif

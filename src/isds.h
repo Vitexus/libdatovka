@@ -788,6 +788,49 @@ struct isds_credentials_delivery {
                                        changed up on a call. */
 };
 
+/* Box attribute to search while performing full-text search */
+typedef enum {
+    FULLTEXT_ALL,       /* search in address, organization identifier, and
+                           box id */
+    FULLTEXT_ADDRESS,   /* search in address */
+    FULLTEXT_IC,        /* search in organization identifier */
+    FULLTEXT_BOX_ID     /* search in box ID */
+} isds_fulltext_target;
+
+/* A box matching full-text search */
+struct isds_fulltext_result {
+    char *dbID;                 /* Box ID */
+    isds_DbType dbType;         /* Box Type */
+    char *name;                 /* Subject owning the box */
+    struct isds_list *name_match_start;     /* List of pointers into `name'
+                                               field string. Point to first
+                                               characters of a matched query
+                                               word. */
+    struct isds_list *name_match_end;       /* List of pointers into `name'
+                                               field string. Point after last
+                                               characters of a matched query
+                                               word. */
+    char *address;              /* Post address */
+    struct isds_list *address_match_start;  /* List of pointers into `address'
+                                               field string. Point to first
+                                               characters of a matched query
+                                               word. */
+    struct isds_list *address_match_end;    /* List of pointers into `address'
+                                               field string. Point after last
+                                               characters of a matched query
+                                               word. */
+    char *ic;                   /* Organization identifier */
+    struct tm *biDate;          /* Date of birth in local time at birth place,
+                                   only tm_year, tm_mon and tm_mday carry sane
+                                   value */
+    _Bool dbEffectiveOVM;       /* Box has OVM role (§ 5a) */
+    _Bool active;               /* Box is active */
+    _Bool public_sending;       /* Current box can send non-commercial
+                                   messages into this box */
+    _Bool commercial_sending;   /* Current box can send commercial messages
+                                   into this box */
+};
+
 /* Initialize ISDS library.
  * Global function, must be called before other functions.
  * If it fails you can not use ISDS library and must call isds_cleanup() to
@@ -1176,6 +1219,48 @@ isds_error isds_get_box_list_archive(struct isds_ctx *context,
  *  other code if something bad happens. @boxes will be NULL. */
 isds_error isds_FindDataBox(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *criteria,
+        struct isds_list **boxes);
+
+/* Find boxes matching a given full-text criteria.
+ * @context is a session context
+ * @query is a non-empty string which consists of words to search
+ * @target selects box attributes to search for @query words. Pass NULL if you
+ * don't care.
+ * @box_type restricts searching to given box type. Value DBTYPE_SYSTEM means
+ * to search in all box types. Pass NULL to let server to use default value
+ * which is DBTYPE_SYSTEM.
+ * @page_size defines count of boxes to constitute a response page. It counts
+ * from zero. Pass NULL to let server to use a default value (50 now).
+ * @page_number defines ordinar number of the response page to return. It
+ * counts from zero. Pass NULL to let server to use a default value (0 now).
+ * @track_matches points to true for marking @query words found in the box
+ * attributes. It points to false for not marking. Pass NULL to let the server
+ * to use default value (false now).
+ * @total_matching_boxes outputs number of all boxes matching the query. Pass
+ * NULL if you don't care.
+ * @current_page_beginning outputs ordinar number of first box in this @boxes
+ * page. It counts from zero. Pass NULL if you don't care.
+ * @current_page_size outputs count of boxes in the this @boxes page. Pass
+ * NULL if you don't care.
+ * @last_page outputs true if this page is the last one, false otherwise. Pass
+ * NULL if you don't care.
+ * @boxes is automatically reallocated list of isds_fulltext_result structures,
+ * possibly empty.
+ * @return:
+ *  IE_SUCCESS if search succeeded, @boxes contains useful data
+ *  IE_2BIG if @page_size is too large
+ *  other code if something bad happens. @boxes will be NULL. */
+isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
+        const char *query,
+        isds_fulltext_target *target,
+        const isds_DbType *box_type,
+        const unsigned long int *page_size,
+        const unsigned long int *page_number,
+        const _Bool *track_matches,
+        unsigned long int *total_matching_boxes,
+        unsigned long int *current_page_beginning,
+        unsigned long int *current_page_size,
+        _Bool *last_page,
         struct isds_list **boxes);
 
 /* Get status of a box.
@@ -1738,6 +1823,10 @@ void isds_credit_event_free(struct isds_credit_event **event);
  * The email string is deallocated too. */
 void isds_credentials_delivery_free(
         struct isds_credentials_delivery **credentials_delivery);
+
+/* Deallocate struct isds_fulltext_result recursively and NULL it */
+void isds_fulltext_result_free(
+        struct isds_fulltext_result **result);
 
 /* Copy structure isds_PersonName recursively */
 struct isds_PersonName *isds_PersonName_duplicate(
