@@ -2141,8 +2141,8 @@ static const xmlChar *isds_FileMetaType2string(const isds_FileMetaType type) {
 }
 
 
-/* Convert dmFileMetaType enum @type to UTF-8 string for ISDSSearch2/searchType
- * value.
+/* Convert isds_fulltext_target enum @type to UTF-8 string for
+ * ISDSSearch2/searchType value.
  * @Return pointer to static string, or NULL if unknown enum value */
 static const xmlChar *isds_fulltext_target2string(
         const isds_fulltext_target type) {
@@ -7333,13 +7333,13 @@ leave:
 #if HAVE_LIBCURL
 /* Convert a string with match markers into a plain string with list of
  * pointers to the matches
- * @string is an UTF-8 encoded with match markers "|$*HL_START*$|" for start
- * and "|$*HL_END*$|" for end of a match. The markers will be removed from the
- * string.
+ * @string is an UTF-8 encoded non-constant string with match markers
+ * "|$*HL_START*$|" for start and "|$*HL_END*$|" for end of a match.
+ * The markers will be removed from the string.
  * @starts is a reallocated list of static pointers into the @string pointing
  * to places where match start markers occured.
  * @ends is a reallocated list of static pointers into the @string pointing
- * to places where match end markers occured
+ * to places where match end markers occured.
  * @return IE_SUCCESS in case of no failure. */
 static isds_error interpret_matches(xmlChar *string,
         struct isds_list **starts, struct isds_list **ends) {
