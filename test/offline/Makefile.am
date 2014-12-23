@@ -32,7 +32,8 @@ TESTS = prepare_environment \
 		isds_DbOwnerInfo_duplicate isds_DbUserInfo_duplicate \
 		isds-filemetatype isds-hash_algorithm \
 		isds-timestring2timeval \
-		isds-uint2isds_message_status isds-eventstring2event
+		isds-uint2isds_message_status isds-eventstring2event \
+		isds-interpret_matches
 if BUILD_CURL
 TESTS += isds-dbtype isds-sendertype isds-usertype isds-paymenttype\
 		 isds-crediteventtype isds-datestring2tm isds-tm2datestring \
@@ -191,6 +192,7 @@ isds_timeval2timestring_SOURCES	= isds-timeval2timestring.c $(isds_common)
 isds_uint2isds_message_status_SOURCES	= isds-uint2isds_message_status.c \
 										  $(isds_common)
 isds_eventstring2event_SOURCES	= isds-eventstring2event.c $(isds_common)
+isds_interpret_matches_SOURCES	= isds-interpret_matches.c $(isds_common)
 
 # Access static symbols from soap.c
 soap_decode_header_value_SOURCES	= soap-decode_header_value.c $(soap_common)
