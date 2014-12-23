@@ -7359,6 +7359,7 @@ static isds_error interpret_matches(xmlChar *string,
                     *source != '\0'; source++, destination++) {
                 *destination = *source;
             }
+            *destination = '\0';
             /* Append the pointer into the list */
             item = calloc(1, sizeof(*item));
             if (!item) {
@@ -7376,6 +7377,7 @@ static isds_error interpret_matches(xmlChar *string,
                     *source != '\0'; source++, destination++) {
                 *destination = *source;
             }
+            *destination = '\0';
             /* Append the pointer into the list */
             item = calloc(1, sizeof(*item));
             if (!item) {
