@@ -7687,6 +7687,25 @@ isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
+    result = xmlXPathEvalExpression(BAD_CAST "/isds:ISDSSearch2Response",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context, _("Missing ISDSSearch2 element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    if (result->nodesetval->nodeNr > 1) {
+        isds_log_message(context, _("Multiple ISDSSearch2 element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+    xmlXPathFreeObject(result); result = NULL;
+
 
     /* Extract counters */
     if (NULL != total_matching_boxes) {
@@ -7704,7 +7723,7 @@ isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
 
     /* Extract boxes if they present */
     result = xmlXPathEvalExpression(BAD_CAST
-            "/isds:ISDSSearch2/isds:dbResults/isds:dbResult", xpath_ctx);
+            "isds:dbResults/isds:dbResult", xpath_ctx);
     if (NULL == result) {
         err = IE_ERROR;
         goto leave;
