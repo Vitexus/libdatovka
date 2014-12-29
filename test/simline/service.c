@@ -176,6 +176,27 @@ struct service {
     } else { INSERT_STRING(parent, element, NULL) } \
 }
 
+#define INSERT_ULONGINTPTR(parent, element, ulongintPtr) { \
+    if ((ulongintPtr)) { \
+        char *buffer = NULL; \
+        /* FIXME: locale sensitive */ \
+        if (-1 == test_asprintf(&buffer, "%lu", *(ulongintPtr))) { \
+            error = HTTP_ERROR_SERVER; \
+            goto leave; \
+        } \
+        INSERT_STRING(parent, element, buffer) \
+        free(buffer); \
+    } else { INSERT_STRING(parent, element, NULL) } \
+}
+
+#define INSERT_BOOLEANPTR(parent, element, booleanPtr) { \
+    if (NULL != (booleanPtr)) { \
+        char *buffer = NULL; \
+        buffer = *(booleanPtr) ? "true" : "false"; \
+        INSERT_STRING(parent, element, buffer) \
+    } else { INSERT_STRING(parent, element, NULL) } \
+}
+
 #define INSERT_TIMEVALPTR(parent, element, timevalPtr) { \
     if (NULL != (timevalPtr)) { \
         char *buffer = NULL; \
@@ -214,6 +235,304 @@ struct service {
             goto leave; \
         } \
     }
+
+/* TODO: These functions (element_exists(), extract_...(), ...) will replace
+ * the macros (ELEMENT_EXISTS, EXTRACT_...). The compiled code will be
+ * smaller, the compilation will be faster. */
+
+/* Check an element exists.
+ * @code is a static output ISDS error code
+ * @error_message is a reallocated output ISDS error message
+ * @xpath_ctx is a current XPath context
+ * @element_name is name of an element to check
+ * @allow_multiple is false to require exactly one element. True to require
+ * one or more elements.
+ * @return HTTP_ERROR_SUCCESS or an appropriate error code. */
+static http_error element_exists(const char **code, char **message,
+        xmlXPathContextPtr xpath_ctx, const char *element_name,
+        _Bool allow_multiple) {
+    xmlXPathObjectPtr result = NULL;
+
+    result = xmlXPathEvalExpression(BAD_CAST element_name, xpath_ctx);
+    if (NULL == result) {
+        return HTTP_ERROR_SERVER;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+            xmlXPathFreeObject(result);
+            test_asprintf(message, "Element %s does not exist", element_name);
+            return HTTP_ERROR_CLIENT;
+    } else {
+        if (!allow_multiple && result->nodesetval->nodeNr > 1) {
+            xmlXPathFreeObject(result);
+            test_asprintf(message, "Multiple %s element", element_name);
+            return HTTP_ERROR_CLIENT;
+        }
+    }
+    xmlXPathFreeObject(result);
+
+    return HTTP_ERROR_SUCCESS;
+}
+
+
+/* Extract @element_name's value as a string.
+ * @code is a static output ISDS error code
+ * @error_message is a reallocated output ISDS error message
+ * @xpath_ctx is a current XPath context
+ * @element_name is name of a element whose child text node to extract
+ * @string is the extraced allocated string value, or NULL if empty or the
+ * element does not exist.
+ * @return HTTP_ERROR_SUCCESS or an appropriate error code. */
+static http_error extract_string(const char **code, char **message,
+        xmlXPathContextPtr xpath_ctx, const char *element_name,
+        char **string) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    char *buffer = NULL;
+
+    if (-1 == test_asprintf(&buffer, "%s/text()", element_name)) {
+        error = HTTP_ERROR_SERVER;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(BAD_CAST buffer, xpath_ctx);
+    free(buffer);
+    if (NULL == result) {
+        error = HTTP_ERROR_SERVER;
+        goto leave;
+    }
+    if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        if (result->nodesetval->nodeNr > 1) {
+            xmlXPathFreeObject(result);
+            test_asprintf(message, "Multiple %s element", element_name);
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+        *string = (char *) \
+            xmlXPathCastNodeSetToString(result->nodesetval);
+        if (!(*string)) {
+            xmlXPathFreeObject(result);
+            error = HTTP_ERROR_SERVER;
+            goto leave;
+        }
+    }
+    xmlXPathFreeObject(result);
+
+leave:
+    return error;
+}
+
+
+/* Checks an @element_name's value is an @expected_value string.
+ * @code is a static output ISDS error code
+ * @error_message is a reallocated output ISDS error message
+ * @xpath_ctx is a current XPath context
+ * @element_name is name of a element to check
+ * @must_exist is true if the @element_name must exist even if @expected_value
+ * is NULL.
+ * @expected_value is an expected string value
+ * @return HTTP_ERROR_SUCCESS if the @element_name element's value is
+ * @expected_value. HTTP_ERROR_CLIENT if not equaled, HTTP_ERROR_SERVER if an
+ * internal error occured. */
+static http_error element_equals_string(const char **code, char **message,
+        xmlXPathContextPtr xpath_ctx, const char *element_name,
+        _Bool must_exist, const char *expected_value) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    char *string = NULL;
+
+    if (must_exist) {
+        error = element_exists(code, message, xpath_ctx, element_name, 0);
+        if (HTTP_ERROR_SUCCESS != error)
+            goto leave;
+    }
+
+    error = extract_string(code, message, xpath_ctx, element_name, &string);
+    if (HTTP_ERROR_SUCCESS != error)
+        goto leave;
+
+    if (NULL != expected_value) {
+        if (NULL == string) {
+            *code = "9999";
+            test_asprintf(message, "Empty %s element", element_name);
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+        if (xmlStrcmp(BAD_CAST expected_value, BAD_CAST string)) {
+            *code = "9999";
+            test_asprintf(message,
+                    "Unexpected %s element value: expected=`%s', got=`%s'",
+                    element_name, expected_value, string);
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+    } else {
+        if (NULL != string && *string != '\0') {
+            *code = "9999";
+            test_asprintf(message,
+                    "Unexpected %s element value: "
+                    "expected empty string, got=`%s'",
+                    element_name, string);
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+    }
+
+leave:
+    free(string);
+    return error;
+}
+
+
+/* Checks an @element_name's value is an @expected_value integer.
+ * @code is a static output ISDS error code
+ * @error_message is a reallocated output ISDS error message
+ * @xpath_ctx is a current XPath context
+ * @element_name is name of a element to check
+ * @must_exist is true if the @element_name must exist even if @expected_value
+ * is NULL.
+ * @expected_value is an expected integer value.
+ * @return HTTP_ERROR_SUCCESS if the @element_name element's value is
+ * @expected_value. HTTP_ERROR_CLIENT if not equaled, HTTP_ERROR_SERVER if an
+ * internal error occured. */
+static http_error element_equals_integer(const char **code, char **message,
+        xmlXPathContextPtr xpath_ctx, const char *element_name,
+        _Bool must_exist, const long int *expected_value) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    char *string = NULL;
+    long int number;
+    char *endptr;
+
+    if (must_exist) {
+        error = element_exists(code, message, xpath_ctx, element_name, 0);
+        if (HTTP_ERROR_SUCCESS != error)
+            goto leave;
+    }
+
+    error = extract_string(code, message, xpath_ctx, element_name, &string);
+    if (HTTP_ERROR_SUCCESS != error)
+        goto leave;
+
+    if (NULL != expected_value) {
+        if (NULL == string) {
+            *code = "9999";
+            test_asprintf(message, "Empty %s element", element_name);
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+        number = strtol(string, &endptr, 10);
+        if (*endptr != '\0') {
+            *code = "9999";
+            test_asprintf(message,
+                    "%s element value is not a valid integer: %s",
+                    element_name, string);
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+        if (number == LONG_MIN || number == LONG_MAX) { \
+            *code = "9999";
+            test_asprintf(message, \
+                    "%s element value is out of range of long int: %s",
+                    element_name, string);
+            error = HTTP_ERROR_SERVER;
+            goto leave;
+        }
+        free(string); string = NULL;
+        if (number != *expected_value) {
+            *code = "9999";
+            test_asprintf(message,
+                    "Unexpected %s element value: expected=`%ld', got=`%ld'",
+                    element_name, *expected_value, number);
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+    } else {
+        if (NULL != string && *string != '\0') {
+            *code = "9999";
+            test_asprintf(message,
+                    "Unexpected %s element value: expected no text node, got=`%s'",
+                    element_name, string);
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+    }
+
+leave:
+    free(string);
+    return error;
+}
+
+
+/* Checks an @element_name's value is an @expected_value boolean.
+ * @code is a static output ISDS error code
+ * @error_message is an reallocated output ISDS error message
+ * @xpath_ctx is a current XPath context
+ * @element_name is name of a element to check
+ * @must_exist is true if the @element_name must exist even if @expected_value
+ * is NULL.
+ * @expected_value is an expected boolean value
+ * @return HTTP_ERROR_SUCCESS if the @element_name element's value is
+ * @expected_value. HTTP_ERROR_CLIENT if not equaled, HTTP_ERROR_SERVER if an
+ * internal error occured. */
+static http_error element_equals_boolean(const char **code, char **message,
+        xmlXPathContextPtr xpath_ctx, const char *element_name,
+        _Bool must_exist, const _Bool *expected_value) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    char *string = NULL;
+    _Bool value;
+
+    if (must_exist) {
+        error = element_exists(code, message, xpath_ctx, element_name, 0);
+        if (HTTP_ERROR_SUCCESS != error)
+            goto leave;
+    }
+
+    error = extract_string(code, message, xpath_ctx, element_name, &string);
+    if (HTTP_ERROR_SUCCESS != error)
+        goto leave;
+
+    if (NULL != expected_value) {
+        if (NULL == string) {
+            *code = "9999";
+            test_asprintf(message, "Empty %s element", element_name);
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+        if (!xmlStrcmp((xmlChar *)string, BAD_CAST "true") ||
+                !xmlStrcmp((xmlChar *)string, BAD_CAST "1"))
+            value = 1;
+        else if (!xmlStrcmp((xmlChar *)string, BAD_CAST "false") ||
+                !xmlStrcmp((xmlChar *)string, BAD_CAST "0"))
+            value = 0;
+        else {
+            *code = "9999";
+            test_asprintf(message,
+                    "%s element value is not a valid boolean: %s",
+                    element_name, string);
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+        if (*expected_value != value) {
+            *code = "9999";
+            test_asprintf(message,
+                    "Unexpected %s element value: expected=%d, got=%d",
+                    element_name, *expected_value, string);
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+    } else {
+        if (NULL != string && *string != '\0') {
+            *code = "9999";
+            test_asprintf(message,
+                    "Unexpected %s element value: "
+                    "expected empty string, got=`%s'",
+                    element_name, string);
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+    }
+
+leave:
+    free(string);
+    return error;
+}
 
 
 /* Insert dmStatus or similar subtree
@@ -581,6 +900,137 @@ leave:
 }
 
 
+/* Insert list of fulltext search results as XSD:tdbResultsArray XML tree.
+ * @isds_response is XML node with the response
+ * @results is list of struct server_db_result *.
+ * @create_empty_root is true to create dbResults element even if @results is
+ * empty. */
+static http_error insert_tdbResultsArray(xmlNodePtr isds_response,
+        const struct server_list *results, _Bool create_empty_root) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    xmlNodePtr root, entry;
+
+    if (NULL == isds_response) return HTTP_ERROR_SERVER;
+
+    if (NULL != results || create_empty_root)
+        INSERT_ELEMENT(root, isds_response, "dbResults");
+
+    if (NULL == results) return HTTP_ERROR_SUCCESS;
+
+    for (const struct server_list *item = results; NULL != item;
+            item = item->next) {
+        const struct server_db_result *result =
+            (struct server_db_result *)item->data;
+        
+        INSERT_ELEMENT(entry, root, "dbResult");
+        if (NULL == result) continue;
+
+        INSERT_STRING(entry, "dbID", result->id);
+        INSERT_STRING(entry, "dbType", result->type);
+        INSERT_STRING(entry, "dbName", result->name);
+        INSERT_STRING(entry, "dbAddress", result->address);
+        INSERT_TMPTR(entry, "dbBiDate", result->birth_date);
+        INSERT_STRING(entry, "dbICO", result->ic);
+        INSERT_BOOLEANPTR(entry, "dbEffectiveOVM", &result->ovm);
+        INSERT_STRING(entry, "dbSendOptions", result->send_options);
+    }
+
+leave:
+    return error;
+}
+
+
+/* Implement ISDSSearch2.
+ * @arguments is pointer to struct arguments_DS_df_ISDSSearch2 */
+static http_error service_ISDSSearch2(
+        const struct http_connection *connection,
+        const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
+        const xmlNodePtr isds_request,
+        xmlDocPtr soap_response, xmlNodePtr isds_response,
+        const void *arguments) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    const char *code = "9999";
+    char *message = NULL;
+    const struct arguments_DS_df_ISDSSearch2 *configuration =
+        (const struct arguments_DS_df_ISDSSearch2 *)arguments;
+    char *string = NULL;
+
+    if (NULL == configuration || NULL == configuration->status_code ||
+            NULL == configuration->status_message) {
+        error = HTTP_ERROR_SERVER;
+        goto leave;
+    }
+
+    /* Check request */
+    EXTRACT_STRING("isds:searchText", string);
+    if (NULL == string) {
+        message = strdup("Missing or empty isds:searchText");
+        error = HTTP_ERROR_CLIENT;
+        goto leave;
+    }
+    if (NULL != configuration->search_text &&
+            xmlStrcmp(BAD_CAST configuration->search_text,
+                    BAD_CAST string)) {
+        code = "9999";
+        message = strdup("Unexpected isds:searchText value");
+        error = HTTP_ERROR_CLIENT;
+        goto leave;
+    }
+    free(string); string = NULL;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:searchType", 1, configuration->search_type);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:searchScope", 1, configuration->search_scope);
+    if (error) goto leave;
+
+    error = element_equals_integer(&code, &message, xpath_ctx,
+            "isds:page", 1, configuration->search_page_number);
+    if (error) goto leave;
+
+    error = element_equals_integer(&code, &message, xpath_ctx,
+            "isds:pageSize", 1, configuration->search_page_size);
+    if (error) goto leave;
+
+    error = element_equals_boolean(&code, &message, xpath_ctx,
+            "isds:highlighting", 0, configuration->search_highlighting_value);
+    if (error) goto leave;
+
+    /* Build response */
+    if (NULL != configuration->total_count)
+        INSERT_ULONGINTPTR(isds_response, "totalCount",
+            configuration->total_count);
+    if (NULL != configuration->current_count)
+        INSERT_ULONGINTPTR(isds_response, "currentCount",
+            configuration->current_count);
+    if (NULL != configuration->position)
+        INSERT_ULONGINTPTR(isds_response, "position",
+            configuration->position);
+    if (NULL != configuration->last_page)
+        INSERT_BOOLEANPTR(isds_response, "lastPage",
+            configuration->last_page);
+    if ((error = insert_tdbResultsArray(isds_response, configuration->results,
+                    configuration->results_exists))) {
+        goto leave;
+    }
+
+    code = configuration->status_code;
+    message = strdup(configuration->status_message);
+
+leave:
+    if (HTTP_ERROR_SERVER != error) {
+        http_error next_error = insert_isds_status(isds_response, 0,
+                BAD_CAST code, BAD_CAST message, NULL);
+        if (HTTP_ERROR_SUCCESS != next_error) error = next_error;
+    }
+    free(string);
+    free(message);
+    return error;
+}
+
+
 /* Common part for ChangeISDSPassword and ChangePasswordOTP.
  * @code is output pointer to static string
  * @pass_message is output pointer to auto-allocated string
@@ -837,6 +1287,9 @@ static struct service services[] = {
     { SERVICE_DS_df_DataBoxCreditInfo,
         "DS/df", BAD_CAST ISDS_NS, BAD_CAST "DataBoxCreditInfo",
         service_DataBoxCreditInfo },
+    { SERVICE_DS_df_ISDSSearch2,
+        "DS/df", BAD_CAST ISDS_NS, BAD_CAST "ISDSSearch2",
+        service_ISDSSearch2 },
     { SERVICE_DS_DsManage_ChangeISDSPassword,
         "DS/DsManage", BAD_CAST ISDS_NS, BAD_CAST "ChangeISDSPassword",
         service_ChangeISDSPassword },

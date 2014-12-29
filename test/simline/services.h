@@ -10,6 +10,7 @@ typedef enum {
     SERVICE_asws_changePassword_ChangePasswordOTP,
     SERVICE_asws_changePassword_SendSMSCode,
     SERVICE_DS_df_DataBoxCreditInfo,
+    SERVICE_DS_df_ISDSSearch2,
     SERVICE_DS_DsManage_ChangeISDSPassword,
     SERVICE_DS_Dx_EraseMessage,
     SERVICE_DS_Dz_DummyOperation,
@@ -89,6 +90,18 @@ struct server_credit_event {
     } details;
 };
 
+/* An ISDSSearch2 result */
+struct server_db_result {
+    char *id;                   /* dbID value */
+    char *type;                 /* dbType value */
+    char *name;                 /* dbName value */
+    char *address;              /* dbAddress value */
+    struct tm *birth_date;      /* dbBiDate value */
+    char *ic;                   /* dbICO value */
+    _Bool ovm;                  /* dbEffectiveOVM value */
+    char *send_options;         /* dbSendOptions value */
+};
+
 /* General linked list */
 struct server_list {
     struct server_list *next;       /* Next list item,
@@ -107,6 +120,25 @@ struct arguments_DS_df_DataBoxCreditInfo {
     const long int current_credit;  /* Return this currentCredit */
     const char *email;              /* Return this notifEmail */
     const struct server_list *history;  /* Return this ciRecords */
+};
+
+struct arguments_DS_df_ISDSSearch2 {
+    const char *status_code; 
+    const char *status_message;
+    const char *search_text;        /* Require this searchText in a request */
+    const char *search_type;        /* Require this searchType in a request */
+    const char *search_scope;       /* Require this searchScope in a request */
+    const long int *search_page_number; /* Require this page in a request */
+    const long int *search_page_size;   /* Require this pageSize in a request */
+    const _Bool *search_highlighting_value;     /* Require this highlighting
+                                                   value in a request */
+    const unsigned long int *total_count;    /* Return this totalCount */
+    const unsigned long int *current_count;  /* Return this currentCount */
+    const unsigned long int *position;       /* Return this position */
+    const _Bool *last_page;         /* Return this lastPage */
+    const _Bool results_exists;     /* Return dbResults element */
+    const struct server_list *results;  /* Return list of
+                                           struct server_db_result* as dbResults */
 };
 
 struct arguments_DS_Dz_ResignISDSDocument {
