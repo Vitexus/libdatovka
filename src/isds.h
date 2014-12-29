@@ -1252,7 +1252,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
  *  other code if something bad happens. @boxes will be NULL. */
 isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
         const char *query,
-        isds_fulltext_target *target,
+        const isds_fulltext_target *target,
         const isds_DbType *box_type,
         const unsigned long int *page_size,
         const unsigned long int *page_number,
