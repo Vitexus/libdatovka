@@ -1236,20 +1236,24 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
  * @track_matches points to true for marking @query words found in the box
  * attributes. It points to false for not marking. Pass NULL to let the server
  * to use default value (false now).
- * @total_matching_boxes outputs number of all boxes matching the query. Pass
+ * @total_matching_boxes outputs reallocated number of all boxes matching the
+ * query. Will be pointer to NULL if server did not provide the value.
+ * Pass NULL if you don't care.
+ * @current_page_beginning outputs reallocated ordinar number of the first box
+ * in this @boxes page. It counts from zero. It will be pointer to NULL if the
+ * server did not provide the value. Pass NULL if you don't care.
+ * @current_page_size outputs reallocated count of boxes in the this @boxes
+ * page. It will be pointer to NULL if the server did not provide the value. Pass
  * NULL if you don't care.
- * @current_page_beginning outputs ordinar number of first box in this @boxes
- * page. It counts from zero. Pass NULL if you don't care.
- * @current_page_size outputs count of boxes in the this @boxes page. Pass
- * NULL if you don't care.
- * @last_page outputs true if this page is the last one, false otherwise. Pass
- * NULL if you don't care.
- * @boxes is automatically reallocated list of isds_fulltext_result structures,
+ * @last_page outputs pointer to reallocated boolean. True if this @boxes page
+ * is the last one, false if more boxes match, NULL if the server did not
+ * provude the value. Pass NULL if you don't care.
+ * @boxes outputs reallocated list of isds_fulltext_result structures,
  * possibly empty.
  * @return:
- *  IE_SUCCESS if search succeeded, @boxes contains useful data
+ *  IE_SUCCESS if search succeeded
  *  IE_2BIG if @page_size is too large
- *  other code if something bad happens. @boxes will be NULL. */
+ *  other code if something bad happens; output arguments will be NULL. */
 isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
         const char *query,
         const isds_fulltext_target *target,
@@ -1257,10 +1261,10 @@ isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
         const unsigned long int *page_size,
         const unsigned long int *page_number,
         const _Bool *track_matches,
-        unsigned long int *total_matching_boxes,
-        unsigned long int *current_page_beginning,
-        unsigned long int *current_page_size,
-        _Bool *last_page,
+        unsigned long int **total_matching_boxes,
+        unsigned long int **current_page_beginning,
+        unsigned long int **current_page_size,
+        _Bool **last_page,
         struct isds_list **boxes);
 
 /* Get status of a box.

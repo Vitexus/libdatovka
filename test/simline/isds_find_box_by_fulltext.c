@@ -119,6 +119,24 @@ static int compare_result_lists(const struct isds_list *expected_list,
     return 0;
 }
 
+struct test_destructor_argument {
+    unsigned long int *total_matching_boxes;
+    unsigned long int *current_page_beginning;
+    unsigned long int *current_page_size;
+    _Bool *last_page;
+    struct isds_list *results;
+};
+
+static void test_destructor(void *argument) {
+    if (NULL == argument) return;
+    free(((struct test_destructor_argument *)argument)->total_matching_boxes);
+    free(((struct test_destructor_argument *)argument)->current_page_beginning);
+    free(((struct test_destructor_argument *)argument)->current_page_size);
+    free(((struct test_destructor_argument *)argument)->last_page);
+    isds_list_free(
+            &((struct test_destructor_argument *)argument)->results
+    );
+}
 
 static int test_isds_find_box_by_fulltext(const isds_error expected_error,
         struct isds_ctx *context,
@@ -134,24 +152,21 @@ static int test_isds_find_box_by_fulltext(const isds_error expected_error,
         const _Bool *expected_last_page,
         const struct isds_list *expected_results) {
     isds_error error;
-    unsigned long int total_matching_boxes = 99;
-    unsigned long int current_page_beginning = 99;
-    unsigned long int current_page_size = 99;
-    _Bool last_page = 1;
-    struct isds_list *results = NULL;
+    struct test_destructor_argument allocated;
+    TEST_FILL_INT(allocated.total_matching_boxes);
+    TEST_FILL_INT(allocated.current_page_beginning);
+    TEST_FILL_INT(allocated.current_page_size);
+    TEST_FILL_INT(allocated.last_page);
+    TEST_CALLOC(allocated.results);
 
     error = isds_find_box_by_fulltext(context,
             query, target, box_type, page_size, page_number, track_matches,
-            (NULL == expected_total_matching_boxes) ?
-                NULL : &total_matching_boxes,
-            (NULL == expected_current_page_beginning) ?
-                NULL : &current_page_beginning,
-            (NULL == expected_current_page_size) ?
-                NULL : &current_page_size,
-            (NULL == expected_last_page) ?
-                NULL : &last_page,
-            &results);
-    TEST_DESTRUCTOR((void(*)(void*))isds_list_free, &results);
+            &allocated.total_matching_boxes,
+            &allocated.current_page_beginning,
+            &allocated.current_page_size,
+            &allocated.last_page,
+            &allocated.results);
+    TEST_DESTRUCTOR(test_destructor, &allocated);
 
     if (expected_error != error) {
         FAIL_TEST("Wrong return code: expected=%s, returned=%s (%s)",
@@ -159,23 +174,25 @@ static int test_isds_find_box_by_fulltext(const isds_error expected_error,
                 isds_long_message(context));
     }
 
-    if (IE_SUCCESS != error)
+    if (IE_SUCCESS != error) {
+        TEST_POINTER_IS_NULL(allocated.total_matching_boxes);
+        TEST_POINTER_IS_NULL(allocated.current_page_beginning);
+        TEST_POINTER_IS_NULL(allocated.current_page_size);
+        TEST_POINTER_IS_NULL(allocated.last_page);
+        TEST_POINTER_IS_NULL(allocated.results);
         PASS_TEST;
+    }
 
-    if (NULL != expected_total_matching_boxes)
-        TEST_INT_DUPLICITY(*expected_total_matching_boxes,
-                total_matching_boxes);
-    if (NULL != expected_current_page_beginning)
-        TEST_INT_DUPLICITY(*expected_current_page_beginning,
-                current_page_beginning);
-    if (NULL != expected_current_page_size)
-        TEST_INT_DUPLICITY(*expected_current_page_size,
-                current_page_size);
-    if (NULL != expected_last_page)
-        TEST_BOOLEAN_DUPLICITY(*expected_last_page,
-                last_page);
+    TEST_INTPTR_DUPLICITY(expected_total_matching_boxes,
+            allocated.total_matching_boxes);
+    TEST_INTPTR_DUPLICITY(expected_current_page_beginning,
+            allocated.current_page_beginning);
+    TEST_INTPTR_DUPLICITY(expected_current_page_size,
+            allocated.current_page_size);
+    TEST_BOOLEANPTR_DUPLICITY(expected_last_page,
+            allocated.last_page);
 
-    if (compare_result_lists(expected_results, results))
+    if (compare_result_lists(expected_results, allocated.results))
         return 1;
 
     
@@ -383,6 +400,70 @@ int main(int argc, char **argv) {
                 context, service_arguments.search_text, NULL, NULL,
                 (unsigned long int *)service_arguments.search_page_size,
                 (unsigned long int *)service_arguments.search_page_number,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL);
+
+        isds_logout(context);
+        if (stop_server(server_process)) {
+            isds_ctx_free(&context);
+            isds_cleanup();
+            ABORT_UNIT(server_error);
+        }
+    }
+
+
+    {
+        /* Successful response without a mandatory element must be discarded
+         * by the client, otherwise a garbage would appear in the output
+         * arguments. */
+        char *url = NULL;
+
+        const struct arguments_DS_df_ISDSSearch2 service_arguments = {
+            .status_code = "0000",
+            .status_message = "totalCount is missing",
+            .search_text = "foo",
+            .search_type = NULL,
+            .search_scope = NULL,
+            .search_page_number = NULL,
+            .search_page_size = NULL,
+            .search_highlighting_value = NULL,
+            .total_count = NULL,
+            .current_count = NULL,
+            .position = NULL,
+            .last_page = NULL,
+            .results_exists = 0,
+            .results = NULL
+        };
+        const struct service_configuration services[] = {
+            { SERVICE_DS_Dz_DummyOperation, NULL },
+            { SERVICE_DS_df_ISDSSearch2, &service_arguments },
+            { SERVICE_END, NULL }
+        };
+        const struct arguments_basic_authentication server_arguments = {
+            .username = username,
+            .password = password,
+            .isds_deviations = 1,
+            .services = services
+        };
+        error = start_server(&server_process, &url,
+                server_basic_authentication, &server_arguments, NULL);
+        if (error == -1) {
+            isds_ctx_free(&context);
+            isds_cleanup();
+            ABORT_UNIT(server_error);
+        }
+        TEST("login", test_login, IE_SUCCESS,
+                context, url, username, password, NULL, NULL);
+        free(url);
+
+        TEST("Missing totalCount in a response", test_isds_find_box_by_fulltext,
+                IE_SUCCESS, context, service_arguments.search_text, NULL, NULL,
+                NULL,
+                NULL,
                 NULL,
                 NULL,
                 NULL,

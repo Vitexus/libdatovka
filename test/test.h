@@ -99,6 +99,11 @@ void *test_destructor_argument;
 
 #define STR(x) #x
 
+#define TEST_POINTER_IS_NULL(x) { \
+    if (NULL != (x)) \
+        FAIL_TEST(STR(x) " is not NULL and should be"); \
+}
+
 #define TEST_POINTER_DUPLICITY(x, y) { \
     if (x == NULL && y != NULL) \
         FAIL_TEST(STR(x) " is NULL, " STR(y) " is not NULL and should be"); \
