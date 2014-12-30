@@ -203,6 +203,7 @@ int main(int argc, char **argv) {
     }
 
     {
+        /* Full response */
         char *url = NULL;
 
         struct isds_list name_match_start = {
@@ -324,6 +325,70 @@ int main(int argc, char **argv) {
                 service_arguments.current_count,
                 service_arguments.last_page,
                 &results);
+
+        isds_logout(context);
+        if (stop_server(server_process)) {
+            isds_ctx_free(&context);
+            isds_cleanup();
+            ABORT_UNIT(server_error);
+        }
+    }
+
+
+    {
+        /* Empty response due to an error */
+        char *url = NULL;
+
+        long int search_page_number = 42;
+        long int search_page_size = 43;
+        const struct arguments_DS_df_ISDSSearch2 service_arguments = {
+            .status_code = "1156",
+            .status_message = "pageSize is too large",
+            .search_text = "foo",
+            .search_type = NULL,
+            .search_scope = NULL,
+            .search_page_number = &search_page_number,
+            .search_page_size = &search_page_size,
+            .search_highlighting_value = NULL,
+            .total_count = NULL,
+            .current_count = NULL,
+            .position = NULL,
+            .last_page = NULL,
+            .results_exists = 0,
+            .results = NULL
+        };
+        const struct service_configuration services[] = {
+            { SERVICE_DS_Dz_DummyOperation, NULL },
+            { SERVICE_DS_df_ISDSSearch2, &service_arguments },
+            { SERVICE_END, NULL }
+        };
+        const struct arguments_basic_authentication server_arguments = {
+            .username = username,
+            .password = password,
+            .isds_deviations = 1,
+            .services = services
+        };
+        error = start_server(&server_process, &url,
+                server_basic_authentication, &server_arguments, NULL);
+        if (error == -1) {
+            isds_ctx_free(&context);
+            isds_cleanup();
+            ABORT_UNIT(server_error);
+        }
+        TEST("login", test_login, IE_SUCCESS,
+                context, url, username, password, NULL, NULL);
+        free(url);
+
+        TEST("No data", test_isds_find_box_by_fulltext, IE_2BIG,
+                context, service_arguments.search_text, NULL, NULL,
+                (unsigned long int *)service_arguments.search_page_size,
+                (unsigned long int *)service_arguments.search_page_number,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL);
 
         isds_logout(context);
         if (stop_server(server_process)) {
