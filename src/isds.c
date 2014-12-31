@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <ctype.h>
-#include <stdint.h>
+#include <stdint.h>     /* For uint8_t and intmax_t */
 #include <limits.h>     /* Because of LONG_{MIN,MAX} constants */
 #include "utils.h"
 #if HAVE_LIBCURL
@@ -2227,13 +2227,14 @@ static isds_error timeval2timestring(const struct timeval *time,
 
     /* TODO: small negative year should be formatted as "-0012". This is not
      * true for glibc "%04d". We should implement it.
-     * TODO: What's type of time->tv_usec exactly? Unsigned? Absolute?
+     * time->tv_usec type is su_seconds_t which is required to be signed
+     * integer to accomodate values from range [-1, 1000000].
      * See <http://www.w3.org/TR/2001/REC-xmlschema-2-20010502/#dateTime> */ 
     if (-1 == isds_asprintf((char **) string,
-                "%04d-%02d-%02dT%02d:%02d:%02d.%06ld",
+                "%04d-%02d-%02dT%02d:%02d:%02d.%06jd",
                 broken.tm_year + 1900, broken.tm_mon + 1, broken.tm_mday,
                 broken.tm_hour, broken.tm_min, broken.tm_sec,
-                time->tv_usec))
+                (intmax_t)time->tv_usec))
         return IE_ERROR;
 
     return IE_SUCCESS;
@@ -2251,6 +2252,7 @@ static isds_error timestring2timeval(const xmlChar *string,
     char subseconds[7];
     int offset_hours, offset_minutes;
     int i;
+    long int long_number;
 #ifdef _WIN32
     int tmp;
 #endif
@@ -2315,12 +2317,21 @@ static isds_error timestring2timeval(const xmlChar *string,
         subseconds[6] = '\0';
 
         /* Convert it into integer */
-        (*time)->tv_usec = strtol(subseconds, &endptr, 10); 
-        if (*endptr != '\0' || (*time)->tv_usec == LONG_MIN ||
-            (*time)->tv_usec == LONG_MAX) {
+        long_number = strtol(subseconds, &endptr, 10);
+        if (*endptr != '\0' || long_number == LONG_MIN ||
+                long_number == LONG_MAX) {
             zfree(*time);
             return IE_DATE;
         }
+        /* POSIX sys_time.h(0p) defines tv_usec timeval member as su_seconds_t
+         * type. sys_types.h(0p) defines su_seconds_t as "used for time in
+         * microseconds" and "the type shall be a signed integer capable of
+         * storing values at least in the range [-1, 1000000]. */
+        if (long_number < -1 || long_number >= 1000000) {
+            zfree(*time);
+            return IE_DATE;
+        }
+        (*time)->tv_usec = long_number;
 
         /* move to the zone offset delimiter or signal NULL*/
         delim = strchr(offset, '-');

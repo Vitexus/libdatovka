@@ -387,7 +387,7 @@ void print_timeval(const struct timeval *time) {
     if (!localtime_r(&(time->tv_sec), &broken)) goto error;
     if (!strftime(buffer, sizeof(buffer)/sizeof(char), "%c", &broken))
         goto error;
-    printf("%s, %ld us\n", buffer, time->tv_usec);
+    printf("%s, %jd us\n", buffer, (intmax_t)time->tv_usec);
     return;
 
 error:

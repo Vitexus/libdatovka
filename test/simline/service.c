@@ -4,6 +4,7 @@
 #include "services.h"
 #include "system.h"
 #include <string.h>
+#include <stdint.h>     /* For intmax_t */
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
@@ -590,13 +591,14 @@ static http_error timeval2timestring(const struct timeval *time,
 
     /* TODO: small negative year should be formatted as "-0012". This is not
      * true for glibc "%04d". We should implement it.
-     * TODO: What's type of time->tv_usec exactly? Unsigned? Absolute?
+     * time->tv_usec type is su_seconds_t which is required to be signed
+     * integer to accomodate values from range [-1, 1000000].
      * See <http://www.w3.org/TR/2001/REC-xmlschema-2-20010502/#dateTime> */ 
     if (-1 == test_asprintf(string,
-                "%04d-%02d-%02dT%02d:%02d:%02d.%06ld",
+                "%04d-%02d-%02dT%02d:%02d:%02d.%06jd",
                 broken.tm_year + 1900, broken.tm_mon + 1, broken.tm_mday,
                 broken.tm_hour, broken.tm_min, broken.tm_sec,
-                time->tv_usec))
+                (intmax_t)time->tv_usec))
         return HTTP_ERROR_SERVER;
 
     return HTTP_ERROR_SUCCESS;

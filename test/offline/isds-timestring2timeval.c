@@ -34,8 +34,9 @@ static int test_timestring2timeval(const xmlChar *time, const isds_error error,
         FAIL_TEST("Returned struct timeval differs in tv_sec: expected=%d, got=%d",
                 correct_timeval->tv_sec, (*new_timeval)->tv_sec);
     if (correct_timeval->tv_usec != (*new_timeval)->tv_usec)
-        FAIL_TEST("Returned struct timeval differs in tv_usec: expected=%d, got=%d",
-                correct_timeval->tv_usec, (*new_timeval)->tv_usec);
+        FAIL_TEST("Returned struct timeval differs in tv_usec: expected=%jd, got=%jd",
+                (intmax_t)correct_timeval->tv_usec,
+                (intmax_t)(*new_timeval)->tv_usec);
 
     PASS_TEST;
 }
