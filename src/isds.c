@@ -2243,13 +2243,14 @@ static isds_error timeval2timestring(const struct timeval *time,
 
 
 /* Convert UTF-8 ISO 8601 date-time @string to struct timeval.
- * It respects microseconds too.
+ * It respects microseconds too. Microseconds are rounded half up.
  * In case of error, @time will be freed. */
 static isds_error timestring2timeval(const xmlChar *string,
         struct timeval **time) {
     struct tm broken;
     char *offset, *delim, *endptr;
     char subseconds[7];
+    _Bool round_up = 0;
     int offset_hours, offset_minutes;
     int i;
     long int long_number;
@@ -2303,13 +2304,17 @@ static isds_error timestring2timeval(const xmlChar *string,
         offset++;
 
         /* Copy first 6 digits, pad it with zeros.
-         * XXX: It truncates longer number, no round.
          * Current server implementation uses only millisecond resolution. */
         /* TODO: isdigit() is locale sensitive */
         for (i = 0;
                 i < sizeof(subseconds)/sizeof(char) - 1  && isdigit(*offset);
                 i++, offset++) {
             subseconds[i] = *offset;
+        }
+        if (sizeof(subseconds)/sizeof(char) - 1 == i && isdigit(*offset)) {
+            /* Check 7th digit for rounding */
+            if (*offset >= '5') round_up = 1;
+            offset++;
         }
         for (; i < sizeof(subseconds)/sizeof(char) - 1; i++) {
             subseconds[i] = '0';
@@ -2332,6 +2337,16 @@ static isds_error timestring2timeval(const xmlChar *string,
             return IE_DATE;
         }
         (*time)->tv_usec = long_number;
+
+        /* Round the subseconds */
+        if (round_up) {
+            if (999999 == (*time)->tv_usec) {
+                (*time)->tv_usec = 0;
+                broken.tm_sec++;
+            } else {
+                (*time)->tv_usec++;
+            }
+        }
 
         /* move to the zone offset delimiter or signal NULL*/
         delim = strchr(offset, '-');

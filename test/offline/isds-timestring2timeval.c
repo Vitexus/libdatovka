@@ -64,6 +64,27 @@ int main(int argc, char **argv) {
     TEST(input, test_timestring2timeval, BAD_CAST input, IE_SUCCESS, &time,
             &output);
 
+    /* Subseconds more precise than 6 digits */
+    input = "2001-02-03T04:05:06.12345601+01:45";
+    time.tv_sec = 981166806, time.tv_usec = 123456;
+    TEST(input, test_timestring2timeval, BAD_CAST input, IE_SUCCESS, &time,
+            &output);
+
+    input = "2001-02-03T04:05:06.1234564+01:45";
+    time.tv_sec = 981166806, time.tv_usec = 123456;
+    TEST(input, test_timestring2timeval, BAD_CAST input, IE_SUCCESS, &time,
+            &output);
+
+    input = "2001-02-03T04:05:06.1234565+01:45";
+    time.tv_sec = 981166806, time.tv_usec = 123457;
+    TEST(input, test_timestring2timeval, BAD_CAST input, IE_SUCCESS, &time,
+            &output);
+
+    input = "2001-02-03T04:05:06.9999995+01:45";
+    time.tv_sec = 981166807, time.tv_usec = 0;
+    TEST(input, test_timestring2timeval, BAD_CAST input, IE_SUCCESS, &time,
+            &output);
+
     /* No subseconds */
     input = "2001-02-03T04:05:06+01:45";
     time.tv_sec = 981166806; time.tv_usec = 0;
