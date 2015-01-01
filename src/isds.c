@@ -7740,6 +7740,7 @@ isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
     if (NULL != last_page) {
         EXTRACT_BOOLEAN("isds:lastPage", *last_page);
     }
+    xmlXPathFreeObject(result); result = NULL;
 
     /* Extract boxes if they present */
     result = xmlXPathEvalExpression(BAD_CAST
