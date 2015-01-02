@@ -520,6 +520,11 @@ static int progress_proxy(void *curl_data, double download_total,
  * Must return 0. */
 static int log_curl(CURL *curl, curl_infotype type, char *buffer, size_t size,
         void *userp) {
+    /* Silent warning about usused arguments.
+     * This prototype is cURL's debug_callback type. */
+    (void)curl;
+    (void)userp;
+
     if (!buffer || 0 == size) return 0;
     if (type == CURLINFO_TEXT || type == CURLINFO_HEADER_IN ||
             type == CURLINFO_HEADER_OUT)
