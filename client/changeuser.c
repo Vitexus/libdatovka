@@ -24,7 +24,7 @@ isds_error get_my_account(struct isds_ctx *ctx,
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
     struct isds_DbOwnerInfo *db_owner_info = NULL;

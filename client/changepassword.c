@@ -26,7 +26,7 @@ void change_password(struct isds_ctx *ctx,
     printf("\n");
 }
 
-int main(int argc, char **argv) {
+int main(void) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
     

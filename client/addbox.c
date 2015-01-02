@@ -83,11 +83,11 @@ int main(int argc, char **argv) {
         };
 
         credentials_delivery = calloc(1, sizeof(*credentials_delivery));
-        if (credentials_delivery && argv[1])
+        if (credentials_delivery && argc >= 2 && argv[1])
             credentials_delivery->email = strdup(argv[1]);
 
-        if (!credentials_delivery || (argv[1] && !credentials_delivery->email))
-        {
+        if (!credentials_delivery ||
+                (argc >= 2 && argv[1] && !credentials_delivery->email)) {
             printf("Not enough memory\n");
         } else {
             printf("Creating already existing box\n");

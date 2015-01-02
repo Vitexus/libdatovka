@@ -40,7 +40,7 @@ isds_error compute_message_hash(struct isds_ctx *ctx,
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
     
