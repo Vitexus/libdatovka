@@ -12011,7 +12011,7 @@ isds_error isds_hash_cmp(const struct isds_hash *h1, const struct isds_hash *h2)
     if (h1->length > 0 && !h1->value) return IE_ERROR;
     if (h2->length > 0 && !h2->value) return IE_ERROR;
 
-    for (int i = 0; i < h1->length; i++) {
+    for (size_t i = 0; i < h1->length; i++) {
         if (((uint8_t *) (h1->value))[i] != ((uint8_t *) (h2->value))[i])
             return IE_NOTEQUAL;
     }
