@@ -8013,7 +8013,7 @@ isds_error isds_get_commercial_permissions(struct isds_ctx *context,
         struct isds_list *prev_item = NULL;
 
         /* Iterate over all permission records */
-        for (long unsigned int i = 0; i < result->nodesetval->nodeNr; i++) {
+        for (int i = 0; i < result->nodesetval->nodeNr; i++) {
             struct isds_list *item;
 
             /* Prepare structure */
@@ -8238,7 +8238,7 @@ isds_error isds_get_commercial_credit(struct isds_ctx *context,
         struct isds_list *prev_item = NULL;
 
         /* Iterate over all records */
-        for (long unsigned int i = 0; i < result->nodesetval->nodeNr; i++) {
+        for (int i = 0; i < result->nodesetval->nodeNr; i++) {
             struct isds_list *item;
 
             /* Prepare structure */
@@ -9174,7 +9174,7 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     xmlChar *string = NULL;
-    long unsigned int count = 0;
+    int count = 0;
 #endif
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -9502,7 +9502,7 @@ isds_error isds_get_list_of_sent_message_state_changes(
     xmlXPathContextPtr xpath_ctx = NULL;
     xmlXPathObjectPtr result = NULL;
     xmlChar *string = NULL;
-    long unsigned int count = 0;
+    int count = 0;
 #endif
 
     if (!context) return IE_INVALID_CONTEXT;
