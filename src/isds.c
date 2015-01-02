@@ -5715,7 +5715,7 @@ isds_error isds_change_password(struct isds_ctx *context,
     }
 
     /* Check for known error codes */
-    for (int i=0; i < sizeof(codes)/sizeof(*codes); i++) {
+    for (size_t i = 0; i < sizeof(codes)/sizeof(*codes); i++) {
         if (!xmlStrcmp(code, codes[i])) {
             char *code_locale = _isds_utf82locale((char*)code);
             char *message_locale = _isds_utf82locale((char*)message);
