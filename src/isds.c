@@ -5388,7 +5388,7 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
     if (xmlStrcmp(code, BAD_CAST "0000")) {
         char *code_locale = _isds_utf82locale((char*)code);
         char *message_locale = _isds_utf82locale((char*)message);
-        int i;
+        size_t i;
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Server refused to send new code on SendSMSCode "
                     "request (code=%s, message=%s)\n"),
