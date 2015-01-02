@@ -673,6 +673,10 @@ static void log_xml(void *ctx, const char *msg, ...) {
     va_list ap;
     char *text = NULL;
 
+    /* Silent warning for unused function argument.
+     * The prototype is an API of libxml2's xmlSetGenericErrorFunc(). */
+    (void)ctx;
+
     if (!msg) return;
 
     va_start(ap, msg);
