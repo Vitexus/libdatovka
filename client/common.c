@@ -185,7 +185,7 @@ void print_hash(const struct isds_hash *hash) {
 
     if (!hash->value) printf("<NULL>");
     else
-        for (int i = 0; i < hash->length; i++) {
+        for (size_t i = 0; i < hash->length; i++) {
             if (i > 0) printf(":");
             printf("%02x", ((uint8_t *)(hash->value))[i]);
         }
