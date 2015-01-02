@@ -131,6 +131,10 @@ static void XMLCALL element_start(void *userData, const XML_Char *name,
      * size_t. */
     const size_t boundary = index; 
 
+    /* Silent warning about unused argument.
+     * This protype is expat's XML_StartElementHandler type. */
+    (void)atts;
+
     isds_log(ILF_XML, ILL_DEBUG, _("Start: name=%s, depth=%zd, offset=%#jx "
             "=> boundary=%#zx\n"),
             name, data->depth, (uintmax_t)index, boundary);
