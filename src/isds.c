@@ -2249,7 +2249,8 @@ static isds_error timestring2timeval(const xmlChar *string,
         struct timeval **time) {
     struct tm broken;
     char *offset, *delim, *endptr;
-    char subseconds[7];
+    const int subsecond_resolution = 6;
+    char subseconds[subsecond_resolution + 1];
     _Bool round_up = 0;
     int offset_hours, offset_minutes;
     int i;
@@ -2307,19 +2308,19 @@ static isds_error timestring2timeval(const xmlChar *string,
          * Current server implementation uses only millisecond resolution. */
         /* TODO: isdigit() is locale sensitive */
         for (i = 0;
-                i < sizeof(subseconds)/sizeof(char) - 1  && isdigit(*offset);
+                i < subsecond_resolution && isdigit(*offset);
                 i++, offset++) {
             subseconds[i] = *offset;
         }
-        if (sizeof(subseconds)/sizeof(char) - 1 == i && isdigit(*offset)) {
+        if (subsecond_resolution == i && isdigit(*offset)) {
             /* Check 7th digit for rounding */
             if (*offset >= '5') round_up = 1;
             offset++;
         }
-        for (; i < sizeof(subseconds)/sizeof(char) - 1; i++) {
+        for (; i < subsecond_resolution; i++) {
             subseconds[i] = '0';
         }
-        subseconds[6] = '\0';
+        subseconds[subsecond_resolution] = '\0';
 
         /* Convert it into integer */
         long_number = strtol(subseconds, &endptr, 10);
