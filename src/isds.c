@@ -12098,7 +12098,7 @@ const struct isds_document *isds_find_document_by_id(
 const char *isds_normalize_mime_type(const char *mime_type) {
     if (!mime_type) return NULL;
 
-    for (int offset = 0;
+    for (size_t offset = 0;
             offset < sizeof(extension_map_mime)/sizeof(extension_map_mime[0]);
             offset += 2) {
         if (!xmlStrcasecmp((const xmlChar*) mime_type,
