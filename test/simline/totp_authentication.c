@@ -67,7 +67,7 @@ static int test_ping(const isds_error error, struct isds_ctx *context) {
     PASS_TEST;
 }
 
-int main(int argc, char **argv) {
+int main(void) {
     int error;
     pid_t server_process;
     struct isds_ctx *context = NULL;

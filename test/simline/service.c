@@ -40,8 +40,8 @@ struct service {
     const char *end_point;
     const xmlChar *name_space;
     const xmlChar *name;
-    http_error (*function) (const struct http_connection *, xmlDocPtr,
-            xmlXPathContextPtr, xmlNodePtr, xmlDocPtr, xmlNodePtr,
+    http_error (*function) (
+            xmlXPathContextPtr, xmlNodePtr,
             const void *arguments);
 };
 
@@ -260,11 +260,13 @@ static http_error element_exists(const char **code, char **message,
     }
     if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
             xmlXPathFreeObject(result);
+            *code = "9999";
             test_asprintf(message, "Element %s does not exist", element_name);
             return HTTP_ERROR_CLIENT;
     } else {
         if (!allow_multiple && result->nodesetval->nodeNr > 1) {
             xmlXPathFreeObject(result);
+            *code = "9999";
             test_asprintf(message, "Multiple %s element", element_name);
             return HTTP_ERROR_CLIENT;
         }
@@ -303,6 +305,7 @@ static http_error extract_string(const char **code, char **message,
     if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
         if (result->nodesetval->nodeNr > 1) {
             xmlXPathFreeObject(result);
+            *code = "9999";
             test_asprintf(message, "Multiple %s element", element_name);
             error = HTTP_ERROR_CLIENT;
             goto leave;
@@ -619,10 +622,12 @@ static int datecmp(const struct tm *a, const struct tm *b) {
 
 /* Implement DummyOperation */
 static http_error service_DummyOperation(
-        const struct http_connection *connection, const xmlDocPtr soap_request,
-        xmlXPathContextPtr xpath_ctx, xmlNodePtr isds_request,
-        xmlDocPtr soap_response, xmlNodePtr isds_response,
+        xmlXPathContextPtr xpath_ctx,
+        xmlNodePtr isds_response,
         const void *arguments) {
+    (void)xpath_ctx;
+    (void)arguments;
+
     return insert_isds_status(isds_response, 1, BAD_CAST "0000",
             BAD_CAST "Success", NULL);
 }
@@ -632,10 +637,8 @@ static http_error service_DummyOperation(
  * It sends document from request back.
  * @arguments is pointer to struct arguments_DS_Dz_ResignISDSDocument */
 static http_error service_ResignISDSDocument(
-        const struct http_connection *connection,
-        const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
-        const xmlNodePtr isds_request,
-        xmlDocPtr soap_response, xmlNodePtr isds_response,
+        xmlXPathContextPtr xpath_ctx,
+        xmlNodePtr isds_response,
         const void *arguments) {
     http_error error = HTTP_ERROR_SUCCESS;
     const char *code = "9999";
@@ -691,10 +694,9 @@ leave:
 
 /* Implement EraseMessage.
  * @arguments is pointer to struct arguments_DS_DsManage_ChangeISDSPassword */
-static http_error service_EraseMessage(const struct http_connection *connection,
-        const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
-        const xmlNodePtr isds_request,
-        xmlDocPtr soap_response, xmlNodePtr isds_response,
+static http_error service_EraseMessage(
+        xmlXPathContextPtr xpath_ctx,
+        xmlNodePtr isds_response,
         const void *arguments) {
     http_error error = HTTP_ERROR_SUCCESS;
     char *code = "9999", *message = NULL;
@@ -827,10 +829,8 @@ leave:
 /* Implement DataBoxCreditInfo.
  * @arguments is pointer to struct arguments_DS_df_DataBoxCreditInfo */
 static http_error service_DataBoxCreditInfo(
-        const struct http_connection *connection,
-        const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
-        const xmlNodePtr isds_request,
-        xmlDocPtr soap_response, xmlNodePtr isds_response,
+        xmlXPathContextPtr xpath_ctx,
+        xmlNodePtr isds_response,
         const void *arguments) {
     http_error error = HTTP_ERROR_SUCCESS;
     const char *code = "9999";
@@ -945,10 +945,8 @@ leave:
 /* Implement ISDSSearch2.
  * @arguments is pointer to struct arguments_DS_df_ISDSSearch2 */
 static http_error service_ISDSSearch2(
-        const struct http_connection *connection,
-        const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
-        const xmlNodePtr isds_request,
-        xmlDocPtr soap_response, xmlNodePtr isds_response,
+        xmlXPathContextPtr xpath_ctx,
+        xmlNodePtr isds_response,
         const void *arguments) {
     http_error error = HTTP_ERROR_SUCCESS;
     const char *code = "9999";
@@ -1092,7 +1090,7 @@ static http_error check_passwd(
         const char special[] = "!#$%&()*+,-.:=?@[]_{}|~";
         _Bool has_lower = 0, has_upper = 0, has_digit=0;
 
-        for (int i = 0; i < length; i++) {
+        for (size_t i = 0; i < length; i++) {
             if (NULL != strchr(lower, new_password[i]))
                 has_lower = 1;
             else if (NULL != strchr(upper, new_password[i]))
@@ -1130,7 +1128,7 @@ static http_error check_passwd(
         goto leave;
     }
 
-    for (int i = 0; i < length - 2; i++) {
+    for (size_t i = 0; i < length - 2; i++) {
         if (new_password[i] == new_password[i+1] &&
                 new_password[i] == new_password[i+2]) {
             *code = "1083";
@@ -1143,7 +1141,7 @@ static http_error check_passwd(
     
     {
         const char *forbidden_prefix[] = { "qwert", "asdgf", "12345" };
-        for (int i = 0; i < sizeof(forbidden_prefix)/sizeof(*forbidden_prefix);
+        for (size_t i = 0; i < sizeof(forbidden_prefix)/sizeof(*forbidden_prefix);
                 i++) {
             if (!strncmp(new_password, forbidden_prefix[i],
                         strlen(forbidden_prefix[i]))) {
@@ -1168,10 +1166,8 @@ leave:
 /* Implement ChangeISDSPassword.
  * @arguments is pointer to struct arguments_DS_DsManage_ChangeISDSPassword */
 static http_error service_ChangeISDSPassword(
-        const struct http_connection *connection,
-        const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
-        const xmlNodePtr isds_request,
-        xmlDocPtr soap_response, xmlNodePtr isds_response,
+        xmlXPathContextPtr xpath_ctx,
+        xmlNodePtr isds_response,
         const void *arguments) {
     http_error error = HTTP_ERROR_SUCCESS;
     char *code = "9999", *message = NULL;
@@ -1204,10 +1200,8 @@ leave:
  * @arguments is pointer to struct
  * arguments_asws_changePassword_ChangePasswordOTP */
 static http_error service_ChangePasswordOTP(
-        const struct http_connection *connection,
-        const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
-        const xmlNodePtr isds_request,
-        xmlDocPtr soap_response, xmlNodePtr isds_response,
+        xmlXPathContextPtr xpath_ctx,
+        xmlNodePtr isds_response,
         const void *arguments) {
     http_error error = HTTP_ERROR_SUCCESS;
     char *code = "9999", *message = NULL;
@@ -1257,14 +1251,13 @@ leave:
 /* Implement SendSMSCode.
  * @arguments is pointer to struct arguments_asws_changePassword_SendSMSCode */
 static http_error service_SendSMSCode(
-        const struct http_connection *connection,
-        const xmlDocPtr soap_request, xmlXPathContextPtr xpath_ctx,
-        const xmlNodePtr isds_request,
-        xmlDocPtr soap_response, xmlNodePtr isds_response,
+        xmlXPathContextPtr xpath_ctx,
+        xmlNodePtr isds_response,
         const void *arguments) {
     const struct arguments_asws_changePassword_SendSMSCode *configuration
         = (const struct arguments_asws_changePassword_SendSMSCode *)
         arguments;
+    (void)xpath_ctx;
 
     if (NULL == configuration || NULL == configuration->status_code ||
             NULL == configuration->status_message) {
@@ -1503,7 +1496,7 @@ void soap(const struct http_connection *connection,
     xmlSetNs(isds_response, isds_ns);
 
     /* Dispatch request to service */
-    for (int i = 0; i < sizeof(services)/sizeof(services[0]); i++) {
+    for (size_t i = 0; i < sizeof(services)/sizeof(services[0]); i++) {
         if (!strcmp(services[i].end_point, end_point) &&
                 !xmlStrcmp(services[i].name_space, isds_request->ns->href) &&
                 !xmlStrcmp(services[i].name, isds_request->name)) {
@@ -1523,9 +1516,9 @@ void soap(const struct http_connection *connection,
                         }
                     }
                     xpath_ctx->node = isds_request;
-                    if (HTTP_ERROR_SERVER != services[i].function(connection,
-                                request_doc, xpath_ctx, isds_request,
-                                response_doc, isds_response,
+                    if (HTTP_ERROR_SERVER != services[i].function(
+                                xpath_ctx,
+                                isds_response,
                                 service->arguments)) {
                         service_passed = 1;
                     } else {

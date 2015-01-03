@@ -625,6 +625,8 @@ int server_out_of_order(const struct http_connection *connection,
         const void *server_arguments, const struct http_request *request) {
     const char *soap_mime_type = "text/xml"; /* SOAP/1.1 requires text/xml */
     const char *fault = "<?xml version='1.0' encoding='UTF-8'?><SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsi=\"http://www.w3.org/1999/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/1999/XMLSchema\"><SOAP-ENV:Body><SOAP-ENV:Fault><faultcode xsi:type=\"xsd:string\">Probíhá plánovaná údržba</faultcode><faultstring xsi:type=\"xsd:string\">Omlouváme se všem uživatelům datových schránek za dočasné omezení přístupu do systému datových schránek z důvodu plánované údržby systému. Děkujeme za pochopení.</faultstring></SOAP-ENV:Fault></SOAP-ENV:Body></SOAP-ENV:Envelope>";
+    (void)server_arguments;
+    (void)request;
 
     http_send_response_503(connection, fault, strlen(fault),
             soap_mime_type);

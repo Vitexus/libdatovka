@@ -17,7 +17,9 @@ static _Bool terminate = 0;
 static int otp_type = 'n';
 
 
+/* Signal handler */
 static void terminator(int signal) {
+    (void)signal;
     terminate = 1;
 }
 

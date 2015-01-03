@@ -161,7 +161,7 @@ static void test_error(const char *code, const isds_error expected_error,
     url = NULL;
 }
 
-int main(int argc, char **argv) {
+int main(void) {
     int error;
     pid_t server_process;
     struct isds_ctx *context = NULL;

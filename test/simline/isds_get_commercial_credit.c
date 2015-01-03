@@ -155,7 +155,7 @@ static int test_isds_get_commercial_credit(const isds_error error,
     PASS_TEST;
 }
 
-int main(int argc, char **argv) {
+int main(void) {
     int error;
     pid_t server_process;
     struct isds_ctx *context = NULL;
@@ -244,26 +244,30 @@ int main(int argc, char **argv) {
             .credit_change = 133,
             .new_credit = 244,
             .type = ISDS_CREDIT_STORAGE_SET,
-            .details.storage_set.new_capacity = 41,
-            .details.storage_set.new_valid_from = &new_valid_from,
-            .details.storage_set.new_valid_to = &new_valid_to,
-            .details.storage_set.old_capacity = &old_capacity,
-            .details.storage_set.old_valid_from = &old_valid_from,
-            .details.storage_set.old_valid_to = &old_valid_to,
-            .details.storage_set.initiator = "Foo",
+            .details.storage_set = {
+                .new_capacity = 41,
+                .new_valid_from = &new_valid_from,
+                .new_valid_to = &new_valid_to,
+                .old_capacity = &old_capacity,
+                .old_valid_from = &old_valid_from,
+                .old_valid_to = &old_valid_to,
+                .initiator = "Foo",
+            },
         };
         struct server_credit_event server_event_credit_storage_set = {
             .time = &event_time,
             .credit_change = 133,
             .new_credit = 244,
             .type = SERVER_CREDIT_STORAGE_SET,
-            .details.storage_set.new_capacity = 41,
-            .details.storage_set.new_valid_from = &new_valid_from,
-            .details.storage_set.new_valid_to = &new_valid_to,
-            .details.storage_set.old_capacity = &old_capacity,
-            .details.storage_set.old_valid_from = &old_valid_from,
-            .details.storage_set.old_valid_to = &old_valid_to,
-            .details.storage_set.initiator = "Foo",
+            .details.storage_set = {
+                .new_capacity = 41,
+                .new_valid_from = &new_valid_from,
+                .new_valid_to = &new_valid_to,
+                .old_capacity = &old_capacity,
+                .old_valid_from = &old_valid_from,
+                .old_valid_to = &old_valid_to,
+                .initiator = "Foo",
+            },
         };
         struct isds_list history_storage_set = {
             .next = &history_expired,
@@ -281,16 +285,20 @@ int main(int argc, char **argv) {
             .credit_change = 133,
             .new_credit = 244,
             .type = ISDS_CREDIT_MESSAGE_SENT,
-            .details.message_sent.recipient = "Foo",
-            .details.message_sent.message_id = "ijklmnop",
+            .details.message_sent = {
+                .recipient = "Foo",
+                .message_id = "ijklmnop",
+            },
         };
         struct server_credit_event server_event_credit_message_sent = {
             .time = &event_time,
             .credit_change = 133,
             .new_credit = 244,
             .type = SERVER_CREDIT_MESSAGE_SENT,
-            .details.message_sent.recipient = "Foo",
-            .details.message_sent.message_id = "ijklmnop",
+            .details.message_sent = {
+                .recipient = "Foo",
+                .message_id = "ijklmnop",
+            },
         };
         struct isds_list history_message_sent = {
             .next = &history_storage_set,

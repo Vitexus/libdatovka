@@ -199,7 +199,7 @@ static int test_isds_find_box_by_fulltext(const isds_error expected_error,
     PASS_TEST;
 }
 
-int main(int argc, char **argv) {
+int main(void) {
     int error;
     pid_t server_process;
     struct isds_ctx *context = NULL;

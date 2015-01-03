@@ -51,7 +51,7 @@ static int test_isds_change_password(const isds_error error,
     PASS_TEST;
 }
 
-int main(int argc, char **argv) {
+int main(void) {
     int error;
     pid_t server_process;
     struct isds_ctx *context = NULL;
