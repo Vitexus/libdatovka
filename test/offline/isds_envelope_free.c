@@ -13,7 +13,7 @@ static int test_isds_envelope_free(
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
 
     INIT_TEST("isds_envelope_free()");
     if (isds_init())

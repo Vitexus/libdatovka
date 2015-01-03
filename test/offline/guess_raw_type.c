@@ -44,7 +44,7 @@ static int test_guess_raw_type(struct isds_ctx *context,
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
     struct test tests[] = {
         {
             .name = "unsigned incoming message",

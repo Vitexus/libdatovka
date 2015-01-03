@@ -34,7 +34,7 @@ static int test_timeval2timestring(const struct timeval* time,
     PASS_TEST;
 }
 
-int main(int argc, char **argv) {
+int main(void) {
     INIT_TEST("Struct timeval to ISO time string conversion");
 
     xmlChar *output = NULL;

@@ -13,7 +13,7 @@ static int test_isds_credit_event_free(
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
     INIT_TEST("isds_credit_event_free()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");

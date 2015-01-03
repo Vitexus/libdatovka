@@ -11,7 +11,7 @@ static int test_init_crypto(const isds_error error) {
     PASS_TEST;
 }
 
-int main(int argc, char **argv) {
+int main(void) {
 
     INIT_TEST("init_gpgme");
 

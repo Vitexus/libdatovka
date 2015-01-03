@@ -11,7 +11,7 @@ static int cmp_hash (const struct isds_hash *h1, const struct isds_hash *h2) {
 
     if (h1->length != h2->length) 
         FAIL_TEST("Wrong hash length");
-    for (int i = 0; i < h1->length; i++) {
+    for (size_t i = 0; i < h1->length; i++) {
         if (((uint8_t *) (h1->value))[i] != ((uint8_t *) (h2->value))[i])
             FAIL_TEST("Wrong hash value");
     }
@@ -42,7 +42,7 @@ static int test_compute_hash(const isds_error error,
     return (status);
 }
 
-int main(int argc, char **argv) {
+int main(void) {
 
     INIT_TEST("compute_hash");
 

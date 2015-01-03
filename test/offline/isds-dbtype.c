@@ -44,7 +44,7 @@ static int test_dbtype(const isds_DbType type, const xmlChar *name) {
     PASS_TEST;
 }
 
-int main(int argc, char **argv) {
+int main(void) {
     INIT_TEST("isds_DbType conversion");
     
     isds_DbType types[] =  {
@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
 
     TEST("DBTYPE_SYSTEM", test_dbtype2string_must_fail, DBTYPE_SYSTEM); 
 
-    for (int i = 0; i < sizeof(types)/sizeof(types[0]); i++)
+    for (size_t i = 0; i < sizeof(types)/sizeof(types[0]); i++)
         TEST(isds_DbType2string(types[i]), test_dbtype, types[i], names[i]);
 
     TEST("1234", test_dbtype2string_must_fail, 1234); 

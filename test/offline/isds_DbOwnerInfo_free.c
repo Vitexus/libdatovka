@@ -13,7 +13,7 @@ static int test_isds_DbOwnerInfo_free(
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
 
     INIT_TEST("isds_DbOwnerInfo_free()");
     if (isds_init())

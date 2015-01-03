@@ -11,7 +11,7 @@ static int test_b64decode(const void *input, const void *correct,
     TEST_DESTRUCTOR(free, output);
 
     if (length == correct_length) {
-        if (length != -1) {
+        if (length != (size_t)-1) {
             if (!memcmp(correct, output, length)) {
                 PASS_TEST;
             } else {
@@ -50,7 +50,7 @@ static int test_b64decode_null_pointer(const void *input,
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
     INIT_TEST("b64decode");
 
     TEST("generic", test_b64decode, "Af+qVQA=\n", "\x1\xff\xaa\x55", 5);

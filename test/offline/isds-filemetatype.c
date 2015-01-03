@@ -51,7 +51,7 @@ static int test_filemetatype(const isds_FileMetaType type,
     PASS_TEST;
 }
 
-int main(int argc, char **argv) {
+int main(void) {
     INIT_TEST("isds_FileMetaType conversion");
     
     isds_FileMetaType types[] =  {
@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
         BAD_CAST "meta"
     };
 
-    for (int i = 0; i < sizeof(types)/sizeof(types[0]); i++)
+    for (size_t i = 0; i < sizeof(types)/sizeof(types[0]); i++)
         TEST(strings[i], test_filemetatype, types[i], strings[i]);
 
 #if HAVE_LIBCURL

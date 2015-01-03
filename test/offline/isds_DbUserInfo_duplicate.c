@@ -62,7 +62,7 @@ static int test_isds_DbUserInfo_duplicate(struct isds_DbUserInfo *origin) {
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
 
     INIT_TEST("isds_DbUserInfo_duplicate()");
     if (isds_init())

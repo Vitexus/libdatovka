@@ -26,7 +26,7 @@ static int test_datestring2tm(const xmlChar *date, const isds_error error,
     PASS_TEST;
 }
 
-int main(int argc, char **argv) {
+int main(void) {
     INIT_TEST("ISO date string to tm conversion");
 
     struct tm output;

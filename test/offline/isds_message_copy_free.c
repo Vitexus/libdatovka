@@ -12,7 +12,7 @@ static int test_isds_message_copy_free(struct isds_message_copy **copy) {
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
 
     INIT_TEST("isds_message_copy_free()");
     if (isds_init())

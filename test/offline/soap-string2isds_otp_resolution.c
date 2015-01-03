@@ -12,8 +12,8 @@ static int test_string2isds_otp_resolution(const char *string,
     PASS_TEST;
 }
 
-int main(int argc, char **argv) {
-    int i;
+int main(void) {
+    size_t i;
 
     const char *hotp_strings[] = {
         "authentication.error.userIsNotAuthenticated",

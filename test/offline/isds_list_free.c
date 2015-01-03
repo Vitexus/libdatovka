@@ -4,6 +4,7 @@
 int counter;
 
 static void destructor(void **data) {
+    (void)data;
     counter++;
 }
 
@@ -25,7 +26,7 @@ static int test_isds_list_free(struct isds_list **list, int destructor_hits) {
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
 
     INIT_TEST("isds_list_free()");
     if (isds_init())

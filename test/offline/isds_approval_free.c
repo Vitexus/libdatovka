@@ -12,7 +12,7 @@ static int test_isds_approval_free(struct isds_approval **approval) {
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
 
     INIT_TEST("isds_approval_free()");
     if (isds_init())

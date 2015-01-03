@@ -28,7 +28,7 @@ static int test_uint2isds_message_status(struct isds_ctx *context,
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
     INIT_TEST("unsigned int to isds_message_status conversion");
     
     struct isds_ctx *context = NULL;
@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
         ABORT_UNIT("Could not create ISDS context");
 
     /* Valid input */
-    for (int i = 0; i < sizeof(numbers)/sizeof(numbers[0]); i++) {
+    for (size_t i = 0; i < sizeof(numbers)/sizeof(numbers[0]); i++) {
         test_asprintf(&text, "%lu", numbers[i]);
         TEST(text, test_uint2isds_message_status, context, &numbers[i],
                 IE_SUCCESS, states[i], &state);

@@ -31,7 +31,7 @@ static int test_reinit(void) {
     PASS_TEST;
 }
 
-int main(int argc, char **argv) {
+int main(void) {
 
     INIT_TEST("isds_init");
 

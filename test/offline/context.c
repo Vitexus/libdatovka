@@ -26,7 +26,7 @@ static int test_free(const isds_error error, struct isds_ctx **context) {
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
     INIT_TEST("context");
     
     struct isds_ctx *context = NULL;

@@ -33,7 +33,7 @@ static int test_tm2datestring(const struct tm* date, const isds_error error,
     PASS_TEST;
 }
 
-int main(int argc, char **argv) {
+int main(void) {
     INIT_TEST("Struct tm to ISO date string conversion");
 
     xmlChar *output = NULL;

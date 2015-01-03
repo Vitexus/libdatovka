@@ -76,7 +76,7 @@ static int test_isds_DbOwnerInfo_duplicate(struct isds_DbOwnerInfo *origin) {
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
 
     INIT_TEST("isds_DbOwnerInfo_duplicate()");
     if (isds_init())

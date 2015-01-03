@@ -46,7 +46,7 @@ static int test_usertype(const isds_UserType type, const xmlChar *name) {
     PASS_TEST;
 }
 
-int main(int argc, char **argv) {
+int main(void) {
     INIT_TEST("isds_UserType conversion");
     
     isds_UserType types[] =  {
@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
     };
 
 
-    for (int i = 0; i < sizeof(types)/sizeof(types[0]); i++)
+    for (size_t i = 0; i < sizeof(types)/sizeof(types[0]); i++)
         TEST(isds_UserType2string(types[i]), test_usertype, types[i], names[i]);
 
     TEST("1234", test_usertype2string_must_fail, 1234); 

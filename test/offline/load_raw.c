@@ -81,7 +81,7 @@ static int test_load_delivery(struct isds_ctx *context,
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
     struct test messages[] = {
         {
             .name = "unsigned incoming message",

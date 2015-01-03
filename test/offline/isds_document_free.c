@@ -13,7 +13,7 @@ static int test_isds_document_free(
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
     xmlNode node = { .type = XML_TEXT_NODE, .content = BAD_CAST "data" };
 
     INIT_TEST("isds_document_free()");

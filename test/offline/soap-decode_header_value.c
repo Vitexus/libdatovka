@@ -11,9 +11,7 @@ static int test_decode_header_value(const char *input,
     PASS_TEST;
 }
 
-int main(int argc, char **argv) {
-    int i;
-
+int main(void) {
     const char *inputs[] = {
         "foo",
         " foo ",
@@ -57,7 +55,7 @@ int main(int argc, char **argv) {
 
     INIT_TEST("HTTP header value decoder");
 
-    for (i = 0; i < sizeof(inputs)/sizeof(inputs[0]); i++) {
+    for (size_t i = 0; i < sizeof(inputs)/sizeof(inputs[0]); i++) {
         TEST(inputs[i], test_decode_header_value, inputs[i], outputs[i]);
     }
 

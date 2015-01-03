@@ -21,7 +21,7 @@ static int test_string2isds_credit_event_type(const xmlChar *string,
     PASS_TEST;
 }
 
-int main(int argc, char **argv) {
+int main(void) {
     INIT_TEST("credit_event_type conversion");
     
     const xmlChar *names[] = {
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 
 
     /* Known values */
-    for (int i = 0; i < sizeof(types)/sizeof(types[0]); i++)
+    for (size_t i = 0; i < sizeof(types)/sizeof(types[0]); i++)
         TEST(names[i], test_string2isds_credit_event_type,
             names[i], IE_SUCCESS, &types[i]);
 

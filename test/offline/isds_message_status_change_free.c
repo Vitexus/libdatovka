@@ -13,7 +13,7 @@ static int test_isds_message_status_change_free(
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
 
     INIT_TEST("isds_message_status_change_free()");
     if (isds_init())

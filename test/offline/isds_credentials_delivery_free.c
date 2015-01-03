@@ -13,7 +13,7 @@ static int test_isds_credentials_delivery_free(
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
 
     INIT_TEST("isds_credentials_delivery_free()");
     if (isds_init())

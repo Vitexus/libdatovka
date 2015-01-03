@@ -12,7 +12,7 @@ static int test_isds_message_free(struct isds_message **message) {
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
 
     INIT_TEST("isds_message_free()");
     if (isds_init())

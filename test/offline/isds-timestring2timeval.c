@@ -42,7 +42,7 @@ static int test_timestring2timeval(const xmlChar *time, const isds_error error,
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
     INIT_TEST("ISO date-time string to timeval conversion");
 
     /* Generic */

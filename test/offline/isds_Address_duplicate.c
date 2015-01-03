@@ -28,7 +28,7 @@ static int test_isds_Address_duplicate(struct isds_Address *origin) {
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
 
     INIT_TEST("isds_Address_duplicate()");
     if (isds_init())

@@ -31,7 +31,7 @@ static int test_b64encode(const char *correct, const void *input,
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
     INIT_TEST("b64encode");
 
     TEST("generic", test_b64encode, "Af+qVQA=\n", "\x1\xff\xaa\x55", 5);

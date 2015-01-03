@@ -27,7 +27,7 @@ static int test_normalize(const char *input, const char *expected) {
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
     INIT_TEST("normalize_mime_type");
 
     TEST("NULL is idempotent", test_normalize, NULL, NULL);

@@ -58,7 +58,7 @@ static int test_eventstring2event(const xmlChar *string, isds_error error,
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
     INIT_TEST("eventstring to event conversion");
     
     xmlChar *input = NULL;

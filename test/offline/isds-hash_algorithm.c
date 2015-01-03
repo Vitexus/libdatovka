@@ -21,7 +21,7 @@ static int test_string2hashalgorithm(const xmlChar *name,
     PASS_TEST;
 }
 
-int main(int argc, char **argv) {
+int main(void) {
     INIT_TEST("isds_hash_algorithm conversion");
    
     xmlChar *names[] = {
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
         HASH_ALGORITHM_SHA_512,
     };
 
-    for (int i = 0; i < sizeof(algos)/sizeof(algos[0]); i++)
+    for (size_t i = 0; i < sizeof(algos)/sizeof(algos[0]); i++)
         TEST(names[i], test_string2hashalgorithm, names[i], IE_SUCCESS,
                 algos[i]);
 

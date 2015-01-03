@@ -31,7 +31,7 @@ static int test_utf82locale(const void *input, const void *correct) {
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
     INIT_TEST("utf8locale");
 
     if (prepare_locale(1)) 

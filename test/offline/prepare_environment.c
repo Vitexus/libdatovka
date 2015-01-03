@@ -57,7 +57,7 @@ static int test_setup_gnupg(void) {
     PASS_TEST;
 }
 
-int main(int argc, char **argv) {
+int main(void) {
 
     INIT_TEST("prepare_environment");
 

@@ -73,7 +73,7 @@ static int test_interpret_matches(const xmlChar *input_string,
 #define START_MARKER "|$*HL_START*$|"
 #define END_MARKER "|$*HL_END*$|"
 
-int main(int argc, char **argv) {
+int main(void) {
     xmlChar *input, *expected_output;
     struct isds_list expected_starts = { .data = NULL, .next = NULL };
     struct isds_list expected_ends = { .data = NULL, .next = NULL };

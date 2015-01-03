@@ -25,7 +25,7 @@ static int test_isds_PersonName_duplicate(struct isds_PersonName *origin) {
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
 
     INIT_TEST("isds_PersonName_duplicate()");
     if (isds_init())
