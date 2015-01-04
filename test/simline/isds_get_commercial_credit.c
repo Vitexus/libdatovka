@@ -10,7 +10,7 @@
 #endif
 
 #ifndef _XOPEN_SOURCE
-#define _XOPEN_SOURCE 600   /* For unsetenv(3) */
+#define _XOPEN_SOURCE 600   /* For unsetenv(3) and strdup(3) */
 #endif
 
 #include "../test.h"

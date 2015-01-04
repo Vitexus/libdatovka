@@ -1,4 +1,5 @@
-#define _XOPEN_SOURCE 500
+#include "../config.h"
+#define _XOPEN_SOURCE XOPEN_SOURCE_LEVEL_FOR_STRDUP
 #include <stdlib.h>
 #include <stdio.h>
 #include <locale.h>

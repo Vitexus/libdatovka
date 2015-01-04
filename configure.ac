@@ -186,6 +186,27 @@ AC_CHECK_FUNCS([localtime_r memset munmap setlocale strdup strerror])
 # Default CFLAGS
 CFLAGS="${CFLAGS} -std=c99 -Wall"
 
+dnl Check for strdup() feature test macros
+dnl strdup() is provided since SUSv2, thus _XOPEN_SOURCE >= 500 has to be
+dnl defined with -std=c99. However Mac OS X requires 600. Reported as
+dnl <rdar://problem/19363342>.
+AC_MSG_CHECKING([Checking for _XOPEN_SOURCE level needed for strdup()])
+AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM([[#define _XOPEN_SOURCE 500
+       #include <string.h>]], [[(void)strdup("");]])],
+    [xopen_source_level_for_strdup=500],
+    [AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([[#define _XOPEN_SOURCE 600
+            #include <string.h>]], [[(void)strdup("");]])],
+        [xopen_source_level_for_strdup=600],
+        [AC_MSG_FAILURE([Cannot determine _XOPEN_SOURCE level for strdup()])]
+    )])
+AC_MSG_RESULT([$xopen_source_level_for_strdup])
+AC_DEFINE_UNQUOTED([XOPEN_SOURCE_LEVEL_FOR_STRDUP],
+                   [$xopen_source_level_for_strdup],
+                   [_XOPEN_SOURCE level needed for strdup()])
+
+
 AC_CONFIG_FILES([Makefile src/Makefile po/Makefile.in client/Makefile
                  test/Makefile test/offline/Makefile test/simline/Makefile
                  test/online/Makefile libisds.pc])

@@ -1,4 +1,5 @@
-#define _XOPEN_SOURCE 500 /* For strdup(3) */
+#include "../../config.h"
+#define _XOPEN_SOURCE XOPEN_SOURCE_LEVEL_FOR_STRDUP
 #include "../test-tools.h"
 #include "http.h"
 #include "services.h"

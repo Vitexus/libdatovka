@@ -1,5 +1,6 @@
 #ifndef _XOPEN_SOURCE
-#define _XOPEN_SOURCE 500   /* For strdup() */
+#include "../../config.h"
+#define _XOPEN_SOURCE XOPEN_SOURCE_LEVEL_FOR_STRDUP
 #endif
 
 #include "http.h"
