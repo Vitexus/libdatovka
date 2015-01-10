@@ -716,7 +716,7 @@ isds_error isds_init(void) {
     /* Initialise cryptographic back-ends. */
     if (IE_SUCCESS != _isds_init_crypto()) {
         isds_log(ILF_ISDS, ILL_CRIT,
-                _("initialisation of cryptographic back-end failed\n"));
+                _("Initialization of cryptographic back-end failed\n"));
         return IE_ERROR;
     }
 
@@ -7665,7 +7665,7 @@ isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
     request = xmlNewNode(NULL, BAD_CAST "ISDSSearch2");
     if (NULL == request) {
         isds_log_message(context,
-                _("Could build ISDSSearch2 request"));
+                _("Could not build ISDSSearch2 request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);

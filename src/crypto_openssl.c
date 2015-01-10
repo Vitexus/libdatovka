@@ -157,7 +157,7 @@ _hidden isds_error _isds_extract_cms_data(struct isds_ctx *context,
 
     bio = BIO_new_mem_buf((void *) cms, cms_length);
     if (NULL == bio) {
-        isds_log_message(context, _("Creating CMS reader BIO failed."));
+        isds_log_message(context, _("Creating CMS reader BIO failed"));
         while (0 != (err = ERR_get_error())) {
             locale_str = _isds_utf82locale(ERR_error_string(err, NULL));
             if (NULL != locale_str) {
@@ -171,7 +171,7 @@ _hidden isds_error _isds_extract_cms_data(struct isds_ctx *context,
 
     cms_ci = d2i_CMS_bio(bio, NULL);
     if (NULL == cms_ci) {
-        isds_log_message(context, _("Cannot parse CMS."));
+        isds_log_message(context, _("Cannot parse CMS"));
         while (0 != (err = ERR_get_error())) {
             locale_str = _isds_utf82locale(ERR_error_string(err, NULL));
             if (NULL != locale_str) {

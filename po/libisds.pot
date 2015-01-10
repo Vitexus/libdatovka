@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libisds 0.10\n"
 "Report-Msgid-Bugs-To: petr.pisar@atlas.cz\n"
-"POT-Creation-Date: 2015-01-10 16:19+0100\n"
+"POT-Creation-Date: 2015-01-10 16:44+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -193,11 +193,11 @@ msgid "Could not get plain data from GPGME after verifying CMS structure"
 msgstr ""
 
 #: src/crypto_openssl.c:160
-msgid "Creating CMS reader BIO failed."
+msgid "Creating CMS reader BIO failed"
 msgstr ""
 
 #: src/crypto_openssl.c:174
-msgid "Cannot parse CMS."
+msgid "Cannot parse CMS"
 msgstr ""
 
 #: src/isds.c:24 src/isds.c:25 src/isds.c:26 src/isds.c:27
@@ -209,7 +209,7 @@ msgid "CURL library initialization failed\n"
 msgstr ""
 
 #: src/isds.c:719
-msgid "initialisation of cryptographic back-end failed\n"
+msgid "Initialization of cryptographic back-end failed\n"
 msgstr ""
 
 #: src/isds.c:730
@@ -1192,7 +1192,7 @@ msgid "Query string must be non-empty"
 msgstr ""
 
 #: src/isds.c:7668
-msgid "Could build ISDSSearch2 request"
+msgid "Could not build ISDSSearch2 request"
 msgstr ""
 
 #: src/isds.c:7684
