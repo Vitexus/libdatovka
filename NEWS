@@ -1,3 +1,26 @@
+Version 0.10
+============
+
+• A new ISDSSearch2 service was implemented by an isds_find_box_by_fulltext()
+function.
+
+• The OpenSSL library can be used instead of the default GPGme library by
+specifying --enable-openssl-backend option to the configure script.
+
+• When parsing ISO 8601 date-time strings from a server response, microsecond
+fractions are properly rounded (half up) now.
+
+• An use-after-free bug in parsing SOAP response has been fixed.
+
+• Handling su_seconds_t type used in the timeval structure was corrected to
+enable flawless compilation with Mac OS X standard library.
+
+• Various signedness mismataches which could lead to an undefined behaviour
+were fixed.
+
+• A work-around for accessing the strdup(3) function in Mac OS X standard
+library was applied.
+
 Version 0.9
 ===========
 
