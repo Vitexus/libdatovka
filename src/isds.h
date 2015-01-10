@@ -1243,8 +1243,8 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
  * in this @boxes page. It counts from zero. It will be pointer to NULL if the
  * server did not provide the value. Pass NULL if you don't care.
  * @current_page_size outputs reallocated count of boxes in the this @boxes
- * page. It will be pointer to NULL if the server did not provide the value. Pass
- * NULL if you don't care.
+ * page. It will be pointer to NULL if the server did not provide the value.
+ * Pass NULL if you don't care.
  * @last_page outputs pointer to reallocated boolean. True if this @boxes page
  * is the last one, false if more boxes match, NULL if the server did not
  * provude the value. Pass NULL if you don't care.
