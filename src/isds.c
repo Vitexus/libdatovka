@@ -7508,7 +7508,7 @@ static isds_error extract_dbResult(struct isds_ctx *context,
     } else if (!xmlStrcmp(BAD_CAST string, BAD_CAST "PDZ")) {
         (*fulltext_result)->active = 1;
         (*fulltext_result)->public_sending = 0;
-        (*fulltext_result)->commercial_sending = 0;
+        (*fulltext_result)->commercial_sending = 1;
     } else if (!xmlStrcmp(BAD_CAST string, BAD_CAST "NONE")) {
         (*fulltext_result)->active = 1;
         (*fulltext_result)->public_sending = 0;
