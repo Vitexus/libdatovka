@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: libisds 0.9\n"
+"Project-Id-Version: libisds 0.10\n"
 "Report-Msgid-Bugs-To: petr.pisar@atlas.cz\n"
-"POT-Creation-Date: 2014-08-10 16:28+0200\n"
+"POT-Creation-Date: 2015-01-10 16:19+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,16 +18,16 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: src/crypto.c:22
+#: src/crypto_gpg.c:26
 msgid "Could not check gcrypt version\n"
 msgstr ""
 
-#: src/crypto.c:35
+#: src/crypto_gpg.c:39
 #, c-format
 msgid "gcrypt version in use: %s\n"
 msgstr ""
 
-#: src/crypto.c:56
+#: src/crypto_gpg.c:60 src/crypto_openssl.c:57
 #, c-format
 msgid ""
 "Data hash requested, length=%zu, content:\n"
@@ -35,1380 +35,1482 @@ msgid ""
 "End of data to hash\n"
 msgstr ""
 
-#: src/crypto.c:97
+#: src/crypto_gpg.c:101
 msgid "GPGME initialization failed\n"
 msgstr ""
 
-#: src/crypto.c:101
+#: src/crypto_gpg.c:105
 #, c-format
 msgid "GPGME version in use: %s\n"
 msgstr ""
 
-#: src/crypto.c:112
+#: src/crypto_gpg.c:116
 msgid "GPGME does not support CMS\n"
 msgstr ""
 
-#: src/crypto.c:123
+#: src/crypto_gpg.c:127
 #, c-format
 msgid "GPGME compiled without support for protocol %s\n"
 msgstr ""
 
-#: src/crypto.c:128
+#: src/crypto_gpg.c:132
 #, c-format
 msgid "Engine %s not installed properly\n"
 msgstr ""
 
-#: src/crypto.c:132
+#: src/crypto_gpg.c:136
 #, c-format
 msgid "Engine %s version %s installed, but at least version %s required\n"
 msgstr ""
 
-#: src/crypto.c:137
+#: src/crypto_gpg.c:141
 #, c-format
 msgid "Unknown problem with engine for protocol %s\n"
 msgstr ""
 
-#: src/crypto.c:187
+#: src/crypto_gpg.c:159
+msgid "gpg-error library initialization failed\n"
+msgstr ""
+
+#: src/crypto_gpg.c:166
+msgid "GPGME library initialization failed\n"
+msgstr ""
+
+#: src/crypto_gpg.c:173
+msgid "gcrypt library initialization failed\n"
+msgstr ""
+
+#: src/crypto_gpg.c:220
 msgid "Could not allocate CMS parser handler"
 msgstr ""
 
-#: src/crypto.c:192
+#: src/crypto_gpg.c:225
 msgid "Could not allocate CMS reader"
 msgstr ""
 
-#: src/crypto.c:198 src/crypto.c:209
+#: src/crypto_gpg.c:231 src/crypto_gpg.c:242
 msgid "Could not bind CMS reader to PKCS#7 structure"
 msgstr ""
 
-#: src/crypto.c:203
+#: src/crypto_gpg.c:236
 msgid "Could not allocate CMS writer"
 msgstr ""
 
-#: src/crypto.c:215
+#: src/crypto_gpg.c:248
 msgid "Could not register CMS reader to CMS handler"
 msgstr ""
 
-#: src/crypto.c:232
+#: src/crypto_gpg.c:265
 #, c-format
 msgid "Error while parsing PKCS#7 structure: %s"
 msgstr ""
 
-#: src/crypto.c:237
+#: src/crypto_gpg.c:270
 msgid "CMS: Data beginning found\n"
 msgstr ""
 
-#: src/crypto.c:242
+#: src/crypto_gpg.c:275
 msgid "unknown data"
 msgstr ""
 
-#: src/crypto.c:243
+#: src/crypto_gpg.c:276
 msgid "plain data"
 msgstr ""
 
-#: src/crypto.c:244
+#: src/crypto_gpg.c:277
 msgid "signed data"
 msgstr ""
 
-#: src/crypto.c:246
+#: src/crypto_gpg.c:279
 msgid "encrypted data by session key"
 msgstr ""
 
-#: src/crypto.c:247
+#: src/crypto_gpg.c:280
 msgid "digest data"
 msgstr ""
 
-#: src/crypto.c:248
+#: src/crypto_gpg.c:281
 msgid "encrypted data"
 msgstr ""
 
-#: src/crypto.c:249
+#: src/crypto_gpg.c:282
 msgid "auth data"
 msgstr ""
 
-#: src/crypto.c:250
+#: src/crypto_gpg.c:283
 msgid "other data"
 msgstr ""
 
-#: src/crypto.c:252
+#: src/crypto_gpg.c:285
 #, c-format
 msgid "CMS: Data type: %s\n"
 msgstr ""
 
-#: src/crypto.c:255
+#: src/crypto_gpg.c:288
 msgid "CMS: Data end found\n"
 msgstr ""
 
-#: src/crypto.c:261
+#: src/crypto_gpg.c:294
 msgid "Getting CMS writer buffer failed"
 msgstr ""
 
-#: src/crypto.c:291
+#: src/crypto_gpg.c:324
 #, c-format
 msgid "Could not create GPGME context: %s"
 msgstr ""
 
-#: src/crypto.c:295
+#: src/crypto_gpg.c:328
 #, c-format
 msgid "Could not set CMS protocol for GPGME context: %s"
 msgstr ""
 
-#: src/crypto.c:299
+#: src/crypto_gpg.c:332
 #, c-format
 msgid "Could not create data handler for signed message in CMS structure: %s"
 msgstr ""
 
-#: src/crypto.c:302
+#: src/crypto_gpg.c:335
 #, c-format
 msgid ""
 "Could not explain to GPGME that CMS structure was packed in DER binary "
 "format: %s"
 msgstr ""
 
-#: src/crypto.c:306
+#: src/crypto_gpg.c:339
 #, c-format
 msgid ""
 "Could not create data handler for plain message extracted from CMS "
 "structure: %s"
 msgstr ""
 
-#: src/crypto.c:314
+#: src/crypto_gpg.c:347
 #, c-format
 msgid "CMS verification failed: %s"
 msgstr ""
 
-#: src/crypto.c:328
+#: src/crypto_gpg.c:361
 msgid "Could not get plain data from GPGME after verifying CMS structure"
 msgstr ""
 
-#: src/isds.c:688
+#: src/crypto_openssl.c:160
+msgid "Creating CMS reader BIO failed."
+msgstr ""
+
+#: src/crypto_openssl.c:174
+msgid "Cannot parse CMS."
+msgstr ""
+
+#: src/isds.c:24 src/isds.c:25 src/isds.c:26 src/isds.c:27
+msgid "n/a"
+msgstr ""
+
+#: src/isds.c:711
 msgid "CURL library initialization failed\n"
 msgstr ""
 
-#: src/isds.c:696
-msgid "gpg-error library initialization failed\n"
+#: src/isds.c:719
+msgid "initialisation of cryptographic back-end failed\n"
 msgstr ""
 
-#: src/isds.c:703
-msgid "GPGME library initialization failed\n"
-msgstr ""
-
-#: src/isds.c:710
-msgid "gcrypt library initialization failed\n"
-msgstr ""
-
-#: src/isds.c:721
+#: src/isds.c:730
 msgid "expat library initialization failed\n"
 msgstr ""
 
-#: src/isds.c:754
+#: src/isds.c:764
 #, c-format
 msgid "%s (%s, GPGME %s, gcrypt %s, %s, libxml2 %s)"
 msgstr ""
 
-#: src/isds.c:756
+#: src/isds.c:766
+#, c-format
+msgid "%s (%s, %s, %s, libxml2 %s)"
+msgstr ""
+
+#: src/isds.c:770
 #, c-format
 msgid "%s (GPGME %s, gcrypt %s, %s, libxml2 %s)"
 msgstr ""
 
 #: src/isds.c:772
+#, c-format
+msgid "%s (%s, %s, libxml2 %s)"
+msgstr ""
+
+#: src/isds.c:793
 msgid "Success"
 msgstr ""
 
-#: src/isds.c:774
+#: src/isds.c:795
 msgid "Unspecified error"
 msgstr ""
 
-#: src/isds.c:776
+#: src/isds.c:797
 msgid "Not supported"
 msgstr ""
 
-#: src/isds.c:778
+#: src/isds.c:799
 msgid "Invalid value"
 msgstr ""
 
-#: src/isds.c:780
+#: src/isds.c:801
 msgid "Invalid context"
 msgstr ""
 
-#: src/isds.c:782
+#: src/isds.c:803
 msgid "Not logged in"
 msgstr ""
 
-#: src/isds.c:784
+#: src/isds.c:805
 msgid "Connection closed"
 msgstr ""
 
-#: src/isds.c:786
+#: src/isds.c:807
 msgid "Timed out"
 msgstr ""
 
-#: src/isds.c:788
+#: src/isds.c:809
 msgid "Not exist"
 msgstr ""
 
-#: src/isds.c:790
+#: src/isds.c:811
 msgid "Out of memory"
 msgstr ""
 
-#: src/isds.c:792
+#: src/isds.c:813
 msgid "Network problem"
 msgstr ""
 
-#: src/isds.c:794
+#: src/isds.c:815
 msgid "HTTP problem"
 msgstr ""
 
-#: src/isds.c:796
+#: src/isds.c:817
 msgid "SOAP problem"
 msgstr ""
 
-#: src/isds.c:798
+#: src/isds.c:819
 msgid "XML problem"
 msgstr ""
 
-#: src/isds.c:800
+#: src/isds.c:821
 msgid "ISDS server problem"
 msgstr ""
 
-#: src/isds.c:802
+#: src/isds.c:823
 msgid "Invalid enum value"
 msgstr ""
 
-#: src/isds.c:804
+#: src/isds.c:825
 msgid "Invalid date value"
 msgstr ""
 
-#: src/isds.c:806
+#: src/isds.c:827
 msgid "Too big"
 msgstr ""
 
-#: src/isds.c:808
+#: src/isds.c:829
 msgid "Too small"
 msgstr ""
 
-#: src/isds.c:810
+#: src/isds.c:831
 msgid "Value not unique"
 msgstr ""
 
-#: src/isds.c:812
+#: src/isds.c:833
 msgid "Values not equal"
 msgstr ""
 
-#: src/isds.c:814
+#: src/isds.c:835
 msgid "Some suboperations failed"
 msgstr ""
 
-#: src/isds.c:816
+#: src/isds.c:837
 msgid "Operation aborted"
 msgstr ""
 
-#: src/isds.c:818
+#: src/isds.c:839
 msgid "Security problem"
 msgstr ""
 
-#: src/isds.c:820
+#: src/isds.c:841
 msgid "Unknown error"
 msgstr ""
 
-#: src/isds.c:1173
+#: src/isds.c:1195
 msgid "Curl library does not support CRL definition"
 msgstr ""
 
-#: src/isds.c:1314
+#: src/isds.c:1335
 msgid "Selected authentication method: no certificate, username and password\n"
 msgstr ""
 
-#: src/isds.c:1318
+#: src/isds.c:1339
 msgid "Both username and password must be supplied"
 msgstr ""
 
-#: src/isds.c:1335 src/isds.c:5517
+#: src/isds.c:1356 src/isds.c:5613
 msgid "Selected authentication method: HMAC-based one-time password\n"
 msgstr ""
 
-#: src/isds.c:1342 src/isds.c:5523
+#: src/isds.c:1363 src/isds.c:5619
 msgid "Selected authentication method: Time-based one-time password\n"
 msgstr ""
 
-#: src/isds.c:1346 src/isds.c:5528
+#: src/isds.c:1367 src/isds.c:5624
 msgid ""
 "OTP code has not been provided by application, requesting server for new "
 "one.\n"
 msgstr ""
 
-#: src/isds.c:1354 src/isds.c:5538
+#: src/isds.c:1375 src/isds.c:5634
 msgid ""
 "OTP code has been provided by application, not requesting server for new "
 "one.\n"
 msgstr ""
 
-#: src/isds.c:1364 src/isds.c:5545
+#: src/isds.c:1385 src/isds.c:5641
 msgid ""
 "Unknown one-time password authentication method requested by application"
 msgstr ""
 
-#: src/isds.c:1379
+#: src/isds.c:1400
 msgid ""
 "Selected authentication method: system certificate, no username and no "
 "password\n"
 msgstr ""
 
-#: src/isds.c:1386
+#: src/isds.c:1407
 msgid ""
 "Selected authentication method: system certificate, box ID and no password\n"
 msgstr ""
 
-#: src/isds.c:1391
+#: src/isds.c:1412
 msgid ""
 "Selected authentication method: commercial certificate, username and "
 "password\n"
 msgstr ""
 
-#: src/isds.c:1408
+#: src/isds.c:1429
 msgid "Could not build ISDS log-in request"
 msgstr ""
 
-#: src/isds.c:1413 src/isds.c:1532 src/isds.c:1601 src/isds.c:1720
-#: src/isds.c:4787 src/isds.c:5227 src/isds.c:5503 src/isds.c:5997
-#: src/isds.c:6222 src/isds.c:6333 src/isds.c:6420 src/isds.c:6573
-#: src/isds.c:6643 src/isds.c:6768 src/isds.c:6870 src/isds.c:7011
-#: src/isds.c:7119 src/isds.c:7334 src/isds.c:7604 src/isds.c:7863
-#: src/isds.c:7951 src/isds.c:8190 src/isds.c:8406 src/isds.c:8659
-#: src/isds.c:8980 src/isds.c:9143 src/isds.c:10550 src/isds.c:11057
-#: src/isds.c:11202
+#: src/isds.c:1434 src/isds.c:1555 src/isds.c:1625 src/isds.c:1744
+#: src/isds.c:4883 src/isds.c:5323 src/isds.c:5599 src/isds.c:6093
+#: src/isds.c:6318 src/isds.c:6429 src/isds.c:6516 src/isds.c:6669
+#: src/isds.c:6739 src/isds.c:6864 src/isds.c:6966 src/isds.c:7107
+#: src/isds.c:7215 src/isds.c:7673 src/isds.c:7886 src/isds.c:8156
+#: src/isds.c:8415 src/isds.c:8503 src/isds.c:8742 src/isds.c:8958
+#: src/isds.c:9211 src/isds.c:9532 src/isds.c:9695 src/isds.c:11102
+#: src/isds.c:11609 src/isds.c:11754
 msgid "Could not create ISDS name space"
 msgstr ""
 
-#: src/isds.c:1427
+#: src/isds.c:1448
 #, c-format
 msgid "Logging user %s into server %s\n"
 msgstr ""
 
-#: src/isds.c:1466
+#: src/isds.c:1490
 #, c-format
 msgid "User %s has been logged into server %s successfully\n"
 msgstr ""
 
-#: src/isds.c:1495
+#: src/isds.c:1518
 msgid "Logged out from ISDS server\n"
 msgstr ""
 
-#: src/isds.c:1527
+#: src/isds.c:1550
 msgid "Could build ISDS dummy request"
 msgstr ""
 
-#: src/isds.c:1538
+#: src/isds.c:1561
 msgid "Pinging ISDS server\n"
 msgstr ""
 
-#: src/isds.c:1548
+#: src/isds.c:1577
 msgid "ISDS server could not be contacted\n"
 msgstr ""
 
-#: src/isds.c:1561
+#: src/isds.c:1585
 msgid "ISDS server alive\n"
 msgstr ""
 
-#: src/isds.c:1588
+#: src/isds.c:1612
 msgid "I said connection closed"
 msgstr ""
 
-#: src/isds.c:1596
+#: src/isds.c:1620
 msgid "Could build ISDS bogus request"
 msgstr ""
 
-#: src/isds.c:1607
+#: src/isds.c:1631
 msgid "Sending bogus request to ISDS\n"
 msgstr ""
 
-#: src/isds.c:1617
+#: src/isds.c:1641
 msgid "Processing ISDS response on bogus request failed\n"
 msgstr ""
 
-#: src/isds.c:1627
+#: src/isds.c:1651
 msgid "ISDS response on bogus request is missing status\n"
 msgstr ""
 
-#: src/isds.c:1637
+#: src/isds.c:1661
 #, c-format
 msgid "Server refused bogus request (code=%s, message=%s)\n"
 msgstr ""
 
-#: src/isds.c:1658
+#: src/isds.c:1682
 msgid "Bogus message accepted by server. This should not happen.\n"
 msgstr ""
 
-#: src/isds.c:1697
+#: src/isds.c:1721
 msgid "Could not build temporary document"
 msgstr ""
 
-#: src/isds.c:1709
+#: src/isds.c:1733
 msgid "Could not copy subtree"
 msgstr ""
 
-#: src/isds.c:1730 src/isds.c:1807 src/isds.c:1875
+#: src/isds.c:1754 src/isds.c:1831 src/isds.c:1899
 msgid "Could not create xmlBuffer"
 msgstr ""
 
-#: src/isds.c:1737 src/isds.c:1890 src/soap.c:1184
+#: src/isds.c:1761 src/isds.c:1914 src/soap.c:1197
 msgid "Could not create XML serializer"
 msgstr ""
 
-#: src/isds.c:1746 src/isds.c:1913
+#: src/isds.c:1770 src/isds.c:1937
 msgid "Could not serialize XML subtree"
 msgstr ""
 
-#: src/isds.c:1818
+#: src/isds.c:1842
 msgid "Could not dump XML node"
 msgstr ""
 
-#: src/isds.c:1880
+#: src/isds.c:1904
 msgid "Could not disable attribute escaping"
 msgstr ""
 
-#: src/isds.c:2343
+#: src/isds.c:2409
 #, c-format
 msgid "Invalid message status value: %lu"
 msgstr ""
 
-#: src/isds.c:2420
+#: src/isds.c:2486
 #, c-format
 msgid "Unknown delivery info event prefix: %s\n"
 msgstr ""
 
-#: src/isds.c:2442
+#: src/isds.c:2508
 #, c-format
 msgid "Multiple %s element"
 msgstr ""
 
-#: src/isds.c:2477
+#: src/isds.c:2543 src/isds.c:2574
 #, c-format
 msgid "%s value is not valid boolean: %s"
 msgstr ""
 
-#: src/isds.c:2502 src/isds.c:2547
+#: src/isds.c:2561
+#, c-format
+msgid "%s element is empty"
+msgstr ""
+
+#: src/isds.c:2598 src/isds.c:2643
 #, c-format
 msgid "%s is not valid integer: %s"
 msgstr ""
 
-#: src/isds.c:2513 src/isds.c:2558
+#: src/isds.c:2609 src/isds.c:2654
 #, c-format
 msgid "%s value out of range of long int: %s"
 msgstr ""
 
-#: src/isds.c:2569
+#: src/isds.c:2665
 #, c-format
 msgid "%s value is negative: %ld"
 msgstr ""
 
-#: src/isds.c:2601
+#: src/isds.c:2697
 #, c-format
 msgid "Invalid %s value: %s"
 msgstr ""
 
-#: src/isds.c:2621
+#: src/isds.c:2717
 #, c-format
 msgid "Could not extract required %s attribute value from %s element"
 msgstr ""
 
-#: src/isds.c:2637 src/isds.c:2739
+#: src/isds.c:2733 src/isds.c:2835
 #, c-format
 msgid "Could not add %s child to %s element"
 msgstr ""
 
-#: src/isds.c:2704
+#: src/isds.c:2800
 #, c-format
 msgid "Could not add %s attribute to %s element"
 msgstr ""
 
-#: src/isds.c:2717
+#: src/isds.c:2813
 #, c-format
 msgid "%s has more than %d characters"
 msgid_plural "%s has more than %d characters"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/isds.c:2725
+#: src/isds.c:2821
 #, c-format
 msgid "%s has less than %d characters"
 msgid_plural "%s has less than %d characters"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/isds.c:2773
+#: src/isds.c:2869
 #, c-format
 msgid "%s element does not contain %s child"
 msgstr ""
 
-#: src/isds.c:2786
+#: src/isds.c:2882
 #, c-format
 msgid "%s element contains multiple %s children"
 msgstr ""
 
-#: src/isds.c:2921
+#: src/isds.c:3017
 #, c-format
 msgid "Invalid isds:biDate value: %s"
 msgstr ""
 
-#: src/isds.c:2976
+#: src/isds.c:3072 src/isds.c:7476
 #, c-format
 msgid "Unknown isds:dbType: %s"
 msgstr ""
 
-#: src/isds.c:3057
+#: src/isds.c:3153
 #, c-format
 msgid "Invalid dbType value: %d"
 msgstr ""
 
-#: src/isds.c:3159 src/isds.c:10381
+#: src/isds.c:3255 src/isds.c:10933
 #, c-format
 msgid "Unknown isds:userType value: %s"
 msgstr ""
 
-#: src/isds.c:3252
+#: src/isds.c:3348
 #, c-format
 msgid "Invalid userType value: %d"
 msgstr ""
 
-#: src/isds.c:3309
+#: src/isds.c:3405
 #, c-format
 msgid "Unknown isds:PDZType value: %s"
 msgstr ""
 
-#: src/isds.c:3328
+#: src/isds.c:3424
 #, c-format
 msgid "Could not convert PDZExpire as ISO time: %s"
 msgstr ""
 
-#: src/isds.c:3380
+#: src/isds.c:3476
 #, c-format
 msgid "Could not convert ciEventTime as ISO time: %s"
 msgstr ""
 
-#: src/isds.c:3397
+#: src/isds.c:3493
 #, c-format
 msgid "Unknown isds:ciEventType value: %s"
 msgstr ""
 
-#: src/isds.c:3640
+#: src/isds.c:3736
 msgid "Missing mandatory sisds:dmMessageStatus integer"
 msgstr ""
 
-#: src/isds.c:3663
+#: src/isds.c:3759
 #, c-format
 msgid "Could not convert dmDeliveryTime as ISO time: %s"
 msgstr ""
 
-#: src/isds.c:3679
+#: src/isds.c:3775
 #, c-format
 msgid "Could not convert dmAcceptanceTime as ISO time: %s"
 msgstr ""
 
-#: src/isds.c:3741
+#: src/isds.c:3837
 #, c-format
 msgid "Message type in dmType attribute is not 1 character long: %s"
 msgstr ""
 
-#: src/isds.c:3775
+#: src/isds.c:3871
 #, c-format
 msgid "Message type in envelope is not 1 character long: %s"
 msgstr ""
 
-#: src/isds.c:3824
+#: src/isds.c:3920
 msgid "Not enough memory to normalize document MIME type"
 msgstr ""
 
-#: src/isds.c:3839
+#: src/isds.c:3935
 #, c-format
 msgid "Document has invalid dmFileMetaType attribute value: %s"
 msgstr ""
 
-#: src/isds.c:3870
+#: src/isds.c:3966
 msgid "Document has more dmEncodedContent elements"
 msgstr ""
 
-#: src/isds.c:3884
+#: src/isds.c:3980
 msgid "Error while Base64-decoding document content"
 msgstr ""
 
-#: src/isds.c:3905
+#: src/isds.c:4001
 msgid "Document has more dmXMLContent elements"
 msgstr ""
 
-#: src/isds.c:3923
+#: src/isds.c:4019
 msgid "Document has no dmEncodedContent, nor dmXMLContent element"
 msgstr ""
 
-#: src/isds.c:3969
+#: src/isds.c:4065
 msgid "Message does not contain any document"
 msgstr ""
 
-#: src/isds.c:4093 src/isds.c:4384
+#: src/isds.c:4189 src/isds.c:4480
 #, c-format
 msgid "Could not convert dmEventTime as ISO time: %s"
 msgstr ""
 
-#: src/isds.c:4105
+#: src/isds.c:4201
 msgid "Missing mandatory isds:dmMessageStatus integer"
 msgstr ""
 
-#: src/isds.c:4170
+#: src/isds.c:4266
 #, c-format
 msgid "Unsupported hash algorithm: %s"
 msgstr ""
 
-#: src/isds.c:4182
+#: src/isds.c:4278
 msgid "sisds:dmHash element is missing hash value"
 msgstr ""
 
-#: src/isds.c:4189
+#: src/isds.c:4285
 msgid "Error while Base64-decoding hash value"
 msgstr ""
 
-#: src/isds.c:4239
+#: src/isds.c:4335
 msgid "Missing dmQTimestamp element content\n"
 msgstr ""
 
-#: src/isds.c:4246
+#: src/isds.c:4342
 msgid "Error while Base64-decoding time stamp value"
 msgstr ""
 
-#: src/isds.c:4440
+#: src/isds.c:4536
 msgid "Delivery info does not contain any event"
 msgstr ""
 
-#: src/isds.c:4499
+#: src/isds.c:4595
 #, c-format
 msgid "Not enough memory to encode %zd byte into Base64"
 msgid_plural "Not enough memory to encode %zd bytes into Base64"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/isds.c:4531
+#: src/isds.c:4627
 msgid "Could not allocate main dmFile"
 msgstr ""
 
-#: src/isds.c:4544
+#: src/isds.c:4640
 #, c-format
 msgid "Could not add dmFile child to %s element"
 msgstr ""
 
-#: src/isds.c:4553
+#: src/isds.c:4649
 msgid "Document is missing mandatory MIME type definition"
 msgstr ""
 
-#: src/isds.c:4562
+#: src/isds.c:4658
 #, c-format
 msgid "Document has unknown dmFileMetaType: %ld"
 msgstr ""
 
-#: src/isds.c:4579
+#: src/isds.c:4675
 msgid "Document is missing mandatory description (title)"
 msgstr ""
 
-#: src/isds.c:4598
+#: src/isds.c:4694
 msgid "Could not allocate dmXMLContent element"
 msgstr ""
 
-#: src/isds.c:4607
+#: src/isds.c:4703
 #, c-format
 msgid "Could not add dmXMLContent child to %s element"
 msgstr ""
 
-#: src/isds.c:4619
+#: src/isds.c:4715
 msgid "Not enough memory to copy XML document"
 msgstr ""
 
-#: src/isds.c:4627
+#: src/isds.c:4723
 msgid "Error while adding XML document into dmXMLContent"
 msgstr ""
 
-#: src/isds.c:4668
+#: src/isds.c:4764
 msgid "Missing isds:dmStatusCode under XSD:tMStatus type element"
 msgstr ""
 
-#: src/isds.c:4694
+#: src/isds.c:4790
 msgid ""
 "Server accepted sent message, but did not returned assigned message ID\n"
 msgstr ""
 
-#: src/isds.c:4781 src/isds.c:6863 src/isds.c:7857 src/isds.c:7945
+#: src/isds.c:4877 src/isds.c:6959 src/isds.c:8409 src/isds.c:8497
 #, c-format
 msgid "Could not build %s request"
 msgstr ""
 
-#: src/isds.c:4798 src/isds.c:5732
+#: src/isds.c:4894 src/isds.c:5828
 #, c-format
 msgid "Sending %s request to ISDS\n"
 msgstr ""
 
-#: src/isds.c:4808 src/isds.c:5741 src/isds.c:9167
+#: src/isds.c:4904 src/isds.c:5837 src/isds.c:9719
 #, c-format
 msgid "Processing ISDS response on %s request failed\n"
 msgstr ""
 
-#: src/isds.c:4818 src/isds.c:5751 src/isds.c:9177
+#: src/isds.c:4914 src/isds.c:5847 src/isds.c:9729
 #, c-format
 msgid "ISDS response on %s request is missing status\n"
 msgstr ""
 
-#: src/isds.c:4829 src/isds.c:5763
+#: src/isds.c:4925 src/isds.c:5859
 #, c-format
 msgid "Server refused %s request (code=%s, message=%s)\n"
 msgstr ""
 
-#: src/isds.c:4900
+#: src/isds.c:4996
 msgid "Missing dbOwnerInfo element"
 msgstr ""
 
-#: src/isds.c:4905
+#: src/isds.c:5001
 msgid "Multiple dbOwnerInfo element"
 msgstr ""
 
-#: src/isds.c:4931
+#: src/isds.c:5027
 msgid "GetOwnerInfoFromLogin request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:4994
+#: src/isds.c:5090
 msgid "Missing dbUserInfo element"
 msgstr ""
 
-#: src/isds.c:4999
+#: src/isds.c:5095
 msgid "Multiple dbUserInfo element"
 msgstr ""
 
-#: src/isds.c:5023
+#: src/isds.c:5119
 msgid "GetUserInfoFromLogin request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:5086
+#: src/isds.c:5182
 msgid "Missing GetPasswordInfoResponse element"
 msgstr ""
 
-#: src/isds.c:5092
+#: src/isds.c:5188
 msgid "Multiple GetPasswordInfoResponse element"
 msgstr ""
 
-#: src/isds.c:5108
+#: src/isds.c:5204
 #, c-format
 msgid "Could not convert pswExpDate as ISO time: %s"
 msgstr ""
 
-#: src/isds.c:5132
+#: src/isds.c:5228
 msgid "GetPasswordInfo request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:5171 src/isds.c:5456
+#: src/isds.c:5267 src/isds.c:5552
 msgid "Unexpected error"
 msgstr ""
 
-#: src/isds.c:5172
+#: src/isds.c:5268
 msgid "One-time code cannot be re-send faster than once a 30 seconds"
 msgstr ""
 
-#: src/isds.c:5173
+#: src/isds.c:5269
 msgid "One-time code could not been sent. Try later again."
 msgstr ""
 
-#: src/isds.c:5185
+#: src/isds.c:5281
 msgid "Second argument (password) of isds_change_password() is NULL"
 msgstr ""
 
-#: src/isds.c:5195
+#: src/isds.c:5291
 msgid "This function requires OTP-authenticated context"
 msgstr ""
 
-#: src/isds.c:5200
+#: src/isds.c:5296
 msgid ""
 "If one-time password authentication method is in use, requesting new OTP "
 "code requires one-time credentials argument either"
 msgstr ""
 
-#: src/isds.c:5206
+#: src/isds.c:5302
 msgid ""
 "Requesting new time-based OTP code from server requires one-time password "
 "authentication method"
 msgstr ""
 
-#: src/isds.c:5212
+#: src/isds.c:5308
 msgid ""
 "Requesting new time-based OTP code from server requires undefined OTP code "
 "member in one-time credentials argument"
 msgstr ""
 
-#: src/isds.c:5222
+#: src/isds.c:5318
 msgid "Could not build SendSMSCode request"
 msgstr ""
 
-#: src/isds.c:5265
+#: src/isds.c:5361
 msgid "Sending SendSMSCode request to ISDS\n"
 msgstr ""
 
-#: src/isds.c:5281
+#: src/isds.c:5377
 msgid "Processing ISDS response on SendSMSCode request failed\n"
 msgstr ""
 
-#: src/isds.c:5290
+#: src/isds.c:5386
 msgid "ISDS response on SendSMSCode request is missing status\n"
 msgstr ""
 
-#: src/isds.c:5301
+#: src/isds.c:5397
 #, c-format
 msgid ""
 "Server refused to send new code on SendSMSCode request (code=%s, message="
 "%s)\n"
 msgstr ""
 
-#: src/isds.c:5352
+#: src/isds.c:5448
 msgid "New OTP code has been sent successfully on SendSMSCode request.\n"
 msgstr ""
 
-#: src/isds.c:5372
+#: src/isds.c:5468
 msgid "NULL status code passed to statuscode2isds_error()"
 msgstr ""
 
-#: src/isds.c:5390
+#: src/isds.c:5486
 msgid "ISDS server returned unknown error"
 msgstr ""
 
-#: src/isds.c:5445
+#: src/isds.c:5541
 msgid "Password length must be between 8 and 32 characters"
 msgstr ""
 
-#: src/isds.c:5446 src/isds.c:5455
+#: src/isds.c:5542 src/isds.c:5551
 msgid "Password cannot be reused"
 msgstr ""
 
-#: src/isds.c:5448
+#: src/isds.c:5544
 msgid "Password contains forbidden character"
 msgstr ""
 
-#: src/isds.c:5449
+#: src/isds.c:5545
 msgid ""
 "Password must contain at least one upper-case letter, one lower-case, and "
 "one digit"
 msgstr ""
 
-#: src/isds.c:5451
+#: src/isds.c:5547
 msgid "Password cannot contain sequence of three identical characters"
 msgstr ""
 
-#: src/isds.c:5452
+#: src/isds.c:5548
 msgid "Password cannot contain user identifier"
 msgstr ""
 
-#: src/isds.c:5453
+#: src/isds.c:5549
 msgid "Password is too simmple"
 msgstr ""
 
-#: src/isds.c:5454
+#: src/isds.c:5550
 msgid "Old password is not valid"
 msgstr ""
 
-#: src/isds.c:5457
+#: src/isds.c:5553
 msgid "LDAP update error"
 msgstr ""
 
-#: src/isds.c:5467
+#: src/isds.c:5563
 msgid "Second argument (old password) of isds_change_password() is NULL"
 msgstr ""
 
-#: src/isds.c:5473
+#: src/isds.c:5569
 msgid "Third argument (new password) of isds_change_password() is NULL"
 msgstr ""
 
-#: src/isds.c:5484
+#: src/isds.c:5580
 msgid ""
 "If one-time password authentication method is in use, changing password "
 "requires one-time credentials either"
 msgstr ""
 
-#: src/isds.c:5495
+#: src/isds.c:5591
 msgid "Could not build ChangeISDSPassword request"
 msgstr ""
 
-#: src/isds.c:5496
+#: src/isds.c:5592
 msgid "Could not build ChangePasswordOTP request"
 msgstr ""
 
-#: src/isds.c:5585
+#: src/isds.c:5681
 msgid "Sending ChangeISDSPassword request to ISDS\n"
 msgstr ""
 
-#: src/isds.c:5586
+#: src/isds.c:5682
 msgid "Sending ChangePasswordOTP request to ISDS\n"
 msgstr ""
 
-#: src/isds.c:5605
+#: src/isds.c:5701
 msgid "Processing ISDS response on ChangeISDSPassword request failed\n"
 msgstr ""
 
-#: src/isds.c:5607
+#: src/isds.c:5703
 msgid "Processing ISDS response on ChangePasswordOTP request failed\n"
 msgstr ""
 
-#: src/isds.c:5618
+#: src/isds.c:5714
 msgid "ISDS response on ChangeISDSPassword request is missing status\n"
 msgstr ""
 
-#: src/isds.c:5620
+#: src/isds.c:5716
 msgid "ISDS response on ChangePasswordOTP request is missing status\n"
 msgstr ""
 
-#: src/isds.c:5631 src/isds.c:5649
+#: src/isds.c:5727 src/isds.c:5745
 #, c-format
 msgid ""
 "Server refused to change password on ChangeISDSPassword request (code=%s, "
 "message=%s)\n"
 msgstr ""
 
-#: src/isds.c:5633 src/isds.c:5651
+#: src/isds.c:5729 src/isds.c:5747
 #, c-format
 msgid ""
 "Server refused to change password on ChangePasswordOTP request (code=%s, "
 "message=%s)\n"
 msgstr ""
 
-#: src/isds.c:5683
+#: src/isds.c:5779
 msgid "Password changed successfully on ChangeISDSPassword request.\n"
 msgstr ""
 
-#: src/isds.c:5685
+#: src/isds.c:5781
 msgid "Password changed successfully on ChangePasswordOTP request.\n"
 msgstr ""
 
-#: src/isds.c:5823 src/isds.c:6910 src/isds.c:7773
+#: src/isds.c:5919 src/isds.c:7006 src/isds.c:8325
 #, c-format
 msgid "%s request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:5908
+#: src/isds.c:6004
 #, c-format
 msgid ""
 "Wrong element in ISDS response for %s request while extracting credentials "
 "delivery details\n"
 msgstr ""
 
-#: src/isds.c:5926
+#: src/isds.c:6022
 #, c-format
 msgid "ISDS did not return token on %s request even if requested\n"
 msgstr ""
 
-#: src/isds.c:5982 src/isds.c:6216
+#: src/isds.c:6078 src/isds.c:6312
 #, c-format
 msgid "Could build %s request"
 msgstr ""
 
-#: src/isds.c:5990
+#: src/isds.c:6086
 msgid "Could not create ISDS1 name space"
 msgstr ""
 
-#: src/isds.c:6124 src/isds.c:11006
+#: src/isds.c:6220 src/isds.c:11558
 msgid "CreateDataBox request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:6236 src/isds.c:7967
+#: src/isds.c:6332 src/isds.c:8519
 msgid "Could not convert `since' argument to ISO date string"
 msgstr ""
 
-#: src/isds.c:6328
+#: src/isds.c:6424
 msgid "Could build UpdateDataBoxDescr request"
 msgstr ""
 
-#: src/isds.c:6413
+#: src/isds.c:6509
 #, c-format
 msgid "Could not build %s request for %s box"
 msgstr ""
 
-#: src/isds.c:6528
+#: src/isds.c:6624
 msgid "GetDataBoxUsers request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:6568
+#: src/isds.c:6664
 msgid "Could build UpdateDataBoxUser request"
 msgstr ""
 
-#: src/isds.c:6638
+#: src/isds.c:6734
 msgid "Could build Activate request"
 msgstr ""
 
-#: src/isds.c:6678
+#: src/isds.c:6774
 msgid "Missing ActivateResponse element"
 msgstr ""
 
-#: src/isds.c:6683
+#: src/isds.c:6779
 msgid "Multiple ActivateResponse element"
 msgstr ""
 
-#: src/isds.c:6692
+#: src/isds.c:6788
 msgid ""
 "Server accepted Activate request, but did not return `userId' element.\n"
 msgstr ""
 
-#: src/isds.c:6697
+#: src/isds.c:6793
 msgid ""
 "Server accepted Activate request, but did not return `password' element.\n"
 msgstr ""
 
-#: src/isds.c:6708
+#: src/isds.c:6804
 msgid "Activate request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:6763
+#: src/isds.c:6859
 msgid "Could build NewAccessData request"
 msgstr ""
 
-#: src/isds.c:6807
+#: src/isds.c:6903
 msgid "NewAccessData request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:7006
+#: src/isds.c:7102
 msgid "Could not build GetDataBoxList request"
 msgstr ""
 
-#: src/isds.c:7042
+#: src/isds.c:7138
 msgid "Error while Base64-decoding box list archive"
 msgstr ""
 
-#: src/isds.c:7057
+#: src/isds.c:7153
 msgid "GetDataBoxList request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:7114
+#: src/isds.c:7210
 msgid "Could build FindDataBox request"
 msgstr ""
 
-#: src/isds.c:7126
+#: src/isds.c:7222
 msgid "Could not add dbOwnerInfo child to FindDataBox element"
 msgstr ""
 
-#: src/isds.c:7136
+#: src/isds.c:7232
 msgid "Sending FindDataBox request to ISDS\n"
 msgstr ""
 
-#: src/isds.c:7146
+#: src/isds.c:7242
 msgid "Processing ISDS response on FindDataBox request failed\n"
 msgstr ""
 
-#: src/isds.c:7156
+#: src/isds.c:7252
 msgid "ISDS response on FindDataBox request is missing status\n"
 msgstr ""
 
-#: src/isds.c:7166
+#: src/isds.c:7262
 #, c-format
 msgid ""
 "Server did not found any box on FindDataBox request (code=%s, message=%s)\n"
 msgstr ""
 
-#: src/isds.c:7180
+#: src/isds.c:7276
 #, c-format
 msgid ""
 "Server truncated response on FindDataBox request (code=%s, message=%s)\n"
 msgstr ""
 
-#: src/isds.c:7193
+#: src/isds.c:7289
 #, c-format
 msgid "Server refused FindDataBox request (code=%s, message=%s)\n"
 msgstr ""
 
-#: src/isds.c:7259
+#: src/isds.c:7355
 msgid "FindDataBox request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:7329
+#: src/isds.c:7468
+msgid "Empty isds:dbType element"
+msgstr ""
+
+#: src/isds.c:7497
+msgid "Empty isds:dbSendOptions element"
+msgstr ""
+
+#: src/isds.c:7523
+#, c-format
+msgid "Unknown isds:dbSendOptions value: %s"
+msgstr ""
+
+#: src/isds.c:7618
+msgid "You are not allowed to perform the search"
+msgstr ""
+
+#: src/isds.c:7619
+msgid "The query string is empty"
+msgstr ""
+
+#: src/isds.c:7620
+msgid "Searched box ID is malformed"
+msgstr ""
+
+#: src/isds.c:7621
+msgid "Searched organization ID is malformed"
+msgstr ""
+
+#: src/isds.c:7622
+msgid "Invalid input"
+msgstr ""
+
+#: src/isds.c:7623
+msgid "Requested page size is too large"
+msgstr ""
+
+#: src/isds.c:7624
+msgid "Search engine internal error"
+msgstr ""
+
+#: src/isds.c:7655
+msgid "Query string must be non-empty"
+msgstr ""
+
+#: src/isds.c:7668
+msgid "Could build ISDSSearch2 request"
+msgstr ""
+
+#: src/isds.c:7684
+#, c-format
+msgid "Invalid target value: %d"
+msgstr ""
+
+#: src/isds.c:7700
+#, c-format
+msgid "Invalid box type value: %d"
+msgstr ""
+
+#: src/isds.c:7737
+msgid "Missing ISDSSearch2 element"
+msgstr ""
+
+#: src/isds.c:7742
+msgid "Multiple ISDSSearch2 element"
+msgstr ""
+
+#: src/isds.c:7811
+msgid "ISDSSearch2 request processed by server successfully.\n"
+msgstr ""
+
+#: src/isds.c:7881
 msgid "Could build CheckDataBox request"
 msgstr ""
 
-#: src/isds.c:7341
+#: src/isds.c:7893
 msgid "Could not add dbID child to CheckDataBox element"
 msgstr ""
 
-#: src/isds.c:7372
+#: src/isds.c:7924
 msgid "Missing CheckDataBoxResponse element"
 msgstr ""
 
-#: src/isds.c:7377
+#: src/isds.c:7929
 msgid "Multiple CheckDataBoxResponse element"
 msgstr ""
 
-#: src/isds.c:7396
+#: src/isds.c:7948
 msgid "CheckDataBox request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:7441
+#: src/isds.c:7993
 msgid "PDZInfo request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:7597
+#: src/isds.c:8149
 #, c-format
 msgid "Could not build DataBoxCreditInfo request for %s box"
 msgstr ""
 
-#: src/isds.c:7617
+#: src/isds.c:8169
 msgid "Could not convert `from_date' argument to ISO date string"
 msgstr ""
 
-#: src/isds.c:7630
+#: src/isds.c:8182
 msgid "Could not convert `to_date' argument to ISO date string"
 msgstr ""
 
-#: src/isds.c:7665
+#: src/isds.c:8217
 msgid "Missing DataBoxCreditInfoResponse element"
 msgstr ""
 
-#: src/isds.c:7670
+#: src/isds.c:8222
 msgid "Multiple DataBoxCreditInfoResponse element"
 msgstr ""
 
-#: src/isds.c:7719
+#: src/isds.c:8271
 msgid "DataBoxCreditInfo request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:8017
+#: src/isds.c:8569
 #, c-format
 msgid "Could not add dmEnvelope child to %s element"
 msgstr ""
 
-#: src/isds.c:8023
+#: src/isds.c:8575
 msgid "Outgoing message is missing envelope"
 msgstr ""
 
-#: src/isds.c:8041
+#: src/isds.c:8593
 msgid "Outgoing message is missing recipient box identifier"
 msgstr ""
 
-#: src/isds.c:8107
+#: src/isds.c:8659
 msgid "Outgoing message is missing list of documents"
 msgstr ""
 
-#: src/isds.c:8113
+#: src/isds.c:8665
 #, c-format
 msgid "Could not add dmFiles child to %s element"
 msgstr ""
 
-#: src/isds.c:8129
+#: src/isds.c:8681
 msgid "List of documents contains empty item"
 msgstr ""
 
-#: src/isds.c:8185
+#: src/isds.c:8737
 msgid "Could not build CreateMessage request"
 msgstr ""
 
-#: src/isds.c:8205
+#: src/isds.c:8757
 msgid "Sending CreateMessage request to ISDS\n"
 msgstr ""
 
-#: src/isds.c:8214
+#: src/isds.c:8766
 msgid "Processing ISDS response on CreateMessage request failed\n"
 msgstr ""
 
-#: src/isds.c:8224
+#: src/isds.c:8776
 msgid "ISDS response on CreateMessage request is missing status\n"
 msgstr ""
 
-#: src/isds.c:8236
+#: src/isds.c:8788
 #, c-format
 msgid ""
 "Server did not accept message for %s on CreateMessage request (code=%s, "
 "message=%s)\n"
 msgstr ""
 
-#: src/isds.c:8265
+#: src/isds.c:8817
 msgid "Missing CreateMessageResponse element"
 msgstr ""
 
-#: src/isds.c:8270
+#: src/isds.c:8822
 msgid "Multiple CreateMessageResponse element"
 msgstr ""
 
-#: src/isds.c:8283
+#: src/isds.c:8835
 msgid "Server accepted sent message, but did not return assigned message ID\n"
 msgstr ""
 
-#: src/isds.c:8343
+#: src/isds.c:8895
 msgid "CreateMessage request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:8401
+#: src/isds.c:8953
 msgid "Could not build CreateMultipleMessage request"
 msgstr ""
 
-#: src/isds.c:8416
+#: src/isds.c:8968
 msgid "Could not add dmRecipients child to CreateMultipleMessage element"
 msgstr ""
 
-#: src/isds.c:8427
+#: src/isds.c:8979
 msgid "`copies' list item contains empty data"
 msgstr ""
 
-#: src/isds.c:8434
+#: src/isds.c:8986
 msgid "Could not add dmRecipient child to dmRecipients element"
 msgstr ""
 
-#: src/isds.c:8442
+#: src/isds.c:8994
 msgid "Message copy is missing recipient box identifier"
 msgstr ""
 
-#: src/isds.c:8460
+#: src/isds.c:9012
 msgid "Sending CreateMultipleMessage request to ISDS\n"
 msgstr ""
 
-#: src/isds.c:8466
+#: src/isds.c:9018
 msgid "Processing ISDS response on CreateMultipleMessage request failed\n"
 msgstr ""
 
-#: src/isds.c:8476
+#: src/isds.c:9028
 msgid "ISDS response on CreateMultipleMessage request is missing status\n"
 msgstr ""
 
-#: src/isds.c:8488
+#: src/isds.c:9040
 #, c-format
 msgid ""
 "Server did accept message for multiple recipients on CreateMultipleMessage "
 "request but delivery to some of them failed (code=%s, message=%s)\n"
 msgstr ""
 
-#: src/isds.c:8506
+#: src/isds.c:9058
 #, c-format
 msgid ""
 "Server did not accept message for multiple recipients on "
 "CreateMultipleMessage request (code=%s, message=%s)\n"
 msgstr ""
 
-#: src/isds.c:8537
+#: src/isds.c:9089
 msgid "Missing isds:dmSingleStatus element"
 msgstr ""
 
-#: src/isds.c:8555
+#: src/isds.c:9107
 #, c-format
 msgid "ISDS returned unexpected number of message copy delivery states: %d"
 msgstr ""
 
-#: src/isds.c:8576
+#: src/isds.c:9128
 msgid ""
 "CreateMultipleMessageResponse request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:8652
+#: src/isds.c:9204
 msgid "Could not build GetListOfSentMessages request"
 msgstr ""
 
-#: src/isds.c:8653
+#: src/isds.c:9205
 msgid "Could not build GetListOfReceivedMessages request"
 msgstr ""
 
-#: src/isds.c:8690
+#: src/isds.c:9242
 #, c-format
 msgid "Invalid message state filter value: %ld"
 msgstr ""
 
-#: src/isds.c:8712
+#: src/isds.c:9264
 msgid "Sending GetListOfSentMessages request to ISDS\n"
 msgstr ""
 
-#: src/isds.c:8713
+#: src/isds.c:9265
 msgid "Sending GetListOfReceivedMessages request to ISDS\n"
 msgstr ""
 
-#: src/isds.c:8723
+#: src/isds.c:9275
 msgid "Processing ISDS response on GetListOfSentMessages request failed\n"
 msgstr ""
 
-#: src/isds.c:8725
+#: src/isds.c:9277
 msgid "Processing ISDS response on GetListOfReceivedMessages request failed\n"
 msgstr ""
 
-#: src/isds.c:8737
+#: src/isds.c:9289
 msgid "ISDS response on GetListOfSentMessages request is missing status\n"
 msgstr ""
 
-#: src/isds.c:8739
+#: src/isds.c:9291
 msgid "ISDS response on GetListOfReceivedMessages request is missing status\n"
 msgstr ""
 
-#: src/isds.c:8751
+#: src/isds.c:9303
 #, c-format
 msgid "Server refused GetListOfSentMessages request (code=%s, message=%s)\n"
 msgstr ""
 
-#: src/isds.c:8753
+#: src/isds.c:9305
 #, c-format
 msgid ""
 "Server refused GetListOfReceivedMessages request (code=%s, message=%s)\n"
 msgstr ""
 
-#: src/isds.c:8846
+#: src/isds.c:9398
 msgid "GetListOfSentMessages request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:8848
+#: src/isds.c:9400
 msgid "GetListOfReceivedMessages request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:8975
+#: src/isds.c:9527
 msgid "Could not build GetMessageStateChanges request"
 msgstr ""
 
-#: src/isds.c:9074
+#: src/isds.c:9626
 msgid "GetMessageStateChanges request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:9136
+#: src/isds.c:9688
 #, c-format
 msgid "Could not build %s request for %s message ID"
 msgstr ""
 
-#: src/isds.c:9157
+#: src/isds.c:9709
 #, c-format
 msgid "Sending %s request for %s message ID to ISDS\n"
 msgstr ""
 
-#: src/isds.c:9187
+#: src/isds.c:9739
 #, c-format
 msgid "Server refused %s request for %s message ID (code=%s, message=%s)\n"
 msgstr ""
 
-#: src/isds.c:9259
+#: src/isds.c:9811
 #, c-format
 msgid "Server did not return any signed data for message ID `%s' on %s request"
 msgstr ""
 
-#: src/isds.c:9270
+#: src/isds.c:9822
 #, c-format
 msgid "Server did return more signed data for message ID `%s' on %s request"
 msgstr ""
 
-#: src/isds.c:9283
+#: src/isds.c:9835
 msgid "dmSignature element is empty"
 msgstr ""
 
-#: src/isds.c:9297
+#: src/isds.c:9849
 msgid "Error while Base64-decoding PKCS#7 structure"
 msgstr ""
 
-#: src/isds.c:9373
+#: src/isds.c:9925
 #, c-format
 msgid ""
 "Server did not return any envelope for ID `%s' on MessageEnvelopeDownload "
 "request"
 msgstr ""
 
-#: src/isds.c:9383
+#: src/isds.c:9935
 #, c-format
 msgid ""
 "Server did return more envelopes for ID `%s' on MessageEnvelopeDownload "
 "request"
 msgstr ""
 
-#: src/isds.c:9416
+#: src/isds.c:9968
 msgid "MessageEnvelopeDownload request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:9479
+#: src/isds.c:10031
 msgid "Bad raw delivery representation type"
 msgstr ""
 
-#: src/isds.c:9485
+#: src/isds.c:10037
 #, c-format
 msgid ""
 "Delivery info content:\n"
@@ -1416,59 +1518,59 @@ msgid ""
 "End of delivery info\n"
 msgstr ""
 
-#: src/isds.c:9528
+#: src/isds.c:10080
 msgid "XML document is not sisds:dmDelivery document"
 msgstr ""
 
-#: src/isds.c:9535
+#: src/isds.c:10087
 msgid "XML document has more sisds:dmDelivery elements"
 msgstr ""
 
-#: src/isds.c:9594
+#: src/isds.c:10146
 msgid "Delivery info loaded successfully.\n"
 msgstr ""
 
-#: src/isds.c:9659
+#: src/isds.c:10211
 msgid "GetSignedDeliveryInfo request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:9709
+#: src/isds.c:10261
 #, c-format
 msgid ""
 "Server did not return any delivery info for ID `%s' on GetDeliveryInfo "
 "request"
 msgstr ""
 
-#: src/isds.c:9741
+#: src/isds.c:10293
 msgid "GetDeliveryInfo request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:9807
+#: src/isds.c:10359
 #, c-format
 msgid ""
 "Server did not return any message for ID `%s' on MessageDownload request"
 msgstr ""
 
-#: src/isds.c:9817
+#: src/isds.c:10369
 #, c-format
 msgid "Server did return more messages for ID `%s' on MessageDownload request"
 msgstr ""
 
-#: src/isds.c:9847
+#: src/isds.c:10399
 msgid ""
 "Substring with isds:MessageDownloadResponse element could not be located in "
 "raw SOAP message"
 msgstr ""
 
-#: src/isds.c:9885
+#: src/isds.c:10437
 msgid "MessageDownload request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:9959
+#: src/isds.c:10511
 msgid "Bad raw message representation type"
 msgstr ""
 
-#: src/isds.c:9965
+#: src/isds.c:10517
 #, c-format
 msgid ""
 "Loading message:\n"
@@ -1476,238 +1578,238 @@ msgid ""
 "End of message\n"
 msgstr ""
 
-#: src/isds.c:10029
+#: src/isds.c:10581
 msgid "XML document does not contain sisds:dmReturnedMessage element"
 msgstr ""
 
-#: src/isds.c:10037
+#: src/isds.c:10589
 msgid "XML document has more sisds:dmReturnedMessage elements"
 msgstr ""
 
-#: src/isds.c:10086
+#: src/isds.c:10638
 msgid "Message loaded successfully.\n"
 msgstr ""
 
-#: src/isds.c:10125
+#: src/isds.c:10677
 msgid "Could not parse data as XML document"
 msgstr ""
 
-#: src/isds.c:10134
+#: src/isds.c:10686
 msgid "XML document is missing root element"
 msgstr ""
 
-#: src/isds.c:10141
+#: src/isds.c:10693
 msgid "Root element does not belong to any name space"
 msgstr ""
 
-#: src/isds.c:10165
+#: src/isds.c:10717
 msgid "Document in ISDS name space is encapsulated into CMS"
 msgstr ""
 
-#: src/isds.c:10173
+#: src/isds.c:10725
 msgid "Unknown root element in ISDS name space"
 msgstr ""
 
-#: src/isds.c:10178
+#: src/isds.c:10730
 msgid "Unknown name space"
 msgstr ""
 
-#: src/isds.c:10259
+#: src/isds.c:10811
 msgid "SignedSentMessageDownload request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:10261
+#: src/isds.c:10813
 msgid "SignedMessageDownload request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:10350
+#: src/isds.c:10902
 msgid "Missing GetMessageAuthorResponse element"
 msgstr ""
 
-#: src/isds.c:10356
+#: src/isds.c:10908
 msgid "Multiple GetMessageAuthorResponse element"
 msgstr ""
 
-#: src/isds.c:10408
+#: src/isds.c:10960
 msgid "GetMessageAuthor request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:10466
+#: src/isds.c:11018
 #, c-format
 msgid "Server did not return any response for ID `%s' on VerifyMessage request"
 msgstr ""
 
-#: src/isds.c:10476
+#: src/isds.c:11028
 #, c-format
 msgid "Server did return more responses for ID `%s' on VerifyMessage request"
 msgstr ""
 
-#: src/isds.c:10502
+#: src/isds.c:11054
 msgid "VerifyMessage request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:10545
+#: src/isds.c:11097
 msgid "Could build EraseMessage request"
 msgstr ""
 
-#: src/isds.c:10564
+#: src/isds.c:11116
 #, c-format
 msgid "Sending EraseMessage request for message ID %s to ISDS\n"
 msgstr ""
 
-#: src/isds.c:10571
+#: src/isds.c:11123
 msgid "Processing ISDS response on EraseMessage request failed\n"
 msgstr ""
 
-#: src/isds.c:10581
+#: src/isds.c:11133
 msgid "ISDS response on EraseMessage request is missing status\n"
 msgstr ""
 
-#: src/isds.c:10588
+#: src/isds.c:11140
 msgid "Message to erase belongs to other box"
 msgstr ""
 
-#: src/isds.c:10591
+#: src/isds.c:11143
 msgid ""
 "Message to erase is not saved in long term storage or the direction does not "
 "match"
 msgstr ""
 
-#: src/isds.c:10598
+#: src/isds.c:11150
 #, c-format
 msgid "Server refused EraseMessage request (code=%s, message=%s)\n"
 msgstr ""
 
-#: src/isds.c:10616
+#: src/isds.c:11168
 msgid "EraseMessage request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:10654
+#: src/isds.c:11206
 msgid "MarkMessageAsDownloaded request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:10694
+#: src/isds.c:11246
 msgid "ConfirmDelivery request processed by server successfully.\n"
 msgstr ""
 
-#: src/isds.c:10740
+#: src/isds.c:11292
 msgid "XML documents cannot be submitted to conversion"
 msgstr ""
 
-#: src/isds.c:10767
+#: src/isds.c:11319
 msgid "Could not build Czech POINT conversion request"
 msgstr ""
 
-#: src/isds.c:10773
+#: src/isds.c:11325
 msgid "Could not create Czech POINT deposit name space"
 msgstr ""
 
-#: src/isds.c:10782
+#: src/isds.c:11334
 msgid "Could not create empty name space"
 msgstr ""
 
-#: src/isds.c:10796
+#: src/isds.c:11348
 msgid "Submitting document for conversion into Czech POINT deposit"
 msgstr ""
 
-#: src/isds.c:10828
+#: src/isds.c:11380
 msgid "Missing `return' element in Czech POINT deposit response"
 msgstr ""
 
-#: src/isds.c:10835
+#: src/isds.c:11387
 msgid "Multiple `return' element in Czech POINT deposit response"
 msgstr ""
 
-#: src/isds.c:10848
+#: src/isds.c:11400
 #, c-format
 msgid ""
 "Czech POINT deposit refused document for conversion (code=%ld, message=%s)"
 msgstr ""
 
-#: src/isds.c:10873
+#: src/isds.c:11425
 #, c-format
 msgid "Invalid dateInserted value: %s"
 msgstr ""
 
-#: src/isds.c:10891
+#: src/isds.c:11443
 #, c-format
 msgid "Document %s has been submitted for conversion to server successfully\n"
 msgstr ""
 
-#: src/isds.c:10953
+#: src/isds.c:11505
 msgid "E-mail field is mandatory"
 msgstr ""
 
-#: src/isds.c:11052
+#: src/isds.c:11604
 msgid "Could not build AuthenticateMessage request"
 msgstr ""
 
-#: src/isds.c:11090
+#: src/isds.c:11642
 msgid "Server did not return any response on AuthenticateMessage request"
 msgstr ""
 
-#: src/isds.c:11097
+#: src/isds.c:11649
 msgid "ISDS authenticated the message successfully\n"
 msgstr ""
 
-#: src/isds.c:11099
+#: src/isds.c:11651
 msgid "ISDS does not know the message"
 msgstr ""
 
-#: src/isds.c:11178
+#: src/isds.c:11730
 msgid "Empty CMS blob on input"
 msgstr ""
 
-#: src/isds.c:11183
+#: src/isds.c:11735
 msgid "NULL pointer provided for output CMS blob"
 msgstr ""
 
-#: src/isds.c:11197
+#: src/isds.c:11749
 msgid "Could not build Re-signISDSDocument request"
 msgstr ""
 
-#: src/isds.c:11238
+#: src/isds.c:11790
 msgid "Missing Re-signISDSDocumentResponse element"
 msgstr ""
 
-#: src/isds.c:11244
+#: src/isds.c:11796
 msgid "Multiple Re-signISDSDocumentResponse element"
 msgstr ""
 
-#: src/isds.c:11257
+#: src/isds.c:11809
 msgid "Error while Base64-decoding re-signed data"
 msgstr ""
 
-#: src/isds.c:11262
+#: src/isds.c:11814
 msgid "Server did not send re-signed data"
 msgstr ""
 
-#: src/isds.c:11283
+#: src/isds.c:11835
 #, c-format
 msgid "Invalid dmValidTo value: %s"
 msgstr ""
 
-#: src/isds.c:11345
+#: src/isds.c:11897
 msgid "Message does not carry raw representation"
 msgstr ""
 
-#: src/isds.c:11385
+#: src/isds.c:11937
 msgid "Bad raw representation type"
 msgstr ""
 
-#: src/isds.c:11408
+#: src/isds.c:11960
 msgid "Substring with isds:dmDM element could not be located in raw message"
 msgstr ""
 
-#: src/isds.c:11424
+#: src/isds.c:11976
 msgid "Could not compute message hash"
 msgstr ""
 
-#: src/isds.c:11497
+#: src/isds.c:12049
 msgid "Given message structure is missing envelope"
 msgstr ""
 
-#: src/isds.c:11502
+#: src/isds.c:12054
 msgid "Given message structure is missing raw representation"
 msgstr ""
 
@@ -1724,32 +1826,32 @@ msgstr ""
 msgid "Expat not compiled with name space support\n"
 msgstr ""
 
-#: src/physxml.c:134
+#: src/physxml.c:138
 #, c-format
 msgid "Start: name=%s, depth=%zd, offset=%#jx => boundary=%#zx\n"
 msgstr ""
 
-#: src/physxml.c:144
+#: src/physxml.c:148
 #, c-format
 msgid "\tStart tag for element `%s' found\n"
 msgstr ""
 
-#: src/physxml.c:168
+#: src/physxml.c:172
 #, c-format
 msgid "End:   name=%s, depth=%zd, offset=%#jx count=%u => boundary=%#zx\n"
 msgstr ""
 
-#: src/physxml.c:175
+#: src/physxml.c:179
 #, c-format
 msgid "\tEnd tag for element `%s' found\n"
 msgstr ""
 
-#: src/physxml.c:218
+#: src/physxml.c:222
 #, c-format
 msgid "Searching boundary of element: %s\n"
 msgstr ""
 
-#: src/physxml.c:253
+#: src/physxml.c:257
 msgid "XML_Parse failed\n"
 msgstr ""
 
@@ -1781,26 +1883,26 @@ msgstr ""
 msgid "Application aborted HTTP transfer"
 msgstr ""
 
-#: src/soap.c:588
+#: src/soap.c:593
 msgid "Disabling server identity verification. That was your decision.\n"
 msgstr ""
 
-#: src/soap.c:599
+#: src/soap.c:604
 #, c-format
 msgid "CA certificates will be searched in `%s' file since now\n"
 msgstr ""
 
-#: src/soap.c:606
+#: src/soap.c:611
 #, c-format
 msgid "CA certificates will be searched in `%s' directory since now\n"
 msgstr ""
 
-#: src/soap.c:614
+#: src/soap.c:619
 #, c-format
 msgid "CRLs will be searched in `%s' file since now\n"
 msgstr ""
 
-#: src/soap.c:620
+#: src/soap.c:625
 msgid ""
 "Your curl library cannot pass certificate revocation list to cryptographic "
 "library.\n"
@@ -1808,146 +1910,146 @@ msgid ""
 "or upgrade curl.\n"
 msgstr ""
 
-#: src/soap.c:644
+#: src/soap.c:649
 msgid "Could not pass credentials to CURL"
 msgstr ""
 
-#: src/soap.c:658
+#: src/soap.c:663
 #, c-format
 msgid "Cryptographic engine `%s' will be used for key or certificate\n"
 msgstr ""
 
-#: src/soap.c:674
+#: src/soap.c:679
 #, c-format
 msgid "Client `%s' certificate will be read from `%s' engine\n"
 msgstr ""
 
-#: src/soap.c:679
+#: src/soap.c:684
 #, c-format
 msgid "Client certificate will be read from `%s' engine\n"
 msgstr ""
 
-#: src/soap.c:685
+#: src/soap.c:690
 #, c-format
 msgid "Client %s certificate will be read from `%s' file\n"
 msgstr ""
 
-#: src/soap.c:688 src/soap.c:731
+#: src/soap.c:693 src/soap.c:736
 msgid "DER"
 msgstr ""
 
-#: src/soap.c:688 src/soap.c:731
+#: src/soap.c:693 src/soap.c:736
 msgid "PEM"
 msgstr ""
 
-#: src/soap.c:699
+#: src/soap.c:704
 msgid ""
 "Your curl library cannot distinguish certificate formats. Make sure your "
 "cryptographic library\n"
 "understands your certificate file by default, or upgrade curl.\n"
 msgstr ""
 
-#: src/soap.c:717
+#: src/soap.c:722
 #, c-format
 msgid "Client private key `%s' from `%s' engine will be used\n"
 msgstr ""
 
-#: src/soap.c:722
+#: src/soap.c:727
 #, c-format
 msgid "Client private key from `%s' engine will be used\n"
 msgstr ""
 
-#: src/soap.c:728
+#: src/soap.c:733
 #, c-format
 msgid "Client %s private key will be read from `%s' file\n"
 msgstr ""
 
-#: src/soap.c:765
+#: src/soap.c:770
 msgid ""
 "Cookies will be stored and sent because context has been authorized by OTP.\n"
 msgstr ""
 
-#: src/soap.c:893
+#: src/soap.c:898
 #, c-format
 msgid "Sending %s request to <%s>\n"
 msgstr ""
 
-#: src/soap.c:897
+#: src/soap.c:902
 #, c-format
 msgid "POST body length: %zu, content follows:\n"
 msgstr ""
 
-#: src/soap.c:899
+#: src/soap.c:904
 msgid "End of POST body\n"
 msgstr ""
 
-#: src/soap.c:916
+#: src/soap.c:921
 #, c-format
 msgid "%s: %s"
 msgstr ""
 
-#: src/soap.c:939
+#: src/soap.c:944
 #, c-format
 msgid "Final response to %s received\n"
 msgstr ""
 
-#: src/soap.c:941
+#: src/soap.c:946
 #, c-format
 msgid "Response body length: %zu, content follows:\n"
 msgstr ""
 
-#: src/soap.c:944
+#: src/soap.c:949
 msgid "End of response body\n"
 msgstr ""
 
-#: src/soap.c:997
+#: src/soap.c:1002
 #, c-format
 msgid "OTP authentication headers received: method=%s, code=%s, message=%s\n"
 msgstr ""
 
-#: src/soap.c:1017
+#: src/soap.c:1022
 #, c-format
 msgid "Server returned OTP authentication message: %s"
 msgstr ""
 
-#: src/soap.c:1031
+#: src/soap.c:1036
 #, c-format
 msgid "OTP authentication headers redirect to: <%s>\n"
 msgstr ""
 
-#: src/soap.c:1119
+#: src/soap.c:1132
 msgid "Could not build SOAP request document"
 msgstr ""
 
-#: src/soap.c:1125
+#: src/soap.c:1138
 msgid "Could not build SOAP request envelope"
 msgstr ""
 
-#: src/soap.c:1134
+#: src/soap.c:1147
 msgid "Could not create SOAP name space"
 msgstr ""
 
-#: src/soap.c:1143
+#: src/soap.c:1156
 msgid "Could not add Body to SOAP request envelope"
 msgstr ""
 
-#: src/soap.c:1155
+#: src/soap.c:1168
 msgid "Could not copy request content"
 msgstr ""
 
-#: src/soap.c:1162
+#: src/soap.c:1175
 msgid "Could not add request content to SOAP request envelope"
 msgstr ""
 
-#: src/soap.c:1174
+#: src/soap.c:1187
 msgid "Could not create xmlBuffer for HTTP request body"
 msgstr ""
 
-#: src/soap.c:1193
+#: src/soap.c:1206
 msgid "Could not serialize SOAP request to HTTP request body"
 msgstr ""
 
-#: src/soap.c:1204
+#: src/soap.c:1217
 #, c-format
 msgid ""
 "SOAP request to sent to %s:\n"
@@ -1955,42 +2057,42 @@ msgid ""
 "End of SOAP request\n"
 msgstr ""
 
-#: src/soap.c:1223
+#: src/soap.c:1236
 #, c-format
 msgid "Server returned %ld HTTP code\n"
 msgstr ""
 
-#: src/soap.c:1245
+#: src/soap.c:1258
 #, c-format
 msgid "Server redirects on <%s> because OTP authentication succeeded."
 msgstr ""
 
-#: src/soap.c:1259
+#: src/soap.c:1272
 msgid "Could not remove credentials from CURL handle."
 msgstr ""
 
-#: src/soap.c:1271
+#: src/soap.c:1284
 #, c-format
 msgid ""
 "Code 302: Server redirects on <%s> request. Redirection is forbidden in "
 "stateless mode."
 msgstr ""
 
-#: src/soap.c:1281
+#: src/soap.c:1294
 msgid "Authentication failed"
 msgstr ""
 
-#: src/soap.c:1287
+#: src/soap.c:1300
 #, c-format
 msgid "Code 404: Document (%s) not found on server"
 msgstr ""
 
-#: src/soap.c:1301
+#: src/soap.c:1314
 #, c-format
 msgid "%s: bad MIME type sent by server: %s"
 msgstr ""
 
-#: src/soap.c:1329
+#: src/soap.c:1342
 #, c-format
 msgid ""
 "SOAP response received:\n"
@@ -1998,44 +2100,44 @@ msgid ""
 "End of SOAP response\n"
 msgstr ""
 
-#: src/soap.c:1357
+#: src/soap.c:1370
 msgid "SOAP response requires unsupported feature"
 msgstr ""
 
-#: src/soap.c:1374
+#: src/soap.c:1387
 msgid "SOAP response does not contain SOAP Body element"
 msgstr ""
 
-#: src/soap.c:1380
+#: src/soap.c:1393
 msgid "SOAP response has more than one Body element"
 msgstr ""
 
-#: src/soap.c:1426
+#: src/soap.c:1439
 #, c-format
 msgid "SOAP response signals Fault: %s"
 msgstr ""
 
-#: src/soap.c:1429
+#: src/soap.c:1442
 msgid "SOAP response signals Fault"
 msgstr ""
 
-#: src/soap.c:1504
+#: src/soap.c:1516
 msgid ""
 "Base URL could not have been determined from context URL because there was "
 "no URL set in the context"
 msgstr ""
 
-#: src/soap.c:1514
+#: src/soap.c:1526
 msgid "Base URL could not have been determined from context URL"
 msgstr ""
 
-#: src/soap.c:1561
+#: src/soap.c:1573
 #, c-format
 msgid ""
 "Cookie for OTP authenticated connection to <%s> could not been invalidated"
 msgstr ""
 
-#: src/soap.c:1565
+#: src/soap.c:1577
 #, c-format
 msgid "Cookie for OTP authenticated connection to <%s> has been invalidated.\n"
 msgstr ""
@@ -2048,51 +2150,51 @@ msgstr ""
 msgid "ISDS response is missing StatusCode element"
 msgstr ""
 
-#: src/validator.c:197 src/validator.c:364
+#: src/validator.c:198 src/validator.c:360
 msgid "SOAP returned empty body"
 msgstr ""
 
-#: src/validator.c:211
+#: src/validator.c:212
 #, c-format
 msgid "SOAP response does not contain element from name space %s"
 msgstr ""
 
-#: src/validator.c:230
+#: src/validator.c:224
 msgid "Could not build ISDS response document"
 msgstr ""
 
-#: src/validator.c:272
+#: src/validator.c:266
 msgid "List contains more main documents"
 msgstr ""
 
-#: src/validator.c:282
+#: src/validator.c:276
 #, c-format
 msgid "List contains more documents with the same ID `%s'"
 msgstr ""
 
-#: src/validator.c:293
+#: src/validator.c:287
 #, c-format
 msgid "List contains documents referencing to not existing document ID `%s'"
 msgstr ""
 
-#: src/validator.c:302
+#: src/validator.c:296
 msgid "List does not contain main document"
 msgstr ""
 
-#: src/validator.c:324
+#: src/validator.c:318
 #, c-format
 msgid "Could not check message ID length: %s"
 msgstr ""
 
-#: src/validator.c:333
+#: src/validator.c:327
 #, c-format
 msgid "Message ID must not be longer than 20 characters: %s"
 msgstr ""
 
-#: src/validator.c:378
+#: src/validator.c:374
 msgid "SOAP response does not contain Czech POINT deposit element"
 msgstr ""
 
-#: src/validator.c:395
+#: src/validator.c:384
 msgid "Could not build Czech POINT deposit response document"
 msgstr ""
