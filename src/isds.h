@@ -7,7 +7,7 @@
 #include <stdlib.h> /* For size_t */
 #include <time.h>   /* For struct tm */
 #include <sys/time.h> /* For struct timeval */
-#include <libxml/tree.h>    /* Gor xmlDoc and xmlNodePtr */
+#include <libxml/tree.h>    /* For xmlDoc and xmlNodePtr */
 
 #ifdef __cplusplus  /* For C++ linker sake */
 extern "C" {
