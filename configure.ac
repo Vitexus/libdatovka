@@ -61,6 +61,11 @@ AS_IF([test -z "$LIBCURL"],
     [
     cppflags_orig="$CPPFLAGS"
     CPPFLAGS="${CPPFLAGS} ${LIBCURL_CPPFLAGS}"
+    AC_CHECK_DECLS([CURLOPT_HEADEROPT], [],
+        AC_MSG_WARN([Your libcurl does not support not sending custom HTTP
+                     headers to proxies.
+                     Consider upgrade to 7.37.0 version.]),
+        [[#include <curl/curl.h>]])
     AC_CHECK_DECLS([CURLOPT_TIMEOUT_MS], [],
         AC_MSG_WARN([Your libcurl does not support subsecond timeout resolution.
                      Consider upgrade to 7.16.2 version.]),

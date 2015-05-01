@@ -829,7 +829,14 @@ static isds_error http(struct isds_ctx *context,
     }
 
     /* Set MIME types and headers requires by SOAP 1.1.
-     * SOAP 1.1 requires text/xml, SOAP 1.2 requires application/soap+xml */
+     * SOAP 1.1 requires text/xml, SOAP 1.2 requires application/soap+xml.
+     * But suppress sending the headers to proxies first if supported. */
+#if HAVE_DECL_CURLOPT_HEADEROPT /* since curl-7.37.0 */
+    if (!curl_err) {
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_HEADEROPT,
+                CURLHEADER_SEPARATE);
+    }
+#endif /* HAVE_DECL_CURLOPT_HEADEROPT */
     if (!curl_err) {
         headers = curl_slist_append(headers,
                 "Accept: application/soap+xml,application/xml,text/xml");
