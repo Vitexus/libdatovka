@@ -3,7 +3,7 @@ User web services specification
 
 Source: Provozní řád ISDS, version 2010-11-28, Pages 15–16
 Source: Webové služby rozhraní ISDS pro manipulaci s datovými zprávami,
-    version 2.32 (2012-10-05)
+    version 2.42 (2015-03-27)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
     version 2.41 (2014-12-08)
 
@@ -115,7 +115,8 @@ is `O', then dmRecipientRefNumber must be defined.
 
 Constraints: Sender must have PRIVIL_CREATE_DM permission.
 Constraints: Exactly one document in message must be main type.
-Constraints: Total size of all documents must not be bigger than 10 MB.
+Constraints: Total size of all documents must not be bigger than a limit
+             (10 MB usually, depends on a box).
 
 Identifier of just sent message assigned by system is returned.
 
