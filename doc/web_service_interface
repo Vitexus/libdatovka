@@ -1,6 +1,7 @@
 Web service interface
 =====================
 
+Source: Provozní řád informačního systému (2015-06-07)
 Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2.6
 (2010-01-18) [DataMessage_ws.pdf], Page 5
 Source: Webové služby ISDS pro vyhledávání datových schránek,
@@ -39,4 +40,17 @@ POST https://www.czebox.cz/DS/dz
 
 200
 <?xml version='1.0' encoding='utf-8'?><SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><SOAP-ENV:Body><q:X-BogusOperationResponse xmlns:q="http://isds.czechpoint.cz/v20" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><q:dmStatus><q:dmStatusCode>2006</q:dmStatusCode><q:dmStatusMessage>Unknown operation: X-BogusOperation</q:dmStatusMessage></q:dmStatus></q:X-BogusOperationResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>
+
+
+Overloading ISDS
+================
+
+The server monitors client's activity (downloading messages, delivery details,
+message details, marking messages) and warns user about excessive usage by
+sending a system message to his box. The ISDS can limit access to a box per
+user as a reaction to abusive server usage. Limiting access means delaying
+responses or returning error responses.
+
+Clients must maintain their own history or delivered messages and download
+only messages or list of messages that have not yet been delivered.
 
