@@ -47,7 +47,7 @@ DeleteDataBoxUser
 UpdateDataBoxUser
     Change data about permitted person
 NewAccessData
-    Reset user credentials (remove old ones and generates new ones)
+    Reset user credentials (remove old ones and generate new ones)
 DisableDataBoxExternally
     Make box inaccessible because owner lost ability to use the box for legal
     reasons (prisoned person, person with no or weak legal rights)
@@ -226,24 +226,27 @@ user. However PRIMARY user assigned to PO or OVM box can be removed
 NewAccessData
 =============
 
-Reset user credentials (remove old ones and generates new ones). This service
-is designed to user who forgot his credentials. He must apply for the reset
-off-line on dedicated meeting point.
+Reset user credentials (remove old ones and generate new ones). This service
+is designed to the user who forgot his credentials. He must apply for the
+credentials reset off-line on a dedicated meeting point.
 
-Input is box description, user description, billing flag and optional switch
+Input is a box description, user description, billing flag and optional switch
 how to deliver new credentials and optional user's e-mail address.
 
-If switch is true, e-mail address will be recorded in the ISDS and output
-element dbAccessDataId will contain token that user will use to authorize to
-web page revealing new credentials and output element dbUserID will contain
-new user log-in name.
+If the switch is true, the e-mail address will be recorded in the ISDS and
+output element dbAccessDataId will contain a token that the user will use to
+authorize to a web page revealing his new credentials and output element
+dbUserID will contain new user log-in name.
 
-If switch is false, new credentials will be sent by paper mail to user. Input
-e-mail address and output token and new log-in name will not be returned.
+If the switch is false, new credentials will be sent through paper mail to the
+user. The input e-mail address and the output token and new log-in name will
+not be returned.
+
+This service was removed from specification on 2015-06-08.
 
 Non-normative: The special web page revealing new credentials is
-<https://www.czechpoint.cz/aktivacniportal/>. The form requires e-mail address
-to match e-mail address provided on meeting point.
+<https://www.czechpoint.cz/aktivacniportal/>. The form requires an e-mail
+address matching the e-mail address provided on the meeting point.
 
 
 DisableDataBoxExternally
