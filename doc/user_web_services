@@ -5,7 +5,7 @@ Source: Provozní řád ISDS, version 2010-11-28, Pages 15–16
 Source: Webové služby rozhraní ISDS pro manipulaci s datovými zprávami,
     version 2.42 (2015-03-27)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
-    version 2.41 (2014-12-08)
+    version 2.42 (2015-03-27)
 
 
 These services are intended for working with messages inside a box by
@@ -609,6 +609,9 @@ ALL     All active boxes        actdsYYYYMMDD.csv   OVM or OVM_REQ user
                                                     PRIVIL_BILLING permission
 UPG     Effectively OVM active  effovmYYYYMMDD.csv  Anybody
         boxes
+POA     Active boxes that       puboaYYYYMMDD.csv   Anybody
+        allow to receive
+        commerical messages
 
 Non-normative: Following types are not documented anymore.
 
@@ -623,10 +626,12 @@ Output is Base64-encoded ZIP file containing a file with name from the table.
 The Base64 string is stored in dblData element. The name of the file embeds
 date of list creation (Y is year digit, M is month, D is day).
 
-The file is created once per a day and its format is following comma-separate
-value table:
+The file is created daily and its format a comma-separate list with following
+columns.
 
-Key 
+Columns for ALL and UPG lists:
+
+Key
 ----------------------
 dbID
 dbType
@@ -645,6 +650,13 @@ adZipCode
 adState
 nationality
 lastChangeDate
+
+Columns for POA lists:
+
+Key
+----
+dbID
+ic
 
 The inner file is encoded in UTF-8. First line of the file is a header. Each
 next line is a box. If a value is undefined, it will be empty. Values in
