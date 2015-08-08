@@ -7061,10 +7061,11 @@ isds_error isds_delete_user(struct isds_ctx *context,
  * @context is session context
  * @list_identifier is UTF-8 encoded string identifying boxes of interrest.
  * System recognizes following values currently: ALL (all boxes), UPG
- * (effectively OVM boxes), OVM (OVM gross type boxes), OPN (boxes allowing
- * receiving commercial messages). This argument is a string because
- * specification states new values can appear in the future. Not all list
- * types are available to all users.
+ * (effectively OVM boxes), POA (active boxes allowing receiving commercial
+ * messages), OVM (OVM gross type boxes), OPN (boxes allowing receiving
+ * commercial messages). This argument is a string because specification
+ * states new values can appear in the future. Not all list types are
+ * available to all users.
  * @buffer is automatically reallocated memory to store the list of boxes. The
  * list is zipped CSV file.
  * @buffer_length is size of @buffer data in bytes.
