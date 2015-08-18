@@ -174,6 +174,38 @@ AC_ARG_ENABLE(fatalwarnings, [AS_HELP_STRING([--disable-fatalwarnings],
 AS_IF([test "$enable_fatalwarnings" = "no"], , CFLAGS="${CFLAGS} -Werror")
 
 
+# Build and install documentation
+AC_ARG_ENABLE(doc, [AS_HELP_STRING([--disable-doc],
+              [Do not build and install documentation])])
+AS_IF([test "$enable_doc" = "no"], , [
+    AC_CHECK_PROG([HAVE_XSLTPROC], [xsltproc], [yes])
+    AS_IF([test "$HAVE_XSLTPROC" != "yes"],
+          AC_MSG_FAILURE([Missing xsltproc!])
+    )
+
+    # Find DocBook XSLT sheets
+    AC_ARG_WITH(docbook-xsl-stylesheets,
+                [AS_HELP_STRING([--with-docbook-xsl-stylesheets=DIR],
+                        [Specify XSL style sheet root directory for manual page
+                         generation from DocBook source])],
+                , with_docbook_xsl_stylesheets=yes)
+
+    DOCBOOK_STYLE="/usr/share/sgml/docbook/xsl-stylesheets"
+    AS_IF([test "$with_docbook_xsl_stylesheets" != "yes"],
+        [DOCBOOK_STYLE="$with_docbook_xsl_stylesheets"])
+    AC_MSG_CHECKING([for DocBook XSLT stylesheet location in "$DOCBOOK_STYLE"])
+    AS_IF([echo '<para/>' |
+           xsltproc "${DOCBOOK_STYLE}/manpages/docbook.xsl" - 2>/dev/null],
+        AC_MSG_RESULT([ok]) AC_SUBST(DOCBOOK_STYLE),
+        DOCBOOK_STYLE=""
+        AC_MSG_FAILURE([missing!])
+    )
+
+    ]
+)
+AM_CONDITIONAL([BUILD_MAN], [test -n "$DOCBOOK_STYLE"])
+
+
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h locale.h stdint.h stdlib.h string.h unistd.h])
 
@@ -213,6 +245,7 @@ AC_DEFINE_UNQUOTED([XOPEN_SOURCE_LEVEL_FOR_STRDUP],
 
 
 AC_CONFIG_FILES([Makefile src/Makefile po/Makefile.in client/Makefile
+                 doc/Makefile
                  test/Makefile test/offline/Makefile test/simline/Makefile
                  test/online/Makefile libisds.pc])
 

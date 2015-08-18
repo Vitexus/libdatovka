@@ -6,6 +6,10 @@ if BUILD_EXAMPLE
 SUBDIRS += client
 endif
 
+if BUILD_MAN
+SUBDIRS += doc
+endif
+
 if BUILD_TEST
 SUBDIRS += test
 endif
@@ -13,7 +17,7 @@ endif
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = $(PACKAGE).pc
 
-EXTRA_DIST = config.rpath doc server
+EXTRA_DIST = config.rpath server
 
 dist-hook:
 	git log --decorate=full > $(distdir)/ChangeLog || echo "Could not dump git log"

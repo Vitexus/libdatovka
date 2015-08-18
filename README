@@ -18,6 +18,7 @@ details.
 
 This code is written in ISO99 C language and requires libxml2, (optional but
 strongly recommended) cURL, (libgcrypt and GPGME) or OpenSSL, >=expat-2.0.0,
+xsltproc and DocBook XSLT stylesheets if building documentation is enabled,
 and (if not part of your standard library) optional Gettext libraries and
 pkg-config tool at compilation time. gnupg2 is required at run time (provides
 gpgsm that uses gpgme to process CMS) if GPGME cryptographic back-end is

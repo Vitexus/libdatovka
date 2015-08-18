@@ -12,6 +12,10 @@ argument (see `./configure --help' for more details).
 
 Additional configure options:
 
+    --disable-doc
+
+        Do not build and install documentation. This is enabled by default.
+
     --enable-example
 
         Build example client. You can run and study example clients in `client'
@@ -44,6 +48,11 @@ Additional configure options:
         a cryptographic message syntax structures and use OpenSSL library
         instead of Libgcrypt library to compute hashes. GPGme and Libgrypt
         back-end is used by default.
+
+    --with-docbook-xsl-stylesheets
+
+        Set directory where DocBook XSLT stylesheets for producing manual
+        pages are installed.
 
     --without-libcurl
     

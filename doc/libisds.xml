@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+
+<!DOCTYPE reference PUBLIC "-//OASIS/DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+
+<reference lang="en">
+
+  <referenceinfo>
+    <author>
+      <personname>
+        <firstname>Petr</firstname>
+        <surname>Písař</surname>
+      </personname>
+      <personblurb>
+        <simpara>He has written libisds.</simpara>
+      </personblurb>
+    </author>
+    <productname>libisds</productname>
+  </referenceinfo>
+
+  <title>Manual for Libisds</title>
+
+
+  <refentry id="libisds.3">
+    <refmeta>
+      <refentrytitle>libisds</refentrytitle>
+      <manvolnum>3</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+      <refname>libisds</refname>
+      <refpurpose>ISDS client library</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+      <synopsis><![CDATA[#include <isds.h>
+#include <stdio.h>
+
+isds_error err;
+struct isds_ctx *ctx;
+
+err = isds_init();
+ctx = isds_ctx_create();
+
+err = isds_login(ctx, NULL, "username", "password", NULL, NULL);
+if (err) {
+    printf("isds_login() failed: %s: %s\n",
+        isds_strerror(err), isds_long_message(ctx));
+} else {
+    printf("Logged in.\n");
+}
+
+err = isds_ctx_free(&ctx);
+err = isds_cleanup();
+]]></synopsis>
+    </refsynopsisdiv>
+
+    <refsection>
+      <title>Description</title>
+
+      <para>This is a client library for accessing SOAP services of
+        <abbrev>ISDS</abbrev> (<phrase lang="cs">Informační systém datových
+          schránek</phrase> / Data Box Information System) as defined in
+        <ulink url="http://portal.gov.cz/zakon/300/2008">Czech
+          <abbrev>ISDS</abbrev> Act (300/2008 <abbrev>Coll.</abbrev>)</ulink>
+        and implied documents. Current implementation details are described in
+        <phrase lang="cs">Provozní řád</phrase> that can be downloaded from
+        <ulink url="https://www.datoveschranky.info/ke-stazeni"><phrase
+            lang="cs">Dokumenty ke stažení</phrase> section of
+          <abbrev>ISDS</abbrev> Information Portal</ulink>.</para>
+
+      <para>The library provides a C language interface with synchronous
+        non-reentrant blocking calls. Network communication progress reporting
+        and operation logging and library debugging are implemented by calling
+        back application-provided functions. Network operations can be
+        canceled from network reporting call-back.</para>
+    </refsection>
+
+    <refsection>
+      <title>Library Initialization and Deinitialization</title>
+
+      <para>A libisds application must include <filename>isds.h</filename>
+        header file. The application must call <function>isds_init</function>
+        function to initialize the library before calling any other library
+        functions.  After last libisds call, <function>isds_cleanup</function>
+        function should be called to clean up some global resources and to
+        deinitialize dependent libraries.</para>
+    </refsection>
+
+    <refsection>
+      <title>Contexts</title>
+
+      <para>Most of the functions operate on an established connection to the
+        <abbrev>ISDS</abbrev> server. This is called a context and it's
+        represented by a pointer to an opaque
+        <structname>isds_ctx</structname> structure. The structure maintains
+        state about network connection, authorization or error from last call
+        on the context.</para>
+
+      <para>The context is allocated by <function>isds_ctx_create</function>
+        function and deallocated by <function>isds_ctx_free</function>
+        function.</para>
+
+      <para>There are more context subtypes. A specific subtype is assigned to
+        the context when a fresh new context is passed to one of the few
+        stratifying functions (<function>isds_login</function>,
+        <function>czp_convert_document</function>,
+        <function>isds_request_new_testing_box</function>). Once the context
+        is specialized, you can use it only with functions understanding the
+        subtype. This is not enforced by the library now, but it does not
+        matter much because all the other functions assume the
+        <function>isds_login</function> was called on the context. In other
+        words, do not share the context among the three stratifying
+        functions.</para>
+
+      <para>For example create a context with
+        <function>isds_ctx_create</function>, then call
+        <function>isds_login</function>, then work with box, then call
+        <function>isds_logout</function>. Here you can reuse the context and
+        log in as another user by calling <function>isds_login</function>
+        again or destroy the context with <function>isds_ctx_free</function> if
+        you don't need it anymore.</para>
+
+      <para>Or create a context with <function>isds_ctx_create</function>,
+        send a document to authorized conversion using
+        <function>czp_convert_document</function>, then you can send more
+        documents to the authorized conversion by calling
+        <function>czp_convert_document</function> again on the same context
+        and finally destroy the context with
+        <function>isds_ctx_free</function>.</para>
+
+    </refsection>
+
+    <refsection>
+      <title>Errors</title>
+
+      <para>Most of the functions return an error code of
+        <type>isds_error</type> type. <errorname>IE_SUCCESS</errorname> value
+        denotes a successful call. Other values represent some kind of
+        failure.</para>
+
+      <para>You can use <function>isds_strerror</function> function to obtain
+        a human readable string representation of the error code.</para>
+
+      <para>If a function with context argument failed, you can use
+        <function>isds_long_message</function> function to obtain a detailed
+        error message. Please note that returned value lasts only to the next
+        call on the context.</para>
+    </refsection>
+
+    <refsection>
+      <title>Character Encoding</title>
+
+      <para>All strings exchanged between the library and the application are
+        encoded in <abbrev>UTF-8</abbrev>. Although there are a few
+        exceptions:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><function>isds_strerror</function> and
+            <function>isds_long_message</function> functions return
+            locale encoded string.</para>
+        </listitem>
+
+        <listitem>
+          <para><function>isds_version</function> returns locale encoded
+            string.</para>
+        </listitem>
+
+        <listitem>
+          <para>Log call-back function set by
+            <function>isds_set_log_callback</function> function is called with
+            raw byte stream.</para>
+        </listitem>
+
+        <listitem>
+          <para><structname>isds_pki_credentials</structname> structure string
+            members have encoding specific to cryptographic library linked to
+            cURL library.</para>
+        </listitem>
+
+      </itemizedlist>
+    </refsection>
+
+    <refsection>
+      <title>Global Settings</title>
+
+      <para>Some functions influence library behavior globally. These are:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><function>isds_init</function> and
+            <function>isds_cleanup</function> used to initialize and
+            deinitialize the library.</para>
+        </listitem>
+
+        <listitem>
+          <para><function>isds_set_logging</function> and
+            <function>isds_set_log_callback</function> to set logging.</para>
+        </listitem>
+      </itemizedlist>
+    </refsection>
+
+    <refsection>
+      <title>Logging and Debugging</title>
+
+      <para>Logging is global for all libisds calls. Log level and facility
+        can be set with <function>isds_set_logging</function> function.</para>
+
+      <para>The log is printed on standard error output by default.
+        Application can redirect the messages to a call-back function by
+        registering the call-back function with
+        <function>isds_set_log_callback</function>.</para>
+    </refsection>
+
+    <refsection>
+      <title>Network Input/Output</title>
+
+      <para>Some functions operating on a context create network sockets and
+        do network input and output.</para>
+
+      <para>Network timeout can be set with
+        <function>isds_set_timeout</function> function. Function calls aborted
+        owing to the timeout will return
+        <errorname>IE_TIMED_OUT</errorname>.</para>
+
+      <para>Network operation progress can be monitored by a call-back
+        function. The call-back function can be registered using
+        <function>isds_set_progress_callback</function> function. Registered
+        call-back function will be called periodically with arguments
+        declaring amount of transferred data. The call-back return value
+        determines whether to continue in the network operation or to cancel
+        the operation. Functions failed owing to canceling network operation
+        will return <errorname>IE_ABORTED</errorname>.</para>
+    </refsection>
+
+    <refsection>
+      <title>Memory management</title>
+
+      <para>The library provides destructors for all libisds data structures.
+        For example <function>isds_ctx_free</function> function accepts a pointer
+        to a pointer to the <structname>isds_ctx</structname> structure, frees
+        the double referenced structure (recursively), writes NULL to the
+        pointed pointer (which invalidates the pointer effectively) and returns
+        nothing.</para>
+
+      <para>Upon a function call, all output arguments are automatically
+        reallocated to desired size. On a function failure, all output
+        arguments are automatically deallocated and their pointers set to
+        NULL. Exceptions are documented at respective functions.</para>
+
+      <para>Output strings are allocated using standard
+        <function>malloc</function> call. Application is responsible for their
+        deallocation (in case of no failure and if not specified otherwise.)
+        Use standard <function>free</function> call for strings,
+        use libisds destructors for libisds structures.</para>
+    </refsection>
+
+    <refsection>
+      <title>Available Functions, Types, and Constants</title>
+
+      <para>See <filename>isds.h</filename> header file.</para>
+    </refsection>
+
+    <refsection>
+      <title>See Also</title>
+
+      <para>
+        <citerefentry>
+          <refentrytitle>libcurl</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+      </para>
+    </refsection>
+
+  </refentry>
+
+</reference>
