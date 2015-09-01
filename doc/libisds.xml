@@ -266,13 +266,1280 @@ err = isds_cleanup();
       <title>See Also</title>
 
       <para>
-        <citerefentry>
-          <refentrytitle>libcurl</refentrytitle>
-          <manvolnum>3</manvolnum>
-        </citerefentry>
+        <simplelist type="inline">
+          <member><citerefentry>
+              <refentrytitle>isds.h</refentrytitle>
+              <manvolnum>3</manvolnum>
+          </citerefentry></member>
+          <member><citerefentry>
+              <refentrytitle>libcurl</refentrytitle>
+              <manvolnum>3</manvolnum>
+          </citerefentry></member>
+        </simplelist>
       </para>
     </refsection>
-
   </refentry>
 
+
+  <refentry id="isds.h.3">
+    <refmeta>
+      <refentrytitle>isds.h</refentrytitle>
+      <manvolnum>3</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+      <refname>isds.h</refname>
+      <refpurpose>API definition for libisds</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+      <synopsis><![CDATA[#include <isds.h>
+]]></synopsis>
+    </refsynopsisdiv>
+
+    <refsection>
+      <title>Description</title>
+
+      <para>This header file declares inteface for libisds library.</para>
+    </refsection>
+
+    <refsection>
+      <title>Constants</title>
+
+      <refsection>
+        <title>Service locators</title>
+
+        <para>Addresses of known <abbrev>ISDS</abbrev> servers.</para>
+
+        <refsection>
+          <title>Base <abbrev>URL</abbrev>s of production <abbrev>ISDS</abbrev> instance</title>
+
+          <refsection>
+            <title><varname>isds_locator</varname></title>
+            <synopsis>extern const char <varname>isds_locator</varname>[];</synopsis>
+            <para>Without client certificate authentication.</para>
+          </refsection>
+
+          <refsection>
+            <title><varname>isds_cert_locator</varname></title>
+            <synopsis>extern const char <varname>isds_cert_locator</varname>[];</synopsis>
+            <para>With client certificate authentication.</para>
+          </refsection>
+
+          <refsection>
+            <title><varname>isds_otp_locator</varname></title>
+            <synopsis>extern const char <varname>isds_otp_locator</varname>[];</synopsis>
+            <para>Without <abbrev>OTP</abbrev> authentication.</para>
+          </refsection>
+        </refsection>
+
+        <refsection>
+          <title>Base <abbrev>URL</abbrev>s of testing <abbrev>ISDS</abbrev> instance</title>
+
+          <refsection>
+            <title><varname>isds_testing_locator</varname></title>
+            <synopsis>extern const char <varname>isds_testing_locator</varname>[];</synopsis>
+            <para>Without client certificate authentication.</para>
+          </refsection>
+
+          <refsection>
+            <title><varname>isds_cert_testing_locator</varname></title>
+            <synopsis>extern const char <varname>isds_cert_testing_locator</varname>[];</synopsis>
+            <para>With client certificate authentication.</para>
+          </refsection>
+
+          <refsection>
+            <title><varname>isds_otp_testing_locator</varname></title>
+            <synopsis>extern const char <varname>isds_otp_testing_locator</varname>[];</synopsis>
+            <para>Without <abbrev>OTP</abbrev> authentication.</para>
+          </refsection>
+        </refsection>
+
+      </refsection>
+    </refsection>
+
+    <refsection>
+      <title>Data types</title>
+
+      <refsection>
+        <title>struct <structname>isds_ctx</structname></title>
+        <synopsis>struct <structname>isds_ctx</structname>;</synopsis>
+        <para>Context for specific <abbrev>ISDS</abbrev> box.</para>
+      </refsection>
+
+      <refsection>
+        <title><type>isds_error</type></title>
+        <synopsis>typedef enum <type>isds_error</type>;</synopsis>
+        <para>Error code. Known values:</para>
+        <variablelist>
+          <varlistentry>
+            <term><errorname>IE_SUCCESS</errorname></term>
+            <listitem><para>No error. Numeric value 0.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_ERROR</errorname></term>
+            <listitem><para>Unspecified error.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_NOTSUP</errorname></term>
+            <listitem><para>Operation is not supported.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_INVAL</errorname></term>
+            <listitem><para>Invalid value.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_INVALID_CONTEXT</errorname></term>
+            <listitem><para>The context is not valid.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_NOT_LOGGED_IN</errorname></term>
+            <listitem><para>The context has not been logged in.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_CONNECTION_CLOSED</errorname></term>
+            <listitem><para>Network connection has been closed.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_TIMED_OUT</errorname></term>
+            <listitem><para>Time limit for network operation exceeded.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_NOEXIST</errorname></term>
+            <listitem><para>Requested entity does exist.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_NOMEM</errorname></term>
+            <listitem><para>Not enough memory.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_NETWORK</errorname></term>
+            <listitem><para>Network error.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_HTTP</errorname></term>
+            <listitem><para>Error on <abbrev>HTTP</abbrev> level.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_SOAP</errorname></term>
+            <listitem><para>Error on <abbrev>SOAP</abbrev> level.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_XML</errorname></term>
+            <listitem><para>Error on XML level.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_ISDS</errorname></term>
+            <listitem><para>Problem with <abbrev>ISDS</abbrev> server.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_ENUM</errorname></term>
+            <listitem><para>Invalid enum value.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_DATE</errorname></term>
+            <listitem><para>Invalid date value.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_2BIG</errorname></term>
+            <listitem><para>Value is too big.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_2SMALL</errorname></term>
+            <listitem><para>Value is too small.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_NOTUNIQ</errorname></term>
+            <listitem><para>Value is not uniq.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_NOTEQUAL</errorname></term>
+            <listitem><para>Compared values are not equal.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_PARTIAL_SUCCESS</errorname></term>
+            <listitem><para>Operaration on a vector succeded for some values, but failed for others.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_ABORTED</errorname></term>
+            <listitem><para>Operation was aborted by application request.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><errorname>IE_SECURITY</errorname></term>
+            <listitem><para>Security requirements were not satisfied.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title><type>isds_log_level</type></title>
+        <synopsis>typedef enum <type>isds_log_level</type>;</synopsis>
+        <para>Log level. Know values:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>ILL_NONE</constant></term>
+            <listitem><para>0</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>ILL_CRIT</constant></term>
+            <listitem><para>10</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>ILL_ERR</constant></term>
+            <listitem><para>20</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>ILL_WARNING</constant></term>
+            <listitem><para>30</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>ILL_INFO</constant></term>
+            <listitem><para>40</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>ILL_DEBUG</constant></term>
+            <listitem><para>50</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>ILL_ALL</constant></term>
+            <listitem><para>100</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title><type>isds_log_facility</type></title>
+        <synopsis>typedef enum <type>isds_log_facility</type>;</synopsis>
+        <para>Log facility. Know values:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>ILF_NONE</constant></term>
+            <listitem><para>0x0</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>ILF_HTTP</constant></term>
+            <listitem><para>0x1</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>ILF_SOAP</constant></term>
+            <listitem><para>0x2</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>ILF_ISDS</constant></term>
+            <listitem><para>0x4</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>ILF_FILE</constant></term>
+            <listitem><para>0x8</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>ILF_SEC</constant></term>
+            <listitem><para>0x10</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>ILF_XML</constant></term>
+            <listitem><para>0x20</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>ILF_ALL</constant></term>
+            <listitem><para>0xFF</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title><type>isds_option</type></title>
+        <synopsis>typedef enum <type>isds_option</type>;</synopsis>
+        <para>libisds option identifiers. Known values:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>IOPT_TLS_VERIFY_SERVER</constant></term>
+            <listitem><para>Option type is <type>_Bool</type>. Whether to
+                verify server identity. Default value is
+                true.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>IOPT_TLS_CA_FILE</constant></term>
+            <listitem><para>Option type is <type>char *</type>. Option value
+                is a file name with certificate authority
+                certificates. Default value depends on used cryptographic
+                library.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>IOPT_TLS_CA_DIRECTORY</constant></term>
+            <listitem><para>Option type is <type>char *</type>, Option value
+                is a directory with certificate authority certificates.
+                Default value depends on used cryptographic
+                library.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>IOPT_TLS_CRL_FILE</constant></term>
+            <listitem><para>Option type is <type>char *</type>. Option value
+                is a file name with certificat revocation list in
+                <abbrev>PEM</abbrev> format. Default value depends on used
+                cryptographic library.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>IOPT_NORMALIZE_MIME_TYPE</constant></term>
+            <listitem><para>Optiona type is <type>_Bool</type>. Whether to
+                normalize <abbrev>MIME</abbrev> type values. Default value is
+                false.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title><type>isds_tls_option</type></title>
+        <synopsis>typedef enum <type>isds_tls_option</type>;</synopsis>
+        <warning><para>This type is deprecated.</para></warning>
+        <para><abbrev>TLS</abbrev> libisds option identifiers. Known values:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>ITLS_VERIFY_SERVER</constant></term>
+            <listitem><para>Option type is <type>_Bool</type>. Whether to
+                verify server identity.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>ITLS_CA_FILE</constant></term>
+            <listitem><para>Option type is <type>char *</type>. Option value
+                is a file name with certificate authority
+                certificates.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>ITLS_CA_DIRECTORY</constant></term>
+            <listitem><para>Option type is <type>char *</type>. Option value
+                is a directory name with certificate authority
+                certificates.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>ITLS_CRL_FILE</constant></term>
+            <listitem><para>Option type is <type>char *</type>. Option value
+                is a file name with certificate revocation list in
+                <abbrev>PEM</abbrev> format.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title><type>isds_pki_format</type></title>
+        <synopsis>typedef enum <type>isds_pki_format</type>;</synopsis>
+        <para>Cryptographic material encoding. Known values:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>PKI_FORMAT_PEM</constant></term>
+            <listitem><para><abbrev>PEM</abbrev> format.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>PKI_FORMAT_DER</constant></term>
+            <listitem><para><abbrev>DER format.</abbrev></para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>PKI_FORMAT_ENG</constant></term>
+            <listitem><para>The material is stored in a cryptographic engine.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title>struct <structname>isds_pki_credentials</structname></title>
+        <synopsis>struct <structname>isds_pki_credentials</structname>;</synopsis>
+        <para>This structure holds public key infrastructure cryptographic
+          material to authenticate a client. Members are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><type>char *</type><structfield>engine</structfield>;</term>
+            <listitem><para>String identifier of cryptographic engine to use
+                (where key is stored). Use NULL for no
+                engine.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>isds_pki_format</type> <structfield>certificate_format</structfield>;</term>
+            <listitem><para>Certificate format.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>certificate</structfield>;</term>
+            <listitem><para>A path to client certificate, or a certificate
+                nickname in case of <abbrev>NSS</abbrev> as curl back-end, or
+                key slot identifier inside cryptographic engine. Some
+                cryptographinc engines can pair certificate with key
+                automatically (NULL value).</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>isds_pki_format</type> <structfield>key_format</structfield>;</term>
+            <listitem><para>Private key format.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>key</structfield>;</term>
+            <listitem><para>A path to client private key, or key identifier in
+                case an engine is used.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>passphrase</structfield>;</term>
+            <listitem><para>Zero terminated string with password for
+                decrypting private key, or engine <abbrev>PIN</abbrev>. Use
+                NULL for no pass-phrase or to let the engine to ask for 
+                it.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title><type>isds_otp_method</type></title>
+        <synopsis>typedef enum <type>isds_otp_method</type>;</synopsis>
+        <para>One-time password authentication method. Known values:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>OTP_HMAC</constant></term>
+            <listitem><para><abbrev>HMAC</abbrev>-based <abbrev>OTP</abbrev> method.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>OTP_TIME</constant></term>
+            <listitem><para>Time-based <abbrev>OTP</abbrev> method.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title><type>isds_otp_resolution</type></title>
+        <synopsis>typedef enum <type>isds_otp_resolution</type>;</synopsis>
+        <para>One-time password authentication resolution. Known values:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>OTP_RESOLUTION_SUCCESS</constant></term>
+            <listitem><para>Authentication succeded.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>OTP_RESOLUTION_UNKNOWN</constant></term>
+            <listitem><para>Status is unkown.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>OTP_RESOLUTION_BAD_AUTHENTICATION</constant></term>
+            <listitem><para>Bad log-in. You can retry to log in.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>OTP_RESOLUTION_ACCESS_BLOCKED</constant></term>
+            <listitem><para>Access blocked for 60 minutes. (Because a brute
+                force attack was detected.)</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>OTP_RESOLUTION_PASSWORD_EXPIRED</constant></term>
+            <listitem>
+              <para>Password has expired.</para>
+              <note>
+                <para>It's not clear which password expired:
+                  <abbrev>OTP</abbrev> or regular password?</para>
+              </note>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>OTP_RESOLUTION_TO_FAST</constant></term>
+            <listitem><para><abbrev>OTP</abbrev> cannot be sent repeatedly at
+                this rate. (Minimal delay depends on <abbrev>TOTP</abbrev>
+                window setting.)</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>OTP_RESOLUTION_UNAUTHORIZED</constant></term>
+            <listitem><para>User name is not allowed to access requested
+                <abbrev>URI</abbrev>.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>OTP_RESOLUTION_TOTP_SENT</constant></term>
+            <listitem><para><abbrev>OTP</abbrev> has been generated and sent
+                by the <abbrev>ISDS</abbrev> to the user.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>OTP_RESOLUTION_TOTP_NOT_SENT</constant></term>
+            <listitem><para><abbrev>OTP</abbrev> could not been sent by the
+                <abbrev>ISDS</abbrev>. Retry later.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title>struct <structname>isds_otp</structname></title>
+        <synopsis>struct <structname>isds_otp</structname>;</synopsis>
+        <para>This structure holds one-time password when authenticating
+          a client and resolution of the authentication.</para>
+        
+        <para>Input members are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><type>isds_otp_method</type> <structfield>method</structfield>;</term>
+            <listitem><para>Select <abbrev>OTP</abbrev> method to use.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>otp_code</structfield>;</term>
+            <listitem><para>One-time password to use. Pass NULL, if you do not
+                know it yet (<abbrev>e.g.</abbrev> in case of first phase of
+                time-based <abbrev>OTP</abbrev> authentication to request new
+                code from <abbrev>ISDS</abbrev>.)</para></listitem>
+          </varlistentry>
+        </variablelist>
+
+        <para>Output members are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><type>isds_otp_resolution</type> <structfield>resolution</structfield>;</term>
+            <listitem><para>Fine-grade resolution of this <abbrev>OTP</abbrev>
+                authentication attempt.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title><type>isds_DbType</type></title>
+        <synopsis>typedef enum <type>isds_DbType</type>;</synopsis>
+        <para>Box type. It classify box owner by his legal status. Known
+          values:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>DBTYPE_SYSTEM</constant></term>
+            <listitem><para>This is a special value for sender of messages sent
+                by the <abbrev>ISDS</abbrev>. You can find it only in
+                incomming messages. It's not accepted by any other
+                <abbrev>services</abbrev>.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBTYPE_OVM</constant></term>
+            <listitem><para>Standard government (state or municipality or
+                similar) office.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBTYPE_OVM_NOTAR</constant></term>
+            <listitem><para>Notary.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBTYPE_OVM_EXEKUT</constant></term>
+            <listitem><para>Executor.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBTYPE_OVM_REQ</constant></term>
+            <listitem><para>Subsidiary office with <abbrev>OVM</abbrev>
+                (governing) status assigned on request (section 6 and 7 of the
+                act).</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBTYPE_PO</constant></term>
+            <listitem><para>Standard commercial organization (listed in trade
+                registry).</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBTYPE_PO_ZAK</constant></term>
+            <listitem><para>Other organization founded by an act.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBTYPE_PO_REQ</constant></term>
+            <listitem><para>An organization with a box assigned on its
+                request.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBTYPE_PFO</constant></term>
+            <listitem><para>Person in bussiness.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBTYPE_PFO_ADVOK</constant></term>
+            <listitem><para>Lawyer.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBTYPE_PFO_DANPOR</constant></term>
+            <listitem><para>Tax consultant.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBTYPE_PFO_INSSPR</constant></term>
+            <listitem><para>Administrator of insolvency.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBTYPE_FO</constant></term>
+            <listitem><para>Standard person.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title><type>isds_DbState</type></title>
+        <synopsis>typedef enum <type>isds_DbState</type>;</synopsis>
+        <para>Box status from point of view of accessibility. Known
+          values:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>DBSTATE_ACCESSIBLE</constant></term>
+            <listitem><para>The box is accessible.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBSTATE_TEMP_UNACCESSIBLE</constant></term>
+            <listitem><para>The box is temporarily inaccessible.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBSTATE_NOT_YET_ACCESSIBLE</constant></term>
+            <listitem><para>The box has not yet been activated.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBSTATE_PERM_UNACCESSIBLE</constant></term>
+            <listitem><para>The box is permanently inaccessible.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBSTATE_REMOVED</constant></term>
+            <listitem><para>The box has been removed.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title><type>isds_priviledges</type></title>
+        <synopsis>typedef enum <type>isds_priviledges</type>;</synopsis>
+        <para>Distinct user permissions from point of view of <abbrev>ISDS</abbrev>.
+          Instances can be bitmaps of any of these distinct values. Distinct known
+          values are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>PRIVIL_READ_NON_PERSONAL</constant></term>
+            <listitem><para>The user can download and read messages with
+                <structfield>dmPersonalDelivery</structfield> equaled to
+                false.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>PRIVIL_READ_ALL</constant></term>
+            <listitem><para>The user can download and read messages with
+                <structfield>dmPersonalDelivery</structfield> equaled to
+                true.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>PRIVIL_CREATE_DM</constant></term>
+            <listitem><para>The user can create and send messages, the user
+                can download outgoing (sent) messages.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>PRIVIL_VIEW_INFO</constant></term>
+            <listitem><para>The user can list messages and read data about
+                a message post and delivery.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>PRIVIL_SEARCH_DB</constant></term>
+            <listitem><para>The user can can search for
+                boxes.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>PRIVIL_OWNER_ADM</constant></term>
+            <listitem><para>The user can administer his box (to add and remove
+                permitted users and to modify theirs
+                permissions.)</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>PRIVIL_READ_VAULT</constant></term>
+            <listitem>
+              <para>The user can read messages stored in the long term storage.</para>
+              <note><para>This permission is not used since 2012-05.</para></note>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>PRIVIL_ERASE_VAULT</constant></term>
+            <listitem><para>The user can delete messages from the long term
+                storage.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title><type>isds_message_status</type></title>
+        <synopsis>typedef enum <type>isds_message_status</type>;</synopsis>
+        <para>Message status. Known values are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>MESSAGESTATE_SENT</constant></term>
+            <listitem><para>The message has been put into
+                <abbrev>ISDS</abbrev>.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>MESSAGESTATE_STAMPED</constant></term>
+            <listitem><para>Message was stamped by a time stamp
+                authority.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>MESSAGESTATE_INFECTED</constant></term>
+            <listitem><para>The message included viruses. Infected documents
+                have been removed from the message.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>MESSAGESTATE_DELIVERED</constant></term>
+            <listitem><para>The message was delivered.
+                (<structfield>dmDeliveryTime</structfield> is
+                    populated.)</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>MESSAGESTATE_SUBSTITUTED</constant></term>
+            <listitem><para>The message was delivered through fiction,
+                <structfield>dmAcceptanceTime</structfield> is
+                populated.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>MESSAGESTATE_RECEIVED</constant></term>
+            <listitem><para>The message was accepted (by user's log-in or
+                user's explicit request).
+                <structfield>dmAcceptanceTime</structfield> is
+                populated.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>MESSAGESTATE_READ</constant></term>
+            <listitem><para>The message has been read by
+                a user.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>MESSAGESTATE_UNDELIVERABLE</constant></term>
+            <listitem><para>The message could not been delivered.
+                (<abbrev>E.g.</abbrev>The recipient's box has been made
+                inaccessible meantime.)</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>MESSAGESTATE_REMOVED</constant></term>
+            <listitem><para>The message's content was
+                deleted.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>MESSAGESTATE_IN_SAFE</constant></term>
+            <listitem><para>The message is stored in the long term
+                storage.</para></listitem>
+          </varlistentry>
+        </variablelist>
+
+        <para>The values can be combined into a bit mask for some functions.
+          A special <constant>MESSAGESTATE_ANY</constant> macro denotes any of
+          the states.</para>
+      </refsection>
+
+      <refsection>
+        <title><type>isds_hash_algorithm</type></title>
+        <synopsis>typedef enum <type>isds_hash_algorithm</type>;</synopsis>
+        <para>Hash algorithm types. Known values are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>HASH_ALGORITHM_MD5</constant></term>
+            <listitem><para><abbrev>MD5</abbrev>.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>HASH_ALGORITHM_SHA_1</constant></term>
+            <listitem><para><abbrev>SHA-1</abbrev>.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>HASH_ALGORITHM_SHA_224</constant></term>
+            <listitem><para><abbrev>SHA-224</abbrev>.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>HASH_ALGORITHM_SHA_256</constant></term>
+            <listitem><para><abbrev>SHA-256</abbrev>.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>HASH_ALGORITHM_SHA_384</constant></term>
+            <listitem><para><abbrev>SHA-384</abbrev>.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>HASH_ALGORITHM_SHA_512</constant></term>
+            <listitem><para><abbrev>SHA-256</abbrev>.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title><type>isds_buffer_strategy</type></title>
+        <synopsis>typedef enum <type>isds_buffer_strategy</type>;</synopsis>
+        <para>Buffer storage strategy. This type defines how a function should
+          embed application provided buffer into
+          <structfield>raw</structfield> element of output structure. Known
+          values are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>BUFFER_DONT_STORE</constant></term>
+            <listitem><para>Don't fill <structfield>raw</structfield>
+                member.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>BUFFER_COPY</constant></term>
+            <listitem><para>Copy buffer content into newly allocated
+                <structfield>raw</structfield> member.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>BUFFER_MOVE</constant></term>
+            <listitem><para>Copy pointer. Leave deallocation to structure
+                destructor
+                (<function>isds_*_free</function>()).</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title>struct <structname>isds_hash</structname></title>
+        <synopsis>struct <structname>isds_hash</structname>;</synopsis>
+        <para>This is a hash value storage. Members are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><type>isds_hash_algorithm</type>
+              <structfield>algorithm</structfield>;</term>
+            <listitem><para>Hash algorithm.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>size_t</type> <structfield>length</structfield>;</term>
+            <listitem><para>Hash value length in bytes.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>void *</type><structfield>value</structfield>;</term>
+            <listitem><para>Hash value as a byte stream.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title>struct <structname>isds_PersonName</structname></title>
+        <synopsis>struct <structname>isds_PersonName</structname>;</synopsis>
+        <para>Name of a person. Members are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><type>char *</type><structfield>pnFirstName</structfield>;</term>
+            <listitem><para>First name.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>pnMiddleName</structfield>;</term>
+            <listitem><para>Middle name.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>pnLastName</structfield>;</term>
+            <listitem><para>Current last name.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>pnLastNameAtBirth</structfield>;</term>
+            <listitem><para>Last name at birth.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title>struct <structname>isds_BirthInfo</structname></title>
+        <synopsis>struct <structname>isds_BirthInfo</structname>;</synopsis>
+        <para>Date and place of a birth. Members are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><type>struct tm *</type><structfield>biDate</structfield>;</term>
+            <listitem><para>Date of birth in local time at the birth place.
+                Only <structfield>tm_year</structfield>,
+                <structfield>tm_mon</structfield> and
+                <structfield>tm_mday</structfield> members of the <type>struct
+                  tm</type> carry sane value. Others are
+                undefined.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>biCity</structfield>;</term>
+            <listitem><para>City where a person was born.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>biCounty</structfield>;</term>
+            <listitem><para>Region where a person was born. This is the kind
+                of region that is called <phrase lang="de">Bezirk</phrase> in
+                German and <phrase lang="cs">okres</phrase> in
+                Czech.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>biState</structfield>;</term>
+            <listitem><para>State wher a person was born.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title>struct <structname>isds_Address</structname></title>
+        <synopsis>struct <structname>isds_Address</structname>;</synopsis>
+        <para>Postal address. Members are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><type>char *</type><structfield>adCity</structfield>;</term>
+            <listitem><para>City.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>adStreet</structfield>;</term>
+            <listitem><para>Street.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>adNumberInStreet</structfield>;</term>
+            <listitem><para>Identification of an entrance on the
+                street. <phrase lang="cs">Číslo orientační</phrase> in
+                Czech.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>adNumberInMunicipality</structfield>;</term>
+            <listitem><para>Identification of a building in the municipality.
+                <phrase lang="cs">Číslo popisné</phrase> in
+                Czech.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>adZipCode</structfield>;</term>
+            <listitem><para>Postal code for mail routing.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>adState</structfield>;</term>
+            <listitem><para>State.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title>struct <structname>isds_DbOwnerInfo</structname></title>
+        <synopsis>struct <structname>isds_DbOwnerInfo</structname>;</synopsis>
+        <para>Data about a box and his owner. NULL pointer values mean
+          undefined values. Members are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><type>char *</type><structfield>dbID</structfield>;</term>
+            <listitem><para>Box identifier. Specification limits the length to
+                7 characters.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>isds_DbType *</type><structfield>dbType</structfield>;</term>
+            <listitem><para>Box type.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>ic</structfield>;</term>
+            <listitem><para>Identifier of the owner.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>isds_PersonName *</type><structfield>personName</structfield>;</term>
+            <listitem><para>Name of a person owning the box.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>firmName</structfield>;</term>
+            <listitem><para>Name of a firm owning the box.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>isds_BirthInfo *</type><structfield>birthInfo</structfield>;</term>
+            <listitem><para>Birth details of the person.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>isds_Address *</type><structfield>address</structfield>;</term>
+            <listitem><para>Postal address of the owner.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>nationality</structfield>;</term>
+            <listitem><para>Nationality of the owner.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>email</structfield>;</term>
+            <listitem><para>E-mail addres of the owner.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>telNumber</structfield>;</term>
+            <listitem><para>Telephone number of the owner.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>identifier</structfield>;</term>
+            <listitem><para>External box identifier for data provider
+                (<abbrev>OVM</abbrev>, <abbrev>PO</abbrev>, maybe
+                <abbrev>PFO</abbrev> box types.) Specification limits the
+                length to 20 characters.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>registryCode</structfield>;</term>
+            <listitem><para><abbrev>PFO</abbrev> external registry code.
+                Specification limits the length to
+                5 characters.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>long int *</type><structfield>dbState</structfield>;</term>
+            <listitem>
+              <para>Box state. 1 means the box is active.</para>
+              <note><para>The type is long int because specification declares it
+                  as <type>xsd:integer</type>.</para></note>
+              <note><para>TODO: enum?</para></note></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>_Bool *</type><structfield>dbEffectiveOVM</structfield>;</term>
+            <listitem><para>The Box has <abbrev>OVM</abbrev> role (section 5a
+                of the act).</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>_Bool *</type><structfield>dbOpenAddressing</structfield>;</term>
+            <listitem>This <para>non-<abbrev>OVM</abbrev> box is free to
+                receive messages from anybody.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title><type>isds_UserType</type></title>
+        <synopsis>typedef enum <type>isds_UserType</type>;</synopsis>
+        <para>User type. Known values are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>USERTYPE_PRIMARY</constant></term>
+            <listitem><para>Owner of the box.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>USERTYPE_ENTRUSTED</constant></term>
+            <listitem><para>User with limited access to the box.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>USERTYPE_ADMINISTRATOR</constant></term>
+            <listitem><para>User who can manage
+                <constant>USERTYPE_ENTRUSTED</constant>
+                users.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>USERTYPE_OFFICIAL</constant></term>
+            <listitem><para>???</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>USERTYPE_OFFICIAL_CERT</constant></term>
+            <listitem><para>???</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>USERTYPE_LIQUIDATOR</constant></term>
+            <listitem><para>Company liquidator.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title>struct <structname>isds_DbUserInfo</structname></title>
+        <synopsis>struct <structname>isds_DbUserInfo</structname>;</synopsis>
+        <para>Data about a user. NULL pointer values mean
+          undefined values. Members are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><type>char *</type><structfield>userID</structfield>;</term>
+            <listitem><para>User identifier. Specification limits the length
+                from 6 to 12 characters.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>isds_UserType *</type><structfield>userType</structfield>;</term>
+            <listitem><para>User type.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>long int *</type><structfield>userPrivils</structfield>;</term>
+            <listitem><para>Set of user permissions.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>isds_PersonName *</type><structfield>personName</structfield>;</term>
+            <listitem><para>Name of the user.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>isds_Address *</type><structfield>address</structfield>;</term>
+            <listitem><para>Postal address of the user.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>struct tm *</type><structfield>biDate</structfield>;</term>
+            <listitem><para>Date of birth in local time.
+                Only <structfield>tm_year</structfield>,
+                <structfield>tm_mon</structfield> and
+                <structfield>tm_mday</structfield> members of the <type>struct
+                  tm</type> carry sane value. Others are
+                undefined.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>ic</structfield>;</term>
+            <listitem><para>Identifier a supervising firm. Specification
+                limits the length to 8 characters.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>firmName</structfield>;</term>
+            <listitem><para>Name of a supervising firm. Specification limits
+                the length to 100 characters.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>caStreet</structfield>;</term>
+            <listitem><para>Contact address. Street and number.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>caCity</structfield>;</term>
+            <listitem><para>Czech city of the contact address.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>caZipCode</structfield>;</term>
+            <listitem><para>Postal code of the contact address.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>caState</structfield>;</term>
+            <listitem><para>Abbreviated country of contact address. This value
+                is optional and implicit meaning is
+                <constant>CZ</constant>.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+
+    </refsection>
+
+    <refsection>
+      <title>Functions</title>
+
+      <itemizedlist>
+        <listitem><funcsynopsis><funcprototype>
+              <funcdef>const char *<function>isds_strerror</function></funcdef>
+              <paramdef>const isds_error <parameter>error</parameter></paramdef>
+        </funcprototype></funcsynopsis></listitem>
+
+        <listitem><funcsynopsis><funcprototype>
+          <funcdef>struct isds_ctx *<function>isds_ctx_create</function></funcdef>
+          <void/>
+        </funcprototype></funcsynopsis></listitem>
+      </itemizedlist>
+    </refsection>
+
+    <refsection>
+      <title>See Also</title>
+
+      <para>
+        <simplelist type="inline">
+          <member><citerefentry>
+              <refentrytitle>libcurl</refentrytitle>
+              <manvolnum>3</manvolnum>
+          </citerefentry></member>
+          <member><citerefentry>
+              <refentrytitle>libisds</refentrytitle>
+              <manvolnum>3</manvolnum>
+          </citerefentry></member>
+          <member><citerefentry>
+              <refentrytitle>time.h</refentrytitle>
+              <manvolnum>0p</manvolnum>
+          </citerefentry></member>
+        </simplelist>
+      </para>
+    </refsection>
+  </refentry>
 </reference>
