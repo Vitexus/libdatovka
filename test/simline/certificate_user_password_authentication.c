@@ -23,7 +23,7 @@ static char *server_certificate = TLSDIR "/server.cert";
 static char *server_key = TLSDIR "/server.key";
 static char *client_certificate = TLSDIR "/client.cert";
 static char *client_key = TLSDIR "/client.key";
-static const char *client_dn = "C=CZ,CN=The Client";
+static const char *client_dn = "CN=The Client,C=CZ";
 static const char *username = "douglas";
 static const char *password = "42";
 
