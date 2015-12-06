@@ -5,6 +5,7 @@
 #include <time.h>
 #include <string.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -387,7 +388,7 @@ void print_timeval(const struct timeval *time) {
     if (!localtime_r(&(time->tv_sec), &broken)) goto error;
     if (!strftime(buffer, sizeof(buffer)/sizeof(char), "%c", &broken))
         goto error;
-    printf("%s, %jd us\n", buffer, (intmax_t)time->tv_usec);
+    printf("%s, %" PRIdMAX " us\n", buffer, (intmax_t)time->tv_usec);
     return;
 
 error:
@@ -723,7 +724,7 @@ int mmap_file(const char *file, int *fd, void **buffer, size_t *length) {
         return -1;
     }
     if (file_info.st_size < 0) {
-        fprintf(stderr, "File `%s' has negative size: %jd\n", file,
+        fprintf(stderr, "File `%s' has negative size: %" PRIdMAX "\n", file,
                 (intmax_t) file_info.st_size);
         close(*fd);
         return -1;

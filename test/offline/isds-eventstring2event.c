@@ -26,7 +26,7 @@ static int test_eventstring2event(const xmlChar *string, isds_error error,
                         correct_event->time->tv_sec, new_event->time->tv_sec);
             if (correct_event->time->tv_usec != new_event->time->tv_usec)
                 FAIL_TEST("Returned event time differs in tv_usec: "
-                        "expected=%jd, got=%jd",
+                        "expected=%" PRIdMAX ", got=%" PRIdMAX,
                         (intmax_t)correct_event->time->tv_usec,
                         (intmax_t)new_event->time->tv_usec);
         }

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdarg.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -99,7 +100,7 @@ int test_mmap_file(const char *file, int *fd, void **buffer, size_t *length) {
         return -1;
     }
     if (file_info.st_size < 0) {
-        fprintf(stderr, "File `%s' has negative size: %jd\n", file,
+        fprintf(stderr, "File `%s' has negative size: %" PRIdMAX "\n", file,
                 (intmax_t) file_info.st_size);
         close(*fd);
         return -1;
@@ -166,7 +167,7 @@ int test_mmap_file(const char *file, int *fd, void **buffer, size_t *length) {
         return -1;
     }
     if (file_info.st_size < 0) {
-        fprintf(stderr, "File `%s' has negative size: %jd\n", file,
+        fprintf(stderr, "File `%s' has negative size: %" PRIdMAX "\n", file,
                 (intmax_t) file_info.st_size);
         close(*fd);
         return -1;

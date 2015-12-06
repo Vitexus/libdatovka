@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <stdint.h>     /* For uint8_t and intmax_t */
 #include <limits.h>     /* Because of LONG_{MIN,MAX} constants */
+#include <inttypes.h>   /* For PRIdMAX formatting macro */
 #include "utils.h"
 #if HAVE_LIBCURL
     #include "soap.h"
@@ -2235,7 +2236,7 @@ static isds_error timeval2timestring(const struct timeval *time,
      * integer to accomodate values from range [-1, 1000000].
      * See <http://www.w3.org/TR/2001/REC-xmlschema-2-20010502/#dateTime> */ 
     if (-1 == isds_asprintf((char **) string,
-                "%04d-%02d-%02dT%02d:%02d:%02d.%06jd",
+                "%04d-%02d-%02dT%02d:%02d:%02d.%06" PRIdMAX,
                 broken.tm_year + 1900, broken.tm_mon + 1, broken.tm_mday,
                 broken.tm_hour, broken.tm_min, broken.tm_sec,
                 (intmax_t)time->tv_usec))
