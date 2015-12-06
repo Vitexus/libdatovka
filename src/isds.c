@@ -2300,6 +2300,7 @@ static isds_error timestring2timeval(const xmlChar *string,
 
     broken.tm_year -= 1900;
     broken.tm_mon--;
+    broken.tm_isdst = -1;
     offset = (char*)string + i;
 #else
     /* Parse date and time without subseconds and offset */
