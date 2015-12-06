@@ -379,13 +379,18 @@ void print_DbUserInfo(const struct isds_DbUserInfo *info) {
 void print_timeval(const struct timeval *time) {
     struct tm broken;
     char buffer[128];
+    time_t seconds_as_time_t;
 
     if (!time) {
         printf("NULL\n");
         return;
     }
-    
-    if (!localtime_r(&(time->tv_sec), &broken)) goto error;
+
+    /* MinGW32 GCC 4.8+ uses 64-bit time_t but time->tv_sec is defined as
+     * 32-bit long in Microsoft API. Convert value to the type expected by
+     * gmtime_r(). */
+    seconds_as_time_t = time->tv_sec;
+    if (!localtime_r(&seconds_as_time_t, &broken)) goto error;
     if (!strftime(buffer, sizeof(buffer)/sizeof(char), "%c", &broken))
         goto error;
     printf("%s, %" PRIdMAX " us\n", buffer, (intmax_t)time->tv_usec);

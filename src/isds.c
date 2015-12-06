@@ -2224,10 +2224,15 @@ static isds_error tm2datestring(const struct tm *time, xmlChar **string) {
 static isds_error timeval2timestring(const struct timeval *time,
         xmlChar **string) {
     struct tm broken;
+    time_t seconds_as_time_t;
 
     if (!time || !string) return IE_INVAL;
 
-    if (!gmtime_r(&time->tv_sec, &broken)) return IE_DATE;
+    /* MinGW32 GCC 4.8+ uses 64-bit time_t but time->tv_sec is defined as
+     * 32-bit long in Microsoft API. Convert value to the type expected by
+     * gmtime_r(). */
+    seconds_as_time_t = time->tv_sec;
+    if (!gmtime_r(&seconds_as_time_t, &broken)) return IE_DATE;
     if (time->tv_usec < 0 || time->tv_usec > 999999) return IE_DATE;
 
     /* TODO: small negative year should be formatted as "-0012". This is not
