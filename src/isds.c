@@ -2240,11 +2240,14 @@ static isds_error timeval2timestring(const struct timeval *time,
      * time->tv_usec type is su_seconds_t which is required to be signed
      * integer to accomodate values from range [-1, 1000000].
      * See <http://www.w3.org/TR/2001/REC-xmlschema-2-20010502/#dateTime> */ 
+    /* XXX: Do not format time->tv_usec as intmax_t because %jd is not
+     * supported and PRIdMAX is broken on MingGW. We can use int32_t because
+     * of the range check above. */
     if (-1 == isds_asprintf((char **) string,
-                "%04d-%02d-%02dT%02d:%02d:%02d.%06" PRIdMAX,
+                "%04d-%02d-%02dT%02d:%02d:%02d.%06" PRId32,
                 broken.tm_year + 1900, broken.tm_mon + 1, broken.tm_mday,
                 broken.tm_hour, broken.tm_min, broken.tm_sec,
-                (intmax_t)time->tv_usec))
+                (int32_t)time->tv_usec))
         return IE_ERROR;
 
     return IE_SUCCESS;
