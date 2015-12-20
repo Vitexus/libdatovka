@@ -125,7 +125,8 @@ CreateDataBox
     |   |   PFO has only one which carries contact address only,
     |   |   OVM has only one which describes office manager,
     |   |   PO has one or more, even other PO user type is applicable
-    |   + dbUserInfo – primary user description (not all fields has meaning)
+    |   + dbUserInfo – primary user description (not all fields has meaning,
+    |   |       AIFOTicket attribute can be specified)
     |   + dbUserInfo
     |   ⋮
     + dbFormerNames – former name of the user, optional
@@ -184,7 +185,8 @@ Add person permitted to access to the box
 Different user types can be added only by users with specific privileges
 (PRIMARY_USER can be added only by PRIVIL_CZP user).
 
-Mandatory input is box description and new user definition.
+Mandatory input is box description and new user definition. The new user can
+have AIFOTicket attribute defined.
 
 If optional input dbVirtual is true, additional input element email specifies
 e-mail address to send notificication about new account and link where to get
@@ -337,8 +339,9 @@ Output is list of box users. Structure:
 
 GetDataBoxUsersResponse
     + dbUsers – optional
-    |   + dbUserInfo – zero count is possible. Type of XSD:tDbUserInfo. See
-        |           GetUserInfoFromLogin request for more details.
+    |   + dbUserInfo – zero count is possible. Type of XSD:tDbUserInfo.
+    |   |           The AIFOTicket attribute can exist. See
+    |   |           GetUserInfoFromLogin request for more details.
     |   + dbUserInfo
     |   ⋮ 
     + dbStatus

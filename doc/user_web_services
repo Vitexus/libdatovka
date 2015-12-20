@@ -3,9 +3,9 @@ User web services specification
 
 Source: Provozní řád ISDS, version 2010-11-28, Pages 15–16
 Source: Webové služby rozhraní ISDS pro manipulaci s datovými zprávami,
-    version 2.42 (2015-03-27)
+    version 2.48 (2015-11-01)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
-    version 2.42 (2015-03-27)
+    version 2.48 (2015-11-01)
 
 
 These services are intended for working with messages inside a box by
@@ -85,6 +85,8 @@ URL postfix: df
 
 FindDataBox (*)
     Find boxes conforming to search criteria
+FindPersonalDataBox (*)
+    Search for active personal boxes
 CheckDataBox (*)
     Return state of given box
 GetDataBoxList (*)
@@ -95,6 +97,8 @@ DataBoxCreditInfo (*)
     Get details about credit for comercial services
 ISDSSearch2 (*)
     Search for boxes conforming to full text criteria
+GetDataBoxActivityStatus (*)
+    Get history of box accessibility states
 
 
 CreateMessage (*)
@@ -265,6 +269,9 @@ http://isds.czechpoint.cz/v20/ vs. http://isds.czechpoint.cz/v20/SentMessage:
   </q:dmReturnedMessage>
 </q:MessageDownloadResponse>
 
+Error codes:
+    1229    This just sent message has not yet been signed
+
 
 GetListOfRecievedMessages
 =========================
@@ -340,7 +347,7 @@ This service is designed for polling state changes of sent messages.
 Input are start (dmFromTime element) and end (dmToTime element) ISO times.
 Empty dmFromTime meands since last 15 days, empty dmToTime means till now.
 
-Non-normative: Server does not report changes recent more than one hour.
+Server does not report changes recent more than few minutes.
 
 Output is list of records with message state changes. The order of records is
 undefined.
@@ -556,8 +563,8 @@ differentiated by box type now:
 
 Gross Box type  Constraints (required search criteria)
 ------------------------------------------------------
-FO              pnLastName or pnLastNameAtBirth
-PFO             ic or pnLastName or pnLastNameAtBirth
+FO              pnLastName
+PFO             ic or pnLastName
 PO              ic or prefix (at least 3 characters) of firmName
 OVM             ic or prefix of firmName
 
@@ -578,6 +585,55 @@ Error codes:
 Non-normative error codes:
     1101    Box type (dbType) must be specified
     2017    Syntax error in date (biDate)
+
+
+FindPersonalDataBox (*)
+===================
+
+Return list of active FO-type boxes matching given criteria.
+
+Input is `dbOwnerInfo' element specifying search criteria for box owner by
+these children elements:
+
+Element                 Type    At search   Meaning
+--------------------------------------------------------------------------------
+dbID                    String              Box ID
+aifoIsds                Boolean Ignored     Reference to citizen registry exists
+pnFirstName             String              Given name
+pnMiddleName            String              Middle name
+pnLastName              String              Surname
+biDate                  Date                Birth date
+biCity                  String              Birth place
+biCounty                String              Birth district (`okres' in Czech)
+biState                 String  Ignored     Birth state
+adCode                  Integer             RUIAN address code
+adCity                  String              Municipality name
+adDistrict              String  Ignored     Municipality part
+adStreet                String              Street
+adNumberInStreet        String              Entrance number
+adNumberInMunicipality  String              Building number
+adZipCode               String  Ignored     Post office code
+adState                 String              State
+nationality             String              State citizenship
+
+Syntactically, all of the `dbOwnerInfo' children can be empty. Semantically,
+if `dbID' is specified, other criteria will be ignored. Otherwise `pnLastName'
+must be specified and it is matched as exact string. Values except `dbID' are
+matched case insensitively.
+
+Output is list of `dbResults' and `dbStatus' elements. `dbResults' is optional
+and possibly empty list of `dbOwnerInfo' elements that have the same structure
+as the input `dbOwnerInfo' element.
+
+The output differs from FindDataBox output. Here are `aifoIsds', `adCode', and
+`adDistrict' elements added. Some unused elements are missing.
+
+This service can be used only by an user with PRIVIL_SEARCH_DB permisson to a
+gross OVM box type.
+
+Error codes:
+    0002    No box matches
+    0003    Too many boxes match, result list is truncated but still valid
 
 
 CheckDataBox (*)
@@ -603,7 +659,9 @@ Input is type of boxes of interrest (dblType element):
 
 Value   Description             File name           Permission
 -------------------------------------------------------------------------------
-ALL     All active boxes        actdsYYYYMMDD.csv   OVM or OVM_REQ user
+ALL     All active boxes        actdsYYYYMMDD.csv   OVM, OVM_EXEKUT,
+                                                    OVM_NOTAR, OVM_REQ, or
+                                                    upgraded OVM user
                                                     authenticated by commercial
                                                     certificate or user with
                                                     PRIVIL_BILLING permission
@@ -638,7 +696,6 @@ dbType
 pnFirstName
 pnMiddleName
 pnLastName
-pnLastNameAtBirth
 biDate
 firmName
 ic
@@ -815,9 +872,11 @@ If `searchType' is `ICO' or `DBID', `searchScope' restriction is ignored.
 file for the semantics, acceptable values are:
 
 Value       Meaning
--------------------------------------
+------------------------------------------------------------------------
 ALL         Search over all box types
 OVM
+OVM_MAIN    Search over main (without suboridanated, with secondary) OVM
+            box types only
 OVM_REQ
 OVM_NOTAR
 OVM_EXEKUT
@@ -882,3 +941,38 @@ Error codes:
     1155    Invalid input
     1156    `pageSize' is too large
     9002    Search engine internal error
+
+
+GetDataBoxActivityStatus (*)
+========================
+
+Retrive box state changes in given history time frame.
+
+Input is list of these elements:
+
+Element Type    Mandatory   Meaning
+--------------------------------------------------------------------------
+dbID    String  Mandatory   Box ID
+baFrom  Time    Optional    Interval beginning, inclusive, second accuracy
+                            defaults to box creation
+baTo    Time    Optional    Interval end, inclusive, second accuracy,
+                            defaults to now
+
+Non-normative: XML schema does not match textual documentation regarding
+obligatority of the elements and their values. The table conforms to the
+textual specification.
+
+Output is list of optional `dbID', optional `Periods', and mandatory
+`dbStatus' elements. `Periods' element is possibly empty list of these
+`Period' elements:
+
+Period
+    + PeriodFrom – xs:dateTime
+    + PeriodTo – xs:dateTime
+    + DbState – non-negative integer
+
+`DbState' is 1 for accessible state. Inaccessible state is signaled by 0 for
+OVM users authenticated by system certificate, by 2--6 as defined in box
+states for some internal priviledged users. Other users are not allowed to
+call this service.
+

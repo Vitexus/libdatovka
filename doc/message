@@ -3,7 +3,7 @@ Message specification
 
 Source: Provozní řád ISDS, version 2011-11-29, Page 5, 14
 Source: Webové služby rozhranní ISDS pro manipulaci s datovými zprávami,
-    version 2.42 (2015-03-27)
+    version 2.48 (2015-11-01)
 Source: MIME Media Types
     <http://www.iana.org/assignments/media-types/index.html>
 Source: O2. Datové schránky: Informace pro dodavatele aplikací, version
@@ -274,13 +274,22 @@ Case    Meaning
 
 The XML document has following structures:
 
-SystemMessage – Attribute `type' is a number of case 1, 3, or 4.
+SystemMessage – Attribute `type' is a number of case 1, or 4.
     + dmID – message ID
     + dbIDRecipient – recipient box ID
 
 SystemMessage – Attribute `type' is a number of case 2, 5, or 6.
     + userID – user ID
     + userName – user proper name
+
+SystemMessage – Attribute `type' is a number of case 3.
+    + dmID – undeliverable message ID
+    + dbIDRecipient – inaccessible recipient box ID
+    + dbName – recipent box name
+    + undelivDate – date when the box was made inaccessible
+    + dmAnnotation – message subject
+    + dmSenderRefNumber – sender's reference number of the message
+    + dmSenderIdent – sender's identity number of the message
 
 SystemMessage – Attribute `type' is a number of case 7, 8, 9, 10, or 11.
     No elements are defined.

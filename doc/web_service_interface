@@ -2,8 +2,8 @@ Web service interface
 =====================
 
 Source: Provozní řád informačního systému (2015-06-07)
-Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2.6
-(2010-01-18) [DataMessage_ws.pdf], Page 5
+Source: Webové služby ISDS pro manipulaci s datovými zprávami,
+version 2.48 (2015-11-01)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
 version 2 (2009-07-26)
 
@@ -24,7 +24,10 @@ Code    Meaning
 0002    FindDataBox: No box suits to search request (by name)
 0003    FindDataBox: To much boxes suit to search request (by name), response
             truncated
+1201    Sending messages from inaccessible box is not possible
 3006    Marking messages as delivered takes too long. Try again.
+3008    Too many parallel requests. Try again later.
+3009    Too many requests. Try again later.
 5001    FindDataBox: No such box exists (by box ID or registry identifier)
 
 NON-NORMATIVE: ISDS on bogus ISDS request but still valid SOAP request
