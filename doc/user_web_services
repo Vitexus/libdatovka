@@ -706,7 +706,7 @@ O           Answer on a commercial message is pre-paid by PDZPayer. ODZIdent
 Z           Limitedly subsidized (undocumented)
 
 
-DataBoxCreditInfo
+DataBoxCreditInfo (*)
 =================
 
 Return current credit value and and history of credit changes for given box
@@ -766,7 +766,7 @@ Error codes (codes are not normative):
     1058    Invalid date
 
 
-ISDSSearch2
+ISDSSearch2 (*)
 ===========
 
 Return list of boxes matching a full text criteria.
