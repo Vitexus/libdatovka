@@ -2006,8 +2006,8 @@ static isds_error string2isds_DbType(xmlChar *string, isds_DbType *type) {
  * @Return pointer to static string, or NULL if unknown enum value */
 static const xmlChar *isds_DbType2string(const isds_DbType type) {
      switch(type) {
-            /* DBTYPE_SYSTEM is invalid value from point of view of public
-             * SOAP interface. */
+            /* DBTYPE_SYSTEM and DBTYPE_OVM_MAIN are invalid values from point
+             * of view of generic public SOAP interface. */
             case DBTYPE_FO: return(BAD_CAST "FO"); break;
             case DBTYPE_PFO: return(BAD_CAST "PFO"); break;
             case DBTYPE_PFO_ADVOK: return(BAD_CAST "PFO_ADVOK"); break;
@@ -7565,7 +7565,8 @@ leave:
  * @target selects box attributes to search for @query words. Pass NULL if you
  * don't care.
  * @box_type restricts searching to given box type. Value DBTYPE_SYSTEM means
- * to search in all box types. Pass NULL to let server to use default value
+ * to search in all box types. Value DBTYPE_OVM_MAIN means to search in
+ * non-subsudiary OVM box types. Pass NULL to let server to use default value
  * which is DBTYPE_SYSTEM.
  * @page_size defines count of boxes to constitute a response page. It counts
  * from zero. Pass NULL to let server to use a default value (50 now).
@@ -7705,6 +7706,8 @@ isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
         /* XXX: Handle DBTYPE_SYSTEM value as "ALL" */
         if (DBTYPE_SYSTEM == *box_type) {
             static_string = BAD_CAST "ALL";
+        } else if (DBTYPE_OVM_MAIN == *box_type) {
+            static_string = BAD_CAST "OVM_MAIN";
         } else {
             static_string = isds_DbType2string(*(box_type));
             if (NULL == static_string) {

@@ -353,6 +353,76 @@ int main(void) {
 
 
     {
+        /* Client must support DBTYPE_OVM_MAIN, send an empty reponse */
+        char *url = NULL;
+
+        isds_fulltext_target target = FULLTEXT_ALL;
+        isds_DbType box_type = DBTYPE_OVM_MAIN;
+        long int search_page_number = 42;
+        long int search_page_size = 43;
+        unsigned long int total_count = 0;
+        unsigned long int current_count = 0;
+        unsigned long int position = 43 * 42;
+        _Bool last_page = 1;
+        const struct arguments_DS_df_ISDSSearch2 service_arguments = {
+            .status_code = "0000",
+            .status_message = "No boxes match",
+            .search_text = "foo",
+            .search_type = "GENERAL",
+            .search_scope = "OVM_MAIN",
+            .search_page_number = &search_page_number,
+            .search_page_size = &search_page_size,
+            .search_highlighting_value = NULL,
+            .total_count = &total_count,
+            .current_count = &current_count,
+            .position = &position,
+            .last_page = &last_page,
+            .results_exists = 1,
+            .results = NULL
+        };
+        const struct service_configuration services[] = {
+            { SERVICE_DS_Dz_DummyOperation, NULL },
+            { SERVICE_DS_df_ISDSSearch2, &service_arguments },
+            { SERVICE_END, NULL }
+        };
+        const struct arguments_basic_authentication server_arguments = {
+            .username = username,
+            .password = password,
+            .isds_deviations = 1,
+            .services = services
+        };
+        error = start_server(&server_process, &url,
+                server_basic_authentication, &server_arguments, NULL);
+        if (error == -1) {
+            isds_ctx_free(&context);
+            isds_cleanup();
+            ABORT_UNIT(server_error);
+        }
+        TEST("login", test_login, IE_SUCCESS,
+                context, url, username, password, NULL, NULL);
+        free(url);
+
+        TEST("DBTYPE_OVM_MAIN", test_isds_find_box_by_fulltext, IE_SUCCESS,
+                context, service_arguments.search_text, &target, &box_type,
+                (unsigned long int *)service_arguments.search_page_size,
+                (unsigned long int *)service_arguments.search_page_number,
+                service_arguments.search_highlighting_value,
+                service_arguments.total_count,
+                service_arguments.position,
+                service_arguments.current_count,
+                service_arguments.last_page,
+                NULL);
+
+        isds_logout(context);
+        if (stop_server(server_process)) {
+            isds_ctx_free(&context);
+            isds_cleanup();
+            ABORT_UNIT(server_error);
+        }
+    }
+
+
+    {
         /* Empty response due to an error */
         char *url = NULL;
 

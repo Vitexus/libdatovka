@@ -77,7 +77,8 @@ int main(void) {
         BAD_CAST "FO"
     };
 
-    TEST("DBTYPE_SYSTEM", test_dbtype2string_must_fail, DBTYPE_SYSTEM); 
+    TEST("DBTYPE_OVM_MAIN", test_dbtype2string_must_fail, DBTYPE_OVM_MAIN);
+    TEST("DBTYPE_SYSTEM", test_dbtype2string_must_fail, DBTYPE_SYSTEM);
 
     for (size_t i = 0; i < sizeof(types)/sizeof(types[0]); i++)
         TEST(isds_DbType2string(types[i]), test_dbtype, types[i], names[i]);

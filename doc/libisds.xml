@@ -849,9 +849,17 @@ err = isds_cleanup();
       <refsection>
         <title><type>isds_DbType</type></title>
         <synopsis>typedef enum <type>isds_DbType</type>;</synopsis>
-        <para>Box type. It classify box owner by his legal status. Known
+        <para>Box type. It classifies box owner by his legal status. Known
           values:</para>
         <variablelist>
+          <varlistentry>
+            <term><constant>DBTYPE_OVM_MAIN</constant></term>
+            <listitem><para>This is a special value for
+                <function>isds_find_box_by_fulltext</function>.
+                It's not accepted by any other
+                <abbrev>services</abbrev>.</para></listitem>
+          </varlistentry>
+
           <varlistentry>
             <term><constant>DBTYPE_SYSTEM</constant></term>
             <listitem><para>This is a special value for sender of messages sent

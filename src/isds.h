@@ -178,6 +178,8 @@ struct isds_otp {
 
 /* Box type */
 typedef enum {
+    DBTYPE_OVM_MAIN = -1,       /* Special value for
+                                   isds_find_box_by_fulltext(). */
     DBTYPE_SYSTEM = 0,          /* This is special sender value for messages
                                    sent by ISDS. */
     DBTYPE_OVM = 10,
@@ -1228,7 +1230,8 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
  * @target selects box attributes to search for @query words. Pass NULL if you
  * don't care.
  * @box_type restricts searching to given box type. Value DBTYPE_SYSTEM means
- * to search in all box types. Pass NULL to let server to use default value
+ * to search in all box types. Value DBTYPE_OVM_MAIN means to search in
+ * non-subsudiary OVM box types. Pass NULL to let server to use default value
  * which is DBTYPE_SYSTEM.
  * @page_size defines count of boxes to constitute a response page. It counts
  * from zero. Pass NULL to let server to use a default value (50 now).
