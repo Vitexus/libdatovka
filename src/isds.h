@@ -991,7 +991,12 @@ isds_error isds_logout(struct isds_ctx *context);
  * Send dummy request to ISDS and expect dummy response. */
 isds_error isds_ping(struct isds_ctx *context);
 
-/* Get data about logged in user and his box. */
+/* Get data about logged in user and his box.
+ * @context is session context
+ * @db_owner_info is reallocated box owner description. It will be freed on
+ * error.
+ * @return error code from lower layer, context message will be set up
+ * appropriately. */
 isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         struct isds_DbOwnerInfo **db_owner_info);
 

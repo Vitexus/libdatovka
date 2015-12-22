@@ -4949,7 +4949,12 @@ leave:
 #endif
 
 
-/* Get data about logged in user and his box. */
+/* Get data about logged in user and his box.
+ * @context is session context
+ * @db_owner_info is reallocated box owner description. It will be freed on
+ * error.
+ * @return error code from lower layer, context message will be set up
+ * appropriately. */
 isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         struct isds_DbOwnerInfo **db_owner_info) {
     isds_error err = IE_SUCCESS;
