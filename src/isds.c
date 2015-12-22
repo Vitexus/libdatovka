@@ -6300,7 +6300,7 @@ leave:
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
-isds_error _isds_delete_box_common(struct isds_ctx *context,
+static isds_error _isds_delete_box_common(struct isds_ctx *context,
         const xmlChar *service_name, 
         const struct isds_DbOwnerInfo *box, const struct tm *since,
         const struct isds_approval *approval, char **refnumber) {
