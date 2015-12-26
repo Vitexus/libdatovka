@@ -3147,58 +3147,70 @@ static isds_error insert_DbOwnerInfo(struct isds_ctx *context,
     isds_error err = IE_SUCCESS;
     xmlNodePtr node;
     xmlChar *string = NULL;
+    const xmlChar *type_string = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!owner || !db_owner_info) return IE_INVAL;
 
 
     /* Build XSD:tDbOwnerInfo */
+    /* XXX: All the elements except email and telNumber are mandatory. */
     CHECK_FOR_STRING_LENGTH(owner->dbID, 0, 7, "dbID")
     INSERT_STRING(db_owner_info, "dbID", owner->dbID);
 
     /* dbType */
     if (owner->dbType) {
-        const xmlChar *type_string = isds_DbType2string(*(owner->dbType));
+        type_string = isds_DbType2string(*(owner->dbType));
         if (!type_string) {
             isds_printf_message(context, _("Invalid dbType value: %d"),
                     *(owner->dbType));
             err = IE_ENUM;
             goto leave;
         }
-        INSERT_STRING(db_owner_info, "dbType", type_string);
     }
+    INSERT_STRING(db_owner_info, "dbType", type_string);
+
     INSERT_STRING(db_owner_info, "ic", owner->ic);
-    if (owner->personName) {
-        INSERT_STRING(db_owner_info, "pnFirstName",
-                owner->personName->pnFirstName);
-        INSERT_STRING(db_owner_info, "pnMiddleName",
-                owner->personName->pnMiddleName);
-        INSERT_STRING(db_owner_info, "pnLastName",
-                owner->personName->pnLastName);
-        INSERT_STRING(db_owner_info, "pnLastNameAtBirth",
+
+    INSERT_STRING(db_owner_info, "pnFirstName",
+            (NULL == owner->personName) ? NULL: owner->personName->pnFirstName);
+    INSERT_STRING(db_owner_info, "pnMiddleName",
+            (NULL == owner->personName) ? NULL: owner->personName->pnMiddleName);
+    INSERT_STRING(db_owner_info, "pnLastName",
+            (NULL == owner->personName) ? NULL: owner->personName->pnLastName);
+    INSERT_STRING(db_owner_info, "pnLastNameAtBirth",
+            (NULL == owner->personName) ? NULL:
                 owner->personName->pnLastNameAtBirth);
-    }
+
     INSERT_STRING(db_owner_info, "firmName", owner->firmName);
-    if (owner->birthInfo) {
-        if (owner->birthInfo->biDate) {
-            if (!tm2datestring(owner->birthInfo->biDate, &string))
-                INSERT_STRING(db_owner_info, "biDate", string);
-            free(string); string = NULL;
-        }
-        INSERT_STRING(db_owner_info, "biCity", owner->birthInfo->biCity);
-        INSERT_STRING(db_owner_info, "biCounty", owner->birthInfo->biCounty);
-        INSERT_STRING(db_owner_info, "biState", owner->birthInfo->biState);
+
+    if (NULL != owner->birthInfo && NULL != owner->birthInfo->biDate) {
+        err = tm2datestring(owner->birthInfo->biDate, &string);
+        if (err) goto leave;
     }
-    if (owner->address) {
-        INSERT_STRING(db_owner_info, "adCity", owner->address->adCity);
-        INSERT_STRING(db_owner_info, "adStreet", owner->address->adStreet);
-        INSERT_STRING(db_owner_info, "adNumberInStreet",
-                owner->address->adNumberInStreet);
-        INSERT_STRING(db_owner_info, "adNumberInMunicipality",
-                owner->address->adNumberInMunicipality);
-        INSERT_STRING(db_owner_info, "adZipCode", owner->address->adZipCode);
-        INSERT_STRING(db_owner_info, "adState", owner->address->adState);
-    }
+    INSERT_STRING(db_owner_info, "biDate", string);
+    zfree(string);
+
+    INSERT_STRING(db_owner_info, "biCity",
+            (NULL == owner->birthInfo) ? NULL: owner->birthInfo->biCity);
+    INSERT_STRING(db_owner_info, "biCounty",
+            (NULL == owner->birthInfo) ? NULL: owner->birthInfo->biCounty);
+    INSERT_STRING(db_owner_info, "biState",
+            (NULL == owner->birthInfo) ? NULL: owner->birthInfo->biState);
+
+    INSERT_STRING(db_owner_info, "adCity",
+            (NULL == owner->address) ? NULL: owner->address->adCity);
+    INSERT_STRING(db_owner_info, "adStreet",
+            (NULL == owner->address) ? NULL: owner->address->adStreet);
+    INSERT_STRING(db_owner_info, "adNumberInStreet",
+            (NULL == owner->address) ? NULL: owner->address->adNumberInStreet);
+    INSERT_STRING(db_owner_info, "adNumberInMunicipality",
+            (NULL == owner->address) ? NULL: owner->address->adNumberInMunicipality);
+    INSERT_STRING(db_owner_info, "adZipCode",
+            (NULL == owner->address) ? NULL: owner->address->adZipCode);
+    INSERT_STRING(db_owner_info, "adState",
+            (NULL == owner->address) ? NULL: owner->address->adState);
+
     INSERT_STRING(db_owner_info, "nationality", owner->nationality);
     INSERT_STRING(db_owner_info, "email", owner->email);
     INSERT_STRING(db_owner_info, "telNumber", owner->telNumber);
