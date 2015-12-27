@@ -279,6 +279,42 @@ static http_error element_exists(const char **code, char **message,
 }
 
 
+/* Locate a children element.
+ * @code is a static output ISDS error code
+ * @error_message is a reallocated output ISDS error message
+ * @xpath_ctx is a current XPath context
+ * @element_name is name of an element to select
+ * @node is output pointer to located element node
+ * @return HTTP_ERROR_SUCCESS or an appropriate error code. */
+static http_error select_element(const char **code, char **message,
+        xmlXPathContextPtr xpath_ctx, const char *element_name,
+        xmlNodePtr *node) {
+    xmlXPathObjectPtr result = NULL;
+
+    result = xmlXPathEvalExpression(BAD_CAST element_name, xpath_ctx);
+    if (NULL == result) {
+        return HTTP_ERROR_SERVER;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+            xmlXPathFreeObject(result);
+            *code = "9999";
+            test_asprintf(message, "Element %s does not exist", element_name);
+            return HTTP_ERROR_CLIENT;
+    } else {
+        if (result->nodesetval->nodeNr > 1) {
+            xmlXPathFreeObject(result);
+            *code = "9999";
+            test_asprintf(message, "Multiple %s element", element_name);
+            return HTTP_ERROR_CLIENT;
+        }
+    }
+    *node = result->nodesetval->nodeTab[0];
+    xmlXPathFreeObject(result);
+
+    return HTTP_ERROR_SUCCESS;
+}
+
+
 /* Extract @element_name's value as a string.
  * @code is a static output ISDS error code
  * @error_message is a reallocated output ISDS error message
@@ -324,6 +360,18 @@ static http_error extract_string(const char **code, char **message,
 
 leave:
     return error;
+}
+
+
+/* Compare dates represented by pointer to struct tm.
+ * @return 0 if equalued, non-0 otherwise. */
+static int datecmp(const struct tm *a, const struct tm *b) {
+    if (NULL == a && b == NULL) return 0;
+    if ((NULL == a && b != NULL) || (NULL != a && b == NULL)) return 1;
+    if (a->tm_year != b->tm_year) return 1;
+    if (a->tm_mon != b->tm_mon) return 1;
+    if (a->tm_mday != b->tm_mday) return 1;
+    return 0;
 }
 
 
@@ -541,6 +589,77 @@ leave:
 }
 
 
+/* Checks an @element_name's value is an @expected_value date.
+ * @code is a static output ISDS error code
+ * @error_message is an reallocated output ISDS error message
+ * @xpath_ctx is a current XPath context
+ * @element_name is name of a element to check
+ * @must_exist is true if the @element_name must exist even if @expected_value
+ * is NULL.
+ * @expected_value is an expected boolean value
+ * @return HTTP_ERROR_SUCCESS if the @element_name element's value is
+ * @expected_value. HTTP_ERROR_CLIENT if not equaled, HTTP_ERROR_SERVER if an
+ * internal error occured. */
+static http_error element_equals_date(const char **code, char **message,
+        xmlXPathContextPtr xpath_ctx, const char *element_name,
+        _Bool must_exist, const struct tm *expected_value) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    char *string = NULL;
+    struct tm value;
+
+    if (must_exist) {
+        error = element_exists(code, message, xpath_ctx, element_name, 0);
+        if (HTTP_ERROR_SUCCESS != error)
+            goto leave;
+    }
+
+    error = extract_string(code, message, xpath_ctx, element_name, &string);
+    if (HTTP_ERROR_SUCCESS != error)
+        goto leave;
+
+    if (NULL != expected_value) {
+        if (NULL == string) {
+            *code = "9999";
+            test_asprintf(message, "Empty %s element", element_name);
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+        error = _server_datestring2tm(string, &value);
+        if (error) {
+            if (error == HTTP_ERROR_CLIENT) { \
+                test_asprintf(message, "%s value is not a valid date: %s",
+                        element_name, string);
+            }
+            goto leave;
+        }
+        if (datecmp(expected_value, &value)) {
+            *code = "9999";
+            test_asprintf(message, "Unexpected %s element value: "
+                    "expected=%d-%02d-%02d, got=%d-%02d-%02d", element_name,
+                    expected_value->tm_year + 1900, expected_value->tm_mon + 1,
+                    expected_value->tm_mday,
+                    value.tm_year + 1900, value.tm_mon + 1, value.tm_mday);
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+    } else {
+        if (NULL != string && *string != '\0') {
+            *code = "9999";
+            test_asprintf(message,
+                    "Unexpected %s element value: "
+                    "expected empty value, got=`%s'",
+                    element_name, string);
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+    }
+
+leave:
+    free(string);
+    return error;
+}
+
+
 /* Insert dmStatus or similar subtree
  * @parent is element to insert to
  * @dm is true for dmStatus, otherwise dbStatus
@@ -607,18 +726,6 @@ static http_error timeval2timestring(const struct timeval *time,
         return HTTP_ERROR_SERVER;
 
     return HTTP_ERROR_SUCCESS;
-}
-
-
-/* Compare dates represented by pointer to struct tm.
- * @return 0 if equalued, non-0 otherwise. */
-static int datecmp(const struct tm *a, const struct tm *b) {
-    if (NULL == a && b == NULL) return 0;
-    if ((NULL == a && b != NULL) || (NULL != a && b == NULL)) return 1;
-    if (a->tm_year != b->tm_year) return 1;
-    if (a->tm_mon != b->tm_mon) return 1;
-    if (a->tm_mday != b->tm_mday) return 1;
-    return 0;
 }
 
 
@@ -940,6 +1047,226 @@ static http_error insert_tdbResultsArray(xmlNodePtr isds_response,
     }
 
 leave:
+    return error;
+}
+
+
+/* Insert list of search results as XSD:tDbOwnersArray XML tree.
+ * @isds_response is XML node with the response
+ * @results is list of struct server_owner_info *.
+ * @create_empty_root is true to create dbResults element even if @results is
+ * empty. */
+static http_error insert_tDbOwnersArray(xmlNodePtr isds_response,
+        const struct server_list *results, _Bool create_empty_root) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    xmlNodePtr root, entry;
+
+    if (NULL == isds_response) return HTTP_ERROR_SERVER;
+
+    if (NULL != results || create_empty_root)
+        INSERT_ELEMENT(root, isds_response, "dbResults");
+
+    if (NULL == results) return HTTP_ERROR_SUCCESS;
+
+    for (const struct server_list *item = results; NULL != item;
+            item = item->next) {
+        const struct server_owner_info *result =
+            (struct server_owner_info *)item->data;
+        
+        INSERT_ELEMENT(entry, root, "dbOwnerInfo");
+        if (NULL == result) continue;
+
+        INSERT_STRING(entry, "dbID", result->dbID);
+        /* Ignore aifoIsds */
+        INSERT_STRING(entry, "dbType", result->dbType);
+        INSERT_STRING(entry, "ic", result->ic);
+        INSERT_STRING(entry, "pnFirstName", result->pnFirstName);
+        INSERT_STRING(entry, "pnMiddleName", result->pnMiddleName);
+        INSERT_STRING(entry, "pnLastName", result->pnLastName);
+        INSERT_STRING(entry, "pnLastNameAtBirth", result->pnLastNameAtBirth);
+        INSERT_STRING(entry, "firmName", result->firmName);
+        INSERT_TMPTR(entry, "biDate", result->biDate);
+        INSERT_STRING(entry, "biCity", result->biCity);
+        INSERT_STRING(entry, "biCounty", result->biCounty);
+        INSERT_STRING(entry, "biState", result->biState);
+        /* Ignore adCode */
+        INSERT_STRING(entry, "adCity", result->adCity);
+        /* Ignore adDistrict */
+        INSERT_STRING(entry, "adStreet", result->adStreet);
+        INSERT_STRING(entry, "adNumberInStreet", result->adNumberInStreet);
+        INSERT_STRING(entry, "adNumberInMunicipality",
+                result->adNumberInMunicipality);
+        INSERT_STRING(entry, "adZipCode", result->adZipCode);
+        INSERT_STRING(entry, "adState", result->adState);
+        INSERT_STRING(entry, "nationality", result->nationality);
+        if (result->email_exists || result->email != NULL) {
+            INSERT_STRING(entry, "email", result->email);
+        }
+        if (result->telNumber_exists || result->telNumber != NULL) {
+            INSERT_STRING(entry, "telNumber", result->telNumber);
+        }
+        INSERT_STRING(entry, "identifier", result->identifier);
+        INSERT_STRING(entry, "registryCode", result->registryCode);
+        INSERT_LONGINTPTR(entry, "dbState", result->dbState);
+        INSERT_BOOLEANPTR(entry, "dbEffectiveOVM", result->dbEffectiveOVM);
+        INSERT_BOOLEANPTR(entry, "dbOpenAddressing", result->dbOpenAddressing);
+    }
+
+leave:
+    return error;
+}
+
+
+/* Implement FindDataBox.
+ * @arguments is pointer to struct arguments_DS_df_FindDataBox */
+static http_error service_FindDataBox(
+        xmlXPathContextPtr xpath_ctx,
+        xmlNodePtr isds_response,
+        const void *arguments) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    const char *code = "9999";
+    char *message = NULL;
+    const struct arguments_DS_df_FindDataBox *configuration =
+        (const struct arguments_DS_df_FindDataBox *)arguments;
+    char *string = NULL;
+    xmlNodePtr node;
+
+    if (NULL == configuration || NULL == configuration->status_code ||
+            NULL == configuration->status_message) {
+        error = HTTP_ERROR_SERVER;
+        goto leave;
+    }
+
+    /* Check request */
+    error = select_element(&code, &message, xpath_ctx, "isds:dbOwnerInfo",
+            &node);
+    if (error) goto leave;
+    xpath_ctx->node = node;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:dbID", 1, configuration->criteria->dbID);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:dbType", 1, configuration->criteria->dbType);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:ic", 1, configuration->criteria->ic);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:pnFirstName", 1, configuration->criteria->pnFirstName);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:pnMiddleName", 1, configuration->criteria->pnMiddleName);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:pnLastName", 1, configuration->criteria->pnLastName);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:pnLastNameAtBirth", 1, configuration->criteria->pnLastNameAtBirth);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:firmName", 1, configuration->criteria->firmName);
+    if (error) goto leave;
+
+    error = element_equals_date(&code, &message, xpath_ctx,
+            "isds:biDate", 1, configuration->criteria->biDate);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:biCity", 1, configuration->criteria->biCity);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:biCounty", 1, configuration->criteria->biCounty);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:biState", 1, configuration->criteria->biState);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:adCity", 1, configuration->criteria->adCity);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:adStreet", 1, configuration->criteria->adStreet);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:adNumberInStreet", 1,
+            configuration->criteria->adNumberInStreet);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:adNumberInMunicipality", 1,
+            configuration->criteria->adNumberInMunicipality);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:adZipCode", 1, configuration->criteria->adZipCode);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:adState", 1, configuration->criteria->adState);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:nationality", 1, configuration->criteria->nationality);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:email", 0, configuration->criteria->email);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:telNumber", 0, configuration->criteria->telNumber);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:identifier", 1, configuration->criteria->identifier);
+    if (error) goto leave;
+
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:registryCode", 1, configuration->criteria->registryCode);
+    if (error) goto leave;
+
+    error = element_equals_integer(&code, &message, xpath_ctx,
+            "isds:dbState", 1, configuration->criteria->dbState);
+    if (error) goto leave;
+
+    error = element_equals_boolean(&code, &message, xpath_ctx,
+            "isds:dbEffectiveOVM", 1, configuration->criteria->dbEffectiveOVM);
+    if (error) goto leave;
+
+    error = element_equals_boolean(&code, &message, xpath_ctx,
+            "isds:dbOpenAddressing", 1,
+            configuration->criteria->dbOpenAddressing);
+    if (error) goto leave;
+
+    /* Build response */
+    if ((error = insert_tDbOwnersArray(isds_response, configuration->results,
+                    configuration->results_exists))) {
+        goto leave;
+    }
+
+    code = configuration->status_code;
+    message = strdup(configuration->status_message);
+
+leave:
+    if (HTTP_ERROR_SERVER != error) {
+        http_error next_error = insert_isds_status(isds_response, 0,
+                BAD_CAST code, BAD_CAST message, NULL);
+        if (HTTP_ERROR_SUCCESS != next_error) error = next_error;
+    }
+    free(string);
+    free(message);
     return error;
 }
 
@@ -1284,6 +1611,9 @@ static struct service services[] = {
     { SERVICE_DS_df_DataBoxCreditInfo,
         "DS/df", BAD_CAST ISDS_NS, BAD_CAST "DataBoxCreditInfo",
         service_DataBoxCreditInfo },
+    { SERVICE_DS_df_FindDataBox,
+        "DS/df", BAD_CAST ISDS_NS, BAD_CAST "FindDataBox",
+        service_FindDataBox },
     { SERVICE_DS_df_ISDSSearch2,
         "DS/df", BAD_CAST ISDS_NS, BAD_CAST "ISDSSearch2",
         service_ISDSSearch2 },

@@ -10,6 +10,7 @@ typedef enum {
     SERVICE_asws_changePassword_ChangePasswordOTP,
     SERVICE_asws_changePassword_SendSMSCode,
     SERVICE_DS_df_DataBoxCreditInfo,
+    SERVICE_DS_df_FindDataBox,
     SERVICE_DS_df_ISDSSearch2,
     SERVICE_DS_DsManage_ChangeISDSPassword,
     SERVICE_DS_Dx_EraseMessage,
@@ -102,6 +103,41 @@ struct server_db_result {
     char *send_options;         /* dbSendOptions value */
 };
 
+/* Union of tdbOwnerInfo and tdbPersonalOwnerInfo XSD types */
+struct server_owner_info {
+    char *dbID;
+    _Bool *aifoIsds;
+    char *dbType;
+    char *ic;
+    char *pnFirstName;
+    char *pnMiddleName;
+    char *pnLastName;
+    char *pnLastNameAtBirth;
+    char *firmName;
+    struct tm *biDate;
+    char *biCity;
+    char *biCounty;
+    char *biState;
+    long int *adCode;
+    char *adCity;
+    char *adDistrict;
+    char *adStreet;
+    char *adNumberInStreet;
+    char *adNumberInMunicipality;
+    char *adZipCode;
+    char *adState;
+    char *nationality;
+    _Bool email_exists; /* Return empty email element */
+    char *email;
+    _Bool telNumber_exists; /* Return empty telNumber element */
+    char *telNumber;
+    char *identifier;
+    char *registryCode;
+    long int *dbState;
+    _Bool *dbEffectiveOVM;
+    _Bool *dbOpenAddressing;
+};
+
 /* General linked list */
 struct server_list {
     struct server_list *next;       /* Next list item,
@@ -120,6 +156,16 @@ struct arguments_DS_df_DataBoxCreditInfo {
     const long int current_credit;  /* Return this currentCredit */
     const char *email;              /* Return this notifEmail */
     const struct server_list *history;  /* Return this ciRecords */
+};
+
+struct arguments_DS_df_FindDataBox {
+    const char *status_code; 
+    const char *status_message;
+    const struct server_owner_info *criteria;  /* generilized tDbOwnerInfo */
+    const _Bool results_exists;     /* Return dbResults element */
+    const struct server_list *results;  /* Return list of
+                                           struct server_owner_info * as
+                                           dbResults */
 };
 
 struct arguments_DS_df_ISDSSearch2 {
