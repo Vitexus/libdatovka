@@ -14,9 +14,9 @@
 
 #include "test-tools.h"
 
-char *unit_name, *reason = NULL;
+char *unit_name, *reason;
 unsigned int passed, failed;
-void (*test_destructor_function)(void *) = NULL;
+void (*test_destructor_function)(void *);
 void *test_destructor_argument;
 
 #define INIT_TEST(name) { \

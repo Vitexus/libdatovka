@@ -16,6 +16,9 @@
 #include <string.h>
 #include <unistd.h>
 
+/* Global variables for each test unit */
+char *reason = NULL;
+void (*test_destructor_function)(void *) = NULL;
 
 /* Print formated string into automtically reallocated @uffer.
  * @buffer automatically reallocated buffer. Must be &NULL or preallocated
