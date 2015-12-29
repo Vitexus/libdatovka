@@ -28,8 +28,10 @@ TESTS = prepare_environment \
 		isds_message_copy_free isds_message_status_change_free isds_approval_free \
 		isds_commercial_permission_free isds_credentials_delivery_free \
 		isds_credit_event_free isds_fulltext_result_free \
+		isds_box_state_period_free \
 		isds_PersonName_duplicate isds_Address_duplicate \
 		isds_DbOwnerInfo_duplicate isds_DbUserInfo_duplicate \
+		isds_box_state_period_duplicate \
 		isds-filemetatype isds-hash_algorithm \
 		isds-timestring2timeval \
 		isds-uint2isds_message_status isds-eventstring2event \
@@ -172,10 +174,13 @@ isds_credentials_delivery_free_SOURCES 	= isds_credentials_delivery_free.c \
 										  $(common)
 isds_credit_event_free_SOURCES 	= isds_credit_event_free.c $(common)
 isds_fulltext_result_free_SOURCES 	= isds_fulltext_result_free.c $(common)
+isds_box_state_period_free_SOURCES 	= isds_box_state_period_free.c $(common)
 isds_PersonName_duplicate_SOURCES	= isds_PersonName_duplicate.c $(common)
 isds_Address_duplicate_SOURCES	= isds_Address_duplicate.c $(common)
 isds_DbOwnerInfo_duplicate_SOURCES	= isds_DbOwnerInfo_duplicate.c $(common)
 isds_DbUserInfo_duplicate_SOURCES	= isds_DbUserInfo_duplicate.c $(common)
+isds_box_state_period_duplicate_SOURCES	= isds_box_state_period_duplicate.c \
+										  $(common)
 
 # Access static symbols from isds.c
 isds_dbtype_SOURCES 		= isds-dbtype.c $(isds_common)

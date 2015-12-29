@@ -833,6 +833,15 @@ struct isds_fulltext_result {
                                    into this box */
 };
 
+/* A box state valid in the time range */
+struct isds_box_state_period {
+    struct timeval from;        /* Time range beginning */
+    struct timeval to;          /* Time range end */
+    long int dbState;           /* Box state; 1 <=> active box, otherwise
+                                   inaccessible; use isds_DbState enum to
+                                   identify some states. */
+};
+
 /* Initialize ISDS library.
  * Global function, must be called before other functions.
  * If it fails you can not use ISDS library and must call isds_cleanup() to
@@ -1841,6 +1850,9 @@ void isds_credentials_delivery_free(
 void isds_fulltext_result_free(
         struct isds_fulltext_result **result);
 
+/* Deallocate struct isds_box_state_period recursively and NULL it */
+void isds_box_state_period_free(struct isds_box_state_period **period);
+
 /* Copy structure isds_PersonName recursively */
 struct isds_PersonName *isds_PersonName_duplicate(
         const struct isds_PersonName *src);
@@ -1856,6 +1868,10 @@ struct isds_DbOwnerInfo *isds_DbOwnerInfo_duplicate(
 /* Copy structure isds_DbUserInfo recursively */
 struct isds_DbUserInfo *isds_DbUserInfo_duplicate(
         const struct isds_DbUserInfo *src);
+
+/* Copy structure isds_box_state_period recursively */
+struct isds_box_state_period *isds_box_state_period_duplicate(
+        const struct isds_box_state_period *src);
 
 #ifdef __cplusplus  /* For C++ linker sake */
 }

@@ -457,6 +457,13 @@ void isds_fulltext_result_free(
 }
 
 
+/* Deallocate struct isds_box_state_period recursively and NULL it */
+void isds_box_state_period_free(struct isds_box_state_period **period) {
+    if (NULL == period || NULL == *period) return;
+    zfree(*period);
+}
+
+
 /* *DUP_OR_ERROR macros needs error label */
 #define STRDUP_OR_ERROR(new, template) { \
     if (!template) { \
@@ -660,6 +667,23 @@ struct isds_DbUserInfo *isds_DbUserInfo_duplicate(
 error:
     isds_DbUserInfo_free(&new);
     return NULL;
+}
+
+
+/* Copy structure isds_box_state_period recursively */
+struct isds_box_state_period *isds_box_state_period_duplicate(
+        const struct isds_box_state_period *src) {
+    struct isds_box_state_period *new = NULL;
+    if (!src) return NULL;
+
+    new = calloc(1, sizeof(*new));
+    if (!new) return NULL;
+
+    memcpy(&new->from, &src->from, sizeof(src->from));
+    memcpy(&new->to, &src->to, sizeof(src->to));
+    new->dbState = src->dbState;
+
+    return new;
 }
 
 #undef FLATDUP_OR_ERROR

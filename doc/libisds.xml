@@ -1510,6 +1510,31 @@ err = isds_cleanup();
         </variablelist>
       </refsection>
 
+      <refsection>
+        <title>struct <structname>isds_box_state_period</structname></title>
+        <synopsis>struct <structname>isds_box_state_period</structname>;</synopsis>
+        <para>A box state valid in the time range. Members are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><type>struct timeval *</type><structfield>from</structfield>;</term>
+            <listitem><para>Time range beginning.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>struct timeval *</type><structfield>to</structfield>;</term>
+            <listitem><para>Time range end.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>long int </type><structfield>dbState</structfield>;</term>
+            <listitem><para>Box state. <constant>1</constant> means the box is
+                accessible. Other values mean the box is inaccessible. You can
+                use <type>isds_DbState</type> enum to identify some
+                states.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
 
     </refsection>
 
