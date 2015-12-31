@@ -1,5 +1,4 @@
 * Implement news from 2015-11-09 and previous
-    GetDataBoxActivityStatus
     FindPersonalDataBox
 * Test Re-signISDSDocument service
     Testing instance seems refusing any input as not-a-message

@@ -1301,6 +1301,28 @@ isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
 isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
         long int *box_status);
 
+/* Get history of box state changes.
+ * @context is ISDS session context.
+ * @box_id is UTF-8 encoded sender box identifier as zero terminated string.
+ * @from_time is first second of history to return in @history. Server ignores
+ * subseconds. NULL means time of creating the box.
+ * @to_time is last second of history to return in @history. Server ignores
+ * subseconds. It's valid to have the @from_time equaled to the @to_time. The
+ * interval is closed from both ends. NULL means now.
+ * @history outputs auto-reallocated list of pointers to struct
+ * isds_box_state_period. Each item describes a continues time when the box
+ * was in one state. The state is 1 for accessible box. Otherwise the box
+ * is inaccessible (priviledged users will get exact box state as enumerated
+ * in isds_DbState, other users 0).
+ * @return:
+ *  IE_SUCCESS if the history has been obtained correctly,
+ *  or other appropriate error. Please note that server allows to retrieve
+ *  the history only to some users. */
+isds_error isds_get_box_state_history(struct isds_ctx *context,
+        const char *box_id,
+        const struct timeval *from_time, const struct timeval *to_time,
+        struct isds_list **history);
+
 /* Get list of permissions to send commercial messages.
  * @context is ISDS session context.
  * @box_id is UTF-8 encoded sender box identifier as zero terminated string

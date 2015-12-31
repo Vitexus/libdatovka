@@ -85,3 +85,30 @@ http_error _server_datestring2tm(const char *string, struct tm *time) {
     time->tm_year -= 1900;
     return HTTP_ERROR_SUCCESS;
 }
+
+
+/* Convert UTC broken time to time_t.
+ * @broken_utc it time in UTC in broken format. Despite its content is not
+ * touched, it'sw not-const because underlying POSIX function has non-const
+ * signature.
+ * @return (time_t) -1 in case of error */
+_hidden time_t _isds_timegm(struct tm *broken_utc) {
+    time_t ret;
+    time_t diff;
+    struct tm broken, *tmp;
+
+    ret = time(0);
+    tmp = gmtime(&ret);
+
+    if (!tmp) {
+        return (time_t)-1;
+    }
+
+    tmp->tm_isdst = broken_utc->tm_isdst;
+    diff = ret - mktime(tmp);
+    memcpy(&broken, broken_utc, sizeof(struct tm));
+    broken.tm_isdst = tmp->tm_isdst; /* handle broken_utc->tm_isdst < 0 */
+    ret = mktime(&broken) + diff;
+    return ret;
+}
+

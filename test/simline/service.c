@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdint.h>     /* For intmax_t */
 #include <inttypes.h>   /* For PRIdMAX */
+#include <ctype.h>      /* for isdigit() */
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
@@ -46,6 +47,161 @@ struct service {
             xmlXPathContextPtr, xmlNodePtr,
             const void *arguments);
 };
+
+
+/* Convert UTF-8 ISO 8601 date-time @string to struct timeval.
+ * It respects microseconds too. Microseconds are rounded half up.
+ * In case of error, @time will be freed. */
+static http_error timestring2timeval(const char *string,
+        struct timeval **time) {
+    struct tm broken;
+    char *offset, *delim, *endptr;
+    const int subsecond_resolution = 6;
+    char subseconds[subsecond_resolution + 1];
+    _Bool round_up = 0;
+    int offset_hours, offset_minutes;
+    int i;
+    long int long_number;
+#ifdef _WIN32
+    int tmp;
+#endif
+    
+    if (!time) return HTTP_ERROR_SERVER;
+    if (!string) {
+        free(*time);
+        *time = NULL;
+        return HTTP_ERROR_CLIENT;
+    }
+
+    memset(&broken, 0, sizeof(broken));
+
+    if (!*time) {
+        *time = calloc(1, sizeof(**time));
+        if (!*time) return HTTP_ERROR_SERVER;
+    } else {
+        memset(*time, 0, sizeof(**time));
+    }
+
+
+    /* xsd:date is ISO 8601 string, thus ASCII */
+    /*TODO: negative year */
+
+#ifdef _WIN32
+    i = 0;
+    if ((tmp = sscanf((const char*)string, "%d-%d-%dT%d:%d:%d%n",
+        &broken.tm_year, &broken.tm_mon, &broken.tm_mday,
+        &broken.tm_hour, &broken.tm_min, &broken.tm_sec,
+        &i)) < 6) {
+        free(*time);
+        *time = NULL;
+        return HTTP_ERROR_CLIENT;
+    }
+
+    broken.tm_year -= 1900;
+    broken.tm_mon--;
+    broken.tm_isdst = -1;
+    offset = (char*)string + i;
+#else
+    /* Parse date and time without subseconds and offset */
+    offset = strptime((char*)string, "%Y-%m-%dT%T", &broken);
+    if (!offset) {
+        free(*time);
+        *time = NULL;
+        return HTTP_ERROR_CLIENT;
+    }
+#endif
+    
+    /* Get subseconds */
+    if (*offset == '.' ) {
+        offset++;
+
+        /* Copy first 6 digits, pad it with zeros.
+         * Current server implementation uses only millisecond resolution. */
+        /* TODO: isdigit() is locale sensitive */
+        for (i = 0;
+                i < subsecond_resolution && isdigit(*offset);
+                i++, offset++) {
+            subseconds[i] = *offset;
+        }
+        if (subsecond_resolution == i && isdigit(*offset)) {
+            /* Check 7th digit for rounding */
+            if (*offset >= '5') round_up = 1;
+            offset++;
+        }
+        for (; i < subsecond_resolution; i++) {
+            subseconds[i] = '0';
+        }
+        subseconds[subsecond_resolution] = '\0';
+
+        /* Convert it into integer */
+        long_number = strtol(subseconds, &endptr, 10);
+        if (*endptr != '\0' || long_number == LONG_MIN ||
+                long_number == LONG_MAX) {
+            free(*time);
+            *time = NULL;
+            return HTTP_ERROR_SERVER;
+        }
+        /* POSIX sys_time.h(0p) defines tv_usec timeval member as su_seconds_t
+         * type. sys_types.h(0p) defines su_seconds_t as "used for time in
+         * microseconds" and "the type shall be a signed integer capable of
+         * storing values at least in the range [-1, 1000000]. */
+        if (long_number < -1 || long_number >= 1000000) {
+            free(*time);
+            *time = NULL;
+            return HTTP_ERROR_CLIENT;
+        }
+        (*time)->tv_usec = long_number;
+
+        /* Round the subseconds */
+        if (round_up) {
+            if (999999 == (*time)->tv_usec) {
+                (*time)->tv_usec = 0;
+                broken.tm_sec++;
+            } else {
+                (*time)->tv_usec++;
+            }
+        }
+
+        /* move to the zone offset delimiter or signal NULL*/
+        delim = strchr(offset, '-');
+        if (!delim)
+            delim = strchr(offset, '+');
+        if (!delim)
+            delim = strchr(offset, 'Z');
+        offset = delim;
+    }
+
+    /* Get zone offset */
+    /* ISO allows zone offset string only: "" | "Z" | ("+"|"-" "<HH>:<MM>")
+     * "" equals to "Z" and it means UTC zone. */
+    /* One can not use strptime(, "%z",) becase it's RFC E-MAIL format without
+     * colon separator */
+    if (offset && (*offset == '-' || *offset == '+')) {
+        if (2 != sscanf(offset + 1, "%2d:%2d", &offset_hours, &offset_minutes)) {
+            free(*time);
+            *time = NULL;
+            return HTTP_ERROR_CLIENT;
+        }
+        if (*offset == '+') {
+            broken.tm_hour -= offset_hours;
+            broken.tm_min -= offset_minutes;
+        } else {
+            broken.tm_hour += offset_hours;
+            broken.tm_min += offset_minutes;
+        }
+    }
+
+    /* Convert to time_t */
+    (*time)->tv_sec = _isds_timegm(&broken);
+    if ((*time)->tv_sec == (time_t) -1) {
+        free(*time);
+        *time = NULL;
+        return HTTP_ERROR_CLIENT;
+    }
+
+    return HTTP_ERROR_SUCCESS;
+}
+
 
 /* Following EXTRACT_* macros expect @xpath_ctx, @error, @message,
  * and leave label. */
@@ -375,6 +531,17 @@ static int datecmp(const struct tm *a, const struct tm *b) {
 }
 
 
+/* Compare times represented by pointer to struct timeval.
+ * @return 0 if equalued, non-0 otherwise. */
+static int timecmp(const struct timeval *a, const struct timeval *b) {
+    if (NULL == a && b == NULL) return 0;
+    if ((NULL == a && b != NULL) || (NULL != a && b == NULL)) return 1;
+    if (a->tv_sec != b->tv_sec) return 1;
+    if (a->tv_usec != b->tv_usec) return 1;
+    return 0;
+}
+
+
 /* Checks an @element_name's value is an @expected_value string.
  * @code is a static output ISDS error code
  * @error_message is a reallocated output ISDS error message
@@ -656,6 +823,78 @@ static http_error element_equals_date(const char **code, char **message,
 
 leave:
     free(string);
+    return error;
+}
+
+
+/* Checks an @element_name's value is an @expected_value time.
+ * @code is a static output ISDS error code
+ * @error_message is an reallocated output ISDS error message
+ * @xpath_ctx is a current XPath context
+ * @element_name is name of a element to check
+ * @must_exist is true if the @element_name must exist even if @expected_value
+ * is NULL.
+ * @expected_value is an expected boolean value
+ * @return HTTP_ERROR_SUCCESS if the @element_name element's value is
+ * @expected_value. HTTP_ERROR_CLIENT if not equaled, HTTP_ERROR_SERVER if an
+ * internal error occured. */
+static http_error element_equals_time(const char **code, char **message,
+        xmlXPathContextPtr xpath_ctx, const char *element_name,
+        _Bool must_exist, const struct timeval *expected_value) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    char *string = NULL;
+    struct timeval *value = NULL;
+
+    if (must_exist) {
+        error = element_exists(code, message, xpath_ctx, element_name, 0);
+        if (HTTP_ERROR_SUCCESS != error)
+            goto leave;
+    }
+
+    error = extract_string(code, message, xpath_ctx, element_name, &string);
+    if (HTTP_ERROR_SUCCESS != error)
+        goto leave;
+
+    if (NULL != expected_value) {
+        if (NULL == string) {
+            *code = "9999";
+            test_asprintf(message, "Empty %s element", element_name);
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+        error = timestring2timeval(string, &value);
+        if (error) {
+            if (error == HTTP_ERROR_CLIENT) { \
+                test_asprintf(message, "%s value is not a valid time: %s",
+                        element_name, string);
+            }
+            goto leave;
+        }
+        if (timecmp(expected_value, value)) {
+            *code = "9999";
+            test_asprintf(message, "Unexpected %s element value: "
+                    "expected=%ds:%" PRIdMAX "us, got=%ds:%" PRIdMAX "us",
+                    element_name,
+                    expected_value->tv_sec, (intmax_t)expected_value->tv_usec,
+                    value->tv_sec, (intmax_t)value->tv_usec);
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+    } else {
+        if (NULL != string && *string != '\0') {
+            *code = "9999";
+            test_asprintf(message,
+                    "Unexpected %s element value: "
+                    "expected empty value, got=`%s'",
+                    element_name, string);
+            error = HTTP_ERROR_CLIENT;
+            goto leave;
+        }
+    }
+
+leave:
+    free(string);
+    free(value);
     return error;
 }
 
@@ -1271,6 +1510,90 @@ leave:
 }
 
 
+/* Insert list of period results as XSD:tdbPeriodsArray XML tree.
+ * @isds_response is XML node with the response
+ * @results is list of struct server_box_state_period *.
+ * @create_empty_root is true to create Periods element even if @results is
+ * empty. */
+static http_error insert_tdbPeriodsArray(xmlNodePtr isds_response,
+        const struct server_list *results, _Bool create_empty_root) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    xmlNodePtr root, entry;
+
+    if (NULL == isds_response) return HTTP_ERROR_SERVER;
+
+    if (NULL != results || create_empty_root)
+        INSERT_ELEMENT(root, isds_response, "Periods");
+
+    if (NULL == results) return HTTP_ERROR_SUCCESS;
+
+    for (const struct server_list *item = results; NULL != item;
+            item = item->next) {
+        const struct server_box_state_period *result =
+            (struct server_box_state_period *)item->data;
+        
+        INSERT_ELEMENT(entry, root, "Period");
+        if (NULL == result) continue;
+
+        INSERT_TIMEVALPTR(entry, "PeriodFrom", result->from);
+        INSERT_TIMEVALPTR(entry, "PeriodTo", result->to);
+        INSERT_LONGINTPTR(entry, "DbState", &(result->dbState));
+    }
+
+leave:
+    return error;
+}
+
+
+/* Implement GetDataBoxActivityStatus.
+ * @arguments is pointer to struct arguments_DS_df_GetDataBoxActivityStatus */
+static http_error service_GetDataBoxActivityStatus(
+        xmlXPathContextPtr xpath_ctx,
+        xmlNodePtr isds_response,
+        const void *arguments) {
+    http_error error = HTTP_ERROR_SUCCESS;
+    const char *code = "9999";
+    char *message = NULL;
+    const struct arguments_DS_df_GetDataBoxActivityStatus *configuration =
+        (const struct arguments_DS_df_GetDataBoxActivityStatus *)arguments;
+
+    if (NULL == configuration || NULL == configuration->status_code ||
+            NULL == configuration->status_message) {
+        error = HTTP_ERROR_SERVER;
+        goto leave;
+    }
+
+    /* Check request */
+    error = element_equals_string(&code, &message, xpath_ctx,
+            "isds:dbID", 1, configuration->box_id);
+    /* ??? XML schema and textual documentation does not agree on obligatority
+     * of the isds:baFrom and isds:baTo value or presence. */
+    error = element_equals_time(&code, &message, xpath_ctx,
+            "isds:baFrom", 1, configuration->from);
+    error = element_equals_time(&code, &message, xpath_ctx,
+            "isds:baTo", 1, configuration->to);
+    if (error) goto leave;
+
+    /* Build response */
+    if ((error = insert_tdbPeriodsArray(isds_response, configuration->results,
+                    configuration->results_exists))) {
+        goto leave;
+    }
+
+    code = configuration->status_code;
+    message = strdup(configuration->status_message);
+
+leave:
+    if (HTTP_ERROR_SERVER != error) {
+        http_error next_error = insert_isds_status(isds_response, 0,
+                BAD_CAST code, BAD_CAST message, NULL);
+        if (HTTP_ERROR_SUCCESS != next_error) error = next_error;
+    }
+    free(message);
+    return error;
+}
+
+
 /* Implement ISDSSearch2.
  * @arguments is pointer to struct arguments_DS_df_ISDSSearch2 */
 static http_error service_ISDSSearch2(
@@ -1614,6 +1937,9 @@ static struct service services[] = {
     { SERVICE_DS_df_FindDataBox,
         "DS/df", BAD_CAST ISDS_NS, BAD_CAST "FindDataBox",
         service_FindDataBox },
+    { SERVICE_DS_df_GetDataBoxActivityStatus,
+        "DS/df", BAD_CAST ISDS_NS, BAD_CAST "GetDataBoxActivityStatus",
+        service_GetDataBoxActivityStatus },
     { SERVICE_DS_df_ISDSSearch2,
         "DS/df", BAD_CAST ISDS_NS, BAD_CAST "ISDSSearch2",
         service_ISDSSearch2 },

@@ -2279,11 +2279,11 @@ static isds_error timeval2timestring(const struct timeval *time,
 #endif /* HAVE_LIBCURL */
 
 
-/* Convert UTF-8 ISO 8601 date-time @string to struct timeval.
+/* Convert UTF-8 ISO 8601 date-time @string to static struct timeval.
  * It respects microseconds too. Microseconds are rounded half up.
- * In case of error, @time will be freed. */
-static isds_error timestring2timeval(const xmlChar *string,
-        struct timeval **time) {
+ * In case of error, @time will be undefined. */
+static isds_error timestring2static_timeval(const xmlChar *string,
+        struct timeval *time) {
     struct tm broken;
     char *offset, *delim, *endptr;
     const int subsecond_resolution = 6;
@@ -2298,18 +2298,11 @@ static isds_error timestring2timeval(const xmlChar *string,
     
     if (!time) return IE_INVAL;
     if (!string) {
-        zfree(*time);
         return IE_INVAL;
     }
 
     memset(&broken, 0, sizeof(broken));
-
-    if (!*time) {
-        *time = calloc(1, sizeof(**time));
-        if (!*time) return IE_NOMEM;
-    } else {
-        memset(*time, 0, sizeof(**time));
-    }
+    memset(time, 0, sizeof(*time));
 
 
     /* xsd:date is ISO 8601 string, thus ASCII */
@@ -2321,7 +2314,6 @@ static isds_error timestring2timeval(const xmlChar *string,
         &broken.tm_year, &broken.tm_mon, &broken.tm_mday,
         &broken.tm_hour, &broken.tm_min, &broken.tm_sec,
         &i)) < 6) {
-        zfree(*time);
         return IE_DATE;
     }
 
@@ -2333,7 +2325,6 @@ static isds_error timestring2timeval(const xmlChar *string,
     /* Parse date and time without subseconds and offset */
     offset = strptime((char*)string, "%Y-%m-%dT%T", &broken);
     if (!offset) {
-        zfree(*time);
         return IE_DATE;
     }
 #endif
@@ -2364,7 +2355,6 @@ static isds_error timestring2timeval(const xmlChar *string,
         long_number = strtol(subseconds, &endptr, 10);
         if (*endptr != '\0' || long_number == LONG_MIN ||
                 long_number == LONG_MAX) {
-            zfree(*time);
             return IE_DATE;
         }
         /* POSIX sys_time.h(0p) defines tv_usec timeval member as su_seconds_t
@@ -2372,18 +2362,17 @@ static isds_error timestring2timeval(const xmlChar *string,
          * microseconds" and "the type shall be a signed integer capable of
          * storing values at least in the range [-1, 1000000]. */
         if (long_number < -1 || long_number >= 1000000) {
-            zfree(*time);
             return IE_DATE;
         }
-        (*time)->tv_usec = long_number;
+        time->tv_usec = long_number;
 
         /* Round the subseconds */
         if (round_up) {
-            if (999999 == (*time)->tv_usec) {
-                (*time)->tv_usec = 0;
+            if (999999 == time->tv_usec) {
+                time->tv_usec = 0;
                 broken.tm_sec++;
             } else {
-                (*time)->tv_usec++;
+                time->tv_usec++;
             }
         }
 
@@ -2403,7 +2392,6 @@ static isds_error timestring2timeval(const xmlChar *string,
      * colon separator */
     if (offset && (*offset == '-' || *offset == '+')) {
         if (2 != sscanf(offset + 1, "%2d:%2d", &offset_hours, &offset_minutes)) {
-            zfree(*time);
             return IE_DATE;
         }
         if (*offset == '+') {
@@ -2416,13 +2404,41 @@ static isds_error timestring2timeval(const xmlChar *string,
     }
 
     /* Convert to time_t */
-    (*time)->tv_sec = _isds_timegm(&broken);
-    if ((*time)->tv_sec == (time_t) -1) {
-        zfree(*time);
+    time->tv_sec = _isds_timegm(&broken);
+    if (time->tv_sec == (time_t) -1) {
         return IE_DATE;
     }
 
     return IE_SUCCESS;
+}
+
+
+/* Convert UTF-8 ISO 8601 date-time @string to reallocated struct timeval.
+ * It respects microseconds too. Microseconds are rounded half up.
+ * In case of error, @time will be freed. */
+static isds_error timestring2timeval(const xmlChar *string,
+        struct timeval **time) {
+    isds_error error;
+    
+    if (!time) return IE_INVAL;
+    if (!string) {
+        zfree(*time);
+        return IE_INVAL;
+    }
+
+    if (!*time) {
+        *time = calloc(1, sizeof(**time));
+        if (!*time) return IE_NOMEM;
+    } else {
+        memset(*time, 0, sizeof(**time));
+    }
+
+    error = timestring2static_timeval(string, *time);
+    if (error) {
+        zfree(*time);
+    }
+
+    return error;
 }
 
 
@@ -8001,6 +8017,281 @@ leave:
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("CheckDataBox request processed by server successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
+}
+
+
+#if HAVE_LIBCURL
+/* Convert XSD:tdbPeriod XML tree into structure
+ * @context is ISDS context.
+ * @period is automatically reallocated found box status period structure.
+ * @xpath_ctx is XPath context with current node as element of
+ * XSD:tDbPeriod type.
+ * In case of error @period will be freed. */
+static isds_error extract_Period(struct isds_ctx *context,
+        struct isds_box_state_period **period, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+    long int *dbState_ptr;
+
+    if (NULL == context) return IE_INVALID_CONTEXT;
+    if (NULL == period) return IE_INVAL;
+    isds_box_state_period_free(period);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *period = calloc(1, sizeof(**period));
+    if (NULL == *period) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    /* Extract data */
+    EXTRACT_STRING("isds:PeriodFrom", string);
+    if (NULL == string) {
+        err = IE_XML;
+        isds_log_message(context,
+                _("Could not find PeriodFrom element value"));
+        goto leave;
+    }
+    err = timestring2static_timeval((xmlChar *) string,
+            &((*period)->from));
+    if (err) {
+        char *string_locale = _isds_utf82locale(string);
+        if (err == IE_DATE) err = IE_ISDS;
+        isds_printf_message(context,
+                _("Could not convert PeriodFrom as ISO time: %s"),
+                string_locale);
+        free(string_locale);
+        goto leave;
+    }
+    zfree(string);
+
+    EXTRACT_STRING("isds:PeriodTo", string);
+    if (NULL == string) {
+        err = IE_XML;
+        isds_log_message(context,
+                _("Could not find PeriodTo element value"));
+        goto leave;
+    }
+    err = timestring2static_timeval((xmlChar *) string,
+            &((*period)->to));
+    if (err) {
+        char *string_locale = _isds_utf82locale(string);
+        if (err == IE_DATE) err = IE_ISDS;
+        isds_printf_message(context,
+                _("Could not convert PeriodTo as ISO time: %s"),
+                string_locale);
+        free(string_locale);
+        goto leave;
+    }
+    zfree(string);
+
+    dbState_ptr = &((*period)->dbState);
+    EXTRACT_LONGINT("isds:DbState", dbState_ptr, 1);
+
+leave:
+    if (err) isds_box_state_period_free(period);
+    free(string);
+    xmlXPathFreeObject(result);
+    return err;
+}
+#endif /* HAVE_LIBCURL */
+
+
+/* Get history of box state changes.
+ * @context is ISDS session context.
+ * @box_id is UTF-8 encoded sender box identifier as zero terminated string.
+ * @from_time is first second of history to return in @history. Server ignores
+ * subseconds. NULL means time of creating the box.
+ * @to_time is last second of history to return in @history. Server ignores
+ * subseconds. It's valid to have the @from_time equaled to the @to_time. The
+ * interval is closed from both ends. NULL means now.
+ * @history outputs auto-reallocated list of pointers to struct
+ * isds_box_state_period. Each item describes a continues time when the box
+ * was in one state. The state is 1 for accessible box. Otherwise the box
+ * is inaccessible (priviledged users will get exact box state as enumerated
+ * in isds_DbState, other users 0).
+ * @return:
+ *  IE_SUCCESS if the history has been obtained correctly,
+ *  or other appropriate error. Please note that server allows to retrieve
+ *  the history only to some users. */
+isds_error isds_get_box_state_history(struct isds_ctx *context,
+        const char *box_id,
+        const struct timeval *from_time, const struct timeval *to_time,
+        struct isds_list **history) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    char *box_id_locale = NULL;
+    xmlNodePtr request = NULL, node;
+    xmlNsPtr isds_ns = NULL;
+    xmlChar *string = NULL;
+
+    xmlDocPtr response = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+#endif
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+
+    /* Free output argument */
+    isds_list_free(history);
+
+#if HAVE_LIBCURL
+    /* Check if connection is established */
+    if (NULL == context->curl) return IE_CONNECTION_CLOSED;
+
+    /* ??? XML schema allows empty box ID, textual documentation
+     * requries the value. */
+    /* Allow undefined box_id */
+    if (NULL != box_id) {
+        box_id_locale = _isds_utf82locale((char*)box_id);
+        if (NULL == box_id_locale) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+    }
+
+    /* Build request */
+    request = xmlNewNode(NULL, BAD_CAST "GetDataBoxActivityStatus");
+    if (NULL == request) {
+        isds_printf_message(context,
+                _("Could not build GetDataBoxActivityStatus request "
+                    "for %s box"),
+                box_id_locale);
+        err = IE_ERROR;
+        goto leave;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    xmlSetNs(request, isds_ns);
+
+    /* Add mandatory XSD:tIdDbInput child */
+    INSERT_STRING(request, BAD_CAST "dbID", box_id);
+    /* Add times elements only when defined */
+    /* ???: XML schema requires the values, textual documentation does not. */
+    if (from_time) {
+        err = timeval2timestring(from_time, &string);
+        if (err) {
+            isds_log_message(context,
+                    _("Could not convert `from_time' argument to ISO time "
+                        "string"));
+            goto leave;
+        }
+        INSERT_STRING(request, "baFrom", string);
+        zfree(string);
+    }
+    if (to_time) {
+        err = timeval2timestring(to_time, &string);
+        if (err) {
+            isds_log_message(context,
+                    _("Could not convert `to_time' argument to ISO time "
+                        "string"));
+            goto leave;
+        }
+        INSERT_STRING(request, "baTo", string);
+        zfree(string);
+    }
+
+    /* Send request and check response*/
+    err = send_destroy_request_check_response(context,
+            SERVICE_DB_SEARCH, BAD_CAST "GetDataBoxActivityStatus",
+            &request, &response, NULL, NULL);
+    if (err) goto leave;
+
+
+    /* Extract data */
+    /* Set context to the root */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    result = xmlXPathEvalExpression(BAD_CAST "/isds:GetDataBoxActivityStatusResponse",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context, _("Missing GetDataBoxActivityStatusResponse element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    if (result->nodesetval->nodeNr > 1) {
+        isds_log_message(context, _("Multiple GetDataBoxActivityStatusResponse element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+    xmlXPathFreeObject(result); result = NULL;
+
+    /* Ignore dbID, it's the same as the input argument. */
+
+    /* Extract records */
+    if (NULL == history) goto leave;
+    result = xmlXPathEvalExpression(BAD_CAST "isds:Periods/isds:Period",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        struct isds_list *prev_item = NULL;
+
+        /* Iterate over all records */
+        for (int i = 0; i < result->nodesetval->nodeNr; i++) {
+            struct isds_list *item;
+
+            /* Prepare structure */
+            item = calloc(1, sizeof(*item));
+            if (!item) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+            item->destructor = (void(*)(void**))isds_box_state_period_free;
+            if (i == 0) *history = item;
+            else prev_item->next = item;
+            prev_item = item;
+
+            /* Extract it */
+            xpath_ctx->node = result->nodesetval->nodeTab[i];
+            err = extract_Period(context,
+                    (struct isds_box_state_period **) (&item->data),
+                    xpath_ctx);
+            if (err) goto leave;
+        }
+    }
+
+leave:
+    if (!err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("GetDataBoxActivityStatus request for %s box "
+                    "processed by server successfully.\n"), box_id_locale);
+    }
+    if (err) {
+        isds_list_free(history);
+    }
+
+    free(box_id_locale);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(response);
+
 #else /* not HAVE_LIBCURL */
     err = IE_NOTSUP;
 #endif

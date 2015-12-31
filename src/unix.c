@@ -1,5 +1,6 @@
 #include "isds_priv.h"
 #include <stdio.h>
+#include <stdlib.h> /* for getenv */
 #include <string.h>
 #include <time.h>
 #include "isds.h"

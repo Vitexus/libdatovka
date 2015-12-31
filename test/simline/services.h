@@ -11,6 +11,7 @@ typedef enum {
     SERVICE_asws_changePassword_SendSMSCode,
     SERVICE_DS_df_DataBoxCreditInfo,
     SERVICE_DS_df_FindDataBox,
+    SERVICE_DS_df_GetDataBoxActivityStatus,
     SERVICE_DS_df_ISDSSearch2,
     SERVICE_DS_DsManage_ChangeISDSPassword,
     SERVICE_DS_Dx_EraseMessage,
@@ -138,6 +139,13 @@ struct server_owner_info {
     _Bool *dbOpenAddressing;
 };
 
+/* Box state period */
+struct server_box_state_period {
+    struct timeval *from;
+    struct timeval *to;
+    long int dbState;
+};
+
 /* General linked list */
 struct server_list {
     struct server_list *next;       /* Next list item,
@@ -166,6 +174,19 @@ struct arguments_DS_df_FindDataBox {
     const struct server_list *results;  /* Return list of
                                            struct server_owner_info * as
                                            dbResults */
+};
+
+struct arguments_DS_df_GetDataBoxActivityStatus {
+    const char *status_code; 
+    const char *status_message;
+    const char *box_id;             /* Input */
+    const struct timeval *from;     /* Input */
+    const struct timeval *to;       /* Input */
+    const char *result_box_id;    /* Output */
+    const _Bool results_exists;     /* Return Periods element */
+    const struct server_list *results;  /* Return list of
+                                           struct server_box_state_period * as
+                                           Periods */
 };
 
 struct arguments_DS_df_ISDSSearch2 {
