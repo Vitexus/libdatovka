@@ -59,14 +59,14 @@ err = isds_cleanup();
       <title>Description</title>
 
       <para>This is a client library for accessing SOAP services of
-        <abbrev>ISDS</abbrev> (<phrase lang="cs">Informační systém datových
-          schránek</phrase> / Data Box Information System) as defined in
+        <abbrev>ISDS</abbrev> (<foreignphrase lang="cs">Informační systém datových
+          schránek</foreignphrase> / Data Box Information System) as defined in
         <ulink url="http://portal.gov.cz/zakon/300/2008">Czech
           <abbrev>ISDS</abbrev> Act (300/2008 <abbrev>Coll.</abbrev>)</ulink>
         and implied documents. Current implementation details are described in
-        <phrase lang="cs">Provozní řád</phrase> that can be downloaded from
-        <ulink url="https://www.datoveschranky.info/ke-stazeni"><phrase
-            lang="cs">Dokumenty ke stažení</phrase> section of
+        <foreignphrase lang="cs">Provozní řád</foreignphrase> that can be downloaded from
+        <ulink url="https://www.datoveschranky.info/ke-stazeni"><foreignphrase
+            lang="cs">Dokumenty ke stažení</foreignphrase> section of
           <abbrev>ISDS</abbrev> Information Portal</ulink>.</para>
 
       <para>The library provides a C language interface with synchronous
@@ -933,6 +933,12 @@ err = isds_cleanup();
             <listitem><para>Standard person.</para></listitem>
           </varlistentry>
         </variablelist>
+
+        <para>Some interfaces refer to <emphasis>gross</emphasis> box type.
+          These are the shortest names of the identifiers. For example,
+          <literal>DBTYPE_OVM</literal> is a gross type for
+          <literal>DB_OVM_NOTAR</literal> or <literal>DBTYPE_OVM</literal>.
+          But not for <literal>DBTYPE_PO</literal>.</para>
       </refsection>
 
       <refsection>
@@ -1245,8 +1251,9 @@ err = isds_cleanup();
           <varlistentry>
             <term><type>char *</type><structfield>biCounty</structfield>;</term>
             <listitem><para>Region where a person was born. This is the kind
-                of region that is called <phrase lang="de">Bezirk</phrase> in
-                German and <phrase lang="cs">okres</phrase> in
+                of region that is called <foreignphrase
+                  lang="de">Bezirk</foreignphrase> in
+                German and <foreignphrase lang="cs">okres</foreignphrase> in
                 Czech.</para></listitem>
           </varlistentry>
 
@@ -1275,14 +1282,14 @@ err = isds_cleanup();
           <varlistentry>
             <term><type>char *</type><structfield>adNumberInStreet</structfield>;</term>
             <listitem><para>Identification of an entrance on the
-                street. <phrase lang="cs">Číslo orientační</phrase> in
-                Czech.</para></listitem>
+                street. <foreignphrase lang="cs">Číslo
+                  orientační</foreignphrase> in Czech.</para></listitem>
           </varlistentry>
 
           <varlistentry>
             <term><type>char *</type><structfield>adNumberInMunicipality</structfield>;</term>
             <listitem><para>Identification of a building in the municipality.
-                <phrase lang="cs">Číslo popisné</phrase> in
+                <foreignphrase lang="cs">Číslo popisné</foreignphrase> in
                 Czech.</para></listitem>
           </varlistentry>
 
@@ -1506,6 +1513,649 @@ err = isds_cleanup();
             <listitem><para>Abbreviated country of contact address. This value
                 is optional and implicit meaning is
                 <constant>CZ</constant>.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title><type>isds_event_type</type></title>
+        <synopsis>typedef enum <type>isds_event_type</type>;</synopsis>
+        <para>Message event type. Known values are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>EVENT_UKNOWN</constant></term>
+            <listitem><para>Event uknown to this library.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>EVENT_ACCEPTED_BY_RECIPIENT</constant></term>
+            <listitem><para>Message has been delivered and accepted by
+                recipient action.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>EVENT_ACCEPTED_BY_FICTION</constant></term>
+            <listitem><para>Message has been delivered, acceptance period
+                timed out, the message is considered as
+                accepted.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>EVENT_UNDELIVERABLE</constant></term>
+            <listitem><para>Recipient box was made inaccessible, thus the
+                message is undeliverable.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>EVENT_COMMERCIAL_ACCEPTED</constant></term>
+            <listitem><para>Recipient confirmed acceptance of this commercial
+                message.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>EVENT_ENTERED_SYSTEM</constant></term>
+            <listitem><para>The message entered the
+                <abbrev>ISDS</abbrev>system, <abbrev>i.e.</abbrev> it has been
+                just sent by a sender.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>EVENT_DELIVERED</constant></term>
+            <listitem><para>The message has been delivered into recipient's
+                box.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>EVENT_PRIMARY_LOGIN</constant></term>
+            <listitem><para>Primary user logged into recipent's
+                box.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>EVENT_ENTRUSTED_LOGIN</constant></term>
+            <listitem><para>Entrusted user with capability to read logged
+                into recipient's box.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>EVENT_SYSCERT_LOGIN</constant></term>
+            <listitem><para>An application authenticated by
+                <emphasis>system</emphasis> certificate logged into
+                recipient's box.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title>struct <structname>isds_event</structname></title>
+        <synopsis>struct <structname>isds_event</structname>;</synopsis>
+        <para>An event that happened in a message life. All members are
+          optional. Members are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><type>struct timeval *</type><structfield>time</structfield>;</term>
+            <listitem><para>When the event occurred.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>isds_event_type *</type><structfield>type</structfield>;</term>
+            <listitem><para>Type of the envent.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>charr *</type><structfield>description</structfield>;</term>
+            <listitem><para>Human-readable event description generated by the
+                <abbrev>ISDS</abbrev> system. (Very probably in Czech
+                language).</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title>struct <structname>isds_envelope</structname></title>
+        <synopsis>struct <structname>isds_envelope</structname>;</synopsis>
+        <para>Message envelope. These are the metadata about a message. It
+          does contain the message documents.</para>
+        <para>Be ware that the string length constraints are forced only on
+          output members transmitted to the <abbrev>ISDS</abbrev>. The other
+          direction (downloading from the <abbrev>ISDS</abbrev>) can break
+          these rules. It should not happen, but nobody knows how much
+          incompatible new version of the <abbrev>ISDS</abbrev> protocol will
+          be.  This is the gold Internet rule: be strict on what you send, be
+          tolerant on what you receive.</para>
+        <para>Following members apply to incoming messages only:</para>
+        <variablelist>
+          <varlistentry>
+            <term><type>char *</type><structfield>dmID</structfield>;</term>
+            <listitem><para>Message identifier. Maximal length is 20
+                characters.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dbIDSender</structfield>;</term>
+            <listitem><para>Box identifier of the sender. Special value
+                <literal>aaaaaaa</literal> means the message was sent by the
+                <abbrev>ISDS</abbrev> system. Not by another user. Maximal
+                length is 7 characters.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmSender</structfield>;</term>
+            <listitem><para>Sender's name. Maximal length is 100
+                characters.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmSenderAddress</structfield>;</term>
+            <listitem><para>Postal address of the sender. Maximal length is 100
+                characters.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>long int *</type><structfield>dmSenderType</structfield>;</term>
+            <listitem><para>Gross box type of the sender. You can use
+                <type>isds_DbType</type> to enumarate some known box types.
+                This is a generic integer because the protocol keeps the value
+                unconstrained and the library must support any syntactically
+                correct value.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmRecipient</structfield>;</term>
+            <listitem><para>Recipient's name. Maximal length is 100
+                characters.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmRecipientAddress</structfield>;</term>
+            <listitem><para>Postal address of the recipient. Maximal length is
+                100 characters.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>_Bool *</type><structfield>dmAmbiguousRecipient</structfield>;</term>
+            <listitem><para>The recipient has <abbrev>OVM</abbrev> role.</para></listitem>
+          </varlistentry>
+        </variablelist>
+
+        <para>Following members are assigned by the <abbrev>ISDS</abbrev> in
+          different phases of message life cycle:</para>
+        <variablelist>
+          <varlistentry>
+            <term><type>unsigned long int *</type><structfield>dmOrdinal</structfield>;</term>
+            <listitem><para>Ordinal number in list of incoming/outgoing
+                messages.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>isds_message_status *</type><structfield>dmMessageStatus</structfield>;</term>
+            <listitem><para>Message state.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>long int *</type><structfield>dmAttachmentSize</structfield>;</term>
+            <listitem><para>Size of message documents in kilobytes. The value
+                is rounded.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>struct timeval *</type><structfield>dmDeliveryTime</structfield>;</term>
+            <listitem><para>The time of delivering the message into recipient's
+                box. It will be <constant>NULL</constant>, if the message has not
+                been delivered yet.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>struct timeval *</type><structfield>dmAcceptanceTime</structfield>;</term>
+            <listitem><para>The time of acceptancing the message by the
+                recipient. It will be <constant>NULL</constant>, if message
+                has not been accepted yet.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>struct isds_hash *</type><structfield>hash</structfield>;</term>
+            <listitem><para>The message digest. This is a hash of a substring representing
+                <literal>isds:dmDM</literal> <abbrev>XML</abbrev>
+                subtree. You can use
+                <function>isds_compute_message_hash</function> function to
+                compute a hash of the message and then compare it against this
+                structure member using <function>isds_hash_cmp</function>
+                function.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>void *</type><structfield>timestamp</structfield>;</term>
+            <listitem><para>This is a binary image of a qualified time stamp
+                of the <structfield>hash</structfield> value. The time stamp
+                is provided by the <abbrev>ISDS</abbrev> system. Messages that
+                have not yet been stamped will have this value
+                <constant>NULL</constant>.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>size_t</type> <structfield>timestamp_length</structfield>;</term>
+            <listitem><para>Length of the <structfield>timestamp</structfield>
+                value in bytes.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>struct isds_list *</type><structfield>events</structfield>;</term>
+            <listitem><para>Events the message passed trough. It's a list of
+                <type>isds_event</type> structures.</para></listitem>
+          </varlistentry>
+        </variablelist>
+
+        <para>Following members apply to both outgoing and incoming
+          messages:</para> 
+
+        <variablelist>
+          <varlistentry>
+            <term><type>char *</type><structfield>dmSenderOrgUnit</structfield>;</term>
+            <listitem><para>Sender's organisation unit as a string. This is
+                optional.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>long int *</type><structfield>dmSenderOrgUnitNum</structfield>;</term>
+            <listitem><para>Sender's organisation unit as a number. This is
+                optional.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dbIDRecipient</structfield>;</term>
+            <listitem><para>Recipent's box identifier. This is mandatory.
+                Maximal length is 7 characters.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmRecipientOrgUnit</structfield>;</term>
+            <listitem><para>Recipient's organisation unit as a string. This is
+                optional.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>long int *</type><structfield>dmRecipientOrgUnitNum</structfield>;</term>
+            <listitem><para>Recipent's organisation unit of as a number. This
+                is optional.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmToHands</structfield>;</term>
+            <listitem><para>A person in recipient's organisation. This is
+                optional.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmAnnotation</structfield>;</term>
+            <listitem><para>A subject (title) of the message. Maximal length
+                is 255 characters.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmRecipientRefNumber</structfield>;</term>
+            <listitem><para>Czech: <foreignphrase lang="cs">číslo jednací
+                  příjemce</foreignphrase>. This is optional. Maximal length is 50
+                characters.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmSenderRefNumber</structfield>;</term>
+            <listitem><para>Czech: <foreignphrase lang="cs">číslo jednací
+                  odesílatele</foreignphrase>. This is optional. Maximal length is 50
+                chars.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmRecipientIdent</structfield>;</term>
+            <listitem><para>Czech: <foreignphrase lang="cs">spisová značka
+                  příjemce</foreignphrase>. This is optional. Maximal length is 50
+                characters.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmSenderIdent</structfield>;</term>
+            <listitem><para>Czech: <foreignphrase lang="cs">spisová značka
+                  odesílatele</foreignphrase> This is optional. Maximal length is 50
+                chars.</para></listitem>
+          </varlistentry>
+        </variablelist>
+
+        <para>Following five members constitue a reference to an item from the
+          Czech Act Collection. The human-readable reference looks
+          like <phrase><emphasis>Point</emphasis>
+            (<emphasis>Paragraph</emphasis>)
+            § <emphasis>Section</emphasis>
+            <emphasis>Law</emphasis>/<emphasis>Year</emphasis>
+            Coll.</phrase> The memebers apply to both incoming and outgoing
+          messages:</para>
+
+        <variablelist>
+          <varlistentry>
+            <term><type>long int *</type><structfield>dmLegalTitleLaw</structfield>;</term>
+            <listitem><para>A number of an act mandating the
+                authority.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>long int *</type><structfield>dmLegalTitleYear</structfield>;</term>
+            <listitem><para>A year of issuing the act mandating the
+                authority.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmLegalTitleSect</structfield>;</term>
+            <listitem><para>A section of the act mandating the authority.
+                Czech: <foreignphrase
+                  lang="cs">paragraf</foreignphrase>.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmLegalTitlePar</structfield>;</term>
+            <listitem><para>A paragraph of the act mandating the authority.
+                Czech: <foreignphrase
+                  lang="cs">odstavec</foreignphrase>.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmLegalTitlePoint</structfield>;</term>
+            <listitem><para>A point of the act mandating the authority. Czech:
+                <foreignphrase lang="cs">písmeno</foreignphrase>.</para></listitem>
+          </varlistentry>
+        </variablelist>
+
+        <para>Other incoming/outgoing message members:</para>
+
+        <variablelist>
+          <varlistentry>
+            <term><type>_Bool *</type><structfield>dmPersonalDelivery</structfield>;</term>
+            <listitem><para>If true, only person with higher privileges can
+                read this message.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>_Bool *</type><structfield>dmAllowSubstDelivery</structfield>;</term>
+            <listitem><para>Allow delivery through fiction.
+                <abbrev>I.e.</abbrev> Even if the recipient did not read this
+                message, the message is considered as delivered after
+                (currently) 10 days. This is called <phrase>delivery through
+                  fiction</phrase>. Oonly OVM dbType sender can set
+                it.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmType</structfield>;</term>
+            <listitem>
+              <para>Message type (commercial subtypes or government message).</para>
+
+              <para>Input values (when sending the message):</para>
+
+              <variablelist>
+                <varlistentry>
+                  <term><literal>"I"</literal></term>
+                  <listitem><para>A commercial message offering paying the
+                      response (<phrase>initiatory message</phrase>). It's
+                      necessary to define
+                      <structfield>dmSenderRefNumber</structfield>
+                      member.</para></listitem>
+                </varlistentry>
+
+                <varlistentry>
+                  <term><literal>"K"</literal></term>
+                  <listitem><para>A commercial message paid by the sender.</para></listitem>
+                </varlistentry>
+
+                <varlistentry>
+                  <term><literal>"O"</literal></term>
+                  <listitem><para>A commercial response paid by the sender of
+                      a initiatory message. It's necessary to copy a value
+                      from the <structfield>dmSenderRefNumber</structfield> of
+                      the initiatory message to the
+                      <structfield>dmRecipientRefNumber</structfield> of this
+                      message.</para></listitem>
+                </varlistentry>
+
+                <varlistentry>
+                  <term><literal>"V"</literal></term>
+                  <listitem><para>A noncommercial government message. This is
+                      the default meaning if the value is undefined while
+                      sending a message.</para></listitem>
+                </varlistentry>
+              </variablelist>
+
+              <para>Output values (when retrieving the message):</para>
+
+              <variablelist>
+                <varlistentry>
+                  <term><literal>"A"</literal></term>
+                  <listitem><para>This is a subsidized initiatory commercial
+                      message which can pay a response.</para></listitem>
+                </varlistentry>
+
+                <varlistentry>
+                  <term><literal>"B"</literal></term>
+                  <listitem><para>This is a subsidized initiatory commercial
+                      message which has already paid the
+                      response.</para></listitem>
+                </varlistentry>
+
+                <varlistentry>
+                  <term><literal>"C"</literal></term>
+                  <listitem><para>This is a subsidized initiatory commercial
+                      message where the response offer has
+                      expired.</para></listitem>
+                </varlistentry>
+
+                <varlistentry>
+                  <term><literal>"D"</literal></term>
+                  <listitem><para>This is an externally subsidized commercial
+                      messsage.</para></listitem>
+                </varlistentry>
+
+                <varlistentry>
+                  <term><literal>"E"</literal></term>
+                  <listitem><para>This is a commercial message prepaid by
+                      a stamp.</para></listitem>
+                </varlistentry>
+
+                <varlistentry>
+                  <term><literal>"G"</literal></term>
+                  <listitem><para>This is a commerical message paid by
+                      a sponsor.</para></listitem>
+                </varlistentry>
+
+                <varlistentry>
+                  <term><literal>"I"</literal></term>
+                  <listitem><para>See the input values.</para></listitem>
+                </varlistentry>
+
+                <varlistentry>
+                  <term><literal>"K"</literal></term>
+                  <listitem><para>See the input values.</para></listitem>
+                </varlistentry>
+
+                <varlistentry>
+                  <term><literal>"O"</literal></term>
+                  <listitem><para>See the input values.</para></listitem>
+                </varlistentry>
+
+                <varlistentry>
+                  <term><literal>"V"</literal></term>
+                  <listitem><para>See the input values.</para></listitem>
+                </varlistentry>
+
+                <varlistentry>
+                  <term><literal>"X"</literal></term>
+                  <listitem><para>This is an initiatory commercial message
+                      where the response offer has expired.</para></listitem>
+                </varlistentry>
+
+                <varlistentry>
+                  <term><literal>"Y"</literal></term>
+                  <listitem><para>This is an initiatory commercial message
+                      which has already paid the response.</para></listitem>
+                </varlistentry>
+
+                <varlistentry>
+                  <term><literal>"Z"</literal></term>
+                  <listitem><para>This is limitedly subsidized commercial message.</para></listitem>
+                </varlistentry>
+              </variablelist>
+
+              <para>Length of the value is exactly 1 UTF-8 character if
+                defined. That means it's still zero-terminated character
+                string.</para></listitem>
+          </varlistentry>
+        </variablelist>
+
+        <para>Following members apply to outgoing messages only:</para>
+
+        <variablelist>
+          <varlistentry>
+            <term><type>_Bool *</type><structfield>dmOVM</structfield>;</term>
+            <listitem><para>OVM sending mode. Non-OVM dbType boxes that have
+                dbEffectiveOVM equaled to true <emphasis>MUST</emphasis>
+                select between true (OVM mode) and false (non-OVM mode).
+                Otherwise the value is optional and the default value is
+                true.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>_Bool *</type><structfield>dmPublishOwnID</structfield>;</term>
+            <listitem><para>To allow to reveal sender's login name. The name
+                will be available to the recipient through
+                <function>isds_get_message_sender</function> function. The
+                sender's box type and identifier will be always available.
+                This feature exists because more users can have access to one
+                box and the recipient could not tell who was the sender. This
+                value is optional. Default value is false.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title><type>isds_FileMetaType</type></title>
+        <synopsis>typedef enum <type>isds_FileMetaType</type>;</synopsis>
+        <para>Document type from point fo view of hierarchy of documents in
+          a message. Known values are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>FILEMETATYPE_MAIN</constant></term>
+            <listitem><para>Main document. There should be exactly one
+                document of this type in a message.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>FILEMETATYPE_ENCLOSURE</constant></term>
+            <listitem><para>An appendix. If a message has more documents,
+                generic-purpose documents other than the main one should have
+                this type.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>FILEMETATYPE_SIGNATURE</constant></term>
+            <listitem><para>Digital signature. This document is a signature of
+                another document in the message.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>FILEMETATYPE_META</constant></term>
+            <listitem><para><abbrev>XML</abbrev> document for
+                <phrase>electronic document information system</phrase>,
+                <foreignphrase lang="cs">elektronická spisová
+                  služba</foreignphrase> (<abbrev lang="cs">ESS</abbrev>) in
+                Czech, purpose. </para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title>struct <structname>isds_document</structname></title>
+        <synopsis>struct <structname>isds_document</structname>;</synopsis>
+        <para>A message document. Members are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><type>_Bool</type> <structfield>is_xml</structfield>;</term>
+            <listitem><para>True if the document is an <abbrev>ISDS</abbrev>
+                <abbrev>XML</abbrev> document. False if the document is an
+                <abbrev>ISDS</abbrev> binary document.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>xmlNodePtr</type> <structfield>xml_node_list</structfield>;</term>
+            <listitem><para><abbrev>XML</abbrev> node-set presenting the
+                <abbrev>XML</abbrev> document content. This is a pointer to
+                first <abbrev>XML</abbrev> node of the <abbrev>XML</abbrev>
+                representation of the message as stored in
+                <structfield>xml</structfield> member of
+                <type>isds_message</type> structure. Use
+                <structfield>children</structfield> and
+                <structfield>next</structfield> members to walk through the
+                document. See <systemitem class="library">libxml2</systemitem>
+                library documentation for more details. The
+                <structfield>xml_node_list</structfield> will be
+                <constant>NULL</constant> if the document is empty. It's valid
+                only if the <structfield>is_xml</structfield> is
+                true.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>void *</type><structfield>data</structfield>;</term>
+            <listitem><para>A binary document content. The encoding and format
+                depends on <structfield>dmMimeType</structfield> member value.
+                This is valid only if the <structfield>is_xml</structfield> is
+                false.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>size_t</type> <structfield>data_length</structfield>;</term>
+            <listitem><para>Length of the <structfield>data</structfield>
+                buffer in bytes. It's valid only if the
+                <structfield>is_xml</structfield> is false.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmMimeType</structfield>;</term>
+            <listitem><para><abbrev>MIME</abbrev> type of document. This
+                member is mandatory.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>isds_FileMetaType</type> <structfield>dmFileMetaType</structfield>;</term>
+            <listitem><para>Document type to create document hierarchy inside
+                a message.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmFileGuid</structfield>;</term>
+            <listitem><para>Message-local document identifier. It can be used
+                as a key to refer to this document by
+                <structfield>dmUpFileGuid</structfield> member from a different
+                document. This is optional.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmUpFileGuid</structfield>;</term>
+            <listitem><para>A reference to upper document identifier stored in
+                <structfield>dmFileGuid</structfield> member of different
+                document. You can use
+                <function>isds_find_document_by_id</function> function to
+                locate the upper document. This value is
+                optional.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmFileDescr</structfield>;</term>
+            <listitem><para>Document name (title). <abbrev>E.g.</abbrev>
+                a file name. This value is mandatory.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmFormat</structfield>;</term>
+            <listitem><para>A reference to <abbrev>XML</abbrev> format
+                definition that explains how to interpret the
+                <abbrev>XML</abbrev> document. <abbrev>E.g.</abbrev>
+                a <abbrev>URL</abbrev> to an <abbrev>XML</abbrev> schema. This
+                value is optional.</para></listitem>
           </varlistentry>
         </variablelist>
       </refsection>
