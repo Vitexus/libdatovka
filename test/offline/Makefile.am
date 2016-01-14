@@ -34,12 +34,11 @@ TESTS = prepare_environment \
 		isds_box_state_period_duplicate \
 		isds-filemetatype isds-hash_algorithm \
 		isds-timestring2timeval \
-		isds-uint2isds_message_status isds-eventstring2event \
-		isds-interpret_matches
+		isds-uint2isds_message_status isds-eventstring2event
 if BUILD_CURL
 TESTS += isds-dbtype isds-sendertype isds-usertype isds-paymenttype\
 		 isds-crediteventtype isds-datestring2tm isds-tm2datestring \
-		 isds-timeval2timestring \
+		 isds-timeval2timestring isds-interpret_matches \
 		 soap-decode_header_value soap-string2isds_otp_resolution
 endif
 
