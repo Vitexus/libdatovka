@@ -26,13 +26,13 @@ It's copy of ../../src/cencode.c due to symbol names.
 
 
 typedef enum {
-	step_A, step_B, step_C
+    step_A, step_B, step_C
 } base64_encodestep;
 
 typedef struct {
-	base64_encodestep step;
-	int8_t result;
-	int stepcount; /* number of encoded octet triplets on a line,
+    base64_encodestep step;
+    int8_t result;
+    int stepcount; /* number of encoded octet triplets on a line,
                       or -1 to for end-less line */
 } base64_encodestate;
 
@@ -42,64 +42,64 @@ static const int CHARS_PER_LINE = 72;
  * @one_line is false for multi-line MIME encoding,
  * true for endless one-line format. */
 static void base64_init_encodestate(base64_encodestate* state_in, _Bool one_line) {
-	state_in->step = step_A;
-	state_in->result = 0;
-	state_in->stepcount = (one_line) ? -1 : 0;
+    state_in->step = step_A;
+    state_in->result = 0;
+    state_in->stepcount = (one_line) ? -1 : 0;
 }
 
 
 static int8_t base64_encode_value(int8_t value_in) {
     /* XXX: CHAR_BIT == 8 because of <stdint.h> */
-	static const int8_t encoding[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	if (value_in > 63) return '=';
-	return encoding[value_in];
+    static const int8_t encoding[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    if (value_in > 63) return '=';
+    return encoding[value_in];
 }
 
 
 static size_t base64_encode_block(const int8_t* plaintext_in,
         size_t length_in, int8_t *code_out, base64_encodestate* state_in) {
-	const int8_t *plainchar = plaintext_in;
-	const int8_t* const plaintextend = plaintext_in + length_in;
-	int8_t *codechar = code_out;
-	int8_t result;
-	int8_t fragment;
-	
-	result = state_in->result;
-	
-	switch (state_in->step) {
-		while (1) {
-	case step_A:
-			if (plainchar == plaintextend) {
-				state_in->result = result;
-				state_in->step = step_A;
-				return codechar - code_out;
-			}
-			fragment = *plainchar++;
-			result = (fragment & 0x0fc) >> 2;
-			*codechar++ = base64_encode_value(result);
-			result = (fragment & 0x003) << 4;
-	case step_B:
-			if (plainchar == plaintextend) {
-				state_in->result = result;
-				state_in->step = step_B;
-				return codechar - code_out;
-			}
-			fragment = *plainchar++;
-			result |= (fragment & 0x0f0) >> 4;
-			*codechar++ = base64_encode_value(result);
-			result = (fragment & 0x00f) << 2;
-	case step_C:
-			if (plainchar == plaintextend) {
-				state_in->result = result;
-				state_in->step = step_C;
-				return codechar - code_out;
-			}
-			fragment = *plainchar++;
-			result |= (fragment & 0x0c0) >> 6;
-			*codechar++ = base64_encode_value(result);
-			result  = (fragment & 0x03f) >> 0;
-			*codechar++ = base64_encode_value(result);
-			
+    const int8_t *plainchar = plaintext_in;
+    const int8_t* const plaintextend = plaintext_in + length_in;
+    int8_t *codechar = code_out;
+    int8_t result;
+    int8_t fragment;
+
+    result = state_in->result;
+
+    switch (state_in->step) {
+        while (1) {
+    case step_A:
+            if (plainchar == plaintextend) {
+                state_in->result = result;
+                state_in->step = step_A;
+                return codechar - code_out;
+            }
+            fragment = *plainchar++;
+            result = (fragment & 0x0fc) >> 2;
+            *codechar++ = base64_encode_value(result);
+            result = (fragment & 0x003) << 4;
+    case step_B:
+            if (plainchar == plaintextend) {
+                state_in->result = result;
+                state_in->step = step_B;
+                return codechar - code_out;
+            }
+            fragment = *plainchar++;
+            result |= (fragment & 0x0f0) >> 4;
+            *codechar++ = base64_encode_value(result);
+            result = (fragment & 0x00f) << 2;
+    case step_C:
+            if (plainchar == plaintextend) {
+                state_in->result = result;
+                state_in->step = step_C;
+                return codechar - code_out;
+            }
+            fragment = *plainchar++;
+            result |= (fragment & 0x0c0) >> 6;
+            *codechar++ = base64_encode_value(result);
+            result  = (fragment & 0x03f) >> 0;
+            *codechar++ = base64_encode_value(result);
+
             if (state_in->stepcount >= 0) {
                 ++(state_in->stepcount);
                 if (state_in->stepcount == CHARS_PER_LINE/4) {
@@ -107,35 +107,35 @@ static size_t base64_encode_block(const int8_t* plaintext_in,
                     state_in->stepcount = 0;
                 }
             }
-		} /* while */
-	} /* switch */
+        } /* while */
+    } /* switch */
 
-	/* control should not reach here */
-	return codechar - code_out;
+    /* control should not reach here */
+    return codechar - code_out;
 }
 
 
 static size_t base64_encode_blockend(int8_t *code_out,
         base64_encodestate* state_in) {
-	int8_t *codechar = code_out;
-	
-	switch (state_in->step) {
-	case step_B:
-		*codechar++ = base64_encode_value(state_in->result);
-		*codechar++ = '=';
-		*codechar++ = '=';
-		break;
-	case step_C:
-		*codechar++ = base64_encode_value(state_in->result);
-		*codechar++ = '=';
-		break;
-	case step_A:
-		break;
-	}
+    int8_t *codechar = code_out;
+
+    switch (state_in->step) {
+    case step_B:
+        *codechar++ = base64_encode_value(state_in->result);
+        *codechar++ = '=';
+        *codechar++ = '=';
+        break;
+    case step_C:
+        *codechar++ = base64_encode_value(state_in->result);
+        *codechar++ = '=';
+        break;
+    case step_A:
+        break;
+    }
     if (state_in->stepcount >= 0)
         *codechar++ = '\n';
-	
-	return codechar - code_out;
+
+    return codechar - code_out;
 }
 
 
@@ -283,7 +283,7 @@ static int http_read_line(const struct http_connection *connection,
             /* And exit */
             return HTTP_ERROR_SUCCESS;
         }
-        
+
         if (*buffer_size == *buffer_used) {
             /* Grow buffer */
             tmp = realloc(*buffer, *buffer_size + BURST);
@@ -399,7 +399,7 @@ static int http_read_bulk(const struct http_connection *connection,
             /* And exit */
             return HTTP_ERROR_SUCCESS;
         }
-        
+
         if (*buffer_size == *buffer_used) {
             /* Grow buffer */
             tmp = realloc(*buffer, *buffer_size + BURST);
@@ -473,11 +473,11 @@ static int http_write_response_status(const struct http_connection *connection,
         return HTTP_ERROR_SERVER;
     error = http_write_line(connection, buffer);
     free(buffer);
-    
+
     return error;
 }
 
-    
+
 /* Parse generic HTTP header.
  * @request is pre-allocated HTTP request.
  * @return 0 if success, negative value if internal error, positive value if
@@ -563,11 +563,11 @@ static int http_write_header(const struct http_connection *connection,
         return HTTP_ERROR_SERVER;
     error = http_write_line(connection, buffer);
     free(buffer);
-    
+
     return error;
 }
 
-    
+
 /* Find Content-Length value in HTTP request headers and set it into @request.
  * @return 0 in success. */
 static int find_content_length(struct http_request *request) {
@@ -692,7 +692,7 @@ int http_write_response(const struct http_connection *connection,
     /* Status line */
     error = http_write_response_status(connection, response);
     if (error) return error;
-    
+
     /* Headers */
     for (struct http_header *header = response->headers; header != NULL;
             header = header->next) {
@@ -766,7 +766,7 @@ ok:
     free(path_parameter);
     return header;
 }
-    
+
 
 /* Send a 200 Ok response with a cookie */ 
 int http_send_response_200_cookie(const struct http_connection *connection,
@@ -787,7 +787,7 @@ int http_send_response_200_cookie(const struct http_connection *connection,
         .body_length = body_length,
         .body = (void *)body
     };
-    
+
     if (cokie_name != NULL) {
         if (NULL == (header_cookie = http_build_setcookie_header(
                         cokie_name, cookie_value, cookie_domain, cookie_path)))
@@ -803,7 +803,7 @@ int http_send_response_200_cookie(const struct http_connection *connection,
         header_cookie->next = response.headers;
         response.headers = header_cookie;
     }
-    
+
     retval = http_write_response(connection, &response);
     http_header_free(&header_cookie);
     return retval;
@@ -845,7 +845,7 @@ int http_send_response_302_cookie(const struct http_connection *connection,
             return http_send_response_500(connection,
                     "Could not build Set-Cookie header");
     }
-    
+
     /* Link defined headers */
     if (location != NULL) {
         response.headers = &header_location;
@@ -854,7 +854,7 @@ int http_send_response_302_cookie(const struct http_connection *connection,
         header_cookie->next = response.headers;
         response.headers = header_cookie;
     }
-    
+
     retval = http_write_response(connection, &response);
     http_header_free(&header_cookie);
     return retval;
@@ -886,7 +886,7 @@ int http_send_response_302_totp(const struct http_connection *connection,
         .body_length = 0,
         .body = NULL
     };
-    
+
     /* Link defined headers */
     if (location != NULL) {
         response.headers = &header_location;
@@ -899,7 +899,7 @@ int http_send_response_302_totp(const struct http_connection *connection,
         header_code.next = response.headers;
         response.headers = &header_code;
     }
-    
+
     return http_write_response(connection, &response);
 }
 
@@ -915,7 +915,7 @@ int http_send_response_400(const struct http_connection *connection,
         .body_length = 0,
         .body = NULL
     };
-    
+
     return http_write_response(connection, &response);
 }
 
@@ -934,7 +934,7 @@ int http_send_response_401_basic(const struct http_connection *connection) {
         .body_length = 0,
         .body = NULL
     };
-    
+
     return http_write_response(connection, &response);
 }
 
@@ -972,7 +972,7 @@ int http_send_response_401_otp(const struct http_connection *connection,
         return http_send_response_500(connection,
                 "Could not build WWW-Authenticate header value");
     }
-    
+
     /* Link defined headers */
     if (code != NULL) header.next = &header_code;
     if (text != NULL) {
@@ -997,7 +997,7 @@ int http_send_response_403(const struct http_connection *connection) {
         .body_length = 0,
         .body = NULL
     };
-    
+
     return http_write_response(connection, &response);
 }
 
@@ -1013,7 +1013,7 @@ int http_send_response_500(const struct http_connection *connection,
         .body_length = 0,
         .body = NULL
     };
-    
+
     return http_write_response(connection, &response);
 }
 
@@ -1032,7 +1032,7 @@ int http_send_response_503(const struct http_connection *connection,
         .body_length = body_length,
         .body = (void *)body
     };
-    
+
     return http_write_response(connection, &response);
 }
 
@@ -1074,13 +1074,13 @@ http_error http_authenticate_basic(const struct http_request *request,
 
     if (strncmp(header->value, "Basic ", 6)) return HTTP_ERROR_CLIENT;
     basic_cookie_client = header->value + 6;
-    
+
     if (-1 == test_asprintf(&basic_cookie_plain, "%s:%s",
                 (username == NULL) ? "" : username,
                 (password == NULL) ? "" : password)) {
         return HTTP_ERROR_SERVER;
     }
-    
+
     basic_cookie_encoded = base64encode(basic_cookie_plain,
             strlen(basic_cookie_plain), 1);
     if (basic_cookie_encoded == NULL) {
