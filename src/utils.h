@@ -98,6 +98,12 @@ int _isds_hex2i(char digit);
  * @return (time_t) -1 in case of error */
 time_t _isds_timegm(struct tm *broken_utc);
 
+/* Convert size_t to int.
+ * @val Value to be converted to int.
+ * @return value converted to int or -1 when the supplied value is too large
+ * to fit into integer. */
+int _isds_sizet2int(size_t val);
+
 /* Free() and set to NULL pointed memory */
 #define zfree(memory) { \
     free(memory); \

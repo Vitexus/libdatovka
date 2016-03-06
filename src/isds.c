@@ -10379,9 +10379,11 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
             break;
     }
 
-    isds_log(ILF_ISDS, ILL_DEBUG,
+    if (_isds_sizet2int(xml_stream_length) >= 0) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
             _("Delivery info content:\n%.*s\nEnd of delivery info\n"),
-            xml_stream_length, xml_stream);
+            _isds_sizet2int(xml_stream_length), xml_stream);
+    }
 
     /* Convert delivery info XML stream into XPath context */
     message_doc = xmlParseMemory(xml_stream, xml_stream_length);
@@ -10859,9 +10861,11 @@ isds_error isds_load_message(struct isds_ctx *context,
             break;
     }
 
-    isds_log(ILF_ISDS, ILL_DEBUG,
-        _("Loading message:\n%.*s\nEnd of message\n"),
-        xml_stream_length, xml_stream);
+    if (_isds_sizet2int(xml_stream_length) >= 0) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+            _("Loading message:\n%.*s\nEnd of message\n"),
+            _isds_sizet2int(xml_stream_length), xml_stream);
+    }
 
     /* Convert messages XML stream into XPath context */
     message_doc = xmlParseMemory(xml_stream, xml_stream_length);

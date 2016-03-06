@@ -907,7 +907,10 @@ static isds_error http(struct isds_ctx *context,
     if (!use_get) {
         isds_log(ILF_HTTP, ILL_DEBUG,
                 _("POST body length: %zu, content follows:\n"), request_length);
-        isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n", request_length, request);
+        if (_isds_sizet2int(request_length) >= 0 ) {
+            isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n",
+                _isds_sizet2int(request_length), request);
+        }
         isds_log(ILF_HTTP, ILL_DEBUG, _("End of POST body\n"));
     }
     
@@ -952,7 +955,10 @@ static isds_error http(struct isds_ctx *context,
     isds_log(ILF_HTTP, ILL_DEBUG,
             _("Response body length: %zu, content follows:\n"),
             body.length);
-    isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n", body.length, body.data);
+    if (_isds_sizet2int(body.length) >= 0) {
+        isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n",
+            _isds_sizet2int(body.length), body.data);
+    }
     isds_log(ILF_HTTP, ILL_DEBUG, _("End of response body\n"));
 
 
@@ -1345,10 +1351,11 @@ redirect:
         goto leave;
     }
 
-    isds_log(ILF_SOAP, ILL_DEBUG,
+    if (_isds_sizet2int(response_length) >= 0) {
+        isds_log(ILF_SOAP, ILL_DEBUG,
             _("SOAP response received:\n%.*s\nEnd of SOAP response\n"),
-            response_length, http_response);
-
+            _isds_sizet2int(response_length), http_response);
+    }
 
     /* Check for SOAP version */
     response_root = xmlDocGetRootElement(response_soap_doc);

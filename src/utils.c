@@ -6,6 +6,7 @@
 #ifndef _WIN32
 #include <langinfo.h>
 #endif
+#include <limits.h>
 #include <time.h>
 #include <errno.h>
 #include "utils.h"
@@ -329,3 +330,8 @@ _hidden int _isds_hex2i(char digit) {
     return -1;
 }
 
+
+/* Convert size_t to int. */
+_hidden int _isds_sizet2int(size_t val) {
+    return (val <= INT_MAX) ? (int) val : -1;
+}
