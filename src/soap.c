@@ -1510,8 +1510,10 @@ leave:
 
 /* Build new URL from current @context and template.
  * @context is context carrying an URL
- * @template is printf(3) format string. First argument is string of base URL
- * found in @context, second argument is length of the base URL.
+ * @template is printf(3) format string. First argument is length of the base
+ * URL found in @context, second argument is the base URL, third argument is
+ * again the base URL.
+ * XXX: We cannot use "$" formatting character because it's not in the ISO C99.
  * @new_url is newly allocated URL built from @template. Caller must free it.
  * Return IE_SUCCESS, or corresponding error code and @new_url will not be
  * allocated.
@@ -1544,7 +1546,8 @@ _hidden isds_error _isds_build_url_from_context(struct isds_ctx *context,
     length++;
     
     /* Build new URL */
-    if (-1 == isds_asprintf(new_url, template, context->url, length))
+    if (-1 == isds_asprintf(new_url, template, length, context->url,
+                context->url))
         return IE_NOMEM;
 
     return IE_SUCCESS;
@@ -1565,7 +1568,7 @@ _hidden isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context) {
     /* Build logout URL */
     /*"https://DOMAINNAME/as/processLogout?uri=https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT"*/
     err = _isds_build_url_from_context(context,
-            "%1$.*2$sas/processLogout?uri=%1$sDS/dz", &url);
+            "%.*sas/processLogout?uri=%sDS/dz", &url);
     if (err) return err;
 
     /* Invalidate the cookie by GET request */

@@ -1381,7 +1381,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
                             _("Selected authentication method: "
                                 "HMAC-based one-time password\n"));
                     authenticator_uri =
-                        "%1$sas/processLogin?type=hotp&uri=%1$sapps/";
+                        "%sas/processLogin?type=hotp&uri=%sapps/";
                     break;
                 case OTP_TIME: 
                     isds_log(ILF_SEC, ILL_INFO,
@@ -1393,16 +1393,16 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
                                     "application, requesting server for "
                                     "new one.\n"));
                         authenticator_uri =
-                            "%1$sas/processLogin?type=totp&sendSms=true&"
-                            "uri=%1$sapps/";
+                            "%sas/processLogin?type=totp&sendSms=true&"
+                            "uri=%sapps/";
                     } else {
                         isds_log(ILF_SEC, ILL_INFO,
                                 _("OTP code has been provided by "
                                     "application, not requesting server "
                                     "for new one.\n"));
                         authenticator_uri =
-                            "%1$sas/processLogin?type=totp&"
-                            "uri=%1$sapps/";
+                            "%sas/processLogin?type=totp&"
+                            "uri=%sapps/";
                     }
                     break;
                 default:
@@ -1411,7 +1411,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
                                 "method requested by application"));
                     return IE_ENUM;
             }
-            if (-1 == isds_asprintf(&context->url, authenticator_uri, url))
+            if (-1 == isds_asprintf(&context->url, authenticator_uri, url, url))
                 return IE_NOMEM; 
         }
     } else {
@@ -5397,7 +5397,7 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
     {
         char *new_url = NULL;
         if ((err = _isds_build_url_from_context(context,
-                    "%1$.*2$sasws/changePassword", &new_url))) {
+                    "%.*sasws/changePassword", &new_url))) {
             goto leave;
         }
         saved_url = context->url;
@@ -5715,7 +5715,7 @@ isds_error isds_change_password(struct isds_ctx *context,
         {
             char *new_url = NULL;
             if ((err = _isds_build_url_from_context(context,
-                        "%1$.*2$sasws/changePassword", &new_url))) {
+                        "%.*sasws/changePassword", &new_url))) {
                 goto leave;
             }
             saved_url = context->url;

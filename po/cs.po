@@ -1524,7 +1524,7 @@ msgstr "Server odmítl požadavek %s na zprávu s ID %s (kód=%s, zpráva=%s)\n
 #, c-format
 msgid "Server did not return any signed data for message ID `%s' on %s request"
 msgstr ""
-"Server nevrátil na požadavek %2$s žádná podepsaná data pro zprávu s ID „%1$s“"
+"Server nevrátil žádná podepsaná data pro zprávu s ID „%s“ na požadavek %s"
 
 #: src/isds.c:9822
 #, c-format
