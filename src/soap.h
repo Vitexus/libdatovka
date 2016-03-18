@@ -33,8 +33,10 @@ isds_error _isds_soap(struct isds_ctx *context, const char *file,
 
 /* Build new URL from current @context and template.
  * @context is context carrying an URL
- * @template is printf(3) format string. First argument is string of base URL
- * found in @context, second argument is length of the base URL.
+ * @template is printf(3) format string. First argument is length of the base
+ * URL found in @context, second argument is the base URL, third argument is
+ * again the base URL.
+ * XXX: We cannot use "$" formatting character because it's not in the ISO C99.
  * @new_url is newly allocated URL built from @template. Caller must free it.
  * Return IE_SUCCESS, or corresponding error code and @new_url will not be
  * allocated.
