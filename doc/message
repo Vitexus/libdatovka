@@ -1,7 +1,7 @@
 Message specification
 =====================
 
-Source: Provozní řád ISDS, version 2011-11-29, Page 5, 14
+Source: Provozní řád ISDS, version 2016-02-07
 Source: Webové služby rozhranní ISDS pro manipulaci s datovými zprávami,
     version 2.48 (2015-11-01)
 Source: MIME Media Types
@@ -173,8 +173,8 @@ ISDS.
 
 Message with `malicious code' will be refused by ISDS.
 
-Maximal total size of Documents in a Message is usually 10 MB. (Some boxes
-allows messages up to 50 MB.) Binary document size is size before encoding
+Maximal total size of Documents in a Message is usually 20 MB. (Some boxes
+allow messages up to 50 MB.) Binary document size is size before encoding
 into Base64, XML document size is size in bytes after serializing into SOAP
 request.
 
