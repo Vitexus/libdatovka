@@ -1,3 +1,21 @@
+* Implement news from 2016-02-07
+    tCreateDBInput/dbOwnerInfo changed type from tDbOwnerInfo to tDbOwnerInfoExt
+        tDbOwnerInfoExt type contains gAddressExt group instead of gAddress
+            gAddressExt adds adDistrict and adAMCode elements
+        It affects CreateDataBox service
+    tDbUsersArray/dbUserInfo element changed type from tDbUserInfo to
+    tDbUserInfoExt
+        tDbUserInfoExt type contains gAddressExt group instead of gAddress
+    tUpdateDBInput/dbOldOwnerInfo and tUpdateDBInput/dbOldOwnerInfo changed
+    types from tDbOwnerInfo to tDbOwnerInfoExt
+        It affects UpdateDataBoxDescr service
+    tAddDBUserInput/dbOwnerInfo changed type from tDbOwnerInfo to
+    tDbOwnerInfoExt
+    tAddDBUserInput/dbUserInfo changed type from tDbUserInfo to
+    tDbOwnerInfoExt
+        It affects AddDataBoxUser service
+    All tUpdDBUserInput elements changed type from nonExt to Ext types
+        It affects UpdateDataBoxUser service
 * Implement news from 2015-11-09 and previous
     FindPersonalDataBox
 * Test Re-signISDSDocument service
