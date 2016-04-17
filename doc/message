@@ -3,7 +3,7 @@ Message specification
 
 Source: Provozní řád ISDS, version 2016-02-07
 Source: Webové služby rozhranní ISDS pro manipulaci s datovými zprávami,
-    version 2.48 (2015-11-01)
+    version 2.49 (2016-02-01)
 Source: MIME Media Types
     <http://www.iana.org/assignments/media-types/index.html>
 Source: O2. Datové schránky: Informace pro dodavatele aplikací, version
@@ -67,7 +67,8 @@ application/x-msdownload.
 Attribute dmFileDescr (so called annotation) must present and must contain
 file name of the Document. Even if dmMimeType exists, ISDS uses THIS attribute
 to detect Document format (according file name extension) and checks content
-for format conformance.
+for format conformance. Especially this attribute is subject of a string
+rewrite.
 
 List of allowed MIME types is copied (and sometimes agumented) in appendix
 of Webové služby rozhranní ISDS pro manipulaci s datovými zprávami.

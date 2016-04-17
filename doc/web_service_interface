@@ -3,9 +3,9 @@ Web service interface
 
 Source: Provozní řád informačního systému (2015-06-07)
 Source: Webové služby ISDS pro manipulaci s datovými zprávami,
-version 2.48 (2015-11-01)
+    version 2.49 (206-02-01)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
-version 2 (2009-07-26)
+    version 2 (2009-07-26)
 
 
 Web services for messages are synchronous, web services for boxes are
@@ -56,4 +56,26 @@ responses or returning error responses.
 
 Clients must maintain their own history or delivered messages and download
 only messages or list of messages that have not yet been delivered.
+
+
+String rewrite
+==============
+
+The dmFileDescr document message value and some unspecified other values are transformed to
+more simple and "secure" form by the ISDS server when receving them from
+a client:
+
+Class           Input characters                    Output
+-------------------------------------------------------------------------
+XML             <, >                                _ (underscore)
+White space     \r, \n, \t,                         \x20 (an ASCII space)
+White space     \u2028, \u2029, \u202F, \u00A0,     \x20 (an ASCII space)
+Control         \u0080--\u009F                      removed
+Spaces          \u2000--\u200A, \u205F,             \x20 (an ASCII space)
+Word splitting  \u200B, \u00AD                      removed
+Dashes          \u2010--\u2015                      - (an ASCII hyphen)
+Quotes          \u201C--\u201F                      " (ASCII double quotes)
+Formatting      \u200C--\u200F                      removed
+Formatting      \u202A--\u202F                      removed
+Invisible       \u2061--\u206F                      removed
 
