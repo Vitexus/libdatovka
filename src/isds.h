@@ -623,7 +623,7 @@ struct isds_message {
                                        document of type FILEMETATYPE_MAIN and
                                        can contain any number of other type
                                        documents. Total size of documents
-                                       must not exceed 10 MB. */
+                                       must not exceed 20 MB. */
 };
 
 /* Message copy recipient and assigned message ID */
