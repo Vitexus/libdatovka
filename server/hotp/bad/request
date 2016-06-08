@@ -1,0 +1,10 @@
+POST /as/processLogin?type=hotp&uri=https://ws1.czebox.cz/apps/DS/dz HTTP/1.1
+Authorization: Basic ****
+User-Agent: libisds/0.5
+Host: ws1.czebox.cz
+Accept: application/soap+xml,application/xml,text/xml
+Content-Type: text/xml
+Content-Length: 179
+
+<?xml version="1.0" encoding="UTF-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"><Body><DummyOperation xmlns="http://isds.czechpoint.cz/v20"/></Body></Envelope>

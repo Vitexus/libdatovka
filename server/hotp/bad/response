@@ -1,0 +1,22 @@
+HTTP/1.1 404 Not Found
+Date: Tue, 03 Jan 2012 22:26:47 GMT
+Server: Apache-Coyote/1.1
+Content-Type: text/html;charset=utf-8
+Content-Language: cs-CZ
+X-Frame-Options: Deny
+Cache-Control: no-store,no-transform,private,max-age=0
+Expires: 0
+Transfer-Encoding: chunked
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="cs" lang="cs">
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+    <title>404</title>
+</head>
+<body>
+<h1>HTTP Status 404</h1>
+Novell AGW
+</body>
+</html>
