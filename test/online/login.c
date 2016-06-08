@@ -37,7 +37,7 @@ static int test_login2(const isds_error error1, const isds_error error2,
 }
 
 
-int main(int argc, char **argv) {
+int main(void) {
     INIT_TEST("login");
     
     struct isds_ctx *context = NULL;
