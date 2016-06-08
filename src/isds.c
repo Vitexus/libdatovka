@@ -8995,7 +8995,7 @@ static isds_error insert_envelope_files(struct isds_ctx *context,
     /* ???: Should we require value for dbEffectiveOVM sender?
      * ISDS has default as true */
     INSERT_BOOLEAN(envelope, "dmOVM", outgoing_message->envelope->dmOVM);
-    INSERT_BOOLEAN(envelope, "dmOVM",
+    INSERT_BOOLEAN(envelope, "dmPublishOwnID",
             outgoing_message->envelope->dmPublishOwnID);
 
 
