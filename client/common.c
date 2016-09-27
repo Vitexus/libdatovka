@@ -85,6 +85,7 @@ void print_DbState(const long int state) {
         case DBSTATE_NOT_YET_ACCESSIBLE: printf("NOT_YET_ACCESSIBLE\n"); break;
         case DBSTATE_PERM_UNACCESSIBLE: printf("PERM_UNACCESSIBLE\n"); break;
         case DBSTATE_REMOVED: printf("REMOVED\n"); break;
+        case DBSTATE_TEMP_UNACCESSIBLE_LAW: printf("DBSTATE_TEMP_UNACCESSIBLE_LAW"); break;
         default: printf("<unknown state %ld>\n", state);
     }
 }

@@ -954,7 +954,7 @@ err = isds_cleanup();
 
           <varlistentry>
             <term><constant>DBSTATE_TEMP_UNACCESSIBLE</constant></term>
-            <listitem><para>The box is temporarily inaccessible.</para></listitem>
+            <listitem><para>The box is temporarily inaccessible (at the request of the user).</para></listitem>
           </varlistentry>
 
           <varlistentry>
@@ -970,6 +970,11 @@ err = isds_cleanup();
           <varlistentry>
             <term><constant>DBSTATE_REMOVED</constant></term>
             <listitem><para>The box has been removed.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBSTATE_TEMP_UNACCESSIBLE_LAW</constant></term>
+            <listitem><para>The box is temporarily inaccessible (because of the reasons enumerated in the law).</para></listitem>
           </varlistentry>
         </variablelist>
       </refsection>

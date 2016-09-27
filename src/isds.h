@@ -202,7 +202,8 @@ typedef enum {
     DBSTATE_TEMP_UNACCESSIBLE = 2,
     DBSTATE_NOT_YET_ACCESSIBLE = 3,
     DBSTATE_PERM_UNACCESSIBLE = 4,
-    DBSTATE_REMOVED = 5
+    DBSTATE_REMOVED = 5,
+    DBSTATE_TEMP_UNACCESSIBLE_LAW = 6
 } isds_DbState;
 
 /* User permissions from point of view of ISDS.
