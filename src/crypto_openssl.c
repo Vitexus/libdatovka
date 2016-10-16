@@ -17,6 +17,20 @@
 #  define SHA1_DIGEST_LENGTH 20
 #endif /* !SHA1_DIGEST_LENGTH */
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+static EVP_MD_CTX *EVP_MD_CTX_new(void) {
+    EVP_MD_CTX *mdctx = malloc(sizeof(*mdctx));
+    if (NULL != mdctx) {
+        EVP_MD_CTX_init(mdctx);
+    }
+    return mdctx;
+}
+
+static void EVP_MD_CTX_free(EVP_MD_CTX *mdctx) {
+    EVP_MD_CTX_cleanup(mdctx);
+    free(mdctx);
+}
+#endif
 
 /* Initialise all cryptographic libraries which libisds depends on.
  * @return IE_SUCCESS if everything went all-right. */
@@ -76,12 +90,11 @@ _hidden isds_error _isds_compute_hash(const void *input,
         goto fail;
     }
 
-    mdctx = malloc(sizeof(*mdctx));
+    mdctx = EVP_MD_CTX_new();
     if (NULL == mdctx) {
         retval = IE_NOMEM;
         goto fail;
     }
-    EVP_MD_CTX_init(mdctx);
     if (!EVP_DigestInit(mdctx, md)) {
         retval = IE_ERROR;
         goto fail;
@@ -105,13 +118,14 @@ _hidden isds_error _isds_compute_hash(const void *input,
         goto fail;
     }
 
-    EVP_MD_CTX_cleanup(mdctx); free(mdctx); mdctx = NULL;
+    EVP_MD_CTX_free(mdctx);
+    mdctx = NULL;
 
     return IE_SUCCESS;
 
 fail:
     if (NULL != mdctx) {
-        EVP_MD_CTX_cleanup(mdctx); free(mdctx);
+        EVP_MD_CTX_free(mdctx);
     }
     return retval;
 }
