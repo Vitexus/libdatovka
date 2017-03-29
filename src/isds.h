@@ -339,7 +339,9 @@ typedef enum {
     USERTYPE_ADMINISTRATOR,         /* User to manage ENTRUSTED_USERs */
     USERTYPE_OFFICIAL,              /* ??? */
     USERTYPE_OFFICIAL_CERT,         /* ??? */
-    USERTYPE_LIQUIDATOR             /* Company liquidator */
+    USERTYPE_LIQUIDATOR,            /* Company liquidator */
+    USERTYPE_RECEIVER,              /* Company receiver */
+    USERTYPE_GUARDIAN               /* Legal guardian */
 } isds_UserType;
 
 /* Data about user.
@@ -773,8 +775,10 @@ typedef enum {
     SENDERTYPE_OFFICIAL,            /* ISDS; sender of system message */
     SENDERTYPE_VIRTUAL,             /* An application (e.g. document
                                        information system) */
-    SENDERTYPE_OFFICIAL_CERT,        /* ???; Non-normative */
-    SENDERTYPE_LIQUIDATOR           /* Liquidator of the company; Non-normative */
+    SENDERTYPE_OFFICIAL_CERT,       /* ???; Non-normative */
+    SENDERTYPE_LIQUIDATOR,          /* Liquidator of the company; Non-normative */
+    SENDERTYPE_RECEIVER,            /* Receiver of the company */
+    SENDERTYPE_GUARDIAN             /* Legal guardian */
 } isds_sender_type;
 
 /* Digital delivery of credentials */

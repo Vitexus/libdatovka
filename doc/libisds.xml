@@ -1441,6 +1441,16 @@ err = isds_cleanup();
             <term><constant>USERTYPE_LIQUIDATOR</constant></term>
             <listitem><para>Company liquidator.</para></listitem>
           </varlistentry>
+
+          <varlistentry>
+            <term><constant>USERTYPE_RECEIVER</constant></term>
+            <listitem><para>Company receiver.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>USERTYPE_GUARDIAN</constant></term>
+            <listitem><para>Legal guardian.</para></listitem>
+          </varlistentry>
         </variablelist>
       </refsection>
 

@@ -31,7 +31,9 @@ int main(void) {
         SENDERTYPE_OFFICIAL,
         SENDERTYPE_VIRTUAL,
         SENDERTYPE_OFFICIAL_CERT,
-        SENDERTYPE_LIQUIDATOR
+        SENDERTYPE_LIQUIDATOR,
+        SENDERTYPE_RECEIVER,
+        SENDERTYPE_GUARDIAN
     };
 
     const xmlChar *names[] = {
@@ -41,7 +43,9 @@ int main(void) {
         BAD_CAST "OFFICIAL",
         BAD_CAST "VIRTUAL",
         BAD_CAST "OFFICIAL_CERT",
-        BAD_CAST "LIQUIDATOR"
+        BAD_CAST "LIQUIDATOR",
+        BAD_CAST "RECEIVER",
+        BAD_CAST "GUARDIAN"
     };
 
 

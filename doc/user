@@ -23,6 +23,11 @@ OFFICIAL
 OFFICIAL_CERT
 LIQUIDATOR          Liquidator of a commercial organisation. Effectively
                     equivalent to PRIMARY_USER.
+RECEIVER            Receiver of a commercial organisation. Effectively
+                    equivalent to PRIMARY_USER.
+GUARDIAN            A person who has the authority to care for the personal
+                    and property interest of another person. Effectively
+                    equivalent to PRIMARY_USER.
 
 
 User authorizations

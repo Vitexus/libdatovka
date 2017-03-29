@@ -55,7 +55,9 @@ int main(void) {
         USERTYPE_ADMINISTRATOR,
         USERTYPE_OFFICIAL,
         USERTYPE_OFFICIAL_CERT,
-        USERTYPE_LIQUIDATOR
+        USERTYPE_LIQUIDATOR,
+        USERTYPE_RECEIVER,
+        USERTYPE_GUARDIAN
     };
 
     const xmlChar *names[] = {
@@ -64,7 +66,9 @@ int main(void) {
         BAD_CAST "ADMINISTRATOR",
         BAD_CAST "OFFICIAL",
         BAD_CAST "OFFICIAL_CERT",
-        BAD_CAST "LIQUIDATOR"
+        BAD_CAST "LIQUIDATOR",
+        BAD_CAST "RECEIVER",
+        BAD_CAST "GUARDIAN"
     };
 
 
