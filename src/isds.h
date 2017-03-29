@@ -193,6 +193,7 @@ typedef enum {
     DBTYPE_PFO_ADVOK = 31,
     DBTYPE_PFO_DANPOR = 32,
     DBTYPE_PFO_INSSPR = 33,
+    DBTYPE_PFO_AUDITOR = 34,
     DBTYPE_FO = 40
 } isds_DbType;
 

@@ -59,6 +59,7 @@ int main(void) {
         DBTYPE_PFO_ADVOK,
         DBTYPE_PFO_DANPOR,
         DBTYPE_PFO_INSSPR,
+        DBTYPE_PFO_AUDITOR,
         DBTYPE_FO
     };
 
@@ -74,6 +75,7 @@ int main(void) {
         BAD_CAST "PFO_ADVOK",
         BAD_CAST "PFO_DANPOR",
         BAD_CAST "PFO_INSSPR",
+        BAD_CAST "PFO_AUDITOR",
         BAD_CAST "FO"
     };
 

@@ -2006,6 +2006,8 @@ static isds_error string2isds_DbType(xmlChar *string, isds_DbType *type) {
         *type = DBTYPE_PFO_DANPOR;
     else if (!xmlStrcmp(string, BAD_CAST "PFO_INSSPR"))
         *type = DBTYPE_PFO_INSSPR;
+    else if (!xmlStrcmp(string, BAD_CAST "PFO_AUDITOR"))
+        *type = DBTYPE_PFO_AUDITOR;
     else if (!xmlStrcmp(string, BAD_CAST "PO"))
         *type = DBTYPE_PO;
     else if (!xmlStrcmp(string, BAD_CAST "PO_ZAK"))
@@ -2037,6 +2039,7 @@ static const xmlChar *isds_DbType2string(const isds_DbType type) {
             case DBTYPE_PFO_ADVOK: return(BAD_CAST "PFO_ADVOK"); break;
             case DBTYPE_PFO_DANPOR: return(BAD_CAST "PFO_DANPOR"); break;
             case DBTYPE_PFO_INSSPR: return(BAD_CAST "PFO_INSSPR"); break;
+            case DBTYPE_PFO_AUDITOR: return(BAD_CAST "PFO_AUDITOR"); break;
             case DBTYPE_PO: return(BAD_CAST "PO"); break;
             case DBTYPE_PO_ZAK: return(BAD_CAST "PO_ZAK"); break;
             case DBTYPE_PO_REQ: return(BAD_CAST "PO_REQ"); break;

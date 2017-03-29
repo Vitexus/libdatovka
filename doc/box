@@ -28,6 +28,7 @@ PFO         30      Person in bussiness
 PFO_ADVOK   31      Lawyer
 PFO_DANPOR  32      Tax consultant
 PFO_INSSPR  33      Administrator of insolvency
+PFO_AUDITOR 34      Statutory auditor
 FO          40      Standard person
 
 

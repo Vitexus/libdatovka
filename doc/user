@@ -5,6 +5,8 @@ Source: Webové služby rozhraní ISDS pro správu datových schránkek,
     version 2.19 (2011-05-05)
 Source: Webové služby rozhraní ISDS pro manipulaci s datovými zprávami,
     version 2.28 (2012-07-27), pages 6–7
+Source: Webové služby rozhraní ISDS pro správu datových schránek
+    version 2.56 (2017-02-20)
 
 
 User types
@@ -68,6 +70,7 @@ PRIVIL_NOTAR            1024        Manage OVM_NOTAR type boxes
 PRIVIL_EXEKUT           2048        Manage OVM_EXEK type boxes
 PRIVIL_ADVOK            4096        Manage PFO_ADVOK type boxes
 PRIVIL_DANPOR           8192        Manage PFO_DANPOR type boxes
+PRIVIL_AUDITOR          1073741824  Manage PFO_AUDITOR type boxes
 PRIVIL_PFO              16384       Manage PFO* type boxes
 PRIVIL_OVMPOZAK         65536       Manage OVM, PO_ZAK and OVM_REQ type boxes
 PRIVIL_VAZBA            131072      Report imprisoning of a person etc.

@@ -929,6 +929,11 @@ err = isds_cleanup();
           </varlistentry>
 
           <varlistentry>
+            <term><constant>DBTYPE_PFO_AUDITOR</constant></term>
+            <listitem><para>Statutory auditor.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
             <term><constant>DBTYPE_FO</constant></term>
             <listitem><para>Standard person.</para></listitem>
           </varlistentry>

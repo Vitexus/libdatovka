@@ -887,6 +887,7 @@ PFO
 PFO_ADVOK
 PFO_INSSPR
 PFO_DANPOR
+PFO_AUDITOR
 FO
 
 Output is this list of these optional elements
