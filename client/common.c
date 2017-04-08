@@ -121,6 +121,10 @@ void print_UserType(const long int *type) {
             case USERTYPE_ENTRUSTED: printf("ENTRUSTED\n"); break;
             case USERTYPE_ADMINISTRATOR: printf("ADMINISTRATOR\n"); break;
             case USERTYPE_OFFICIAL: printf("OFFICIAL\n"); break;
+            case USERTYPE_OFFICIAL_CERT: printf("OFFICIAL_CERT\n"); break;
+            case USERTYPE_LIQUIDATOR: printf("LIQUIDATOR\n"); break;
+            case USERTYPE_RECEIVER: printf("RECEIVER\n"); break;
+            case USERTYPE_GUARDIAN: printf("GUARDIAN\n"); break;
             default: printf("<unknown type %ld>\n", *type);
         }
 }
@@ -135,6 +139,10 @@ void print_sender_type(const isds_sender_type *type) {
             case SENDERTYPE_ADMINISTRATOR: printf("ADMINISTRATOR\n"); break;
             case SENDERTYPE_OFFICIAL: printf("OFFICIAL\n"); break;
             case SENDERTYPE_VIRTUAL: printf("VIRTUAL\n"); break;
+            case SENDERTYPE_OFFICIAL_CERT: printf("OFFICIAL_CERT\n"); break;
+            case SENDERTYPE_LIQUIDATOR: printf("LIQUIDATOR\n"); break;
+            case SENDERTYPE_RECEIVER: printf("RECEIVER\n"); break;
+            case SENDERTYPE_GUARDIAN: printf("GUARDIAN\n"); break;
             default: printf("<unknown type %u>\n", *type);
         }
 }
