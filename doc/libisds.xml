@@ -876,12 +876,14 @@ err = isds_cleanup();
 
           <varlistentry>
             <term><constant>DBTYPE_OVM_NOTAR</constant></term>
-            <listitem><para>Notary.</para></listitem>
+            <listitem><para>Notary (stopped being used, replaced with
+                <abbrev>OVM_PFO</abbrev>).</para></listitem>
           </varlistentry>
 
           <varlistentry>
             <term><constant>DBTYPE_OVM_EXEKUT</constant></term>
-            <listitem><para>Executor.</para></listitem>
+            <listitem><para>Executor (stopped being used, replaced with
+                <abbrev>OVM_PFO</abbrev>).</para></listitem>
           </varlistentry>
 
           <varlistentry>
@@ -892,6 +894,25 @@ err = isds_cleanup();
           </varlistentry>
 
           <varlistentry>
+            <term><constant>DBTYPE_OVM_FO</constant></term>
+            <listitem><para>Natural person with <abbrev>OVM</abbrev> status
+                (without identification number).</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBTYPE_OVM_PFO</constant></term>
+            <listitem><para>Natural person in business with <abbrev>OVM</abbrev>
+                status (e.g. notary or executor).</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBTYPE_OVM_PO</constant></term>
+            <listitem><para>Juridical person with <abbrev>OVM</abbrev> status
+                (arisen from previously existing <abbrev>PO</abbrev> or
+                <abbrev>PO_REQ</abbrev>).</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
             <term><constant>DBTYPE_PO</constant></term>
             <listitem><para>Standard commercial organization (listed in trade
                 registry).</para></listitem>
@@ -899,7 +920,9 @@ err = isds_cleanup();
 
           <varlistentry>
             <term><constant>DBTYPE_PO_ZAK</constant></term>
-            <listitem><para>Other organization founded by an act.</para></listitem>
+            <listitem><para>Other organization founded by an act
+                (stopped being used, replaced with
+                <abbrev>PO</abbrev>).</para></listitem>
           </varlistentry>
 
           <varlistentry>
@@ -910,7 +933,7 @@ err = isds_cleanup();
 
           <varlistentry>
             <term><constant>DBTYPE_PFO</constant></term>
-            <listitem><para>Person in bussiness.</para></listitem>
+            <listitem><para>Person in business.</para></listitem>
           </varlistentry>
 
           <varlistentry>

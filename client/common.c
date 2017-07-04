@@ -108,6 +108,9 @@ void print_DbType(const long int *type) {
             case DBTYPE_OVM_NOTAR: printf("OVM_NOTAR\n"); break;
             case DBTYPE_OVM_EXEKUT: printf("OVM_EXEKUT\n"); break;
             case DBTYPE_OVM_REQ: printf("OVM_REQ\n"); break;
+            case DBTYPE_OVM_FO: printf("OVM_FO\n"); break;
+            case DBTYPE_OVM_PFO: printf("OVM_PFO\n"); break;
+            case DBTYPE_OVM_PO: printf("OVM_PO\n"); break;
             default: printf("<unknown type %ld>\n", *type);
         }
 }

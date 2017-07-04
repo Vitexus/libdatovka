@@ -17,14 +17,21 @@ Symbol      Number  Description
             0       ISDS system
 OVM         10      Standard government (state or municipality or similar)
                     office
-OVM_NOTAR   11      Notary
-OVM_EXEKUT  12      Executor
+OVM_NOTAR   11      Notary (stopped being used, replaced with OVM_PFO)
+OVM_EXEKUT  12      Executor (stopped being used, replaced with OVM_PFO)
 OVM_REQ     13      Subsidiary office with OVM status assigned on request
                     (section 6 and 7 of act)
+OVM_FO      14      Natural person with OVM status
+                    (without identification number)
+OVM_PFO     15      Natural person in business with OVM status
+                    (e.g. notary or executor)
+OVM_PO      16      Juridical person with OVM status
+                    (arisen from previously existing PO or PO_REQ)
 PO          20      Standard commercial organization (in trade registry)
 PO_ZAK      21      Other organization based on law
+                    (stopped being used, replaced with PO)
 PO_REQ      22      Organization with box assigned on request
-PFO         30      Person in bussiness
+PFO         30      Person in business
 PFO_ADVOK   31      Lawyer
 PFO_DANPOR  32      Tax consultant
 PFO_INSSPR  33      Administrator of insolvency

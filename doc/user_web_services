@@ -878,6 +878,9 @@ OVM
 OVM_MAIN    Search over main (without suboridanated, with secondary) OVM
             box types only
 OVM_REQ
+OVM_FO
+OVM_PFO
+OVM_PO
 OVM_NOTAR
 OVM_EXEKUT
 PO

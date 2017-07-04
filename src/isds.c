@@ -2022,6 +2022,12 @@ static isds_error string2isds_DbType(xmlChar *string, isds_DbType *type) {
         *type = DBTYPE_OVM_EXEKUT;
     else if (!xmlStrcmp(string, BAD_CAST "OVM_REQ"))
         *type = DBTYPE_OVM_REQ;
+    else if (!xmlStrcmp(string, BAD_CAST "OVM_FO"))
+        *type = DBTYPE_OVM_FO;
+    else if (!xmlStrcmp(string, BAD_CAST "OVM_PFO"))
+        *type = DBTYPE_OVM_PFO;
+    else if (!xmlStrcmp(string, BAD_CAST "OVM_PO"))
+        *type = DBTYPE_OVM_PO;
     else
         return IE_ENUM;
     return IE_SUCCESS;
@@ -2047,6 +2053,9 @@ static const xmlChar *isds_DbType2string(const isds_DbType type) {
             case DBTYPE_OVM_NOTAR: return(BAD_CAST "OVM_NOTAR"); break;
             case DBTYPE_OVM_EXEKUT: return(BAD_CAST "OVM_EXEKUT"); break;
             case DBTYPE_OVM_REQ: return(BAD_CAST "OVM_REQ"); break;
+            case DBTYPE_OVM_FO: return(BAD_CAST "OVM_FO"); break;
+            case DBTYPE_OVM_PFO: return(BAD_CAST "OVM_PFO"); break;
+            case DBTYPE_OVM_PO: return(BAD_CAST "OVM_PO"); break;
             default: return NULL; break;
         }
 }

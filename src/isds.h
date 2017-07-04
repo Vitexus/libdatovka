@@ -183,11 +183,14 @@ typedef enum {
     DBTYPE_SYSTEM = 0,          /* This is special sender value for messages
                                    sent by ISDS. */
     DBTYPE_OVM = 10,
-    DBTYPE_OVM_NOTAR = 11,
-    DBTYPE_OVM_EXEKUT = 12,
+    DBTYPE_OVM_NOTAR = 11,      /* This type has been replaced with OVM_PFO. */
+    DBTYPE_OVM_EXEKUT = 12,     /* This type has been replaced with OVM_PFO. */
     DBTYPE_OVM_REQ = 13,
+    DBTYPE_OVM_FO = 14,
+    DBTYPE_OVM_PFO = 15,
+    DBTYPE_OVM_PO = 16,
     DBTYPE_PO = 20,
-    DBTYPE_PO_ZAK = 21,
+    DBTYPE_PO_ZAK = 21,         /* This type has been replaced with PO. */
     DBTYPE_PO_REQ = 22,
     DBTYPE_PFO = 30,
     DBTYPE_PFO_ADVOK = 31,
