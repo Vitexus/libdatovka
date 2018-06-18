@@ -8599,6 +8599,9 @@ isds_error isds_get_commercial_credit(struct isds_ctx *context,
     if (NULL != credit) EXTRACT_LONGINT("isds:currentCredit", credit, 1);
     if (NULL != email) EXTRACT_STRING("isds:notifEmail", *email);
 
+    /* result gets overwritten in next step */
+    xmlXPathFreeObject(result); result = NULL;
+
     /* Extract records */
     if (NULL == history) goto leave;
     result = xmlXPathEvalExpression(BAD_CAST "isds:ciRecords/isds:ciRecord",
