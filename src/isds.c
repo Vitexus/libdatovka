@@ -11313,6 +11313,8 @@ isds_error isds_get_message_sender(struct isds_ctx *context,
             }
         }
     }
+    if (NULL == raw_sender_type)
+        zfree(type_string);
     if (NULL != sender_name)
         EXTRACT_STRING("isds:authorName", *sender_name);
 
