@@ -386,8 +386,10 @@ typedef enum {
     EVENT_PRIMARY_LOGIN,            /* Primary user has logged in */
     EVENT_ENTRUSTED_LOGIN,          /* Entrusted user with capability to read
                                        has logged in */
-    EVENT_SYSCERT_LOGIN             /* Application authenticated by `system'
+    EVENT_SYSCERT_LOGIN,            /* Application authenticated by `system'
                                        certificate has logged in */
+    EVENT_UNDELIVERED_AV_CHECK      /* An attachment didn't pass the antivirus
+                                       check, message has not been delivered */
 } isds_event_type;
 
 /* Message event
