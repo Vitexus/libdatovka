@@ -267,10 +267,10 @@ void isds_envelope_free(struct isds_envelope **envelope) {
     free((*envelope)->dmRecipient);
     free((*envelope)->dmRecipientAddress);
     free((*envelope)->dmAmbiguousRecipient);
-    free((*envelope)->dmType);
 
     free((*envelope)->dmOrdinal);
     free((*envelope)->dmMessageStatus);
+    free((*envelope)->dmAttachmentSize);
     free((*envelope)->dmDeliveryTime);
     free((*envelope)->dmAcceptanceTime);
     isds_hash_free(&(*envelope)->hash);
@@ -297,6 +297,7 @@ void isds_envelope_free(struct isds_envelope **envelope) {
 
     free((*envelope)->dmPersonalDelivery);
     free((*envelope)->dmAllowSubstDelivery);
+    free((*envelope)->dmType);
 
     free((*envelope)->dmOVM);
     free((*envelope)->dmPublishOwnID);
