@@ -121,6 +121,14 @@ int main(void) {
     TEST((char*)input, test_eventstring2event, input,
             IE_SUCCESS, &event, &output);
 
+    input = BAD_CAST "EV8: some text";
+    event.time = NULL;
+    event_type = EVENT_UNDELIVERED_AV_CHECK;
+    event.type = &event_type;
+    event.description = "some text";
+    TEST((char*)input, test_eventstring2event, input,
+            IE_SUCCESS, &event, &output);
+
     input = BAD_CAST "EV11: some text";
     event.time = NULL;
     event_type = EVENT_PRIMARY_LOGIN;
