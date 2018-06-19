@@ -3,7 +3,7 @@ User web services specification
 
 Source: Provozní řád ISDS, version 2016-02-07
 Source: Webové služby rozhraní ISDS pro manipulaci s datovými zprávami,
-    version 2.48 (2015-11-01)
+    version 2.56 (2017-03-05)
 Source: Webové služby ISDS pro vyhledávání datových schránek,
     version 2.48 (2015-11-01)
 Source: ISDS – Přehled změn (2017-05-27)
@@ -495,7 +495,7 @@ ISO time and text description. The text description has well-known prefix to
 distinguish the event meaning. Following prefixes are defined:
 
     Prefix  Meaning
-    -----------------------------------------------------
+    --------------------------------------------------------------------------
     EV0:    Message enterend into ISDS
     EV1:    Message has been accepted by recipient action
     EV2:    Message has been delivered to box and is considered as accepted by
@@ -506,6 +506,7 @@ distinguish the event meaning. Following prefixes are defined:
             message is sent to sender in addition.
     EV4:    Commercial message has been accepted by recipient confirmation
     EV5:    Message has been delivered into recipent box
+    EV8:    A virus has been detected in the message, it won't be delivered
     EV11:   Primary user has logged into his box
     EV12:   Entrusted user havin permission to read this message has logged in
     EV13:   Application (not a human) has logged into box using `system'
