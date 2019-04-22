@@ -34,21 +34,23 @@ static int test_utf82locale(const void *input, const void *correct) {
 int main(void) {
     INIT_TEST("utf8locale");
 
-    if (prepare_locale(1)) 
-        ABORT_UNIT("Could not set any UTF-8 locale");
+    if (prepare_locale(1)) {
+        SKIP_TESTS(5, "Could not set any UTF-8 locale");
+    } else {
+        TEST("NULL input", test_utf82locale, NULL, NULL);
+        TEST("Empty string", test_utf82locale, "", "");
+        TEST("ASCII text", test_utf82locale, "lazy fox", "lazy fox");
+        TEST("non-ASCII text in UTF-8 locale", test_utf82locale, "Šíleně žluťoučký",
+                "Šíleně žluťoučký");
+        TEST("OTP message in UTF-8 locale", test_utf82locale,
+                "Jednorázový kód odeslán.", "Jednorázový kód odeslán.");
+    }
 
-    TEST("NULL input", test_utf82locale, NULL, NULL);
-    TEST("Empty string", test_utf82locale, "", "");
-    TEST("ASCII text", test_utf82locale, "lazy fox", "lazy fox");
-    TEST("non-ASCII text in UTF-8 locale", test_utf82locale, "Šíleně žluťoučký",
-            "Šíleně žluťoučký");
-    TEST("OTP message in UTF-8 locale", test_utf82locale,
-            "Jednorázový kód odeslán.", "Jednorázový kód odeslán.");
-
-    if (prepare_locale(0)) 
-        ABORT_UNIT("Could not set C locale");
-
-    TEST("non-ASCII text in C locale", test_utf82locale, "Šíleně žluťoučký", NULL);
+    if (prepare_locale(0)) {
+        SKIP_TESTS(1, "Could not set C locale");
+    } else {
+        TEST("non-ASCII text in C locale", test_utf82locale, "Šíleně žluťoučký", NULL);
+    }
 
     SUM_TEST();
 }
