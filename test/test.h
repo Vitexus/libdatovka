@@ -15,21 +15,22 @@
 #include "test-tools.h"
 
 char *unit_name, *reason;
-unsigned int passed, failed;
+unsigned int passed, failed, skipped;
 void (*test_destructor_function)(void *);
 void *test_destructor_argument;
 
 #define INIT_TEST(name) { \
     setlocale(LC_ALL, "C"); \
     unit_name = name; \
-    passed = failed = 0; \
+    passed = failed = skipped = 0; \
     printf("Testing unit: %s\n", unit_name); \
 }
 
 #define SUM_TEST() { \
-    printf("Test results: unit = %s, passed = %u, failed = %u\n\n", \
-            unit_name, passed, failed); \
-    exit(failed ? EXIT_FAILURE : EXIT_SUCCESS ); \
+    printf("Test results: unit = %s, passed = %u, failed = %u, skipped = %u\n\n", \
+            unit_name, passed, failed, skipped); \
+    exit(failed ? EXIT_FAILURE : passed ? EXIT_SUCCESS : \
+            skipped ? 77 : EXIT_SUCCESS); \
 }
 
 #define TEST_DESTRUCTOR(function, argument) { \
@@ -55,6 +56,22 @@ void *test_destructor_argument;
     return 1; \
 }
 
+#define SKIP_TEST(...) { \
+    FAILURE_REASON(__VA_ARGS__); \
+    if (NULL != test_destructor_function) \
+        test_destructor_function(test_destructor_argument); \
+    return 77; \
+}
+
+#define SKIP_TESTS(number, reason) { \
+    if (1 == (number)) { \
+        printf("\t%u test skipped: %s\n", (number), (reason)); \
+    } else {\
+        printf("\t%u tests skipped: %s\n", (number), (reason)); \
+    } \
+    skipped += (number); \
+}
+
 #define ABORT_UNIT(message) { \
     printf("Unit %s procedure aborted: %s\n", unit_name, (message)); \
     exit(EXIT_FAILURE); \
@@ -66,7 +83,10 @@ void *test_destructor_argument;
     free(reason); reason = NULL; \
     test_destructor_function = NULL; \
     int status = (function)(__VA_ARGS__); \
-    if (status) { \
+    if (77 == status) { \
+        skipped++; \
+        test_message = "skipped"; \
+    } else if (status) { \
         failed++; \
         test_message = "failed"; \
     } else { \
