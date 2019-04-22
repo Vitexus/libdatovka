@@ -6,6 +6,9 @@ static int prepare_locale(_Bool utf8) {
     char *old_locale;
 
     if (utf8) {
+        old_locale = setlocale(LC_ALL, "C.UTF-8");
+        if (old_locale != NULL) return 0;
+
         old_locale = setlocale(LC_ALL, "en_US.UTF-8");
         if (old_locale != NULL) return 0;
 
