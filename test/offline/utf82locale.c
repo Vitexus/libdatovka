@@ -2,10 +2,10 @@
 #include "utils.h"
 #include <locale.h>
 
-static int prepare_locale(_Bool utf8) {
+static int prepare_locale(char type) {
     char *old_locale;
 
-    if (utf8) {
+    if ('U' == type) {
         old_locale = setlocale(LC_ALL, "C.UTF-8");
         if (old_locale != NULL) return 0;
 
@@ -13,6 +13,9 @@ static int prepare_locale(_Bool utf8) {
         if (old_locale != NULL) return 0;
 
         old_locale = setlocale(LC_ALL, "cs_CZ.UTF-8");
+        if (old_locale != NULL) return 0;
+    } else if ('2' == type) {
+        old_locale = setlocale(LC_ALL, "cs_CZ.ISO8859-2");
         if (old_locale != NULL) return 0;
     } else {
         old_locale = setlocale(LC_ALL, "C");
@@ -37,7 +40,7 @@ static int test_utf82locale(const void *input, const void *correct) {
 int main(void) {
     INIT_TEST("utf8locale");
 
-    if (prepare_locale(1)) {
+    if (prepare_locale('U')) {
         SKIP_TESTS(5, "Could not set any UTF-8 locale");
     } else {
         TEST("NULL input", test_utf82locale, NULL, NULL);
@@ -49,7 +52,14 @@ int main(void) {
                 "Jednorázový kód odeslán.", "Jednorázový kód odeslán.");
     }
 
-    if (prepare_locale(0)) {
+    if (prepare_locale('2')) {
+        SKIP_TESTS(1, "Could not set any ISO-8859-2 locale");
+    } else {
+        TEST("non-ASCII text in ISO-8859-2 locale", test_utf82locale,
+                "Šíleně žluťoučký", "\xa9\xedlen\xec \xbelu\xbbou\xe8k\xfd");
+    }
+
+    if (prepare_locale('C')) {
         SKIP_TESTS(1, "Could not set C locale");
     } else {
         TEST("non-ASCII text in C locale", test_utf82locale, "Šíleně žluťoučký", NULL);
