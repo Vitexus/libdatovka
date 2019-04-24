@@ -35,7 +35,11 @@ static int test_login(const isds_error error, struct isds_ctx *context,
     isds_error err;
 
     err = isds_login(context, url, username, password, pki_credentials, otp);
-    if (error != err)
+    /* If TLSv1.3 is used, cURL reports a network error instead of a security
+     * error if server refuses client's certificate (since GnuTLS 3.6.4).
+     * Maybe a <https://gitlab.com/gnutls/gnutls/issues/615>. As a workaround,
+     * accept IE_NETWORK if IE_SECURITY was expected. */
+    if (error != err && (IE_SECURITY != error || IE_NETWORK != err))
         FAIL_TEST("Wrong return code: expected=%s, returned=%s (%s)",
                 isds_strerror(error), isds_strerror(err),
                 isds_long_message(context));
