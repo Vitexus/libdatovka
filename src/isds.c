@@ -32,11 +32,13 @@ const char *version_expat = N_("n/a");
 const char isds_locator[] = "https://ws1.mojedatovaschranka.cz/";
 const char isds_cert_locator[] = "https://ws1c.mojedatovaschranka.cz/";
 const char isds_otp_locator[] = "https://www.mojedatovaschranka.cz/";
+const char isds_mep_locator[] = "https://www.mojedatovaschranka.cz/";
 
 /* Base URL of production ISDS instance */
 const char isds_testing_locator[] = "https://ws1.czebox.cz/";
 const char isds_cert_testing_locator[] = "https://ws1c.czebox.cz/";
 const char isds_otp_testing_locator[] = "https://www.czebox.cz/";
+const char isds_mep_testing_locator[] = "https://www.czebox.cz/";
 
 /* Extension to MIME type map */
 static const xmlChar *extension_map_mime[] = {
@@ -1334,7 +1336,7 @@ static isds_error _isds_store_credentials(struct isds_ctx *context,
 isds_error isds_login(struct isds_ctx *context, const char *url,
         const char *username, const char *password,
         const struct isds_pki_credentials *pki_credentials,
-        struct isds_otp *otp) {
+        struct isds_otp *otp, struct isds_mep *mep) {
 #if HAVE_LIBCURL
     isds_error err = IE_NOT_LOGGED_IN;
     isds_error soap_err;
@@ -1357,22 +1359,37 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 
     /* Mangle base URI according to requested authentication method */
     if (NULL == pki_credentials) {
-        isds_log(ILF_SEC, ILL_INFO,
-                _("Selected authentication method: no certificate, "
-                    "username and password\n"));
-        if (!username || !password) {
+
+        if ((NULL != username) && (NULL != password) && (NULL == mep)) {
+            isds_log(ILF_SEC, ILL_INFO,
+                    _("Selected authentication method: no certificate, "
+                        "username and password\n"));
+        } else if ((NULL != username) && (NULL == password) &&
+                   (NULL != mep) && (NULL != mep->mep_code)) {
+            isds_log(ILF_SEC, ILL_INFO,
+                    _("Selected authentication method: no certificate, "
+                        "username and mobile key\n"));
+        } else {
             isds_log_message(context,
-                    _("Both username and password must be supplied"));
+                    _("Either both username and password or "
+                        "username and mobile key code must be supplied."));
+            return IE_INVAL;
+        }
+        if ((NULL != otp) && (NULL != mep)) {
+            isds_log_message(context,
+                    _("Cannot combine OTP and mobile key authentication."));
             return IE_INVAL;
         }
         context->otp_credentials = otp;
         context->otp = (NULL != context->otp_credentials);
+        context->mep_credentials = mep;
+        context->mep = (NULL != context->mep_credentials);
         
-        if (!context->otp) {
+        if (!context->otp && !context->mep) {
             /* Default locator is official system (without certificate or
              * OTP) */
             context->url = strdup((NULL != url) ? url : isds_locator);
-        } else {
+        } else if (context->otp) {
             const char *authenticator_uri = NULL;
             if (!url) url = isds_otp_locator;
             otp->resolution = OTP_RESOLUTION_UNKNOWN;
@@ -1414,11 +1431,31 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
             }
             if (-1 == isds_asprintf(&context->url, authenticator_uri, url, url))
                 return IE_NOMEM; 
+        } else if (context->mep) {
+            if (NULL == url) {
+                url = isds_mep_locator;
+            }
+            mep->resolution = MEP_RESOLUTION_UNKNOWN;
+            /* Use mobile key code for password. */
+            password = context->mep_credentials->mep_code;
+            const char *authenticator_uri =
+                "%sas/processLogin?type=mep-ws&applicationName=%s&"
+                "uri=%sapps/";
+            const char *app_name = context->mep_credentials->app_name;
+            if (NULL == app_name) {
+                app_name = "";
+            }
+            if (-1 == isds_asprintf(&context->url, authenticator_uri, url,
+                        app_name, url)) {
+                return IE_NOMEM;
+            }
         }
     } else {
         /* Default locator is official system (with client certificate) */
         context->otp = 0;
         context->otp_credentials = NULL;
+        context->mep = 0;
+        context->mep_credentials = NULL;
         if (!url) url = isds_cert_locator;
 
         if (!username) {
@@ -1485,7 +1522,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
    
     if (context->otp) {
         /* Revert context URL from OTP authentication service URL to OTP web
-         * service base URL for subsequent calls. Potenial isds_login() retry
+         * service base URL for subsequent calls. Potential isds_login() retry
          * will re-set context URL again. */
         zfree(context->url);
         context->url = _isds_astrcat(url, "apps/");
@@ -1494,6 +1531,18 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
         }
         /* Detach pointer to OTP credentials from context */
         context->otp_credentials = NULL;
+    }
+
+    if (context->mep) {
+        /* Revert context URL from mobile key authentication service to web
+          * service base URL for subsequent calls. */
+        zfree(context->url);
+        context->url = _isds_astrcat(url, "apps/");
+        if (context->url == NULL) {
+            soap_err = IE_NOMEM;
+        }
+        /* Detach credentials pointer from context. */
+        context->mep_credentials = NULL;
     }
 
     /* Remove credentials */
@@ -1529,7 +1578,7 @@ isds_error isds_logout(struct isds_ctx *context) {
 
 #if HAVE_LIBCURL
     if (context->curl) {
-        if (context->otp) {
+        if (context->otp || context->mep) {
             isds_error err = _isds_invalidate_otp_cookie(context);
             if (err) return err;
         }

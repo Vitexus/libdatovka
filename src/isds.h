@@ -26,10 +26,12 @@ extern "C" {
 extern const char isds_locator[];       /* Without client certificate auth. */
 extern const char isds_cert_locator[];  /* With client certificate auth. */
 extern const char isds_otp_locator[];   /* With OTP authentication */
+extern const char isds_mep_locator[];   /* Mobile key application. */
 /* Base URL of testing ISDS instance */
 extern const char isds_testing_locator[];       /* Without client certificate */
 extern const char isds_cert_testing_locator[];  /* With client certificate */
 extern const char isds_otp_testing_locator[];   /* With OTP authentication */
+extern const char isds_mep_testing_locator[];   /* Mobile key application. */
 
 
 struct isds_ctx;    /* Context for specific ISDS box */
@@ -142,10 +144,10 @@ typedef enum {
     OTP_TIME                /* Time-based OTP method */
 } isds_otp_method;
 
-/* One-time passwed authentication resolution */
+/* One-time password authentication resolution */
 typedef enum {
-    OTP_RESOLUTION_SUCCESS = 0,         /* Authentication succeded */
-    OTP_RESOLUTION_UNKNOWN,             /* Status is unkown */
+    OTP_RESOLUTION_SUCCESS = 0,         /* Authentication succeeded */
+    OTP_RESOLUTION_UNKNOWN,             /* Status is unknown */
     OTP_RESOLUTION_BAD_AUTHENTICATION,  /* Bad log-in, retry */
     OTP_RESOLUTION_ACCESS_BLOCKED,      /* Access blocked for 60 minutes
                                            (brute force attack detected) */
@@ -173,6 +175,36 @@ struct isds_otp {
                                        request new code from ISDS.) */
     /* Output members */
     isds_otp_resolution resolution; /* Fine-grade resolution of OTP
+                                       authentication attempt. */
+};
+
+/* Mobile key authentication resolution. */
+typedef enum {
+    MEP_RESOLUTION_SUCCESS = 0,    /* Authentication succeeded */
+    MEP_RESOLUTION_UNKNOWN,        /* Status is unknown */
+    MEP_RESOLUTION_UNRECOGNISED,   /* Authentication request not recognised. */
+    MEP_RESOLUTION_ACK_REQUESTED,  /* Waiting for acknowledgement. */
+    MEP_RESOLUTION_ACK,            /* Acknowledged. */
+    MEP_RESOLUTION_ACK_EXPIRED     /* Acknowledgement request expired. */
+} isds_mep_resolution;
+
+/* Mobile key context to authenticate client */
+struct isds_mep {
+    /* Input members. */
+    char *mep_code;                 /* Communication code. The code is generated
+                                       when enabling the mobile key
+                                       authentication and can be found in the
+                                       web-based portal of the data-box
+                                       service. */
+    char *app_name;                 /* Client application name. This name is
+                                       displayed in the mobile key authentication
+                                       application to provide the user brief
+                                       information about which application is
+                                       requiring access to the data box. */
+    /* Intermediate members. */
+    char *intermediate_uri;         /* Intermediate authentication URI. */
+    /* Output members. */
+    isds_mep_resolution resolution; /* Fine-grade resolution of mobile key
                                        authentication attempt. */
 };
 
@@ -733,7 +765,7 @@ struct isds_credit_event_storage_set {
                                        change; Optional. */
 };
 
-/* Event about change of credit for sending commerical services */
+/* Event about change of credit for sending commercial services */
 struct isds_credit_event {
     /* Common fields */
     struct timeval *time;           /* When the credit was changed. */
@@ -743,7 +775,7 @@ struct isds_credit_event {
                                        The unit is 1/100 CZK. */
     isds_credit_event_type type;    /* Type of the event */
 
-    /* Datails specific for the type */
+    /* Details specific for the type */
     union {
         struct isds_credit_event_charged charged;
                                                 /* ISDS_CREDIT_CHARGED */
@@ -898,7 +930,7 @@ void isds_set_logging(const unsigned int facilities,
  * @facility is log message class
  * @level is log message severity
  * @message is string with zero byte terminator. This can be any arbitrary
- * chunk of a sentence with or without new line, a sentence can be splitted
+ * chunk of a sentence with or without new line, a sentence can be split
  * into more messages. However it should not happen. If you discover message
  * without new line, report it as a bug.
  * @length is size of @message string in bytes excluding trailing zero
@@ -989,6 +1021,8 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
  * authentication.
  * @otp selects one-time password authentication method to use, defines OTP
  * code (if known) and returns fine grade resolution of OTP procedure.
+ * @mk selects mobile key authentication method to use, specifies the
+ * communication code.
  * @return:
  *  IE_SUCCESS if authentication succeeds
  *  IE_NOT_LOGGED_IN if authentication fails. If OTP authentication has been
@@ -1002,7 +1036,7 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
 isds_error isds_login(struct isds_ctx *context, const char *url,
         const char *username, const char *password,
         const struct isds_pki_credentials *pki_credentials,
-        struct isds_otp *otp);
+        struct isds_otp *otp, struct isds_mep *mep);
 
 /* Log out from ISDS server and close connection. */
 isds_error isds_logout(struct isds_ctx *context);

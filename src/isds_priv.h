@@ -87,6 +87,8 @@ struct isds_ctx {
     struct isds_pki_credentials *pki_credentials;
     _Bool otp;              /* This is OTP-authenticated context */
     struct isds_otp *otp_credentials;   /* Weak pointer to OTP credentials */
+    _Bool mep;               /* This is mobile-key-authenticated context. */
+    struct isds_mep *mep_credentials;   /* Weak pointer to mobile key credentials. */
     char *saved_username;   /* User name preserved after OTP log-in for OTP
                                password change */
     CURL *curl;             /* CURL session handle */

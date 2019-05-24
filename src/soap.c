@@ -631,29 +631,32 @@ static isds_error http(struct isds_ctx *context,
     }
 
 
-    /* Set credentials */
+    if ((NULL == context->mep_credentials) || (NULL == context->mep_credentials->intermediate_uri)) {
+        /* Don't set credentials in intermediate mobile key login state. */
+        /* Set credentials */
 #if HAVE_DECL_CURLOPT_USERNAME /* Since curl-7.19.1 */
-    if (!curl_err && context->username) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_USERNAME,
-                context->username);
-    }
-    if (!curl_err && context->password) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_PASSWORD,
-                context->password);
-    }
-#else
-    if (!curl_err && (context->username || context->password)) {
-        char *userpwd =
-            _isds_astrcat3(context->username, ":", context->password);
-        if (!userpwd) {
-            isds_log_message(context, _("Could not pass credentials to CURL"));
-            err = IE_NOMEM;
-            goto leave;
+        if (!curl_err && context->username) {
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_USERNAME,
+                    context->username);
         }
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_USERPWD, userpwd);
-        free(userpwd);
-    }
+        if (!curl_err && context->password) {
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_PASSWORD,
+                    context->password);
+        }
+#else
+        if (!curl_err && (context->username || context->password)) {
+            char *userpwd =
+                _isds_astrcat3(context->username, ":", context->password);
+            if (!userpwd) {
+                isds_log_message(context, _("Could not pass credentials to CURL"));
+                err = IE_NOMEM;
+                goto leave;
+            }
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_USERPWD, userpwd);
+            free(userpwd);
+        }
 #endif /* not HAVE_DECL_CURLOPT_USERNAME */
+    }
 
     /* Set PKI credentials */
     if (!curl_err && (context->pki_credentials)) {
@@ -765,10 +768,10 @@ static isds_error http(struct isds_ctx *context,
     }
 
     /* Set authorization cookie for OTP session */
-    if (!curl_err && context->otp) {
+    if (!curl_err && (context->otp || context->mep)) {
         isds_log(ILF_SEC, ILL_INFO,
                 _("Cookies will be stored and sent "
-                    "because context has been authorized by OTP.\n"));
+                    "because context has been authorized by OTP or mobile key.\n"));
         curl_err = curl_easy_setopt(context->curl, CURLOPT_COOKIEFILE, "");
     }
 
@@ -1017,7 +1020,7 @@ static isds_error http(struct isds_ctx *context,
                 response_otp_headers->method, response_otp_headers->code,
                 response_otp_headers->message);
 
-        /* XXX: Don't make unknown code fatal. Missing code can be succcess if
+        /* XXX: Don't make unknown code fatal. Missing code can be success if
          * HTTP code is 302. This is checked in _isds_soap(). */
         response_otp_headers->resolution =
             string2isds_otp_resolution(response_otp_headers->code);
@@ -1082,6 +1085,49 @@ leave:
     return err;
 }
 
+static
+isds_mep_resolution mep_ws_state_response(const char *str, size_t len)
+{
+    isds_mep_resolution res = MEP_RESOLUTION_UNKNOWN; /* Default error. */
+
+    if ((str == NULL) || (len == 0)) {
+        return res;
+    }
+    /* Ensure trailing '\0' character. */
+    char *tmp_str = malloc(len + 1);
+    if (tmp_str == NULL) {
+        return res;
+    }
+    memcpy(tmp_str, str, len);
+    tmp_str[len] = '\0';
+
+    char *endptr;
+    long num = strtol(tmp_str, &endptr, 10);
+    if (*endptr != '\0') {
+        return res;
+    }
+
+    switch (num) {
+    case -1:
+       res = MEP_RESOLUTION_UNRECOGNISED;
+       break;
+    case 1:
+       res = MEP_RESOLUTION_ACK_REQUESTED;
+       break;
+    case 2:
+       res = MEP_RESOLUTION_ACK;
+       break;
+    case 3:
+       res = MEP_RESOLUTION_ACK_EXPIRED;
+       break;
+    default:
+        break;
+    }
+
+    free(tmp_str);
+
+    return res;
+}
 
 /* Do SOAP request.
  * @context holds the base URL,
@@ -1108,6 +1154,7 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
         void **raw_response, size_t *raw_response_length) {
 
     isds_error err = IE_SUCCESS;
+    char *orig_url = NULL;
     char *url = NULL;
     char *mime_type = NULL;
     long http_code = 0;
@@ -1136,7 +1183,12 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
     if (response_node_list) *response_node_list = NULL;
     if (raw_response) *raw_response = NULL;
 
-    url = _isds_astrcat(context->url, file);
+    if ((NULL != context->mep_credentials) && (NULL != context->mep_credentials->intermediate_uri)) {
+        /* Prefer mobile key intermediate URI. */
+        url = _isds_astrcat(context->mep_credentials->intermediate_uri, NULL);
+    } else {
+        url = _isds_astrcat(context->url, file);
+    }
     if (!url) return IE_NOMEM;
 
     /* Build SOAP request envelope */
@@ -1202,7 +1254,7 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
     /* Last argument 1 means format the XML tree. This is pretty but it breaks
-     * XML document transport as it adds text nodes (indentiation) between
+     * XML document transport as it adds text nodes (indentation) between
      * elements. */
     save_ctx = xmlSaveToBuffer(http_request, "UTF-8", 0);
     if (!save_ctx) {
@@ -1221,19 +1273,29 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
         goto leave;
     }
 
-    if (context->otp_credentials != NULL)
+    if ((context->otp_credentials != NULL) || (context->mep_credentials != NULL)) {
         memset(&response_otp_headers, 0, sizeof(response_otp_headers));
+    }
 redirect:
-    if (context->otp_credentials != NULL)
+    if ((context->otp_credentials != NULL) || (context->mep_credentials != NULL)) {
         auth_headers_free(&response_otp_headers);
+    }
     isds_log(ILF_SOAP, ILL_DEBUG,
             _("SOAP request to sent to %s:\n%.*s\nEnd of SOAP request\n"),
             url, http_request->use, http_request->content);
 
-    err = http(context, url, 0, http_request->content, http_request->use,
-            &http_response, &response_length,
-            &mime_type, NULL, &http_code,
-            (context->otp_credentials == NULL) ? NULL: &response_otp_headers);
+    if ((NULL != context->mep_credentials) && (NULL != context->mep_credentials->intermediate_uri)) {
+        /* POST does not work for the intermediate URI, using GET here. */
+        err = http(context, url, 1, NULL, 0,
+                &http_response, &response_length,
+                &mime_type, NULL, &http_code,
+                ((context->otp_credentials == NULL) && (context->mep_credentials == NULL)) ? NULL: &response_otp_headers);
+    } else {
+        err = http(context, url, 0, http_request->content, http_request->use,
+                &http_response, &response_length,
+                &mime_type, NULL, &http_code,
+                ((context->otp_credentials == NULL) && (context->mep_credentials == NULL)) ? NULL: &response_otp_headers);
+    }
 
     /* TODO: HTTP binding for SOAP prescribes non-200 HTTP return codes
      * to be processed too. */
@@ -1244,6 +1306,9 @@ redirect:
 
     if (NULL != context->otp_credentials)
         context->otp_credentials->resolution = response_otp_headers.resolution;
+    if (NULL != context->mep_credentials) {
+//        context->mep_credentials->resolution = response_otp_headers.resolution;
+    }
     
     /* Check for HTTP return code */
     isds_log(ILF_SOAP, ILL_DEBUG, _("Server returned %ld HTTP code\n"),
@@ -1258,6 +1323,31 @@ redirect:
                         OTP_RESOLUTION_UNKNOWN)
                     context->otp_credentials->resolution =
                         OTP_RESOLUTION_SUCCESS;
+            } else if (NULL != context->mep_credentials) {
+                /* The server returns just a numerical value in the body, nothing else. */
+                context->mep_credentials->resolution =
+                        mep_ws_state_response(http_response, response_length);
+                switch (context->mep_credentials->resolution) {
+                case MEP_RESOLUTION_ACK_REQUESTED:
+                    err = IE_PARTIAL_SUCCESS;
+                    sleep(1);
+                    goto redirect;
+                    break;
+                case MEP_RESOLUTION_ACK:
+                    /* redirect to login finalisation. */
+                    free(url);
+                    url = orig_url;
+                    orig_url = NULL;
+                    free(context->mep_credentials->intermediate_uri);
+                    context->mep_credentials->intermediate_uri = NULL;
+                    goto redirect;
+                    break;
+                default:
+                    err = IE_NOT_LOGGED_IN;
+                    /* No XML data are returned here. */
+                    goto leave;
+                    break;
+                }
             }
             break;
         case 302:
@@ -1291,6 +1381,28 @@ redirect:
                     /* XXX: Otherwise bail out to ask application for OTP code. */
                     goto leave;
                 }
+            } else if (NULL != context->mep_credentials) {
+                if (context->mep_credentials->resolution == MEP_RESOLUTION_UNKNOWN) {
+                    context->mep_credentials->resolution = MEP_RESOLUTION_ACK_REQUESTED;
+                    if ((context->mep_credentials->intermediate_uri == NULL) &&
+                            (response_otp_headers.redirect != NULL)) {
+                        /* This is the first attempt. */
+                        isds_printf_message(context,
+                                _("Server redirects on <%s> because mobile key authentication "
+                                    "succeeded."),
+                                url);
+                        context->mep_credentials->intermediate_uri = _isds_astrcat(response_otp_headers.redirect, NULL);
+                        orig_url = url;
+                        url = response_otp_headers.redirect;
+                        response_otp_headers.redirect = NULL;
+                        err = IE_PARTIAL_SUCCESS;
+                        goto redirect;
+                    }
+                } else if (context->mep_credentials->resolution == MEP_RESOLUTION_ACK) {
+                    err = IE_SUCCESS;
+                    goto leave;
+                }
+                break;
             } else {
                 err = IE_HTTP;
                 isds_printf_message(context,
@@ -1495,7 +1607,7 @@ leave:
     if (NULL == response_document || NULL == *response_document) {
         xmlFreeDoc(response_soap_doc);
     }
-    if (context->otp_credentials != NULL)
+    if ((context->otp_credentials != NULL) || (context->mep_credentials != NULL))
         auth_headers_free(&response_otp_headers);
     free(mime_type);
     free(http_response);
@@ -1562,7 +1674,7 @@ _hidden isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context) {
     void *response = NULL;
     size_t response_length;
 
-    if (context == NULL || !context->otp) return IE_INVALID_CONTEXT;
+    if (context == NULL || (!context->otp && !context->mep)) return IE_INVALID_CONTEXT;
     if (context->curl == NULL) return IE_CONNECTION_CLOSED;
 
     /* Build logout URL */
