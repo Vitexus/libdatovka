@@ -1348,8 +1348,9 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     zfree(context->long_message);
 
 #if HAVE_LIBCURL
-    /* Close connection if already logged in */
-    if (context->curl) {
+    /* Close connection if already logged in, but don't close the connection
+     * if continuing to negotiate MEP authentication.*/
+    if ((NULL != context->curl) && (NULL == mep || NULL == mep->intermediate_uri)) {
         _isds_close_connection(context);
     }
 
@@ -1482,9 +1483,12 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
         return IE_NOMEM;
 
     /* Prepare CURL handle */
-    context->curl = curl_easy_init();
-    if (!(context->curl))
+    if (NULL == context->curl) {
+        context->curl = curl_easy_init();
+    }
+    if (NULL == context->curl) {
         return IE_ERROR;
+    }
 
     /* Build log-in request */
     request = xmlNewNode(NULL, BAD_CAST "DummyOperation");
@@ -1551,19 +1555,21 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     /* Destroy log-in request */
     xmlFreeNode(request);
 
-    if (soap_err) {
+    if ((IE_SUCCESS != soap_err) && (context->mep && (IE_PARTIAL_SUCCESS != soap_err))) {
+        /* Don't close connection when using MEP authentication. */
         _isds_close_connection(context);
         return soap_err;
     }
 
     /* XXX: Until we don't propagate HTTP code 500 or 4xx, we can be sure
      * authentication succeeded if soap_err == IE_SUCCESS */
-    err = IE_SUCCESS;
+    err = soap_err;
 
-    if (!err) 
+    if (IE_SUCCESS == err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("User %s has been logged into server %s successfully\n"),
             username, url);
+    }
     return err;
 #else /* not HAVE_LIBCURL */
     return IE_NOTSUP;

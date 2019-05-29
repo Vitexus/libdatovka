@@ -1032,6 +1032,9 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
  *  server has sent OTP code through side channel. Application is expected to
  *  fill the code into @otp->otp_code, keep other arguments unchanged, and retry
  *  this call to complete second phase of TOTP authentication;
+ *  IE_PARTIAL_SUCCESS if MEP authentication has been requested, fine-grade
+ *  resolution is returned via @mep->mep_code, keep arguments unchanged and
+ *  repeat the function call as long as IE_PARTIAL_SUCCESS is being returned;
  *  or other appropriate error. */
 isds_error isds_login(struct isds_ctx *context, const char *url,
         const char *username, const char *password,

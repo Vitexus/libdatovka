@@ -1467,7 +1467,6 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
         void **raw_response, size_t *raw_response_length) {
 
     isds_error err = IE_SUCCESS;
-    char *orig_url = NULL;
     char *url = NULL;
     char *mime_type = NULL;
     long http_code = 0;
@@ -1486,12 +1485,7 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
     if (response_node_list) *response_node_list = NULL;
     if (raw_response) *raw_response = NULL;
 
-    if ((NULL != context->mep_credentials) && (NULL != context->mep_credentials->intermediate_uri)) {
-        /* Prefer mobile key intermediate URI. */
-        url = _isds_astrcat(context->mep_credentials->intermediate_uri, NULL);
-    } else {
-        url = _isds_astrcat(context->url, file);
-    }
+    url = _isds_astrcat(context->url, file);
     if (!url) return IE_NOMEM;
 
 
@@ -1514,7 +1508,7 @@ redirect:
 
     if ((NULL != context->mep_credentials) && (NULL != context->mep_credentials->intermediate_uri)) {
         /* POST does not work for the intermediate URI, using GET here. */
-        err = http(context, url, 1, NULL, 0,
+        err = http(context, context->mep_credentials->intermediate_uri, 1, NULL, 0,
                 &http_response, &response_length,
                 &mime_type, NULL, &http_code,
                 ((context->otp_credentials == NULL) && (context->mep_credentials == NULL)) ? NULL: &response_otp_headers);
@@ -1534,9 +1528,6 @@ redirect:
 
     if (NULL != context->otp_credentials)
         context->otp_credentials->resolution = response_otp_headers.resolution;
-    if (NULL != context->mep_credentials) {
-//        context->mep_credentials->resolution = response_otp_headers.resolution;
-    }
     
     /* Check for HTTP return code */
     isds_log(ILF_SOAP, ILL_DEBUG, _("Server returned %ld HTTP code\n"),
@@ -1557,22 +1548,25 @@ redirect:
                         mep_ws_state_response(http_response, response_length);
                 switch (context->mep_credentials->resolution) {
                 case MEP_RESOLUTION_ACK_REQUESTED:
+                    /* Waiting for the user to acknowledge the login request
+                     * in the mobile application. This may take a while.
+                     * Return with partial success. Don't close communication
+                     * context. */
                     err = IE_PARTIAL_SUCCESS;
-                    sleep(1);
-                    goto redirect;
+                    goto leave;
                     break;
                 case MEP_RESOLUTION_ACK:
-                    /* redirect to login finalisation. */
-                    free(url);
-                    url = orig_url;
-                    orig_url = NULL;
+                    /* Immediately redirect to login finalisation. */
                     free(context->mep_credentials->intermediate_uri);
                     context->mep_credentials->intermediate_uri = NULL;
+                    err = IE_PARTIAL_SUCCESS;
                     goto redirect;
                     break;
                 default:
+                    free(context->mep_credentials->intermediate_uri);
+                    context->mep_credentials->intermediate_uri = NULL;
                     err = IE_NOT_LOGGED_IN;
-                    /* No XML data are returned here. */
+                    /* No SOAP data are returned here just plain response code. */
                     goto leave;
                     break;
                 }
@@ -1619,14 +1613,14 @@ redirect:
                                 _("Server redirects on <%s> because mobile key authentication "
                                     "succeeded."),
                                 url);
-                        context->mep_credentials->intermediate_uri = _isds_astrcat(response_otp_headers.redirect, NULL);
-                        orig_url = url;
-                        url = response_otp_headers.redirect;
-                        response_otp_headers.redirect = NULL;
+                        context->mep_credentials->intermediate_uri =
+                                _isds_astrcat(response_otp_headers.redirect, NULL);
                         err = IE_PARTIAL_SUCCESS;
                         goto redirect;
                     }
                 } else if (context->mep_credentials->resolution == MEP_RESOLUTION_ACK) {
+                    /* MEP login succeeded. No SOAP data received even though
+                     * they were requested. */
                     err = IE_SUCCESS;
                     goto leave;
                 }
