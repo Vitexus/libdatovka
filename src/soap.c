@@ -1129,10 +1129,323 @@ isds_mep_resolution mep_ws_state_response(const char *str, size_t len)
     return res;
 }
 
+/* Build SOAP request.
+ * @context needed for error logging,
+ * @request is XML node set with SOAP request body,
+ * @http_request_ptr the address of a pointer to an automatically allocated
+ * buffer to which the request data are written.
+ */
+static
+isds_error build_http_request(struct isds_ctx *context,
+        const xmlNodePtr request, xmlBufferPtr *http_request_ptr) {
+
+    isds_error err = IE_SUCCESS;
+    xmlBufferPtr http_request = NULL;
+    xmlSaveCtxtPtr save_ctx = NULL;
+    xmlDocPtr request_soap_doc = NULL;
+    xmlNodePtr request_soap_envelope = NULL, request_soap_body = NULL;
+    xmlNsPtr soap_ns = NULL;
+
+    if (NULL == context) {
+        return IE_INVALID_CONTEXT;
+    }
+    if (NULL == http_request_ptr) {
+        return IE_ERROR;
+    }
+
+
+    /* Build SOAP request envelope */
+    request_soap_doc = xmlNewDoc(BAD_CAST "1.0");
+    if (NULL == request_soap_doc) {
+        isds_log_message(context, _("Could not build SOAP request document"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    request_soap_envelope = xmlNewNode(NULL, BAD_CAST "Envelope");
+    if (NULL == request_soap_envelope) {
+        isds_log_message(context, _("Could not build SOAP request envelope"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    xmlDocSetRootElement(request_soap_doc, request_soap_envelope);
+    /* Only this way we get namespace definition as @xmlns:soap,
+     * otherwise we get namespace prefix without definition */
+    soap_ns = xmlNewNs(request_soap_envelope, BAD_CAST SOAP_NS, NULL);
+    if(NULL == soap_ns) {
+        isds_log_message(context, _("Could not create SOAP name space"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    xmlSetNs(request_soap_envelope, soap_ns);
+    request_soap_body = xmlNewChild(request_soap_envelope, NULL,
+            BAD_CAST "Body", NULL);
+    if (NULL == request_soap_body) {
+        isds_log_message(context,
+                _("Could not add Body to SOAP request envelope"));
+        err = IE_ERROR;
+        goto leave;
+    }
+
+
+    /* Append request XML node set to SOAP body if request is not empty */
+    /* XXX: Copy of request must be used, otherwise xmlFreeDoc(request_soap_doc)
+     * would destroy this outer structure. */
+    if (NULL != request) {
+        xmlNodePtr request_copy = xmlCopyNodeList(request);
+        if (NULL == request_copy) {
+            isds_log_message(context,
+                    _("Could not copy request content"));
+            err = IE_ERROR;
+            goto leave;
+        }
+        if (NULL == xmlAddChildList(request_soap_body, request_copy)) {
+            xmlFreeNodeList(request_copy);
+            isds_log_message(context,
+                    _("Could not add request content to SOAP "
+                        "request envelope"));
+            err = IE_ERROR;
+            goto leave;
+        }
+    }
+
+
+    /* Serialize the SOAP request into HTTP request body */
+    http_request = xmlBufferCreate();
+    if (NULL == http_request) {
+        isds_log_message(context,
+                _("Could not create xmlBuffer for HTTP request body"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* Last argument 1 means format the XML tree. This is pretty but it breaks
+     * XML document transport as it adds text nodes (indentation) between
+     * elements. */
+    save_ctx = xmlSaveToBuffer(http_request, "UTF-8", 0);
+    if (NULL == save_ctx) {
+        isds_log_message(context,
+                _("Could not create XML serializer"));
+        err = IE_ERROR;
+        goto leave;
+    }
+    /* XXX: According LibXML documentation, this function does not return
+     * meaningful value yet */
+    xmlSaveDoc(save_ctx, request_soap_doc);
+    if (-1 == xmlSaveFlush(save_ctx)) {
+        isds_log_message(context,
+                _("Could not serialize SOAP request to HTTP request body"));
+        err = IE_ERROR;
+        goto leave;
+    }
+
+leave:
+    xmlSaveClose(save_ctx);
+    if (err == IE_SUCCESS) {
+        /* Pass buffer to caller when successfully written. */
+        *http_request_ptr = http_request;
+    } else {
+        xmlBufferFree(http_request);
+    }
+    xmlFreeDoc(request_soap_doc); /* recursive, frees request_body, soap_ns*/
+    return err;
+}
+
+/* Process SOAP response.
+ * @context needed for error logging,
+ * @response is a pointer to a buffer where response data are held,
+ * @response_length is the size of the response,
+ * @response_document is an automatically allocated XML document whose sub-tree
+ * identified by @response_node_list holds the SOAP response body content. You
+ * must xmlFreeDoc() it. If you don't care pass NULL and also
+ * NULL @response_node_list.
+ * @response_node_list is a pointer to node set with SOAP response body
+ * content. The returned pointer points into @response_document to the first
+ * child of SOAP Body element. Pass NULL and NULL @response_document, if you
+ * don't care.
+ */
+static
+isds_error process_http_response(struct isds_ctx *context,
+        const void *response, size_t response_length,
+        xmlDocPtr *response_document, xmlNodePtr *response_node_list) {
+
+    isds_error err = IE_SUCCESS;
+    xmlDocPtr response_soap_doc = NULL;
+    xmlNodePtr response_root = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr response_soap_headers = NULL, response_soap_body = NULL,
+                      response_soap_fault = NULL;
+
+    if (NULL == context) {
+        return IE_INVALID_CONTEXT;
+    }
+    if ((NULL == response_document && NULL != response_node_list) ||
+            (NULL != response_document && NULL == response_node_list)) {
+        return IE_INVAL;
+    }
+
+    /* TODO: Convert returned body into XML default encoding */
+
+    /* Parse the HTTP body as XML */
+    response_soap_doc = xmlParseMemory(response, response_length);
+    if (NULL == response_soap_doc) {
+        err = IE_XML;
+        goto leave;
+    }
+
+    xpath_ctx = xmlXPathNewContext(response_soap_doc);
+    if (NULL == xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    if (IE_SUCCESS !=
+            _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    if (_isds_sizet2int(response_length) >= 0) {
+        isds_log(ILF_SOAP, ILL_DEBUG,
+            _("SOAP response received:\n%.*s\nEnd of SOAP response\n"),
+            _isds_sizet2int(response_length), response);
+    }
+
+    /* Check for SOAP version */
+    response_root = xmlDocGetRootElement(response_soap_doc);
+    if (NULL == response_root) {
+        isds_log_message(context, "SOAP response has no root element");
+        err = IE_SOAP;
+        goto leave;
+    }
+    if (xmlStrcmp(response_root->name, BAD_CAST "Envelope") ||
+            xmlStrcmp(response_root->ns->href, BAD_CAST SOAP_NS)) {
+        isds_log_message(context, "SOAP response is not SOAP 1.1 document");
+        err = IE_SOAP;
+        goto leave;
+    }
+
+    /* Check for SOAP Headers */
+    response_soap_headers = xmlXPathEvalExpression(
+            BAD_CAST "/soap:Envelope/soap:Header/"
+            "*[@soap:mustUnderstand/text() = true()]", xpath_ctx);
+    if (NULL == response_soap_headers) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (!xmlXPathNodeSetIsEmpty(response_soap_headers->nodesetval)) {
+        isds_log_message(context,
+                _("SOAP response requires unsupported feature"));
+        /* TODO: log the headers
+         * xmlChar *fragment = NULL;
+         * fragment = xmlXPathCastNodeSetToSting(response_soap_headers->nodesetval);*/
+        err = IE_NOTSUP;
+        goto leave;
+    }
+
+    /* Get SOAP Body */
+    response_soap_body = xmlXPathEvalExpression(
+            BAD_CAST "/soap:Envelope/soap:Body", xpath_ctx);
+    if (NULL == response_soap_body) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(response_soap_body->nodesetval)) {
+        isds_log_message(context,
+                _("SOAP response does not contain SOAP Body element"));
+        err = IE_SOAP;
+        goto leave;
+    }
+    if (response_soap_body->nodesetval->nodeNr > 1) {
+        isds_log_message(context,
+                _("SOAP response has more than one Body element"));
+        err = IE_SOAP;
+        goto leave;
+    }
+
+    /* Check for SOAP Fault */
+    response_soap_fault = xmlXPathEvalExpression(
+            BAD_CAST "/soap:Envelope/soap:Body/soap:Fault", xpath_ctx);
+    if (NULL == response_soap_fault) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (!xmlXPathNodeSetIsEmpty(response_soap_fault->nodesetval)) {
+        /* Server signals Fault. Gather error message and croak. */
+        /* XXX: Only first message is passed */
+        char *message = NULL, *message_locale = NULL;
+        xpath_ctx->node = response_soap_fault->nodesetval->nodeTab[0];
+        xmlXPathFreeObject(response_soap_fault);
+        /* XXX: faultstring and faultcode are in no name space according
+         * ISDS specification */
+        /* First more verbose faultstring */
+        response_soap_fault = xmlXPathEvalExpression(
+                BAD_CAST "faultstring[1]/text()", xpath_ctx);
+        if ((NULL != response_soap_fault) &&
+                !xmlXPathNodeSetIsEmpty(response_soap_fault->nodesetval)) {
+            message = (char *)
+                xmlXPathCastNodeSetToString(response_soap_fault->nodesetval);
+            message_locale = _isds_utf82locale(message);
+        }
+        /* If not available, try shorter faultcode */
+        if (NULL == message_locale) {
+            free(message);
+            xmlXPathFreeObject(response_soap_fault);
+            response_soap_fault = xmlXPathEvalExpression(
+                    BAD_CAST "faultcode[1]/text()", xpath_ctx);
+            if ((NULL != response_soap_fault) &&
+                    !xmlXPathNodeSetIsEmpty(response_soap_fault->nodesetval)) {
+                message = (char *)
+                    xmlXPathCastNodeSetToString(
+                            response_soap_fault->nodesetval);
+                message_locale = _isds_utf82locale(message);
+            }
+        }
+
+        /* Croak */
+        if (NULL != message_locale) {
+            isds_printf_message(context, _("SOAP response signals Fault: %s"),
+                    message_locale);
+        } else {
+            isds_log_message(context, _("SOAP response signals Fault"));
+        }
+
+        free(message_locale);
+        free(message);
+
+        err = IE_SOAP;
+        goto leave;
+    }
+
+
+    /* Extract XML tree with ISDS response from SOAP envelope and return it.
+     * XXX: response_soap_body lists only one Body element here. We need
+     * children which may not exist (i.e. empty Body) or being more than one
+     * (this is not the case of ISDS payload, but let's support generic SOAP).
+     * XXX: We will return the XML document and children as a node list for
+     * two reasons:
+     * (1) We won't to do expensive xmlDocCopyNodeList(),
+     * (2) Any node is unusable after calling xmlFreeDoc() on it's document
+     * because the document holds a dictionary with identifiers. Caller always
+     * can do xmlDocCopyNodeList() on a fresh document later. */
+    if (NULL != response_document && NULL != response_node_list) {
+        *response_document = response_soap_doc;
+        *response_node_list =
+            response_soap_body->nodesetval->nodeTab[0]->children;
+        response_soap_doc = NULL; /* The document has been passed to the caller. */
+    }
+
+leave:
+    xmlXPathFreeObject(response_soap_fault);
+    xmlXPathFreeObject(response_soap_body);
+    xmlXPathFreeObject(response_soap_headers);
+    xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(response_soap_doc);
+    return err;
+}
+
 /* Do SOAP request.
  * @context holds the base URL,
  * @file is a (CGI) file of SOAP URL,
- * @request is XML node set with SOAP request body. 
+ * @request is XML node set with SOAP request body.
  * @file must be NULL, @request should be NULL rather than empty, if they should
  * not be signaled in the SOAP request.
  * @response_document is an automatically allocated XML document whose subtree
@@ -1160,18 +1473,8 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
     long http_code = 0;
     struct auth_headers response_otp_headers;
     xmlBufferPtr http_request = NULL;
-    xmlSaveCtxtPtr save_ctx = NULL;
-    xmlDocPtr request_soap_doc = NULL;
-    xmlNodePtr request_soap_envelope = NULL, request_soap_body = NULL;
-    xmlNsPtr soap_ns = NULL;
     void *http_response = NULL;
     size_t response_length = 0;
-    xmlDocPtr response_soap_doc = NULL;
-    xmlNodePtr response_root = NULL;
-    xmlXPathContextPtr xpath_ctx = NULL;
-    xmlXPathObjectPtr response_soap_headers = NULL, response_soap_body = NULL,
-                      response_soap_fault = NULL;
-
 
     if (!context) return IE_INVALID_CONTEXT;
     if ( (NULL == response_document && NULL != response_node_list) ||
@@ -1191,87 +1494,12 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
     }
     if (!url) return IE_NOMEM;
 
-    /* Build SOAP request envelope */
-    request_soap_doc = xmlNewDoc(BAD_CAST "1.0");
-    if (!request_soap_doc) {
-        isds_log_message(context, _("Could not build SOAP request document"));
-        err = IE_ERROR;
-        goto leave;
-    }
-    request_soap_envelope = xmlNewNode(NULL, BAD_CAST "Envelope");
-    if (!request_soap_envelope) {
-        isds_log_message(context, _("Could not build SOAP request envelope"));
-        err = IE_ERROR;
-        goto leave;
-    }
-    xmlDocSetRootElement(request_soap_doc, request_soap_envelope);
-    /* Only this way we get namespace definition as @xmlns:soap,
-     * otherwise we get namespace prefix without definition */
-    soap_ns = xmlNewNs(request_soap_envelope, BAD_CAST SOAP_NS, NULL);
-    if(!soap_ns) {
-        isds_log_message(context, _("Could not create SOAP name space"));
-        err = IE_ERROR;
-        goto leave;
-    }
-    xmlSetNs(request_soap_envelope, soap_ns);
-    request_soap_body = xmlNewChild(request_soap_envelope, NULL,
-            BAD_CAST "Body", NULL);
-    if (!request_soap_body) {
-        isds_log_message(context,
-                _("Could not add Body to SOAP request envelope"));
-        err = IE_ERROR;
+
+    err = build_http_request(context, request, &http_request);
+    if (IE_SUCCESS != err) {
         goto leave;
     }
 
-    /* Append request XML node set to SOAP body if request is not empty */
-    /* XXX: Copy of request must be used, otherwise xmlFreeDoc(request_soap_doc)
-     * would destroy this outer structure. */
-    if (request) {
-        xmlNodePtr request_copy = xmlCopyNodeList(request);
-        if (!request_copy) {
-            isds_log_message(context,
-                    _("Could not copy request content"));
-            err = IE_ERROR;
-            goto leave;
-        }
-        if (!xmlAddChildList(request_soap_body, request_copy)) {
-            xmlFreeNodeList(request_copy);
-            isds_log_message(context,
-                    _("Could not add request content to SOAP "
-                        "request envelope"));
-            err = IE_ERROR;
-            goto leave;
-        }
-    }
-
-
-    /* Serialize the SOAP request into HTTP request body */
-    http_request = xmlBufferCreate();
-    if (!http_request) {
-        isds_log_message(context,
-                _("Could not create xmlBuffer for HTTP request body"));
-        err = IE_ERROR;
-        goto leave;
-    }
-    /* Last argument 1 means format the XML tree. This is pretty but it breaks
-     * XML document transport as it adds text nodes (indentation) between
-     * elements. */
-    save_ctx = xmlSaveToBuffer(http_request, "UTF-8", 0);
-    if (!save_ctx) {
-        isds_log_message(context,
-                _("Could not create XML serializer"));
-        err = IE_ERROR;
-        goto leave;
-    }
-    /* XXX: According LibXML documentation, this function does not return
-     * meaningful value yet */
-    xmlSaveDoc(save_ctx, request_soap_doc);
-    if (-1 == xmlSaveFlush(save_ctx)) {
-        isds_log_message(context,
-                _("Could not serialize SOAP request to HTTP request body"));
-        err = IE_ERROR;
-        goto leave;
-    }
 
     if ((context->otp_credentials != NULL) || (context->mep_credentials != NULL)) {
         memset(&response_otp_headers, 0, sizeof(response_otp_headers));
@@ -1442,178 +1670,30 @@ redirect:
         err = IE_SOAP;
         goto leave;
     }
-    
-    /* TODO: Convert returned body into XML default encoding */
 
-    /* Parse the HTTP body as XML */
-    response_soap_doc = xmlParseMemory(http_response, response_length);
-    if (!response_soap_doc) {
-        err = IE_XML;
+
+    err = process_http_response(context, http_response, response_length,
+            response_document, response_node_list);
+    if (IE_SUCCESS != err) {
         goto leave;
     }
 
-    xpath_ctx = xmlXPathNewContext(response_soap_doc);
-    if (!xpath_ctx) {
-        err = IE_ERROR;
-        goto leave;
-    }
-
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
-        err = IE_ERROR;
-        goto leave;
-    }
-
-    if (_isds_sizet2int(response_length) >= 0) {
-        isds_log(ILF_SOAP, ILL_DEBUG,
-            _("SOAP response received:\n%.*s\nEnd of SOAP response\n"),
-            _isds_sizet2int(response_length), http_response);
-    }
-
-    /* Check for SOAP version */
-    response_root = xmlDocGetRootElement(response_soap_doc);
-    if (!response_root) {
-        isds_log_message(context, "SOAP response has no root element");
-        err = IE_SOAP;
-        goto leave;
-    }
-    if (xmlStrcmp(response_root->name, BAD_CAST "Envelope") ||
-            xmlStrcmp(response_root->ns->href, BAD_CAST SOAP_NS)) {
-        isds_log_message(context, "SOAP response is not SOAP 1.1 document");
-        err = IE_SOAP;
-        goto leave;
-    }
-
-    /* Check for SOAP Headers */
-    response_soap_headers = xmlXPathEvalExpression(
-            BAD_CAST "/soap:Envelope/soap:Header/"
-            "*[@soap:mustUnderstand/text() = true()]", xpath_ctx);
-    if (!response_soap_headers) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (!xmlXPathNodeSetIsEmpty(response_soap_headers->nodesetval)) {
-        isds_log_message(context,
-                _("SOAP response requires unsupported feature"));
-        /* TODO: log the headers 
-         * xmlChar *fragment = NULL;
-         * fragment = xmlXPathCastNodeSetToSting(response_soap_headers->nodesetval);*/
-        err = IE_NOTSUP;
-        goto leave;
-    }
-
-    /* Get SOAP Body */
-    response_soap_body = xmlXPathEvalExpression(
-            BAD_CAST "/soap:Envelope/soap:Body", xpath_ctx);
-    if (!response_soap_body) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (xmlXPathNodeSetIsEmpty(response_soap_body->nodesetval)) {
-        isds_log_message(context,
-                _("SOAP response does not contain SOAP Body element"));
-        err = IE_SOAP;
-        goto leave;
-    }
-    if (response_soap_body->nodesetval->nodeNr > 1) {
-        isds_log_message(context,
-                _("SOAP response has more than one Body element"));
-        err = IE_SOAP;
-        goto leave;
-    }
-
-    /* Check for SOAP Fault */
-    response_soap_fault = xmlXPathEvalExpression(
-            BAD_CAST "/soap:Envelope/soap:Body/soap:Fault", xpath_ctx);
-    if (!response_soap_fault) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (!xmlXPathNodeSetIsEmpty(response_soap_fault->nodesetval)) {
-        /* Server signals Fault. Gather error message and croak. */
-        /* XXX: Only first message is passed */
-        char *message = NULL, *message_locale = NULL;
-        xpath_ctx->node = response_soap_fault->nodesetval->nodeTab[0];
-        xmlXPathFreeObject(response_soap_fault);
-        /* XXX: faultstring and faultcode are in no name space according
-         * ISDS specification */
-        /* First more verbose faultstring */
-        response_soap_fault = xmlXPathEvalExpression(
-                BAD_CAST "faultstring[1]/text()", xpath_ctx);
-        if (response_soap_fault &&
-                !xmlXPathNodeSetIsEmpty(response_soap_fault->nodesetval)) {
-            message = (char *)
-                xmlXPathCastNodeSetToString(response_soap_fault->nodesetval);
-            message_locale = _isds_utf82locale(message);
-        }
-        /* If not available, try shorter faultcode */
-        if (!message_locale) {
-            free(message);
-            xmlXPathFreeObject(response_soap_fault);
-            response_soap_fault = xmlXPathEvalExpression(
-                    BAD_CAST "faultcode[1]/text()", xpath_ctx);
-            if (response_soap_fault &&
-                    !xmlXPathNodeSetIsEmpty(response_soap_fault->nodesetval)) {
-                message = (char *)
-                    xmlXPathCastNodeSetToString(
-                            response_soap_fault->nodesetval);
-                message_locale = _isds_utf82locale(message);
-            }
-        }
-
-        /* Croak */
-        if (message_locale) 
-            isds_printf_message(context, _("SOAP response signals Fault: %s"),
-                    message_locale);
-        else
-            isds_log_message(context, _("SOAP response signals Fault"));
-
-        free(message_locale);
-        free(message);
-
-        err = IE_SOAP;
-        goto leave;
-    }
-
-
-    /* Extract XML tree with ISDS response from SOAP envelope and return it.
-     * XXX: response_soap_body lists only one Body element here. We need
-     * children which may not exist (i.e. empty Body) or being more than one
-     * (this is not the case of ISDS payload, but let's support generic SOAP).
-     * XXX: We will return the XML document and children as a node list for
-     * two reasons:
-     * (1) We won't to do expensive xmlDocCopyNodeList(),
-     * (2) Any node is unusable after calling xmlFreeDoc() on it's document
-     * because the document holds a dictionary with identifiers. Caller always
-     * can do xmlDocCopyNodeList() on a fresh document later. */
-    if (NULL != response_document && NULL != response_node_list) {
-        *response_document = response_soap_doc;
-        *response_node_list =
-            response_soap_body->nodesetval->nodeTab[0]->children;
-    }
 
     /* Save raw response */
-    if (raw_response) {
+    if (NULL != raw_response) {
         *raw_response = http_response;
-        *raw_response_length = response_length;
         http_response = NULL;
     }
-
+    if (NULL != raw_response_length) {
+        *raw_response_length = response_length;
+    }
 
 leave:
-    xmlXPathFreeObject(response_soap_fault);
-    xmlXPathFreeObject(response_soap_body);
-    xmlXPathFreeObject(response_soap_headers);
-    xmlXPathFreeContext(xpath_ctx);
-    if (NULL == response_document || NULL == *response_document) {
-        xmlFreeDoc(response_soap_doc);
-    }
     if ((context->otp_credentials != NULL) || (context->mep_credentials != NULL))
         auth_headers_free(&response_otp_headers);
     free(mime_type);
     free(http_response);
-    xmlSaveClose(save_ctx);
     xmlBufferFree(http_request);
-    xmlFreeDoc(request_soap_doc); /* recursive, frees request_body, soap_ns*/
     free(url);
 
     return err;
