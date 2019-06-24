@@ -1348,9 +1348,8 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     zfree(context->long_message);
 
 #if HAVE_LIBCURL
-    /* Close connection if already logged in, but don't close the connection
-     * if continuing to negotiate MEP authentication.*/
-    if ((NULL != context->curl) && (NULL == mep || NULL == mep->intermediate_uri)) {
+    /* Close connection if already logged in */
+    if (context->curl) {
         _isds_close_connection(context);
     }
 
@@ -1360,37 +1359,22 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 
     /* Mangle base URI according to requested authentication method */
     if (NULL == pki_credentials) {
-
-        if ((NULL != username) && (NULL != password) && (NULL == mep)) {
-            isds_log(ILF_SEC, ILL_INFO,
-                    _("Selected authentication method: no certificate, "
-                        "username and password\n"));
-        } else if ((NULL != username) && (NULL == password) &&
-                   (NULL != mep) && (NULL != mep->mep_code)) {
-            isds_log(ILF_SEC, ILL_INFO,
-                    _("Selected authentication method: no certificate, "
-                        "username and mobile key\n"));
-        } else {
+        isds_log(ILF_SEC, ILL_INFO,
+                _("Selected authentication method: no certificate, "
+                    "username and password\n"));
+        if (!username || !password) {
             isds_log_message(context,
-                    _("Either both username and password or "
-                        "username and mobile key code must be supplied."));
-            return IE_INVAL;
-        }
-        if ((NULL != otp) && (NULL != mep)) {
-            isds_log_message(context,
-                    _("Cannot combine OTP and mobile key authentication."));
+                    _("Both username and password must be supplied"));
             return IE_INVAL;
         }
         context->otp_credentials = otp;
         context->otp = (NULL != context->otp_credentials);
-        context->mep_credentials = mep;
-        context->mep = (NULL != context->mep_credentials);
         
-        if (!context->otp && !context->mep) {
+        if (!context->otp) {
             /* Default locator is official system (without certificate or
              * OTP) */
             context->url = strdup((NULL != url) ? url : isds_locator);
-        } else if (context->otp) {
+        } else {
             const char *authenticator_uri = NULL;
             if (!url) url = isds_otp_locator;
             otp->resolution = OTP_RESOLUTION_UNKNOWN;
@@ -1432,31 +1416,11 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
             }
             if (-1 == isds_asprintf(&context->url, authenticator_uri, url, url))
                 return IE_NOMEM; 
-        } else if (context->mep) {
-            if (NULL == url) {
-                url = isds_mep_locator;
-            }
-            mep->resolution = MEP_RESOLUTION_UNKNOWN;
-            /* Use mobile key code for password. */
-            password = context->mep_credentials->mep_code;
-            const char *authenticator_uri =
-                "%sas/processLogin?type=mep-ws&applicationName=%s&"
-                "uri=%sapps/";
-            const char *app_name = context->mep_credentials->app_name;
-            if (NULL == app_name) {
-                app_name = "";
-            }
-            if (-1 == isds_asprintf(&context->url, authenticator_uri, url,
-                        app_name, url)) {
-                return IE_NOMEM;
-            }
         }
     } else {
         /* Default locator is official system (with client certificate) */
         context->otp = 0;
         context->otp_credentials = NULL;
-        context->mep = 0;
-        context->mep_credentials = NULL;
         if (!url) url = isds_cert_locator;
 
         if (!username) {
@@ -1483,12 +1447,9 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
         return IE_NOMEM;
 
     /* Prepare CURL handle */
-    if (NULL == context->curl) {
-        context->curl = curl_easy_init();
-    }
-    if (NULL == context->curl) {
+    context->curl = curl_easy_init();
+    if (!(context->curl))
         return IE_ERROR;
-    }
 
     /* Build log-in request */
     request = xmlNewNode(NULL, BAD_CAST "DummyOperation");
@@ -1536,6 +1497,123 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
         /* Detach pointer to OTP credentials from context */
         context->otp_credentials = NULL;
     }
+
+    /* Remove credentials */
+    _isds_discard_credentials(context, 0);
+
+    /* Destroy log-in request */
+    xmlFreeNode(request);
+
+    if (soap_err) {
+        _isds_close_connection(context);
+        return soap_err;
+    }
+
+    /* XXX: Until we don't propagate HTTP code 500 or 4xx, we can be sure
+     * authentication succeeded if soap_err == IE_SUCCESS */
+    err = IE_SUCCESS;
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("User %s has been logged into server %s successfully\n"),
+            username, url);
+    return err;
+#else /* not HAVE_LIBCURL */
+    return IE_NOTSUP;
+#endif
+}
+
+isds_error isds_login_mep(struct isds_ctx *context, const char *url,
+        const char *username, const char *code, struct isds_mep *mep) {
+#if HAVE_LIBCURL
+    isds_error err = IE_NOT_LOGGED_IN;
+    isds_error soap_err;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+#endif /* HAVE_LIBCURL */
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+
+#if HAVE_LIBCURL
+    /* Close connection if already logged in, but don't close the connection
+     * if continuing to negotiate MEP authentication.*/
+    if ((NULL != context->curl) && (NULL == mep || NULL == mep->intermediate_uri)) {
+        _isds_close_connection(context);
+    }
+
+    if ((NULL != username) && (NULL != code) && (NULL != mep)) {
+        isds_log(ILF_SEC, ILL_INFO,
+                _("Selected authentication method: no certificate, "
+                    "username and mobile key\n"));
+    } else {
+        isds_log_message(context,
+                "Username, communication code and mep context must be supplied.\n");
+    }
+    context->mep_credentials = mep;
+    context->mep = (NULL != context->mep_credentials);
+
+    if (context->mep) {
+        if (NULL == url) {
+            url = isds_mep_locator;
+        }
+        mep->resolution = MEP_RESOLUTION_UNKNOWN;
+        const char *authenticator_uri =
+            "%sas/processLogin?type=mep-ws&applicationName=%s&"
+            "uri=%sapps/";
+        const char *app_name = context->mep_credentials->app_name;
+        if (NULL == app_name) {
+            app_name = "";
+        }
+        if (-1 == isds_asprintf(&context->url, authenticator_uri, url,
+                    app_name, url)) {
+            return IE_NOMEM;
+        }
+    }
+    if (!(context->url))
+        return IE_NOMEM;
+
+    /* Prepare CURL handle */
+    if (NULL == context->curl) {
+        context->curl = curl_easy_init();
+    }
+    if (NULL == context->curl) {
+        return IE_ERROR;
+    }
+
+    /* Build log-in request */
+    request = xmlNewNode(NULL, BAD_CAST "DummyOperation");
+    if (!request) {
+        isds_log_message(context, _("Could not build ISDS log-in request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    /* Store credentials, use  mobile key code for password. */
+    _isds_discard_credentials(context, 1);
+    if (_isds_store_credentials(context, username, code, NULL)) {
+        _isds_discard_credentials(context, 1);
+        xmlFreeNode(request);
+        return IE_NOMEM;
+    }
+
+    isds_log(ILF_ISDS, ILL_DEBUG, _("Logging user %s into server %s\n"),
+            username, url);
+
+    /* XXX: ISDS documentation does not specify response body for
+     * DummyOperation request.  However real server sends back
+     * DummyOperationResponse.  Therefore we cannot check for the SOAP body
+     * content and we call _isds_soap() instead of _isds().  _isds() checks for
+     * SOAP body content, e.g. the dmStatus element. */
+
+    /* Send log-in request */
+    soap_err = _isds_soap(context, "DS/dz", request, NULL, NULL, NULL, NULL);
 
     if (context->mep) {
         /* Revert context URL from mobile key authentication service to web

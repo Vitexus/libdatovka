@@ -191,11 +191,6 @@ typedef enum {
 /* Mobile key context to authenticate client */
 struct isds_mep {
     /* Input members. */
-    char *mep_code;                 /* Communication code. The code is generated
-                                       when enabling the mobile key
-                                       authentication and can be found in the
-                                       web-based portal of the data-box
-                                       service. */
     char *app_name;                 /* Client application name. This name is
                                        displayed in the mobile key authentication
                                        application to provide the user brief
@@ -1040,6 +1035,21 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
         const char *username, const char *password,
         const struct isds_pki_credentials *pki_credentials,
         struct isds_otp *otp, struct isds_mep *mep);
+
+/* Connect and log into ISDS server using the MEP login method.
+ * All arguments are copied, you don't have to keep them after successful
+ * return.
+ * @url is base address of ISDS web service. Pass extern isds_mep_locator to use
+ * the production ISDS environment (pass extern isds_mep_testing_locator to
+ * access the testing environment). Passing null causes the production
+ * environment locator to be used.
+ * @username is the username of ISDS user or box ID
+ * @code is the communication code. The code is generated when enabling
+ * the mobile key authentication and can be found in the web-based portal
+ * of the data-box service.
+ */
+isds_error isds_login_mep(struct isds_ctx *context, const char *url,
+        const char *username, const char *code, struct isds_mep *mep);
 
 /* Log out from ISDS server and close connection. */
 isds_error isds_logout(struct isds_ctx *context);
