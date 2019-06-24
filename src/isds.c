@@ -1544,8 +1544,7 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
 
     if ((NULL != username) && (NULL != code) && (NULL != mep)) {
         isds_log(ILF_SEC, ILL_INFO,
-                _("Selected authentication method: no certificate, "
-                    "username and mobile key\n"));
+                _("Selected authentication method: username and mobile key\n"));
     } else {
         isds_log_message(context,
                 "Username, communication code and mep context must be supplied.\n");
