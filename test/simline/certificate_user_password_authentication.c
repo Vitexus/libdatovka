@@ -34,8 +34,7 @@ static int test_login(const isds_error error, struct isds_ctx *context,
         struct isds_otp *otp) {
     isds_error err;
 
-    err = isds_login(context, url, username, password, pki_credentials, otp,
-            NULL);
+    err = isds_login(context, url, username, password, pki_credentials, otp);
     /* If TLSv1.3 is used, cURL reports a network error instead of a security
      * error if server refuses client's certificate (since GnuTLS 3.6.4).
      * Maybe a <https://gitlab.com/gnutls/gnutls/issues/615>. As a workaround,

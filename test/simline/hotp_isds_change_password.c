@@ -29,8 +29,7 @@ static int test_login(const isds_error error,
         struct isds_otp *otp) {
     isds_error err;
 
-    err = isds_login(context, url, username, password, pki_credentials, otp,
-            NULL);
+    err = isds_login(context, url, username, password, pki_credentials, otp);
     if (error != err)
         FAIL_TEST("Wrong return code: expected=%s, returned=%s (%s)",
                 isds_strerror(error), isds_strerror(err),

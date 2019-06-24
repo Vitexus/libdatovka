@@ -1336,7 +1336,7 @@ static isds_error _isds_store_credentials(struct isds_ctx *context,
 isds_error isds_login(struct isds_ctx *context, const char *url,
         const char *username, const char *password,
         const struct isds_pki_credentials *pki_credentials,
-        struct isds_otp *otp, struct isds_mep *mep) {
+        struct isds_otp *otp) {
 #if HAVE_LIBCURL
     isds_error err = IE_NOT_LOGGED_IN;
     isds_error soap_err;

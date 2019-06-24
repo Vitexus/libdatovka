@@ -1027,14 +1027,11 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
  *  server has sent OTP code through side channel. Application is expected to
  *  fill the code into @otp->otp_code, keep other arguments unchanged, and retry
  *  this call to complete second phase of TOTP authentication;
- *  IE_PARTIAL_SUCCESS if MEP authentication has been requested, fine-grade
- *  resolution is returned via @mep->mep_code, keep arguments unchanged and
- *  repeat the function call as long as IE_PARTIAL_SUCCESS is being returned;
  *  or other appropriate error. */
 isds_error isds_login(struct isds_ctx *context, const char *url,
         const char *username, const char *password,
         const struct isds_pki_credentials *pki_credentials,
-        struct isds_otp *otp, struct isds_mep *mep);
+        struct isds_otp *otp);
 
 /* Connect and log into ISDS server using the MEP login method.
  * All arguments are copied, you don't have to keep them after successful
@@ -1047,7 +1044,11 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
  * @code is the communication code. The code is generated when enabling
  * the mobile key authentication and can be found in the web-based portal
  * of the data-box service.
- */
+ * @return:
+ *  IE_PARTIAL_SUCCESS if MEP authentication has been requested, fine-grade
+ *  resolution is returned via @mep->resolution, keep arguments unchanged and
+ *  repeat the function call as long as IE_PARTIAL_SUCCESS is being returned;
+ *  or other appropriate error. */
 isds_error isds_login_mep(struct isds_ctx *context, const char *url,
         const char *username, const char *code, struct isds_mep *mep);
 
