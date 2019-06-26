@@ -4,4 +4,7 @@
 const char *username(void);
 const char *password(void);
 
+const char *username_mep(void);
+const char *code_mep(void);
+
 #endif

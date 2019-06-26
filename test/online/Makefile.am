@@ -13,7 +13,7 @@ AM_CFLAGS = @LIBGCRYPT_CFLAGS@ @GPGME_CFLAGS@
 LDADD = @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ @GPGME_LIBS@ @EXPAT_LIBS@ \
 		@LTLIBINTL@
 
-TESTS = login 
+TESTS = login login_mep
 
 noinst_PROGRAMS = $(TESTS)
 
@@ -81,6 +81,7 @@ endif
 # Access _hidden symbols
 #compute_hash_SOURCES 	= compute_hash.c $(common)
 login_SOURCES 			= login.c $(common)
+login_mep_SOURCES		= login_mep.c $(common)
 
 # Access static symbols from isds.c
 #isds_dbtype_SOURCES 		= isds-dbtype.c $(isds_common)

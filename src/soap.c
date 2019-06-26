@@ -1634,6 +1634,15 @@ redirect:
                 goto leave;
             }
             break;
+        case 400:
+            if (NULL != context->mep_credentials) {
+                free(context->mep_credentials->intermediate_uri);
+                context->mep_credentials->intermediate_uri = NULL;
+                context->mep_credentials->resolution = MEP_RESOLUTION_UNRECOGNISED;
+                err = IE_NOT_LOGGED_IN;
+                goto leave;
+            }
+            break;
         case 401:   /* ISDS server returns 401 even if Authorization
                        presents. */
         case 403:   /* HTTP/1.0 prescribes 403 if Authorization presents. */

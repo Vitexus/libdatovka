@@ -1532,23 +1532,26 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
     xmlNodePtr request = NULL;
 #endif /* HAVE_LIBCURL */
 
-    if (!context) return IE_INVALID_CONTEXT;
+    if (NULL == context) {
+        return IE_INVALID_CONTEXT;
+    }
     zfree(context->long_message);
 
 #if HAVE_LIBCURL
-    /* Close connection if already logged in, but don't close the connection
-     * if continuing to negotiate MEP authentication.*/
-    if ((NULL != context->curl) && (NULL == mep || NULL == mep->intermediate_uri)) {
-        _isds_close_connection(context);
-    }
-
     if ((NULL != username) && (NULL != code) && (NULL != mep)) {
         isds_log(ILF_SEC, ILL_INFO,
                 _("Selected authentication method: username and mobile key\n"));
     } else {
         isds_log_message(context,
                 "Username, communication code and mep context must be supplied.\n");
+        return IE_INVAL;
     }
+    /* Close connection if already logged in, but don't close the connection
+     * if continuing to negotiate MEP authentication.*/
+    if ((NULL != context->curl) && (NULL == mep->intermediate_uri)) {
+        _isds_close_connection(context);
+    }
+
     context->mep_credentials = mep;
     context->mep = (NULL != context->mep_credentials);
 
@@ -1569,8 +1572,9 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
             return IE_NOMEM;
         }
     }
-    if (!(context->url))
+    if (NULL == context->url) {
         return IE_NOMEM;
+    }
 
     /* Prepare CURL handle */
     if (NULL == context->curl) {
@@ -1582,12 +1586,12 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
 
     /* Build log-in request */
     request = xmlNewNode(NULL, BAD_CAST "DummyOperation");
-    if (!request) {
+    if (NULL == request) {
         isds_log_message(context, _("Could not build ISDS log-in request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
-    if(!isds_ns) {
+    if(NULL == isds_ns) {
         isds_log_message(context, _("Could not create ISDS name space"));
         xmlFreeNode(request);
         return IE_ERROR;
@@ -1596,7 +1600,7 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
 
     /* Store credentials, use  mobile key code for password. */
     _isds_discard_credentials(context, 1);
-    if (_isds_store_credentials(context, username, code, NULL)) {
+    if (IE_SUCCESS != _isds_store_credentials(context, username, code, NULL)) {
         _isds_discard_credentials(context, 1);
         xmlFreeNode(request);
         return IE_NOMEM;
