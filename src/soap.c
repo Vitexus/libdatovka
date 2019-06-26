@@ -1085,6 +1085,12 @@ leave:
     return err;
 }
 
+/* Converts numeric server response when periodically checking for MEP
+ * authentication status.
+ * @str String containing the numeric server response value
+ * @len String length
+ * @return server response code or MEP_RESOLUTION_UNKNOWN if the code was not
+ * recognised. */
 static
 isds_mep_resolution mep_ws_state_response(const char *str, size_t len)
 {
@@ -1109,17 +1115,17 @@ isds_mep_resolution mep_ws_state_response(const char *str, size_t len)
 
     switch (num) {
     case -1:
-       res = MEP_RESOLUTION_UNRECOGNISED;
-       break;
+        res = MEP_RESOLUTION_UNRECOGNISED;
+        break;
     case 1:
-       res = MEP_RESOLUTION_ACK_REQUESTED;
-       break;
+        res = MEP_RESOLUTION_ACK_REQUESTED;
+        break;
     case 2:
-       res = MEP_RESOLUTION_ACK;
-       break;
+        res = MEP_RESOLUTION_ACK;
+        break;
     case 3:
-       res = MEP_RESOLUTION_ACK_EXPIRED;
-       break;
+        res = MEP_RESOLUTION_ACK_EXPIRED;
+        break;
     default:
         break;
     }
@@ -1621,6 +1627,7 @@ redirect:
                 } else if (context->mep_credentials->resolution == MEP_RESOLUTION_ACK) {
                     /* MEP login succeeded. No SOAP data received even though
                      * they were requested. */
+                    context->mep_credentials->resolution = MEP_RESOLUTION_SUCCESS;
                     err = IE_SUCCESS;
                     goto leave;
                 }

@@ -1045,6 +1045,8 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
  * the mobile key authentication and can be found in the web-based portal
  * of the data-box service.
  * @return:
+ *  IE_SUCCESS if authentication succeeds
+ *  IE_NOT_LOGGED_IN if authentication fails
  *  IE_PARTIAL_SUCCESS if MEP authentication has been requested, fine-grade
  *  resolution is returned via @mep->resolution, keep arguments unchanged and
  *  repeat the function call as long as IE_PARTIAL_SUCCESS is being returned;
