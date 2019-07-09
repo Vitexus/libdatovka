@@ -1538,6 +1538,9 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
     zfree(context->long_message);
 
 #if HAVE_LIBCURL
+
+    context->type = CTX_TYPE_ISDS;
+
     if ((NULL != username) && (NULL != code) && (NULL != mep)) {
         isds_log(ILF_SEC, ILL_INFO,
                 _("Selected authentication method: username and mobile key\n"));
