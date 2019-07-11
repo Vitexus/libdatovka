@@ -1570,10 +1570,13 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
         if (NULL == app_name) {
             app_name = "";
         }
+        char *escaped_app_name = curl_easy_escape(context->curl, app_name, 0);
         if (-1 == isds_asprintf(&context->url, authenticator_uri, url,
-                    app_name, url)) {
+                    escaped_app_name, url)) {
+            curl_free(escaped_app_name);
             return IE_NOMEM;
         }
+        curl_free(escaped_app_name);
     }
     if (NULL == context->url) {
         return IE_NOMEM;
