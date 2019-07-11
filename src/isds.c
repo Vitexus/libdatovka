@@ -1623,7 +1623,7 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
 
     if (context->mep) {
         /* Revert context URL from mobile key authentication service to web
-          * service base URL for subsequent calls. */
+         * service base URL for subsequent calls. */
         zfree(context->url);
         context->url = _isds_astrcat(url, "apps/");
         if (context->url == NULL) {

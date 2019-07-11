@@ -1647,6 +1647,9 @@ redirect:
                 context->mep_credentials->intermediate_uri = NULL;
                 context->mep_credentials->resolution = MEP_RESOLUTION_UNRECOGNISED;
                 err = IE_NOT_LOGGED_IN;
+                isds_printf_message(context,
+                        _("Code 400: Server redirects on <%s> request. "
+                            "MEP communication code was not recognised."), url);
                 goto leave;
             }
             break;
