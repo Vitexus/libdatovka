@@ -6,12 +6,12 @@
 char credentials_pwd_file[] = "../../test_credentials";
 char credentials_mep_file[] = "../../test_credentials_mep";
 
-static int read_config(const char *cred_file, char **line, int order) {
+static int read_config(const char *credentials_file, char **line, int order) {
     FILE *file;
     size_t length = 0;
     char *eol;
 
-    if (NULL == cred_file) {
+    if (NULL == credentials_file) {
         return -1;
     }
 
@@ -19,16 +19,16 @@ static int read_config(const char *cred_file, char **line, int order) {
     free(*line);
     *line = NULL;
 
-    file = fopen(cred_file, "r");
+    file = fopen(credentials_file, "r");
     if (!file) {
-        fprintf(stderr, "Could open %s\n", cred_file);
+        fprintf(stderr, "Could open %s\n", credentials_file);
         return -1;
     }
 
     for (int i = 0; i < order; i++) {
         if (-1 == getline(line, &length, file)) {
             fprintf(stderr, "Could not read line #%d from %s: ",
-                    i + 1, cred_file);
+                    i + 1, credentials_file);
             if (ferror(file))
                 fprintf(stderr, "error occured\n");
             else if (feof(file)) 
@@ -51,22 +51,22 @@ static int read_config(const char *cred_file, char **line, int order) {
 }
 
 const char *username(void) {
-    static char *username;
+    static char *username = NULL;
 
-    if (!username) {
+    if (NULL == username) {
         username = getenv("ISDS_USERNAME");
-        if (!username)
+        if (NULL == username)
             read_config(credentials_pwd_file, &username, 1);
     }
     return username;
 }
 
 const char *password(void) {
-    static char *password;
+    static char *password = NULL;
 
-    if (!password) {
+    if (NULL == password) {
         password = getenv("ISDS_PASSWORD");
-        if (!password)
+        if (NULL == password)
             read_config(credentials_pwd_file, &password, 2);
     }
     return password;

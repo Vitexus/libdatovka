@@ -8,5 +8,6 @@ MinGW support:
     Martin Doucha <doucha@integri.cz>
 
 C++ and OS X portability:
+Mobile key authentication:
 OpenSSL back-end:
     Karel Slany <karel.slany@nic.cz>

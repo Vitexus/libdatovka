@@ -1091,9 +1091,7 @@ leave:
  * @len String length
  * @return server response code or MEP_RESOLUTION_UNKNOWN if the code was not
  * recognised. */
-static
-isds_mep_resolution mep_ws_state_response(const char *str, size_t len)
-{
+static isds_mep_resolution mep_ws_state_response(const char *str, size_t len) {
     isds_mep_resolution res = MEP_RESOLUTION_UNKNOWN; /* Default error. */
 
     if ((str == NULL) || (len == 0)) {
@@ -1109,25 +1107,25 @@ isds_mep_resolution mep_ws_state_response(const char *str, size_t len)
 
     char *endptr;
     long num = strtol(tmp_str, &endptr, 10);
-    if (*endptr != '\0') {
+    if (*endptr != '\0' || LONG_MIN == num || LONG_MAX == num) {
         return res;
     }
 
     switch (num) {
-    case -1:
-        res = MEP_RESOLUTION_UNRECOGNISED;
-        break;
-    case 1:
-        res = MEP_RESOLUTION_ACK_REQUESTED;
-        break;
-    case 2:
-        res = MEP_RESOLUTION_ACK;
-        break;
-    case 3:
-        res = MEP_RESOLUTION_ACK_EXPIRED;
-        break;
-    default:
-        break;
+        case -1:
+            res = MEP_RESOLUTION_UNRECOGNISED;
+            break;
+        case 1:
+            res = MEP_RESOLUTION_ACK_REQUESTED;
+            break;
+        case 2:
+            res = MEP_RESOLUTION_ACK;
+            break;
+        case 3:
+            res = MEP_RESOLUTION_ACK_EXPIRED;
+            break;
+        default:
+            break;
     }
 
     free(tmp_str);
@@ -1135,14 +1133,14 @@ isds_mep_resolution mep_ws_state_response(const char *str, size_t len)
     return res;
 }
 
+
 /* Build SOAP request.
  * @context needed for error logging,
  * @request is XML node set with SOAP request body,
  * @http_request_ptr the address of a pointer to an automatically allocated
  * buffer to which the request data are written.
  */
-static
-isds_error build_http_request(struct isds_ctx *context,
+static isds_error build_http_request(struct isds_ctx *context,
         const xmlNodePtr request, xmlBufferPtr *http_request_ptr) {
 
     isds_error err = IE_SUCCESS;
@@ -1553,28 +1551,26 @@ redirect:
                 context->mep_credentials->resolution =
                         mep_ws_state_response(http_response, response_length);
                 switch (context->mep_credentials->resolution) {
-                case MEP_RESOLUTION_ACK_REQUESTED:
-                    /* Waiting for the user to acknowledge the login request
-                     * in the mobile application. This may take a while.
-                     * Return with partial success. Don't close communication
-                     * context. */
-                    err = IE_PARTIAL_SUCCESS;
-                    goto leave;
-                    break;
-                case MEP_RESOLUTION_ACK:
-                    /* Immediately redirect to login finalisation. */
-                    free(context->mep_credentials->intermediate_uri);
-                    context->mep_credentials->intermediate_uri = NULL;
-                    err = IE_PARTIAL_SUCCESS;
-                    goto redirect;
-                    break;
-                default:
-                    free(context->mep_credentials->intermediate_uri);
-                    context->mep_credentials->intermediate_uri = NULL;
-                    err = IE_NOT_LOGGED_IN;
-                    /* No SOAP data are returned here just plain response code. */
-                    goto leave;
-                    break;
+                    case MEP_RESOLUTION_ACK_REQUESTED:
+                        /* Waiting for the user to acknowledge the login request
+                         * in the mobile application. This may take a while.
+                         * Return with partial success. Don't close communication
+                         * context. */
+                        err = IE_PARTIAL_SUCCESS;
+                        goto leave;
+                        break;
+                    case MEP_RESOLUTION_ACK:
+                        /* Immediately redirect to login finalisation. */
+                        zfree(context->mep_credentials->intermediate_uri);
+                        err = IE_PARTIAL_SUCCESS;
+                        goto redirect;
+                        break;
+                    default:
+                        zfree(context->mep_credentials->intermediate_uri);
+                        err = IE_NOT_LOGGED_IN;
+                        /* No SOAP data are returned here just plain response code. */
+                        goto leave;
+                        break;
                 }
             }
             break;

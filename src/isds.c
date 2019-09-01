@@ -1523,6 +1523,25 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 #endif
 }
 
+
+/* Connect and log into ISDS server using the MEP login method.
+ * All arguments are copied, you don't have to keep them after successful
+ * return.
+ * @url is base address of ISDS web service. Pass extern isds_mep_locator to use
+ * the production ISDS environment (pass extern isds_mep_testing_locator to
+ * access the testing environment). Passing null causes the production
+ * environment locator to be used.
+ * @username is the username of ISDS user or box ID
+ * @code is the communication code. The code is generated when enabling
+ * the mobile key authentication and can be found in the web-based portal
+ * of the data-box service.
+ * @return:
+ *  IE_SUCCESS if authentication succeeds
+ *  IE_NOT_LOGGED_IN if authentication fails
+ *  IE_PARTIAL_SUCCESS if MEP authentication has been requested, fine-grade
+ *  resolution is returned via @mep->resolution, keep arguments unchanged and
+ *  repeat the function call as long as IE_PARTIAL_SUCCESS is being returned;
+ *  or other appropriate error. */
 isds_error isds_login_mep(struct isds_ctx *context, const char *url,
         const char *username, const char *code, struct isds_mep *mep) {
 #if HAVE_LIBCURL
@@ -1538,7 +1557,6 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
     zfree(context->long_message);
 
 #if HAVE_LIBCURL
-
     context->type = CTX_TYPE_ISDS;
 
     if ((NULL != username) && (NULL != code) && (NULL != mep)) {
@@ -1571,6 +1589,9 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
             app_name = "";
         }
         char *escaped_app_name = curl_easy_escape(context->curl, app_name, 0);
+        if (NULL == escaped_app_name) {
+            return IE_NOMEM;
+        }
         if (-1 == isds_asprintf(&context->url, authenticator_uri, url,
                     escaped_app_name, url)) {
             curl_free(escaped_app_name);
@@ -1638,7 +1659,7 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
 
     /* Remove credentials */
     _isds_discard_credentials(context, 0);
-   
+
     /* Destroy log-in request */
     xmlFreeNode(request);
 

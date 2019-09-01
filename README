@@ -41,6 +41,8 @@ library. Preliminary library self-tests are located in `test' directory. Test
 data and message examples are stored in `server/messages' directory.
 
 Credentials for testing account can be passed to example clients and on-line
-tests by environmental variables `ISDS_USERNAME' and `ISDS_PASSWORD' or by
-saving them into `test_credentials' in build root directory (first line is
-user name, second line is password). Environmental variables take precedence.
+tests by environmental variables `ISDS_USERNAME', `ISDS_PASSWORD', and
+`ISDS_CODE_MEP' or by saving them into `test_credentials' (first line is the
+user name, second line is the password) and `test_credentials_mep' (first list
+is tge use name, second line is the MEP code) in a build root directory.
+Environmental variables take precedence.
