@@ -21,7 +21,7 @@ static int read_config(const char *credentials_file, char **line, int order) {
 
     file = fopen(credentials_file, "r");
     if (!file) {
-        fprintf(stderr, "Could open %s\n", credentials_file);
+        fprintf(stderr, "Could not open %s\n", credentials_file);
         return -1;
     }
 
