@@ -5,12 +5,14 @@ Source: Webové služby ISDS pro manipulaci s datovými zprávami, version 2.16
     (2011-01-26), Page 5
 Source: Provozní řád ISDS, version 2011-06-19, Page 13
 Source: Podpora OTP autentizace v ISDS, version 2011-10-14, Page 3
+Source: Podpora authentizace Mobilním klíčem v rozhraní WS v ISDS, version 1.1
+    (2019-06-06), Page 3
 
 
 Servers are accessed by HTTPS protocol. Server fully qualified domain name varies on ISDS
 instance and authenticiation method.
 
-Two ISDS instances exist. Each instance has unique two-level domain name:
+Two ISDS instances exist. Each instance has a unique two-level domain name:
 
 ISDS Instance           Base domain
 ---------------------------------------------
@@ -27,9 +29,10 @@ System certificate                      ws1c        /cert/DS/
 Commercial certificate with HTTP basic  ws1c        /certds/DS/
 System certificate and box ID           ws1c        /hspis/DS/
 OTP without client certificate          www         /apps/DS/
+Mobile key                              www         /apps/DS/
 
 
-For example, when logging into production instance with HTTP basic
-authentication, the base URL is <https://ws1.mojedatovaschranka.cz/DS/>. When
-logging into testing instance with OTP method, the base URL is
+For example, when logging into the production instance with HTTP basic
+authentication, a base URL is <https://ws1.mojedatovaschranka.cz/DS/>. When
+logging into the testing instance with the OTP method, the base URL is
 <https://www.czebox.cz/apps/DS/>.

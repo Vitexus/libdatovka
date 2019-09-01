@@ -10,11 +10,14 @@ Source: Podpora OTP autentizace v ISDS, version 1.5 (2011-10-14)
 Source: Přihlášení bezpečným kódem,
     <https://www.mojedatovaschranka.cz/static/pages/prihlasovani_bezp_kod.html>
     (2012-01-03)
+Source: Podpora authentizace Mobilním klíčem v rozhraní WS v ISDS, version 1.1
+    (2019-06-06)
 
 
-There are two authentication methods. One is stateless HTTP Basic method
-(assured by X.509 client certificate in some cases). The other one is
-state-full HTTP non-standard hotp or totpsendsms/totp method.
+There are three authentication methods. One is a stateless HTTP Basic method
+(assured by X.509 client certificate in some cases). Another one is
+a state-full HTTP non-standard hotp or totpsendsms/totp method. The third one
+is a state-full HTTP non-standard mobile key method.
 
 
 Stateless HTTP Basic Method
@@ -189,8 +192,52 @@ get more details or `STOP LOGINDEV' text to disable sending more codes. The
 destination SMS phone number is `90201' (available from Czech celular phone
 networks only). If the user sends the stop-message or looses his receiver or
 capability to receive premium messages, he will lose access to his data box
-effectivly and the only remedy will be to ask for reseting credentials on
+effectively and the only remedy will be to ask for resetting credentials on
 Czech POINT meeting place.
+
+
+HTTP mobile key method
+======================
+
+A client sends a POST request to
+<https://DOMAINNAME/as/processLogin?type=mep-ws&applicationName=NAME&uri=https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT>
+with a user name and a special authentication code in a standard HTTP Basic
+authentication header. The NAME is an arbitrary string that will be displayed to
+a user on his mobile phone and it should identify the client process.
+
+If the authentication succeeds, the server sends the NAME to an application in
+the user's mobile phone and asks the user for an confirmation. Otherwise it
+responds with a 401 error code. In the mean time, the server responds with
+a redirection to the client:
+
+302 Found
+Set-Cookie: S-COOKIE=VALUE;
+Location: https://DOMAINNAME/as/mepWsStateUpdate
+
+The client is supposed periodically request that location while sending the
+S-COOKIE cookie. The server will reply with a plain-text document consisting
+of "-1" string if an error occurred, or "1" if the user has not yet finished
+the confirmation. Or "3" if the confirmation process timed out.
+
+In the mean time, the user is supposed to accept the confirmation request
+through the mobile application. Then the server sends a "2" text to the client.
+
+Once the client receives "2" text, it repeats the first POST request including
+the Basic authentication header. This time it also attached the S-COOKIE
+cookie. Then the server sends a final 302 redirect:
+
+302 Found
+Set-Cookie: IPCZ-X-COOKIE=VALUE2;
+Location: https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT
+
+Then the client can send requests to normal ISDS API end point. The requests
+will be authenticated with the IPCZ-X-COOKIE cookie. The cookie is valid for
+30 minutes. The cookie can be invalidated by sending a GET request to
+<https://DOMAINNAME/as/processLogout?uri=https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT>.
+
+Non-normative: The mobile phone application is available for selected
+operating systems from the phone vendor application store only. The
+application and its protocol is proprietary.
 
 
 ISDS unavailability
