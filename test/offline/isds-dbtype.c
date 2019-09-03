@@ -32,7 +32,7 @@ static int test_dbtype(const isds_DbType type, const xmlChar *name) {
         FAIL_TEST("conversion from isds_DbType to string failed");
 
     if (xmlStrcmp(name, string))
-            FAIL_TEST("Wrong to string conversion result");
+        FAIL_TEST("Wrong to string conversion result");
 
     err = string2isds_DbType(string, &new_type);
     if (err)
@@ -89,7 +89,7 @@ int main(void) {
     TEST("DBTYPE_SYSTEM", test_dbtype2string_must_fail, DBTYPE_SYSTEM);
 
     for (size_t i = 0; i < sizeof(types)/sizeof(types[0]); i++)
-        TEST(isds_DbType2string(types[i]), test_dbtype, types[i], names[i]);
+        TEST(names[i], test_dbtype, types[i], names[i]);
 
     TEST("1234", test_dbtype2string_must_fail, 1234); 
     

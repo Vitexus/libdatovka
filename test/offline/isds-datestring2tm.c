@@ -51,7 +51,8 @@ int main(void) {
             &output);
 
     input = NULL;
-    TEST(input, test_datestring2tm, BAD_CAST input, IE_INVAL, &date, &output);
+    TEST("NULL input pointer", test_datestring2tm, BAD_CAST input, IE_INVAL,
+            &date, &output);
 
     TEST("NULL output pointer", test_datestring2tm, BAD_CAST "", IE_INVAL,
             NULL, NULL);

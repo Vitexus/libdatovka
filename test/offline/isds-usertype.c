@@ -73,7 +73,7 @@ int main(void) {
 
 
     for (size_t i = 0; i < sizeof(types)/sizeof(types[0]); i++)
-        TEST(isds_UserType2string(types[i]), test_usertype, types[i], names[i]);
+        TEST(names[i], test_usertype, types[i], names[i]);
 
     TEST("1234", test_usertype2string_must_fail, 1234); 
     
