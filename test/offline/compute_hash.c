@@ -27,9 +27,13 @@ static int test_compute_hash(const isds_error error,
     if (!correct || !test) return 1;
 
     err = _isds_compute_hash(input, input_length, test);
+    if (IE_NOTSUP == err) {
+        SKIP_TEST("The hash algorithm is not supported");
+    }
     if (err != error) {
         free(test->value); test->value = NULL;
-        FAIL_TEST("Wrong return value");
+        FAIL_TEST("_isds_compute_hash() returned an unexpected code: "
+                "expected=%s got=%s", isds_strerror(error), isds_strerror(err));
     }
 
     if (!err) {
