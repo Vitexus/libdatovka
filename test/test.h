@@ -14,10 +14,11 @@
 
 #include "test-tools.h"
 
-char *unit_name, *reason;
-unsigned int passed, failed, skipped;
-void (*test_destructor_function)(void *);
-void *test_destructor_argument;
+extern char *unit_name;
+extern char *reason;
+extern unsigned int passed, failed, skipped;
+extern void (*test_destructor_function)(void *);
+extern void *test_destructor_argument;
 
 #define INIT_TEST(name) { \
     setlocale(LC_ALL, "C"); \

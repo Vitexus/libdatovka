@@ -17,8 +17,11 @@
 #include <unistd.h>
 
 /* Global variables for each test unit */
+char *unit_name = NULL;
 char *reason = NULL;
+unsigned int passed, failed, skipped;
 void (*test_destructor_function)(void *) = NULL;
+void *test_destructor_argument = NULL;
 
 /* Print formated string into automtically reallocated @uffer.
  * @buffer automatically reallocated buffer. Must be &NULL or preallocated
