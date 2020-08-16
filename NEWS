@@ -1,3 +1,14 @@
+Version 0.11.1
+==============
+
+• This release is fully compatible with the previous one.
+
+• Building with GCC 10, which defaults to tentative definitions of global
+variables now as with -fno-common option and resulted into
+an error about multiple definitions of a variable, was fixed.
+
+• The next release will be signed with 0x4FD1AEC3365AF7BF PGP key.
+
 Version 0.11
 ============
 
