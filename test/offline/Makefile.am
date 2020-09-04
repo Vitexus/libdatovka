@@ -22,15 +22,19 @@ TESTS = prepare_environment \
 		compute_hash context guess_raw_type init_crypto isds_init load_raw \
 		normalize_mime_type utf82locale \
 		isds_list_free isds_pki_credentials_free isds_hash_free \
-		isds_PersonName_free isds_BirthInfo_free isds_Address_free \
-		isds_DbOwnerInfo_free isds_DbUserInfo_free isds_event_free \
+		isds_PersonName_free isds_PersonName2_free isds_BirthInfo_free \
+		isds_Address_free isds_AddressExt2_free \
+		isds_DbOwnerInfo_free isds_DbOwnerInfoExt2_free \
+		isds_DbUserInfo_free isds_DbUserInfoExt2_free isds_event_free \
 		isds_envelope_free isds_document_free isds_message_free \
 		isds_message_copy_free isds_message_status_change_free isds_approval_free \
 		isds_commercial_permission_free isds_credentials_delivery_free \
 		isds_credit_event_free isds_fulltext_result_free \
 		isds_box_state_period_free \
-		isds_PersonName_duplicate isds_Address_duplicate \
-		isds_DbOwnerInfo_duplicate isds_DbUserInfo_duplicate \
+		isds_PersonName_duplicate isds_PersonName2_duplicate \
+		isds_Address_duplicate isds_AddressExt2_duplicate \
+		isds_DbOwnerInfo_duplicate isds_DbOwnerInfoExt2_duplicate \
+		isds_DbUserInfo_duplicate isds_DbUserInfoExt2_duplicate \
 		isds_box_state_period_duplicate \
 		isds-filemetatype isds-hash_algorithm \
 		isds-timestring2timeval \
@@ -155,10 +159,14 @@ isds_list_free_SOURCES 	= isds_list_free.c $(common)
 isds_pki_credentials_free_SOURCES 	= isds_pki_credentials_free.c $(common)
 isds_hash_free_SOURCES 	= isds_hash_free.c $(common)
 isds_PersonName_free_SOURCES 	= isds_PersonName_free.c $(common)
+isds_PersonName2_free_SOURCES	= isds_PersonName2_free.c $(common)
 isds_BirthInfo_free_SOURCES 	= isds_BirthInfo_free.c $(common)
 isds_Address_free_SOURCES 	= isds_Address_free.c $(common)
+isds_AddressExt2_free_SOURCES	= isds_AddressExt2_free.c $(common)
 isds_DbOwnerInfo_free_SOURCES 	= isds_DbOwnerInfo_free.c $(common)
+isds_DbOwnerInfoExt2_free_SOURCES	= isds_DbOwnerInfoExt2_free.c $(common)
 isds_DbUserInfo_free_SOURCES 	= isds_DbUserInfo_free.c $(common)
+isds_DbUserInfoExt2_free_SOURCES	= isds_DbUserInfoExt2_free.c $(common)
 isds_event_free_SOURCES 	= isds_event_free.c $(common)
 isds_envelope_free_SOURCES 	= isds_envelope_free.c $(common)
 isds_document_free_SOURCES 	= isds_document_free.c $(common)
@@ -175,9 +183,13 @@ isds_credit_event_free_SOURCES 	= isds_credit_event_free.c $(common)
 isds_fulltext_result_free_SOURCES 	= isds_fulltext_result_free.c $(common)
 isds_box_state_period_free_SOURCES 	= isds_box_state_period_free.c $(common)
 isds_PersonName_duplicate_SOURCES	= isds_PersonName_duplicate.c $(common)
+isds_PersonName2_duplicate_SOURCES	= isds_PersonName2_duplicate.c $(common)
 isds_Address_duplicate_SOURCES	= isds_Address_duplicate.c $(common)
+isds_AddressExt2_duplicate_SOURCES	= isds_AddressExt2_duplicate.c $(common)
 isds_DbOwnerInfo_duplicate_SOURCES	= isds_DbOwnerInfo_duplicate.c $(common)
+isds_DbOwnerInfoExt2_duplicate_SOURCES	= isds_DbOwnerInfoExt2_duplicate.c $(common)
 isds_DbUserInfo_duplicate_SOURCES	= isds_DbUserInfo_duplicate.c $(common)
+isds_DbUserInfoExt2_duplicate_SOURCES	= isds_DbUserInfoExt2_duplicate.c $(common)
 isds_box_state_period_duplicate_SOURCES	= isds_box_state_period_duplicate.c \
 										  $(common)
 
