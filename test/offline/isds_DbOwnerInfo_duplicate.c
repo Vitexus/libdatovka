@@ -33,6 +33,8 @@ static int test_isds_DbOwnerInfo_duplicate(struct isds_DbOwnerInfo *origin) {
                 copy->personName->pnLastNameAtBirth);
     }
 
+    TEST_STRING_DUPLICITY(origin->firmName, copy->firmName);
+
     /* Birth of person */
     TEST_POINTER_DUPLICITY(origin->birthInfo, copy->birthInfo);
     if(origin->birthInfo && copy->birthInfo) {
