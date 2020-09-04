@@ -4,7 +4,7 @@ AM_CFLAGS = -I$(srcdir)/$(LIBDIR) -DSRCDIR=\"$(top_srcdir)\"
 LDADD = $(LIBDIR)/libisds.la -L$(LIBDIR) @XML_LIBS@
 
 noinst_PROGRAMS = isdsclient login certauth version progressbar logger \
-	getuserboxinfo addbox changebox \
+	getuserboxinfo getuserboxinfo2 addbox changebox \
 	changepassword activate resetpassword deleteuser changeuser \
 	switchcommercial switchaccessibility disableaccesibilityexternaly \
 	sendmultiple getsent getsignedsent getsignedsentbyid getchangedstates \
@@ -26,6 +26,7 @@ version_SOURCES = version.c $(common)
 progressbar_SOURCES = progressbar.c $(common)
 logger_SOURCES = logger.c $(common)
 getuserboxinfo_SOURCES = getuserboxinfo.c $(common)
+getuserboxinfo2_SOURCES = getuserboxinfo2.c $(common)
 addbox_SOURCES = addbox.c $(common)
 changebox_SOURCES = changebox.c $(common)
 changepassword_SOURCES = changepassword.c $(common)
