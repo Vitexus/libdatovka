@@ -317,6 +317,12 @@ struct isds_PersonName {
     char *pnLastNameAtBirth;
 };
 
+/* Name of person version 2. Since WSDL 2.31. */
+struct isds_PersonName2 {
+    char *pnGivenNames;    /* First name and other given (middle) names */
+    char *pnLastName;      /* Family name */
+};
+
 /* Date and place of birth */
 struct isds_BirthInfo {
     struct tm *biDate;      /* Date of Birth in local time at birth place,
@@ -330,6 +336,18 @@ struct isds_BirthInfo {
 /* Post address */
 struct isds_Address {
     char *adCity;
+    char *adStreet;
+    char *adNumberInStreet;
+    char *adNumberInMunicipality;
+    char *adZipCode;
+    char *adState;
+};
+
+/* Post address version 2. Since WSDL 2.31.  */
+struct isds_Address2 {
+    char *adCode;                    /* RUIAN address code */
+    char *adCity;
+    char *adDistrict;                /* Part of the municipality */
     char *adStreet;
     char *adNumberInStreet;
     char *adNumberInMunicipality;
@@ -363,6 +381,29 @@ struct isds_DbOwnerInfo {
                                        messages from anybody */  
 };
 
+/* Data about box and its respective owner version 2. Since WSDL 2.31.
+ * NULL pointer means undefined value */
+struct isds_DbOwnerInfo2 {
+    char *dbID;                     /* Box ID [Max. 7 chars] */
+    _Bool *aifoIsds;                /* Set if box owner data are held and
+                                       synchronised with the Person registry
+                                       (Regist osob/ROB) */
+    isds_DbType *dbType;            /* Box type */
+    char *ic;                       /* ID */
+    struct isds_PersonName2 *personName;     /* Name of person */
+    char *firmName;                 /* Name of firm */
+    struct isds_BirthInfo *birthInfo;       /* Birth of person */
+    struct isds_Address2 *address;   /* Post address */
+    char *nationality;
+    char *dbIdOVM;                  /* ID from the OVM registry */
+    long int *dbState;              /* Box state; 1 <=> active box;
+                                       long int because xsd:integer
+                                       TODO: enum? */
+    _Bool *dbOpenAddressing;        /* Non-OVM Box is free to receive
+                                       messages from anybody */
+    char *dbUpperID;                /* ID of superordinate OVM data box */
+};
+
 /* User type */
 typedef enum {
     USERTYPE_PRIMARY,               /* Owner of the box */
@@ -386,6 +427,31 @@ struct isds_DbUserInfo {
     struct tm *biDate;          /* Date of birth in local time,
                                    only tm_year, tm_mon and tm_mday carry sane
                                    value */
+    char *ic;                   /* ID of a supervising firm [Max. 8 chars] */
+    char *firmName;             /* Name of a supervising firm
+                                   [Max. 100 chars] */
+    char *caStreet;             /* Street and number of contact address */
+    char *caCity;               /* Czech City of contact address */
+    char *caZipCode;            /* Post office code of contact address */
+    char *caState;              /* Abbreviated country of contact address;
+                                   Implicit value is "CZ"; Optional. */
+};
+
+/* Data about user version 2. Since WSDL 2.31.
+ * NULL pointer means undefined value */
+struct isds_DbUserInfo2 {
+    _Bool *aifoIsds;            /* Set if user data are held within
+                                   the Person registry (Regist osob/ROB) */
+    struct isds_PersonName2 *personName;    /* Name of the person */
+    struct isds_Address2 *address;    /* Post address */
+    struct tm *biDate;          /* Date of birth in local time,
+                                   only tm_year, tm_mon and tm_mday carry sane
+                                   value */
+    char *isdsID;               /* Identifier without significance, unique for
+                                   each user. It does not change when new
+                                   login credentials are handed out. */
+    isds_UserType *userType;    /* User type */
+    long int *userPrivils;      /* Set of user permissions */
     char *ic;                   /* ID of a supervising firm [Max. 8 chars] */
     char *firmName;             /* Name of a supervising firm
                                    [Max. 100 chars] */
@@ -1883,17 +1949,29 @@ void isds_hash_free(struct isds_hash **hash);
 /* Deallocate structure isds_PersonName recursively and NULL it */
 void isds_PersonName_free(struct isds_PersonName **person_name);
 
+/* Deallocate structure isds_PersonName2 recursively and NULL it */
+void isds_PersonName2_free(struct isds_PersonName2 **person_name);
+
 /* Deallocate structure isds_BirthInfo recursively and NULL it */
 void isds_BirthInfo_free(struct isds_BirthInfo **birth_info);
 
 /* Deallocate structure isds_Address recursively and NULL it */
 void isds_Address_free(struct isds_Address **address);
 
+/* Deallocate structure isds_Address2 recursively and NULL it */
+void isds_Address2_free(struct isds_Address2 **address);
+
 /* Deallocate structure isds_DbOwnerInfo recursively and NULL it */
 void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info);
 
+/* Deallocate structure isds_DbOwnerInfo2 recursively and NULL it */
+void isds_DbOwnerInfo2_free(struct isds_DbOwnerInfo2 **db_owner_info);
+
 /* Deallocate structure isds_DbUserInfo recursively and NULL it */
 void isds_DbUserInfo_free(struct isds_DbUserInfo **db_user_info);
+
+/* Deallocate structure isds_DbUserInfo2 recursively and NULL it */
+void isds_DbUserInfo2_free(struct isds_DbUserInfo2 **db_user_info);
 
 /* Deallocate struct isds_event recursively and NULL it */
 void isds_event_free(struct isds_event **event);
@@ -1940,17 +2018,33 @@ void isds_box_state_period_free(struct isds_box_state_period **period);
 struct isds_PersonName *isds_PersonName_duplicate(
         const struct isds_PersonName *src);
 
+/* Copy structure isds_PersonName2 recursively */
+struct isds_PersonName2 *isds_PersonName2_duplicate(
+        const struct isds_PersonName2 *src);
+
 /* Copy structure isds_Address recursively */
 struct isds_Address *isds_Address_duplicate(
         const struct isds_Address *src);
+
+/* Copy structure isds_Address2 recursively */
+struct isds_Address2 *isds_Address2_duplicate(
+        const struct isds_Address2 *src);
 
 /* Copy structure isds_DbOwnerInfo recursively */
 struct isds_DbOwnerInfo *isds_DbOwnerInfo_duplicate(
         const struct isds_DbOwnerInfo *src);
 
+/* Copy structure isds_DbOwnerInfo2 recursively */
+struct isds_DbOwnerInfo2 *isds_DbOwnerInfo2_duplicate(
+        const struct isds_DbOwnerInfo2 *src);
+
 /* Copy structure isds_DbUserInfo recursively */
 struct isds_DbUserInfo *isds_DbUserInfo_duplicate(
         const struct isds_DbUserInfo *src);
+
+/* Copy structure isds_DbUserInfo2 recursively */
+struct isds_DbUserInfo2 *isds_DbUserInfo2_duplicate(
+        const struct isds_DbUserInfo2 *src);
 
 /* Copy structure isds_box_state_period recursively */
 struct isds_box_state_period *isds_box_state_period_duplicate(

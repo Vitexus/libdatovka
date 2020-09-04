@@ -165,7 +165,19 @@ void isds_PersonName_free(struct isds_PersonName **person_name) {
     free((*person_name)->pnMiddleName);
     free((*person_name)->pnLastName);
     free((*person_name)->pnLastNameAtBirth);
-   
+
+    free(*person_name);
+    *person_name = NULL;
+}
+
+
+/* Deallocate structure isds_PersonName2 recursively and NULL it */
+void isds_PersonName2_free(struct isds_PersonName2 **person_name) {
+    if (!person_name || !*person_name) return;
+
+    free((*person_name)->pnGivenNames);
+    free((*person_name)->pnLastName);
+
     free(*person_name);
     *person_name = NULL;
 }
@@ -195,7 +207,25 @@ void isds_Address_free(struct isds_Address **address) {
     free((*address)->adNumberInMunicipality);
     free((*address)->adZipCode);
     free((*address)->adState);
-    
+
+    free(*address);
+    *address = NULL;
+}
+
+
+/* Deallocate structure isds_Address2 recursively and NULL it */
+void isds_Address2_free(struct isds_Address2 **address) {
+    if (!address || !*address) return;
+
+    free((*address)->adCode);
+    free((*address)->adCity);
+    free((*address)->adDistrict);
+    free((*address)->adStreet);
+    free((*address)->adNumberInStreet);
+    free((*address)->adNumberInMunicipality);
+    free((*address)->adZipCode);
+    free((*address)->adState);
+
     free(*address);
     *address = NULL;
 }
@@ -225,6 +255,30 @@ void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info) {
     *db_owner_info = NULL;
 }
 
+
+/* Deallocate structure isds_DbOwnerInfo2 recursively and NULL it */
+void isds_DbOwnerInfo2_free(struct isds_DbOwnerInfo2 **db_owner_info) {
+    if (!db_owner_info || !*db_owner_info) return;
+
+    free((*db_owner_info)->dbID);
+    free((*db_owner_info)->aifoIsds);
+    free((*db_owner_info)->dbType);
+    free((*db_owner_info)->ic);
+    isds_PersonName2_free(&((*db_owner_info)->personName));
+    free((*db_owner_info)->firmName);
+    isds_BirthInfo_free(&((*db_owner_info)->birthInfo));
+    isds_Address2_free(&((*db_owner_info)->address));
+    free((*db_owner_info)->nationality);
+    free((*db_owner_info)->dbIdOVM);
+    free((*db_owner_info)->dbState);
+    free((*db_owner_info)->dbOpenAddressing);
+    free((*db_owner_info)->dbUpperID);
+
+    free(*db_owner_info);
+    *db_owner_info = NULL;
+}
+
+
 /* Deallocate structure isds_DbUserInfo recursively and NULL it */
 void isds_DbUserInfo_free(struct isds_DbUserInfo **db_user_info) {
     if (!db_user_info || !*db_user_info) return;
@@ -241,7 +295,29 @@ void isds_DbUserInfo_free(struct isds_DbUserInfo **db_user_info) {
     free((*db_user_info)->caCity);
     free((*db_user_info)->caZipCode);
     free((*db_user_info)->caState);
-    
+
+    zfree(*db_user_info);
+}
+
+
+/* Deallocate structure isds_DbUserInfo2 recursively and NULL it */
+void isds_DbUserInfo2_free(struct isds_DbUserInfo2 **db_user_info) {
+    if (!db_user_info || !*db_user_info) return;
+
+    free((*db_user_info)->aifoIsds);
+    isds_PersonName2_free(&((*db_user_info)->personName));
+    isds_Address2_free(&((*db_user_info)->address));
+    free((*db_user_info)->biDate);
+    free((*db_user_info)->isdsID);
+    free((*db_user_info)->userType);
+    free((*db_user_info)->userPrivils);
+    free((*db_user_info)->ic);
+    free((*db_user_info)->firmName);
+    free((*db_user_info)->caStreet);
+    free((*db_user_info)->caCity);
+    free((*db_user_info)->caZipCode);
+    free((*db_user_info)->caState);
+
     zfree(*db_user_info);
 }
 
@@ -534,7 +610,28 @@ error:
     return NULL;
 }
 
-    
+
+/* Copy structure isds_PersonName2 recursively */
+struct isds_PersonName2 *isds_PersonName2_duplicate(
+        const struct isds_PersonName2 *src) {
+    struct isds_PersonName2 *new = NULL;
+
+    if (!src) return NULL;
+
+    new = calloc(1, sizeof(*new));
+    if (!new) return NULL;
+
+    STRDUP_OR_ERROR(new->pnGivenNames, src->pnGivenNames);
+    STRDUP_OR_ERROR(new->pnLastName, src->pnLastName);
+
+    return new;
+
+error:
+    isds_PersonName2_free(&new);
+    return NULL;
+}
+
+
 /* Copy structure isds_BirthInfo recursively */
 static struct isds_BirthInfo *isds_BirthInfo_duplicate(
         const struct isds_BirthInfo *template) {
@@ -580,6 +677,34 @@ struct isds_Address *isds_Address_duplicate(
     
 error:
     isds_Address_free(&new);
+    return NULL;
+}
+
+
+/* Copy structure isds_Address2 recursively */
+struct isds_Address2 *isds_Address2_duplicate(
+        const struct isds_Address2 *src) {
+    struct isds_Address2 *new = NULL;
+
+    if (!src) return NULL;
+
+    new = calloc(1, sizeof(*new));
+    if (!new) return NULL;
+
+    STRDUP_OR_ERROR(new->adCode, src->adCode);
+    STRDUP_OR_ERROR(new->adCity, src->adCity);
+    STRDUP_OR_ERROR(new->adDistrict, src->adDistrict);
+    STRDUP_OR_ERROR(new->adStreet, src->adStreet);
+    STRDUP_OR_ERROR(new->adNumberInStreet, src->adNumberInStreet);
+    STRDUP_OR_ERROR(new->adNumberInMunicipality,
+            src->adNumberInMunicipality);
+    STRDUP_OR_ERROR(new->adZipCode, src->adZipCode);
+    STRDUP_OR_ERROR(new->adState, src->adState);
+
+    return new;
+
+error:
+    isds_Address2_free(&new);
     return NULL;
 }
 
@@ -633,6 +758,51 @@ error:
 }
 
 
+/* Copy structure isds_DbOwnerInfo2 recursively */
+struct isds_DbOwnerInfo2 *isds_DbOwnerInfo2_duplicate(
+        const struct isds_DbOwnerInfo2 *src) {
+    struct isds_DbOwnerInfo2 *new = NULL;
+    if (!src) return NULL;
+
+    new = calloc(1, sizeof(*new));
+    if (!new) return NULL;
+
+    STRDUP_OR_ERROR(new->dbID, src->dbID);
+    FLATDUP_OR_ERROR(new->aifoIsds, src->aifoIsds);
+    FLATDUP_OR_ERROR(new->dbType, src->dbType);
+    STRDUP_OR_ERROR(new->ic, src->ic);
+
+    if (src->personName) {
+        if (!(new->personName =
+                    isds_PersonName2_duplicate(src->personName)))
+            goto error;
+    }
+
+    STRDUP_OR_ERROR(new->firmName, src->firmName);
+
+    if (src->birthInfo) {
+        if (!(new->birthInfo =
+                    isds_BirthInfo_duplicate(src->birthInfo)))
+            goto error;
+    }
+
+    if (src->address) {
+        if (!(new->address = isds_Address2_duplicate(src->address)))
+            goto error;
+    }
+
+    STRDUP_OR_ERROR(new->nationality, src->nationality);
+    STRDUP_OR_ERROR(new->dbIdOVM, src->dbIdOVM);
+    FLATDUP_OR_ERROR(new->dbState, src->dbState);
+    FLATDUP_OR_ERROR(new->dbOpenAddressing, src->dbOpenAddressing);
+    STRDUP_OR_ERROR(new->dbUpperID, src->dbUpperID);
+
+error:
+    isds_DbOwnerInfo2_free(&new);
+    return NULL;
+}
+
+
 /* Copy structure isds_DbUserInfo recursively */
 struct isds_DbUserInfo *isds_DbUserInfo_duplicate(
         const struct isds_DbUserInfo *src) {
@@ -669,6 +839,47 @@ struct isds_DbUserInfo *isds_DbUserInfo_duplicate(
     
 error:
     isds_DbUserInfo_free(&new);
+    return NULL;
+}
+
+
+/* Copy structure isds_DbUserInfo2 recursively */
+struct isds_DbUserInfo2 *isds_DbUserInfo2_duplicate(
+        const struct isds_DbUserInfo2 *src) {
+    struct isds_DbUserInfo2 *new = NULL;
+    if (!src) return NULL;
+
+    new = calloc(1, sizeof(*new));
+    if (!new) return NULL;
+
+    FLATDUP_OR_ERROR(new->aifoIsds, src->aifoIsds);
+
+    if (src->personName) {
+        if (!(new->personName =
+                    isds_PersonName2_duplicate(src->personName)))
+            goto error;
+    }
+
+    if (src->address) {
+        if (!(new->address = isds_Address2_duplicate(src->address)))
+            goto error;
+    }
+
+    FLATDUP_OR_ERROR(new->biDate, src->biDate);
+    STRDUP_OR_ERROR(new->isdsID, src->isdsID);
+    FLATDUP_OR_ERROR(new->userType, src->userType);
+    FLATDUP_OR_ERROR(new->userPrivils, src->userPrivils);
+    STRDUP_OR_ERROR(new->ic, src->ic);
+    STRDUP_OR_ERROR(new->firmName, src->firmName);
+    STRDUP_OR_ERROR(new->caStreet, src->caStreet);
+    STRDUP_OR_ERROR(new->caCity, src->caCity);
+    STRDUP_OR_ERROR(new->caZipCode, src->caZipCode);
+    STRDUP_OR_ERROR(new->caState, src->caState);
+
+    return new;
+
+error:
+    isds_DbUserInfo2_free(&new);
     return NULL;
 }
 
