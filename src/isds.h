@@ -1136,7 +1136,7 @@ isds_error isds_ping(struct isds_ctx *context);
 isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         struct isds_DbOwnerInfo **db_owner_info);
 
-/* Get data about logged in user and his box version 3.
+/* Get data about logged in user and his box version 2.
  * @context is session context
  * @db_owner_info is reallocated box owner description. It will be freed on
  * error.
@@ -1148,6 +1148,15 @@ isds_error isds_GetOwnerInfoFromLogin2(struct isds_ctx *context,
 /* Get data about logged in user. */
 isds_error isds_GetUserInfoFromLogin(struct isds_ctx *context,
         struct isds_DbUserInfo **db_user_info);
+
+/* Get data about logged in user version 2.
+ * @context is session context
+ * @db_user_info is reallocated user description. It will be freed on
+ * error.
+ * @return error code from lower layer, context message will be set up
+ * appropriately. */
+isds_error isds_GetUserInfoFromLogin2(struct isds_ctx *context,
+        struct isds_DbUserInfoExt2 **db_user_info);
 
 /* Get expiration time of current password
  * @context is session context

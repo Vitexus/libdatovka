@@ -3935,6 +3935,86 @@ leave:
 }
 
 
+/* Convert XSD:tDbOwnerInfoExt2 XML tree into structure
+ * @context is ISDS context
+ * @db_user_info is automatically reallocated user info structure
+ * @xpath_ctx is XPath context with current node as XSD:tDbOwnerInfoExt2 element
+ * In case of error @db_user_info will be freed. */
+static isds_error extract_DbUserInfoExt2(struct isds_ctx *context,
+        struct isds_DbUserInfoExt2 **db_user_info, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!db_user_info) return IE_INVAL;
+    isds_DbUserInfoExt2_free(db_user_info);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *db_user_info = calloc(1, sizeof(**db_user_info));
+    if (!*db_user_info) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    EXTRACT_BOOLEAN("isds:aifoIsds", (*db_user_info)->aifoIsds);
+
+    err = extract_gPersonName2(context, &(*db_user_info)->personName,
+            xpath_ctx);
+    if (err) goto leave;
+
+    err = extract_gAddressExt2(context, &(*db_user_info)->address, xpath_ctx);
+    if (err) goto leave;
+
+    err = extract_BiDate(context, &(*db_user_info)->biDate, xpath_ctx);
+    if (err) goto leave;
+
+    EXTRACT_STRING("isds:isdsID", (*db_user_info)->isdsID);
+
+    EXTRACT_STRING("isds:userType", string);
+    if (string) {
+        (*db_user_info)->userType =
+            calloc(1, sizeof(*((*db_user_info)->userType)));
+        if (!(*db_user_info)->userType) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+        err = string2isds_UserType((xmlChar *)string,
+                (*db_user_info)->userType);
+        if (err) {
+            zfree((*db_user_info)->userType);
+            if (err == IE_ENUM) {
+                err = IE_ISDS;
+                char *string_locale = _isds_utf82locale(string);
+                isds_printf_message(context,
+                        _("Unknown isds:userType value: %s"), string_locale);
+                free(string_locale);
+            }
+            goto leave;
+        }
+        zfree(string);
+    }
+
+    EXTRACT_LONGINT("isds:userPrivils", (*db_user_info)->userPrivils, 0);
+    EXTRACT_STRING("isds:ic", (*db_user_info)->ic);
+    EXTRACT_STRING("isds:firmName", (*db_user_info)->firmName);
+    EXTRACT_STRING("isds:caStreet", (*db_user_info)->caStreet);
+    EXTRACT_STRING("isds:caCity", (*db_user_info)->caCity);
+    EXTRACT_STRING("isds:caZipCode", (*db_user_info)->caZipCode);
+
+    /* ???: Default value is "CZ" according specification. Should we provide
+     * it? */
+    EXTRACT_STRING("isds:caState", (*db_user_info)->caState);
+
+leave:
+    if (err) isds_DbUserInfoExt2_free(db_user_info);
+    free(string);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
 /* Insert struct isds_DbUserInfo data (user description) into XML tree
  * @context is session context
  * @user is libisds structure with user description
@@ -5858,6 +5938,102 @@ leave:
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("GetUserInfoFromLogin request processed by server "
+                    "successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
+}
+
+
+/* Get data about the logged-in user version 2.
+ * @context is session context
+ * @db_user_info is reallocated user description. It will be freed on
+ * error.
+ * @return error code from lower layer, context message will be set up
+ * appropriately. */
+isds_error isds_GetUserInfoFromLogin2(struct isds_ctx *context,
+        struct isds_DbUserInfoExt2 **db_user_info) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+#endif
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (!db_user_info) return IE_INVAL;
+    isds_DbUserInfoExt2_free(db_user_info);
+
+#if HAVE_LIBCURL
+    /* Check whether connection is established */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+    /* Do request and check for success */
+    err = build_send_check_dbdummy_request(context,
+            BAD_CAST "GetUserInfoFromLogin2",
+            &response, NULL, NULL, &code, &message);
+    if (err) goto leave;
+
+
+    /* Extract data */
+    /* Prepare structure */
+    *db_user_info = calloc(1, sizeof(**db_user_info));
+    if (!*db_user_info) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    /* Set context node */
+    result = xmlXPathEvalExpression(BAD_CAST
+            "/isds:GetUserInfoFromLogin2Response/isds:dbUserInfo", xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context, _("Missing dbUserInfo element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    if (result->nodesetval->nodeNr > 1) {
+        isds_log_message(context, _("Multiple dbUserInfo element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+    xmlXPathFreeObject(result); result = NULL;
+
+    /* Extract it */
+    err = extract_DbUserInfoExt2(context, db_user_info, xpath_ctx);
+
+leave:
+    if (err) {
+        isds_DbUserInfoExt2_free(db_user_info);
+    }
+
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("GetUserInfoFromLogin2 request processed by server "
                     "successfully.\n"));
 #else /* not HAVE_LIBCURL */
     err = IE_NOTSUP;

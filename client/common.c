@@ -467,6 +467,45 @@ void print_DbUserInfo(const struct isds_DbUserInfo *info) {
 }
 
 
+void print_DbUserInfoExt2(const struct isds_DbUserInfoExt2 *info) {
+    printf("dbUserInfoExt2 = ");
+
+    if (!info) {
+        printf("NULL\n");
+        return;
+    }
+
+    printf("{\n");
+    printf("\taifoIsds = ");
+    print_bool(info->aifoIsds);
+
+    print_PersonName2(info->personName);
+
+    print_AddressExt2(info->address);
+
+    printf("\tbiDate = ");
+    print_date(info->biDate);
+
+    printf("\tisdsID = %s\n", info->isdsID);
+
+    printf("\tuserType = ");
+    print_UserType((long int *) (info->userType));
+
+    printf("\tuserPrivils = ");
+    print_UserPrivils(info->userPrivils);
+
+    printf("\tic = %s\n", info->ic);
+    printf("\tfirmName = %s\n", info->firmName);
+
+    printf("\tcaStreet = %s\n", info->caStreet);
+    printf("\tcaCity = %s\n", info->caCity);
+    printf("\tcaZipCode = %s\n", info->caZipCode);
+    printf("\tcaState = %s\n", info->caState);
+
+    printf("}\n");
+}
+
+
 void print_timeval(const struct timeval *time) {
     struct tm broken;
     char buffer[128];

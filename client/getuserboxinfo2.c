@@ -74,17 +74,17 @@ int main(void) {
 
     {
         /* Get info about my account */
-        struct isds_DbUserInfo *db_user_info = NULL;
+        struct isds_DbUserInfoExt2 *db_user_info = NULL;
         printf("Getting info about my account:\n");
-        err = isds_GetUserInfoFromLogin(ctx, &db_user_info);
+        err = isds_GetUserInfoFromLogin2(ctx, &db_user_info);
         if (err) {
-            printf("isds_GetUserInfoFromLogin() failed: %s: %s\n",
+            printf("isds_GetUserInfoFromLogin2() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
         } else {
-            printf("isds_GetUserInfoFromLogin() succeeded\n");
-            print_DbUserInfo(db_user_info);
+            printf("isds_GetUserInfoFromLogin2() succeeded\n");
+            print_DbUserInfoExt2(db_user_info);
         }
-        isds_DbUserInfo_free(&db_user_info);
+        isds_DbUserInfoExt2_free(&db_user_info);
     }
 
     {
