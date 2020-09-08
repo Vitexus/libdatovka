@@ -3897,14 +3897,7 @@ static isds_error extract_DbUserInfo(struct isds_ctx *context,
         zfree(string);
     }
 
-    EXTRACT_LONGINT("isds:userPrivils", (*db_user_info)->userPrivils, 0); 
-
-    (*db_user_info)->personName =
-        calloc(1, sizeof(*((*db_user_info)->personName)));
-    if (!(*db_user_info)->personName) {
-        err = IE_NOMEM;
-        goto leave;
-    }
+    EXTRACT_LONGINT("isds:userPrivils", (*db_user_info)->userPrivils, 0);
 
     err = extract_gPersonName(context, &(*db_user_info)->personName,
             xpath_ctx);
