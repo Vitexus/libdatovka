@@ -3911,6 +3911,96 @@ leave:
 }
 
 
+/* Insert struct isds_DbOwnerInfoExt2 data (box description) into XML tree
+ * @context is session context
+ * @owner is libisds structure with box description
+ * @db_owner_info is XML element of XSD:tDbOwnerInfoExt2 */
+static isds_error insert_DbOwnerInfoExt2(struct isds_ctx *context,
+        const struct isds_DbOwnerInfoExt2 *owner, xmlNodePtr db_owner_info) {
+
+    isds_error err = IE_SUCCESS;
+    xmlNodePtr node;
+    xmlChar *string = NULL;
+    const xmlChar *type_string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!owner || !db_owner_info) return IE_INVAL;
+
+    CHECK_FOR_STRING_LENGTH(owner->dbID, 0, 7, "dbID")
+    INSERT_STRING(db_owner_info, "dbID", owner->dbID);
+
+    INSERT_BOOLEAN(db_owner_info, "aifoIsds", owner->aifoIsds);
+
+    if (owner->dbType) {
+        type_string = isds_DbType2string(*(owner->dbType));
+        if (!type_string) {
+            isds_printf_message(context, _("Invalid dbType value: %d"),
+                    *(owner->dbType));
+            err = IE_ENUM;
+            goto leave;
+        }
+    }
+    INSERT_STRING(db_owner_info, "dbType", type_string);
+
+    INSERT_STRING(db_owner_info, "ic", owner->ic);
+
+    INSERT_STRING(db_owner_info, "pnGivenNames",
+            (NULL == owner->personName) ? NULL:
+                owner->personName->pnGivenNames);
+    INSERT_STRING(db_owner_info, "pnLastName",
+            (NULL == owner->personName) ? NULL: owner->personName->pnLastName);
+
+    INSERT_STRING(db_owner_info, "firmName", owner->firmName);
+
+    if (NULL != owner->birthInfo && NULL != owner->birthInfo->biDate) {
+        err = tm2datestring(owner->birthInfo->biDate, &string);
+        if (err) goto leave;
+    }
+    INSERT_STRING(db_owner_info, "biDate", string);
+    zfree(string);
+
+    INSERT_STRING(db_owner_info, "biCity",
+            (NULL == owner->birthInfo) ? NULL: owner->birthInfo->biCity);
+    INSERT_STRING(db_owner_info, "biCounty",
+            (NULL == owner->birthInfo) ? NULL: owner->birthInfo->biCounty);
+    INSERT_STRING(db_owner_info, "biState",
+            (NULL == owner->birthInfo) ? NULL: owner->birthInfo->biState);
+
+    INSERT_STRING(db_owner_info, "adCode",
+            (NULL == owner->address) ? NULL : owner->address->adCode);
+    INSERT_STRING(db_owner_info, "adCity",
+            (NULL == owner->address) ? NULL: owner->address->adCity);
+    INSERT_STRING(db_owner_info, "adDistrict",
+            (NULL == owner->address) ? NULL: owner->address->adDistrict);
+    INSERT_STRING(db_owner_info, "adStreet",
+            (NULL == owner->address) ? NULL: owner->address->adStreet);
+    INSERT_STRING(db_owner_info, "adNumberInStreet",
+            (NULL == owner->address) ? NULL: owner->address->adNumberInStreet);
+    INSERT_STRING(db_owner_info, "adNumberInMunicipality",
+            (NULL == owner->address) ? NULL:
+            owner->address->adNumberInMunicipality);
+    INSERT_STRING(db_owner_info, "adZipCode",
+            (NULL == owner->address) ? NULL: owner->address->adZipCode);
+    INSERT_STRING(db_owner_info, "adState",
+            (NULL == owner->address) ? NULL: owner->address->adState);
+
+    INSERT_STRING(db_owner_info, "nationality", owner->nationality);
+
+    INSERT_STRING(db_owner_info, "dbIdOVM", owner->dbIdOVM);
+
+    INSERT_LONGINT(db_owner_info, "dbState", owner->dbState, string);
+
+    INSERT_BOOLEAN(db_owner_info, "dbOpenAddressing",
+            owner->dbOpenAddressing);
+
+    INSERT_STRING(db_owner_info, "dbUpperID", owner->dbUpperID);
+
+leave:
+    free(string);
+    return err;
+}
+
+
 /* Convert XSD:tDbUserInfo XML tree into structure
  * @context is ISDS context
  * @db_user_info is automatically reallocated user info structure
@@ -8374,6 +8464,207 @@ leave:
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("FindDataBox request processed by server successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
+}
+
+
+/* Find boxes suiting given criteria version 2.
+ * @context is ISDS session context.
+ * @criteria is filter. You should fill in at least some members.
+ * @boxes is automatically reallocated list of isds_DbOwnerInfoExt2 structures,
+ * possibly empty. Input NULL or valid old structure.
+ * @return:
+ *  IE_SUCCESS if search succeeded, @boxes contains useful data
+ *  IE_NOEXIST if no such box exists, @boxes will be NULL
+ *  IE_2BIG if too much boxes exist and server truncated the results, @boxes
+ *      contains still valid data
+ *  other code if something bad happens. @boxes will be NULL. */
+isds_error isds_FindDataBox2(struct isds_ctx *context,
+        const struct isds_DbOwnerInfoExt2 *criteria,
+        struct isds_list **boxes) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    _Bool truncated = 0;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+    xmlNodePtr db_owner_info;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    xmlChar *string = NULL;
+#endif
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (!boxes) return IE_INVAL;
+    isds_list_free(boxes);
+
+    if (!criteria) {
+        return IE_INVAL;
+    }
+
+#if HAVE_LIBCURL
+    /* Check if connection is established
+     * TODO: This check should be done downstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Build FindDataBox2 request */
+    request = xmlNewNode(NULL, BAD_CAST "FindDataBox2");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build FindDataBox2 request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+    db_owner_info = xmlNewChild(request, NULL, BAD_CAST "dbOwnerInfo", NULL);
+    if (!db_owner_info) {
+        isds_log_message(context, _("Could not add dbOwnerInfo child to "
+                    "FindDataBox2 element"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+
+    err = insert_DbOwnerInfoExt2(context, criteria, db_owner_info);
+    if (err) goto leave;
+
+
+    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending FindDataBox2 request to ISDS\n"));
+
+    /* Sent request */
+    err = _isds(context, SERVICE_DB_SEARCH, request, &response, NULL, NULL);
+
+    /* Destroy request */
+    xmlFreeNode(request); request = NULL;
+
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Processing ISDS response on FindDataBox2 "
+                    "request failed\n"));
+        goto leave;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, SERVICE_DB_SEARCH, response,
+            &code, &message, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("ISDS response on FindDataBox2 request is missing status\n"));
+        goto leave;
+    }
+
+    /* Request processed, but nothing found */
+    if (!xmlStrcmp(code, BAD_CAST "0002") ||
+            !xmlStrcmp(code, BAD_CAST "5001")) {
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server did not found any box on FindDataBox2 request "
+                    "(code=%s, message=%s)\n"), code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_NOEXIST;
+        goto leave;
+    }
+
+    /* Warning, not a error */
+    if (!xmlStrcmp(code, BAD_CAST "0003")) {
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server truncated response on FindDataBox2 request "
+                    "(code=%s, message=%s)\n"), code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+        truncated = 1;
+    }
+
+    /* Other error */
+    else if (xmlStrcmp(code, BAD_CAST "0000")) {
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server refused FindDataBox2 request "
+                    "(code=%s, message=%s)\n"), code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    /* Extract boxes if they present */
+    result = xmlXPathEvalExpression(BAD_CAST
+            "/isds:FindDataBox2Response/isds:dbResults/isds:dbOwnerInfo",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        struct isds_list *item, *prev_item = NULL;
+        for (int i = 0; i < result->nodesetval->nodeNr; i++) {
+            item = calloc(1, sizeof(*item));
+            if (!item) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+
+            item->destructor = (void (*)(void **))isds_DbOwnerInfoExt2_free;
+            if (i == 0) *boxes = item;
+            else prev_item->next = item;
+            prev_item = item;
+
+            xpath_ctx->node = result->nodesetval->nodeTab[i];
+            err = extract_DbOwnerInfoExt2(context,
+                    (struct isds_DbOwnerInfoExt2 **) &(item->data), xpath_ctx);
+            if (err) goto leave;
+        }
+    }
+
+leave:
+    if (err) {
+        isds_list_free(boxes);
+    } else {
+        if (truncated) err = IE_2BIG;
+    }
+
+    free(string);
+    xmlFreeNode(request);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("FindDataBox2 request processed by server successfully.\n"));
 #else /* not HAVE_LIBCURL */
     err = IE_NOTSUP;
 #endif

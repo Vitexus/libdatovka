@@ -55,6 +55,28 @@ int main(void) {
 
     }
 
+    {
+        struct isds_list *boxes = NULL, *item;
+
+        printf("Searching for my own box:\n");
+        err = isds_FindDataBox2(ctx, db_owner_info, &boxes);
+        if (err == IE_SUCCESS || err == IE_2BIG) {
+            if (err == IE_2BIG)
+                printf("isds_FindDataBox2() results truncated\n");
+            printf("isds_FindDataBox2() succeeded:\n");
+
+            for(item = boxes; item; item = item->next) {
+                printf("List item:\n");
+                print_DbOwnerInfoExt2(item->data);
+            }
+        } else {
+            printf("isds_FindDataBox2() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        }
+
+        isds_list_free(&boxes);
+    }
+
 
     /* Get box delivery info */
     if (db_owner_info) {

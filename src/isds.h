@@ -1390,6 +1390,21 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *criteria,
         struct isds_list **boxes);
 
+/* Find boxes suiting given criteria version 2.
+ * @context is ISDS session context.
+ * @criteria is filter. You should fill in at least some members.
+ * @boxes is automatically reallocated list of isds_DbOwnerInfoExt2 structures,
+ * possibly empty. Input NULL or valid old structure.
+ * @return:
+ *  IE_SUCCESS if search succeeded, @boxes contains useful data
+ *  IE_NOEXIST if no such box exists, @boxes will be NULL
+ *  IE_2BIG if too much boxes exist and server truncated the results, @boxes
+ *      contains still valid data
+ *  other code if something bad happens. @boxes will be NULL. */
+isds_error isds_FindDataBox2(struct isds_ctx *context,
+        const struct isds_DbOwnerInfoExt2 *criteria,
+        struct isds_list **boxes);
+
 /* Find boxes matching a given full-text criteria.
  * @context is a session context
  * @query is a non-empty string which consists of words to search
