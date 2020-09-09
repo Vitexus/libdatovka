@@ -1271,6 +1271,13 @@ isds_error isds_UpdateDataBoxDescr(struct isds_ctx *context,
 isds_error isds_GetDataBoxUsers(struct isds_ctx *context, const char *box_id,
         struct isds_list **users);
 
+/* Get data about all users assigned to given box version 2.
+ * @context is session context
+ * @box_id is box ID
+ * @users is automatically reallocated list of struct isds_DbUserInfoExt2 */
+isds_error isds_GetDataBoxUsers2(struct isds_ctx *context, const char *box_id,
+        struct isds_list **users);
+
 /* Update data about user assigned to given box.
  * @context is session context
  * @box is box identification

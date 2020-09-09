@@ -70,6 +70,24 @@ int main(void) {
         }
     }
 
+    /* Get info all users of this box */
+    if (db_owner_info) {
+        struct isds_list *users = NULL, *item;
+        printf("Getting users of my box with ID `%s':\n", db_owner_info->dbID);
+        err = isds_GetDataBoxUsers2(ctx, db_owner_info->dbID, &users);
+        if (err) {
+            printf("isds_GetDataBoxUsers2() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        } else {
+            printf("isds_GetDataBoxUsers2() succeeded\n");
+            for(item = users; item; item = item->next) {
+                printf("List item:\n");
+                print_DbUserInfoExt2(item->data);
+            }
+        }
+        isds_list_free(&users);
+    }
+
     isds_DbOwnerInfoExt2_free(&db_owner_info);
 
     {

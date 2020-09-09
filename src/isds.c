@@ -7558,6 +7558,99 @@ leave:
 }
 
 
+/* Get data about all users assigned to given box version 2.
+ * @context is session context
+ * @box_id is box ID
+ * @users is automatically reallocated list of struct isds_DbUserInfoExt2 */
+isds_error isds_GetDataBoxUsers2(struct isds_ctx *context, const char *box_id,
+        struct isds_list **users) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    xmlDocPtr response = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    int i;
+    struct isds_list *item, *prev_item = NULL;
+#endif
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (!users || !box_id) return IE_INVAL;
+    isds_list_free(users);
+
+
+#if HAVE_LIBCURL
+    /* Do request and check for success */
+    err = build_send_dbid_request_check_response(context,
+            SERVICE_DB_MANIPULATION, BAD_CAST "GetDataBoxUsers2", NULL,
+            BAD_CAST box_id, NULL, &response, NULL);
+    if (err) goto leave;
+
+
+    /* Extract data */
+    /* Prepare structure */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    /* Set context node */
+    result = xmlXPathEvalExpression(BAD_CAST
+            "/isds:GetDataBoxUsers2Response/isds:dbUsers/isds:dbUserInfo",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        /* Iterate over all users */
+        for (i = 0; i < result->nodesetval->nodeNr; i++) {
+
+            /* Prepare structure */
+            item = calloc(1, sizeof(*item));
+            if (!item) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+            item->destructor = (void(*)(void**))isds_DbUserInfoExt2_free;
+            if (i == 0) *users = item;
+            else prev_item->next = item;
+            prev_item = item;
+
+            /* Extract it */
+            xpath_ctx->node = result->nodesetval->nodeTab[i];
+            err = extract_DbUserInfoExt2(context,
+                    (struct isds_DbUserInfoExt2 **) (&item->data), xpath_ctx);
+            if (err) goto leave;
+        }
+    }
+
+leave:
+    if (err) {
+        isds_list_free(users);
+    }
+
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("GetDataBoxUsers2 request processed by server "
+                    "successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
+}
+
+
 /* Update data about user assigned to given box.
  * @context is session context
  * @box is box identification
