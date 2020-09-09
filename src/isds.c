@@ -797,6 +797,8 @@ struct isds_DbOwnerInfoExt2 *isds_DbOwnerInfoExt2_duplicate(
     FLATDUP_OR_ERROR(new->dbOpenAddressing, src->dbOpenAddressing);
     STRDUP_OR_ERROR(new->dbUpperID, src->dbUpperID);
 
+    return new;
+
 error:
     isds_DbOwnerInfoExt2_free(&new);
     return NULL;
@@ -7464,6 +7466,72 @@ isds_error isds_UpdateDataBoxDescr(struct isds_ctx *context,
     /* Send it to server and process response */
     err = send_request_check_drop_response(context, SERVICE_DB_MANIPULATION,
             BAD_CAST "UpdateDataBoxDescr", &request, (xmlChar **) refnumber);
+
+leave:
+    xmlFreeNode(request);
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
+}
+
+
+/* Update data about given box version 2.
+ * @context is session context
+ * @old_box current box description
+ * @new_box are updated data about @old_box
+ * @approval is optional external approval of box manipulation
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_UpdateDataBoxDescr2(struct isds_ctx *context,
+        const struct isds_DbOwnerInfoExt2 *old_box,
+        const struct isds_DbOwnerInfoExt2 *new_box,
+        const struct isds_approval *approval, char **refnumber) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlNodePtr node;
+#endif
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (!old_box || !new_box) return IE_INVAL;
+
+
+#if HAVE_LIBCURL
+    /* Build UpdateDataBoxDescr2 request */
+    request = xmlNewNode(NULL, BAD_CAST "UpdateDataBoxDescr2");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build UpdateDataBoxDescr2 request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    INSERT_ELEMENT(node, request, "dbOldOwnerInfo");
+    err = insert_DbOwnerInfoExt2(context, old_box, node);
+    if (err) goto leave;
+
+    INSERT_ELEMENT(node, request, "dbNewOwnerInfo");
+    err = insert_DbOwnerInfoExt2(context, new_box, node);
+    if (err) goto leave;
+
+    err = insert_GExtApproval(context, approval, request);
+    if (err) goto leave;
+
+
+    /* Send it to server and process response */
+    err = send_request_check_drop_response(context, SERVICE_DB_MANIPULATION,
+            BAD_CAST "UpdateDataBoxDescr2", &request, (xmlChar **) refnumber);
 
 leave:
     xmlFreeNode(request);

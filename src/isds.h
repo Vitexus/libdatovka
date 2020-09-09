@@ -1264,6 +1264,18 @@ isds_error isds_UpdateDataBoxDescr(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *new_box,
         const struct isds_approval *approval, char **refnumber);
 
+/* Update data about given box version 2.
+ * @context is session context
+ * @old_box current box description
+ * @new_box are updated data about @old_box
+ * @approval is optional external approval of box manipulation
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_UpdateDataBoxDescr2(struct isds_ctx *context,
+        const struct isds_DbOwnerInfoExt2 *old_box,
+        const struct isds_DbOwnerInfoExt2 *new_box,
+        const struct isds_approval *approval, char **refnumber);
+
 /* Get data about all users assigned to given box.
  * @context is session context
  * @box_id is box ID
