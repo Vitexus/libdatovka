@@ -1391,6 +1391,17 @@ isds_error isds_delete_user(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
         const struct isds_approval *approval, char **refnumber);
 
+/* Remove user assigned to given box version 2.
+ * @context is session context
+ * @box_id is box ID
+ * @isds_id is isds ID as used in isds_DbUserInfoExt2.isdsID
+ * @approval is optional external approval of box manipulation
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_DeleteDataBoxUser2(struct isds_ctx *context,
+        const char *box_id, const char *isds_id,
+        const struct isds_approval *approval, char **refnumber);
+
 /* Get list of boxes in ZIP archive.
  * @context is session context
  * @list_identifier is UTF-8 encoded string identifying boxes of interrest.

@@ -8401,6 +8401,64 @@ isds_error isds_delete_user(struct isds_ctx *context,
 }
 
 
+/* Remove user assigned to given box version 2.
+ * @context is session context
+ * @box_id is box ID
+ * @isds_id is isds ID as used in isds_DbUserInfoExt2.isdsID
+ * @approval is optional external approval of box manipulation
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_DeleteDataBoxUser2(struct isds_ctx *context,
+        const char *box_id, const char *isds_id,
+        const struct isds_approval *approval, char **refnumber) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlNodePtr node;
+#endif
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (!box_id || !isds_id) return IE_INVAL;
+
+#if HAVE_LIBCURL
+    /* Build DeleteDataBoxUser2 request */
+    request = xmlNewNode(NULL, BAD_CAST "DeleteDataBoxUser2");
+    if (!request) {
+        isds_log_message(context,
+                _("Could not build DeleteDataBoxUser2 request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    INSERT_STRING(request, "dbID", box_id);
+    INSERT_STRING(request, "isdsID", isds_id);
+
+    err = insert_GExtApproval(context, approval, request);
+    if (err) goto leave;
+
+    /* Send it to server and process response */
+    err = send_request_check_drop_response(context, SERVICE_DB_MANIPULATION,
+            BAD_CAST "DeleteDataBoxUser2", &request, (xmlChar **) refnumber);
+
+leave:
+    xmlFreeNode(request);
+    request = NULL;
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
+}
+
+
 /* Get list of boxes in ZIP archive.
  * @context is session context
  * @list_identifier is UTF-8 encoded string identifying boxes of interrest.
