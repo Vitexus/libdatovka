@@ -7089,7 +7089,7 @@ static isds_error extract_credentials_delivery(struct isds_ctx *context,
             err = IE_ERROR;
             goto leave;
         }
-        if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
             char *request_name_locale = _isds_utf82locale(request_name);
             isds_log(ILF_ISDS, ILL_WARNING,
                     _("Wrong element in ISDS response for %s request "
