@@ -4060,10 +4060,10 @@ leave:
 }
 
 
-/* Convert XSD:tDbOwnerInfoExt2 XML tree into structure
+/* Convert XSD:tDbUserInfoExt2 XML tree into structure
  * @context is ISDS context
  * @db_user_info is automatically reallocated user info structure
- * @xpath_ctx is XPath context with current node as XSD:tDbOwnerInfoExt2 element
+ * @xpath_ctx is XPath context with current node as XSD:tDbUserInfoExt2 element
  * In case of error @db_user_info will be freed. */
 static isds_error extract_DbUserInfoExt2(struct isds_ctx *context,
         struct isds_DbUserInfoExt2 **db_user_info, xmlXPathContextPtr xpath_ctx) {
@@ -4159,6 +4159,78 @@ static isds_error insert_DbUserInfo(struct isds_ctx *context,
     }
     CHECK_FOR_STRING_LENGTH(user->userID, 6, 12, "userID");
     INSERT_STRING(db_user_info, "userID", user->userID);
+
+    /* userType */
+    if (user->userType) {
+        const xmlChar *type_string = isds_UserType2string(*(user->userType));
+        if (!type_string) {
+            isds_printf_message(context, _("Invalid userType value: %d"),
+                    *(user->userType));
+            err = IE_ENUM;
+            goto leave;
+        }
+        INSERT_STRING(db_user_info, "userType", type_string);
+    }
+
+    INSERT_LONGINT(db_user_info, "userPrivils", user->userPrivils, string);
+    CHECK_FOR_STRING_LENGTH(user->ic, 0, 8, "ic")
+    INSERT_STRING(db_user_info, "ic", user->ic);
+    CHECK_FOR_STRING_LENGTH(user->firmName, 0, 100, "firmName")
+    INSERT_STRING(db_user_info, "firmName", user->firmName);
+    INSERT_STRING(db_user_info, "caStreet", user->caStreet);
+    INSERT_STRING(db_user_info, "caCity", user->caCity);
+    INSERT_STRING(db_user_info, "caZipCode", user->caZipCode);
+    INSERT_STRING(db_user_info, "caState", user->caState);
+
+leave:
+    free(string);
+    return err;
+}
+
+
+/* Insert struct isds_DbUserInfoExt2 data (user description) into XML tree
+ * @context is session context
+ * @user is libisds structure with user description
+ * @db_user_info is XML element of XSD:tDbUserInfoExt2 */
+static isds_error insert_DbUserInfoExt2(struct isds_ctx *context,
+        const struct isds_DbUserInfoExt2 *user, xmlNodePtr db_user_info) {
+
+    isds_error err = IE_SUCCESS;
+    xmlNodePtr node;
+    xmlChar *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!user || !db_user_info) return IE_INVAL;
+
+    /* Build XSD:tDbUserInfoExt2 */
+
+    INSERT_BOOLEAN(db_user_info, "aifoIsds", user->aifoIsds);
+    if (user->personName) {
+        INSERT_STRING(db_user_info, "pnGivenNames",
+                user->personName->pnGivenNames);
+        INSERT_STRING(db_user_info, "pnLastName",
+                user->personName->pnLastName);
+    }
+    if (user->address) {
+        INSERT_STRING(db_user_info, "adCode", user->address->adCode);
+        INSERT_STRING(db_user_info, "adCity", user->address->adCity);
+        INSERT_STRING(db_user_info, "adDistrict", user->address->adDistrict);
+        INSERT_STRING(db_user_info, "adStreet", user->address->adStreet);
+        INSERT_STRING(db_user_info, "adNumberInStreet",
+                user->address->adNumberInStreet);
+        INSERT_STRING(db_user_info, "adNumberInMunicipality",
+                user->address->adNumberInMunicipality);
+        INSERT_STRING(db_user_info, "adZipCode", user->address->adZipCode);
+        INSERT_STRING(db_user_info, "adState", user->address->adState);
+    }
+    if (user->biDate) {
+        if (!tm2datestring(user->biDate, &string))
+            INSERT_STRING(db_user_info, "biDate", string);
+        zfree(string);
+    }
+
+    /* The documentation doesn't specify the length of the identifier. */
+    INSERT_STRING(db_user_info, "isdsID", user->isdsID);
 
     /* userType */
     if (user->userType) {
@@ -8216,6 +8288,100 @@ isds_error isds_add_user(struct isds_ctx *context,
     return build_send_manipulationboxuser_request_check_drop_response(context,
             BAD_CAST "AddDataBoxUser", box, user, credentials_delivery,
             approval, (xmlChar **) refnumber);
+}
+
+
+/* Assign new user to given box version 2.
+ * @context is session context
+ * @box_id is box ID
+ * @user defines new user to add
+ * @credentials_delivery is NULL if new user's password should be delivered
+ * off-line to the user. It is valid pointer if user should obtain new
+ * password on-line on dedicated web server. Then input
+ * @credentials_delivery.email value is user's e-mail address user must
+ * provide to dedicated web server together with @credentials_delivery.token.
+ * The output reallocated token user needs to use to authorize on the web
+ * server to view his new password. Output reallocated
+ * @credentials_delivery.new_user_name is user's log-in name that ISDS
+ * assigned up on this call.
+ * @approval is optional external approval of box manipulation
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_AddDataBoxUser2(struct isds_ctx *context, const char *box_id,
+        const struct isds_DbUserInfoExt2 *user,
+        struct isds_credentials_delivery *credentials_delivery,
+        const struct isds_approval *approval, char **refnumber) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlDocPtr response = NULL;
+    xmlNodePtr node;
+#endif
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (!box_id || !user) return IE_INVAL;
+
+#if HAVE_LIBCURL
+    /* Build AddDataBoxUser2 request */
+    request = xmlNewNode(NULL, BAD_CAST "AddDataBoxUser2");
+    if (!request) {
+        isds_log_message(context,
+                _("Could not build AddDataBoxUser2 request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    /* XSD:gDbIdInuptAttrs */
+    INSERT_STRING(request, "dbID", box_id);
+
+    INSERT_ELEMENT(node, request, "dbUserInfo");
+
+    err = insert_DbUserInfoExt2(context, user, node);
+    if (err) goto leave;
+
+    err = insert_credentials_delivery(context, credentials_delivery, request);
+    if (err) goto leave;
+
+    err = insert_GExtApproval(context, approval, request);
+    if (err) goto leave;
+
+    /* Send request and check response*/
+    err = send_destroy_request_check_response(context,
+            SERVICE_DB_MANIPULATION, BAD_CAST "AddDataBoxUser2", &request,
+            &response, (xmlChar **) refnumber, NULL);
+
+    xmlFreeNode(request);
+    request = NULL;
+
+    /* Pick up credentials_delivery if requested */
+    err = extract_credentials_delivery(context, credentials_delivery, response,
+            (char *) "AddDataBoxUser2");
+
+leave:
+    xmlFreeDoc(response);
+    if (request) xmlFreeNode(request);
+
+    if (!err) {
+        char *service_name_locale =
+            _isds_utf82locale((char *) "AddDataBoxUser2");
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("%s request processed by server successfully.\n"),
+                service_name_locale);
+        free(service_name_locale);
+    }
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
 }
 
 

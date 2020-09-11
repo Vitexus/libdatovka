@@ -1359,6 +1359,27 @@ isds_error isds_add_user(struct isds_ctx *context,
         struct isds_credentials_delivery *credentials_delivery,
         const struct isds_approval *approval, char **refnumber);
 
+/* Assign new user to given box version 2.
+ * @context is session context
+ * @box_id is box ID
+ * @user defines new user to add
+ * @credentials_delivery is NULL if new user's password should be delivered
+ * off-line to the user. It is valid pointer if user should obtain new
+ * password on-line on dedicated web server. Then input
+ * @credentials_delivery.email value is user's e-mail address user must
+ * provide to dedicated web server together with @credentials_delivery.token.
+ * The output reallocated token user needs to use to authorize on the web
+ * server to view his new password. Output reallocated
+ * @credentials_delivery.new_user_name is user's log-in name that ISDS
+ * assigned up on this call.
+ * @approval is optional external approval of box manipulation
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care.*/
+isds_error isds_AddDataBoxUser2(struct isds_ctx *context, const char *box_id,
+        const struct isds_DbUserInfoExt2 *user,
+        struct isds_credentials_delivery *credentials_delivery,
+        const struct isds_approval *approval, char **refnumber);
+
 /* Remove user assigned to given box.
  * @context is session context
  * @box is box identification
