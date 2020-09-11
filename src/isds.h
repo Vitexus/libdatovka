@@ -1149,7 +1149,7 @@ isds_error isds_GetOwnerInfoFromLogin2(struct isds_ctx *context,
 isds_error isds_GetUserInfoFromLogin(struct isds_ctx *context,
         struct isds_DbUserInfo **db_user_info);
 
-/* Get data about logged in user version 2.
+/* Get data about the logged-in user version 2.
  * @context is session context
  * @db_user_info is reallocated user description. It will be freed on
  * error.
@@ -1270,7 +1270,7 @@ isds_error isds_UpdateDataBoxDescr(struct isds_ctx *context,
  * @new_box are updated data about @old_box
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
- * NULL, if you don't care.*/
+ * NULL, if you don't care. */
 isds_error isds_UpdateDataBoxDescr2(struct isds_ctx *context,
         const struct isds_DbOwnerInfoExt2 *old_box,
         const struct isds_DbOwnerInfoExt2 *new_box,
@@ -1303,7 +1303,18 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
         const struct isds_DbUserInfo *new_user,
         char **refnumber);
 
-/* Undocumented function. 
+/* Update data about user assigned to given box version 2.
+ * @context is session context
+ * @box_id is box ID
+ * @isds_id is isds ID as used in isds_DbUserInfoExt2.isdsID
+ * @new_user are updated data about @old_user
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+isds_error isds_UpdateDataBoxUser2(struct isds_ctx *context,
+        const char *box_id, const char *isds_id,
+        const struct isds_DbUserInfoExt2 *new_user, char **refnumber);
+
+/* Undocumented function.
  * @context is session context
  * @box_id is UTF-8 encoded box identifier
  * @token is UTF-8 encoded temporary password
@@ -1374,7 +1385,7 @@ isds_error isds_add_user(struct isds_ctx *context,
  * assigned up on this call.
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
- * NULL, if you don't care.*/
+ * NULL, if you don't care. */
 isds_error isds_AddDataBoxUser2(struct isds_ctx *context, const char *box_id,
         const struct isds_DbUserInfoExt2 *user,
         struct isds_credentials_delivery *credentials_delivery,
@@ -1397,7 +1408,7 @@ isds_error isds_delete_user(struct isds_ctx *context,
  * @isds_id is isds ID as used in isds_DbUserInfoExt2.isdsID
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
- * NULL, if you don't care.*/
+ * NULL, if you don't care. */
 isds_error isds_DeleteDataBoxUser2(struct isds_ctx *context,
         const char *box_id, const char *isds_id,
         const struct isds_approval *approval, char **refnumber);
