@@ -7106,15 +7106,10 @@ static isds_error extract_credentials_delivery(struct isds_ctx *context,
          * optional. */
         EXTRACT_STRING("isds:dbUserID", credentials_delivery->new_user_name);
 
+        /* XXX: isds:dbAccessDataId is provided only on case of a special use
+         * case when creating special internal users. Leave it optional.
+         */
         EXTRACT_STRING("isds:dbAccessDataId", credentials_delivery->token);
-        if (!credentials_delivery->token) {
-            char *request_name_locale = _isds_utf82locale(request_name);
-            isds_log(ILF_ISDS, ILL_ERR,
-                    _("ISDS did not return token on %s request "
-                        "even if requested\n"), request_name_locale);
-            free(request_name_locale);
-            err = IE_ERROR;
-        }
     }
 
 leave:
