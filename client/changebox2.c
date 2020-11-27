@@ -1,0 +1,117 @@
+#define _XOPEN_SOURCE 500
+#include <stdlib.h>
+#include <stdio.h>
+#include <locale.h>
+#include <time.h>
+#include <string.h>
+#include <isds.h>
+#include "common.h"
+
+/* Get info about my account */
+isds_error get_my_box(struct isds_ctx *ctx,
+        struct isds_DbOwnerInfoExt2 **db_owner_info) {
+    isds_error err = IE_SUCCESS;
+        printf("Getting info about my box:\n");
+        err = isds_GetOwnerInfoFromLogin2(ctx, db_owner_info);
+        if (err) {
+            printf("isds_GetOwnerInfoFromLogin2() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        } else {
+            printf("isds_GetOwnerInfoFromLogin2() succeeded\n");
+        }
+        print_DbOwnerInfoExt2(*db_owner_info);
+    return err;
+}
+
+
+int main(void) {
+    struct isds_ctx *ctx = NULL;
+    isds_error err;
+    struct isds_DbOwnerInfoExt2 *db_owner_info = NULL;
+
+    setlocale(LC_ALL, "");
+
+    err = isds_init();
+    if (err) {
+        printf("isds_init() failed: %s\n", isds_strerror(err));
+        exit(EXIT_FAILURE);
+    }
+
+    isds_set_logging(ILF_ALL & ~ILF_HTTP, ILL_ALL);
+
+    ctx = isds_ctx_create();
+    if (!ctx) {
+        printf("isds_ctx_create() failed");
+    }
+
+    err = isds_set_timeout(ctx, 10000);
+    if (err) {
+        printf("isds_set_timeout() failed: %s\n", isds_strerror(err));
+    }
+
+    err = isds_login(ctx, url, username(), password(), NULL, NULL);
+    if (err) {
+        printf("isds_login() failed: %s: %s\n", isds_strerror(err),
+                isds_long_message(ctx));
+    } else {
+        printf("Logged in :)\n");
+    }
+
+
+    {
+        printf("Get current box info\n");
+        get_my_box(ctx, &db_owner_info);
+    }
+
+
+    if (db_owner_info) {
+        /* Update box info */
+        struct isds_DbOwnerInfoExt2 *old_owner_info = NULL;
+        char *refnumber = NULL;
+
+        old_owner_info = isds_DbOwnerInfoExt2_duplicate(db_owner_info);
+        if (!old_owner_info) {
+            fprintf(stderr, "Not enough memory\n");
+            exit(EXIT_FAILURE);
+        }
+
+        printf("Updating info about my box: with no change\n");
+        err = isds_UpdateDataBoxDescr2(ctx, old_owner_info, db_owner_info,
+                NULL, &refnumber);
+        if (err) {
+            printf("isds_UpdateDataBoxDescr2() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        } else {
+            printf("isds_UpdateDataBoxDescr2() succeeded as request #%s\n",
+                    refnumber);
+            printf("Get new box info\n");
+            get_my_box(ctx, &db_owner_info);
+        }
+
+        free(refnumber);
+        isds_DbOwnerInfoExt2_free(&old_owner_info);
+    }
+
+    isds_DbOwnerInfoExt2_free(&db_owner_info);
+
+
+
+    err = isds_logout(ctx);
+    if (err) {
+        printf("isds_logout() failed: %s\n", isds_strerror(err));
+    }
+
+
+    err = isds_ctx_free(&ctx);
+    if (err) {
+        printf("isds_ctx_free() failed: %s\n", isds_strerror(err));
+    }
+
+
+    err = isds_cleanup();
+    if (err) {
+        printf("isds_cleanup() failed: %s\n", isds_strerror(err));
+    }
+
+    exit (EXIT_SUCCESS);
+}

@@ -317,6 +317,12 @@ struct isds_PersonName {
     char *pnLastNameAtBirth;
 };
 
+/* Name of person version 2. Since WSDL 2.31. */
+struct isds_PersonName2 {
+    char *pnGivenNames;    /* First name and other given (middle) names */
+    char *pnLastName;      /* Family name */
+};
+
 /* Date and place of birth */
 struct isds_BirthInfo {
     struct tm *biDate;      /* Date of Birth in local time at birth place,
@@ -330,6 +336,18 @@ struct isds_BirthInfo {
 /* Post address */
 struct isds_Address {
     char *adCity;
+    char *adStreet;
+    char *adNumberInStreet;
+    char *adNumberInMunicipality;
+    char *adZipCode;
+    char *adState;
+};
+
+/* Post address version 3. Since WSDL 2.31. */
+struct isds_AddressExt2 {
+    char *adCode;                    /* RUIAN address code */
+    char *adCity;
+    char *adDistrict;                /* Part of the municipality */
     char *adStreet;
     char *adNumberInStreet;
     char *adNumberInMunicipality;
@@ -363,6 +381,29 @@ struct isds_DbOwnerInfo {
                                        messages from anybody */  
 };
 
+/* Data about box and its respective owner version 3. Since WSDL 2.31.
+ * NULL pointer means undefined value */
+struct isds_DbOwnerInfoExt2 {
+    char *dbID;                     /* Box ID [Max. 7 chars] */
+    _Bool *aifoIsds;                /* Set if box owner data are held and
+                                       synchronised with the Person registry
+                                       (Regist osob/ROB) */
+    isds_DbType *dbType;            /* Box type */
+    char *ic;                       /* ID */
+    struct isds_PersonName2 *personName; /* Name of person */
+    char *firmName;                 /* Name of firm */
+    struct isds_BirthInfo *birthInfo;    /* Birth of person */
+    struct isds_AddressExt2 *address;    /* Post address */
+    char *nationality;
+    char *dbIdOVM;                  /* ID from the OVM registry */
+    long int *dbState;              /* Box state; 1 <=> active box;
+                                       long int because xsd:integer
+                                       TODO: enum? */
+    _Bool *dbOpenAddressing;        /* Non-OVM Box is free to receive
+                                       messages from anybody */
+    char *dbUpperID;                /* ID of superordinate OVM data box */
+};
+
 /* User type */
 typedef enum {
     USERTYPE_PRIMARY,               /* Owner of the box */
@@ -386,6 +427,31 @@ struct isds_DbUserInfo {
     struct tm *biDate;          /* Date of birth in local time,
                                    only tm_year, tm_mon and tm_mday carry sane
                                    value */
+    char *ic;                   /* ID of a supervising firm [Max. 8 chars] */
+    char *firmName;             /* Name of a supervising firm
+                                   [Max. 100 chars] */
+    char *caStreet;             /* Street and number of contact address */
+    char *caCity;               /* Czech City of contact address */
+    char *caZipCode;            /* Post office code of contact address */
+    char *caState;              /* Abbreviated country of contact address;
+                                   Implicit value is "CZ"; Optional. */
+};
+
+/* Data about user version 3. Since WSDL 2.31.
+ * NULL pointer means undefined value */
+struct isds_DbUserInfoExt2 {
+    _Bool *aifoIsds;            /* Set if user data are held within
+                                   the Person registry (Regist osob/ROB) */
+    struct isds_PersonName2 *personName; /* Name of the person */
+    struct isds_AddressExt2 *address;    /* Post address */
+    struct tm *biDate;          /* Date of birth in local time,
+                                   only tm_year, tm_mon and tm_mday carry sane
+                                   value */
+    char *isdsID;               /* Identifier without significance, unique for
+                                   each user. It does not change when new
+                                   login credentials are handed out. */
+    isds_UserType *userType;    /* User type */
+    long int *userPrivils;      /* Set of user permissions */
     char *ic;                   /* ID of a supervising firm [Max. 8 chars] */
     char *firmName;             /* Name of a supervising firm
                                    [Max. 100 chars] */
@@ -1070,9 +1136,27 @@ isds_error isds_ping(struct isds_ctx *context);
 isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         struct isds_DbOwnerInfo **db_owner_info);
 
+/* Get data about logged in user and his box version 2.
+ * @context is session context
+ * @db_owner_info is reallocated box owner description. It will be freed on
+ * error.
+ * @return error code from lower layer, context message will be set up
+ * appropriately. */
+isds_error isds_GetOwnerInfoFromLogin2(struct isds_ctx *context,
+        struct isds_DbOwnerInfoExt2 **db_owner_info);
+
 /* Get data about logged in user. */
 isds_error isds_GetUserInfoFromLogin(struct isds_ctx *context,
         struct isds_DbUserInfo **db_user_info);
+
+/* Get data about the logged-in user version 2.
+ * @context is session context
+ * @db_user_info is reallocated user description. It will be freed on
+ * error.
+ * @return error code from lower layer, context message will be set up
+ * appropriately. */
+isds_error isds_GetUserInfoFromLogin2(struct isds_ctx *context,
+        struct isds_DbUserInfoExt2 **db_user_info);
 
 /* Get expiration time of current password
  * @context is session context
@@ -1180,11 +1264,30 @@ isds_error isds_UpdateDataBoxDescr(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *new_box,
         const struct isds_approval *approval, char **refnumber);
 
+/* Update data about given box version 2.
+ * @context is session context
+ * @old_box current box description
+ * @new_box are updated data about @old_box
+ * @approval is optional external approval of box manipulation
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+isds_error isds_UpdateDataBoxDescr2(struct isds_ctx *context,
+        const struct isds_DbOwnerInfoExt2 *old_box,
+        const struct isds_DbOwnerInfoExt2 *new_box,
+        const struct isds_approval *approval, char **refnumber);
+
 /* Get data about all users assigned to given box.
  * @context is session context
  * @box_id is box ID
  * @users is automatically reallocated list of struct isds_DbUserInfo */
 isds_error isds_GetDataBoxUsers(struct isds_ctx *context, const char *box_id,
+        struct isds_list **users);
+
+/* Get data about all users assigned to given box version 2.
+ * @context is session context
+ * @box_id is box ID
+ * @users is automatically reallocated list of struct isds_DbUserInfoExt2 */
+isds_error isds_GetDataBoxUsers2(struct isds_ctx *context, const char *box_id,
         struct isds_list **users);
 
 /* Update data about user assigned to given box.
@@ -1200,7 +1303,18 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
         const struct isds_DbUserInfo *new_user,
         char **refnumber);
 
-/* Undocumented function. 
+/* Update data about user assigned to given box version 2.
+ * @context is session context
+ * @box_id is box ID
+ * @isds_id is isds ID as used in isds_DbUserInfoExt2.isdsID
+ * @new_user are updated data about @old_user
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+isds_error isds_UpdateDataBoxUser2(struct isds_ctx *context,
+        const char *box_id, const char *isds_id,
+        const struct isds_DbUserInfoExt2 *new_user, char **refnumber);
+
+/* Undocumented function.
  * @context is session context
  * @box_id is UTF-8 encoded box identifier
  * @token is UTF-8 encoded temporary password
@@ -1256,6 +1370,27 @@ isds_error isds_add_user(struct isds_ctx *context,
         struct isds_credentials_delivery *credentials_delivery,
         const struct isds_approval *approval, char **refnumber);
 
+/* Assign new user to given box version 2.
+ * @context is session context
+ * @box_id is box ID
+ * @user defines new user to add
+ * @credentials_delivery is NULL if new user's password should be delivered
+ * off-line to the user. It is valid pointer if user should obtain new
+ * password on-line on dedicated web server. Then input
+ * @credentials_delivery.email value is user's e-mail address user must
+ * provide to dedicated web server together with @credentials_delivery.token.
+ * The output reallocated token user needs to use to authorize on the web
+ * server to view his new password. Output reallocated
+ * @credentials_delivery.new_user_name is user's log-in name that ISDS
+ * assigned up on this call.
+ * @approval is optional external approval of box manipulation
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+isds_error isds_AddDataBoxUser2(struct isds_ctx *context, const char *box_id,
+        const struct isds_DbUserInfoExt2 *user,
+        struct isds_credentials_delivery *credentials_delivery,
+        const struct isds_approval *approval, char **refnumber);
+
 /* Remove user assigned to given box.
  * @context is session context
  * @box is box identification
@@ -1265,6 +1400,17 @@ isds_error isds_add_user(struct isds_ctx *context,
  * NULL, if you don't care.*/
 isds_error isds_delete_user(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
+        const struct isds_approval *approval, char **refnumber);
+
+/* Remove user assigned to given box version 2.
+ * @context is session context
+ * @box_id is box ID
+ * @isds_id is isds ID as used in isds_DbUserInfoExt2.isdsID
+ * @approval is optional external approval of box manipulation
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+isds_error isds_DeleteDataBoxUser2(struct isds_ctx *context,
+        const char *box_id, const char *isds_id,
         const struct isds_approval *approval, char **refnumber);
 
 /* Get list of boxes in ZIP archive.
@@ -1297,6 +1443,21 @@ isds_error isds_get_box_list_archive(struct isds_ctx *context,
  *  other code if something bad happens. @boxes will be NULL. */
 isds_error isds_FindDataBox(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *criteria,
+        struct isds_list **boxes);
+
+/* Find boxes suiting given criteria version 2.
+ * @context is ISDS session context.
+ * @criteria is filter. You should fill in at least some members.
+ * @boxes is automatically reallocated list of isds_DbOwnerInfoExt2 structures,
+ * possibly empty. Input NULL or valid old structure.
+ * @return:
+ *  IE_SUCCESS if search succeeded, @boxes contains useful data
+ *  IE_NOEXIST if no such box exists, @boxes will be NULL
+ *  IE_2BIG if too much boxes exist and server truncated the results, @boxes
+ *      contains still valid data
+ *  other code if something bad happens. @boxes will be NULL. */
+isds_error isds_FindDataBox2(struct isds_ctx *context,
+        const struct isds_DbOwnerInfoExt2 *criteria,
         struct isds_list **boxes);
 
 /* Find boxes matching a given full-text criteria.
@@ -1883,17 +2044,29 @@ void isds_hash_free(struct isds_hash **hash);
 /* Deallocate structure isds_PersonName recursively and NULL it */
 void isds_PersonName_free(struct isds_PersonName **person_name);
 
+/* Deallocate structure isds_PersonName2 recursively and NULL it */
+void isds_PersonName2_free(struct isds_PersonName2 **person_name);
+
 /* Deallocate structure isds_BirthInfo recursively and NULL it */
 void isds_BirthInfo_free(struct isds_BirthInfo **birth_info);
 
 /* Deallocate structure isds_Address recursively and NULL it */
 void isds_Address_free(struct isds_Address **address);
 
+/* Deallocate structure isds_AddressExt2 recursively and NULL it */
+void isds_AddressExt2_free(struct isds_AddressExt2 **address);
+
 /* Deallocate structure isds_DbOwnerInfo recursively and NULL it */
 void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info);
 
+/* Deallocate structure isds_DbOwnerInfoExt2 recursively and NULL it */
+void isds_DbOwnerInfoExt2_free(struct isds_DbOwnerInfoExt2 **db_owner_info);
+
 /* Deallocate structure isds_DbUserInfo recursively and NULL it */
 void isds_DbUserInfo_free(struct isds_DbUserInfo **db_user_info);
+
+/* Deallocate structure isds_DbUserInfoExt2 recursively and NULL it */
+void isds_DbUserInfoExt2_free(struct isds_DbUserInfoExt2 **db_user_info);
 
 /* Deallocate struct isds_event recursively and NULL it */
 void isds_event_free(struct isds_event **event);
@@ -1940,17 +2113,33 @@ void isds_box_state_period_free(struct isds_box_state_period **period);
 struct isds_PersonName *isds_PersonName_duplicate(
         const struct isds_PersonName *src);
 
+/* Copy structure isds_PersonName2 recursively */
+struct isds_PersonName2 *isds_PersonName2_duplicate(
+        const struct isds_PersonName2 *src);
+
 /* Copy structure isds_Address recursively */
 struct isds_Address *isds_Address_duplicate(
         const struct isds_Address *src);
+
+/* Copy structure isds_AddressExt2 recursively */
+struct isds_AddressExt2 *isds_AddressExt2_duplicate(
+        const struct isds_AddressExt2 *src);
 
 /* Copy structure isds_DbOwnerInfo recursively */
 struct isds_DbOwnerInfo *isds_DbOwnerInfo_duplicate(
         const struct isds_DbOwnerInfo *src);
 
+/* Copy structure isds_DbOwnerInfoExt2 recursively */
+struct isds_DbOwnerInfoExt2 *isds_DbOwnerInfoExt2_duplicate(
+        const struct isds_DbOwnerInfoExt2 *src);
+
 /* Copy structure isds_DbUserInfo recursively */
 struct isds_DbUserInfo *isds_DbUserInfo_duplicate(
         const struct isds_DbUserInfo *src);
+
+/* Copy structure isds_DbUserInfoExt2 recursively */
+struct isds_DbUserInfoExt2 *isds_DbUserInfoExt2_duplicate(
+        const struct isds_DbUserInfoExt2 *src);
 
 /* Copy structure isds_box_state_period recursively */
 struct isds_box_state_period *isds_box_state_period_duplicate(

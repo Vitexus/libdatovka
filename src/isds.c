@@ -165,7 +165,19 @@ void isds_PersonName_free(struct isds_PersonName **person_name) {
     free((*person_name)->pnMiddleName);
     free((*person_name)->pnLastName);
     free((*person_name)->pnLastNameAtBirth);
-   
+
+    free(*person_name);
+    *person_name = NULL;
+}
+
+
+/* Deallocate structure isds_PersonName2 recursively and NULL it */
+void isds_PersonName2_free(struct isds_PersonName2 **person_name) {
+    if (!person_name || !*person_name) return;
+
+    free((*person_name)->pnGivenNames);
+    free((*person_name)->pnLastName);
+
     free(*person_name);
     *person_name = NULL;
 }
@@ -195,7 +207,25 @@ void isds_Address_free(struct isds_Address **address) {
     free((*address)->adNumberInMunicipality);
     free((*address)->adZipCode);
     free((*address)->adState);
-    
+
+    free(*address);
+    *address = NULL;
+}
+
+
+/* Deallocate structure isds_AddressExt2 recursively and NULL it */
+void isds_AddressExt2_free(struct isds_AddressExt2 **address) {
+    if (!address || !*address) return;
+
+    free((*address)->adCode);
+    free((*address)->adCity);
+    free((*address)->adDistrict);
+    free((*address)->adStreet);
+    free((*address)->adNumberInStreet);
+    free((*address)->adNumberInMunicipality);
+    free((*address)->adZipCode);
+    free((*address)->adState);
+
     free(*address);
     *address = NULL;
 }
@@ -225,6 +255,30 @@ void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info) {
     *db_owner_info = NULL;
 }
 
+
+/* Deallocate structure isds_DbOwnerInfoExt2 recursively and NULL it */
+void isds_DbOwnerInfoExt2_free(struct isds_DbOwnerInfoExt2 **db_owner_info) {
+    if (!db_owner_info || !*db_owner_info) return;
+
+    free((*db_owner_info)->dbID);
+    free((*db_owner_info)->aifoIsds);
+    free((*db_owner_info)->dbType);
+    free((*db_owner_info)->ic);
+    isds_PersonName2_free(&((*db_owner_info)->personName));
+    free((*db_owner_info)->firmName);
+    isds_BirthInfo_free(&((*db_owner_info)->birthInfo));
+    isds_AddressExt2_free(&((*db_owner_info)->address));
+    free((*db_owner_info)->nationality);
+    free((*db_owner_info)->dbIdOVM);
+    free((*db_owner_info)->dbState);
+    free((*db_owner_info)->dbOpenAddressing);
+    free((*db_owner_info)->dbUpperID);
+
+    free(*db_owner_info);
+    *db_owner_info = NULL;
+}
+
+
 /* Deallocate structure isds_DbUserInfo recursively and NULL it */
 void isds_DbUserInfo_free(struct isds_DbUserInfo **db_user_info) {
     if (!db_user_info || !*db_user_info) return;
@@ -241,7 +295,29 @@ void isds_DbUserInfo_free(struct isds_DbUserInfo **db_user_info) {
     free((*db_user_info)->caCity);
     free((*db_user_info)->caZipCode);
     free((*db_user_info)->caState);
-    
+
+    zfree(*db_user_info);
+}
+
+
+/* Deallocate structure isds_DbUserInfoExt2 recursively and NULL it */
+void isds_DbUserInfoExt2_free(struct isds_DbUserInfoExt2 **db_user_info) {
+    if (!db_user_info || !*db_user_info) return;
+
+    free((*db_user_info)->aifoIsds);
+    isds_PersonName2_free(&((*db_user_info)->personName));
+    isds_AddressExt2_free(&((*db_user_info)->address));
+    free((*db_user_info)->biDate);
+    free((*db_user_info)->isdsID);
+    free((*db_user_info)->userType);
+    free((*db_user_info)->userPrivils);
+    free((*db_user_info)->ic);
+    free((*db_user_info)->firmName);
+    free((*db_user_info)->caStreet);
+    free((*db_user_info)->caCity);
+    free((*db_user_info)->caZipCode);
+    free((*db_user_info)->caState);
+
     zfree(*db_user_info);
 }
 
@@ -534,7 +610,28 @@ error:
     return NULL;
 }
 
-    
+
+/* Copy structure isds_PersonName2 recursively */
+struct isds_PersonName2 *isds_PersonName2_duplicate(
+        const struct isds_PersonName2 *src) {
+    struct isds_PersonName2 *new = NULL;
+
+    if (!src) return NULL;
+
+    new = calloc(1, sizeof(*new));
+    if (!new) return NULL;
+
+    STRDUP_OR_ERROR(new->pnGivenNames, src->pnGivenNames);
+    STRDUP_OR_ERROR(new->pnLastName, src->pnLastName);
+
+    return new;
+
+error:
+    isds_PersonName2_free(&new);
+    return NULL;
+}
+
+
 /* Copy structure isds_BirthInfo recursively */
 static struct isds_BirthInfo *isds_BirthInfo_duplicate(
         const struct isds_BirthInfo *template) {
@@ -580,6 +677,34 @@ struct isds_Address *isds_Address_duplicate(
     
 error:
     isds_Address_free(&new);
+    return NULL;
+}
+
+
+/* Copy structure isds_AddressExt2 recursively */
+struct isds_AddressExt2 *isds_AddressExt2_duplicate(
+        const struct isds_AddressExt2 *src) {
+    struct isds_AddressExt2 *new = NULL;
+
+    if (!src) return NULL;
+
+    new = calloc(1, sizeof(*new));
+    if (!new) return NULL;
+
+    STRDUP_OR_ERROR(new->adCode, src->adCode);
+    STRDUP_OR_ERROR(new->adCity, src->adCity);
+    STRDUP_OR_ERROR(new->adDistrict, src->adDistrict);
+    STRDUP_OR_ERROR(new->adStreet, src->adStreet);
+    STRDUP_OR_ERROR(new->adNumberInStreet, src->adNumberInStreet);
+    STRDUP_OR_ERROR(new->adNumberInMunicipality,
+            src->adNumberInMunicipality);
+    STRDUP_OR_ERROR(new->adZipCode, src->adZipCode);
+    STRDUP_OR_ERROR(new->adState, src->adState);
+
+    return new;
+
+error:
+    isds_AddressExt2_free(&new);
     return NULL;
 }
 
@@ -633,6 +758,53 @@ error:
 }
 
 
+/* Copy structure isds_DbOwnerInfoExt2 recursively */
+struct isds_DbOwnerInfoExt2 *isds_DbOwnerInfoExt2_duplicate(
+        const struct isds_DbOwnerInfoExt2 *src) {
+    struct isds_DbOwnerInfoExt2 *new = NULL;
+    if (!src) return NULL;
+
+    new = calloc(1, sizeof(*new));
+    if (!new) return NULL;
+
+    STRDUP_OR_ERROR(new->dbID, src->dbID);
+    FLATDUP_OR_ERROR(new->aifoIsds, src->aifoIsds);
+    FLATDUP_OR_ERROR(new->dbType, src->dbType);
+    STRDUP_OR_ERROR(new->ic, src->ic);
+
+    if (src->personName) {
+        if (!(new->personName =
+                    isds_PersonName2_duplicate(src->personName)))
+            goto error;
+    }
+
+    STRDUP_OR_ERROR(new->firmName, src->firmName);
+
+    if (src->birthInfo) {
+        if (!(new->birthInfo =
+                    isds_BirthInfo_duplicate(src->birthInfo)))
+            goto error;
+    }
+
+    if (src->address) {
+        if (!(new->address = isds_AddressExt2_duplicate(src->address)))
+            goto error;
+    }
+
+    STRDUP_OR_ERROR(new->nationality, src->nationality);
+    STRDUP_OR_ERROR(new->dbIdOVM, src->dbIdOVM);
+    FLATDUP_OR_ERROR(new->dbState, src->dbState);
+    FLATDUP_OR_ERROR(new->dbOpenAddressing, src->dbOpenAddressing);
+    STRDUP_OR_ERROR(new->dbUpperID, src->dbUpperID);
+
+    return new;
+
+error:
+    isds_DbOwnerInfoExt2_free(&new);
+    return NULL;
+}
+
+
 /* Copy structure isds_DbUserInfo recursively */
 struct isds_DbUserInfo *isds_DbUserInfo_duplicate(
         const struct isds_DbUserInfo *src) {
@@ -669,6 +841,47 @@ struct isds_DbUserInfo *isds_DbUserInfo_duplicate(
     
 error:
     isds_DbUserInfo_free(&new);
+    return NULL;
+}
+
+
+/* Copy structure isds_DbUserInfoExt2 recursively */
+struct isds_DbUserInfoExt2 *isds_DbUserInfoExt2_duplicate(
+        const struct isds_DbUserInfoExt2 *src) {
+    struct isds_DbUserInfoExt2 *new = NULL;
+    if (!src) return NULL;
+
+    new = calloc(1, sizeof(*new));
+    if (!new) return NULL;
+
+    FLATDUP_OR_ERROR(new->aifoIsds, src->aifoIsds);
+
+    if (src->personName) {
+        if (!(new->personName =
+                    isds_PersonName2_duplicate(src->personName)))
+            goto error;
+    }
+
+    if (src->address) {
+        if (!(new->address = isds_AddressExt2_duplicate(src->address)))
+            goto error;
+    }
+
+    FLATDUP_OR_ERROR(new->biDate, src->biDate);
+    STRDUP_OR_ERROR(new->isdsID, src->isdsID);
+    FLATDUP_OR_ERROR(new->userType, src->userType);
+    FLATDUP_OR_ERROR(new->userPrivils, src->userPrivils);
+    STRDUP_OR_ERROR(new->ic, src->ic);
+    STRDUP_OR_ERROR(new->firmName, src->firmName);
+    STRDUP_OR_ERROR(new->caStreet, src->caStreet);
+    STRDUP_OR_ERROR(new->caCity, src->caCity);
+    STRDUP_OR_ERROR(new->caZipCode, src->caZipCode);
+    STRDUP_OR_ERROR(new->caState, src->caState);
+
+    return new;
+
+error:
+    isds_DbUserInfoExt2_free(&new);
     return NULL;
 }
 
@@ -3136,6 +3349,102 @@ leave:
 
 
 #if HAVE_LIBCURL
+/* Find and convert XSD:tDbType in current node into value
+ * @context is ISDS context
+ * @dbType is automatically reallocated box type value. If no member
+ * value is found, will be freed.
+ * @xpath_ctx is XPath context with current node as parent for XSD:tDbType
+ * elements
+ * In case of error @dbType will be freed. */
+static isds_error extract_tDbType(struct isds_ctx *context,
+        isds_DbType **dbType, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!dbType) return IE_INVAL;
+    zfree(*dbType);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *dbType = calloc(1, sizeof(**dbType));
+    if (!*dbType) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    EXTRACT_STRING("isds:dbType", string);
+    if (string) {
+        err = string2isds_DbType((xmlChar *)string, *dbType);
+        if (err) {
+            if (err == IE_ENUM) {
+                err = IE_ISDS;
+                char *string_locale = _isds_utf82locale(string);
+                isds_printf_message(context,
+                        _("Unknown isds:dbType value: %s"), string_locale);
+                free(string_locale);
+            }
+            goto leave;
+        }
+    }
+
+leave:
+    if (err) zfree(*dbType);
+    free(string);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
+/* Find and convert XSD:tUserType in current node into value
+ * @context is ISDS context
+ * @userType is automatically reallocated box type value. If no member
+ * value is found, will be freed.
+ * @xpath_ctx is XPath context with current node as parent for XSD:tUserType
+ * elements
+ * In case of error @userType will be freed. */
+static isds_error extract_tUserType(struct isds_ctx *context,
+        isds_UserType **userType, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!userType) return IE_INVAL;
+    zfree(*userType);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *userType = calloc(1, sizeof(**userType));
+    if (!*userType) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    EXTRACT_STRING("isds:userType", string);
+    if (string) {
+        err = string2isds_UserType((xmlChar *)string, *userType);
+        if (err) {
+            if (err == IE_ENUM) {
+                err = IE_ISDS;
+                char *string_locale = _isds_utf82locale(string);
+                isds_printf_message(context,
+                        _("Unknown isds:userType value: %s"), string_locale);
+                free(string_locale);
+            }
+            goto leave;
+        }
+    }
+
+leave:
+    if (err) zfree(*userType);
+    free(string);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
 /* Find and convert XSD:gPersonName group in current node into structure
  * @context is ISDS context
  * @personName is automatically reallocated person name structure. If no member
@@ -3171,6 +3480,43 @@ static isds_error extract_gPersonName(struct isds_ctx *context,
 
 leave:
     if (err) isds_PersonName_free(personName);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
+/* Find and convert XSD:gPersonName2 group in current node into structure
+ * @context is ISDS context
+ * @personName is automatically reallocated person name structure. If no member
+ * value is found, will be freed.
+ * @xpath_ctx is XPath context with current node as parent for XSD:gPersonName2
+ * elements
+ * In case of error @personName will be freed. */
+static isds_error extract_gPersonName2(struct isds_ctx *context,
+        struct isds_PersonName2 **personName, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!personName) return IE_INVAL;
+    isds_PersonName2_free(personName);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *personName = calloc(1, sizeof(**personName));
+    if (!*personName) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    EXTRACT_STRING("isds:pnGivenNames", (*personName)->pnGivenNames);
+    EXTRACT_STRING("isds:pnLastName", (*personName)->pnLastName);
+
+    if (!(*personName)->pnGivenNames && !(*personName)->pnLastName)
+        isds_PersonName2_free(personName);
+
+leave:
+    if (err) isds_PersonName2_free(personName);
     xmlXPathFreeObject(result);
     return err;
 }
@@ -3216,6 +3562,53 @@ static isds_error extract_gAddress(struct isds_ctx *context,
 
 leave:
     if (err) isds_Address_free(address);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
+/* Find and convert XSD:gAddressExt2 group in current node into structure
+ * @context is ISDS context
+ * @address is automatically reallocated address structure. If no member
+ * value is found, will be freed.
+ * @xpath_ctx is XPath context with current node as parent for XSD:gAddressExt2
+ * elements
+ * In case of error @address will be freed. */
+static isds_error extract_gAddressExt2(struct isds_ctx *context,
+        struct isds_AddressExt2 **address, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!address) return IE_INVAL;
+    isds_AddressExt2_free(address);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *address = calloc(1, sizeof(**address));
+    if (!*address) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    EXTRACT_STRING("isds:adCode", (*address)->adCode);
+    EXTRACT_STRING("isds:adCity", (*address)->adCity);
+    EXTRACT_STRING("isds:adDistrict", (*address)->adDistrict);
+    EXTRACT_STRING("isds:adStreet", (*address)->adStreet);
+    EXTRACT_STRING("isds:adNumberInStreet", (*address)->adNumberInStreet);
+    EXTRACT_STRING("isds:adNumberInMunicipality",
+            (*address)->adNumberInMunicipality);
+    EXTRACT_STRING("isds:adZipCode", (*address)->adZipCode);
+    EXTRACT_STRING("isds:adState", (*address)->adState);
+
+    if (!(*address)->adCode && !(*address)->adCity && !(*address)->adDistrict &&
+            !(*address)->adStreet && !(*address)->adNumberInStreet &&
+            !(*address)->adNumberInMunicipality && !(*address)->adZipCode &&
+            !(*address)->adState)
+        isds_AddressExt2_free(address);
+
+leave:
+    if (err) isds_AddressExt2_free(address);
     xmlXPathFreeObject(result);
     return err;
 }
@@ -3267,6 +3660,45 @@ leave:
 }
 
 
+/* Find and convert XSD:gBirthInfo group in current node into structure
+ * @context is ISDS context
+ * @birthInfo is automatically reallocated birth info structure. If no member
+ * value is found, will be freed.
+ * @xpath_ctx is XPath context with current node as parent for XSD:gBirthInfo
+ * element
+ * In case of error @birthInfo will be freed. */
+static isds_error extract_gBirthInfo(struct isds_ctx *context,
+        struct isds_BirthInfo **birthInfo, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!birthInfo) return IE_INVAL;
+    isds_BirthInfo_free(birthInfo);
+    if (!xpath_ctx) return IE_INVAL;
+
+    *birthInfo = calloc(1, sizeof(**birthInfo));
+    if (!*birthInfo) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    err = extract_BiDate(context, &(*birthInfo)->biDate, xpath_ctx);
+    if (err) goto leave;
+    EXTRACT_STRING("isds:biCity", (*birthInfo)->biCity);
+    EXTRACT_STRING("isds:biCounty", (*birthInfo)->biCounty);
+    EXTRACT_STRING("isds:biState", (*birthInfo)->biState);
+    if (!(*birthInfo)->biDate && !(*birthInfo)->biCity &&
+            !(*birthInfo)->biCounty && !(*birthInfo)->biState)
+        isds_BirthInfo_free(birthInfo);
+
+leave:
+    if (err) isds_BirthInfo_free(birthInfo);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
 /* Convert isds:dBOwnerInfo XML tree into structure
  * @context is ISDS context
  * @db_owner_info is automatically reallocated box owner info structure
@@ -3277,7 +3709,6 @@ static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
         xmlXPathContextPtr xpath_ctx) {
     isds_error err = IE_SUCCESS;
     xmlXPathObjectPtr result = NULL;
-    char *string = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!db_owner_info) return IE_INVAL;
@@ -3292,29 +3723,9 @@ static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
     }
 
     EXTRACT_STRING("isds:dbID", (*db_owner_info)->dbID);
-    
-    EXTRACT_STRING("isds:dbType", string);
-    if (string) {
-        (*db_owner_info)->dbType =
-            calloc(1, sizeof(*((*db_owner_info)->dbType)));
-        if (!(*db_owner_info)->dbType) {
-            err = IE_NOMEM;
-            goto leave;
-        }
-        err = string2isds_DbType((xmlChar *)string, (*db_owner_info)->dbType);
-        if (err) {
-            zfree((*db_owner_info)->dbType);
-            if (err == IE_ENUM) {
-                err = IE_ISDS;
-                char *string_locale = _isds_utf82locale(string);
-                isds_printf_message(context, _("Unknown isds:dbType: %s"), 
-                    string_locale);
-                free(string_locale);
-            }
-            goto leave;
-        }
-        zfree(string);
-    }
+
+    err = extract_tDbType(context, &(*db_owner_info)->dbType, xpath_ctx);
+    if (err) goto leave;
 
     EXTRACT_STRING("isds:ic", (*db_owner_info)->ic);
 
@@ -3324,23 +3735,8 @@ static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
 
     EXTRACT_STRING("isds:firmName", (*db_owner_info)->firmName);
 
-    (*db_owner_info)->birthInfo =
-        calloc(1, sizeof(*((*db_owner_info)->birthInfo)));
-    if (!(*db_owner_info)->birthInfo) {
-        err = IE_NOMEM;
-        goto leave;
-    }
-    err = extract_BiDate(context, &(*db_owner_info)->birthInfo->biDate,
-            xpath_ctx);
+    err = extract_gBirthInfo(context, &(*db_owner_info)->birthInfo, xpath_ctx);
     if (err) goto leave;
-    EXTRACT_STRING("isds:biCity", (*db_owner_info)->birthInfo->biCity);
-    EXTRACT_STRING("isds:biCounty", (*db_owner_info)->birthInfo->biCounty);
-    EXTRACT_STRING("isds:biState", (*db_owner_info)->birthInfo->biState);
-    if (!(*db_owner_info)->birthInfo->biDate &&
-            !(*db_owner_info)->birthInfo->biCity &&
-            !(*db_owner_info)->birthInfo->biCounty &&
-            !(*db_owner_info)->birthInfo->biState)
-        isds_BirthInfo_free(&(*db_owner_info)->birthInfo);
 
     err = extract_gAddress(context, &(*db_owner_info)->address, xpath_ctx);
     if (err) goto leave;
@@ -3350,7 +3746,7 @@ static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
     EXTRACT_STRING("isds:telNumber", (*db_owner_info)->telNumber);
     EXTRACT_STRING("isds:identifier", (*db_owner_info)->identifier);
     EXTRACT_STRING("isds:registryCode", (*db_owner_info)->registryCode);
-    
+
     EXTRACT_LONGINT("isds:dbState", (*db_owner_info)->dbState, 0);
 
     EXTRACT_BOOLEAN("isds:dbEffectiveOVM", (*db_owner_info)->dbEffectiveOVM);
@@ -3359,7 +3755,63 @@ static isds_error extract_DbOwnerInfo(struct isds_ctx *context,
 
 leave:
     if (err) isds_DbOwnerInfo_free(db_owner_info);
-    free(string);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
+/* Convert XSD:tDbOwnerInfoExt2 XML tree into structure
+ * @context is ISDS context
+ * @db_owner_info is automatically reallocated box owner info version 3
+ * @xpath_ctx is XPath context with current node as XSD:tDbOwnerInfoExt2 element
+ * In case of error @db_owner_info will be freed. */
+static isds_error extract_DbOwnerInfoExt2(struct isds_ctx *context,
+        struct isds_DbOwnerInfoExt2 **db_owner_info,
+        xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!db_owner_info) return IE_INVAL;
+    isds_DbOwnerInfoExt2_free(db_owner_info);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *db_owner_info = calloc(1, sizeof(**db_owner_info));
+    if (!*db_owner_info) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    EXTRACT_STRING("isds:dbID", (*db_owner_info)->dbID);
+    EXTRACT_BOOLEAN("isds:aifoIsds", (*db_owner_info)->aifoIsds);
+
+    err = extract_tDbType(context, &(*db_owner_info)->dbType, xpath_ctx);
+    if (err) goto leave;
+
+    EXTRACT_STRING("isds:ic", (*db_owner_info)->ic);
+
+    err = extract_gPersonName2(context, &(*db_owner_info)->personName,
+            xpath_ctx);
+    if (err) goto leave;
+
+    EXTRACT_STRING("isds:firmName", (*db_owner_info)->firmName);
+
+    err = extract_gBirthInfo(context, &(*db_owner_info)->birthInfo, xpath_ctx);
+    if (err) goto leave;
+
+    err = extract_gAddressExt2(context, &(*db_owner_info)->address, xpath_ctx);
+    if (err) goto leave;
+
+    EXTRACT_STRING("isds:nationality", (*db_owner_info)->nationality);
+    EXTRACT_STRING("isds:dbIdOVM", (*db_owner_info)->dbIdOVM);
+    EXTRACT_LONGINT("isds:dbState", (*db_owner_info)->dbState, 0);
+    EXTRACT_BOOLEAN("isds:dbOpenAddressing",
+            (*db_owner_info)->dbOpenAddressing);
+    EXTRACT_STRING("isds:dbUpperID", (*db_owner_info)->dbUpperID);
+
+leave:
+    if (err) isds_DbOwnerInfoExt2_free(db_owner_info);
     xmlXPathFreeObject(result);
     return err;
 }
@@ -3461,6 +3913,96 @@ leave:
 }
 
 
+/* Insert struct isds_DbOwnerInfoExt2 data (box description) into XML tree
+ * @context is session context
+ * @owner is libisds structure with box description
+ * @db_owner_info is XML element of XSD:tDbOwnerInfoExt2 */
+static isds_error insert_DbOwnerInfoExt2(struct isds_ctx *context,
+        const struct isds_DbOwnerInfoExt2 *owner, xmlNodePtr db_owner_info) {
+
+    isds_error err = IE_SUCCESS;
+    xmlNodePtr node;
+    xmlChar *string = NULL;
+    const xmlChar *type_string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!owner || !db_owner_info) return IE_INVAL;
+
+    CHECK_FOR_STRING_LENGTH(owner->dbID, 0, 7, "dbID")
+    INSERT_STRING(db_owner_info, "dbID", owner->dbID);
+
+    INSERT_BOOLEAN(db_owner_info, "aifoIsds", owner->aifoIsds);
+
+    if (owner->dbType) {
+        type_string = isds_DbType2string(*(owner->dbType));
+        if (!type_string) {
+            isds_printf_message(context, _("Invalid dbType value: %d"),
+                    *(owner->dbType));
+            err = IE_ENUM;
+            goto leave;
+        }
+    }
+    INSERT_STRING(db_owner_info, "dbType", type_string);
+
+    INSERT_STRING(db_owner_info, "ic", owner->ic);
+
+    INSERT_STRING(db_owner_info, "pnGivenNames",
+            (NULL == owner->personName) ? NULL:
+                owner->personName->pnGivenNames);
+    INSERT_STRING(db_owner_info, "pnLastName",
+            (NULL == owner->personName) ? NULL: owner->personName->pnLastName);
+
+    INSERT_STRING(db_owner_info, "firmName", owner->firmName);
+
+    if (NULL != owner->birthInfo && NULL != owner->birthInfo->biDate) {
+        err = tm2datestring(owner->birthInfo->biDate, &string);
+        if (err) goto leave;
+    }
+    INSERT_STRING(db_owner_info, "biDate", string);
+    zfree(string);
+
+    INSERT_STRING(db_owner_info, "biCity",
+            (NULL == owner->birthInfo) ? NULL: owner->birthInfo->biCity);
+    INSERT_STRING(db_owner_info, "biCounty",
+            (NULL == owner->birthInfo) ? NULL: owner->birthInfo->biCounty);
+    INSERT_STRING(db_owner_info, "biState",
+            (NULL == owner->birthInfo) ? NULL: owner->birthInfo->biState);
+
+    INSERT_STRING(db_owner_info, "adCode",
+            (NULL == owner->address) ? NULL : owner->address->adCode);
+    INSERT_STRING(db_owner_info, "adCity",
+            (NULL == owner->address) ? NULL: owner->address->adCity);
+    INSERT_STRING(db_owner_info, "adDistrict",
+            (NULL == owner->address) ? NULL: owner->address->adDistrict);
+    INSERT_STRING(db_owner_info, "adStreet",
+            (NULL == owner->address) ? NULL: owner->address->adStreet);
+    INSERT_STRING(db_owner_info, "adNumberInStreet",
+            (NULL == owner->address) ? NULL: owner->address->adNumberInStreet);
+    INSERT_STRING(db_owner_info, "adNumberInMunicipality",
+            (NULL == owner->address) ? NULL:
+            owner->address->adNumberInMunicipality);
+    INSERT_STRING(db_owner_info, "adZipCode",
+            (NULL == owner->address) ? NULL: owner->address->adZipCode);
+    INSERT_STRING(db_owner_info, "adState",
+            (NULL == owner->address) ? NULL: owner->address->adState);
+
+    INSERT_STRING(db_owner_info, "nationality", owner->nationality);
+
+    INSERT_STRING(db_owner_info, "dbIdOVM", owner->dbIdOVM);
+
+    INSERT_LONGINT(db_owner_info, "dbState", owner->dbState, string);
+
+    INSERT_BOOLEAN(db_owner_info, "dbOpenAddressing",
+            owner->dbOpenAddressing);
+
+    INSERT_STRING(db_owner_info, "dbUpperID", owner->dbUpperID);
+
+leave:
+    free(string);
+    return err;
+}
+
+
 /* Convert XSD:tDbUserInfo XML tree into structure
  * @context is ISDS context
  * @db_user_info is automatically reallocated user info structure
@@ -3470,7 +4012,6 @@ static isds_error extract_DbUserInfo(struct isds_ctx *context,
         struct isds_DbUserInfo **db_user_info, xmlXPathContextPtr xpath_ctx) {
     isds_error err = IE_SUCCESS;
     xmlXPathObjectPtr result = NULL;
-    char *string = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!db_user_info) return IE_INVAL;
@@ -3485,39 +4026,11 @@ static isds_error extract_DbUserInfo(struct isds_ctx *context,
     }
 
     EXTRACT_STRING("isds:userID", (*db_user_info)->userID);
-    
-    EXTRACT_STRING("isds:userType", string);
-    if (string) {
-        (*db_user_info)->userType =
-            calloc(1, sizeof(*((*db_user_info)->userType)));
-        if (!(*db_user_info)->userType) {
-            err = IE_NOMEM;
-            goto leave;
-        }
-        err = string2isds_UserType((xmlChar *)string,
-                (*db_user_info)->userType);
-        if (err) {
-            zfree((*db_user_info)->userType);
-            if (err == IE_ENUM) {
-                err = IE_ISDS;
-                char *string_locale = _isds_utf82locale(string);
-                isds_printf_message(context,
-                        _("Unknown isds:userType value: %s"), string_locale);
-                free(string_locale);
-            }
-            goto leave;
-        }
-        zfree(string);
-    }
 
-    EXTRACT_LONGINT("isds:userPrivils", (*db_user_info)->userPrivils, 0); 
+    err = extract_tUserType(context, &(*db_user_info)->userType, xpath_ctx);
+    if (err) goto leave;
 
-    (*db_user_info)->personName =
-        calloc(1, sizeof(*((*db_user_info)->personName)));
-    if (!(*db_user_info)->personName) {
-        err = IE_NOMEM;
-        goto leave;
-    }
+    EXTRACT_LONGINT("isds:userPrivils", (*db_user_info)->userPrivils, 0);
 
     err = extract_gPersonName(context, &(*db_user_info)->personName,
             xpath_ctx);
@@ -3542,7 +4055,63 @@ static isds_error extract_DbUserInfo(struct isds_ctx *context,
 
 leave:
     if (err) isds_DbUserInfo_free(db_user_info);
-    free(string);
+    xmlXPathFreeObject(result);
+    return err;
+}
+
+
+/* Convert XSD:tDbUserInfoExt2 XML tree into structure
+ * @context is ISDS context
+ * @db_user_info is automatically reallocated user info structure
+ * @xpath_ctx is XPath context with current node as XSD:tDbUserInfoExt2 element
+ * In case of error @db_user_info will be freed. */
+static isds_error extract_DbUserInfoExt2(struct isds_ctx *context,
+        struct isds_DbUserInfoExt2 **db_user_info, xmlXPathContextPtr xpath_ctx) {
+    isds_error err = IE_SUCCESS;
+    xmlXPathObjectPtr result = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!db_user_info) return IE_INVAL;
+    isds_DbUserInfoExt2_free(db_user_info);
+    if (!xpath_ctx) return IE_INVAL;
+
+
+    *db_user_info = calloc(1, sizeof(**db_user_info));
+    if (!*db_user_info) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+
+    EXTRACT_BOOLEAN("isds:aifoIsds", (*db_user_info)->aifoIsds);
+
+    err = extract_gPersonName2(context, &(*db_user_info)->personName,
+            xpath_ctx);
+    if (err) goto leave;
+
+    err = extract_gAddressExt2(context, &(*db_user_info)->address, xpath_ctx);
+    if (err) goto leave;
+
+    err = extract_BiDate(context, &(*db_user_info)->biDate, xpath_ctx);
+    if (err) goto leave;
+
+    EXTRACT_STRING("isds:isdsID", (*db_user_info)->isdsID);
+
+    err = extract_tUserType(context, &(*db_user_info)->userType, xpath_ctx);
+    if (err) goto leave;
+
+    EXTRACT_LONGINT("isds:userPrivils", (*db_user_info)->userPrivils, 0);
+    EXTRACT_STRING("isds:ic", (*db_user_info)->ic);
+    EXTRACT_STRING("isds:firmName", (*db_user_info)->firmName);
+    EXTRACT_STRING("isds:caStreet", (*db_user_info)->caStreet);
+    EXTRACT_STRING("isds:caCity", (*db_user_info)->caCity);
+    EXTRACT_STRING("isds:caZipCode", (*db_user_info)->caZipCode);
+
+    /* ???: Default value is "CZ" according specification. Should we provide
+     * it? */
+    EXTRACT_STRING("isds:caState", (*db_user_info)->caState);
+
+leave:
+    if (err) isds_DbUserInfoExt2_free(db_user_info);
     xmlXPathFreeObject(result);
     return err;
 }
@@ -3590,6 +4159,78 @@ static isds_error insert_DbUserInfo(struct isds_ctx *context,
     }
     CHECK_FOR_STRING_LENGTH(user->userID, 6, 12, "userID");
     INSERT_STRING(db_user_info, "userID", user->userID);
+
+    /* userType */
+    if (user->userType) {
+        const xmlChar *type_string = isds_UserType2string(*(user->userType));
+        if (!type_string) {
+            isds_printf_message(context, _("Invalid userType value: %d"),
+                    *(user->userType));
+            err = IE_ENUM;
+            goto leave;
+        }
+        INSERT_STRING(db_user_info, "userType", type_string);
+    }
+
+    INSERT_LONGINT(db_user_info, "userPrivils", user->userPrivils, string);
+    CHECK_FOR_STRING_LENGTH(user->ic, 0, 8, "ic")
+    INSERT_STRING(db_user_info, "ic", user->ic);
+    CHECK_FOR_STRING_LENGTH(user->firmName, 0, 100, "firmName")
+    INSERT_STRING(db_user_info, "firmName", user->firmName);
+    INSERT_STRING(db_user_info, "caStreet", user->caStreet);
+    INSERT_STRING(db_user_info, "caCity", user->caCity);
+    INSERT_STRING(db_user_info, "caZipCode", user->caZipCode);
+    INSERT_STRING(db_user_info, "caState", user->caState);
+
+leave:
+    free(string);
+    return err;
+}
+
+
+/* Insert struct isds_DbUserInfoExt2 data (user description) into XML tree
+ * @context is session context
+ * @user is libisds structure with user description
+ * @db_user_info is XML element of XSD:tDbUserInfoExt2 */
+static isds_error insert_DbUserInfoExt2(struct isds_ctx *context,
+        const struct isds_DbUserInfoExt2 *user, xmlNodePtr db_user_info) {
+
+    isds_error err = IE_SUCCESS;
+    xmlNodePtr node;
+    xmlChar *string = NULL;
+
+    if (!context) return IE_INVALID_CONTEXT;
+    if (!user || !db_user_info) return IE_INVAL;
+
+    /* Build XSD:tDbUserInfoExt2 */
+
+    INSERT_BOOLEAN(db_user_info, "aifoIsds", user->aifoIsds);
+    if (user->personName) {
+        INSERT_STRING(db_user_info, "pnGivenNames",
+                user->personName->pnGivenNames);
+        INSERT_STRING(db_user_info, "pnLastName",
+                user->personName->pnLastName);
+    }
+    if (user->address) {
+        INSERT_STRING(db_user_info, "adCode", user->address->adCode);
+        INSERT_STRING(db_user_info, "adCity", user->address->adCity);
+        INSERT_STRING(db_user_info, "adDistrict", user->address->adDistrict);
+        INSERT_STRING(db_user_info, "adStreet", user->address->adStreet);
+        INSERT_STRING(db_user_info, "adNumberInStreet",
+                user->address->adNumberInStreet);
+        INSERT_STRING(db_user_info, "adNumberInMunicipality",
+                user->address->adNumberInMunicipality);
+        INSERT_STRING(db_user_info, "adZipCode", user->address->adZipCode);
+        INSERT_STRING(db_user_info, "adState", user->address->adState);
+    }
+    if (user->biDate) {
+        if (!tm2datestring(user->biDate, &string))
+            INSERT_STRING(db_user_info, "biDate", string);
+        zfree(string);
+    }
+
+    /* The documentation doesn't specify the length of the identifier. */
+    INSERT_STRING(db_user_info, "isdsID", user->isdsID);
 
     /* userType */
     if (user->userType) {
@@ -5289,6 +5930,105 @@ leave:
 }
 
 
+/* Get data about logged in user and his box version 2.
+ * @context is session context
+ * @db_owner_info is reallocated box owner description. It will be freed on
+ * error.
+ * @return error code from lower layer, context message will be set up
+ * appropriately. */
+isds_error isds_GetOwnerInfoFromLogin2(struct isds_ctx *context,
+        struct isds_DbOwnerInfoExt2 **db_owner_info) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    char *string = NULL;
+#endif
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (!db_owner_info) return IE_INVAL;
+    isds_DbOwnerInfoExt2_free(db_owner_info);
+
+#if HAVE_LIBCURL
+    /* Check whether connection is established */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Do request and check for success */
+    err = build_send_check_dbdummy_request(context,
+            BAD_CAST "GetOwnerInfoFromLogin2",
+            &response, NULL, NULL, &code, &message);
+    if (err) goto leave;
+
+    /* Extract data */
+    /* Prepare structure */
+    *db_owner_info = calloc(1, sizeof(**db_owner_info));
+    if (!*db_owner_info) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    /* Set context node */
+    result = xmlXPathEvalExpression(BAD_CAST
+            "/isds:GetOwnerInfoFromLogin2Response/isds:dbOwnerInfo", xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context, _("Missing dbOwnerInfo element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    if (result->nodesetval->nodeNr > 1) {
+        isds_log_message(context, _("Multiple dbOwnerInfo element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+    xmlXPathFreeObject(result); result = NULL;
+
+    /* Extract it */
+    err = extract_DbOwnerInfoExt2(context, db_owner_info, xpath_ctx);
+
+
+leave:
+    if (err) {
+        isds_DbOwnerInfoExt2_free(db_owner_info);
+    }
+
+    free(string);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("GetOwnerInfoFromLogin2 request processed by server "
+                    "successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
+}
+
+
 /* Get data about logged in user. */
 isds_error isds_GetUserInfoFromLogin(struct isds_ctx *context,
         struct isds_DbUserInfo **db_user_info) {
@@ -5372,6 +6112,102 @@ leave:
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("GetUserInfoFromLogin request processed by server "
+                    "successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
+}
+
+
+/* Get data about the logged-in user version 2.
+ * @context is session context
+ * @db_user_info is reallocated user description. It will be freed on
+ * error.
+ * @return error code from lower layer, context message will be set up
+ * appropriately. */
+isds_error isds_GetUserInfoFromLogin2(struct isds_ctx *context,
+        struct isds_DbUserInfoExt2 **db_user_info) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+#endif
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (!db_user_info) return IE_INVAL;
+    isds_DbUserInfoExt2_free(db_user_info);
+
+#if HAVE_LIBCURL
+    /* Check whether connection is established */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+    /* Do request and check for success */
+    err = build_send_check_dbdummy_request(context,
+            BAD_CAST "GetUserInfoFromLogin2",
+            &response, NULL, NULL, &code, &message);
+    if (err) goto leave;
+
+
+    /* Extract data */
+    /* Prepare structure */
+    *db_user_info = calloc(1, sizeof(**db_user_info));
+    if (!*db_user_info) {
+        err = IE_NOMEM;
+        goto leave;
+    }
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    /* Set context node */
+    result = xmlXPathEvalExpression(BAD_CAST
+            "/isds:GetUserInfoFromLogin2Response/isds:dbUserInfo", xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        isds_log_message(context, _("Missing dbUserInfo element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    if (result->nodesetval->nodeNr > 1) {
+        isds_log_message(context, _("Multiple dbUserInfo element"));
+        err = IE_ISDS;
+        goto leave;
+    }
+    xpath_ctx->node = result->nodesetval->nodeTab[0];
+    xmlXPathFreeObject(result); result = NULL;
+
+    /* Extract it */
+    err = extract_DbUserInfoExt2(context, db_user_info, xpath_ctx);
+
+leave:
+    if (err) {
+        isds_DbUserInfoExt2_free(db_user_info);
+    }
+
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("GetUserInfoFromLogin2 request processed by server "
                     "successfully.\n"));
 #else /* not HAVE_LIBCURL */
     err = IE_NOTSUP;
@@ -6253,7 +7089,7 @@ static isds_error extract_credentials_delivery(struct isds_ctx *context,
             err = IE_ERROR;
             goto leave;
         }
-        if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
             char *request_name_locale = _isds_utf82locale(request_name);
             isds_log(ILF_ISDS, ILL_WARNING,
                     _("Wrong element in ISDS response for %s request "
@@ -6270,15 +7106,10 @@ static isds_error extract_credentials_delivery(struct isds_ctx *context,
          * optional. */
         EXTRACT_STRING("isds:dbUserID", credentials_delivery->new_user_name);
 
+        /* XXX: isds:dbAccessDataId is provided only on case of a special use
+         * case when creating special internal users. Leave it optional.
+         */
         EXTRACT_STRING("isds:dbAccessDataId", credentials_delivery->token);
-        if (!credentials_delivery->token) {
-            char *request_name_locale = _isds_utf82locale(request_name);
-            isds_log(ILF_ISDS, ILL_ERR,
-                    _("ISDS did not return token on %s request "
-                        "even if requested\n"), request_name_locale);
-            free(request_name_locale);
-            err = IE_ERROR;
-        }
     }
 
 leave:
@@ -6713,6 +7544,72 @@ leave:
 }
 
 
+/* Update data about given box version 2.
+ * @context is session context
+ * @old_box current box description
+ * @new_box are updated data about @old_box
+ * @approval is optional external approval of box manipulation
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+isds_error isds_UpdateDataBoxDescr2(struct isds_ctx *context,
+        const struct isds_DbOwnerInfoExt2 *old_box,
+        const struct isds_DbOwnerInfoExt2 *new_box,
+        const struct isds_approval *approval, char **refnumber) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlNodePtr node;
+#endif
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (!old_box || !new_box) return IE_INVAL;
+
+
+#if HAVE_LIBCURL
+    /* Build UpdateDataBoxDescr2 request */
+    request = xmlNewNode(NULL, BAD_CAST "UpdateDataBoxDescr2");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build UpdateDataBoxDescr2 request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    INSERT_ELEMENT(node, request, "dbOldOwnerInfo");
+    err = insert_DbOwnerInfoExt2(context, old_box, node);
+    if (err) goto leave;
+
+    INSERT_ELEMENT(node, request, "dbNewOwnerInfo");
+    err = insert_DbOwnerInfoExt2(context, new_box, node);
+    if (err) goto leave;
+
+    err = insert_GExtApproval(context, approval, request);
+    if (err) goto leave;
+
+
+    /* Send it to server and process response */
+    err = send_request_check_drop_response(context, SERVICE_DB_MANIPULATION,
+            BAD_CAST "UpdateDataBoxDescr2", &request, (xmlChar **) refnumber);
+
+leave:
+    xmlFreeNode(request);
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
+}
+
+
 #if HAVE_LIBCURL
 /* Build ISDS request of XSD tIdDbInput type, sent it and check for error
  * code
@@ -6886,6 +7783,99 @@ leave:
 }
 
 
+/* Get data about all users assigned to given box version 2.
+ * @context is session context
+ * @box_id is box ID
+ * @users is automatically reallocated list of struct isds_DbUserInfoExt2 */
+isds_error isds_GetDataBoxUsers2(struct isds_ctx *context, const char *box_id,
+        struct isds_list **users) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    xmlDocPtr response = NULL;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    int i;
+    struct isds_list *item, *prev_item = NULL;
+#endif
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (!users || !box_id) return IE_INVAL;
+    isds_list_free(users);
+
+
+#if HAVE_LIBCURL
+    /* Do request and check for success */
+    err = build_send_dbid_request_check_response(context,
+            SERVICE_DB_MANIPULATION, BAD_CAST "GetDataBoxUsers2", NULL,
+            BAD_CAST box_id, NULL, &response, NULL);
+    if (err) goto leave;
+
+
+    /* Extract data */
+    /* Prepare structure */
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    /* Set context node */
+    result = xmlXPathEvalExpression(BAD_CAST
+            "/isds:GetDataBoxUsers2Response/isds:dbUsers/isds:dbUserInfo",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        /* Iterate over all users */
+        for (i = 0; i < result->nodesetval->nodeNr; i++) {
+
+            /* Prepare structure */
+            item = calloc(1, sizeof(*item));
+            if (!item) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+            item->destructor = (void(*)(void**))isds_DbUserInfoExt2_free;
+            if (i == 0) *users = item;
+            else prev_item->next = item;
+            prev_item = item;
+
+            /* Extract it */
+            xpath_ctx->node = result->nodesetval->nodeTab[i];
+            err = extract_DbUserInfoExt2(context,
+                    (struct isds_DbUserInfoExt2 **) (&item->data), xpath_ctx);
+            if (err) goto leave;
+        }
+    }
+
+leave:
+    if (err) {
+        isds_list_free(users);
+    }
+
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("GetDataBoxUsers2 request processed by server "
+                    "successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
+}
+
+
 /* Update data about user assigned to given box.
  * @context is session context
  * @box is box identification
@@ -6953,7 +7943,68 @@ leave:
 }
 
 
-/* Undocumented function. 
+/* Update data about user assigned to given box version 2.
+ * @context is session context
+ * @box_id is box ID
+ * @isds_id is isds ID as used in isds_DbUserInfoExt2.isdsID
+ * @new_user are updated data about @old_user
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+isds_error isds_UpdateDataBoxUser2(struct isds_ctx *context,
+        const char *box_id, const char *isds_id,
+        const struct isds_DbUserInfoExt2 *new_user, char **refnumber) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlNodePtr node;
+#endif
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (!box_id || !isds_id || !new_user) return IE_INVAL;
+
+
+#if HAVE_LIBCURL
+    /* Build UpdateDataBoxUser2 request */
+    request = xmlNewNode(NULL, BAD_CAST "UpdateDataBoxUser2");
+    if (!request) {
+        isds_log_message(context,
+                _("Could not build UpdateDataBoxUser2 request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    INSERT_STRING(request, "dbID", box_id);
+    INSERT_STRING(request, "isdsID", isds_id);
+
+    INSERT_ELEMENT(node, request, "dbNewUserInfo");
+    err = insert_DbUserInfoExt2(context, new_user, node);
+    if (err) goto leave;
+
+    /* Send it to server and process response */
+    err = send_request_check_drop_response(context, SERVICE_DB_MANIPULATION,
+            BAD_CAST "UpdateDataBoxUser2", &request, (xmlChar **) refnumber);
+
+leave:
+    xmlFreeNode(request);
+    request = NULL;
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
+}
+
+
+/* Undocumented function.
  * @context is session context
  * @box_id is UTF-8 encoded box identifier
  * @token is UTF-8 encoded temporary password
@@ -7296,6 +8347,100 @@ isds_error isds_add_user(struct isds_ctx *context,
 }
 
 
+/* Assign new user to given box version 2.
+ * @context is session context
+ * @box_id is box ID
+ * @user defines new user to add
+ * @credentials_delivery is NULL if new user's password should be delivered
+ * off-line to the user. It is valid pointer if user should obtain new
+ * password on-line on dedicated web server. Then input
+ * @credentials_delivery.email value is user's e-mail address user must
+ * provide to dedicated web server together with @credentials_delivery.token.
+ * The output reallocated token user needs to use to authorize on the web
+ * server to view his new password. Output reallocated
+ * @credentials_delivery.new_user_name is user's log-in name that ISDS
+ * assigned up on this call.
+ * @approval is optional external approval of box manipulation
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+isds_error isds_AddDataBoxUser2(struct isds_ctx *context, const char *box_id,
+        const struct isds_DbUserInfoExt2 *user,
+        struct isds_credentials_delivery *credentials_delivery,
+        const struct isds_approval *approval, char **refnumber) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlDocPtr response = NULL;
+    xmlNodePtr node;
+#endif
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (!box_id || !user) return IE_INVAL;
+
+#if HAVE_LIBCURL
+    /* Build AddDataBoxUser2 request */
+    request = xmlNewNode(NULL, BAD_CAST "AddDataBoxUser2");
+    if (!request) {
+        isds_log_message(context,
+                _("Could not build AddDataBoxUser2 request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    /* XSD:gDbIdInuptAttrs */
+    INSERT_STRING(request, "dbID", box_id);
+
+    INSERT_ELEMENT(node, request, "dbUserInfo");
+
+    err = insert_DbUserInfoExt2(context, user, node);
+    if (err) goto leave;
+
+    err = insert_credentials_delivery(context, credentials_delivery, request);
+    if (err) goto leave;
+
+    err = insert_GExtApproval(context, approval, request);
+    if (err) goto leave;
+
+    /* Send request and check response*/
+    err = send_destroy_request_check_response(context,
+            SERVICE_DB_MANIPULATION, BAD_CAST "AddDataBoxUser2", &request,
+            &response, (xmlChar **) refnumber, NULL);
+
+    xmlFreeNode(request);
+    request = NULL;
+
+    /* Pick up credentials_delivery if requested */
+    err = extract_credentials_delivery(context, credentials_delivery, response,
+            (char *) "AddDataBoxUser2");
+
+leave:
+    xmlFreeDoc(response);
+    if (request) xmlFreeNode(request);
+
+    if (!err) {
+        char *service_name_locale =
+            _isds_utf82locale((char *) "AddDataBoxUser2");
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("%s request processed by server successfully.\n"),
+                service_name_locale);
+        free(service_name_locale);
+    }
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
+}
+
+
 /* Remove user assigned to given box.
  * @context is session context
  * @box is box identification
@@ -7309,6 +8454,64 @@ isds_error isds_delete_user(struct isds_ctx *context,
     return build_send_manipulationboxuser_request_check_drop_response(context,
             BAD_CAST "DeleteDataBoxUser", box, user, NULL, approval,
             (xmlChar **) refnumber);
+}
+
+
+/* Remove user assigned to given box version 2.
+ * @context is session context
+ * @box_id is box ID
+ * @isds_id is isds ID as used in isds_DbUserInfoExt2.isdsID
+ * @approval is optional external approval of box manipulation
+ * @refnumber is reallocated serial number of request assigned by ISDS. Use
+ * NULL, if you don't care. */
+isds_error isds_DeleteDataBoxUser2(struct isds_ctx *context,
+        const char *box_id, const char *isds_id,
+        const struct isds_approval *approval, char **refnumber) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlNodePtr node;
+#endif
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (!box_id || !isds_id) return IE_INVAL;
+
+#if HAVE_LIBCURL
+    /* Build DeleteDataBoxUser2 request */
+    request = xmlNewNode(NULL, BAD_CAST "DeleteDataBoxUser2");
+    if (!request) {
+        isds_log_message(context,
+                _("Could not build DeleteDataBoxUser2 request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+
+    INSERT_STRING(request, "dbID", box_id);
+    INSERT_STRING(request, "isdsID", isds_id);
+
+    err = insert_GExtApproval(context, approval, request);
+    if (err) goto leave;
+
+    /* Send it to server and process response */
+    err = send_request_check_drop_response(context, SERVICE_DB_MANIPULATION,
+            BAD_CAST "DeleteDataBoxUser2", &request, (xmlChar **) refnumber);
+
+leave:
+    xmlFreeNode(request);
+    request = NULL;
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
 }
 
 
@@ -7609,6 +8812,207 @@ leave:
     if (!err)
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("FindDataBox request processed by server successfully.\n"));
+#else /* not HAVE_LIBCURL */
+    err = IE_NOTSUP;
+#endif
+
+    return err;
+}
+
+
+/* Find boxes suiting given criteria version 2.
+ * @context is ISDS session context.
+ * @criteria is filter. You should fill in at least some members.
+ * @boxes is automatically reallocated list of isds_DbOwnerInfoExt2 structures,
+ * possibly empty. Input NULL or valid old structure.
+ * @return:
+ *  IE_SUCCESS if search succeeded, @boxes contains useful data
+ *  IE_NOEXIST if no such box exists, @boxes will be NULL
+ *  IE_2BIG if too much boxes exist and server truncated the results, @boxes
+ *      contains still valid data
+ *  other code if something bad happens. @boxes will be NULL. */
+isds_error isds_FindDataBox2(struct isds_ctx *context,
+        const struct isds_DbOwnerInfoExt2 *criteria,
+        struct isds_list **boxes) {
+    isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+    _Bool truncated = 0;
+    xmlNsPtr isds_ns = NULL;
+    xmlNodePtr request = NULL;
+    xmlDocPtr response = NULL;
+    xmlChar *code = NULL, *message = NULL;
+    xmlNodePtr db_owner_info;
+    xmlXPathContextPtr xpath_ctx = NULL;
+    xmlXPathObjectPtr result = NULL;
+    xmlChar *string = NULL;
+#endif
+
+
+    if (!context) return IE_INVALID_CONTEXT;
+    zfree(context->long_message);
+    if (!boxes) return IE_INVAL;
+    isds_list_free(boxes);
+
+    if (!criteria) {
+        return IE_INVAL;
+    }
+
+#if HAVE_LIBCURL
+    /* Check if connection is established
+     * TODO: This check should be done downstairs. */
+    if (!context->curl) return IE_CONNECTION_CLOSED;
+
+
+    /* Build FindDataBox2 request */
+    request = xmlNewNode(NULL, BAD_CAST "FindDataBox2");
+    if (!request) {
+        isds_log_message(context,
+                _("Could build FindDataBox2 request"));
+        return IE_ERROR;
+    }
+    isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+    if(!isds_ns) {
+        isds_log_message(context, _("Could not create ISDS name space"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+    xmlSetNs(request, isds_ns);
+    db_owner_info = xmlNewChild(request, NULL, BAD_CAST "dbOwnerInfo", NULL);
+    if (!db_owner_info) {
+        isds_log_message(context, _("Could not add dbOwnerInfo child to "
+                    "FindDataBox2 element"));
+        xmlFreeNode(request);
+        return IE_ERROR;
+    }
+
+    err = insert_DbOwnerInfoExt2(context, criteria, db_owner_info);
+    if (err) goto leave;
+
+
+    isds_log(ILF_ISDS, ILL_DEBUG, _("Sending FindDataBox2 request to ISDS\n"));
+
+    /* Sent request */
+    err = _isds(context, SERVICE_DB_SEARCH, request, &response, NULL, NULL);
+
+    /* Destroy request */
+    xmlFreeNode(request); request = NULL;
+
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Processing ISDS response on FindDataBox2 "
+                    "request failed\n"));
+        goto leave;
+    }
+
+    /* Check for response status */
+    err = isds_response_status(context, SERVICE_DB_SEARCH, response,
+            &code, &message, NULL);
+    if (err) {
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("ISDS response on FindDataBox2 request is missing status\n"));
+        goto leave;
+    }
+
+    /* Request processed, but nothing found */
+    if (!xmlStrcmp(code, BAD_CAST "0002") ||
+            !xmlStrcmp(code, BAD_CAST "5001")) {
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server did not found any box on FindDataBox2 request "
+                    "(code=%s, message=%s)\n"), code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_NOEXIST;
+        goto leave;
+    }
+
+    /* Warning, not a error */
+    if (!xmlStrcmp(code, BAD_CAST "0003")) {
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server truncated response on FindDataBox2 request "
+                    "(code=%s, message=%s)\n"), code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+        truncated = 1;
+    }
+
+    /* Other error */
+    else if (xmlStrcmp(code, BAD_CAST "0000")) {
+        char *code_locale = _isds_utf82locale((char*)code);
+        char *message_locale = _isds_utf82locale((char*)message);
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("Server refused FindDataBox2 request "
+                    "(code=%s, message=%s)\n"), code_locale, message_locale);
+        isds_log_message(context, message_locale);
+        free(code_locale);
+        free(message_locale);
+        err = IE_ISDS;
+        goto leave;
+    }
+
+    xpath_ctx = xmlXPathNewContext(response);
+    if (!xpath_ctx) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        err = IE_ERROR;
+        goto leave;
+    }
+
+    /* Extract boxes if they present */
+    result = xmlXPathEvalExpression(BAD_CAST
+            "/isds:FindDataBox2Response/isds:dbResults/isds:dbOwnerInfo",
+            xpath_ctx);
+    if (!result) {
+        err = IE_ERROR;
+        goto leave;
+    }
+    if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+        struct isds_list *item, *prev_item = NULL;
+        for (int i = 0; i < result->nodesetval->nodeNr; i++) {
+            item = calloc(1, sizeof(*item));
+            if (!item) {
+                err = IE_NOMEM;
+                goto leave;
+            }
+
+            item->destructor = (void (*)(void **))isds_DbOwnerInfoExt2_free;
+            if (i == 0) *boxes = item;
+            else prev_item->next = item;
+            prev_item = item;
+
+            xpath_ctx->node = result->nodesetval->nodeTab[i];
+            err = extract_DbOwnerInfoExt2(context,
+                    (struct isds_DbOwnerInfoExt2 **) &(item->data), xpath_ctx);
+            if (err) goto leave;
+        }
+    }
+
+leave:
+    if (err) {
+        isds_list_free(boxes);
+    } else {
+        if (truncated) err = IE_2BIG;
+    }
+
+    free(string);
+    xmlFreeNode(request);
+    xmlXPathFreeObject(result);
+    xmlXPathFreeContext(xpath_ctx);
+
+    free(code);
+    free(message);
+    xmlFreeDoc(response);
+
+    if (!err)
+        isds_log(ILF_ISDS, ILL_DEBUG,
+                _("FindDataBox2 request processed by server successfully.\n"));
 #else /* not HAVE_LIBCURL */
     err = IE_NOTSUP;
 #endif

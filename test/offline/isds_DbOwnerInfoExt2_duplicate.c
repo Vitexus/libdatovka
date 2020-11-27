@@ -2,35 +2,33 @@
 #include "isds.h"
 #include <string.h>
 
-static int test_isds_DbOwnerInfo_duplicate(struct isds_DbOwnerInfo *origin) {
-    struct isds_DbOwnerInfo *copy = isds_DbOwnerInfo_duplicate(origin);
-    TEST_DESTRUCTOR((void(*)(void*))isds_DbOwnerInfo_free, &copy);
+static int test_isds_DbOwnerInfoExt2_duplicate(
+        struct isds_DbOwnerInfoExt2 *origin) {
+    struct isds_DbOwnerInfoExt2 *copy = isds_DbOwnerInfoExt2_duplicate(origin);
+    TEST_DESTRUCTOR((void(*)(void*))isds_DbOwnerInfoExt2_free, &copy);
 
     if (!origin) {
-        if (copy) 
+        if (copy)
             FAIL_TEST("Duplicate of NULL should be NULL");
         PASS_TEST;
     }
 
     if (!copy)
-        FAIL_TEST("isds_DbOwnerInfo_duplicate() returned NULL instead of "
+        FAIL_TEST("isds_DbOwnerInfoExt2_duplicate() returned NULL instead of "
                 "pointer to copy");
 
     TEST_STRING_DUPLICITY(origin->dbID, copy->dbID);
+    TEST_BOOLEANPTR_DUPLICITY(origin->aifoIsds, copy->aifoIsds);
     TEST_INTPTR_DUPLICITY(origin->dbType, copy->dbType);
     TEST_STRING_DUPLICITY(origin->ic, copy->ic);
 
     /* Name of person */
     TEST_POINTER_DUPLICITY(origin->personName, copy->personName);
     if (origin->personName && copy->personName) {
-        TEST_STRING_DUPLICITY(origin->personName->pnFirstName,
-                copy->personName->pnFirstName);
-        TEST_STRING_DUPLICITY(origin->personName->pnMiddleName,
-                copy->personName->pnMiddleName);
+        TEST_STRING_DUPLICITY(origin->personName->pnGivenNames,
+                copy->personName->pnGivenNames);
         TEST_STRING_DUPLICITY(origin->personName->pnLastName,
                 copy->personName->pnLastName);
-        TEST_STRING_DUPLICITY(origin->personName->pnLastNameAtBirth,
-                copy->personName->pnLastNameAtBirth);
     }
 
     TEST_STRING_DUPLICITY(origin->firmName, copy->firmName);
@@ -51,8 +49,12 @@ static int test_isds_DbOwnerInfo_duplicate(struct isds_DbOwnerInfo *origin) {
     /* Post address */
     TEST_POINTER_DUPLICITY(origin->address, copy->address);
     if (origin->address && copy->address) {
+        TEST_STRING_DUPLICITY(origin->address->adCode,
+                copy->address->adCode);
         TEST_STRING_DUPLICITY(origin->address->adCity,
                 copy->address->adCity);
+        TEST_STRING_DUPLICITY(origin->address->adDistrict,
+                copy->address->adDistrict);
         TEST_STRING_DUPLICITY(origin->address->adStreet,
                 copy->address->adStreet);
         TEST_STRING_DUPLICITY(origin->address->adNumberInStreet,
@@ -66,13 +68,10 @@ static int test_isds_DbOwnerInfo_duplicate(struct isds_DbOwnerInfo *origin) {
     }
 
     TEST_STRING_DUPLICITY(origin->nationality, copy->nationality);
-    TEST_STRING_DUPLICITY(origin->email, copy->email);
-    TEST_STRING_DUPLICITY(origin->telNumber, copy->telNumber);
-    TEST_STRING_DUPLICITY(origin->identifier, copy->identifier);
-    TEST_STRING_DUPLICITY(origin->registryCode, copy->registryCode);
+    TEST_STRING_DUPLICITY(origin->dbIdOVM, copy->dbIdOVM);
     TEST_INTPTR_DUPLICITY(origin->dbState, copy->dbState);
-    TEST_BOOLEANPTR_DUPLICITY(origin->dbEffectiveOVM, copy->dbEffectiveOVM);
     TEST_BOOLEANPTR_DUPLICITY(origin->dbOpenAddressing, copy->dbOpenAddressing);
+    TEST_INTPTR_DUPLICITY(origin->dbUpperID, copy->dbUpperID);
 
     PASS_TEST;
 }
@@ -80,23 +79,22 @@ static int test_isds_DbOwnerInfo_duplicate(struct isds_DbOwnerInfo *origin) {
 
 int main(void) {
 
-    INIT_TEST("isds_DbOwnerInfo_duplicate()");
+    INIT_TEST("isds_DbOwnerInfoExt2_duplicate()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
-    TEST("NULL", test_isds_DbOwnerInfo_duplicate, NULL);
 
-    struct isds_DbOwnerInfo empty;
+    TEST("NULL", test_isds_DbOwnerInfoExt2_duplicate, NULL);
+
+    struct isds_DbOwnerInfoExt2 empty;
     memset(&empty, 0, sizeof(empty));
-    TEST("Empty structure", test_isds_DbOwnerInfo_duplicate, &empty);
+    TEST("Empty structure", test_isds_DbOwnerInfoExt2_duplicate, &empty);
 
     /* Full structure */
+    _Bool aifoIsds = 1;
     isds_DbType dbType = 2;
-    struct isds_PersonName PersonName = {
-        .pnFirstName = "P1",
-        .pnMiddleName = "P2",
-        .pnLastName = "P3",
-        .pnLastNameAtBirth = "P4"
+    struct isds_PersonName2 PersonName = {
+        .pnGivenNames = "P1",
+        .pnLastName = "P2"
     };
     struct tm BiDate = {
         .tm_year = 1,
@@ -109,35 +107,34 @@ int main(void) {
         .biCounty = "B3",
         .biState = "B4"
     };
-    struct isds_Address Address = {
-        .adCity = "A1",
-        .adStreet = "A2",
-        .adNumberInStreet = "A3",
-        .adNumberInMunicipality = "A4",
-        .adZipCode = "A5",
-        .adState = "A6"
+    struct isds_AddressExt2 Address = {
+        .adCode = "A1",
+        .adCity = "A2",
+        .adDistrict = "A3",
+        .adStreet = "A4",
+        .adNumberInStreet = "A5",
+        .adNumberInMunicipality = "A6",
+        .adZipCode = "A7",
+        .adState = "A8"
     };
-    long int DbState = 13;
-    _Bool DbEffectiveOVM = 1;
+    long int DbState = 11;
     _Bool DbOpenAddressing = 1;
-    struct isds_DbOwnerInfo full = {
+    struct isds_DbOwnerInfoExt2 full = {
         .dbID = "1",
+        .aifoIsds = &aifoIsds,
         .dbType = &dbType,
-        .ic = "3",
+        .ic = "4",
         .personName = &PersonName,
-        .firmName = "5",
+        .firmName = "6",
         .birthInfo = &BirthInfo,
         .address = &Address,
-        .nationality = "8",
-        .email = "9",
-        .telNumber = "10",
-        .identifier = "11",
-        .registryCode = "12",
+        .nationality = "9",
+        .dbIdOVM = "10",
         .dbState = &DbState,
-        .dbEffectiveOVM = &DbEffectiveOVM,
-        .dbOpenAddressing = &DbOpenAddressing
+        .dbOpenAddressing = &DbOpenAddressing,
+        .dbUpperID = "13"
     };
-    TEST("Full structure", test_isds_DbOwnerInfo_duplicate, &full);
+    TEST("Full structure", test_isds_DbOwnerInfoExt2_duplicate, &full);
 
     isds_cleanup();
     SUM_TEST();

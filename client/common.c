@@ -275,6 +275,18 @@ void print_PersonName(const struct isds_PersonName *personName) {
 }
 
 
+void print_PersonName2(const struct isds_PersonName2 *personName) {
+    printf("\tpersonName = ");
+    if (!personName) printf("NULL\n");
+    else {
+        printf("{\n");
+        printf("\t\tpnGivenNames = %s\n", personName->pnGivenNames);
+        printf("\t\tpnLastName = %s\n", personName->pnLastName);
+        printf("\t}\n");
+    }
+}
+
+
 void print_Address(const struct isds_Address *address) {
     printf("\taddress = ");
     if (!address) printf("NULL\n");
@@ -292,9 +304,45 @@ void print_Address(const struct isds_Address *address) {
 }
 
 
+void print_AddressExt2(const struct isds_AddressExt2 *address) {
+    printf("\taddress = ");
+    if (!address) printf("NULL\n");
+    else {
+        printf("{\n");
+        printf("\t\tadCode = %s\n", address->adCode);
+        printf("\t\tadCity = %s\n", address->adCity);
+        printf("\t\tadDistrict = %s\n", address->adDistrict);
+        printf("\t\tadStreet = %s\n", address->adStreet);
+        printf("\t\tadNumberInStreet = %s\n", address->adNumberInStreet);
+        printf("\t\tadNumberInMunicipality = %s\n",
+                address->adNumberInMunicipality);
+        printf("\t\tadZipCode = %s\n", address->adZipCode);
+        printf("\t\tadState = %s\n", address->adState);
+        printf("\t}\n");
+    }
+}
+
+
 void print_date(const struct tm *date) {
     if (!date) printf("NULL\n");
     else printf("%s", asctime(date));
+}
+
+
+void print_BirthInfo(const struct isds_BirthInfo *birthInfo) {
+    printf("\tbirthInfo = ");
+    if (!birthInfo) printf("NULL\n");
+    else {
+        printf("{\n");
+
+        printf("\t\tbiDate = ");
+        print_date(birthInfo->biDate);
+
+        printf("\t\tbiCity = %s\n", birthInfo->biCity);
+        printf("\t\tbiCounty = %s\n", birthInfo->biCounty);
+        printf("\t\tbiState = %s\n", birthInfo->biState);
+        printf("\t}\n");
+    }
 }
 
 
@@ -316,21 +364,9 @@ void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info) {
     print_PersonName(info->personName);
         
     printf("\tfirmName = %s\n", info->firmName);
-    
-    printf("\tbirthInfo = ");
-    if (!info->birthInfo) printf("NULL\n");
-    else {
-        printf("{\n");
-        
-        printf("\t\tbiDate = ");
-        print_date(info->birthInfo->biDate);
 
-        printf("\t\tbiCity = %s\n", info->birthInfo->biCity);
-        printf("\t\tbiCounty = %s\n", info->birthInfo->biCounty);
-        printf("\t\tbiState = %s\n", info->birthInfo->biState);
-        printf("\t}\n");
-    }
-    
+    print_BirthInfo(info->birthInfo);
+
     print_Address(info->address);
 
     printf("\tnationality = %s\n", info->nationality);
@@ -350,7 +386,49 @@ void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info) {
     print_bool(info->dbOpenAddressing);
 
     printf("}\n");
+}
 
+
+void print_DbOwnerInfoExt2(const struct isds_DbOwnerInfoExt2 *info) {
+    printf("DbOwnerInfoExt2 = ");
+
+    if (!info) {
+        printf("NULL\n");
+        return;
+    }
+
+    printf("{\n");
+    printf("\tdbID = %s\n", info->dbID);
+
+    printf("\taifoIsds = ");
+    print_bool(info->aifoIsds);
+
+    printf("\tdbType = ");
+    print_DbType((long int *) (info->dbType));
+    printf("\tic = %s\n", info->ic);
+
+    print_PersonName2(info->personName);
+
+    printf("\tfirmName = %s\n", info->firmName);
+
+    print_BirthInfo(info->birthInfo);
+
+    print_AddressExt2(info->address);
+
+    printf("\tnationality = %s\n", info->nationality);
+
+    printf("\tdbIdOVM = %s\n", info->dbIdOVM);
+
+    printf("\tdbState = ");
+    if (!info->dbState) printf("NULL\n");
+    else print_DbState(*(info->dbState));
+
+    printf("\tdbOpenAddressing = ");
+    print_bool(info->dbOpenAddressing);
+
+    printf("\tdbUpperID = %s\n", info->dbUpperID);
+
+    printf("}\n");
 }
 
 
@@ -380,6 +458,45 @@ void print_DbUserInfo(const struct isds_DbUserInfo *info) {
     printf("\tic = %s\n", info->ic);
     printf("\tfirmName = %s\n", info->firmName);
     
+    printf("\tcaStreet = %s\n", info->caStreet);
+    printf("\tcaCity = %s\n", info->caCity);
+    printf("\tcaZipCode = %s\n", info->caZipCode);
+    printf("\tcaState = %s\n", info->caState);
+
+    printf("}\n");
+}
+
+
+void print_DbUserInfoExt2(const struct isds_DbUserInfoExt2 *info) {
+    printf("dbUserInfoExt2 = ");
+
+    if (!info) {
+        printf("NULL\n");
+        return;
+    }
+
+    printf("{\n");
+    printf("\taifoIsds = ");
+    print_bool(info->aifoIsds);
+
+    print_PersonName2(info->personName);
+
+    print_AddressExt2(info->address);
+
+    printf("\tbiDate = ");
+    print_date(info->biDate);
+
+    printf("\tisdsID = %s\n", info->isdsID);
+
+    printf("\tuserType = ");
+    print_UserType((long int *) (info->userType));
+
+    printf("\tuserPrivils = ");
+    print_UserPrivils(info->userPrivils);
+
+    printf("\tic = %s\n", info->ic);
+    printf("\tfirmName = %s\n", info->firmName);
+
     printf("\tcaStreet = %s\n", info->caStreet);
     printf("\tcaCity = %s\n", info->caCity);
     printf("\tcaZipCode = %s\n", info->caZipCode);

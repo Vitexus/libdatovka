@@ -4,16 +4,16 @@ AM_CFLAGS = -I$(srcdir)/$(LIBDIR) -DSRCDIR=\"$(top_srcdir)\"
 LDADD = $(LIBDIR)/libisds.la -L$(LIBDIR) @XML_LIBS@
 
 noinst_PROGRAMS = isdsclient login certauth version progressbar logger \
-	getuserboxinfo addbox changebox \
-	changepassword activate resetpassword deleteuser changeuser \
-	switchcommercial switchaccessibility disableaccesibilityexternaly \
-	sendmultiple getsent getsignedsent getsignedsentbyid getchangedstates \
-	loadreceivedmessage loadcmssignedsentmessage \
-	sendxmldoc loadsentmessagewithxmldocuments \
+	getuserboxinfo getuserboxinfo2 addbox changebox changebox2 \
+	changepassword activate resetpassword deleteuser deleteuser2 \
+	changeuser switchcommercial switchaccessibility \
+	disableaccesibilityexternaly sendmultiple getsent getsignedsent \
+	getsignedsentbyid getchangedstates loadreceivedmessage \
+	loadcmssignedsentmessage sendxmldoc loadsentmessagewithxmldocuments \
 	getreceived getsignedreceived \
-	getreceivedenvelope markasread markasreceived getsenderbyid \
-	downloadmessagehash verifyreceivedhash computemessagehash \
-	authenticatemessage \
+	getreceivedenvelope manageuser2 markasread markasreceived \
+	getsenderbyid downloadmessagehash verifyreceivedhash \
+	computemessagehash authenticatemessage \
 	loaddelivery getreceiveddelivery getreceivedsigneddelivery \
 	convertdocument requestnewtestingbox getboxlist
 
@@ -26,12 +26,15 @@ version_SOURCES = version.c $(common)
 progressbar_SOURCES = progressbar.c $(common)
 logger_SOURCES = logger.c $(common)
 getuserboxinfo_SOURCES = getuserboxinfo.c $(common)
+getuserboxinfo2_SOURCES = getuserboxinfo2.c $(common)
 addbox_SOURCES = addbox.c $(common)
 changebox_SOURCES = changebox.c $(common)
+changebox2_SOURCES = changebox2.c $(common)
 changepassword_SOURCES = changepassword.c $(common)
 activate_SOURCES = activate.c $(common)
 resetpassword_SOURCES = resetpassword.c $(common)
 deleteuser_SOURCES = deleteuser.c $(common)
+deleteuser2_SOURCES = deleteuser2.c $(common)
 changeuser_SOURCES = changeuser.c $(common)
 switchcommercial_SOURCES = switchcommercial.c $(common)
 switchaccessibility_SOURCES = switchaccessibility.c $(common)
@@ -53,6 +56,7 @@ downloadmessagehash_SOURCES = downloadmessagehash.c $(common)
 verifyreceivedhash_SOURCES = verifyreceivedhash.c $(common)
 computemessagehash_SOURCES = computemessagehash.c $(common)
 authenticatemessage_SOURCES = authenticatemessage.c $(common)
+manageuser2_SOURCES = manageuser2.c $(common)
 markasread_SOURCES = markasread.c $(common)
 markasreceived_SOURCES = markasreceived.c $(common)
 getsenderbyid_SOURCES = getsenderbyid.c $(common)
