@@ -1,5 +1,5 @@
 #include "../test.h"
-#include "isds.h"
+#include "libdatovka/isds.h"
 
 int counter;
 

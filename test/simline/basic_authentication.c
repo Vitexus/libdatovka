@@ -15,7 +15,7 @@
 
 #include "../test.h"
 #include "server.h"
-#include "isds.h"
+#include "libdatovka/isds.h"
 
 static const char *username = "douglas";
 static const char *password = "42";

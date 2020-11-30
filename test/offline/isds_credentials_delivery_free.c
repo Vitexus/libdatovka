@@ -1,5 +1,5 @@
 #include "../test.h"
-#include "isds.h"
+#include "libdatovka/isds.h"
 
 static int test_isds_credentials_delivery_free(
         struct isds_credentials_delivery **credentials_delivery) {

@@ -1,7 +1,7 @@
 #include <unistd.h> /* sleep() */
 
 #include "../test.h"
-#include "isds.h"
+#include "libdatovka/isds.h"
 #include "common.h"
 
 /*

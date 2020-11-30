@@ -1,5 +1,5 @@
 #include "../test.h"
-#include "isds.h"
+#include "libdatovka/isds.h"
 
 static int test_isds_approval_free(struct isds_approval **approval) {
     isds_approval_free(approval);

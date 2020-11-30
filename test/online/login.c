@@ -1,5 +1,5 @@
 #include "../test.h"
-#include "isds.h"
+#include "libdatovka/isds.h"
 #include "common.h"
 
 static int test_login(const isds_error error, struct isds_ctx *context,
