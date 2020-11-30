@@ -4,7 +4,7 @@
 #include <locale.h>
 #include <time.h>
 #include <string.h>
-#include <isds.h>
+#include <libdatovka/isds.h>
 #include "common.h"
 
 isds_error compute_message_hash(struct isds_ctx *ctx,

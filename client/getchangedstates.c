@@ -4,7 +4,7 @@
 #include <locale.h>
 #include <string.h>
 #include <sys/time.h>
-#include <isds.h>
+#include <libdatovka/isds.h>
 #include "common.h"
 
 

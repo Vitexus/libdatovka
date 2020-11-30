@@ -5,7 +5,7 @@
 #include <locale.h>
 #include <time.h>
 #include <string.h>
-#include <isds.h>
+#include <libdatovka/isds.h>
 #include "common.h"
 
 

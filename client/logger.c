@@ -4,7 +4,7 @@
 #include <locale.h>
 #include <time.h>
 #include <string.h>
-#include <isds.h>
+#include <libdatovka/isds.h>
 #include "common.h"
 
 void logger(isds_log_facility facility, isds_log_level level,

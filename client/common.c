@@ -12,7 +12,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
-#include <isds.h>
+#include <libdatovka/isds.h>
 
 char credentials_file[] = "../test_credentials";
 
