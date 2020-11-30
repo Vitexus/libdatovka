@@ -1,7 +1,7 @@
 #ifndef __ISDS_SOAP_H__
 #define __ISDS_SOAP_H__
 
-#include "isds.h"
+#include "libdatovka/isds.h"
 
 /* Close connection to server and destroy CURL handle associated
  * with @context */

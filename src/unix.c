@@ -3,7 +3,7 @@
 #include <stdlib.h> /* for getenv */
 #include <string.h>
 #include <time.h>
-#include "isds.h"
+#include "libdatovka/isds.h"
 #include "utils.h"
 
 static char *tz_orig; /* Copy of original TZ variable */

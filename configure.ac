@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.63])
-AC_INIT([libisds], [0.11.1], [petr.pisar@atlas.cz])
+AC_INIT([libdatovka], [0.0.0], [datove-schranky@labs.nic.cz])
 AM_INIT_AUTOMAKE
 AC_LANG([C])
 AC_CONFIG_SRCDIR([src/isds.c])
@@ -243,11 +243,13 @@ AC_DEFINE_UNQUOTED([XOPEN_SOURCE_LEVEL_FOR_STRDUP],
                    [$xopen_source_level_for_strdup],
                    [_XOPEN_SOURCE level needed for strdup()])
 
+# Default preprocessor flags
+AC_SUBST([AM_CPPFLAGS], [""])
 
-AC_CONFIG_FILES([Makefile src/Makefile po/Makefile.in client/Makefile
-                 doc/Makefile
+AC_CONFIG_FILES([Makefile include/Makefile src/Makefile po/Makefile.in
+                 client/Makefile doc/Makefile
                  test/Makefile test/offline/Makefile test/simline/Makefile
-                 test/online/Makefile libisds.pc])
+                 test/online/Makefile libdatovka.pc])
 
 #AC_CONFIG_SUBDIRS([src])
 AC_OUTPUT

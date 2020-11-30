@@ -1,8 +1,10 @@
-libisds_ladir = $(includedir)
+
 localedir = $(datadir)/locale
 
-lib_LTLIBRARIES = libisds.la
-libisds_la_SOURCES = \
+AM_CPPFLAGS += -I$(top_srcdir)/include
+
+lib_LTLIBRARIES = libdatovka.la
+libdatovka_la_SOURCES = \
 	cdecode.c \
 	cdecode.h \
 	cencode.c \
@@ -10,7 +12,6 @@ libisds_la_SOURCES = \
 	crypto.h \
 	gettext.h \
 	isds.c \
-	isds.h \
 	isds_priv.h \
 	physxml.c \
 	physxml.h \
@@ -21,32 +22,31 @@ libisds_la_SOURCES = \
 	system.h
 
 if USE_OPENSSL_BACKEND
-libisds_la_SOURCES += \
+libdatovka_la_SOURCES += \
 	crypto_openssl.c
 else
-libisds_la_SOURCES += \
+libdatovka_la_SOURCES += \
 	crypto_gpg.c
 endif
 
 if BUILD_CURL
-libisds_la_SOURCES += \
+libdatovka_la_SOURCES += \
 	soap.c \
 	soap.h
 endif
 
 if WIN32
-libisds_la_SOURCES += \
+libdatovka_la_SOURCES += \
 	win32.c \
 	win32.h
 else
-libisds_la_SOURCES += \
+libdatovka_la_SOURCES += \
 	unix.c \
 	unix.h
 endif
 
-libisds_la_HEADERS = isds.h
-libisds_la_CPPFLAGS = @XML_CPPFLAGS@ @LIBCURL_CPPFLAGS@ \
-					  -DLOCALEDIR=\"$(localedir)\"
-libisds_la_CFLAGS = @LIBGCRYPT_CFLAGS@ @GPGME_CFLAGS@
-libisds_la_LDFLAGS = -version-info 9:0:4 @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ \
+libdatovka_la_CPPFLAGS = @XML_CPPFLAGS@ @LIBCURL_CPPFLAGS@ \
+	-DLOCALEDIR=\"$(localedir)\" $(AM_CPPFLAGS)
+libdatovka_la_CFLAGS = @LIBGCRYPT_CFLAGS@ @GPGME_CFLAGS@
+libdatovka_la_LDFLAGS = -version-info 0:0:0 @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ \
 	@GPGME_LIBS@ @EXPAT_LIBS@ @LTLIBINTL@

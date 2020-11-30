@@ -1,9 +1,9 @@
 #ifndef __ISDS_CRYPTO_H__
 #define __ISDS_CRYPTO_H__
 
-#include "isds.h"
+#include "libdatovka/isds.h"
 
-/* Initialise all cryptographic libraries which libisds depends on.
+/* Initialise all cryptographic libraries which the library depends on.
  * @return IE_SUCCESS if everything went all-right. */
 isds_error _isds_init_crypto(void);
 

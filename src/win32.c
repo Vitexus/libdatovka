@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "isds.h"
+#include "libdatovka/isds.h"
 #include "isds_priv.h"
 #include "utils.h"
 #include "win32.h"

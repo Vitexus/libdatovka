@@ -15,7 +15,7 @@ extern "C" {
 
 /* _deprecated macro marks library symbols as deprecated. Application should
  * avoid using such function as soon as possible. */
-#if defined(__GNUC__) 
+#if defined(__GNUC__)
 #define _deprecated __attribute__((deprecated))
 #else
 #define _deprecated
@@ -256,7 +256,7 @@ typedef enum {
                                        storage (does not exists since
                                        2012-05) */
     PRIVIL_ERASE_VAULT = 0x80       /* Can delete messages from long term
-                                       storage */ 
+                                       storage */
 } isds_priviledges;
 
 /* Message status */
@@ -378,7 +378,7 @@ struct isds_DbOwnerInfo {
                                        TODO: enum? */
     _Bool *dbEffectiveOVM;          /* Box has OVM role (§ 5a) */
     _Bool *dbOpenAddressing;        /* Non-OVM Box is free to receive
-                                       messages from anybody */  
+                                       messages from anybody */
 };
 
 /* Data about box and its respective owner version 3. Since WSDL 2.31.
@@ -609,7 +609,7 @@ struct isds_envelope {
                                            message which can pay a response
                                        "B" is subsidized initiatory commercial
                                            message which has already paid the
-                                           response 
+                                           response
                                        "C" is subsidized initiatory commercial
                                            message where the response offer has
                                            expired
@@ -1075,7 +1075,7 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
  * Passing NULL has the same effect, autoselection between isds_locator,
  * isds_cert_locator, and isds_otp_locator is performed in addition. You can
  * pass extern isds_testing_locator (or isds_cert_testing_locator or
- * isds_otp_testing_locator) variable to select testing instance. 
+ * isds_otp_testing_locator) variable to select testing instance.
  * @username is user name of ISDS user or box ID
  * @password is user's secret password
  * @pki_credentials defines public key cryptographic material to use in client
@@ -1088,7 +1088,7 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
  *  IE_SUCCESS if authentication succeeds
  *  IE_NOT_LOGGED_IN if authentication fails. If OTP authentication has been
  *  requested, fine grade reason will be set into @otp->resolution. Error
- *  message from server can be obtained by isds_long_message() call. 
+ *  message from server can be obtained by isds_long_message() call.
  *  IE_PARTIAL_SUCCESS if time-based OTP authentication has been requested and
  *  server has sent OTP code through side channel. Application is expected to
  *  fill the code into @otp->otp_code, keep other arguments unchanged, and retry
@@ -1588,7 +1588,7 @@ isds_error isds_get_commercial_credit(struct isds_ctx *context,
  * default)
  * @context is ISDS session context.
  * @box_id is UTF-8 encoded box identifier as zero terminated string
- * @allow is true for enable, false for disable commercial messages income 
+ * @allow is true for enable, false for disable commercial messages income
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */

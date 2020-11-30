@@ -5,9 +5,9 @@ includedir=@includedir@
 
 Name: @PACKAGE@
 Version: @VERSION@
-Description: Client library for accessing SOAP services of ISDS 
-Requires: libxml-2.0 
-Requires.private: libcurl 
-Libs: -L${libdir} -lisds
+Description: Client library for accessing SOAP services of ISDS
+Requires: libxml-2.0
+Requires.private: libcurl
+Libs: -L${libdir} -ldatovka
 Libs.private: @GPGME_LIBS@ @LIBGCRYPT_LIBS@ @EXPAT_LIBS@
 Cflags: -I${includedir}
