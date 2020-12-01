@@ -6,6 +6,16 @@
 <reference lang="en">
 
   <referenceinfo>
+    <authorgroup>
+    <!-- corpauthor has a weird format -->
+    <author>
+      <personname>
+        <othername>CZ.NIC, z. s. p. o.</othername>
+      </personname>
+      <personblurb>
+        <simpara>Maintains libdatovka. Has been contributing to libisds.</simpara>
+      </personblurb>
+    </author>
     <author>
       <personname>
         <firstname>Petr</firstname>
@@ -15,25 +25,26 @@
         <simpara>He has written libisds.</simpara>
       </personblurb>
     </author>
-    <productname>libisds</productname>
+    <productname>libdatovka</productname>
+    </authorgroup>
   </referenceinfo>
 
-  <title>Manual for Libisds</title>
+  <title>Manual for Libdatovka</title>
 
 
-  <refentry id="libisds.3">
+  <refentry id="libdatovka.3">
     <refmeta>
-      <refentrytitle>libisds</refentrytitle>
+      <refentrytitle>libdatovka</refentrytitle>
       <manvolnum>3</manvolnum>
     </refmeta>
 
     <refnamediv>
-      <refname>libisds</refname>
+      <refname>libdatovka</refname>
       <refpurpose>ISDS client library</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
-      <synopsis><![CDATA[#include <isds.h>
+      <synopsis><![CDATA[#include <libdatovka/isds.h>
 #include <stdio.h>
 
 isds_error err;
@@ -79,10 +90,10 @@ err = isds_cleanup();
     <refsection>
       <title>Library Initialization and Deinitialization</title>
 
-      <para>A libisds application must include <filename>isds.h</filename>
+      <para>A libdatovka application must include the <filename>libdatovka/isds.h</filename>
         header file. The application must call <function>isds_init</function>
         function to initialize the library before calling any other library
-        functions.  After last libisds call, <function>isds_cleanup</function>
+        functions.  After last libdatovka call, <function>isds_cleanup</function>
         function should be called to clean up some global resources and to
         deinitialize dependent libraries.</para>
     </refsection>
@@ -204,7 +215,7 @@ err = isds_cleanup();
     <refsection>
       <title>Logging and Debugging</title>
 
-      <para>Logging is global for all libisds calls. Log level and facility
+      <para>Logging is global for all libdatovka calls. Log level and facility
         can be set with <function>isds_set_logging</function> function.</para>
 
       <para>The log is printed on standard error output by default.
@@ -237,7 +248,7 @@ err = isds_cleanup();
     <refsection>
       <title>Memory management</title>
 
-      <para>The library provides destructors for all libisds data structures.
+      <para>The library provides destructors for all libdatovka data structures.
         For example <function>isds_ctx_free</function> function accepts a pointer
         to a pointer to the <structname>isds_ctx</structname> structure, frees
         the double referenced structure (recursively), writes NULL to the
@@ -253,13 +264,13 @@ err = isds_cleanup();
         <function>malloc</function> call. Application is responsible for their
         deallocation (in case of no failure and if not specified otherwise.)
         Use standard <function>free</function> call for strings,
-        use libisds destructors for libisds structures.</para>
+        use libdatovka destructors for libdatovka structures.</para>
     </refsection>
 
     <refsection>
       <title>Available Functions, Types, and Constants</title>
 
-      <para>See <filename>isds.h</filename> header file.</para>
+      <para>See <filename>libdatovka/isds.h</filename> header file.</para>
     </refsection>
 
     <refsection>
@@ -268,7 +279,7 @@ err = isds_cleanup();
       <para>
         <simplelist type="inline">
           <member><citerefentry>
-              <refentrytitle>isds.h</refentrytitle>
+              <refentrytitle>isds.h.libdatovka</refentrytitle>
               <manvolnum>3</manvolnum>
           </citerefentry></member>
           <member><citerefentry>
@@ -281,26 +292,26 @@ err = isds_cleanup();
   </refentry>
 
 
-  <refentry id="isds.h.3">
+  <refentry id="isds.h.libdatovka.3">
     <refmeta>
-      <refentrytitle>isds.h</refentrytitle>
+      <refentrytitle>isds.h.libdatovka</refentrytitle>
       <manvolnum>3</manvolnum>
     </refmeta>
 
     <refnamediv>
-      <refname>isds.h</refname>
-      <refpurpose>API definition for libisds</refpurpose>
+      <refname>isds.h.libdatovka</refname>
+      <refpurpose>API definition for libdatovka</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
-      <synopsis><![CDATA[#include <isds.h>
+      <synopsis><![CDATA[#include <libdatovka/isds.h>
 ]]></synopsis>
     </refsynopsisdiv>
 
     <refsection>
       <title>Description</title>
 
-      <para>This header file declares inteface for libisds library.</para>
+      <para>This header file declares interface for the libdatovka library.</para>
     </refsection>
 
     <refsection>
@@ -586,7 +597,7 @@ err = isds_cleanup();
       <refsection>
         <title><type>isds_option</type></title>
         <synopsis>typedef enum <type>isds_option</type>;</synopsis>
-        <para>libisds option identifiers. Known values:</para>
+        <para>libdatovka option identifiers. Known values:</para>
         <variablelist>
           <varlistentry>
             <term><constant>IOPT_TLS_VERIFY_SERVER</constant></term>
@@ -632,7 +643,7 @@ err = isds_cleanup();
         <title><type>isds_tls_option</type></title>
         <synopsis>typedef enum <type>isds_tls_option</type>;</synopsis>
         <warning><para>This type is deprecated.</para></warning>
-        <para><abbrev>TLS</abbrev> libisds option identifiers. Known values:</para>
+        <para><abbrev>TLS</abbrev> libdatovka option identifiers. Known values:</para>
         <variablelist>
           <varlistentry>
             <term><constant>ITLS_VERIFY_SERVER</constant></term>
@@ -2257,7 +2268,7 @@ err = isds_cleanup();
               <manvolnum>3</manvolnum>
           </citerefentry></member>
           <member><citerefentry>
-              <refentrytitle>libisds</refentrytitle>
+              <refentrytitle>libdatovka</refentrytitle>
               <manvolnum>3</manvolnum>
           </citerefentry></member>
           <member><citerefentry>

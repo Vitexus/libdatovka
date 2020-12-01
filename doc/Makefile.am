@@ -3,8 +3,8 @@ PARAMS += --stringparam "man.hyphenate" 1
 STYLE = @DOCBOOK_STYLE@/manpages/docbook.xsl
 .PHONY: checkspell man-clean validate
 
-man_SRC = libisds.xml
-man_MANS = libisds.3 isds.h.3
+man_SRC = libdatovka.xml
+man_MANS = libdatovka.3 isds.h.libdatovka.3
 EXTRA_DIST = $(man_SRC)
 
 validate: $(man_SRC)
