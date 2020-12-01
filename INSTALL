@@ -69,11 +69,11 @@ Additional configure options:
         affects changing ISDS password while OTP authentication method is in
         use. 
 
-Large File Support (LFS) Notice: libisds uses GPGME by default, and GPGME is
-compiled with LFS on usually. You need to keep LFS compatibility on reverse
-dependencies (libisds library, your application using libisds), otherwise
+Large File Support (LFS) Notice: libdatovka uses GPGME by default, and GPGME is
+by default compiled with LFS on. You need to keep LFS compatibility on reverse
+dependencies (libdatovka library, your application using libdatovka), otherwise
 strange things can happen (e.g. file/message/document sizes can mismatch).
-libisds switches LFS on too. Use --disable-largefile to switch it off if you
+libdatovka switches LFS on too. Use --disable-largefile to switch it off if you
 think it's more appropriate. However recall this tweak when building your
 application.
 

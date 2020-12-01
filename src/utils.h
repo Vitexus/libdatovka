@@ -18,7 +18,7 @@
  * Use it as last resort fatal error solution */
 #define PANIC(message) { \
     if (stderr != NULL ) fprintf(stderr, \
-            "LIBISDS PANIC (%s:%d): %s\n", __FILE__, __LINE__, (message)); \
+            "LIBDATOVKA PANIC (%s:%d): %s\n", __FILE__, __LINE__, (message)); \
     abort(); \
 }
 

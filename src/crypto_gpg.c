@@ -150,7 +150,7 @@ static isds_error _isds_init_gpgme(const char **current_version) {
 }
 
 
-/* Initialise all cryptographic libraries which libisds depends on.
+/* Initialise all cryptographic libraries which this library depends on.
  * @return IE_SUCCESS if everything went all-right. */
 _hidden isds_error _isds_init_crypto(void) {
     /* Initialize gpg-error because of gpgme and ksba */

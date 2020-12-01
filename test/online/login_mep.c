@@ -78,7 +78,7 @@ int main(void) {
     }
 
     struct isds_mep mep = {
-        .app_name = "libisds-test",
+        .app_name = "libdatovka-test",
         .intermediate_uri = NULL,
         .resolution = MEP_RESOLUTION_SUCCESS
     };

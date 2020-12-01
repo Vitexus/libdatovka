@@ -19,7 +19,7 @@ int main(void) {
         exit(EXIT_FAILURE);
     }
 
-    printf("libisds version: %s\n", isds_version());
+    printf("libdatovka version: %s\n", isds_version());
 
     err = isds_cleanup();
     if (err) {
