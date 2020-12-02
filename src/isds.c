@@ -7546,8 +7546,8 @@ leave:
 
 /* Update data about given box version 2.
  * @context is session context
- * @box_id is UTF-8 encoded box identifier
- * @new_box are updated data about @old_box
+ * @box_id is box ID
+ * @new_box are updated data about the box
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
