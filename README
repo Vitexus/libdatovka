@@ -37,7 +37,7 @@ on amd64 architecture.
 
 The library is derived from libisds which can be obtained from the Git
 repository <http://repo.or.cz/w/libisds.git> (web interface).
-Lates sources camn be obtrained from
+Latest sources can be obtained from
 <https://gitlab.nic.cz/datovka/libdatovka/> (GitLab project).
 
 ISDS documentation is located under `doc' directory, user documentation can be
