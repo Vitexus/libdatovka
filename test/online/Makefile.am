@@ -2,9 +2,10 @@ AUTOMAKE_OPTIONS = color-tests parallel-tests
 export VERBOSE=1
 
 libdirpath = src
+INCLUDEDIR = $(top_srcdir)/include
 LIBDIR = $(top_srcdir)/$(libdirpath)
 localedir = $(datadir)/locale
-AM_CPPFLAGS = -I$(LIBDIR) -I$(top_builddir)/$(libdirpath)
+AM_CPPFLAGS = -I$(INCLUDEDIR) -I$(LIBDIR) -I$(top_builddir)/$(libdirpath)
 
 # Large files needed by GPGME
 AM_CPPFLAGS += @XML_CPPFLAGS@ @LIBCURL_CPPFLAGS@ \
@@ -18,6 +19,7 @@ TESTS = login login_mep
 noinst_PROGRAMS = $(TESTS)
 
 common = ../test.c ../test.h ../test-tools.h common.c common.h \
+	$(INCLUDEDIR)/libdatovka/isds.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/isds.c \
@@ -29,7 +31,6 @@ common = ../test.c ../test.h ../test-tools.h common.c common.h \
 	$(LIBDIR)/cencode.h \
 	$(LIBDIR)/crypto.h \
 	$(LIBDIR)/gettext.h \
-	$(LIBDIR)/isds.h \
 	$(LIBDIR)/isds_priv.h \
 	$(LIBDIR)/physxml.h \
 	$(LIBDIR)/soap.h \
@@ -50,6 +51,7 @@ endif
 
 # Omit isds.c
 isds_common = ../test.c ../test.h ../test-tools.h \
+	$(INCLUDEDIR)/libdatovka/isds.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/physxml.c \
@@ -59,7 +61,6 @@ isds_common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/cdecode.h \
 	$(LIBDIR)/cencode.h \
 	$(LIBDIR)/crypto.h \
-	$(LIBDIR)/isds.h \
 	$(LIBDIR)/isds_priv.h \
 	$(LIBDIR)/physxml.h \
 	$(LIBDIR)/soap.h \

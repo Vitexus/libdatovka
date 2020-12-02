@@ -1,7 +1,7 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
-#include <isds.h>
+#include <libdatovka/isds.h>
 
 #define url isds_testing_locator
 const char *username(void);

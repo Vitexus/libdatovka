@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <locale.h>
 #include <string.h>
-#include <isds.h>
+#include <libdatovka/isds.h>
 #include "common.h"
 
 int main(void) {

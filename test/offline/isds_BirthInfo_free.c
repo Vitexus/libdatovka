@@ -1,5 +1,5 @@
 #include "../test.h"
-#include "isds.h"
+#include "libdatovka/isds.h"
 
 static int test_isds_BirthInfo_free(
         struct isds_BirthInfo **BirthInfo) {

@@ -1258,11 +1258,11 @@ void isds_set_logging(const unsigned int facilities,
 }
 
 
-/* Register callback function libisds calls when new global log message is
- * produced by library. Library logs to stderr by default.
- * @callback is function provided by application libisds will call. See type
- * definition for @callback argument explanation. Pass NULL to revert logging to
- * default behaviour.
+/* Register a callback function which the library calls when new global log
+ * message is produced by the library. Library logs to stderr by default.
+ * @callback is function provided by application which the library will call.
+ * See type definition for @callback argument explanation. Pass NULL to revert
+ * logging to default behaviour.
  * @data is application specific data @callback gets as last argument */
 void isds_set_log_callback(isds_log_callback callback, void *data) {
     log_callback = callback;
@@ -1341,11 +1341,11 @@ isds_error isds_set_timeout(struct isds_ctx *context,
 }
 
 
-/* Register callback function libisds calls periodically during HTTP data
- * transfer.
+/* Register a callback function which the library calls periodically during
+ * a HTTP data transfer.
  * @context is session context
- * @callback is function provided by application libisds will call. See type
- * definition for @callback argument explanation.
+ * @callback is function provided by application which the library will call.
+ * See type definition for @callback argument explanation.
  * @data is application specific data @callback gets as last argument */
 isds_error isds_set_progress_callback(struct isds_ctx *context,
         isds_progress_callback callback, void *data) {
@@ -3819,7 +3819,7 @@ leave:
 
 /* Insert struct isds_DbOwnerInfo data (box description) into XML tree
  * @context is session context
- * @owner is libisds structure with box description
+ * @owner is a structure containing a box description
  * @db_owner_info is XML element of XSD:tDbOwnerInfo */
 static isds_error insert_DbOwnerInfo(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *owner, xmlNodePtr db_owner_info) {
@@ -3915,7 +3915,7 @@ leave:
 
 /* Insert struct isds_DbOwnerInfoExt2 data (box description) into XML tree
  * @context is session context
- * @owner is libisds structure with box description
+ * @owner is a structure containing a box description
  * @db_owner_info is XML element of XSD:tDbOwnerInfoExt2 */
 static isds_error insert_DbOwnerInfoExt2(struct isds_ctx *context,
         const struct isds_DbOwnerInfoExt2 *owner, xmlNodePtr db_owner_info) {
@@ -4119,7 +4119,7 @@ leave:
 
 /* Insert struct isds_DbUserInfo data (user description) into XML tree
  * @context is session context
- * @user is libisds structure with user description
+ * @user is a structure containing a user description
  * @db_user_info is XML element of XSD:tDbUserInfo */
 static isds_error insert_DbUserInfo(struct isds_ctx *context,
         const struct isds_DbUserInfo *user, xmlNodePtr db_user_info) {
@@ -4190,7 +4190,7 @@ leave:
 
 /* Insert struct isds_DbUserInfoExt2 data (user description) into XML tree
  * @context is session context
- * @user is libisds structure with user description
+ * @user is a structure containing a user description
  * @db_user_info is XML element of XSD:tDbUserInfoExt2 */
 static isds_error insert_DbUserInfoExt2(struct isds_ctx *context,
         const struct isds_DbUserInfoExt2 *user, xmlNodePtr db_user_info) {
@@ -5694,7 +5694,7 @@ leave:
 
 /* Insert struct isds_approval data (box approval) into XML tree
  * @context is session context
- * @approval is libisds structure with approval description. NULL is
+ * @approval is a structure containing an approval description. NULL is
  * acceptable.
  * @parent is XML element to append @approval to */
 static isds_error insert_GExtApproval(struct isds_ctx *context,
@@ -10485,7 +10485,7 @@ leave:
 /* Insert struct isds_message data (envelope (recipient data optional) and
  * documents into XML tree
  * @context is session context
- * @outgoing_message is libisds structure with message data
+ * @outgoing_message is a structure containing message data
  * @create_message is XML CreateMessage or CreateMultipleMessage element
  * @process_recipient true for recipient data serialization, false for no
  * serialization */

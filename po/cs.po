@@ -1,12 +1,14 @@
-# Czech translation of libisds.
-# Copyright (C) 2010 Petr Písař
-# This file is distributed under the same license as the libisds package.
+# Czech translation of libdatovka.
+# Copyright (C) 2010-2020 Petr Písař
+# Copyright (C) 2020 CZ.NIC, z. s. p. o
+# This file is distributed under the same license as the libdatovka package.
 # Petr Pisar <petr.pisar@atlas.cz>, 2010, 2011, 2012, 2013, 2015, 2019.
+# CZ.NIC, z. s. p. o <https://www.nic.cz/>
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: libisds 0.11\n"
-"Report-Msgid-Bugs-To: petr.pisar@atlas.cz\n"
+"Project-Id-Version: libdatovka 0.0\n"
+"Report-Msgid-Bugs-To: datove-schranky@labs.nic.cz\n"
 "POT-Creation-Date: 2020-08-16 11:03+0200\n"
 "PO-Revision-Date: 2019-09-04 22:42+02:00\n"
 "Last-Translator: Petr Pisar <petr.pisar@atlas.cz>\n"

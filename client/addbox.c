@@ -5,7 +5,7 @@
 #include <locale.h>
 #include <time.h>
 #include <string.h>
-#include <isds.h>
+#include <libdatovka/isds.h>
 #include "common.h"
 
 /* Pass e-mail address where to deliver credentials as first argument. */

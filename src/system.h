@@ -1,7 +1,7 @@
 #ifndef __ISDS_SYSTEM_H__
 #define __ISDS_SYSTEM_H__
 
-#include "isds.h"
+#include "libdatovka/isds.h"
 
 #ifdef _WIN32
 #include "win32.h"

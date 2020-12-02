@@ -1,7 +1,7 @@
 #ifndef __ISDS_ISDS_H__
 #define __ISDS_ISDS_H__
 
-/* Public interface for libisds.
+/* Public interface for libdatovka.
  * Private declarations in isds_priv.h. */
 
 #include <stdlib.h> /* For size_t */
@@ -15,7 +15,7 @@ extern "C" {
 
 /* _deprecated macro marks library symbols as deprecated. Application should
  * avoid using such function as soon as possible. */
-#if defined(__GNUC__) 
+#if defined(__GNUC__)
 #define _deprecated __attribute__((deprecated))
 #else
 #define _deprecated
@@ -87,7 +87,7 @@ typedef enum {
 /* Return text description of ISDS error */
 const char *isds_strerror(const isds_error error);
 
-/* libisds options */
+/* library options */
 typedef enum {
     IOPT_TLS_VERIFY_SERVER,     /*  _Bool: Verify server identity?
                                    Default value is true. */
@@ -104,7 +104,7 @@ typedef enum {
                                    Default value is false. */
 } isds_option;
 
-/* TLS libisds options */
+/* library TLS options */
 typedef enum {
     ITLS_VERIFY_SERVER,     /*  _Bool: Verify server identity? */
     ITLS_CA_FILE,           /* char *: File name with CA certificates */
@@ -256,7 +256,7 @@ typedef enum {
                                        storage (does not exists since
                                        2012-05) */
     PRIVIL_ERASE_VAULT = 0x80       /* Can delete messages from long term
-                                       storage */ 
+                                       storage */
 } isds_priviledges;
 
 /* Message status */
@@ -378,7 +378,7 @@ struct isds_DbOwnerInfo {
                                        TODO: enum? */
     _Bool *dbEffectiveOVM;          /* Box has OVM role (§ 5a) */
     _Bool *dbOpenAddressing;        /* Non-OVM Box is free to receive
-                                       messages from anybody */  
+                                       messages from anybody */
 };
 
 /* Data about box and its respective owner version 3. Since WSDL 2.31.
@@ -609,7 +609,7 @@ struct isds_envelope {
                                            message which can pay a response
                                        "B" is subsidized initiatory commercial
                                            message which has already paid the
-                                           response 
+                                           response
                                        "C" is subsidized initiatory commercial
                                            message where the response offer has
                                            expired
@@ -741,7 +741,8 @@ struct isds_message_copy {
                                        Optional. */
 
     /* Output members returned from ISDS */
-    isds_error error;               /* libisds compatible error of delivery to o                                       ne recipient */
+    isds_error error;               /* libdatovka compatible error of delivery
+                                       to one recipient */
     char *dmStatus;                 /* Error description returned by ISDS;
                                        Optional. */
     char *dmID;                     /* Assigned message ID; Meaningful only
@@ -982,11 +983,11 @@ char *isds_long_message(const struct isds_ctx *context);
 void isds_set_logging(const unsigned int facilities,
         const isds_log_level level);
 
-/* Function provided by application libisds will call to pass log message.
- * The message is usually locale encoded, but raw strings (UTF-8 usually) can
- * occur when logging raw communication with ISDS servers. Infixed zero byte
- * is not excluded, but should not present. Use @length argument to get real
- * length of the message.
+/* Function provided by application which the library will call to pass a log
+ * message. The message is usually locale encoded, but raw strings
+ * (UTF-8 usually) can occur when logging raw communication with ISDS servers.
+ * Infixed zero byte is not excluded, but should not present. Use @length
+ * argument to get real length of the message.
  * TODO: We will try to fix the encoding issue
  * @facility is log message class
  * @level is log message severity
@@ -1001,11 +1002,11 @@ typedef void (*isds_log_callback)(
         isds_log_facility facility, isds_log_level level,
         const char *message, int length, void *data);
 
-/* Register callback function libisds calls when new global log message is
- * produced by library. Library logs to stderr by default.
- * @callback is function provided by application libisds will call. See type
- * definition for @callback argument explanation. Pass NULL to revert logging to
- * default behaviour.
+/* Register a callback function which the library calls when new global log
+ * message is produced by the library. Library logs to stderr by default.
+ * @callback is function provided by application which the library will call.
+ * See type definition for @callback argument explanation. Pass NULL to revert
+ * logging to default behaviour.
  * @data is application specific data @callback gets as last argument */
 void isds_set_log_callback(isds_log_callback callback, void *data);
 
@@ -1014,7 +1015,7 @@ void isds_set_log_callback(isds_log_callback callback, void *data);
 isds_error isds_set_timeout(struct isds_ctx *context,
         const unsigned int timeout);
 
-/* Function provided by application libisds will call with
+/* Function provided by application which the library will call with
  * following five arguments. Value zero of any argument means the value is
  * unknown.
  * @upload_total is expected total upload,
@@ -1028,11 +1029,11 @@ typedef int (*isds_progress_callback)(
         double download_total, double download_current,
         void *data);
 
-/* Register callback function libisds calls periodically during HTTP data
- * transfer.
+/* Register a callback function which the library calls periodically during
+ * a HTTP data transfer.
  * @context is session context
- * @callback is function provided by application libisds will call. See type
- * definition for @callback argument explanation.
+ * @callback is function provided by application which the library will call.
+ * See type definition for @callback argument explanation.
  * @data is application specific data @callback gets as last argument */
 isds_error isds_set_progress_callback(struct isds_ctx *context,
         isds_progress_callback callback, void *data);
@@ -1075,7 +1076,7 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
  * Passing NULL has the same effect, autoselection between isds_locator,
  * isds_cert_locator, and isds_otp_locator is performed in addition. You can
  * pass extern isds_testing_locator (or isds_cert_testing_locator or
- * isds_otp_testing_locator) variable to select testing instance. 
+ * isds_otp_testing_locator) variable to select testing instance.
  * @username is user name of ISDS user or box ID
  * @password is user's secret password
  * @pki_credentials defines public key cryptographic material to use in client
@@ -1088,7 +1089,7 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
  *  IE_SUCCESS if authentication succeeds
  *  IE_NOT_LOGGED_IN if authentication fails. If OTP authentication has been
  *  requested, fine grade reason will be set into @otp->resolution. Error
- *  message from server can be obtained by isds_long_message() call. 
+ *  message from server can be obtained by isds_long_message() call.
  *  IE_PARTIAL_SUCCESS if time-based OTP authentication has been requested and
  *  server has sent OTP code through side channel. Application is expected to
  *  fill the code into @otp->otp_code, keep other arguments unchanged, and retry
@@ -1588,7 +1589,7 @@ isds_error isds_get_commercial_credit(struct isds_ctx *context,
  * default)
  * @context is ISDS session context.
  * @box_id is UTF-8 encoded box identifier as zero terminated string
- * @allow is true for enable, false for disable commercial messages income 
+ * @allow is true for enable, false for disable commercial messages income
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */

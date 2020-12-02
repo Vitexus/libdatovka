@@ -2,13 +2,13 @@ AUTOMAKE_OPTIONS = color-tests parallel-tests
 export VERBOSE=1
 
 libdirpath = src
-INCLUDEDIR = $(top_srcdir)/$(libdirpath)
+INCLUDEDIR = $(top_srcdir)/include
 LIBDIR = $(top_builddir)/$(libdirpath)
 localedir = $(datadir)/locale
 
 AM_CPPFLAGS = @XML_CPPFLAGS@
 AM_CFLAGS = -I$(INCLUDEDIR) -DSRCDIR=\"$(top_srcdir)\"
-LDADD = -L$(LIBDIR) $(LIBDIR)/libisds.la -L. ./libserver.la
+LDADD = -L$(LIBDIR) $(LIBDIR)/libdatovka.la -L. ./libserver.la
 
 # To fake home dir for gnupg2
 export HOME=@top_builddir@
@@ -61,4 +61,3 @@ totp_isds_change_password_SOURCES = totp_isds_change_password.c $(common)
 isds_delete_message_from_storage_SOURCES = isds_delete_message_from_storage.c $(common)
 isds_resign_message_SOURCES = isds_resign_message.c $(common)
 isds_ping_SOURCES = isds_ping.c $(common)
-

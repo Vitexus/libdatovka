@@ -1,7 +1,7 @@
 #ifndef __ISDS_VALIDATOR_H__
 #define __ISDS_VALIDATOR_H__
 
-#include "isds.h"
+#include "libdatovka/isds.h"
 
 #if HAVE_LIBCURL
 typedef enum {

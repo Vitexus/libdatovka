@@ -1,5 +1,5 @@
 #include "../test.h"
-#include "isds.h"
+#include "libdatovka/isds.h"
 #include <string.h>
 
 static int test_isds_DbOwnerInfoExt2_duplicate(

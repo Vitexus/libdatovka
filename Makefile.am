@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I m4
 AUTOMAKE_OPTIONS = check-news dist-bzip2 dist-xz color-tests
-SUBDIRS = po src
+SUBDIRS = po include src
 
 if BUILD_EXAMPLE
 SUBDIRS += client

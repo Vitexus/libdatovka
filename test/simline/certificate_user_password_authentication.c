@@ -15,7 +15,7 @@
 
 #include "../test.h"
 #include "server.h"
-#include "isds.h"
+#include "libdatovka/isds.h"
 
 #define TLSDIR SRCDIR "/server/tls"
 static const char *ca_certificate = TLSDIR "/ca.cert";

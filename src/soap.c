@@ -862,7 +862,7 @@ static isds_error http(struct isds_ctx *context,
     if (!curl_err) {
         /* Set user agent identification */
         curl_err = curl_easy_setopt(context->curl, CURLOPT_USERAGENT,
-                "libisds/" PACKAGE_VERSION);
+                "libdatovka/" PACKAGE_VERSION);
     }
 
     if (use_get) {

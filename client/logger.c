@@ -4,13 +4,13 @@
 #include <locale.h>
 #include <time.h>
 #include <string.h>
-#include <isds.h>
+#include <libdatovka/isds.h>
 #include "common.h"
 
 void logger(isds_log_facility facility, isds_log_level level,
         const char *message, int length, void *data) {
     /* Silent warning about unused argument.
-     * It's a libisds' protopype isds_log_callback. */
+     * It's a protopype isds_log_callback. */
     (void) data;
 
     printf("\033[32mLOG(%02d,%02d): ", facility, level);

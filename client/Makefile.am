@@ -1,7 +1,7 @@
 LIBDIR =../src
-AM_CPPFLAGS = @XML_CPPFLAGS@
+AM_CPPFLAGS = @XML_CPPFLAGS@ -I$(top_srcdir)/include
 AM_CFLAGS = -I$(srcdir)/$(LIBDIR) -DSRCDIR=\"$(top_srcdir)\"
-LDADD = $(LIBDIR)/libisds.la -L$(LIBDIR) @XML_LIBS@
+LDADD = $(LIBDIR)/libdatovka.la -L$(LIBDIR) @XML_LIBS@
 
 noinst_PROGRAMS = isdsclient login certauth version progressbar logger \
 	getuserboxinfo getuserboxinfo2 addbox changebox changebox2 \

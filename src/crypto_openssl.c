@@ -32,7 +32,7 @@ static void EVP_MD_CTX_free(EVP_MD_CTX *mdctx) {
 }
 #endif
 
-/* Initialise all cryptographic libraries which libisds depends on.
+/* Initialise all cryptographic libraries which this library depends on.
  * @return IE_SUCCESS if everything went all-right. */
 _hidden isds_error _isds_init_crypto(void)
 {

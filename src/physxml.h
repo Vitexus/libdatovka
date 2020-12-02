@@ -1,7 +1,7 @@
 #ifndef __ISDS_PHYSXML_H__
 #define __ISDS_PHYSXML_H__
 
-#include "isds.h"
+#include "libdatovka/isds.h"
 
 #define PHYSXML_ELEMENT_SEPARATOR "|"
 #define PHYSXML_NS_SEPARATOR ">"

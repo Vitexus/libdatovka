@@ -17,7 +17,7 @@
 
 /* Structures not to export outside library */
 #include "../config.h"
-#include "isds.h"
+#include "libdatovka/isds.h"
 #if HAVE_LIBCURL
     #include <curl/curl.h>
 #endif

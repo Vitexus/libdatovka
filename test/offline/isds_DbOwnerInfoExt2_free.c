@@ -1,5 +1,5 @@
 #include "../test.h"
-#include "isds.h"
+#include "libdatovka/isds.h"
 
 static int test_isds_DbOwnerInfoExt2_free(
         struct isds_DbOwnerInfoExt2 **DbOwnerInfo) {

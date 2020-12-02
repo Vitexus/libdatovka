@@ -1,5 +1,5 @@
 #include "../test.h"
-#include "isds.h"
+#include "libdatovka/isds.h"
 
 static int test_isds_message_copy_free(struct isds_message_copy **copy) {
     isds_message_copy_free(copy);
