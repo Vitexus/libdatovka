@@ -20,3 +20,6 @@ $(man_MANS): $(man_SRC)
 man-clean:
 	-rm -f $(man_MANS)
 endif
+
+distclean-local:
+	-rm -rf $(man_MANS)
