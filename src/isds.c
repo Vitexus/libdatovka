@@ -7546,14 +7546,13 @@ leave:
 
 /* Update data about given box version 2.
  * @context is session context
- * @old_box current box description
+ * @box_id is UTF-8 encoded box identifier
  * @new_box are updated data about @old_box
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
 isds_error isds_UpdateDataBoxDescr2(struct isds_ctx *context,
-        const struct isds_DbOwnerInfoExt2 *old_box,
-        const struct isds_DbOwnerInfoExt2 *new_box,
+        const char *box_id, const struct isds_DbOwnerInfoExt2 *new_box,
         const struct isds_approval *approval, char **refnumber) {
     isds_error err = IE_SUCCESS;
 #if HAVE_LIBCURL
@@ -7565,7 +7564,7 @@ isds_error isds_UpdateDataBoxDescr2(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
-    if (!old_box || !new_box) return IE_INVAL;
+    if (!box_id || !new_box) return IE_INVAL;
 
 
 #if HAVE_LIBCURL
@@ -7584,9 +7583,7 @@ isds_error isds_UpdateDataBoxDescr2(struct isds_ctx *context,
     }
     xmlSetNs(request, isds_ns);
 
-    INSERT_ELEMENT(node, request, "dbOldOwnerInfo");
-    err = insert_DbOwnerInfoExt2(context, old_box, node);
-    if (err) goto leave;
+    INSERT_STRING(request, "dbID", box_id);
 
     INSERT_ELEMENT(node, request, "dbNewOwnerInfo");
     err = insert_DbOwnerInfoExt2(context, new_box, node);
