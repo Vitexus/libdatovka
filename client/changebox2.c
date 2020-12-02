@@ -66,17 +66,10 @@ int main(void) {
 
     if (db_owner_info) {
         /* Update box info */
-        struct isds_DbOwnerInfoExt2 *old_owner_info = NULL;
         char *refnumber = NULL;
 
-        old_owner_info = isds_DbOwnerInfoExt2_duplicate(db_owner_info);
-        if (!old_owner_info) {
-            fprintf(stderr, "Not enough memory\n");
-            exit(EXIT_FAILURE);
-        }
-
         printf("Updating info about my box: with no change\n");
-        err = isds_UpdateDataBoxDescr2(ctx, old_owner_info, db_owner_info,
+        err = isds_UpdateDataBoxDescr2(ctx, db_owner_info->dbID, db_owner_info,
                 NULL, &refnumber);
         if (err) {
             printf("isds_UpdateDataBoxDescr2() failed: %s: %s\n",
@@ -89,7 +82,6 @@ int main(void) {
         }
 
         free(refnumber);
-        isds_DbOwnerInfoExt2_free(&old_owner_info);
     }
 
     isds_DbOwnerInfoExt2_free(&db_owner_info);
