@@ -13,10 +13,10 @@ static isds_error get_owner(struct isds_ctx *ctx,
     printf("Getting info about my box:\n");
     err = isds_GetOwnerInfoFromLogin2(ctx, db_owner_info);
     if (err) {
-        printf("isds_GetOwnerInfoFromLogin() failed: %s: %s\n",
+        printf("isds_GetOwnerInfoFromLogin2() failed: %s: %s\n",
                 isds_strerror(err), isds_long_message(ctx));
     } else {
-        printf("isds_GetOwnerInfoFromLogin() succeeded\n");
+        printf("isds_GetOwnerInfoFromLogin2() succeeded\n");
         print_DbOwnerInfoExt2(*db_owner_info);
     }
     return err;
@@ -165,7 +165,7 @@ int main(void) {
                 exit(EXIT_FAILURE);
             }
         }
-        /* Add address is missing. */
+        /* Add address if missing. */
         {
             struct isds_AddressExt2 *address = user_to_be_created->address;
 
@@ -186,7 +186,7 @@ int main(void) {
             }
         }
 
-        /* Newly create user does not have its internal id obviously. */
+        /* Newly created user does not have its internal id obviously. */
         free(user_to_be_created->isdsID); user_to_be_created->isdsID = NULL;
         /* According to the documentation only entrusted users can be added. */
         *user_to_be_created->userType = USERTYPE_ENTRUSTED;
