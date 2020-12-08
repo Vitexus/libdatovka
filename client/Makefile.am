@@ -11,7 +11,7 @@ noinst_PROGRAMS = isdsclient login certauth version progressbar logger \
 	getsignedsentbyid getchangedstates loadreceivedmessage \
 	loadcmssignedsentmessage sendxmldoc loadsentmessagewithxmldocuments \
 	getreceived getsignedreceived \
-	getreceivedenvelope manageuser2 markasread markasreceived \
+	getreceivedenvelope manageuser manageuser2 markasread markasreceived \
 	getsenderbyid downloadmessagehash verifyreceivedhash \
 	computemessagehash authenticatemessage \
 	loaddelivery getreceiveddelivery getreceivedsigneddelivery \
@@ -56,6 +56,7 @@ downloadmessagehash_SOURCES = downloadmessagehash.c $(common)
 verifyreceivedhash_SOURCES = verifyreceivedhash.c $(common)
 computemessagehash_SOURCES = computemessagehash.c $(common)
 authenticatemessage_SOURCES = authenticatemessage.c $(common)
+manageuser_SOURCES = manageuser.c $(common)
 manageuser2_SOURCES = manageuser2.c $(common)
 markasread_SOURCES = markasread.c $(common)
 markasreceived_SOURCES = markasreceived.c $(common)
