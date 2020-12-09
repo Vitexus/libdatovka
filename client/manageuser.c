@@ -243,6 +243,15 @@ int main(void)
 			    "isds_add_user() succeeded with reference number: %s\n",
 			    refnumber);
 		}
+		const struct isds_status *status = isds_operation_status(ctx);
+		if (status != NULL) {
+			printf(
+			    "Obtained status code: '%s'; message: '%s'; rerenece number: '%s'\n",
+			    status->code, status->message, status->ref_number);
+		} else {
+			fprintf(stderr, "Cannot obtain status after calling isds_add_user()\n");
+			exit(EXIT_FAILURE);
+		}
 
 		free(refnumber); refnumber = NULL;
 	}
