@@ -1384,7 +1384,12 @@ isds_error isds_reset_password(struct isds_ctx *context,
  * assingned up on this call.
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
- * NULL, if you don't care.*/
+ * NULL, if you don't care.
+ *
+ * Always check the status here even after a successful return from this
+ * function check the status message. It may contain login information,
+ * especially when the user account has been created inside the testing
+ * environment, or other useful data. */
 isds_error isds_add_user(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
         struct isds_credentials_delivery *credentials_delivery,
@@ -1405,7 +1410,12 @@ isds_error isds_add_user(struct isds_ctx *context,
  * assigned up on this call.
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
- * NULL, if you don't care. */
+ * NULL, if you don't care.
+ *
+ * Always check the status here even after a successful return from this
+ * function check the status message. It may contain login information,
+ * especially when the user account has been created inside the testing
+ * environment, or other useful data. */
 isds_error isds_AddDataBoxUser2(struct isds_ctx *context, const char *box_id,
         const struct isds_DbUserInfoExt2 *user,
         struct isds_credentials_delivery *credentials_delivery,
