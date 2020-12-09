@@ -203,6 +203,20 @@ struct isds_mep {
                                        authentication attempt. */
 };
 
+/* Type of status message. Can refer to dbStatus or dmStatus. */
+typedef enum isds_status_type {
+    STAT_DB = 0, /* Status returned inside the dbStatus element. */
+    STAT_DM      /* Status returned inside the dmStatus element. */
+} isds_status_type;
+
+/* Status as returned by many ISDS operations. */
+struct isds_status {
+    enum isds_status_type type; /* Type of the status description. */
+    char *code;                 /* Value of the *StatusCode element. */
+    char *message;              /* Value of the *StatusMessage element. */
+    char *ref_number;           /* Value of the dbStatusRefNumber element if available. */
+};
+
 /* Box type */
 typedef enum {
     DBTYPE_OVM_MAIN = -1,       /* Special value for
@@ -976,6 +990,12 @@ isds_error isds_ctx_free(struct isds_ctx **context);
  * called for the same context. Could be NULL, especially if NULL context is
  * supplied. Return string is locale encoded. */
 char *isds_long_message(const struct isds_ctx *context);
+
+/* Return status description of the last performed ISDS operation.
+ * Returned pointer is only valid until new library function is called for
+ * the supplied context. Can be NULL.
+ * Most of the functions don't generate a status description now. */
+const struct isds_status *isds_operation_status(const struct isds_ctx *context);
 
 /* Set logging up.
  * @facilities is bit mask of isds_log_facility values,
@@ -2028,6 +2048,10 @@ const struct isds_document *isds_find_document_by_id(
  * constant static UTF-8 encoded string with proper MIME type. */
 const char *isds_normalize_mime_type(const char *mime_type);
 
+/* Deallocate structure isds_status ann NULL it.
+ * @status  status to be freed */
+void isds_status_free(struct isds_status **status);
+
 /* Deallocate structure isds_pki_credentials and NULL it.
  * Pass-phrase is discarded.
  * @pki  credentials to to free */
@@ -2108,6 +2132,9 @@ void isds_fulltext_result_free(
 
 /* Deallocate struct isds_box_state_period recursively and NULL it */
 void isds_box_state_period_free(struct isds_box_state_period **period);
+
+/* Copy structure isds_status recursively */
+struct isds_status *isds_status_duplicate(const struct isds_status *src);
 
 /* Copy structure isds_PersonName recursively */
 struct isds_PersonName *isds_PersonName_duplicate(

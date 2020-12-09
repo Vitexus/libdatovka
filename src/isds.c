@@ -112,6 +112,18 @@ struct code_map_isds_error {
     const isds_error *errors;  /* Mapping to isds_error code */
 };
 
+void isds_status_free(struct isds_status **status) {
+    if ((status == NULL) || (*status == NULL)) {
+        return;
+    }
+
+    free((*status)->code);
+    free((*status)->message);
+    free((*status)->ref_number);
+
+    zfree((*status));
+}
+
 /* Deallocate structure isds_pki_credentials and NULL it.
  * Pass-phrase is discarded.
  * @pki  credentials to to free */
@@ -587,6 +599,29 @@ error:
     return NULL;
 }
 
+struct isds_status *isds_status_duplicate(const struct isds_status *src) {
+    struct isds_status *new = NULL;
+
+    if (src == NULL) {
+       return NULL;
+    }
+
+    new = calloc(1, sizeof(*new));
+    if (new == NULL) {
+        return NULL;
+    }
+
+    new->type = src->type;
+    STRDUP_OR_ERROR(new->code, src->code);
+    STRDUP_OR_ERROR(new->message, src->message);
+    STRDUP_OR_ERROR(new->ref_number, src->ref_number);
+
+    return new;
+
+error:
+    isds_status_free(&new);
+    return NULL;
+}
 
 /* Copy structure isds_PersonName recursively */
 struct isds_PersonName *isds_PersonName_duplicate(
@@ -1163,6 +1198,7 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
     free((*context)->tls_crl_file);
 #endif /* HAVE_LIBCURL */
     free((*context)->long_message);
+    isds_status_free(&((*context)->status));
 
     free(*context);
     *context = NULL;
@@ -1177,6 +1213,15 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
 char *isds_long_message(const struct isds_ctx *context) {
     if (!context) return NULL;
     return context->long_message;
+}
+
+
+const struct isds_status *isds_operation_status(
+        const struct isds_ctx *context) {
+    if (context == NULL) {
+        return NULL;
+    }
+    return context->status;
 }
 
 
@@ -1315,6 +1360,7 @@ isds_error isds_set_timeout(struct isds_ctx *context,
         const unsigned int timeout) {
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
 
 #if HAVE_LIBCURL
     context->timeout = timeout;
@@ -1351,6 +1397,7 @@ isds_error isds_set_progress_callback(struct isds_ctx *context,
         isds_progress_callback callback, void *data) {
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
 
 #if HAVE_LIBCURL
     context->progress_callback = callback;
@@ -1379,6 +1426,7 @@ isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
 
     va_start(ap, option);
 
@@ -1559,6 +1607,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
 
 #if HAVE_LIBCURL
     /* Close connection if already logged in */
@@ -1768,6 +1817,7 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
         return IE_INVALID_CONTEXT;
     }
     zfree(context->long_message);
+    isds_status_free(&(context->status));
 
 #if HAVE_LIBCURL
     context->type = CTX_TYPE_ISDS;
@@ -1902,6 +1952,7 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
 isds_error isds_logout(struct isds_ctx *context) {
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
 
 #if HAVE_LIBCURL
     if (context->curl) {
@@ -1940,6 +1991,7 @@ isds_error isds_ping(struct isds_ctx *context) {
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
 
 #if HAVE_LIBCURL
     /* Check if connection is established */
@@ -1993,6 +2045,38 @@ isds_error isds_ping(struct isds_ctx *context) {
 }
 
 
+/* Convert response status into status structure. */
+#if HAVE_LIBCURL
+static
+isds_error build_isds_status(struct isds_status **status,
+    enum isds_status_type type, const char *code, const char *message,
+    char *ref_number) {
+    if (status == NULL) {
+        return IE_INVALID_CONTEXT;
+    }
+
+    isds_status_free(status);
+    *status = calloc(1, sizeof(**status));
+    if (*status == NULL) {
+        return IE_NOMEM;
+    }
+
+    (*status)->type = type;
+    if (code != NULL) {
+        (*status)->code = _isds_utf82locale(code);
+    }
+    if (message != NULL) {
+        (*status)->message = _isds_utf82locale(message);
+    }
+    if (ref_number != NULL) {
+        (*status)->ref_number = _isds_utf82locale(ref_number);
+    }
+
+    return IE_SUCCESS;
+}
+#endif
+
+
 /* Send bogus request to ISDS.
  * Just for test purposes */
 isds_error isds_bogus_request(struct isds_ctx *context) {
@@ -2006,6 +2090,7 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
 
 #if HAVE_LIBCURL
     /* Check if connection is established */
@@ -2048,6 +2133,9 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
     /* Check for response status */
     err = isds_response_status(context, SERVICE_DM_OPERATIONS, response,
             &code, &message, NULL);
+    build_isds_status(&(context->status),
+            _isds_service_to_status_type(SERVICE_DM_OPERATIONS),
+            (char *)code, (char *)message, NULL);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("ISDS response on bogus request is missing status\n"));
@@ -5800,6 +5888,9 @@ static isds_error build_send_check_dbdummy_request(struct isds_ctx *context,
     /* Check for response status */
     err = isds_response_status(context, SERVICE_DB_ACCESS, *response,
             code, status_message, NULL);
+    build_isds_status(&(context->status),
+            _isds_service_to_status_type(SERVICE_DB_ACCESS),
+            (char *)code, (char *)status_message, NULL);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                     _("ISDS response on %s request is missing status\n"),
@@ -5849,6 +5940,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!db_owner_info) return IE_INVAL;
     isds_DbOwnerInfo_free(db_owner_info);
 
@@ -5949,6 +6041,7 @@ isds_error isds_GetOwnerInfoFromLogin2(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!db_owner_info) return IE_INVAL;
     isds_DbOwnerInfoExt2_free(db_owner_info);
 
@@ -6042,6 +6135,7 @@ isds_error isds_GetUserInfoFromLogin(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!db_user_info) return IE_INVAL;
     isds_DbUserInfo_free(db_user_info);
 
@@ -6139,6 +6233,7 @@ isds_error isds_GetUserInfoFromLogin2(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!db_user_info) return IE_INVAL;
     isds_DbUserInfoExt2_free(db_user_info);
 
@@ -6235,6 +6330,7 @@ isds_error isds_get_password_expiration(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!expiration) return IE_INVAL;
     zfree(*expiration);
 
@@ -6367,6 +6463,7 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
 
     if (NULL == context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (NULL == password) {
         isds_log_message(context,
                 _("Second argument (password) of isds_change_password() "
@@ -6470,8 +6567,24 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
     }
 
     /* Check for response status */
-    err = isds_response_status(context, SERVICE_ASWS, response,
-            &code, &message, (xmlChar **)refnumber);
+    {
+        xmlChar *refnum = NULL; /* Always set status reference number. */
+        err = isds_response_status(context, SERVICE_ASWS, response,
+                &code, &message, &refnum);
+        build_isds_status(&(context->status),
+                _isds_service_to_status_type(SERVICE_ASWS),
+                (char *)code, (char *)message, (char *)refnum);
+        if (refnumber != NULL) {
+            zfree(*refnumber);
+        }
+        if (refnum != NULL) {
+            if (refnumber != NULL) {
+                *refnumber = (char *)refnum;
+            } else {
+                free(refnum);
+            }
+        }
+    }
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("ISDS response on SendSMSCode request is missing "
@@ -6647,6 +6760,7 @@ isds_error isds_change_password(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (NULL != refnumber)
         zfree(*refnumber);
     if (NULL == old_password) {
@@ -6797,9 +6911,26 @@ isds_error isds_change_password(struct isds_ctx *context,
     }
 
     /* Check for response status */
-    err = isds_response_status(context,
-            (NULL == otp) ? SERVICE_DB_ACCESS : SERVICE_ASWS, response,
-            &code, &message, (xmlChar **)refnumber);
+    {
+        xmlChar *refnum = NULL; /* Always set status reference number. */
+        err = isds_response_status(context,
+                (NULL == otp) ? SERVICE_DB_ACCESS : SERVICE_ASWS, response,
+                &code, &message, &refnum);
+        build_isds_status(&(context->status),
+                _isds_service_to_status_type(
+                        (NULL == otp) ? SERVICE_DB_ACCESS : SERVICE_ASWS),
+                (char *)code, (char *)message, (char *)refnum);
+        if (refnumber != NULL) {
+            zfree(*refnumber);
+        }
+        if (refnum != NULL) {
+            if (refnumber != NULL) {
+                *refnumber = (char *)refnum;
+            } else {
+                free(refnum);
+            }
+        }
+    }
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG, (NULL == otp) ?
                 _("ISDS response on ChangeISDSPassword request is missing "
@@ -6931,8 +7062,24 @@ static isds_error send_destroy_request_check_response(
     }
 
     /* Check for response status */
-    err = isds_response_status(context, service, *response,
-            &code, &message, refnumber);
+    {
+        xmlChar *refnum = NULL; /* Always set status reference number. */
+        err = isds_response_status(context, service, *response,
+                &code, &message, &refnum);
+        build_isds_status(&(context->status),
+                _isds_service_to_status_type(service),
+                (char *)code, (char *)message, (char *)refnum);
+        if (refnumber != NULL) {
+            zfree(*refnumber);
+        }
+        if (refnum != NULL) {
+            if (refnumber != NULL) {
+                *refnumber = refnum;
+            } else {
+                free(refnum);
+            }
+        }
+    }
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                     _("ISDS response on %s request is missing status\n"),
@@ -7257,6 +7404,7 @@ isds_error isds_add_box(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (credentials_delivery) {
         zfree(credentials_delivery->token);
         zfree(credentials_delivery->new_user_name);
@@ -7337,6 +7485,7 @@ isds_error isds_add_pfoinfo(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!box) return IE_INVAL;
 
 #if HAVE_LIBCURL
@@ -7386,6 +7535,7 @@ static isds_error _isds_delete_box_common(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!service_name || !*service_name || !box) return IE_INVAL;
 
 
@@ -7453,6 +7603,7 @@ isds_error isds_delete_box(struct isds_ctx *context,
         const struct isds_approval *approval, char **refnumber) {
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!box || !since) return IE_INVAL;
 
     return _isds_delete_box_common(context, BAD_CAST "DeleteDataBox",
@@ -7471,6 +7622,7 @@ isds_error isds_delete_box_promptly(struct isds_ctx *context,
         const struct isds_approval *approval, char **refnumber) {
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!box) return IE_INVAL;
 
     return _isds_delete_box_common(context, BAD_CAST "DeleteDataBoxPromptly",
@@ -7499,6 +7651,7 @@ isds_error isds_UpdateDataBoxDescr(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!old_box || !new_box) return IE_INVAL;
 
 
@@ -7564,6 +7717,7 @@ isds_error isds_UpdateDataBoxDescr2(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!box_id || !new_box) return IE_INVAL;
 
 
@@ -7704,6 +7858,7 @@ isds_error isds_GetDataBoxUsers(struct isds_ctx *context, const char *box_id,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!users || !box_id) return IE_INVAL;
     isds_list_free(users);
 
@@ -7797,6 +7952,7 @@ isds_error isds_GetDataBoxUsers2(struct isds_ctx *context, const char *box_id,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!users || !box_id) return IE_INVAL;
     isds_list_free(users);
 
@@ -7895,6 +8051,7 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!box || !old_user || !new_user) return IE_INVAL;
 
 
@@ -7960,6 +8117,7 @@ isds_error isds_UpdateDataBoxUser2(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!box_id || !isds_id || !new_user) return IE_INVAL;
 
 
@@ -8023,6 +8181,7 @@ isds_error isds_activate(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
 
     if (user_id) zfree(*user_id);
     if (password) zfree(*password);
@@ -8146,6 +8305,7 @@ isds_error isds_reset_password(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
 
     if (credentials_delivery) {
         zfree(credentials_delivery->token);
@@ -8246,6 +8406,7 @@ static isds_error build_send_manipulationboxuser_request_check_drop_response(
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (credentials_delivery) {
         zfree(credentials_delivery->token);
         zfree(credentials_delivery->new_user_name);
@@ -8374,6 +8535,7 @@ isds_error isds_AddDataBoxUser2(struct isds_ctx *context, const char *box_id,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!box_id || !user) return IE_INVAL;
 
 #if HAVE_LIBCURL
@@ -8473,6 +8635,7 @@ isds_error isds_DeleteDataBoxUser2(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!box_id || !isds_id) return IE_INVAL;
 
 #if HAVE_LIBCURL
@@ -8541,6 +8704,7 @@ isds_error isds_get_box_list_archive(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (buffer) zfree(*buffer);
     if (!buffer || !buffer_length) return IE_INVAL;
 
@@ -8646,6 +8810,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!boxes) return IE_INVAL;
     isds_list_free(boxes);
 
@@ -8703,6 +8868,9 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
     /* Check for response status */
     err = isds_response_status(context, SERVICE_DB_SEARCH, response,
             &code, &message, NULL);
+    build_isds_status(&(context->status),
+            _isds_service_to_status_type(SERVICE_DB_SEARCH),
+            (char *)code, (char *)message, NULL);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("ISDS response on FindDataBox request is missing status\n"));
@@ -8847,6 +9015,7 @@ isds_error isds_FindDataBox2(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!boxes) return IE_INVAL;
     isds_list_free(boxes);
 
@@ -8904,6 +9073,9 @@ isds_error isds_FindDataBox2(struct isds_ctx *context,
     /* Check for response status */
     err = isds_response_status(context, SERVICE_DB_SEARCH, response,
             &code, &message, NULL);
+    build_isds_status(&(context->status),
+            _isds_service_to_status_type(SERVICE_DB_SEARCH),
+            (char *)code, (char *)message, NULL);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("ISDS response on FindDataBox2 request is missing status\n"));
@@ -9306,6 +9478,7 @@ isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
 
     if (NULL == context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
 
     if (NULL == boxes) return IE_INVAL;
 
@@ -9526,6 +9699,7 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!box_status || !box_id || *box_id == '\0') return IE_INVAL;
 
 #if HAVE_LIBCURL
@@ -9728,6 +9902,7 @@ isds_error isds_get_box_state_history(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
 
     /* Free output argument */
     isds_list_free(history);
@@ -9911,6 +10086,7 @@ isds_error isds_get_commercial_permissions(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (NULL == permissions) return IE_INVAL;
     isds_list_free(permissions);
     if (NULL == box_id) return IE_INVAL;
@@ -10059,6 +10235,7 @@ isds_error isds_get_commercial_credit(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
 
     /* Free output argument */
     if (NULL != credit) *credit = 0;
@@ -10245,6 +10422,7 @@ static isds_error build_send_manipulationdbid_request_check_drop_response(
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!service_name || *service_name == '\0' || !box_id) return IE_INVAL;
 
 #if HAVE_LIBCURL
@@ -10331,6 +10509,7 @@ static isds_error build_send_manipulationdbowner_request_check_drop_response(
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!service_name || *service_name == '\0' || !owner) return IE_INVAL;
 
 #if HAVE_LIBCURL
@@ -10425,6 +10604,7 @@ isds_error isds_disable_box_accessibility_externaly(
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!box || !since) return IE_INVAL;
 
 #if HAVE_LIBCURL
@@ -10660,6 +10840,7 @@ isds_error isds_send_message(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!outgoing_message) return IE_INVAL;
 
 #if HAVE_LIBCURL
@@ -10709,6 +10890,9 @@ isds_error isds_send_message(struct isds_ctx *context,
     /* Check for response status */
     err = isds_response_status(context, SERVICE_DM_OPERATIONS, response,
             &code, &message, NULL);
+    build_isds_status(&(context->status),
+            _isds_service_to_status_type(SERVICE_DM_OPERATIONS),
+            (char *)code, (char *)message, NULL);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("ISDS response on CreateMessage request "
@@ -10876,6 +11060,7 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!outgoing_message || !copies) return IE_INVAL;
 
 #if HAVE_LIBCURL
@@ -10961,6 +11146,9 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
     /* Check for response status */
     err = isds_response_status(context, SERVICE_DM_OPERATIONS, response,
             &code, &message, NULL);
+    build_isds_status(&(context->status),
+            _isds_service_to_status_type(SERVICE_DM_OPERATIONS),
+            (char *)code, (char *)message, NULL);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("ISDS response on CreateMultipleMessage request "
@@ -11121,6 +11309,7 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
    
     /* Free former message list if any */
     if (messages) isds_list_free(messages);
@@ -11221,6 +11410,9 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
     /* Check for response status */
     err = isds_response_status(context, SERVICE_DM_INFO, response,
             &code, &message, NULL);
+    build_isds_status(&(context->status),
+            _isds_service_to_status_type(SERVICE_DM_INFO),
+            (char *)code, (char *)message, NULL);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 (outgoing_direction) ?
@@ -11449,6 +11641,7 @@ isds_error isds_get_list_of_sent_message_state_changes(
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
    
     /* Free former message list if any */
     isds_list_free(changed_states);
@@ -11662,6 +11855,9 @@ static isds_error build_send_check_message_request(struct isds_ctx *context,
     /* Check for response status */
     err = isds_response_status(context, service, *response,
             code, status_message, NULL);
+    build_isds_status(&(context->status),
+            _isds_service_to_status_type(service),
+            (char *)code, (char *)status_message, NULL);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                     _("ISDS response on %s request is missing status\n"),
@@ -11826,6 +12022,7 @@ isds_error isds_get_received_envelope(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
    
     /* Free former message if any */
     if (!message) return IE_INVAL;
@@ -11939,6 +12136,7 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!message) return IE_INVAL;
     isds_message_free(message);
     if (!buffer) return IE_INVAL;
@@ -12109,6 +12307,7 @@ isds_error isds_get_signed_delivery_info(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
    
     /* Free former message if any */
     if (!message) return IE_INVAL;
@@ -12180,6 +12379,7 @@ isds_error isds_get_delivery_info(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
    
     /* Free former message if any */
     if (!message) return IE_INVAL;
@@ -12262,6 +12462,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
    
     /* Free former message if any */
     if (NULL == message) return IE_INVAL;
@@ -12408,6 +12609,7 @@ isds_error isds_load_message(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!message) return IE_INVAL;
     isds_message_free(message);
     if (!buffer) return IE_INVAL;
@@ -12600,6 +12802,7 @@ isds_error isds_guess_raw_type(struct isds_ctx *context,
     
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (length == 0 || !buffer) return IE_INVAL;
     if (!raw_type) return IE_INVAL;
 
@@ -12704,6 +12907,7 @@ static isds_error isds_get_signed_message(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!message) return IE_INVAL;
     isds_message_free(message);
 
@@ -12811,6 +13015,7 @@ isds_error isds_get_message_sender(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (sender_type) zfree(*sender_type);
     if (raw_sender_type) zfree(*raw_sender_type);
     if (sender_name) zfree(*sender_name);
@@ -12928,6 +13133,7 @@ isds_error isds_download_message_hash(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
    
     isds_hash_free(hash);
 
@@ -13027,6 +13233,7 @@ isds_error isds_delete_message_from_storage(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (NULL == message_id) return IE_INVAL;
    
 #if HAVE_LIBCURL
@@ -13072,6 +13279,9 @@ isds_error isds_delete_message_from_storage(struct isds_ctx *context,
     /* Check for response status */
     err = isds_response_status(context, SERVICE_DM_INFO, response,
             &code, &status_message, NULL);
+    build_isds_status(&(context->status),
+            _isds_service_to_status_type(SERVICE_DM_INFO),
+            (char *)code, (char *)status_message, NULL);
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                     _("ISDS response on EraseMessage request is missing "
@@ -13134,6 +13344,7 @@ isds_error isds_mark_message_read(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
    
 #if HAVE_LIBCURL
     /* Do request and check for success */
@@ -13174,6 +13385,7 @@ isds_error isds_mark_message_received(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
    
 #if HAVE_LIBCURL
     /* Do request and check for success */
@@ -13229,6 +13441,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!document || !id || !date) return IE_INVAL;
 
     if (document->is_xml) {
@@ -13400,6 +13613,7 @@ leave:
 isds_error czp_close_connection(struct isds_ctx *context) {
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
 #if HAVE_LIBCURL
     return czp_do_close_connection(context);
 #else
@@ -13442,6 +13656,7 @@ isds_error isds_request_new_testing_box(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!box) return IE_INVAL;
 
 #if HAVE_LIBCURL
@@ -13533,6 +13748,7 @@ isds_error isds_authenticate_message(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!message || length == 0) return IE_INVAL;
 
 #if HAVE_LIBCURL
@@ -13670,6 +13886,7 @@ isds_error isds_resign_message(struct isds_ctx *context,
 
     if (NULL == context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (NULL == input_data || 0 == input_length) {
         isds_log_message(context, _("Empty CMS blob on input"));
         return IE_INVAL;
@@ -13834,6 +14051,7 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!message) return IE_INVAL;
    
     if (!message->raw) {
@@ -13986,6 +14204,7 @@ isds_error isds_verify_message_hash(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
+    isds_status_free(&(context->status));
     if (!message) return IE_INVAL;
 
     if (!message->envelope) {

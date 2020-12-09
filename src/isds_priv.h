@@ -104,6 +104,7 @@ struct isds_ctx {
 #endif /* HAVE_LIBCURL */
     _Bool normalize_mime_type; /* Normalize document MIME types? */
     char *long_message;     /* message buffer */
+    struct isds_status *status; /* last operation status */
 };
 
 /* Stores message into context' long_message buffer.
