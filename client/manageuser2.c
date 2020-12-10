@@ -214,7 +214,7 @@ int main(void) {
         }
         const struct isds_status *status = isds_operation_status(ctx);
         if (status != NULL) {
-            printf("Obtained status code: '%s'; message: '%s'; rerenece number: '%s'\n",
+            printf("Obtained status code: '%s'; message: '%s'; reference number: '%s'\n",
                     status->code, status->message, status->ref_number);
         } else {
             fprintf(stderr,

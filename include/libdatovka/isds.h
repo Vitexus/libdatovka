@@ -993,8 +993,7 @@ char *isds_long_message(const struct isds_ctx *context);
 
 /* Return status description of the last performed ISDS operation.
  * Returned pointer is only valid until new library function is called for
- * the supplied context. Can be NULL.
- * Most of the functions don't generate a status description now. */
+ * the supplied context. Can be NULL. */
 const struct isds_status *isds_operation_status(const struct isds_ctx *context);
 
 /* Set logging up.
@@ -1381,13 +1380,13 @@ isds_error isds_reset_password(struct isds_ctx *context,
  * The output reallocated token user needs to use to authorize on the web
  * server to view his new password. Output reallocated
  * @credentials_delivery.new_user_name is user's log-in name that ISDS
- * assingned up on this call.
+ * assigned up on this call.
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.
  *
- * Always check the status here even after a successful return from this
- * function check the status message. It may contain login information,
+ * Always check the message from the status after calling this functions. Even
+ * after a successful return. The message may contain login information,
  * especially when the user account has been created inside the testing
  * environment, or other useful data. */
 isds_error isds_add_user(struct isds_ctx *context,
@@ -1412,8 +1411,8 @@ isds_error isds_add_user(struct isds_ctx *context,
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.
  *
- * Always check the status here even after a successful return from this
- * function check the status message. It may contain login information,
+ * Always check the message from the status after calling this functions. Even
+ * after a successful return. The message may contain login information,
  * especially when the user account has been created inside the testing
  * environment, or other useful data. */
 isds_error isds_AddDataBoxUser2(struct isds_ctx *context, const char *box_id,
@@ -2058,7 +2057,7 @@ const struct isds_document *isds_find_document_by_id(
  * constant static UTF-8 encoded string with proper MIME type. */
 const char *isds_normalize_mime_type(const char *mime_type);
 
-/* Deallocate structure isds_status ann NULL it.
+/* Deallocate structure isds_status and NULL it.
  * @status  status to be freed */
 void isds_status_free(struct isds_status **status);
 
