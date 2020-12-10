@@ -13,6 +13,10 @@ typedef enum {
     SERVICE_ASWS
 } isds_service;
 
+/* Convert isds_service to enum isds_status_type.
+ * @service is ISDS web service identifier */
+enum isds_status_type _isds_service_to_status_type(isds_service service);
+
 /* Get ISDS status info from ISDS @response XML document.
  * Be ware that different request families return differently encoded status
  * (e.g. dmStatus, dbStatus)

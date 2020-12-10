@@ -7,6 +7,24 @@
 
 
 #if HAVE_LIBCURL
+_hidden enum isds_status_type _isds_service_to_status_type(
+        isds_service service) {
+    enum isds_status_type type = STAT_DB;
+
+    switch (service) {
+        case SERVICE_DM_OPERATIONS:
+        case SERVICE_DM_INFO:
+            type = STAT_DM;
+        case SERVICE_DB_SEARCH:
+        case SERVICE_DB_ACCESS:
+        case SERVICE_DB_MANIPULATION:
+            type = STAT_DB;
+        case SERVICE_ASWS:
+            type = STAT_DB;
+    }
+    return type;
+}
+
 /* Get ISDS status info from ISDS @response XML document.
  * Be ware that different request families return differently encoded status
  * (e.g. dmStatus, dbStatus)

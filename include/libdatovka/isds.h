@@ -203,6 +203,20 @@ struct isds_mep {
                                        authentication attempt. */
 };
 
+/* Type of status message. Can refer to dbStatus or dmStatus. */
+typedef enum isds_status_type {
+    STAT_DB = 0, /* Status returned inside the dbStatus element. */
+    STAT_DM      /* Status returned inside the dmStatus element. */
+} isds_status_type;
+
+/* Status as returned by many ISDS operations. All strings are UTF-8 encoded. */
+struct isds_status {
+    enum isds_status_type type; /* Type of the status description. */
+    char *code;                 /* Value of the *StatusCode element. */
+    char *message;              /* Value of the *StatusMessage element. */
+    char *ref_number;           /* Value of the dbStatusRefNumber element if available. */
+};
+
 /* Box type */
 typedef enum {
     DBTYPE_OVM_MAIN = -1,       /* Special value for
@@ -977,6 +991,11 @@ isds_error isds_ctx_free(struct isds_ctx **context);
  * supplied. Return string is locale encoded. */
 char *isds_long_message(const struct isds_ctx *context);
 
+/* Return status description of the last performed ISDS operation.
+ * Returned pointer is only valid until new library function is called for
+ * the supplied context. Can be NULL. */
+const struct isds_status *isds_operation_status(const struct isds_ctx *context);
+
 /* Set logging up.
  * @facilities is bit mask of isds_log_facility values,
  * @level is verbosity level. */
@@ -1361,10 +1380,15 @@ isds_error isds_reset_password(struct isds_ctx *context,
  * The output reallocated token user needs to use to authorize on the web
  * server to view his new password. Output reallocated
  * @credentials_delivery.new_user_name is user's log-in name that ISDS
- * assingned up on this call.
+ * assigned up on this call.
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
- * NULL, if you don't care.*/
+ * NULL, if you don't care.
+ *
+ * Always check the message from the status after calling this functions. Even
+ * after a successful return. The message may contain login information,
+ * especially when the user account has been created inside the testing
+ * environment, or other useful data. */
 isds_error isds_add_user(struct isds_ctx *context,
         const struct isds_DbOwnerInfo *box, const struct isds_DbUserInfo *user,
         struct isds_credentials_delivery *credentials_delivery,
@@ -1385,7 +1409,12 @@ isds_error isds_add_user(struct isds_ctx *context,
  * assigned up on this call.
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
- * NULL, if you don't care. */
+ * NULL, if you don't care.
+ *
+ * Always check the message from the status after calling this functions. Even
+ * after a successful return. The message may contain login information,
+ * especially when the user account has been created inside the testing
+ * environment, or other useful data. */
 isds_error isds_AddDataBoxUser2(struct isds_ctx *context, const char *box_id,
         const struct isds_DbUserInfoExt2 *user,
         struct isds_credentials_delivery *credentials_delivery,
@@ -2028,6 +2057,10 @@ const struct isds_document *isds_find_document_by_id(
  * constant static UTF-8 encoded string with proper MIME type. */
 const char *isds_normalize_mime_type(const char *mime_type);
 
+/* Deallocate structure isds_status and NULL it.
+ * @status  status to be freed */
+void isds_status_free(struct isds_status **status);
+
 /* Deallocate structure isds_pki_credentials and NULL it.
  * Pass-phrase is discarded.
  * @pki  credentials to to free */
@@ -2108,6 +2141,9 @@ void isds_fulltext_result_free(
 
 /* Deallocate struct isds_box_state_period recursively and NULL it */
 void isds_box_state_period_free(struct isds_box_state_period **period);
+
+/* Copy structure isds_status recursively */
+struct isds_status *isds_status_duplicate(const struct isds_status *src);
 
 /* Copy structure isds_PersonName recursively */
 struct isds_PersonName *isds_PersonName_duplicate(
