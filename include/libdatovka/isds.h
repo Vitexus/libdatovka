@@ -209,7 +209,7 @@ typedef enum isds_status_type {
     STAT_DM      /* Status returned inside the dmStatus element. */
 } isds_status_type;
 
-/* Status as returned by many ISDS operations. */
+/* Status as returned by many ISDS operations. All strings are UTF-8 encoded. */
 struct isds_status {
     enum isds_status_type type; /* Type of the status description. */
     char *code;                 /* Value of the *StatusCode element. */

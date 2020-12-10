@@ -937,6 +937,35 @@ struct isds_box_state_period *isds_box_state_period_duplicate(
     return new;
 }
 
+#if HAVE_LIBCURL
+/* Convert response status into status structure. */
+static
+isds_error build_isds_status(struct isds_status **status,
+    enum isds_status_type type, const char *code, const char *message,
+    char *ref_number) {
+    if (status == NULL) {
+        return IE_INVALID_CONTEXT;
+    }
+
+    isds_status_free(status);
+    *status = calloc(1, sizeof(**status));
+    if (*status == NULL) {
+        return IE_NOMEM;
+    }
+
+    (*status)->type = type;
+    STRDUP_OR_ERROR((*status)->code, code);
+    STRDUP_OR_ERROR((*status)->message, message);
+    STRDUP_OR_ERROR((*status)->ref_number, ref_number);
+
+    return IE_SUCCESS;
+
+error:
+    isds_status_free(status);
+    return IE_NOMEM;
+}
+#endif
+
 #undef FLATDUP_OR_ERROR
 #undef STRDUP_OR_ERROR 
 
@@ -2043,38 +2072,6 @@ isds_error isds_ping(struct isds_ctx *context) {
     return IE_NOTSUP;
 #endif
 }
-
-
-/* Convert response status into status structure. */
-#if HAVE_LIBCURL
-static
-isds_error build_isds_status(struct isds_status **status,
-    enum isds_status_type type, const char *code, const char *message,
-    char *ref_number) {
-    if (status == NULL) {
-        return IE_INVALID_CONTEXT;
-    }
-
-    isds_status_free(status);
-    *status = calloc(1, sizeof(**status));
-    if (*status == NULL) {
-        return IE_NOMEM;
-    }
-
-    (*status)->type = type;
-    if (code != NULL) {
-        (*status)->code = _isds_utf82locale(code);
-    }
-    if (message != NULL) {
-        (*status)->message = _isds_utf82locale(message);
-    }
-    if (ref_number != NULL) {
-        (*status)->ref_number = _isds_utf82locale(ref_number);
-    }
-
-    return IE_SUCCESS;
-}
-#endif
 
 
 /* Send bogus request to ISDS.
