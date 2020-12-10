@@ -265,10 +265,8 @@ int main(void)
 	 *     <p:dbStatusRefNumber>REF187124</p:dbStatusRefNumber>
 	 * </p:dbStatus>
 	 *
-	 * The only way how currently obtain this information is from the log.
-	 * TODO - The library should hold the complete status description
-	 * (code, message and reference number) of every unsuccessful and
-	 * successful operation.
+	 * The only way how to obtain this information is from the log or
+	 * by acquiring the status via isds_operation_status().
 	 */
 
 	/* Download user data and search for newly created user. */
