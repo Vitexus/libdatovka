@@ -1,2 +1,6 @@
 0.0.0 /
  * Created libdatovka by forking libisds-0.11.1.
+ * Added function for ISDS services GetOwnerInfoFromLogin2,
+   GetUserInfoFromLogin2, UpdateDataBoxDescr2, GetDataBoxUsers2,
+   UpdateDataBoxUser2, AddDataBoxUser2, DeleteDataBoxUser2 and FindDataBox2.
+ * Made ISDS response status available via the function isds_operation_status().
