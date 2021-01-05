@@ -455,7 +455,7 @@ struct isds_DbUserInfo {
  * NULL pointer means undefined value */
 struct isds_DbUserInfoExt2 {
     _Bool *aifoIsds;            /* Set if user data are held within
-                                   the Person registry (Regist osob/ROB) */
+                                   the Person registry (Registr osob/ROB) */
     struct isds_PersonName2 *personName; /* Name of the person */
     struct isds_AddressExt2 *address;    /* Post address */
     struct tm *biDate;          /* Date of birth in local time,
@@ -617,7 +617,7 @@ struct isds_envelope {
                                            dmSenderRefNumber of initiatory
                                            message to dmRecipientRefNumber
                                            of this message
-                                       "V" is noncommercial government message
+                                       "V" is non-commercial government message
                                        Default value while sending is undefined
                                        which has the same meaning as "V".
                                        Output values (when retrieving
@@ -631,10 +631,10 @@ struct isds_envelope {
                                            message where the response offer has
                                            expired
                                        "D" is externally subsidized commercial
-                                           messsage
+                                           message
                                        "E" is commercial message prepaid by
                                            a stamp
-                                       "G" is commerical message paid by
+                                       "G" is commercial message paid by
                                            a sponsor
                                        "I"
                                        "K"
@@ -775,12 +775,12 @@ struct isds_message_status_change {
 
 /* How outgoing commercial message gets paid */
 typedef enum {
-    PAYMENT_SENDER,             /* Payed by a sender */
+    PAYMENT_SENDER,             /* Paid by sender */
     PAYMENT_STAMP,              /* Pre-paid by a sender */
     PAYMENT_SPONSOR,            /* A sponsor pays all messages */
     PAYMENT_RESPONSE,           /* Recipient pays a response */
     PAYMENT_SPONSOR_LIMITED,    /* Undocumented */
-    PAYMENT_SPONSOR_EXTERNAL    /* Undocomented */
+    PAYMENT_SPONSOR_EXTERNAL    /* Undocumented */
 } isds_payment_type;
 
 /* Permission to send commercial message */
@@ -790,7 +790,7 @@ struct isds_commercial_permission {
                                        NULL means to anybody. */
     char *payer;                    /* Owner of this box ID pays */
     struct timeval *expiration;     /* This permissions is valid until;
-                                       NULL means indefinitivly. */
+                                       NULL means indefinitely. */
     unsigned long int *count;       /* Number of messages that can be sent
                                        on this permission;
                                        NULL means unlimited. */
@@ -804,7 +804,7 @@ typedef enum {
     ISDS_CREDIT_CHARGED,        /* Credit has been charged */
     ISDS_CREDIT_DISCHARGED,     /* Credit has been discharged */
     ISDS_CREDIT_MESSAGE_SENT,   /* Credit has been spent for sending
-                                   a commerical message */
+                                   a commercial message */
     ISDS_CREDIT_STORAGE_SET,    /* Credit has been spent for setting
                                    a long-term storage */
     ISDS_CREDIT_EXPIRED         /* Credit has expired */
@@ -824,7 +824,7 @@ struct isds_credit_event_discharged {
 
 /* Data specific for ISDS_CREDIT_MESSAGE_SENT isds_credit_event_type */
 struct isds_credit_event_message_sent {
-    char *recipient;                /* Recipent's box ID of the sent message */
+    char *recipient;                /* Recipient's box ID of the sent message */
     char *message_id;               /* ID of the sent message */
 };
 
@@ -859,7 +859,7 @@ struct isds_credit_event {
         struct isds_credit_event_charged charged;
                                                 /* ISDS_CREDIT_CHARGED */
         struct isds_credit_event_discharged discharged;
-                                                /* ISDS_CREDIT_DISCHAGED */
+                                                /* ISDS_CREDIT_DISCHARGED */
         struct isds_credit_event_message_sent message_sent;
                                                 /* ISDS_CREDIT_MESSAGE_SENT */
         struct isds_credit_event_storage_set storage_set;
@@ -880,7 +880,7 @@ struct isds_list {
 struct isds_approval {
     _Bool approved;                 /* True if request for box has been
                                        approved out of ISDS */
-    char *refference;               /* Identifier of the approval */
+    char *reference;                /* Identifier of the approval */
 };
 
 /* Message sender type.

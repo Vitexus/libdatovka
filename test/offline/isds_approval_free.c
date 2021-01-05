@@ -27,7 +27,7 @@ int main(void) {
     TEST("Empty structure", test_isds_approval_free, &approval);
 
     TEST_CALLOC(approval);
-    TEST_FILL_STRING(approval->refference);
+    TEST_FILL_STRING(approval->reference);
     TEST("Full structure", test_isds_approval_free, &approval);
 
     isds_cleanup();

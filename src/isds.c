@@ -462,7 +462,7 @@ void isds_message_status_change_free(
 void isds_approval_free(struct isds_approval **approval) {
     if (!approval || !*approval) return;
 
-    free((*approval)->refference);
+    free((*approval)->reference);
 
     zfree(*approval);
 }
@@ -5797,7 +5797,7 @@ static isds_error insert_GExtApproval(struct isds_ctx *context,
 
     /* Build XSD:gExtApproval */
     INSERT_SCALAR_BOOLEAN(parent, "dbApproved", approval->approved);
-    INSERT_STRING(parent, "dbExternRefNumber", approval->refference);
+    INSERT_STRING(parent, "dbExternRefNumber", approval->reference);
 
 leave:
     return err;

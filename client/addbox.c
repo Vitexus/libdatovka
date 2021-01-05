@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
         char *refnumber = NULL;
         struct isds_credentials_delivery *credentials_delivery = NULL;
         const struct isds_approval approval = {
-            .approved = 1, .refference = "Me"
+            .approved = 1, .reference = "Me"
         };
 
         credentials_delivery = calloc(1, sizeof(*credentials_delivery));
