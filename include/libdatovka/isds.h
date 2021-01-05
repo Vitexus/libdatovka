@@ -1499,11 +1499,11 @@ isds_error isds_FindDataBox2(struct isds_ctx *context,
  * don't care.
  * @box_type restricts searching to given box type. Value DBTYPE_SYSTEM means
  * to search in all box types. Value DBTYPE_OVM_MAIN means to search in
- * non-subsudiary OVM box types. Pass NULL to let server to use default value
+ * non-subsidiary OVM box types. Pass NULL to let server to use default value
  * which is DBTYPE_SYSTEM.
  * @page_size defines count of boxes to constitute a response page. It counts
  * from zero. Pass NULL to let server to use a default value (50 now).
- * @page_number defines ordinar number of the response page to return. It
+ * @page_number defines ordinary number of the response page to return. It
  * counts from zero. Pass NULL to let server to use a default value (0 now).
  * @track_matches points to true for marking @query words found in the box
  * attributes. It points to false for not marking. Pass NULL to let the server
@@ -1511,7 +1511,7 @@ isds_error isds_FindDataBox2(struct isds_ctx *context,
  * @total_matching_boxes outputs reallocated number of all boxes matching the
  * query. Will be pointer to NULL if server did not provide the value.
  * Pass NULL if you don't care.
- * @current_page_beginning outputs reallocated ordinar number of the first box
+ * @current_page_beginning outputs reallocated ordinary number of the first box
  * in this @boxes page. It counts from zero. It will be pointer to NULL if the
  * server did not provide the value. Pass NULL if you don't care.
  * @current_page_size outputs reallocated count of boxes in the this @boxes
@@ -1519,7 +1519,7 @@ isds_error isds_FindDataBox2(struct isds_ctx *context,
  * Pass NULL if you don't care.
  * @last_page outputs pointer to reallocated boolean. True if this @boxes page
  * is the last one, false if more boxes match, NULL if the server did not
- * provude the value. Pass NULL if you don't care.
+ * provide the value. Pass NULL if you don't care.
  * @boxes outputs reallocated list of isds_fulltext_result structures,
  * possibly empty.
  * @return:
@@ -1561,7 +1561,7 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
  * @from_time is first second of history to return in @history. Server ignores
  * subseconds. NULL means time of creating the box.
  * @to_time is last second of history to return in @history. Server ignores
- * subseconds. It's valid to have the @from_time equaled to the @to_time. The
+ * subseconds. It's valid to have the @from_time equal to the @to_time. The
  * interval is closed from both ends. NULL means now.
  * @history outputs auto-reallocated list of pointers to struct
  * isds_box_state_period. Each item describes a continues time when the box
@@ -1972,7 +1972,7 @@ isds_error isds_resign_message(struct isds_ctx *context,
  * @message_id is message identifier.
  * @incoming is true for incoming message, false for outgoing message.
  * @return
- *  IE_SUCCESS  if message has ben removed
+ *  IE_SUCCESS  if message has been removed
  *  IE_INVAL    if message does not exist in long term storage or message
  *              belongs to different box
  * TODO: IE_NOEPRM  if user has no permission to erase a message */
