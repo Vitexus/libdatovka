@@ -6456,7 +6456,7 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
     };
     const isds_otp_resolution resolutions[] = {
         OTP_RESOLUTION_UNKNOWN,
-        OTP_RESOLUTION_TO_FAST,
+        OTP_RESOLUTION_TOO_FAST,
         OTP_RESOLUTION_TOTP_NOT_SENT
     };
 

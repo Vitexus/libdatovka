@@ -303,7 +303,7 @@ static isds_otp_resolution string2isds_otp_resolution(const char *string) {
     else if (!strcmp(string, "authentication.error.paswordExpired"))
         return OTP_RESOLUTION_PASSWORD_EXPIRED;
     else if (!strcmp(string, "authentication.info.cannotSendQuickly"))
-        return OTP_RESOLUTION_TO_FAST;
+        return OTP_RESOLUTION_TOO_FAST;
     else if (!strcmp(string, "authentication.error.badRole"))
         return OTP_RESOLUTION_UNAUTHORIZED;
     else if (!strcmp(string, "authentication.info.totpNotSended"))

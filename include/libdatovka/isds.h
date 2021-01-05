@@ -154,7 +154,7 @@ typedef enum {
     OTP_RESOLUTION_PASSWORD_EXPIRED,    /* Password has expired.
                                            ???: OTP or regular password
                                            expired? */
-    OTP_RESOLUTION_TO_FAST,             /* OTP cannot be sent repeatedly
+    OTP_RESOLUTION_TOO_FAST,            /* OTP cannot be sent repeatedly
                                            at this rate (minimal delay
                                            depends on TOTP window setting) */
     OTP_RESOLUTION_UNAUTHORIZED,        /* User name is not allowed to

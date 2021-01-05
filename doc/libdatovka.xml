@@ -799,7 +799,7 @@ err = isds_cleanup();
           </varlistentry>
 
           <varlistentry>
-            <term><constant>OTP_RESOLUTION_TO_FAST</constant></term>
+            <term><constant>OTP_RESOLUTION_TOO_FAST</constant></term>
             <listitem><para><abbrev>OTP</abbrev> cannot be sent repeatedly at
                 this rate. (Minimal delay depends on <abbrev>TOTP</abbrev>
                 window setting.)</para></listitem>
