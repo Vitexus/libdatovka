@@ -8,3 +8,4 @@
    a data message is accepted by fiction even though there is no data-box user
    who can cause by his own actions the acceptance of the delivered message.
  * Renamed OTP_RESOLUTION_TO_FAST to OTP_RESOLUTION_TOO_FAST.
+ * Renamed EVENT_UKNOWN to EVENT_UNKNOWN.

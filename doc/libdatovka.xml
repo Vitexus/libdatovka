@@ -1577,7 +1577,7 @@ err = isds_cleanup();
         <para>Message event type. Known values are:</para>
         <variablelist>
           <varlistentry>
-            <term><constant>EVENT_UKNOWN</constant></term>
+            <term><constant>EVENT_UNKNOWN</constant></term>
             <listitem><para>Event uknown to this library.</para></listitem>
           </varlistentry>
 

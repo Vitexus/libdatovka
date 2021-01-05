@@ -3024,7 +3024,7 @@ static isds_error eventstring2event(const xmlChar *string,
             _("Unknown delivery info event prefix: %s\n"), string_locale);
     free(string_locale);
 
-    *event->type = EVENT_UKNOWN;
+    *event->type = EVENT_UNKNOWN;
     event->description = strdup((char *) string);
     if (!(event->description)) return IE_NOMEM;
 

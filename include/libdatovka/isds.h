@@ -478,7 +478,7 @@ struct isds_DbUserInfoExt2 {
 
 /* Message event type */
 typedef enum {
-    EVENT_UKNOWN,                   /* Event unknown to this library */
+    EVENT_UNKNOWN,                  /* Event unknown to this library */
     EVENT_ACCEPTED_BY_RECIPIENT,    /* Message has been delivered and accepted
                                        by recipient action */
     EVENT_ACCEPTED_BY_FICTION,      /* Message has been delivered, acceptance

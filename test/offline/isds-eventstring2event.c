@@ -164,7 +164,7 @@ int main(void) {
     /* Unknown event prefixes */
     input = BAD_CAST "EV-1: unknown event";
     event.time = NULL;
-    event_type = EVENT_UKNOWN;
+    event_type = EVENT_UNKNOWN;
     event.type = &event_type;
     event.description = (char *) input;
     TEST((char*)input, test_eventstring2event, input,
@@ -172,7 +172,7 @@ int main(void) {
 
     input = BAD_CAST "EV7: intermediate undefined event";
     event.time = NULL;
-    event_type = EVENT_UKNOWN;
+    event_type = EVENT_UNKNOWN;
     event.type = &event_type;
     event.description = (char *) input;
     TEST((char*)input, test_eventstring2event, input,
@@ -180,7 +180,7 @@ int main(void) {
 
     input = BAD_CAST "EV10: intermediate undefined event";
     event.time = NULL;
-    event_type = EVENT_UKNOWN;
+    event_type = EVENT_UNKNOWN;
     event.type = &event_type;
     event.description = (char *) input;
     TEST((char*)input, test_eventstring2event, input,
@@ -188,7 +188,7 @@ int main(void) {
 
     input = BAD_CAST "EV14: out of range event";
     event.time = NULL;
-    event_type = EVENT_UKNOWN;
+    event_type = EVENT_UNKNOWN;
     event.type = &event_type;
     event.description = (char *) input;
     TEST((char*)input, test_eventstring2event, input,
@@ -196,7 +196,7 @@ int main(void) {
 
     /* Other valid cases */
     event.time = NULL;
-    event_type = EVENT_UKNOWN;
+    event_type = EVENT_UNKNOWN;
     event.type = &event_type;
     event.description = "";
     TEST("Empty input", test_eventstring2event, BAD_CAST "",
