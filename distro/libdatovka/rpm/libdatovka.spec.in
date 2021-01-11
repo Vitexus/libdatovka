@@ -1,0 +1,82 @@
+Name: libdatovka
+Version: __VERSION__
+Release: __RELEASE__%{?dist}
+Summary: Library for accessing the Czech Data Boxes
+License: LGPLv3+ and GPLv3+
+URL: http://xpisar.wz.cz/%{name}/
+#Source0: %{url}dist/%{name}-%{version}.tar.xz
+Source0: libdatovka_%{version}.orig.tar.xz
+
+BuildRequires: autoconf
+BuildRequires: automake
+BuildRequires: coreutils
+BuildRequires: findutils
+BuildRequires: gcc
+BuildRequires: libxml2-devel
+BuildRequires: libcurl-devel
+BuildRequires: make
+BuildRequires: openssl-devel >= 1.0.2
+BuildRequires: expat-devel >= 2.0.0
+
+# Manual pages
+#BuildRequires: docbook-style-xsl
+#BuildRequires: libxslt
+
+%description
+This is a library for accessing ISDS (Informační systém datových schránek /
+Data Box Information System) SOAP services as defined in Czech ISDS Act
+(300/2008 Coll.) and implied documents.
+
+%package devel
+Summary: Development files for %{name}
+Requires: %{name}%{?_isa} = %{version}-%{release}
+Requires: libxml2-devel%{?_isa}
+Requires: pkgconfig%{?_isa}
+
+%description devel
+The %{name}-devel package contains libraries and header files for
+developing applications that use %{name}.
+
+%prep
+%setup -q
+
+%build
+%configure \
+    --disable-doc \
+    --enable-openssl-backend \
+    --disable-static \
+    --with-libcurl \
+    --enable-curlreauthorizationbug
+make %{?_smp_mflags}
+
+%check
+make check %{?_smp_mflags}
+
+%install
+make install DESTDIR=$RPM_BUILD_ROOT
+find $RPM_BUILD_ROOT -name '*.la' -delete
+%find_lang %{name}
+mv doc specification
+# Remove multilib unsafe files
+rm -rf client/.deps client/Makefile{,.in}
+
+%post -p /sbin/ldconfig
+
+%postun -p /sbin/ldconfig
+
+#%%ldconfig_scriptlets
+
+%files -f %{name}.lang
+%license COPYING
+%doc README AUTHORS NEWS TODO
+%{_libdir}/*.so.*
+
+%files devel
+%{_includedir}/libdatovka/isds.h
+%{_libdir}/*.so
+%{_libdir}/pkgconfig/%{name}.pc
+%doc client specification
+
+%changelog
+* Tue Apr 03 2018 Karel Slany <karel.slany@nic.cz> - 0.10.7-1
+- moved spec file to OBS

@@ -1,0 +1,4 @@
+usr/include/libdatovka/*
+usr/lib/*/libdatovka*.a
+usr/lib/*/libdatovka*.so
+usr/lib/*/pkgconfig/libdatovka.pc

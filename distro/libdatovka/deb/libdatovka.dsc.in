@@ -1,0 +1,19 @@
+Format: 3.0 (quilt)
+Source: libdatovka
+Binary: libdatovka0, libdatovka-dev
+Architecture: any all
+Version: __VERSION__-__RELEASE__
+Maintainer: Datovka <datove-schranky@labs.nic.cz>
+Uploaders: Karel Slany <karel.slany@nic.cz>
+Homepage: http://www.datovka.cz/
+Testsuite: autopkgtest
+Build-Depends: debhelper (>= 9),
+               gettext,
+               libcurl4-openssl-dev,
+               libexpat-dev,
+               libssl-dev,
+               libxml2-dev
+Package-List:
+ libdatovka0 deb libs optional arch=any
+ libdatovka-dev deb libdevel arch=any
+Files:
