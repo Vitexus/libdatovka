@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.63])
 AC_INIT([libdatovka], [0.0.0], [datove-schranky@labs.nic.cz])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([tar-ustar]) # File names longer than 99 characters.
 AC_LANG([C])
 AC_CONFIG_SRCDIR([src/isds.c])
 AC_CONFIG_MACRO_DIR([m4])

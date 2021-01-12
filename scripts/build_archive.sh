@@ -73,6 +73,7 @@ run_distcheck() {
 	return 1
 }
 
+# Find xzip archive.
 find_package_file() {
 	local PACKAGE="$1"
 	local VERSION="$2"
