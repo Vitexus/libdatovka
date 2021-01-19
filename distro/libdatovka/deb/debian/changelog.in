@@ -1,0 +1,6 @@
+libdatovka (__VERSION__-__RELEASE__) unstable; urgency=medium
+
+  * moved changelog to OBS
+  * see NEWS or https://www.datovka.cz
+
+ -- Karel Slany <karel.slany@nic.cz>  Tue, 27 mar 2018 14:39:18 +0200

@@ -1,0 +1,4 @@
+version=3
+
+opts=pgpsigurlmangle=s/$/.asc/ \
+ https://secure.nic.cz/files/datove_schranky/libdatovka/libdatovka-(.+)\.tar\.xz
