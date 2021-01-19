@@ -2030,7 +2030,7 @@ isds_error isds_ping(struct isds_ctx *context) {
     /* Build dummy request */
     request = xmlNewNode(NULL, BAD_CAST "DummyOperation");
     if (!request) {
-        isds_log_message(context, _("Could build ISDS dummy request"));
+        isds_log_message(context, _("Could not build DummyOperation request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
@@ -2101,7 +2101,7 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
     /* Build dummy request */
     request = xmlNewNode(NULL, BAD_CAST "X-BogusOperation");
     if (!request) {
-        isds_log_message(context, _("Could build ISDS bogus request"));
+        isds_log_message(context, _("Could not build bogus request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
@@ -7307,7 +7307,7 @@ static isds_error build_CreateDBInput_request(struct isds_ctx *context,
     *request = xmlNewNode(NULL, service_name);
     if (!*request) {
         char *service_name_locale = _isds_utf82locale((char*) service_name);
-        isds_printf_message(context, _("Could build %s request"),
+        isds_printf_message(context, _("Could not build %s request"),
                 service_name_locale);
         free(service_name_locale);
         return IE_ERROR;
@@ -7544,7 +7544,7 @@ static isds_error _isds_delete_box_common(struct isds_ctx *context,
     if (!request) {
         char *service_name_locale = _isds_utf82locale((char*)service_name);
         isds_printf_message(context,
-                _("Could build %s request"), service_name_locale);
+                _("Could not build %s request"), service_name_locale);
         free(service_name_locale);
         return IE_ERROR;
     }
@@ -7659,7 +7659,7 @@ isds_error isds_UpdateDataBoxDescr(struct isds_ctx *context,
     request = xmlNewNode(NULL, BAD_CAST "UpdateDataBoxDescr");
     if (!request) {
         isds_log_message(context,
-                _("Could build UpdateDataBoxDescr request"));
+                _("Could not build UpdateDataBoxDescr request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
@@ -7725,7 +7725,7 @@ isds_error isds_UpdateDataBoxDescr2(struct isds_ctx *context,
     request = xmlNewNode(NULL, BAD_CAST "UpdateDataBoxDescr2");
     if (!request) {
         isds_log_message(context,
-                _("Could build UpdateDataBoxDescr2 request"));
+                _("Could not build UpdateDataBoxDescr2 request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
@@ -8059,7 +8059,7 @@ isds_error isds_UpdateDataBoxUser(struct isds_ctx *context,
     request = xmlNewNode(NULL, BAD_CAST "UpdateDataBoxUser");
     if (!request) {
         isds_log_message(context,
-                _("Could build UpdateDataBoxUser request"));
+                _("Could not build UpdateDataBoxUser request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
@@ -8192,7 +8192,7 @@ isds_error isds_activate(struct isds_ctx *context,
     /* Build Activate request */
     request = xmlNewNode(NULL, BAD_CAST "Activate");
     if (!request) {
-        isds_log_message(context, _("Could build Activate request"));
+        isds_log_message(context, _("Could not build Activate request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
@@ -8318,7 +8318,7 @@ isds_error isds_reset_password(struct isds_ctx *context,
     request = xmlNewNode(NULL, BAD_CAST "NewAccessData");
     if (!request) {
         isds_log_message(context,
-                _("Could build NewAccessData request"));
+                _("Could not build NewAccessData request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
@@ -8827,7 +8827,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
     request = xmlNewNode(NULL, BAD_CAST "FindDataBox");
     if (!request) {
         isds_log_message(context,
-                _("Could build FindDataBox request"));
+                _("Could not build FindDataBox request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
@@ -8882,7 +8882,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         char *code_locale = _isds_utf82locale((char*)code);
         char *message_locale = _isds_utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Server did not found any box on FindDataBox request "
+                _("Server did not find any box on the FindDataBox request "
                     "(code=%s, message=%s)\n"), code_locale, message_locale);
         isds_log_message(context, message_locale);
         free(code_locale);
@@ -9032,7 +9032,7 @@ isds_error isds_FindDataBox2(struct isds_ctx *context,
     request = xmlNewNode(NULL, BAD_CAST "FindDataBox2");
     if (!request) {
         isds_log_message(context,
-                _("Could build FindDataBox2 request"));
+                _("Could not build FindDataBox2 request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
@@ -9087,7 +9087,7 @@ isds_error isds_FindDataBox2(struct isds_ctx *context,
         char *code_locale = _isds_utf82locale((char*)code);
         char *message_locale = _isds_utf82locale((char*)message);
         isds_log(ILF_ISDS, ILL_DEBUG,
-                _("Server did not found any box on FindDataBox2 request "
+                _("Server did not find any box on the FindDataBox2 request "
                     "(code=%s, message=%s)\n"), code_locale, message_locale);
         isds_log_message(context, message_locale);
         free(code_locale);
@@ -9711,7 +9711,7 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
     request = xmlNewNode(NULL, BAD_CAST "CheckDataBox");
     if (!request) {
         isds_log_message(context,
-                _("Could build CheckDataBox request"));
+                _("Could not build CheckDataBox request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
@@ -13244,7 +13244,7 @@ isds_error isds_delete_message_from_storage(struct isds_ctx *context,
     request = xmlNewNode(NULL, BAD_CAST "EraseMessage");
     if (!request) {
         isds_log_message(context,
-                _("Could build EraseMessage request"));
+                _("Could not build EraseMessage request"));
         return IE_ERROR;
     }
     isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
