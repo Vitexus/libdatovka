@@ -4,3 +4,6 @@
    GetUserInfoFromLogin2, UpdateDataBoxDescr2, GetDataBoxUsers2,
    UpdateDataBoxUser2, AddDataBoxUser2, DeleteDataBoxUser2 and FindDataBox2.
  * Made ISDS response status available via the function isds_operation_status().
+ * Added support for the new EV6 event. This event describes a situation when
+   a data message is accepted by fiction even though there is no data-box user
+   who can cause by his own actions the acceptance of the delivered message.
