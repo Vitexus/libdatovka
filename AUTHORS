@@ -1,4 +1,5 @@
 Core development:
+    CZ.NIC, z. s. p. o. <datove-schranky@labs.nic.cz>
     Petr Písař <petr.pisar@atlas.cz>
 
 Base64 transformation <http://sourceforge.net/projects/libb64>:
@@ -10,4 +11,4 @@ MinGW support:
 C++ and OS X portability:
 Mobile key authentication:
 OpenSSL back-end:
-    Karel Slany <karel.slany@nic.cz>
+    CZ.NIC, z. s. p. o. <datove-schranky@labs.nic.cz>
