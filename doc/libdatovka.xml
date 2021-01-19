@@ -1590,8 +1590,15 @@ err = isds_cleanup();
           <varlistentry>
             <term><constant>EVENT_ACCEPTED_BY_FICTION</constant></term>
             <listitem><para>Message has been delivered, acceptance period
-                timed out, the message is considered as
+                timed out, the message is considered
                 accepted.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>EVENT_ACCEPTED_BY_FICTION_NO_USER</constant></term>
+            <listitem><para>Message has been delivered, acceptance period
+                timed out because there was no user who could accept
+                the message.</para></listitem>
           </varlistentry>
 
           <varlistentry>
