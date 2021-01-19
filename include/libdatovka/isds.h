@@ -482,7 +482,10 @@ typedef enum {
     EVENT_ACCEPTED_BY_RECIPIENT,    /* Message has been delivered and accepted
                                        by recipient action */
     EVENT_ACCEPTED_BY_FICTION,      /* Message has been delivered, acceptance
-                                       timed out, considered as accepted */
+                                       timed out, considered accepted */
+    EVENT_ACCEPTED_BY_FICTION_NO_USER, /* Message has been delivered, acceptance
+                                          timed out because there was no user
+                                          who could accept the message */
     EVENT_UNDELIVERABLE,            /* Recipient box made inaccessible,
                                        thus message is undeliverable */
     EVENT_COMMERCIAL_ACCEPTED,      /* Recipient confirmed acceptance of

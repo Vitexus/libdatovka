@@ -121,6 +121,14 @@ int main(void) {
     TEST((char*)input, test_eventstring2event, input,
             IE_SUCCESS, &event, &output);
 
+    input = BAD_CAST "EV6: some text";
+    event.time = NULL;
+    event_type = EVENT_ACCEPTED_BY_FICTION_NO_USER;
+    event.type = &event_type;
+    event.description = "some text";
+    TEST((char*)input, test_eventstring2event, input,
+            IE_SUCCESS, &event, &output);
+
     input = BAD_CAST "EV8: some text";
     event.time = NULL;
     event_type = EVENT_UNDELIVERED_AV_CHECK;
@@ -162,7 +170,7 @@ int main(void) {
     TEST((char*)input, test_eventstring2event, input,
             IE_SUCCESS, &event, &output);
 
-    input = BAD_CAST "EV6: intermediate undefined event";
+    input = BAD_CAST "EV7: intermediate undefined event";
     event.time = NULL;
     event_type = EVENT_UKNOWN;
     event.type = &event_type;

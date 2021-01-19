@@ -544,6 +544,8 @@ void print_event_type(const isds_event_type *type) {
                            printf("ACCEPTED_BY_RECIPIENT\n"); break;
         case EVENT_ACCEPTED_BY_FICTION:
                            printf("DELIVERED_BY_FICTION\n"); break;
+        case EVENT_ACCEPTED_BY_FICTION_NO_USER:
+                           printf("ACCEPTED_BY_FICTION_NO_USER\n"); break;
         case EVENT_UNDELIVERABLE:
                            printf("UNDELIVERABLE\n"); break;
         case EVENT_COMMERCIAL_ACCEPTED:
