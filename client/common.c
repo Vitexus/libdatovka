@@ -81,11 +81,11 @@ const char *password(void) {
 void print_DbState(const long int state) {
     switch(state) {
         case DBSTATE_ACCESSIBLE: printf("ACCESSIBLE\n"); break;
-        case DBSTATE_TEMP_UNACCESSIBLE: printf("TEMP_UNACCESSIBLE\n"); break;
+        case DBSTATE_TEMP_INACCESSIBLE: printf("TEMP_INACCESSIBLE\n"); break;
         case DBSTATE_NOT_YET_ACCESSIBLE: printf("NOT_YET_ACCESSIBLE\n"); break;
-        case DBSTATE_PERM_UNACCESSIBLE: printf("PERM_UNACCESSIBLE\n"); break;
+        case DBSTATE_PERM_INACCESSIBLE: printf("PERM_INACCESSIBLE\n"); break;
         case DBSTATE_REMOVED: printf("REMOVED\n"); break;
-        case DBSTATE_TEMP_UNACCESSIBLE_LAW: printf("DBSTATE_TEMP_UNACCESSIBLE_LAW"); break;
+        case DBSTATE_TEMP_INACCESSIBLE_LAW: printf("DBSTATE_TEMP_INACCESSIBLE_LAW"); break;
         default: printf("<unknown state %ld>\n", state);
     }
 }

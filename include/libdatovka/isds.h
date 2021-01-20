@@ -244,11 +244,11 @@ typedef enum {
 /* Box status from point of view of accessibility */
 typedef enum {
     DBSTATE_ACCESSIBLE = 1,
-    DBSTATE_TEMP_UNACCESSIBLE = 2,
+    DBSTATE_TEMP_INACCESSIBLE = 2,
     DBSTATE_NOT_YET_ACCESSIBLE = 3,
-    DBSTATE_PERM_UNACCESSIBLE = 4,
+    DBSTATE_PERM_INACCESSIBLE = 4,
     DBSTATE_REMOVED = 5,
-    DBSTATE_TEMP_UNACCESSIBLE_LAW = 6
+    DBSTATE_TEMP_INACCESSIBLE_LAW = 6
 } isds_DbState;
 
 /* User permissions from point of view of ISDS.
