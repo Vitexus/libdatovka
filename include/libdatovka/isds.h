@@ -271,7 +271,7 @@ typedef enum {
                                        2012-05) */
     PRIVIL_ERASE_VAULT = 0x80       /* Can delete messages from long term
                                        storage */
-} isds_priviledges;
+} isds_privileges;
 
 /* Message status */
 typedef enum {

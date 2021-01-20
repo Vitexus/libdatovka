@@ -1019,8 +1019,8 @@ err = isds_cleanup();
       </refsection>
 
       <refsection>
-        <title><type>isds_priviledges</type></title>
-        <synopsis>typedef enum <type>isds_priviledges</type>;</synopsis>
+        <title><type>isds_privileges</type></title>
+        <synopsis>typedef enum <type>isds_privileges</type>;</synopsis>
         <para>Distinct user permissions from point of view of <abbrev>ISDS</abbrev>.
           Instances can be bitmaps of any of these distinct values. Distinct known
           values are:</para>
