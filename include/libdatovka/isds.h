@@ -1191,7 +1191,7 @@ isds_error isds_get_password_expiration(struct isds_ctx *context,
 
 /* Change user password in ISDS.
  * User must supply old password, new password will takes effect after some
- * time, current session can continue. Password must fulfill some constraints.
+ * time, current session can continue. Password must fulfil some constraints.
  * @context is session context
  * @old_password is current password.
  * @new_password is requested new password
@@ -1447,7 +1447,7 @@ isds_error isds_DeleteDataBoxUser2(struct isds_ctx *context,
 
 /* Get list of boxes in ZIP archive.
  * @context is session context
- * @list_identifier is UTF-8 encoded string identifying boxes of interrest.
+ * @list_identifier is UTF-8 encoded string identifying boxes of interest.
  * System recognizes following values currently: ALL (all boxes), UPG
  * (effectively OVM boxes), POA (active boxes allowing receiving commercial
  * messages), OVM (OVM gross type boxes), OPN (boxes allowing receiving
@@ -1469,8 +1469,8 @@ isds_error isds_get_box_list_archive(struct isds_ctx *context,
  * possibly empty. Input NULL or valid old structure.
  * @return:
  *  IE_SUCCESS if search succeeded, @boxes contains useful data
- *  IE_NOEXIST if no such box exists, @boxes will be NULL
- *  IE_2BIG if too much boxes exist and server truncated the results, @boxes
+ *  IE_NONEXIST if no such box exists, @boxes will be NULL
+ *  IE_TOO_BIG if too much boxes exist and server truncated the results, @boxes
  *      contains still valid data
  *  other code if something bad happens. @boxes will be NULL. */
 isds_error isds_FindDataBox(struct isds_ctx *context,
@@ -1484,8 +1484,8 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
  * possibly empty. Input NULL or valid old structure.
  * @return:
  *  IE_SUCCESS if search succeeded, @boxes contains useful data
- *  IE_NOEXIST if no such box exists, @boxes will be NULL
- *  IE_2BIG if too much boxes exist and server truncated the results, @boxes
+ *  IE_NONEXIST if no such box exists, @boxes will be NULL
+ *  IE_TOO_BIG if too much boxes exist and server truncated the results, @boxes
  *      contains still valid data
  *  other code if something bad happens. @boxes will be NULL. */
 isds_error isds_FindDataBox2(struct isds_ctx *context,
@@ -1524,7 +1524,7 @@ isds_error isds_FindDataBox2(struct isds_ctx *context,
  * possibly empty.
  * @return:
  *  IE_SUCCESS if search succeeded
- *  IE_2BIG if @page_size is too large
+ *  IE_TOO_BIG if @page_size is too large
  *  other code if something bad happens; output arguments will be NULL. */
 isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
         const char *query,
@@ -1545,7 +1545,7 @@ isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
  * @box_status is return value of box status.
  * @return:
  *  IE_SUCCESS if box has been found and its status retrieved
- *  IE_NOEXIST if box is not known to ISDS server
+ *  IE_NONEXIST if box is not known to ISDS server
  *  or other appropriate error.
  *  You can use isds_DbState to enumerate box status. However out of enum
  *  range value can be returned too. This is feature because ISDS
@@ -1566,7 +1566,7 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
  * @history outputs auto-reallocated list of pointers to struct
  * isds_box_state_period. Each item describes a continues time when the box
  * was in one state. The state is 1 for accessible box. Otherwise the box
- * is inaccessible (priviledged users will get exact box state as enumerated
+ * is inaccessible (privileged users will get exact box state as enumerated
  * in isds_DbState, other users 0).
  * @return:
  *  IE_SUCCESS if the history has been obtained correctly,
@@ -1936,7 +1936,7 @@ isds_error isds_verify_message_hash(struct isds_ctx *context,
 
 /* Submit CMS signed message to ISDS to verify its originality. This is
  * stronger form of isds_verify_message_hash() because ISDS does more checks
- * than simple one (potentialy old weak) hash comparison.
+ * than simple one (potentially old weak) hash comparison.
  * @context is session context
  * @message is memory with raw CMS signed message bit stream
  * @length is @message size in bytes
