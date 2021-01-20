@@ -466,7 +466,7 @@ int main(void) {
                 context, url, username, password, NULL, NULL);
         free(url);
 
-        TEST("No data", test_isds_find_box_by_fulltext, IE_2BIG,
+        TEST("No data", test_isds_find_box_by_fulltext, IE_TOO_BIG,
                 context, service_arguments.search_text, NULL, NULL,
                 (unsigned long int *)service_arguments.search_page_size,
                 (unsigned long int *)service_arguments.search_page_number,

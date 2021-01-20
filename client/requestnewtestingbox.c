@@ -79,7 +79,7 @@ int main(void) {
     if (db_owner_info) {
         char *refnumber = NULL;
         const struct isds_approval approval = {
-            .approved = 1, .refference = "Me"
+            .approved = 1, .reference = "Me"
         };
         
         free(db_owner_info->email);

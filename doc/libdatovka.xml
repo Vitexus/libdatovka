@@ -424,8 +424,8 @@ err = isds_cleanup();
           </varlistentry>
 
           <varlistentry>
-            <term><errorname>IE_NOEXIST</errorname></term>
-            <listitem><para>Requested entity does exist.</para></listitem>
+            <term><errorname>IE_NONEXIST</errorname></term>
+            <listitem><para>Requested entity doesn't exist.</para></listitem>
           </varlistentry>
 
           <varlistentry>
@@ -460,7 +460,7 @@ err = isds_cleanup();
 
           <varlistentry>
             <term><errorname>IE_ENUM</errorname></term>
-            <listitem><para>Invalid enum value.</para></listitem>
+            <listitem><para>Invalid enumeration value.</para></listitem>
           </varlistentry>
 
           <varlistentry>
@@ -469,18 +469,18 @@ err = isds_cleanup();
           </varlistentry>
 
           <varlistentry>
-            <term><errorname>IE_2BIG</errorname></term>
+            <term><errorname>IE_TOO_BIG</errorname></term>
             <listitem><para>Value is too big.</para></listitem>
           </varlistentry>
 
           <varlistentry>
-            <term><errorname>IE_2SMALL</errorname></term>
+            <term><errorname>IE_TOO_SMALL</errorname></term>
             <listitem><para>Value is too small.</para></listitem>
           </varlistentry>
 
           <varlistentry>
             <term><errorname>IE_NOTUNIQ</errorname></term>
-            <listitem><para>Value is not uniq.</para></listitem>
+            <listitem><para>Value is not unique.</para></listitem>
           </varlistentry>
 
           <varlistentry>
@@ -490,7 +490,7 @@ err = isds_cleanup();
 
           <varlistentry>
             <term><errorname>IE_PARTIAL_SUCCESS</errorname></term>
-            <listitem><para>Operaration on a vector succeded for some values, but failed for others.</para></listitem>
+            <listitem><para>Operation on a vector succeeded for some values but failed for others.</para></listitem>
           </varlistentry>
 
           <varlistentry>
@@ -799,7 +799,7 @@ err = isds_cleanup();
           </varlistentry>
 
           <varlistentry>
-            <term><constant>OTP_RESOLUTION_TO_FAST</constant></term>
+            <term><constant>OTP_RESOLUTION_TOO_FAST</constant></term>
             <listitem><para><abbrev>OTP</abbrev> cannot be sent repeatedly at
                 this rate. (Minimal delay depends on <abbrev>TOTP</abbrev>
                 window setting.)</para></listitem>
@@ -992,7 +992,7 @@ err = isds_cleanup();
           </varlistentry>
 
           <varlistentry>
-            <term><constant>DBSTATE_TEMP_UNACCESSIBLE</constant></term>
+            <term><constant>DBSTATE_TEMP_INACCESSIBLE</constant></term>
             <listitem><para>The box is temporarily inaccessible (at the request of the user).</para></listitem>
           </varlistentry>
 
@@ -1002,7 +1002,7 @@ err = isds_cleanup();
           </varlistentry>
 
           <varlistentry>
-            <term><constant>DBSTATE_PERM_UNACCESSIBLE</constant></term>
+            <term><constant>DBSTATE_PERM_INACCESSIBLE</constant></term>
             <listitem><para>The box is permanently inaccessible.</para></listitem>
           </varlistentry>
 
@@ -1012,15 +1012,15 @@ err = isds_cleanup();
           </varlistentry>
 
           <varlistentry>
-            <term><constant>DBSTATE_TEMP_UNACCESSIBLE_LAW</constant></term>
+            <term><constant>DBSTATE_TEMP_INACCESSIBLE_LAW</constant></term>
             <listitem><para>The box is temporarily inaccessible (because of the reasons enumerated in the law).</para></listitem>
           </varlistentry>
         </variablelist>
       </refsection>
 
       <refsection>
-        <title><type>isds_priviledges</type></title>
-        <synopsis>typedef enum <type>isds_priviledges</type>;</synopsis>
+        <title><type>isds_privileges</type></title>
+        <synopsis>typedef enum <type>isds_privileges</type>;</synopsis>
         <para>Distinct user permissions from point of view of <abbrev>ISDS</abbrev>.
           Instances can be bitmaps of any of these distinct values. Distinct known
           values are:</para>
@@ -1145,7 +1145,7 @@ err = isds_cleanup();
           </varlistentry>
 
           <varlistentry>
-            <term><constant>MESSAGESTATE_IN_SAFE</constant></term>
+            <term><constant>MESSAGESTATE_IN_VAULT</constant></term>
             <listitem><para>The message is stored in the long term
                 storage.</para></listitem>
           </varlistentry>
@@ -1577,7 +1577,7 @@ err = isds_cleanup();
         <para>Message event type. Known values are:</para>
         <variablelist>
           <varlistentry>
-            <term><constant>EVENT_UKNOWN</constant></term>
+            <term><constant>EVENT_UNKNOWN</constant></term>
             <listitem><para>Event uknown to this library.</para></listitem>
           </varlistentry>
 

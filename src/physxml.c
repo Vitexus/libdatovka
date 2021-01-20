@@ -261,6 +261,6 @@ _hidden isds_error _isds_find_element_boundary(void *document, size_t length,
 
     XML_ParserFree(parser);
     if (user_data.found) return IE_SUCCESS;
-    else return IE_NOEXIST;
+    else return IE_NONEXIST;
 }
 

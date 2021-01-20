@@ -81,7 +81,7 @@ int main(void) {
         }
 
         if (last_message) {
-            /*Save last message for latter refference */
+            /* Save last message for latter reference */
             if (last_message->envelope && last_message->envelope->dmID) {
                 last_message_id = strdup(last_message->envelope->dmID);
             }

@@ -81,11 +81,11 @@ const char *password(void) {
 void print_DbState(const long int state) {
     switch(state) {
         case DBSTATE_ACCESSIBLE: printf("ACCESSIBLE\n"); break;
-        case DBSTATE_TEMP_UNACCESSIBLE: printf("TEMP_UNACCESSIBLE\n"); break;
+        case DBSTATE_TEMP_INACCESSIBLE: printf("TEMP_INACCESSIBLE\n"); break;
         case DBSTATE_NOT_YET_ACCESSIBLE: printf("NOT_YET_ACCESSIBLE\n"); break;
-        case DBSTATE_PERM_UNACCESSIBLE: printf("PERM_UNACCESSIBLE\n"); break;
+        case DBSTATE_PERM_INACCESSIBLE: printf("PERM_INACCESSIBLE\n"); break;
         case DBSTATE_REMOVED: printf("REMOVED\n"); break;
-        case DBSTATE_TEMP_UNACCESSIBLE_LAW: printf("DBSTATE_TEMP_UNACCESSIBLE_LAW"); break;
+        case DBSTATE_TEMP_INACCESSIBLE_LAW: printf("DBSTATE_TEMP_INACCESSIBLE_LAW"); break;
         default: printf("<unknown state %ld>\n", state);
     }
 }
@@ -245,7 +245,7 @@ static void print_dmMessageStatus(const isds_message_status *status) {
             case MESSAGESTATE_READ: printf("READ\n"); break;
             case MESSAGESTATE_UNDELIVERABLE: printf("UNDELIVERABLE\n"); break;
             case MESSAGESTATE_REMOVED: printf("REMOVED\n"); break;
-            case MESSAGESTATE_IN_SAFE: printf("IN_SAFE\n"); break;
+            case MESSAGESTATE_IN_VAULT: printf("IN_VAULT\n"); break;
             default: printf("<unknown type %d>\n", *status);
         }
 }
@@ -538,7 +538,7 @@ void print_event_type(const isds_event_type *type) {
         return;
     }
     switch (*type) {
-        case EVENT_UKNOWN: printf("UNKNOWN\n"); break;
+        case EVENT_UNKNOWN: printf("UNKNOWN\n"); break;
         case EVENT_ENTERED_SYSTEM: printf("ENTERED_SYSTEM\n"); break;
         case EVENT_ACCEPTED_BY_RECIPIENT:
                            printf("ACCEPTED_BY_RECIPIENT\n"); break;

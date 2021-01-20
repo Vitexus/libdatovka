@@ -74,7 +74,7 @@ List of allowed MIME types is copied (and sometimes agumented) in appendix
 of Webové služby rozhranní ISDS pro manipulaci s datovými zprávami.
 
 There is list of allowed file name extensions and MIME type mapping
-(types ordered in decreasing prefference):
+(types ordered in decreasing preference):
 
 Extensions  MIME type               Description
 -------------------------------------------------------------------------------

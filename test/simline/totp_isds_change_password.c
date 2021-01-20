@@ -236,7 +236,7 @@ int main(void) {
         /* First phase of authentication */
         otp_credentials.otp_code = NULL;
         TEST("SendSMSCode cannot send so fast", test_isds_change_password,
-                IE_ISDS, OTP_RESOLUTION_TO_FAST, "43",
+                IE_ISDS, OTP_RESOLUTION_TOO_FAST, "43",
                 context, password, "h2k$Aana", &otp_credentials, &refnum);
 
         free(refnum);

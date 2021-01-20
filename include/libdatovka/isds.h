@@ -45,7 +45,7 @@ typedef enum {
     IE_NOT_LOGGED_IN,
     IE_CONNECTION_CLOSED,
     IE_TIMED_OUT,
-    IE_NOEXIST,
+    IE_NONEXIST,
     IE_NOMEM,
     IE_NETWORK,
     IE_HTTP,
@@ -54,8 +54,8 @@ typedef enum {
     IE_ISDS,
     IE_ENUM,
     IE_DATE,
-    IE_2BIG,
-    IE_2SMALL,
+    IE_TOO_BIG,
+    IE_TOO_SMALL,
     IE_NOTUNIQ,
     IE_NOTEQUAL,
     IE_PARTIAL_SUCCESS,
@@ -154,7 +154,7 @@ typedef enum {
     OTP_RESOLUTION_PASSWORD_EXPIRED,    /* Password has expired.
                                            ???: OTP or regular password
                                            expired? */
-    OTP_RESOLUTION_TO_FAST,             /* OTP cannot be sent repeatedly
+    OTP_RESOLUTION_TOO_FAST,            /* OTP cannot be sent repeatedly
                                            at this rate (minimal delay
                                            depends on TOTP window setting) */
     OTP_RESOLUTION_UNAUTHORIZED,        /* User name is not allowed to
@@ -244,11 +244,11 @@ typedef enum {
 /* Box status from point of view of accessibility */
 typedef enum {
     DBSTATE_ACCESSIBLE = 1,
-    DBSTATE_TEMP_UNACCESSIBLE = 2,
+    DBSTATE_TEMP_INACCESSIBLE = 2,
     DBSTATE_NOT_YET_ACCESSIBLE = 3,
-    DBSTATE_PERM_UNACCESSIBLE = 4,
+    DBSTATE_PERM_INACCESSIBLE = 4,
     DBSTATE_REMOVED = 5,
-    DBSTATE_TEMP_UNACCESSIBLE_LAW = 6
+    DBSTATE_TEMP_INACCESSIBLE_LAW = 6
 } isds_DbState;
 
 /* User permissions from point of view of ISDS.
@@ -271,7 +271,7 @@ typedef enum {
                                        2012-05) */
     PRIVIL_ERASE_VAULT = 0x80       /* Can delete messages from long term
                                        storage */
-} isds_priviledges;
+} isds_privileges;
 
 /* Message status */
 typedef enum {
@@ -291,7 +291,7 @@ typedef enum {
                                            (e.g. recipient box has been made
                                            inaccessible meantime) */
     MESSAGESTATE_REMOVED = 0x200,       /* Message content deleted */
-    MESSAGESTATE_IN_SAFE = 0x400        /* Message stored in long term storage */
+    MESSAGESTATE_IN_VAULT = 0x400       /* Message stored in long term storage */
 } isds_message_status;
 #define MESSAGESTATE_ANY 0x7FE          /* Union of all isds_message_status
                                            values */
@@ -455,7 +455,7 @@ struct isds_DbUserInfo {
  * NULL pointer means undefined value */
 struct isds_DbUserInfoExt2 {
     _Bool *aifoIsds;            /* Set if user data are held within
-                                   the Person registry (Regist osob/ROB) */
+                                   the Person registry (Registr osob/ROB) */
     struct isds_PersonName2 *personName; /* Name of the person */
     struct isds_AddressExt2 *address;    /* Post address */
     struct tm *biDate;          /* Date of birth in local time,
@@ -478,7 +478,7 @@ struct isds_DbUserInfoExt2 {
 
 /* Message event type */
 typedef enum {
-    EVENT_UKNOWN,                   /* Event unknown to this library */
+    EVENT_UNKNOWN,                  /* Event unknown to this library */
     EVENT_ACCEPTED_BY_RECIPIENT,    /* Message has been delivered and accepted
                                        by recipient action */
     EVENT_ACCEPTED_BY_FICTION,      /* Message has been delivered, acceptance
@@ -617,7 +617,7 @@ struct isds_envelope {
                                            dmSenderRefNumber of initiatory
                                            message to dmRecipientRefNumber
                                            of this message
-                                       "V" is noncommercial government message
+                                       "V" is non-commercial government message
                                        Default value while sending is undefined
                                        which has the same meaning as "V".
                                        Output values (when retrieving
@@ -631,10 +631,10 @@ struct isds_envelope {
                                            message where the response offer has
                                            expired
                                        "D" is externally subsidized commercial
-                                           messsage
+                                           message
                                        "E" is commercial message prepaid by
                                            a stamp
-                                       "G" is commerical message paid by
+                                       "G" is commercial message paid by
                                            a sponsor
                                        "I"
                                        "K"
@@ -775,12 +775,12 @@ struct isds_message_status_change {
 
 /* How outgoing commercial message gets paid */
 typedef enum {
-    PAYMENT_SENDER,             /* Payed by a sender */
+    PAYMENT_SENDER,             /* Paid by sender */
     PAYMENT_STAMP,              /* Pre-paid by a sender */
     PAYMENT_SPONSOR,            /* A sponsor pays all messages */
     PAYMENT_RESPONSE,           /* Recipient pays a response */
     PAYMENT_SPONSOR_LIMITED,    /* Undocumented */
-    PAYMENT_SPONSOR_EXTERNAL    /* Undocomented */
+    PAYMENT_SPONSOR_EXTERNAL    /* Undocumented */
 } isds_payment_type;
 
 /* Permission to send commercial message */
@@ -790,7 +790,7 @@ struct isds_commercial_permission {
                                        NULL means to anybody. */
     char *payer;                    /* Owner of this box ID pays */
     struct timeval *expiration;     /* This permissions is valid until;
-                                       NULL means indefinitivly. */
+                                       NULL means indefinitely. */
     unsigned long int *count;       /* Number of messages that can be sent
                                        on this permission;
                                        NULL means unlimited. */
@@ -804,7 +804,7 @@ typedef enum {
     ISDS_CREDIT_CHARGED,        /* Credit has been charged */
     ISDS_CREDIT_DISCHARGED,     /* Credit has been discharged */
     ISDS_CREDIT_MESSAGE_SENT,   /* Credit has been spent for sending
-                                   a commerical message */
+                                   a commercial message */
     ISDS_CREDIT_STORAGE_SET,    /* Credit has been spent for setting
                                    a long-term storage */
     ISDS_CREDIT_EXPIRED         /* Credit has expired */
@@ -824,7 +824,7 @@ struct isds_credit_event_discharged {
 
 /* Data specific for ISDS_CREDIT_MESSAGE_SENT isds_credit_event_type */
 struct isds_credit_event_message_sent {
-    char *recipient;                /* Recipent's box ID of the sent message */
+    char *recipient;                /* Recipient's box ID of the sent message */
     char *message_id;               /* ID of the sent message */
 };
 
@@ -859,7 +859,7 @@ struct isds_credit_event {
         struct isds_credit_event_charged charged;
                                                 /* ISDS_CREDIT_CHARGED */
         struct isds_credit_event_discharged discharged;
-                                                /* ISDS_CREDIT_DISCHAGED */
+                                                /* ISDS_CREDIT_DISCHARGED */
         struct isds_credit_event_message_sent message_sent;
                                                 /* ISDS_CREDIT_MESSAGE_SENT */
         struct isds_credit_event_storage_set storage_set;
@@ -880,7 +880,7 @@ struct isds_list {
 struct isds_approval {
     _Bool approved;                 /* True if request for box has been
                                        approved out of ISDS */
-    char *refference;               /* Identifier of the approval */
+    char *reference;                /* Identifier of the approval */
 };
 
 /* Message sender type.
@@ -1191,7 +1191,7 @@ isds_error isds_get_password_expiration(struct isds_ctx *context,
 
 /* Change user password in ISDS.
  * User must supply old password, new password will takes effect after some
- * time, current session can continue. Password must fulfill some constraints.
+ * time, current session can continue. Password must fulfil some constraints.
  * @context is session context
  * @old_password is current password.
  * @new_password is requested new password
@@ -1447,7 +1447,7 @@ isds_error isds_DeleteDataBoxUser2(struct isds_ctx *context,
 
 /* Get list of boxes in ZIP archive.
  * @context is session context
- * @list_identifier is UTF-8 encoded string identifying boxes of interrest.
+ * @list_identifier is UTF-8 encoded string identifying boxes of interest.
  * System recognizes following values currently: ALL (all boxes), UPG
  * (effectively OVM boxes), POA (active boxes allowing receiving commercial
  * messages), OVM (OVM gross type boxes), OPN (boxes allowing receiving
@@ -1469,8 +1469,8 @@ isds_error isds_get_box_list_archive(struct isds_ctx *context,
  * possibly empty. Input NULL or valid old structure.
  * @return:
  *  IE_SUCCESS if search succeeded, @boxes contains useful data
- *  IE_NOEXIST if no such box exists, @boxes will be NULL
- *  IE_2BIG if too much boxes exist and server truncated the results, @boxes
+ *  IE_NONEXIST if no such box exists, @boxes will be NULL
+ *  IE_TOO_BIG if too much boxes exist and server truncated the results, @boxes
  *      contains still valid data
  *  other code if something bad happens. @boxes will be NULL. */
 isds_error isds_FindDataBox(struct isds_ctx *context,
@@ -1484,8 +1484,8 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
  * possibly empty. Input NULL or valid old structure.
  * @return:
  *  IE_SUCCESS if search succeeded, @boxes contains useful data
- *  IE_NOEXIST if no such box exists, @boxes will be NULL
- *  IE_2BIG if too much boxes exist and server truncated the results, @boxes
+ *  IE_NONEXIST if no such box exists, @boxes will be NULL
+ *  IE_TOO_BIG if too much boxes exist and server truncated the results, @boxes
  *      contains still valid data
  *  other code if something bad happens. @boxes will be NULL. */
 isds_error isds_FindDataBox2(struct isds_ctx *context,
@@ -1499,11 +1499,11 @@ isds_error isds_FindDataBox2(struct isds_ctx *context,
  * don't care.
  * @box_type restricts searching to given box type. Value DBTYPE_SYSTEM means
  * to search in all box types. Value DBTYPE_OVM_MAIN means to search in
- * non-subsudiary OVM box types. Pass NULL to let server to use default value
+ * non-subsidiary OVM box types. Pass NULL to let server to use default value
  * which is DBTYPE_SYSTEM.
  * @page_size defines count of boxes to constitute a response page. It counts
  * from zero. Pass NULL to let server to use a default value (50 now).
- * @page_number defines ordinar number of the response page to return. It
+ * @page_number defines ordinary number of the response page to return. It
  * counts from zero. Pass NULL to let server to use a default value (0 now).
  * @track_matches points to true for marking @query words found in the box
  * attributes. It points to false for not marking. Pass NULL to let the server
@@ -1511,7 +1511,7 @@ isds_error isds_FindDataBox2(struct isds_ctx *context,
  * @total_matching_boxes outputs reallocated number of all boxes matching the
  * query. Will be pointer to NULL if server did not provide the value.
  * Pass NULL if you don't care.
- * @current_page_beginning outputs reallocated ordinar number of the first box
+ * @current_page_beginning outputs reallocated ordinary number of the first box
  * in this @boxes page. It counts from zero. It will be pointer to NULL if the
  * server did not provide the value. Pass NULL if you don't care.
  * @current_page_size outputs reallocated count of boxes in the this @boxes
@@ -1519,12 +1519,12 @@ isds_error isds_FindDataBox2(struct isds_ctx *context,
  * Pass NULL if you don't care.
  * @last_page outputs pointer to reallocated boolean. True if this @boxes page
  * is the last one, false if more boxes match, NULL if the server did not
- * provude the value. Pass NULL if you don't care.
+ * provide the value. Pass NULL if you don't care.
  * @boxes outputs reallocated list of isds_fulltext_result structures,
  * possibly empty.
  * @return:
  *  IE_SUCCESS if search succeeded
- *  IE_2BIG if @page_size is too large
+ *  IE_TOO_BIG if @page_size is too large
  *  other code if something bad happens; output arguments will be NULL. */
 isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
         const char *query,
@@ -1545,7 +1545,7 @@ isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
  * @box_status is return value of box status.
  * @return:
  *  IE_SUCCESS if box has been found and its status retrieved
- *  IE_NOEXIST if box is not known to ISDS server
+ *  IE_NONEXIST if box is not known to ISDS server
  *  or other appropriate error.
  *  You can use isds_DbState to enumerate box status. However out of enum
  *  range value can be returned too. This is feature because ISDS
@@ -1561,12 +1561,12 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
  * @from_time is first second of history to return in @history. Server ignores
  * subseconds. NULL means time of creating the box.
  * @to_time is last second of history to return in @history. Server ignores
- * subseconds. It's valid to have the @from_time equaled to the @to_time. The
+ * subseconds. It's valid to have the @from_time equal to the @to_time. The
  * interval is closed from both ends. NULL means now.
  * @history outputs auto-reallocated list of pointers to struct
  * isds_box_state_period. Each item describes a continues time when the box
  * was in one state. The state is 1 for accessible box. Otherwise the box
- * is inaccessible (priviledged users will get exact box state as enumerated
+ * is inaccessible (privileged users will get exact box state as enumerated
  * in isds_DbState, other users 0).
  * @return:
  *  IE_SUCCESS if the history has been obtained correctly,
@@ -1936,7 +1936,7 @@ isds_error isds_verify_message_hash(struct isds_ctx *context,
 
 /* Submit CMS signed message to ISDS to verify its originality. This is
  * stronger form of isds_verify_message_hash() because ISDS does more checks
- * than simple one (potentialy old weak) hash comparison.
+ * than simple one (potentially old weak) hash comparison.
  * @context is session context
  * @message is memory with raw CMS signed message bit stream
  * @length is @message size in bytes
@@ -1972,7 +1972,7 @@ isds_error isds_resign_message(struct isds_ctx *context,
  * @message_id is message identifier.
  * @incoming is true for incoming message, false for outgoing message.
  * @return
- *  IE_SUCCESS  if message has ben removed
+ *  IE_SUCCESS  if message has been removed
  *  IE_INVAL    if message does not exist in long term storage or message
  *              belongs to different box
  * TODO: IE_NOEPRM  if user has no permission to erase a message */

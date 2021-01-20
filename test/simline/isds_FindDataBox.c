@@ -160,7 +160,7 @@ static int test_isds_FindDataBox(const isds_error expected_error,
                 isds_long_message(context));
     }
 
-    if (IE_SUCCESS != error && IE_2BIG != error) {
+    if (IE_SUCCESS != error && IE_TOO_BIG != error) {
         TEST_POINTER_IS_NULL(results);
         PASS_TEST;
     }
@@ -547,7 +547,7 @@ int main(void) {
                 context, url, username, password, NULL, NULL);
         free(url);
 
-        TEST("Truncated asnwer", test_isds_FindDataBox, IE_2BIG,
+        TEST("Truncated answer", test_isds_FindDataBox, IE_TOO_BIG,
                 context, &criteria, &results);
 
         isds_logout(context);
@@ -606,7 +606,7 @@ int main(void) {
     }
 
     {
-        /* Report 0002 server error as IE_NOEXIST */
+        /* Report 0002 server error as IE_NONEXIST */
         char *url = NULL;
 
         struct isds_DbOwnerInfo criteria = {
@@ -645,8 +645,8 @@ int main(void) {
                 context, url, username, password, NULL, NULL);
         free(url);
 
-        TEST("Report 0002 server error as IE_NOEXIST", test_isds_FindDataBox,
-                IE_NOEXIST, context, &criteria, NULL);
+        TEST("Report 0002 server error as IE_NONEXIST", test_isds_FindDataBox,
+                IE_NONEXIST, context, &criteria, NULL);
 
         isds_logout(context);
         if (stop_server(server_process)) {
@@ -657,7 +657,7 @@ int main(void) {
     }
 
     {
-        /* Report 5001 server error as IE_NOEXIST */
+        /* Report 5001 server error as IE_NONEXIST */
         char *url = NULL;
 
         struct isds_DbOwnerInfo criteria = {
@@ -696,8 +696,8 @@ int main(void) {
                 context, url, username, password, NULL, NULL);
         free(url);
 
-        TEST("Report 0002 server error as IE_NOEXIST", test_isds_FindDataBox,
-                IE_NOEXIST, context, &criteria, NULL);
+        TEST("Report 0002 server error as IE_NONEXIST", test_isds_FindDataBox,
+                IE_NONEXIST, context, &criteria, NULL);
 
         isds_logout(context);
         if (stop_server(server_process)) {

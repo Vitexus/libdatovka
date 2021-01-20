@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
 
         printf("Searching box with firm name `%s':\n", criteria.firmName);
         err = isds_FindDataBox(ctx, &criteria, &boxes);
-        if (err == IE_SUCCESS || err == IE_2BIG) {
+        if (err == IE_SUCCESS || err == IE_TOO_BIG) {
             printf("isds_FindDataBox() succeeded:\n");
 
             if (boxes && boxes->data) {
