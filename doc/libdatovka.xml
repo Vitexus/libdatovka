@@ -1145,7 +1145,7 @@ err = isds_cleanup();
           </varlistentry>
 
           <varlistentry>
-            <term><constant>MESSAGESTATE_IN_SAFE</constant></term>
+            <term><constant>MESSAGESTATE_IN_VAULT</constant></term>
             <listitem><para>The message is stored in the long term
                 storage.</para></listitem>
           </varlistentry>

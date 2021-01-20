@@ -245,7 +245,7 @@ static void print_dmMessageStatus(const isds_message_status *status) {
             case MESSAGESTATE_READ: printf("READ\n"); break;
             case MESSAGESTATE_UNDELIVERABLE: printf("UNDELIVERABLE\n"); break;
             case MESSAGESTATE_REMOVED: printf("REMOVED\n"); break;
-            case MESSAGESTATE_IN_SAFE: printf("IN_SAFE\n"); break;
+            case MESSAGESTATE_IN_VAULT: printf("IN_VAULT\n"); break;
             default: printf("<unknown type %d>\n", *status);
         }
 }

@@ -291,7 +291,7 @@ typedef enum {
                                            (e.g. recipient box has been made
                                            inaccessible meantime) */
     MESSAGESTATE_REMOVED = 0x200,       /* Message content deleted */
-    MESSAGESTATE_IN_SAFE = 0x400        /* Message stored in long term storage */
+    MESSAGESTATE_IN_VAULT = 0x400       /* Message stored in long term storage */
 } isds_message_status;
 #define MESSAGESTATE_ANY 0x7FE          /* Union of all isds_message_status
                                            values */
