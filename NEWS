@@ -10,3 +10,5 @@
  * Renamed OTP_RESOLUTION_TO_FAST to OTP_RESOLUTION_TOO_FAST.
  * Renamed EVENT_UKNOWN to EVENT_UNKNOWN.
  * Renamed .refference to .reference in struct isds_approval.
+ * Renamed IE_NOEXIST to IE_NONEXIST, IE_2BIG to IE_TOO_BIG and
+   IE_2SMALL to IE_TOO_SMALL.

@@ -1110,8 +1110,8 @@ const char *isds_strerror(const isds_error error) {
             return(_("Connection closed")); break;
         case IE_TIMED_OUT:
             return(_("Timed out")); break;
-        case IE_NOEXIST:
-            return(_("Not exist")); break;
+        case IE_NONEXIST:
+            return(_("Non-existent")); break;
         case IE_NOMEM:
             return(_("Out of memory")); break;
         case IE_NETWORK:
@@ -1125,12 +1125,12 @@ const char *isds_strerror(const isds_error error) {
         case IE_ISDS:
             return(_("ISDS server problem")); break;
         case IE_ENUM:
-            return(_("Invalid enum value")); break;
+            return(_("Invalid enumeration value")); break;
         case IE_DATE:
             return(_("Invalid date value")); break;
-        case IE_2BIG:
+        case IE_TOO_BIG:
             return(_("Too big")); break;
-        case IE_2SMALL:
+        case IE_TOO_SMALL:
             return(_("Too small")); break;
         case IE_NOTUNIQ:
             return(_("Value not unique")); break;
@@ -3351,7 +3351,7 @@ static isds_error eventstring2event(const xmlChar *string,
                     ngettext("%s has more than %d characters", \
                         "%s has more than %d characters", (maximum)), \
                     (name), (maximum)); \
-            err = IE_2BIG; \
+            err = IE_TOO_BIG; \
             goto leave; \
         } \
         if (length < (minimum)) { \
@@ -3359,7 +3359,7 @@ static isds_error eventstring2event(const xmlChar *string,
                     ngettext("%s has less than %d characters", \
                         "%s has less than %d characters", (minimum)), \
                     (name), (minimum)); \
-            err = IE_2SMALL; \
+            err = IE_TOO_SMALL; \
             goto leave; \
         } \
     } \
@@ -3408,7 +3408,7 @@ static isds_error move_xpathctx_to_child(struct isds_ctx *context,
                 parent_locale, child_locale);
         free(child_locale);
         free(parent_locale);
-        err = IE_NOEXIST;
+        err = IE_NONEXIST;
         goto leave;
     }
 
@@ -5226,7 +5226,7 @@ static isds_error find_and_extract_DmHash(struct isds_ctx *context,
 
     /* Locate dmHash */
     err = move_xpathctx_to_child(context, BAD_CAST "sisds:dmHash", xpath_ctx);
-    if (err == IE_NOEXIST || err == IE_NOTUNIQ) {
+    if (err == IE_NONEXIST || err == IE_NOTUNIQ) {
         err = IE_ISDS;
         goto leave;
     }
@@ -5365,7 +5365,7 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
 
     /* Extract dmDM */
     err = move_xpathctx_to_child(context, BAD_CAST "isds:dmDm", xpath_ctx);
-    if (err == IE_NOEXIST || err == IE_NOTUNIQ) { err = IE_ISDS; goto leave; }
+    if (err == IE_NONEXIST || err == IE_NOTUNIQ) { err = IE_ISDS; goto leave; }
     if (err) { err = IE_ERROR; goto leave; }
     err = append_GMessageEnvelope(context, &((*message)->envelope), xpath_ctx);
     if (err) goto leave;
@@ -5376,7 +5376,7 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
         /* Extract dmFiles */
         err = move_xpathctx_to_child(context, BAD_CAST "isds:dmFiles",
                 xpath_ctx);
-        if (err == IE_NOEXIST || err == IE_NOTUNIQ) {
+        if (err == IE_NONEXIST || err == IE_NOTUNIQ) {
             err = IE_ISDS; goto leave;
         }
         if (err) { err = IE_ERROR; goto leave; }
@@ -8786,8 +8786,8 @@ leave:
  * possibly empty. Input NULL or valid old structure.
  * @return:
  *  IE_SUCCESS if search succeeded, @boxes contains useful data
- *  IE_NOEXIST if no such box exists, @boxes will be NULL
- *  IE_2BIG if too much boxes exist and server truncated the results, @boxes
+ *  IE_NONEXIST if no such box exists, @boxes will be NULL
+ *  IE_TOO_BIG if too much boxes exist and server truncated the results, @boxes
  *      contains still valid data
  *  other code if something bad happens. @boxes will be NULL. */
 isds_error isds_FindDataBox(struct isds_ctx *context,
@@ -8887,7 +8887,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         isds_log_message(context, message_locale);
         free(code_locale);
         free(message_locale);
-        err = IE_NOEXIST;
+        err = IE_NONEXIST;
         goto leave;
     }
 
@@ -8961,7 +8961,7 @@ leave:
     if (err) {
         isds_list_free(boxes);
     } else {
-        if (truncated) err = IE_2BIG;
+        if (truncated) err = IE_TOO_BIG;
     }
 
     free(string);
@@ -8991,8 +8991,8 @@ leave:
  * possibly empty. Input NULL or valid old structure.
  * @return:
  *  IE_SUCCESS if search succeeded, @boxes contains useful data
- *  IE_NOEXIST if no such box exists, @boxes will be NULL
- *  IE_2BIG if too much boxes exist and server truncated the results, @boxes
+ *  IE_NONEXIST if no such box exists, @boxes will be NULL
+ *  IE_TOO_BIG if too much boxes exist and server truncated the results, @boxes
  *      contains still valid data
  *  other code if something bad happens. @boxes will be NULL. */
 isds_error isds_FindDataBox2(struct isds_ctx *context,
@@ -9092,7 +9092,7 @@ isds_error isds_FindDataBox2(struct isds_ctx *context,
         isds_log_message(context, message_locale);
         free(code_locale);
         free(message_locale);
-        err = IE_NOEXIST;
+        err = IE_NONEXIST;
         goto leave;
     }
 
@@ -9166,7 +9166,7 @@ leave:
     if (err) {
         isds_list_free(boxes);
     } else {
-        if (truncated) err = IE_2BIG;
+        if (truncated) err = IE_TOO_BIG;
     }
 
     free(string);
@@ -9408,7 +9408,7 @@ leave:
  * possibly empty.
  * @return:
  *  IE_SUCCESS if search succeeded
- *  IE_2BIG if @page_size is too large
+ *  IE_TOO_BIG if @page_size is too large
  *  other code if something bad happens; output arguments will be NULL. */
 isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
         const char *query,
@@ -9458,7 +9458,7 @@ isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
         IE_INVAL,
         IE_INVAL,
         IE_INVAL,
-        IE_2BIG,
+        IE_TOO_BIG,
         IE_ISDS
     };
     struct code_map_isds_error map = {
@@ -9655,7 +9655,7 @@ leave:
  * @box_status is return value of box status.
  * @return:
  *  IE_SUCCESS if box has been found and its status retrieved
- *  IE_NOEXIST if box is not known to ISDS server
+ *  IE_NONEXIST if box is not known to ISDS server
  *  or other appropriate error.
  *  You can use isds_DbState to enumerate box status. However out of enum
  *  range value can be returned too. This is feature because ISDS
@@ -9685,7 +9685,7 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
         "Box ID malformed",
     };
     const isds_error errors[] = {
-        IE_NOEXIST,
+        IE_NONEXIST,
         IE_INVAL,
         IE_INVAL,
     };
@@ -10220,7 +10220,7 @@ isds_error isds_get_commercial_credit(struct isds_ctx *context,
     };
     const isds_error errors[] = {
         IE_ISDS,
-        IE_NOEXIST,
+        IE_NONEXIST,
         IE_DATE,
         IE_DATE,
         IE_DATE,
@@ -12237,7 +12237,7 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
 
     /* Extract events */
     err = move_xpathctx_to_child(context, BAD_CAST "sisds:dmEvents", xpath_ctx);
-    if (err == IE_NOEXIST || err == IE_NOTUNIQ) { err = IE_ISDS; goto leave; }
+    if (err == IE_NONEXIST || err == IE_NOTUNIQ) { err = IE_ISDS; goto leave; }
     if (err) { err = IE_ERROR; goto leave; }
     err = extract_events(context, &(*message)->envelope->events, xpath_ctx);
     if (err) goto leave;

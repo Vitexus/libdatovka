@@ -424,8 +424,8 @@ err = isds_cleanup();
           </varlistentry>
 
           <varlistentry>
-            <term><errorname>IE_NOEXIST</errorname></term>
-            <listitem><para>Requested entity does exist.</para></listitem>
+            <term><errorname>IE_NONEXIST</errorname></term>
+            <listitem><para>Requested entity doesn't exist.</para></listitem>
           </varlistentry>
 
           <varlistentry>
@@ -460,7 +460,7 @@ err = isds_cleanup();
 
           <varlistentry>
             <term><errorname>IE_ENUM</errorname></term>
-            <listitem><para>Invalid enum value.</para></listitem>
+            <listitem><para>Invalid enumeration value.</para></listitem>
           </varlistentry>
 
           <varlistentry>
@@ -469,18 +469,18 @@ err = isds_cleanup();
           </varlistentry>
 
           <varlistentry>
-            <term><errorname>IE_2BIG</errorname></term>
+            <term><errorname>IE_TOO_BIG</errorname></term>
             <listitem><para>Value is too big.</para></listitem>
           </varlistentry>
 
           <varlistentry>
-            <term><errorname>IE_2SMALL</errorname></term>
+            <term><errorname>IE_TOO_SMALL</errorname></term>
             <listitem><para>Value is too small.</para></listitem>
           </varlistentry>
 
           <varlistentry>
             <term><errorname>IE_NOTUNIQ</errorname></term>
-            <listitem><para>Value is not uniq.</para></listitem>
+            <listitem><para>Value is not unique.</para></listitem>
           </varlistentry>
 
           <varlistentry>
@@ -490,7 +490,7 @@ err = isds_cleanup();
 
           <varlistentry>
             <term><errorname>IE_PARTIAL_SUCCESS</errorname></term>
-            <listitem><para>Operaration on a vector succeded for some values, but failed for others.</para></listitem>
+            <listitem><para>Operation on a vector succeeded for some values but failed for others.</para></listitem>
           </varlistentry>
 
           <varlistentry>

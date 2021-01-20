@@ -62,8 +62,8 @@ int main(void) {
 
         printf("Searching for my own box:\n");
         err = isds_FindDataBox(ctx, db_owner_info, &boxes);
-        if (err == IE_SUCCESS || err == IE_2BIG) {
-            if (err == IE_2BIG) 
+        if (err == IE_SUCCESS || err == IE_TOO_BIG) {
+            if (err == IE_TOO_BIG)
                 printf("isds_FindDataBox() results truncated\n");
             printf("isds_FindDataBox() succeeded:\n");
 

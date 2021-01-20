@@ -54,12 +54,12 @@ int main(void) {
 
         printf("Searching box with firm name `%s':\n", criteria.firmName);
         err = isds_FindDataBox(ctx, &criteria, &boxes);
-        if (err == IE_SUCCESS || err == IE_2BIG) {
+        if (err == IE_SUCCESS || err == IE_TOO_BIG) {
             printf("isds_FindDataBox() succeeded:\n");
 
             int n;
             for(item = boxes, n = 1; item; item = item->next, n++) {
-                if (err != IE_2BIG) {
+                if (err != IE_TOO_BIG) {
                     printf("List item #%d:\n", n);
                     print_DbOwnerInfo(item->data);
                 }
@@ -68,7 +68,7 @@ int main(void) {
                 if (n == 2) recipient2 = strdup(
                         ((struct isds_DbOwnerInfo *)(item->data))->dbID);
             }
-            if (err == IE_2BIG) 
+            if (err == IE_TOO_BIG)
                 printf("isds_FindDataBox() results truncated to %d boxes\n",
                         --n);
         } else {

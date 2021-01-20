@@ -79,8 +79,8 @@ int main(void) {
 
         printf("Searching for my own box:\n");
         err = isds_FindDataBox(ctx, db_owner_info, &boxes);
-        if (err == IE_SUCCESS || err == IE_2BIG) {
-            if (err == IE_2BIG) 
+        if (err == IE_SUCCESS || err == IE_TOO_BIG) {
+            if (err == IE_TOO_BIG)
                 printf("isds_FindDataBox() results truncated\n");
             printf("isds_FindDataBox() succeeded:\n");
 
@@ -117,17 +117,17 @@ int main(void) {
 
         printf("Searching box with firm name `%s':\n", criteria->firmName);
         err = isds_FindDataBox(ctx, criteria, &boxes);
-        if (err == IE_SUCCESS || err == IE_2BIG) {
+        if (err == IE_SUCCESS || err == IE_TOO_BIG) {
             printf("isds_FindDataBox() succeeded:\n");
 
             int n;
             for(item = boxes, n = 1; item; item = item->next, n++) {
-                if (err != IE_2BIG) {
+                if (err != IE_TOO_BIG) {
                     printf("List item #%d:\n", n);
                     print_DbOwnerInfo(item->data);
                 }
             }
-            if (err == IE_2BIG) 
+            if (err == IE_TOO_BIG)
                 printf("isds_FindDataBox() results truncated to %d boxes\n",
                         --n);
         } else {
@@ -149,19 +149,19 @@ int main(void) {
 
         printf("Searching for exact box by ID `%s' and type:\n", criteria.dbID);
         err = isds_FindDataBox(ctx, &criteria, &boxes);
-        if (err == IE_SUCCESS || err == IE_2BIG) {
+        if (err == IE_SUCCESS || err == IE_TOO_BIG) {
             printf("isds_FindDataBox() succeeded:\n");
 
             int n;
             for(item = boxes, n = 1; item; item = item->next, n++) {
-                if (err != IE_2BIG) {
+                if (err != IE_TOO_BIG) {
                     printf("List item #%d:\n", n);
                     print_DbOwnerInfo(item->data);
                 }
                 if (n == 1) recipient = strdup(
                         ((struct isds_DbOwnerInfo *)(item->data))->dbID);
             }
-            if (err == IE_2BIG) 
+            if (err == IE_TOO_BIG)
                 printf("isds_FindDataBox() results truncated to %d boxes\n",
                         --n);
         } else {
@@ -183,19 +183,19 @@ int main(void) {
 
         printf("Searching box with firm name `%s':\n", criteria.firmName);
         err = isds_FindDataBox(ctx, &criteria, &boxes);
-        if (err == IE_SUCCESS || err == IE_2BIG) {
+        if (err == IE_SUCCESS || err == IE_TOO_BIG) {
             printf("isds_FindDataBox() succeeded:\n");
 
             int n;
             for(item = boxes, n = 1; item; item = item->next, n++) {
-                if (err != IE_2BIG) {
+                if (err != IE_TOO_BIG) {
                     printf("List item #%d:\n", n);
                     print_DbOwnerInfo(item->data);
                 }
                 if (n == 1) recipient = strdup(
                         ((struct isds_DbOwnerInfo *)(item->data))->dbID);
             }
-            if (err == IE_2BIG) 
+            if (err == IE_TOO_BIG)
                 printf("isds_FindDataBox() results truncated to %d boxes\n",
                         --n);
         } else {
