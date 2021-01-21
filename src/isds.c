@@ -18,14 +18,14 @@
 
 /* Global variables.
  * Allocated in isds_init() and deallocated in isds_cleanup(). */
-unsigned int log_facilities;
-isds_log_level log_level;
-isds_log_callback log_callback;
-void *log_callback_data;
-const char *version_gpgme = N_("n/a");
-const char *version_gcrypt = N_("n/a");
-const char *version_openssl = N_("n/a");
-const char *version_expat = N_("n/a");
+_hidden unsigned int log_facilities;
+_hidden isds_log_level log_level;
+_hidden isds_log_callback log_callback;
+_hidden void *log_callback_data;
+_hidden const char *version_gpgme = N_("n/a");
+_hidden const char *version_gcrypt = N_("n/a");
+_hidden const char *version_openssl = N_("n/a");
+_hidden const char *version_expat = N_("n/a");
 
 /* Locators */
 /* Base URL of production ISDS instance */
@@ -576,7 +576,7 @@ void isds_box_state_period_free(struct isds_box_state_period **period) {
 }
 
 /* Copy structure isds_pki_credentials recursively. */
-struct isds_pki_credentials *isds_pki_credentials_duplicate(
+static struct isds_pki_credentials *isds_pki_credentials_duplicate(
         const struct isds_pki_credentials *template) {
     struct isds_pki_credentials *new = NULL;
 

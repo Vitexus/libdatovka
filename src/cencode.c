@@ -8,7 +8,7 @@ For details, see http://sourceforge.net/projects/libb64
 #include "cencode.h"
 #include "utils.h"
 
-const int CHARS_PER_LINE = 72;
+static const int CHARS_PER_LINE = 72;
 
 
 _hidden void _isds_base64_init_encodestate(base64_encodestate* state_in) {

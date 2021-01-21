@@ -323,7 +323,7 @@ _hidden isds_error _isds_check_documents_hierarchy(struct isds_ctx *context,
  * @context is session context
  * @message_id checked message ID
  * @return IE_SUCCESS or appropriate error code and fill context' message */
-isds_error validate_message_id_length(struct isds_ctx *context,
+_hidden isds_error validate_message_id_length(struct isds_ctx *context,
         const xmlChar *message_id) {
     if (!context) return IE_INVALID_CONTEXT;
     if (!message_id) return IE_INVAL;
