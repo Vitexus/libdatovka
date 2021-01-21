@@ -1,5 +1,4 @@
 libdatovka.so.0 libdatovka0 #MINVER#
- CHARS_PER_LINE@Base 0.0
  czp_close_connection@Base 0.0
  czp_convert_document@Base 0.0
  isds_AddDataBoxUser2@Base 0.0
@@ -18,22 +17,22 @@ libdatovka.so.0 libdatovka0 #MINVER#
  isds_DbUserInfo_duplicate@Base 0.0
  isds_DbUserInfo_free@Base 0.0
  isds_DeleteDataBoxUser2@Base 0.0
- isds_FindDataBox2@Base 0.0
  isds_FindDataBox@Base 0.0
- isds_GetDataBoxUsers2@Base 0.0
+ isds_FindDataBox2@Base 0.0
  isds_GetDataBoxUsers@Base 0.0
- isds_GetOwnerInfoFromLogin2@Base 0.0
+ isds_GetDataBoxUsers2@Base 0.0
  isds_GetOwnerInfoFromLogin@Base 0.0
- isds_GetUserInfoFromLogin2@Base 0.0
+ isds_GetOwnerInfoFromLogin2@Base 0.0
  isds_GetUserInfoFromLogin@Base 0.0
+ isds_GetUserInfoFromLogin2@Base 0.0
  isds_PersonName2_duplicate@Base 0.0
  isds_PersonName2_free@Base 0.0
  isds_PersonName_duplicate@Base 0.0
  isds_PersonName_free@Base 0.0
- isds_UpdateDataBoxDescr2@Base 0.0
  isds_UpdateDataBoxDescr@Base 0.0
- isds_UpdateDataBoxUser2@Base 0.0
+ isds_UpdateDataBoxDescr2@Base 0.0
  isds_UpdateDataBoxUser@Base 0.0
+ isds_UpdateDataBoxUser2@Base 0.0
  isds_activate@Base 0.0
  isds_add_box@Base 0.0
  isds_add_pfoinfo@Base 0.0
@@ -104,7 +103,6 @@ libdatovka.so.0 libdatovka0 #MINVER#
  isds_otp_locator@Base 0.0
  isds_otp_testing_locator@Base 0.0
  isds_ping@Base 0.0
- isds_pki_credentials_duplicate@Base 0.0
  isds_pki_credentials_free@Base 0.0
  isds_request_new_testing_box@Base 0.0
  isds_reset_password@Base 0.0
@@ -125,12 +123,3 @@ libdatovka.so.0 libdatovka0 #MINVER#
  isds_testing_locator@Base 0.0
  isds_verify_message_hash@Base 0.0
  isds_version@Base 0.0
- log_callback@Base 0.0
- log_callback_data@Base 0.0
- log_facilities@Base 0.0
- log_level@Base 0.0
- validate_message_id_length@Base 0.0
- version_expat@Base 0.0
- version_gcrypt@Base 0.0
- version_gpgme@Base 0.0
- version_openssl@Base 0.0
