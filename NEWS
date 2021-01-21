@@ -16,3 +16,5 @@
    DBSTATE_PERM_UNACCESSIBLE to DBSTATE_PERM_INACCESSIBLE and
    DBSTATE_TEMP_UNACCESSIBLE_LAW to DBSTATE_TEMP_INACCESSIBLE_LAW.
  * Renamed MESSAGESTATE_IN_SAFE to MESSAGESTATE_IN_VAULT.
+ * All exported symbols of the library have been hidden except for those
+   mentioned in the public header file.
