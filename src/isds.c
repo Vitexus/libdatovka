@@ -16,6 +16,16 @@
 #include "physxml.h"
 #include "system.h"
 
+unsigned long isds_lib_ver_num(void)
+{
+	return ISDS_LIB_VER_NUM;
+}
+
+const char *isds_lib_ver_str(void)
+{
+	return ISDS_LIB_VER_STR;
+}
+
 /* Global variables.
  * Allocated in isds_init() and deallocated in isds_cleanup(). */
 _hidden unsigned int log_facilities;

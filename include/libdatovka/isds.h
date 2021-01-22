@@ -13,6 +13,41 @@
 extern "C" {
 #endif
 
+/*
+ * Numeric release version identifier:
+ * MMNNRR0S: MM = major, NN == minor, RR == release (patch), S = status
+ * The status nibble has holds the value 0 for release other values identify
+ * developmental builds.
+ * For example:
+ * 0.1.0 release             0x00010000
+ * 0.1.0 further development 0x00010001
+ * 0.1.2                     0x00010200
+ * 1.2.3                     0x01020300
+ */
+#define ISDS_LIB_VER_NUM 0x0000000fL
+#define ISDS_LIB_VER_STR "libdatovka 0.0.0"
+
+/*
+ * Can be used like:
+ * #if (ISDS_LIB_VER_NUM >= ISDS_LIB_VER_CHECK(0, 1, 0))
+ */
+#define ISDS_LIB_VER_CHECK(major, minor, release) \
+	(((major) << 24) | ((minor) << 16) | (release << 8))
+
+/*
+ * Return version number of this library.
+ * This may a different version than the version the application has been
+ * compiled against.
+ */
+unsigned long isds_lib_ver_num(void);
+
+/*
+ * Return version of this library.
+ * This may a different version than the version the application has been
+ * compiled against.
+ */
+const char *isds_lib_ver_str(void);
+
 /* _deprecated macro marks library symbols as deprecated. Application should
  * avoid using such function as soon as possible. */
 #if defined(__GNUC__)
