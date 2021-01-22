@@ -83,6 +83,8 @@ libdatovka.so.0 libdatovka0 #MINVER#
  isds_hash_cmp@Base 0.0
  isds_hash_free@Base 0.0
  isds_init@Base 0.0
+ isds_lib_ver_num@Base 0.0
+ isds_lib_ver_str@Base 0.0
  isds_list_free@Base 0.0
  isds_load_delivery_info@Base 0.0
  isds_load_message@Base 0.0
