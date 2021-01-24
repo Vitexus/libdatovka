@@ -18,3 +18,5 @@
  * Renamed MESSAGESTATE_IN_SAFE to MESSAGESTATE_IN_VAULT.
  * All exported symbols of the library have been hidden except for those
    mentioned in the public header file.
+ * Added the macros ISDS_LIB_VER_NUM, ISDS_LIB_VER_STR and ISDS_LIB_VER_CHECK.
+   Added the functions isds_lib_ver_num() and isds_lib_ver_str().
