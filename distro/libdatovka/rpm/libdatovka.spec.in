@@ -3,7 +3,7 @@ Version: __VERSION__
 Release: __RELEASE__%{?dist}
 Summary: Library for accessing the Czech Data Boxes
 License: LGPLv3+ and GPLv3+
-URL: http://xpisar.wz.cz/%{name}/
+URL: https://www.datovka.cz/cs/pages/libdatovka.html
 #Source0: %{url}dist/%{name}-%{version}.tar.xz
 Source0: libdatovka_%{version}.orig.tar.xz
 
