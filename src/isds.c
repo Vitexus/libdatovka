@@ -3465,14 +3465,13 @@ static isds_error extract_tDbType(struct isds_ctx *context,
     if (!xpath_ctx) return IE_INVAL;
 
 
-    *dbType = calloc(1, sizeof(**dbType));
-    if (!*dbType) {
-        err = IE_NOMEM;
-        goto leave;
-    }
-
     EXTRACT_STRING("isds:dbType", string);
     if (string) {
+        *dbType = calloc(1, sizeof(**dbType));
+        if (!*dbType) {
+            err = IE_NOMEM;
+            goto leave;
+        }
         err = string2isds_DbType((xmlChar *)string, *dbType);
         if (err) {
             if (err == IE_ENUM) {
