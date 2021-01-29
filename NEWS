@@ -1,3 +1,9 @@
+0.1.1 /
+ * Fixed a problem in tests when the .dbType entry was allocated inside
+   isds_DbOwnerInfo when parsing XML data when reading an empty dbType element.
+   Similar problem with the .userType inside isds_DbUserInfo has also been
+   fixed.
+
 0.1.0 / 2021-01-25
  * Created libdatovka by forking libisds-0.11.1.
  * Added function for ISDS services GetOwnerInfoFromLogin2,
