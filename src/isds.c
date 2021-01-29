@@ -3512,14 +3512,13 @@ static isds_error extract_tUserType(struct isds_ctx *context,
     if (!xpath_ctx) return IE_INVAL;
 
 
-    *userType = calloc(1, sizeof(**userType));
-    if (!*userType) {
-        err = IE_NOMEM;
-        goto leave;
-    }
-
     EXTRACT_STRING("isds:userType", string);
     if (string) {
+        *userType = calloc(1, sizeof(**userType));
+        if (!*userType) {
+            err = IE_NOMEM;
+            goto leave;
+        }
         err = string2isds_UserType((xmlChar *)string, *userType);
         if (err) {
             if (err == IE_ENUM) {
