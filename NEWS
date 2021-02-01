@@ -3,6 +3,7 @@
    isds_DbOwnerInfo when parsing XML data when reading an empty dbType element.
    Similar problem with the .userType inside isds_DbUserInfo has also been
    fixed.
+ * Initialise Libtool using the LT_INIT macro.
 
 0.1.0 / 2021-01-25
  * Created libdatovka by forking libisds-0.11.1.
