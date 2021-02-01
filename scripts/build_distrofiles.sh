@@ -107,10 +107,10 @@ x${P_LIBDATOVKA})
 		fi
 	else
 		# Use latest release as default.
-		VERSION="0.1.0"
+		VERSION="0.1.1"
 
 		ensure_source_presence "${SRC_ROOT}" "${PACKAGE}-${VERSION}.tar.xz" \
-		    "https://secure.nic.cz/files/datove_schranky/libdatovka/" "a3fd28ef44bdc52ded29ba0a556af0cde1155f7eedcb895d586a260bdc81d25e" "" "" || exit 1
+		    "https://secure.nic.cz/files/datove_schranky/libdatovka/" "44087c07a9ba96990d6dab56913686fd95be53d851b3751a81972599f4238d46" "" "" || exit 1
 	fi
 
 	RELEASE="1"
