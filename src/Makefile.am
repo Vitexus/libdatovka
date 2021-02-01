@@ -45,6 +45,10 @@ libdatovka_la_SOURCES += \
 	unix.h
 endif
 
+# Read
+# https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
+# for a description how to bump the version info numbers.
+
 libdatovka_la_CPPFLAGS = @XML_CPPFLAGS@ @LIBCURL_CPPFLAGS@ \
 	-DLOCALEDIR=\"$(localedir)\" $(AM_CPPFLAGS)
 libdatovka_la_CFLAGS = @LIBGCRYPT_CFLAGS@ @GPGME_CFLAGS@
