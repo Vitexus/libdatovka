@@ -968,6 +968,16 @@ err = isds_cleanup();
           </varlistentry>
 
           <varlistentry>
+            <term><constant>DBTYPE_PFO_ZNALEC</constant></term>
+            <listitem><para>Expert witness.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>DBTYPE_PFO_TLUMOCNIK</constant></term>
+            <listitem><para>Sworn translator.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
             <term><constant>DBTYPE_FO</constant></term>
             <listitem><para>Standard person.</para></listitem>
           </varlistentry>

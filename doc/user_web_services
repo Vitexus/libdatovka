@@ -873,12 +873,12 @@ If `searchType' is `ICO' or `DBID', `searchScope' restriction is ignored.
 `searchScope' element restricts box types. See `Box types' section in `box'
 file for the semantics, acceptable values are:
 
-Value       Meaning
-------------------------------------------------------------------------
-ALL         Search over all box types
+Value          Meaning
+---------------------------------------------------------------------------
+ALL            Search over all box types
 OVM
-OVM_MAIN    Search over main (without suboridanated, with secondary) OVM
-            box types only
+OVM_MAIN       Search over main (without suboridanated, with secondary) OVM
+               box types only
 OVM_REQ
 OVM_FO
 OVM_PFO
@@ -893,6 +893,8 @@ PFO_ADVOK
 PFO_INSSPR
 PFO_DANPOR
 PFO_AUDITOR
+PFO_ZNALEC
+PFO_TLUMOCNIK
 FO
 
 Output is this list of these optional elements
