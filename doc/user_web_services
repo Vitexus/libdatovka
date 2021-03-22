@@ -506,6 +506,8 @@ distinguish the event meaning. Following prefixes are defined:
             message is sent to sender in addition.
     EV4:    Commercial message has been accepted by recipient confirmation
     EV5:    Message has been delivered into recipent box
+    EV6:    Message has been delivered, acceptance timed out because
+            there was no user who could accept the message
     EV8:    A virus has been detected in the message, it won't be delivered
     EV11:   Primary user has logged into his box
     EV12:   Entrusted user havin permission to read this message has logged in
@@ -873,12 +875,12 @@ If `searchType' is `ICO' or `DBID', `searchScope' restriction is ignored.
 `searchScope' element restricts box types. See `Box types' section in `box'
 file for the semantics, acceptable values are:
 
-Value       Meaning
-------------------------------------------------------------------------
-ALL         Search over all box types
+Value          Meaning
+---------------------------------------------------------------------------
+ALL            Search over all box types
 OVM
-OVM_MAIN    Search over main (without suboridanated, with secondary) OVM
-            box types only
+OVM_MAIN       Search over main (without suboridanated, with secondary) OVM
+               box types only
 OVM_REQ
 OVM_FO
 OVM_PFO
@@ -893,6 +895,8 @@ PFO_ADVOK
 PFO_INSSPR
 PFO_DANPOR
 PFO_AUDITOR
+PFO_ZNALEC
+PFO_TLUMOCNIK
 FO
 
 Output is this list of these optional elements

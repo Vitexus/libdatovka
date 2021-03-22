@@ -63,6 +63,8 @@ int main(void) {
         DBTYPE_PFO_DANPOR,
         DBTYPE_PFO_INSSPR,
         DBTYPE_PFO_AUDITOR,
+        DBTYPE_PFO_ZNALEC,
+        DBTYPE_PFO_TLUMOCNIK,
         DBTYPE_FO
     };
 
@@ -82,6 +84,8 @@ int main(void) {
         BAD_CAST "PFO_DANPOR",
         BAD_CAST "PFO_INSSPR",
         BAD_CAST "PFO_AUDITOR",
+        BAD_CAST "PFO_ZNALEC",
+        BAD_CAST "PFO_TLUMOCNIK",
         BAD_CAST "FO"
     };
 

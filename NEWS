@@ -1,3 +1,7 @@
+0.1.2 /
+ * Added support for the new PFO_ZNALEC and PFO_TLUMOCNIK data-box types
+   introduced in the version 2.32 of the XSD and WSDL definitions.
+
 0.1.1 / 2021-02-01
  * Fixed a problem in tests when the .dbType entry was allocated inside
    isds_DbOwnerInfo when parsing XML data when reading an empty dbType element.
