@@ -16,7 +16,7 @@ static int test_isds_list_free(struct isds_list **list, int destructor_hits) {
     if (destructor_hits != counter)
         FAIL_TEST("Destructor called wrong times: expected=%d, called=%d",
                 destructor_hits, counter);
-    
+
     if (!list) PASS_TEST;
 
     if (*list)
@@ -32,7 +32,7 @@ int main(void) {
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
 
-    
+
     /* isds_list_free() */
     struct isds_list *list = NULL;
     TEST("NULL", test_isds_list_free, NULL, 0);

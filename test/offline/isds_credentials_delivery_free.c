@@ -18,7 +18,7 @@ int main(void) {
     INIT_TEST("isds_credentials_delivery_free()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     struct isds_credentials_delivery *credentials_delivery = NULL;
 
     TEST("NULL", test_isds_credentials_delivery_free, NULL);

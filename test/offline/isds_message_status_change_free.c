@@ -18,7 +18,7 @@ int main(void) {
     INIT_TEST("isds_message_status_change_free()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     struct isds_message_status_change *message_status_change = NULL;
 
     TEST("NULL", test_isds_message_status_change_free, NULL);

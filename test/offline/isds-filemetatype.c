@@ -6,7 +6,7 @@ static int test_filemetatype2string_must_fail(const isds_FileMetaType type) {
     xmlChar *string;
 
     string = (xmlChar *) isds_FileMetaType2string(type);
-    if (string) 
+    if (string)
         FAIL_TEST("conversion from isds_FileMetaType to string did not fail");
 
     PASS_TEST;
@@ -32,7 +32,7 @@ static int test_filemetatype(const isds_FileMetaType type,
     xmlChar *new_string;
 
     new_string = (xmlChar *) isds_FileMetaType2string(type);
-    if (!new_string) 
+    if (!new_string)
         FAIL_TEST("conversion from isds_FileMetaType to string failed");
     if (xmlStrcmp(string, new_string))
         FAIL_TEST("conversion from isds_FileMetaType %zd to string returned "
@@ -53,7 +53,7 @@ static int test_filemetatype(const isds_FileMetaType type,
 
 int main(void) {
     INIT_TEST("isds_FileMetaType conversion");
-    
+
     isds_FileMetaType types[] =  {
         FILEMETATYPE_MAIN,              /* Main document */
         FILEMETATYPE_ENCLOSURE,         /* Appendix */
@@ -71,9 +71,9 @@ int main(void) {
         TEST(strings[i], test_filemetatype, types[i], strings[i]);
 
 #if HAVE_LIBCURL
-    TEST("1234", test_filemetatype2string_must_fail, 1234); 
+    TEST("1234", test_filemetatype2string_must_fail, 1234);
 #endif
-    
+
     TEST("X-Invalid_Type", test_string2filemetatype_must_fail,
             BAD_CAST "X-Invalid_Type");
 

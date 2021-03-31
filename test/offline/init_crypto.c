@@ -5,7 +5,7 @@ static int test_init_crypto(const isds_error error) {
     isds_error err;
 
     err = _isds_init_crypto();
-    if (err != error) 
+    if (err != error)
         FAIL_TEST("Wrong return value");
 
     PASS_TEST;

@@ -18,7 +18,7 @@ int main(void) {
     INIT_TEST("isds_pki_credentials_free()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     struct isds_pki_credentials *credentials = NULL;
     TEST("NULL", test_isds_pki_credentials_free, NULL);
     TEST("*NULL", test_isds_pki_credentials_free, &credentials);

@@ -18,7 +18,7 @@ static int test_setup_gnupg(void) {
     int tmpfd;
 
     home = getenv("HOME");
-    if (!home) 
+    if (!home)
         FAIL_TEST("Could not get HOME variable");
 
     if (!*home)

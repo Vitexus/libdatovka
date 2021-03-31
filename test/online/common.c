@@ -31,7 +31,7 @@ static int read_config(const char *credentials_file, char **line, int order) {
                     i + 1, credentials_file);
             if (ferror(file))
                 fprintf(stderr, "error occured\n");
-            else if (feof(file)) 
+            else if (feof(file))
                 fprintf(stderr, "end of file reached\n");
             else
                 fprintf(stderr, "I don't know why\n");

@@ -5,7 +5,7 @@ static int test_dbtype2string_must_fail(const isds_DbType type) {
     xmlChar *string;
 
     string = (xmlChar *) isds_DbType2string(type);
-    if (string) 
+    if (string)
         FAIL_TEST("conversion from isds_DbType to string did not fail");
 
     PASS_TEST;
@@ -28,7 +28,7 @@ static int test_dbtype(const isds_DbType type, const xmlChar *name) {
     isds_DbType new_type;
 
     string = (xmlChar *) isds_DbType2string(type);
-    if (!string) 
+    if (!string)
         FAIL_TEST("conversion from isds_DbType to string failed");
 
     if (xmlStrcmp(name, string))
@@ -46,7 +46,7 @@ static int test_dbtype(const isds_DbType type, const xmlChar *name) {
 
 int main(void) {
     INIT_TEST("isds_DbType conversion");
-    
+
     isds_DbType types[] =  {
         DBTYPE_OVM,
         DBTYPE_OVM_NOTAR,
@@ -95,8 +95,8 @@ int main(void) {
     for (size_t i = 0; i < sizeof(types)/sizeof(types[0]); i++)
         TEST(names[i], test_dbtype, types[i], names[i]);
 
-    TEST("1234", test_dbtype2string_must_fail, 1234); 
-    
+    TEST("1234", test_dbtype2string_must_fail, 1234);
+
     TEST("X-Invalid_Type", test_string2dbtype_must_fail,
             BAD_CAST "X-Invalid_Type");
 

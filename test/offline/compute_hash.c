@@ -9,7 +9,7 @@ static int cmp_hash (const struct isds_hash *h1, const struct isds_hash *h2) {
     if (h1->algorithm != h2->algorithm)
         FAIL_TEST("Wrong hash algorithm");
 
-    if (h1->length != h2->length) 
+    if (h1->length != h2->length)
         FAIL_TEST("Wrong hash length");
     for (size_t i = 0; i < h1->length; i++) {
         if (((uint8_t *) (h1->value))[i] != ((uint8_t *) (h2->value))[i])
@@ -79,7 +79,7 @@ int main(void) {
     test.algorithm = HASH_ALGORITHM_SHA_1;
     TEST("zero length with NULL input",
             test_compute_hash, IE_SUCCESS, &correct, &test, NULL, 0);
-    
+
     correct.algorithm = HASH_ALGORITHM_MD5;
     correct.length = 16;
     correct.value = (uint8_t[]) {

@@ -18,7 +18,7 @@ int main(void) {
     INIT_TEST("isds_BirthInfo_free()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     struct isds_BirthInfo *BirthInfo = NULL;
     TEST("NULL", test_isds_BirthInfo_free, NULL);
     TEST("*NULL", test_isds_BirthInfo_free, &BirthInfo);

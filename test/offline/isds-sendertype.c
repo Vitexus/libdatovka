@@ -23,7 +23,7 @@ static int test_string2sendertype(const xmlChar *string, isds_error error,
 
 int main(void) {
     INIT_TEST("isds_sender_type conversion");
-    
+
     isds_sender_type types[] =  {
         SENDERTYPE_PRIMARY,
         SENDERTYPE_ENTRUSTED,

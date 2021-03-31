@@ -60,7 +60,7 @@ static int test_eventstring2event(const xmlChar *string, isds_error error,
 
 int main(void) {
     INIT_TEST("eventstring to event conversion");
-    
+
     xmlChar *input = NULL;
     isds_event_type event_type;
     struct isds_event event;

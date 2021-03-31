@@ -61,7 +61,7 @@ int main(void) {
         TEST(totp_strings[i], test_string2isds_otp_resolution,
                 totp_strings[i], totp_resolutions[i]);
     }
-    
+
     /* Corner cases */
     TEST("Unknown value", test_string2isds_otp_resolution, "X-Unknown value",
             OTP_RESOLUTION_UNKNOWN);

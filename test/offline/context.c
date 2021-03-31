@@ -6,7 +6,7 @@ static int test_create(struct isds_ctx **context) {
         FAIL_TEST("Bad invocation");
 
     *context = isds_ctx_create();
-    if (!*context) 
+    if (!*context)
         FAIL_TEST("isds_ctx_create() failed");
 
     PASS_TEST;
@@ -19,7 +19,7 @@ static int test_free(const isds_error error, struct isds_ctx **context) {
     if (error != isds_ctx_free(context))
         FAIL_TEST("Wrong return code");
 
-    if (*context) 
+    if (*context)
         FAIL_TEST("context not NULLed");
 
     PASS_TEST;
@@ -28,7 +28,7 @@ static int test_free(const isds_error error, struct isds_ctx **context) {
 
 int main(void) {
     INIT_TEST("context");
-    
+
     struct isds_ctx *context = NULL;
 
     if (isds_init())

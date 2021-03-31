@@ -23,7 +23,7 @@ static int test_string2isds_payment_type(const xmlChar *string,
 
 int main(void) {
     INIT_TEST("isds_payment_type conversion");
-    
+
     const xmlChar *names[] = {
         BAD_CAST "K",
         BAD_CAST "E",

@@ -17,7 +17,7 @@ int main(void) {
     INIT_TEST("isds_commercial_permission_free()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     struct isds_commercial_permission *permission = NULL;
     TEST("NULL", test_isds_commercial_permission_free, NULL);
     TEST("*NULL", test_isds_commercial_permission_free, &permission);

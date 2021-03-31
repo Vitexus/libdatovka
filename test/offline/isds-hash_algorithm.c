@@ -23,7 +23,7 @@ static int test_string2hashalgorithm(const xmlChar *name,
 
 int main(void) {
     INIT_TEST("isds_hash_algorithm conversion");
-   
+
     xmlChar *names[] = {
         BAD_CAST "MD5",
         BAD_CAST "SHA-1",

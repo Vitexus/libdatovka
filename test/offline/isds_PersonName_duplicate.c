@@ -7,7 +7,7 @@ static int test_isds_PersonName_duplicate(struct isds_PersonName *origin) {
     TEST_DESTRUCTOR((void(*)(void *))isds_PersonName_free, &copy);
 
     if (!origin) {
-        if (copy) 
+        if (copy)
             FAIL_TEST("Duplicate of NULL should be NULL");
         PASS_TEST;
     }
@@ -30,7 +30,7 @@ int main(void) {
     INIT_TEST("isds_PersonName_duplicate()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     TEST("NULL", test_isds_PersonName_duplicate, NULL);
 
     struct isds_PersonName empty;

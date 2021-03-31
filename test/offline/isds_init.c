@@ -5,7 +5,7 @@ static int test_init(const isds_error error) {
     isds_error err;
 
     err = isds_init();
-    if (err != error) 
+    if (err != error)
         FAIL_TEST("Wrong return value");
 
     PASS_TEST;
@@ -15,7 +15,7 @@ static int test_cleanup(const isds_error error) {
     isds_error err;
 
     err = isds_cleanup();
-    if (err != error) 
+    if (err != error)
         FAIL_TEST("Wrong return value");
 
     PASS_TEST;
@@ -37,7 +37,7 @@ int main(void) {
 
     TEST("first initialization", test_init, IE_SUCCESS);
     TEST("first cleanup", test_cleanup, IE_SUCCESS);
-    
+
     TEST("reinitialization", test_reinit);
 
     SUM_TEST();

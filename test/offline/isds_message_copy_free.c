@@ -17,7 +17,7 @@ int main(void) {
     INIT_TEST("isds_message_copy_free()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     struct isds_message_copy *copy = NULL;
 
     TEST("NULL", test_isds_message_copy_free, NULL);

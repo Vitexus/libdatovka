@@ -30,7 +30,7 @@ static int test_uint2isds_message_status(struct isds_ctx *context,
 
 int main(void) {
     INIT_TEST("unsigned int to isds_message_status conversion");
-    
+
     struct isds_ctx *context = NULL;
     isds_message_status *state = NULL;
     char *text = NULL;

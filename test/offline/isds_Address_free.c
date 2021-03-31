@@ -18,7 +18,7 @@ int main(void) {
     INIT_TEST("isds_Address_free()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     struct isds_Address *Address = NULL;
     TEST("NULL", test_isds_Address_free, NULL);
     TEST("*NULL", test_isds_Address_free, &Address);

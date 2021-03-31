@@ -23,7 +23,7 @@ static int test_string2isds_credit_event_type(const xmlChar *string,
 
 int main(void) {
     INIT_TEST("credit_event_type conversion");
-    
+
     const xmlChar *names[] = {
         BAD_CAST "1",
         BAD_CAST "2",

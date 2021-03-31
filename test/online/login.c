@@ -23,7 +23,7 @@ static int test_login2(const isds_error error1, const isds_error error2,
         const char *url, const char *username, const char *password,
         const struct isds_pki_credentials *pki_credentials,
         struct isds_otp *otp) {
-    
+
     isds_error err =
             isds_login(context, url, username, password, pki_credentials, otp);
     if (err != error1 && err != error2)
@@ -39,7 +39,7 @@ static int test_login2(const isds_error error1, const isds_error error2,
 
 int main(void) {
     INIT_TEST("login");
-    
+
     struct isds_ctx *context = NULL;
     const char *url = isds_testing_locator;
 
