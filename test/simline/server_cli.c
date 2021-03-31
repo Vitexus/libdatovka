@@ -30,9 +30,9 @@ static void usage(const char *name) {
             "\t-p PASSWORD      Define password\n"
             "\t-t TOTP_CODE     Define time-based OTP code\n"
             "\t-u USERNAME      Define user name\n"
-            "\t-a CERTIFICATE   PEM-formated authority certiticate\n"
-            "\t-s CERTIFICATE   PEM-formated server certificate\n"
-            "\t-S KEY           PEM-formated server privat key\n"
+            "\t-a CERTIFICATE   PEM-formatted authority certificate\n"
+            "\t-s CERTIFICATE   PEM-formatted server certificate\n"
+            "\t-S KEY           PEM-formatted server private key\n"
             "\t-c NAME          Client distinguished name\n"
             );
 }
@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
         } else if (otp_type == 'h') {
             server_otp_arguments.method = AUTH_OTP_HMAC;
         } else {
-            fprintf(stderr, "Internal error: Uknown OTP type: %c\n", otp_type);
+            fprintf(stderr, "Internal error: Unknown OTP type: %c\n", otp_type);
             exit(EXIT_FAILURE);
         }
         service_passwdotp_arguments.method = server_otp_arguments.method;

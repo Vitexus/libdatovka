@@ -13,21 +13,21 @@
 #define _hidden
 #endif
 
-/* Print formated string into automtically reallocated @uffer.
+/* Print formatted string into automatically reallocated @buffer.
  * @buffer automatically reallocated buffer. Must be &NULL or preallocated
  * memory.
  * @format format string as for printf(3)
- * @ap list of variadic arguments, after call will be in udefined state
- * @Returns number of bytes printed. In case of errror, -1 and NULL @buffer*/
+ * @ap list of variadic arguments, after call will be in undefined state
+ * @Returns number of bytes printed. In case of error, -1 and NULL @buffer*/
 int test_vasprintf(char **buffer, const char *format, va_list ap);
 
 
-/* Print formated string into automtically reallocated @uffer.
+/* Print formatted string into automatically reallocated @buffer.
  * @buffer automatically reallocated buffer. Must be &NULL or preallocated
  * memory.
  * @format format string as for printf(3)
  * @... variadic arguments
- * @Returns number of bytes printed. In case of errror, -1 and NULL @buffer*/
+ * @Returns number of bytes printed. In case of error, -1 and NULL @buffer*/
 int test_asprintf(char **buffer, const char *format, ...);
 
 

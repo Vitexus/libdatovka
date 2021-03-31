@@ -234,9 +234,9 @@ static char *uri_decode(const char *coded) {
 /* Read a line from HTTP socket.
  * @connection is HTTP connection to read from.
  * @line is auto-reallocated just read line. Will be NULL if EOF has been
- * reached or error occured.
+ * reached or error occurred.
  * @buffer is automatically reallocated buffer for the socket. It can preserve
- * prematurately read socket data.
+ * prematurely read socket data.
  * @buffer_size is allocated size of @buffer
  * @buffer_length is size of head of the buffer that holds read data.
  * @return 0 in success. */
@@ -358,10 +358,10 @@ static int http_write_line(const struct http_connection *connection,
 /* Read data of given length from HTTP socket.
  * @connection is HTTP connection to read from.
  * @data is auto-allocated just read data bulk. Will be NULL if EOF has been
- * reached or error occured.
+ * reached or error occurred.
  * @data_length is size of bytes to read.
  * @buffer is automatically reallocated buffer for the socket. It can preserve
- * prematurately read socket data.
+ * prematurely read socket data.
  * @buffer_size is allocated size of @buffer
  * @buffer_length is size of head of the buffer that holds read data.
  * @return 0 in success. */
@@ -385,7 +385,7 @@ static int http_read_bulk(const struct http_connection *connection,
 
 #define BURST 1024
     while (1) {
-        /* Check whether enought data have been read */
+        /* Check whether enough data have been read */
         if (*buffer_used >= data_length) {
             /* Copy read ahead data to new buffer and point data to original
              * buffer. */
@@ -491,7 +491,7 @@ static int http_parse_header(char *line, struct http_request *request) {
 
     /* Find last used header */
     for (header = request->headers; header != NULL && header->next != NULL;
-            header = header->next); 
+            header = header->next);
 
     if (*line == ' ' || *line == '\t') {
         /* Line is continuation of last header */
@@ -540,7 +540,7 @@ static int http_parse_header(char *line, struct http_request *request) {
     }
 
 
-    /* FIXME: Decode. After parsing all headers as we could decode begining
+    /* FIXME: Decode. After parsing all headers as we could decode beginning
      * and then got encoded continuation. */
     return HTTP_ERROR_SUCCESS;
 }
@@ -603,7 +603,7 @@ static void dump_body(const void *data, size_t length) {
     fprintf(stderr, "===BEGIN BODY===\n");
     if (length > 0 && NULL != data) {
         for (size_t i = 0; i < length; i++) {
-            if (isprint(((const unsigned char *)data)[i])) 
+            if (isprint(((const unsigned char *)data)[i]))
                 fprintf(stderr, "%c", ((const unsigned char *)data)[i]);
             else
                 fprintf(stderr, "\\x%02x", ((const unsigned char*)data)[i]);
@@ -768,7 +768,7 @@ ok:
 }
 
 
-/* Send a 200 Ok response with a cookie */ 
+/* Send a 200 Ok response with a cookie */
 int http_send_response_200_cookie(const struct http_connection *connection,
         const char *cokie_name, const char *cookie_value,
         const char *cookie_domain, const char *cookie_path,
@@ -797,7 +797,7 @@ int http_send_response_200_cookie(const struct http_connection *connection,
 
     /* Link defined headers */
     if (type != NULL) {
-        response.headers = &header_contenttype; 
+        response.headers = &header_contenttype;
     }
     if (header_cookie != NULL) {
         header_cookie->next = response.headers;
@@ -810,7 +810,7 @@ int http_send_response_200_cookie(const struct http_connection *connection,
 }
 
 
-/* Send a 200 Ok response */ 
+/* Send a 200 Ok response */
 int http_send_response_200(const struct http_connection *connection,
         const void *body, size_t body_length, const char *type) {
     return http_send_response_200_cookie(connection,
@@ -819,7 +819,7 @@ int http_send_response_200(const struct http_connection *connection,
 }
 
 
-/* Send a 302 Found response setting a cookie */ 
+/* Send a 302 Found response setting a cookie */
 int http_send_response_302_cookie(const struct http_connection *connection,
         const char *cokie_name, const char *cookie_value,
         const char *cookie_domain, const char *cookie_path,
@@ -861,7 +861,7 @@ int http_send_response_302_cookie(const struct http_connection *connection,
 }
 
 
-/* Send a 302 Found response with totp authentication scheme header */ 
+/* Send a 302 Found response with totp authentication scheme header */
 int http_send_response_302_totp(const struct http_connection *connection,
         const char *code, const char *text, const char *location) {
     struct http_header header_code = {
@@ -905,7 +905,7 @@ int http_send_response_302_totp(const struct http_connection *connection,
 
 
 /* Send a 400 Bad Request response.
- * Use non-NULL @reason to override status message. */ 
+ * Use non-NULL @reason to override status message. */
 int http_send_response_400(const struct http_connection *connection,
         const char *reason) {
     struct http_response response = {
@@ -920,7 +920,7 @@ int http_send_response_400(const struct http_connection *connection,
 }
 
 
-/* Send a 401 Unauthorized response with Basic authentication scheme header */ 
+/* Send a 401 Unauthorized response with Basic authentication scheme header */
 int http_send_response_401_basic(const struct http_connection *connection) {
     struct http_header header = {
         .name = "WWW-Authenticate",
@@ -940,7 +940,7 @@ int http_send_response_401_basic(const struct http_connection *connection) {
 
 
 /* Send a 401 Unauthorized response with OTP authentication scheme header for
- * given @method. */ 
+ * given @method. */
 int http_send_response_401_otp(const struct http_connection *connection,
         const char *method, const char *code, const char *text) {
     int retval;
@@ -988,7 +988,7 @@ int http_send_response_401_otp(const struct http_connection *connection,
 }
 
 
-/* Send a 403 Forbidden response */ 
+/* Send a 403 Forbidden response */
 int http_send_response_403(const struct http_connection *connection) {
     struct http_response response = {
         .status = 403,
@@ -1003,7 +1003,7 @@ int http_send_response_403(const struct http_connection *connection) {
 
 
 /* Send a 500 Internal Server Error response.
- * Use non-NULL @reason to override status message. */ 
+ * Use non-NULL @reason to override status message. */
 int http_send_response_500(const struct http_connection *connection,
         const char *reason) {
     struct http_response response = {
@@ -1018,7 +1018,7 @@ int http_send_response_500(const struct http_connection *connection,
 }
 
 
-/* Send a 503 Service Temporarily Unavailable response */ 
+/* Send a 503 Service Temporarily Unavailable response */
 int http_send_response_503(const struct http_connection *connection,
         const void *body, size_t body_length, const char *type) {
     struct http_header header = {
@@ -1061,7 +1061,7 @@ int http_client_authenticates(const struct http_request *request) {
 
 
 /* Return HTTP_ERROR_SUCCESS if request carries valid Basic credentials.
- * NULL @username or @password equales to empty string. */
+ * NULL @username or @password equals to empty string. */
 http_error http_authenticate_basic(const struct http_request *request,
         const char *username, const char *password) {
     const struct http_header *header;

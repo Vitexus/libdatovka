@@ -8,14 +8,14 @@ struct http_connection;
 
 /* Call-back type for non-interrupting receiving from socket. See recv(2).
  * @buffer is data to send by the call-back
- * @lentgh is number of bytes to send
+ * @length is number of bytes to send
  * @connection carries socket and callback_data. */
 typedef ssize_t (*http_recv_callback_t) (
         const struct http_connection *connection, void *buffer, size_t length);
 
 /* Call-back type for non-interrupting sending to socket. See send(2).
  * @buffer is memory to store received data by the call-back
- * @lentgh is size of the @buffer in bytes
+ * @length is size of the @buffer in bytes
  * @connection carries socket and callback_data. */
 typedef ssize_t (*http_send_callback_t) (
         const struct http_connection *connection, const void *buffer,
@@ -88,48 +88,48 @@ http_error http_read_request(const struct http_connection *connection,
 int http_write_response(const struct http_connection *connection,
         const struct http_response *response);
 
-/* Send a 200 Ok response with a cookie */ 
+/* Send a 200 Ok response with a cookie */
 int http_send_response_200_cookie(const struct http_connection *connection,
         const char *cokie_name, const char *cookie_value,
         const char *cookie_domain, const char *cookie_path,
         const void *body, size_t body_length, const char *type);
 
-/* Send a 200 Ok response */ 
+/* Send a 200 Ok response */
 int http_send_response_200(const struct http_connection *connection,
         const void *body, size_t body_length, const char *type);
 
-/* Send a 302 Found response setting a cookie */ 
+/* Send a 302 Found response setting a cookie */
 int http_send_response_302_cookie(const struct http_connection *connection,
         const char *cokie_name, const char *cookie_value,
         const char *cookie_domain, const char *cookie_path,
         const char *location);
 
-/* Send a 302 Found response with totp authentication scheme header */ 
+/* Send a 302 Found response with totp authentication scheme header */
 int http_send_response_302_totp(const struct http_connection *connection,
         const char *code, const char *text, const char *location);
 
 /* Send a 400 Bad Request response.
- * Use non-NULL @reason to override status message. */ 
+ * Use non-NULL @reason to override status message. */
 int http_send_response_400(const struct http_connection *connection,
         const char *reason);
 
-/* Send a 401 Unauthorized response with Basic authentication scheme header */ 
+/* Send a 401 Unauthorized response with Basic authentication scheme header */
 int http_send_response_401_basic(const struct http_connection *connection);
 
 /* Send a 401 Unauthorized response with OTP authentication scheme header for
- * given @method. */ 
+ * given @method. */
 int http_send_response_401_otp(const struct http_connection *connection,
         const char *method, const char *code, const char *text);
 
-/* Send a 403 Forbidden response */ 
+/* Send a 403 Forbidden response */
 int http_send_response_403(const struct http_connection *connection);
 
 /* Send a 500 Internal Server Error response.
- * Use non-NULL @reason to override status message. */ 
+ * Use non-NULL @reason to override status message. */
 int http_send_response_500(const struct http_connection *connection,
         const char *reason);
 
-/* Send a 503 Service Temporarily Unavailable response */ 
+/* Send a 503 Service Temporarily Unavailable response */
 int http_send_response_503(const struct http_connection *connection,
         const void *body, size_t body_length, const char *type);
 
@@ -137,7 +137,7 @@ int http_send_response_503(const struct http_connection *connection,
 int http_client_authenticates(const struct http_request *request);
 
 /* Return HTTP_ERROR_SUCCESS if request carries valid Basic credentials.
- * NULL @username or @password equales to empty string. */
+ * NULL @username or @password equal to empty string. */
 http_error http_authenticate_basic(const struct http_request *request,
         const char *username, const char *password);
 

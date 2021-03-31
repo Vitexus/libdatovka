@@ -29,7 +29,7 @@ typedef enum {
     SERVER_CREDIT_CHARGED,        /* Credit has been charged */
     SERVER_CREDIT_DISCHARGED,     /* Credit has been discharged */
     SERVER_CREDIT_MESSAGE_SENT,   /* Credit has been spent for sending
-                                   a commerical message */
+                                   a commercial message */
     SERVER_CREDIT_STORAGE_SET,    /* Credit has been spent for setting
                                    a long-term storage */
     SERVER_CREDIT_EXPIRED         /* Credit has expired */
@@ -49,7 +49,7 @@ struct server_credit_event_discharged {
 
 /* Data specific for SERVER_CREDIT_MESSAGE_SENT server_credit_event_type */
 struct server_credit_event_message_sent {
-    char *recipient;                /* Recipent's box ID of the sent message */
+    char *recipient;                /* Recipient's box ID of the sent message */
     char *message_id;               /* ID of the sent message */
 };
 
@@ -69,7 +69,7 @@ struct server_credit_event_storage_set {
                                        change; Optional. */
 };
 
-/* Event about change of credit for sending commerical services */
+/* Event about change of credit for sending commercial services */
 struct server_credit_event {
     /* Common fields */
     struct timeval *time;           /* When the credit was changed. */
@@ -79,7 +79,7 @@ struct server_credit_event {
                                        The unit is 1/100 CZK. */
     server_credit_event_type type;    /* Type of the event */
 
-    /* Datails specific for the type */
+    /* Details specific for the type */
     union {
         struct server_credit_event_charged charged;
                                                 /* SERVER_CREDIT_CHARGED */

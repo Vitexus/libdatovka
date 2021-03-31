@@ -174,7 +174,7 @@ static http_error timestring2timeval(const char *string,
     /* Get zone offset */
     /* ISO allows zone offset string only: "" | "Z" | ("+"|"-" "<HH>:<MM>")
      * "" equals to "Z" and it means UTC zone. */
-    /* One can not use strptime(, "%z",) becase it's RFC E-MAIL format without
+    /* One can not use strptime(, "%z",) because it's RFC E-MAIL format without
      * colon separator */
     if (offset && (*offset == '-' || *offset == '+')) {
         if (2 != sscanf(offset + 1, "%2d:%2d", &offset_hours, &offset_minutes)) {
@@ -476,7 +476,7 @@ static http_error select_element(const char **code, char **message,
  * @error_message is a reallocated output ISDS error message
  * @xpath_ctx is a current XPath context
  * @element_name is name of a element whose child text node to extract
- * @string is the extraced allocated string value, or NULL if empty or the
+ * @string is the extracted allocated string value, or NULL if empty or the
  * element does not exist.
  * @return HTTP_ERROR_SUCCESS or an appropriate error code. */
 static http_error extract_string(const char **code, char **message,
@@ -520,7 +520,7 @@ leave:
 
 
 /* Compare dates represented by pointer to struct tm.
- * @return 0 if equalued, non-0 otherwise. */
+ * @return 0 if equal, non-0 otherwise. */
 static int datecmp(const struct tm *a, const struct tm *b) {
     if (NULL == a && b == NULL) return 0;
     if ((NULL == a && b != NULL) || (NULL != a && b == NULL)) return 1;
@@ -532,7 +532,7 @@ static int datecmp(const struct tm *a, const struct tm *b) {
 
 
 /* Compare times represented by pointer to struct timeval.
- * @return 0 if equalued, non-0 otherwise. */
+ * @return 0 if equal, non-0 otherwise. */
 static int timecmp(const struct timeval *a, const struct timeval *b) {
     if (NULL == a && b == NULL) return 0;
     if ((NULL == a && b != NULL) || (NULL != a && b == NULL)) return 1;
@@ -551,8 +551,8 @@ static int timecmp(const struct timeval *a, const struct timeval *b) {
  * is NULL.
  * @expected_value is an expected string value
  * @return HTTP_ERROR_SUCCESS if the @element_name element's value is
- * @expected_value. HTTP_ERROR_CLIENT if not equaled, HTTP_ERROR_SERVER if an
- * internal error occured. */
+ * @expected_value. HTTP_ERROR_CLIENT if not equal, HTTP_ERROR_SERVER if an
+ * internal error occurred. */
 static http_error element_equals_string(const char **code, char **message,
         xmlXPathContextPtr xpath_ctx, const char *element_name,
         _Bool must_exist, const char *expected_value) {
@@ -611,8 +611,8 @@ leave:
  * is NULL.
  * @expected_value is an expected integer value.
  * @return HTTP_ERROR_SUCCESS if the @element_name element's value is
- * @expected_value. HTTP_ERROR_CLIENT if not equaled, HTTP_ERROR_SERVER if an
- * internal error occured. */
+ * @expected_value. HTTP_ERROR_CLIENT if not equal, HTTP_ERROR_SERVER if an
+ * internal error occurred. */
 static http_error element_equals_integer(const char **code, char **message,
         xmlXPathContextPtr xpath_ctx, const char *element_name,
         _Bool must_exist, const long int *expected_value) {
@@ -690,8 +690,8 @@ leave:
  * is NULL.
  * @expected_value is an expected boolean value
  * @return HTTP_ERROR_SUCCESS if the @element_name element's value is
- * @expected_value. HTTP_ERROR_CLIENT if not equaled, HTTP_ERROR_SERVER if an
- * internal error occured. */
+ * @expected_value. HTTP_ERROR_CLIENT if not equal, HTTP_ERROR_SERVER if an
+ * internal error occurred. */
 static http_error element_equals_boolean(const char **code, char **message,
         xmlXPathContextPtr xpath_ctx, const char *element_name,
         _Bool must_exist, const _Bool *expected_value) {
@@ -765,8 +765,8 @@ leave:
  * is NULL.
  * @expected_value is an expected boolean value
  * @return HTTP_ERROR_SUCCESS if the @element_name element's value is
- * @expected_value. HTTP_ERROR_CLIENT if not equaled, HTTP_ERROR_SERVER if an
- * internal error occured. */
+ * @expected_value. HTTP_ERROR_CLIENT if not equal, HTTP_ERROR_SERVER if an
+ * internal error occurred. */
 static http_error element_equals_date(const char **code, char **message,
         xmlXPathContextPtr xpath_ctx, const char *element_name,
         _Bool must_exist, const struct tm *expected_value) {
@@ -836,8 +836,8 @@ leave:
  * is NULL.
  * @expected_value is an expected boolean value
  * @return HTTP_ERROR_SUCCESS if the @element_name element's value is
- * @expected_value. HTTP_ERROR_CLIENT if not equaled, HTTP_ERROR_SERVER if an
- * internal error occured. */
+ * @expected_value. HTTP_ERROR_CLIENT if not equal, HTTP_ERROR_SERVER if an
+ * internal error occurred. */
 static http_error element_equals_time(const char **code, char **message,
         xmlXPathContextPtr xpath_ctx, const char *element_name,
         _Bool must_exist, const struct timeval *expected_value) {
@@ -904,7 +904,7 @@ leave:
  * @dm is true for dmStatus, otherwise dbStatus
  * @code is status code as string
  * @message is UTF-8 encoded message
- * @db_ref_number is optinal reference number propagated if not @dm
+ * @db_ref_number is optional reference number propagated if not @dm
  * @return 0 on success, otherwise non-0. */
 static http_error insert_isds_status(xmlNodePtr parent, _Bool dm,
         const xmlChar *code, const xmlChar *message,
@@ -1963,7 +1963,7 @@ static struct service services[] = {
  * @otp_ns selects name space for the request and response know as "isds".
  * Use true for OTP-authenticated password change services, otherwise false.
  * @message_ns selects proper message name space. Unsigned and signed
- * messages and delivery info's differ in prefix and URI.
+ * messages and delivery infos differ in prefix and URI.
  * @return 0 in success, otherwise not 0. */
 static int register_namespaces(xmlXPathContextPtr xpath_ctx,
         const _Bool otp_ns, const message_ns_type message_ns) {
@@ -2200,7 +2200,7 @@ void soap(const struct http_connection *connection,
             goto leave;
         }
         /* Last argument 1 means format the XML tree. This is pretty but it breaks
-         * XML document transport as it adds text nodes (indentiation) between
+         * XML document transport as it adds text nodes (indentation) between
          * elements. */
         save_ctx = xmlSaveToBuffer(http_response_body, "UTF-8", 0);
         if (NULL == save_ctx) {

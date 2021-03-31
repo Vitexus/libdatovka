@@ -308,7 +308,7 @@ static void do_as_sendsms(const struct http_connection *connection,
                 char *location = NULL;
                 if (-1 == test_asprintf(&location, "%s%s", as_path_dontsendsms, uri)) {
                     http_send_response_500(connection,
-                            "Could not build new localtion for "
+                            "Could not build new location for "
                             "second OTP phase");
                     return;
                 }
@@ -477,7 +477,7 @@ static void do_asws(const struct http_connection *connection,
         do_ws(connection, arguments->services, request, NULL);
         return;
     }
-    
+
     if (AUTH_OTP_TIME == arguments->method) {
         /* Try Basic */
         error = http_authenticate_basic(request,
@@ -566,7 +566,7 @@ static void do_ws_with_cookie(const struct http_connection *connection,
  * @connection is HTTP connection
  * @server_arguments is pointer to structure arguments_otp_authentication. It
  * selects OTP method to enable.
- * @request is parsed HTTP client requrest
+ * @request is parsed HTTP client request
  * @return 0 to accept new client, return -1 in case of fatal error. */
 int server_otp_authentication(const struct http_connection *connection,
         const void *server_arguments, const struct http_request *request) {
@@ -618,7 +618,7 @@ int server_otp_authentication(const struct http_connection *connection,
 /* Implementation of server that is out of order.
  * It always sends back SOAP Fault with HTTP error 503.
  * @connection is HTTP connection
- * @server_arguments is ununsed pointer
+ * @server_arguments is unused pointer
  * @request is parsed HTTP client request
  * @return 0 to accept new client, return -1 in case of fatal error. */
 int server_out_of_order(const struct http_connection *connection,
@@ -671,7 +671,7 @@ static ssize_t recv_tls(const struct http_connection *connection,
                 error = gnutls_handshake(connection->callback_data);
             } while (error < 0 && !gnutls_error_is_fatal(error));
             if (error < 0) {
-                fprintf(stderr, "TLS rehandshake failed: %s\n",
+                fprintf(stderr, "TLS re-handshake failed: %s\n",
                         gnutls_strerror(error));
                 return -1;
             }
@@ -693,7 +693,7 @@ static ssize_t send_tls(const struct http_connection *connection,
 }
 
 
-/* Call-back fot GnuTLS to receive data from TCP socket.
+/* Call-back for GnuTLS to receive data from TCP socket.
  * We override default implementation to unify passing http_connection as
  * @context. Also otherwise there is need for ugly type cast from integer to
  * pointer. */

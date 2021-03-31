@@ -118,11 +118,11 @@ int main(void) {
                 context, password, username, NULL, NULL);
         TEST("sequence of the same characters", test_isds_change_password,
                 IE_INVAL, context, password, "h222k$Aa", NULL, NULL);
-        TEST("forbiden prefix qwert", test_isds_change_password,
+        TEST("forbidden prefix qwert", test_isds_change_password,
                 IE_INVAL, context, password, "qwert$A8", NULL, NULL);
-        TEST("forbiden prefix asdgf", test_isds_change_password,
+        TEST("forbidden prefix asdgf", test_isds_change_password,
                 IE_INVAL, context, password, "asdgf$A8", NULL, NULL);
-        TEST("forbiden prefix 12345", test_isds_change_password,
+        TEST("forbidden prefix 12345", test_isds_change_password,
                 IE_INVAL, context, password, "12345$Aa", NULL, NULL);
         TEST("valid request", test_isds_change_password, IE_SUCCESS,
                 context, password, "h2k$Aana", NULL, NULL);

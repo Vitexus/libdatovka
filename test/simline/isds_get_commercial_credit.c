@@ -145,7 +145,7 @@ static int test_isds_get_commercial_credit(const isds_error error,
             case ISDS_CREDIT_EXPIRED:
                 break;
             default:
-                FAIL_TEST("Uknown credit event type returned");
+                FAIL_TEST("Unknown credit event type returned");
         }
     }
     if (NULL != returned_item)

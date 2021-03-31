@@ -353,7 +353,7 @@ int main(void) {
 
 
     {
-        /* Client must support DBTYPE_OVM_MAIN, send an empty reponse */
+        /* Client must support DBTYPE_OVM_MAIN, send an empty response */
         char *url = NULL;
 
         isds_fulltext_target target = FULLTEXT_ALL;

@@ -62,7 +62,7 @@ int main(void) {
     TEST("invalid URL", test_login, IE_NETWORK, context,
             "invalid://", username(), password(), NULL, NULL);
     /* Direct connection fails on local resolution, connection trough proxy
-     * failes on HTTP code */
+     * fails on HTTP code */
     TEST("unresolvable host name", test_login2, IE_NETWORK, IE_HTTP, context,
             "http://unresolvable.example.com/", username(), password(),
             NULL, NULL);
