@@ -27,7 +27,7 @@ static int test_b64decode(const void *input, const void *correct,
         }
     } else {
         /* Format as signed to get -1 as error. Big positive numbers should
-         * not occure in these tests */
+         * not occur in these tests */
         FAIL_TEST("Output length differs: expected=%zd, got=%zd",
                 correct_length, length);
     }
@@ -39,12 +39,12 @@ static int test_b64decode_null_pointer(const void *input,
     size_t length;
 
     length = _isds_b64decode(input, NULL);
-    
+
     if (length == correct_length)
         PASS_TEST
     else
         /* Format as signed to get -1 as error. Big positive numbers should
-         * not occure in these tests */
+         * not occur in these tests */
         FAIL_TEST("Output length differs: expected=%zd, got=%zd",
                 correct_length, length)
 }

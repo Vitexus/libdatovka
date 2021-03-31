@@ -17,7 +17,7 @@ static int test_string2dbtype_must_fail(const xmlChar *string) {
 
     err = string2isds_DbType((xmlChar *)string, &new_type);
     if (!err)
-        FAIL_TEST("conversion from string to isds_DbTyoe did not fail");
+        FAIL_TEST("conversion from string to isds_DbType did not fail");
 
     PASS_TEST;
 }
@@ -36,7 +36,7 @@ static int test_dbtype(const isds_DbType type, const xmlChar *name) {
 
     err = string2isds_DbType(string, &new_type);
     if (err)
-        FAIL_TEST("conversion from string to isds_DbTyoe failed");
+        FAIL_TEST("conversion from string to isds_DbType failed");
 
     if (type != new_type)
         FAIL_TEST("double conversion not idempotent");

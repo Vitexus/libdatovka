@@ -12,11 +12,11 @@ static int test_b64encode(const char *correct, const void *input,
         PASS_TEST;
 
     if (correct != NULL && output == NULL)
-        FAIL_TEST("Excpected non-NULL, got NULL");
+        FAIL_TEST("Expected non-NULL, got NULL");
 
     if (correct == NULL && output != NULL) {
         free(output);
-        FAIL_TEST("Excpected NULL, got non-NULL");
+        FAIL_TEST("Expected NULL, got non-NULL");
     }
 
     if (strcmp(correct, output)) {

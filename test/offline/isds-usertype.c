@@ -37,7 +37,7 @@ static int test_usertype(const isds_UserType type, const xmlChar *name) {
 
     err = string2isds_UserType(string, &new_type);
     if (err)
-        FAIL_TEST("conversion from string to isds_DbTyoe failed");
+        FAIL_TEST("conversion from string to isds_UserType failed");
 
     if (type != new_type)
         FAIL_TEST("double conversion not idempotent: expected=%d, got=%d",

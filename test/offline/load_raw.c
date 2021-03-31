@@ -37,7 +37,7 @@ static int test_load_message(struct isds_ctx *context,
 
     if (test->should_pass) {
         if (err)
-            FAIL_TEST("Message loading should succeded: got=%s",
+            FAIL_TEST("Message loading should succeed: got=%s",
                     isds_strerror(err));
     } else {
         if (!err)
@@ -69,7 +69,7 @@ static int test_load_delivery(struct isds_ctx *context,
 
     if (test->should_pass) {
         if (err)
-            FAIL_TEST("Message loading should succeded: got=%s",
+            FAIL_TEST("Message loading should succeed: got=%s",
                     isds_strerror(err));
     } else {
         if (!err)

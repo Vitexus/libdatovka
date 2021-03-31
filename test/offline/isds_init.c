@@ -36,7 +36,7 @@ int main(void) {
     INIT_TEST("isds_init");
 
     TEST("first initialization", test_init, IE_SUCCESS);
-    TEST("first cleanup", test_cleanup, IE_SUCCESS);
+    TEST("first clean-up", test_cleanup, IE_SUCCESS);
 
     TEST("reinitialization", test_reinit);
 
