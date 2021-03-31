@@ -129,7 +129,7 @@ static void XMLCALL element_start(void *userData, const XML_Char *name,
     const XML_Index index = XML_GetCurrentByteIndex(data->parser);
     /* XXX: Because document length is stored as size_t, index always fits
      * size_t. */
-    const size_t boundary = index; 
+    const size_t boundary = index;
 
     /* Silent warning about unused argument.
      * This protype is expat's XML_StartElementHandler type. */
@@ -147,7 +147,7 @@ static void XMLCALL element_start(void *userData, const XML_Char *name,
         isds_log(ILF_XML, ILL_DEBUG,
                 _("\tStart tag for element `%s' found\n"),
                 data->elements[data->element_depth]);
-        
+
         if (!data->elements[data->element_depth + 1]) {
             data->found = 1;
             *data->start = boundary;
@@ -167,7 +167,7 @@ static void XMLCALL element_end(void *userData, const XML_Char *name) {
     const int count = XML_GetCurrentByteCount(data->parser);
     /* XXX: Because document length is stored as size_t, index + count always
      * fits size_t. */
-    const size_t boundary = index + count - 1; 
+    const size_t boundary = index + count - 1;
 
     isds_log(ILF_XML, ILL_DEBUG, _("End:   name=%s, depth=%zd, offset=%#jx "
             "count=%u => boundary=%#zx\n"),
@@ -211,7 +211,7 @@ static void XMLCALL element_end(void *userData, const XML_Char *name) {
  * @return 0 if element found */
 _hidden isds_error _isds_find_element_boundary(void *document, size_t length,
         char *path, size_t *start, size_t *end) {
-    
+
     XML_Parser parser;
     enum XML_Status xerr;
     struct expat_data user_data;
@@ -239,7 +239,7 @@ _hidden isds_error _isds_find_element_boundary(void *document, size_t length,
 
     XML_SetStartElementHandler(parser, element_start);
     XML_SetEndElementHandler(parser, element_end);
-    
+
     user_data.parser = parser;
     user_data.found = 0;
     user_data.start = start;

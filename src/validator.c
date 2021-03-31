@@ -82,7 +82,7 @@ _hidden isds_error isds_response_status(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, 
+    if (_isds_register_namespaces(xpath_ctx,
                 (context->type == CTX_TYPE_TESTING_REQUEST_COLLECTOR) ?
                     MESSAGE_NS_1 : MESSAGE_NS_UNSIGNED)) {
         err = IE_ERROR;
@@ -286,7 +286,7 @@ _hidden isds_error _isds_check_documents_hierarchy(struct isds_ctx *context,
             }
             main_exists = 1;
         }
-        
+
         /* All document identifiers should be unique */
         if (document->dmFileGuid) {
             if (isds_find_document_by_id(documents, document->dmFileGuid) !=
@@ -309,7 +309,7 @@ _hidden isds_error _isds_check_documents_hierarchy(struct isds_ctx *context,
             }
         }
     }
-    
+
     if (!main_exists) {
         isds_log_message(context, _("List does not contain main document"));
         return IE_ERROR;

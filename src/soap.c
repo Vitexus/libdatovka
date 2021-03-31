@@ -41,7 +41,7 @@ static void auth_headers_free(struct auth_headers *headers) {
 static const char *header_value(const char *line, const char *name) {
     const char *value;
     if (line == NULL || name == NULL) return NULL;
-    
+
     for (value = line; ; value++, name++) {
         if (*value == '\0') return NULL;        /* Line too short */
         if (*name == '\0') break;               /* Name matches */
@@ -113,14 +113,14 @@ static int try_rfc2047_decode(_Bool prepend_space, const char **input,
 
     /* Now pointers are:
      * "=?CHARSET?E?ENCODED_TEXT?="
-     *  | |       |             || 
+     *  | |       |             ||
      *  | |       |             |\- encoded
      *  | |       |             \- end
      *  | |       \- encoding
      *  | \- charset_start
      *  \- *input
      */
-    
+
     charset_length = encoding - charset_start - 1;
     if (charset_length < 1)
         return -1;
@@ -190,7 +190,7 @@ static int try_rfc2047_decode(_Bool prepend_space, const char **input,
         free(charset);
         return -1;
     }
-    
+
     /* Convert to UTF-8 */
     char *utf_stream = NULL;
     size_t utf_length;
@@ -238,12 +238,11 @@ static char *decode_header_value(const char *encoded_value) {
     /* Decode */
     /* RFC 2616, section 4.2: Remove surrounding LWS, replace inner ones with
      * a space. */
-    /* RFC 2047, section 6.2: LWS between adjacent encoded words is ignored.
-     * */ 
+    /* RFC 2047, section 6.2: LWS between adjacent encoded words is ignored. */
     for (decoded_cursor = decoded; *encoded_value; encoded_value++) {
         if (*encoded_value == '\r' || *encoded_value == '\n' ||
                 *encoded_value == '\t' || *encoded_value == ' ') {
-            lws_seen = 1; 
+            lws_seen = 1;
             continue;
         }
         if (*encoded_value == '=' &&
@@ -273,7 +272,7 @@ static char *decode_header_value(const char *encoded_value) {
 /*static _Bool otp_method_matches(const isds_otp_method client_method,
         const char *server_method) {
     char *method_name = NULL;
-    
+
     switch (client_method) {
         case OTP_HMAC: method_name = "hotp"; break;
         case OTP_TIME: method_name = "totp"; break;
@@ -347,7 +346,7 @@ static isds_error unset_http_authorization(struct isds_ctx *context) {
         error = IE_ERROR;
 #endif /* not HAVE_DECL_CURLOPT_USERNAME */
 
-    if (error) 
+    if (error)
         isds_log(ILF_HTTP, ILL_ERR, _("Error while unsetting user name and "
                     "password from CURL handle for connection to server %s.\n"),
                 context->url);
@@ -537,7 +536,7 @@ static int log_curl(CURL *curl, curl_infotype type, char *buffer, size_t size,
  * @context holds the base URL,
  * @url is a (CGI) file of SOAP URL,
  * @use_get is a false to do a POST request, true to do a GET request.
- * @request is body for POST request 
+ * @request is body for POST request
  * @request_length is length of @request in bytes
  * @reponse is automatically reallocated() buffer to fit HTTP response with
  * @response_length (does not need to match allocated memory exactly). You must
@@ -684,13 +683,13 @@ static isds_error http(struct isds_ctx *context,
                             context->pki_credentials->certificate,
                             context->pki_credentials->engine);
                 else
-                    isds_log(ILF_SEC, ILL_INFO, _("Client certificate " 
+                    isds_log(ILF_SEC, ILL_INFO, _("Client certificate "
                                 "will be read from `%s' engine\n"),
                             context->pki_credentials->engine);
                 curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLCERTTYPE,
                         "ENG");
             } else if (context->pki_credentials->certificate) {
-                isds_log(ILF_SEC, ILL_INFO, _("Client %s certificate " 
+                isds_log(ILF_SEC, ILL_INFO, _("Client %s certificate "
                             "will be read from `%s' file\n"),
                         (context->pki_credentials->certificate_format ==
                             PKI_FORMAT_DER) ? _("DER") : _("PEM"),
@@ -726,7 +725,7 @@ static isds_error http(struct isds_ctx *context,
                                 "from `%s' engine will be used\n"),
                             context->pki_credentials->key,
                             context->pki_credentials->engine);
-                else 
+                else
                     isds_log(ILF_SEC, ILL_INFO, _("Client private key "
                                 "from `%s' engine will be used\n"),
                             context->pki_credentials->engine);
@@ -916,7 +915,7 @@ static isds_error http(struct isds_ctx *context,
         }
         isds_log(ILF_HTTP, ILL_DEBUG, _("End of POST body\n"));
     }
-    
+
 
     /*  Do the request */
     curl_err = curl_easy_perform(context->curl);
@@ -1024,7 +1023,7 @@ static isds_error http(struct isds_ctx *context,
          * HTTP code is 302. This is checked in _isds_soap(). */
         response_otp_headers->resolution =
             string2isds_otp_resolution(response_otp_headers->code);
-        
+
         if (response_otp_headers->message != NULL) {
             char *message_locale = _isds_utf82locale(response_otp_headers->message);
             /* _isds_utf82locale() return NULL on inconverable string. Do not
@@ -1532,7 +1531,7 @@ redirect:
 
     if (NULL != context->otp_credentials)
         context->otp_credentials->resolution = response_otp_headers.resolution;
-    
+
     /* Check for HTTP return code */
     isds_log(ILF_SOAP, ILL_DEBUG, _("Server returned %ld HTTP code\n"),
             http_code);
@@ -1727,7 +1726,7 @@ _hidden isds_error _isds_build_url_from_context(struct isds_ctx *context,
     if (NULL == context) return IE_INVALID_CONTEXT;
     if (NULL == template) return IE_INVAL;
     if (NULL == new_url) return IE_INVAL;
-    
+
     /* Find length of base URL from context URL */
     if (NULL == context->url) {
         isds_log_message(context, _("Base URL could not have been determined "
@@ -1745,7 +1744,7 @@ _hidden isds_error _isds_build_url_from_context(struct isds_ctx *context,
         return IE_ERROR;
     }
     length++;
-    
+
     /* Build new URL */
     if (-1 == isds_asprintf(new_url, template, length, context->url,
                 context->url))

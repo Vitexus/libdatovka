@@ -148,7 +148,7 @@ void isds_pki_credentials_free(struct isds_pki_credentials **pki) {
         memset((*pki)->passphrase, 0, strlen((*pki)->passphrase));
         free((*pki)->passphrase);
     }
-    
+
     zfree((*pki));
 }
 
@@ -159,7 +159,7 @@ void isds_list_free(struct isds_list **list) {
     struct isds_list *item, *next_item;
 
     if (!list || !*list) return;
-    
+
     for(item = *list; item; item = next_item) {
         if (item->destructor) (item->destructor)(&(item->data));
         next_item = item->next;
@@ -213,7 +213,7 @@ void isds_BirthInfo_free(struct isds_BirthInfo **birth_info) {
     free((*birth_info)->biCity);
     free((*birth_info)->biCounty);
     free((*birth_info)->biState);
-    
+
     free(*birth_info);
     *birth_info = NULL;
 }
@@ -272,7 +272,7 @@ void isds_DbOwnerInfo_free(struct isds_DbOwnerInfo **db_owner_info) {
     free((*db_owner_info)->dbState);
     free((*db_owner_info)->dbEffectiveOVM);
     free((*db_owner_info)->dbOpenAddressing);
-    
+
     free(*db_owner_info);
     *db_owner_info = NULL;
 }
@@ -424,7 +424,7 @@ void isds_message_free(struct isds_message **message) {
 /* Deallocate struct isds_document recursively and NULL it */
 void isds_document_free(struct isds_document **document) {
     if (!document || !*document) return;
-    
+
     if (!(*document)->is_xml) {
         free((*document)->data);
     }
@@ -433,7 +433,7 @@ void isds_document_free(struct isds_document **document) {
     free((*document)->dmUpFileGuid);
     free((*document)->dmFileDescr);
     free((*document)->dmFormat);
-    
+
     free(*document);
     *document = NULL;
 }
@@ -601,7 +601,7 @@ static struct isds_pki_credentials *isds_pki_credentials_duplicate(
     new->key_format = template->key_format;
     STRDUP_OR_ERROR(new->key, template->key);
     STRDUP_OR_ERROR(new->passphrase, template->passphrase);
-    
+
     return new;
 
 error:
@@ -649,7 +649,7 @@ struct isds_PersonName *isds_PersonName_duplicate(
     STRDUP_OR_ERROR(new->pnLastNameAtBirth, src->pnLastNameAtBirth);
 
     return new;
-    
+
 error:
     isds_PersonName_free(&new);
     return NULL;
@@ -691,9 +691,9 @@ static struct isds_BirthInfo *isds_BirthInfo_duplicate(
     STRDUP_OR_ERROR(new->biCity, template->biCity);
     STRDUP_OR_ERROR(new->biCounty, template->biCounty);
     STRDUP_OR_ERROR(new->biState, template->biState);
-    
+
     return new;
-    
+
 error:
     isds_BirthInfo_free(&new);
     return NULL;
@@ -717,9 +717,9 @@ struct isds_Address *isds_Address_duplicate(
             src->adNumberInMunicipality);
     STRDUP_OR_ERROR(new->adZipCode, src->adZipCode);
     STRDUP_OR_ERROR(new->adState, src->adState);
-    
+
     return new;
-    
+
 error:
     isds_Address_free(&new);
     return NULL;
@@ -785,7 +785,7 @@ struct isds_DbOwnerInfo *isds_DbOwnerInfo_duplicate(
         if (!(new->address = isds_Address_duplicate(src->address)))
             goto error;
     }
-    
+
     STRDUP_OR_ERROR(new->nationality, src->nationality);
     STRDUP_OR_ERROR(new->email, src->email);
     STRDUP_OR_ERROR(new->telNumber, src->telNumber);
@@ -796,7 +796,7 @@ struct isds_DbOwnerInfo *isds_DbOwnerInfo_duplicate(
     FLATDUP_OR_ERROR(new->dbOpenAddressing, src->dbOpenAddressing);
 
     return new;
-    
+
 error:
     isds_DbOwnerInfo_free(&new);
     return NULL;
@@ -873,7 +873,7 @@ struct isds_DbUserInfo *isds_DbUserInfo_duplicate(
         if (!(new->address = isds_Address_duplicate(src->address)))
             goto error;
     }
-    
+
     FLATDUP_OR_ERROR(new->biDate, src->biDate);
     STRDUP_OR_ERROR(new->ic, src->ic);
     STRDUP_OR_ERROR(new->firmName, src->firmName);
@@ -883,7 +883,7 @@ struct isds_DbUserInfo *isds_DbUserInfo_duplicate(
     STRDUP_OR_ERROR(new->caState, src->caState);
 
     return new;
-    
+
 error:
     isds_DbUserInfo_free(&new);
     return NULL;
@@ -977,7 +977,7 @@ error:
 #endif
 
 #undef FLATDUP_OR_ERROR
-#undef STRDUP_OR_ERROR 
+#undef STRDUP_OR_ERROR
 
 
 /* Logs libxml2 errors. Should be registered to libxml2 library.
@@ -1058,7 +1058,7 @@ isds_error isds_init(void) {
 isds_error isds_cleanup(void) {
     /* XML */
     xmlCleanupParser();
-    
+
 #if HAVE_LIBCURL
     /* Curl */
     curl_global_cleanup();
@@ -1215,7 +1215,7 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
     if (!context || !*context) {
         return IE_INVALID_CONTEXT;
     }
-  
+
 #if HAVE_LIBCURL
     /* Discard credentials and close connection */
     switch ((*context)->type) {
@@ -1272,9 +1272,9 @@ _hidden isds_error isds_log_message(struct isds_ctx *context,
         const char *message) {
     char *buffer;
     size_t length;
-    
+
     if (!context) return IE_INVALID_CONTEXT;
-    
+
     /* FIXME: Check for integer overflow */
     length = 1 + ((message) ? strlen(message) : 0);
     buffer = realloc(context->long_message, length);
@@ -1297,12 +1297,12 @@ _hidden isds_error isds_append_message(struct isds_ctx *context,
         const char *message) {
     char *buffer;
     size_t old_length, length;
-    
+
     if (!context) return IE_INVALID_CONTEXT;
     if (!message) return IE_SUCCESS;
     if (!context->long_message)
         return isds_log_message(context, message);
-    
+
     old_length = strlen(context->long_message);
     /* FIXME: Check for integer overflow */
     length = 1 + old_length + strlen(message);
@@ -1322,12 +1322,12 @@ _hidden isds_error isds_printf_message(struct isds_ctx *context,
         const char *format, ...) {
     va_list ap;
     int length;
-    
+
     if (!context) return IE_INVALID_CONTEXT;
     va_start(ap, format);
     length = isds_vasprintf(&(context->long_message), format, ap);
     va_end(ap);
-        
+
     return (length < 0) ? IE_ERROR: IE_SUCCESS;
 }
 
@@ -1408,7 +1408,7 @@ isds_error isds_set_timeout(struct isds_ctx *context,
         CURLcode curl_err;
 
         curl_err = curl_easy_setopt(context->curl, CURLOPT_NOSIGNAL, 1);
-        if (!curl_err) 
+        if (!curl_err)
 #if HAVE_DECL_CURLOPT_TIMEOUT_MS /* Since curl-7.16.2 */
             curl_err = curl_easy_setopt(context->curl, CURLOPT_TIMEOUT_MS,
                     context->timeout);
@@ -1616,7 +1616,7 @@ static isds_error _isds_store_credentials(struct isds_ctx *context,
  * Passing NULL has the same effect, autoselection between isds_locator,
  * isds_cert_locator, and isds_otp_locator is performed in addition. You can
  * pass extern isds_testing_locator (or isds_cert_testing_locator or
- * isds_otp_testing_locator) variable to select testing instance. 
+ * isds_otp_testing_locator) variable to select testing instance.
  * @username is user name of ISDS user or box ID
  * @password is user's secret password
  * @pki_credentials defines public key cryptographic material to use in client
@@ -1627,7 +1627,7 @@ static isds_error _isds_store_credentials(struct isds_ctx *context,
  *  IE_SUCCESS if authentication succeeds
  *  IE_NOT_LOGGED_IN if authentication fails. If OTP authentication has been
  *  requested, fine grade reason will be set into @otp->resolution. Error
- *  message from server can be obtained by isds_long_message() call. 
+ *  message from server can be obtained by isds_long_message() call.
  *  IE_PARTIAL_SUCCESS if time-based OTP authentication has been requested and
  *  server has sent OTP code through side channel. Application is expected to
  *  fill the code into @otp->otp_code, keep other arguments unchanged, and retry
@@ -1670,7 +1670,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
         }
         context->otp_credentials = otp;
         context->otp = (NULL != context->otp_credentials);
-        
+
         if (!context->otp) {
             /* Default locator is official system (without certificate or
              * OTP) */
@@ -1680,14 +1680,14 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
             if (!url) url = isds_otp_locator;
             otp->resolution = OTP_RESOLUTION_UNKNOWN;
             switch (context->otp_credentials->method) {
-                case OTP_HMAC: 
+                case OTP_HMAC:
                     isds_log(ILF_SEC, ILL_INFO,
                             _("Selected authentication method: "
                                 "HMAC-based one-time password\n"));
                     authenticator_uri =
                         "%sas/processLogin?type=hotp&uri=%sapps/";
                     break;
-                case OTP_TIME: 
+                case OTP_TIME:
                     isds_log(ILF_SEC, ILL_INFO,
                             _("Selected authentication method: "
                                 "Time-based one-time password\n"));
@@ -1716,7 +1716,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
                     return IE_ENUM;
             }
             if (-1 == isds_asprintf(&context->url, authenticator_uri, url, url))
-                return IE_NOMEM; 
+                return IE_NOMEM;
         }
     } else {
         /* Default locator is official system (with client certificate) */
@@ -1785,7 +1785,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 
     /* Send log-in request */
     soap_err = _isds_soap(context, "DS/dz", request, NULL, NULL, NULL, NULL);
-   
+
     if (context->otp) {
         /* Revert context URL from OTP authentication service URL to OTP web
          * service base URL for subsequent calls. Potential isds_login() retry
@@ -2061,7 +2061,7 @@ isds_error isds_ping(struct isds_ctx *context) {
 
     /* Send dummy request */
     soap_err = _isds_soap(context, "DS/dz", request, NULL, NULL, NULL, NULL);
-   
+
     /* Destroy log-in request */
     xmlFreeNode(request);
 
@@ -2126,7 +2126,7 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
 
     /* Sent bogus request */
     err = _isds(context, SERVICE_DM_OPERATIONS, request, &response, NULL, NULL);
-   
+
     /* Destroy request */
     xmlFreeNode(request);
 
@@ -2169,7 +2169,7 @@ isds_error isds_bogus_request(struct isds_ctx *context) {
         xmlFreeDoc(response);
         return IE_ISDS;
     }
-   
+
 
     free(code);
     free(message);
@@ -2212,14 +2212,14 @@ static isds_error serialize_subtree(struct isds_ctx *context,
      * It can result in not well-formed on invalid XML tree (e.g. name space
      * prefix definition can miss. */
     /*FIXME */
-    
+
     subtree_doc = xmlNewDoc(BAD_CAST "1.0");
     if (!subtree_doc) {
         isds_log_message(context, _("Could not build temporary document"));
         err = IE_ERROR;
         goto leave;
     }
-    
+
     /* XXX: Copy subtree and attach the copy to document.
      * One node can not bee attached into more document at the same time.
      * XXX: Check xmlDOMWrapRemoveNode(). It could solve NS references
@@ -2271,7 +2271,7 @@ static isds_error serialize_subtree(struct isds_ctx *context,
     /* XXX: libxml-2.7.4 complains when xmlSaveClose() on immutable buffer
      * even after xmlSaveFlush(). Thus close it here */
     xmlSaveClose(save_ctx); save_ctx = NULL;
-   
+
 
     /* Store and detach buffer from xml_buffer */
     *buffer = xml_buffer->content;
@@ -2313,7 +2313,7 @@ static isds_error dump_nodeset(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!buffer) return IE_INVAL;
-    zfree(*buffer); 
+    zfree(*buffer);
     if (!document || !nodeset || !length) return IE_INVAL;
     *length = 0;
 
@@ -2329,7 +2329,7 @@ static isds_error dump_nodeset(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-   
+
     /* Iterate over all nodes */
     for (int i = 0; i < nodeset->nodeNr; i++) {
         /* Serialize node.
@@ -2381,7 +2381,7 @@ static isds_error dump_nodeset(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!buffer) return IE_INVAL;
-    zfree(*buffer); 
+    zfree(*buffer);
     if (!document || !nodeset || !length) return IE_INVAL;
     *length = 0;
 
@@ -2418,7 +2418,7 @@ static isds_error dump_nodeset(struct isds_ctx *context,
         goto leave;
     }*/
 
-   
+
     /* Iterate over all nodes */
     for (int i = 0; i < nodeset->nodeNr; i++) {
         /* Serialize node.
@@ -2763,7 +2763,7 @@ static isds_error timeval2timestring(const struct timeval *time,
      * true for glibc "%04d". We should implement it.
      * time->tv_usec type is su_seconds_t which is required to be signed
      * integer to accomodate values from range [-1, 1000000].
-     * See <http://www.w3.org/TR/2001/REC-xmlschema-2-20010502/#dateTime> */ 
+     * See <http://www.w3.org/TR/2001/REC-xmlschema-2-20010502/#dateTime> */
     /* XXX: Do not format time->tv_usec as intmax_t because %jd is not
      * supported and PRIdMAX is broken on MingGW. We can use int32_t because
      * of the range check above. */
@@ -2795,7 +2795,7 @@ static isds_error timestring2static_timeval(const xmlChar *string,
 #ifdef _WIN32
     int tmp;
 #endif
-    
+
     if (!time) return IE_INVAL;
     if (!string) {
         return IE_INVAL;
@@ -2828,7 +2828,7 @@ static isds_error timestring2static_timeval(const xmlChar *string,
         return IE_DATE;
     }
 #endif
-    
+
     /* Get subseconds */
     if (*offset == '.' ) {
         offset++;
@@ -2919,7 +2919,7 @@ static isds_error timestring2static_timeval(const xmlChar *string,
 static isds_error timestring2timeval(const xmlChar *string,
         struct timeval **time) {
     isds_error error;
-    
+
     if (!time) return IE_INVAL;
     if (!string) {
         zfree(*time);
@@ -2991,7 +2991,7 @@ static isds_error eventstring2event(const xmlChar *string,
         BAD_CAST "EV13:"
     };
     const isds_event_type types[] = {
-        EVENT_ENTERED_SYSTEM, 
+        EVENT_ENTERED_SYSTEM,
         EVENT_ACCEPTED_BY_RECIPIENT,
         EVENT_ACCEPTED_BY_FICTION,
         EVENT_UNDELIVERABLE,
@@ -3032,7 +3032,7 @@ static isds_error eventstring2event(const xmlChar *string,
             return IE_SUCCESS;
         }
     }
-    
+
     /* Unknown event prefix.
      * XSD allows any string */
     char *string_locale = _isds_utf82locale((char *) string);
@@ -3104,7 +3104,7 @@ static isds_error eventstring2event(const xmlChar *string,
              \
             free(string); \
         } \
-    } 
+    }
 
 #define EXTRACT_BOOLEANNOPTR(element, boolean) \
     { \
@@ -4421,7 +4421,7 @@ static isds_error extract_DbPDZRecord(struct isds_ctx *context,
         zfree(string);
     }
 
-    EXTRACT_ULONGINT("isds:PDZCnt", (*permission)->count, 0); 
+    EXTRACT_ULONGINT("isds:PDZCnt", (*permission)->count, 0);
     EXTRACT_STRING("isds:ODZIdent", (*permission)->reply_identifier);
 
 leave:
@@ -4525,7 +4525,7 @@ static isds_error extract_CiRecord(struct isds_ctx *context,
                 (*event)->details.storage_set.old_valid_to);
             EXTRACT_STRING("isds:ciDoneBy",
                     (*event)->details.storage_set.initiator);
-            break; 
+            break;
         case ISDS_CREDIT_EXPIRED:
             break;
     }
@@ -4672,7 +4672,7 @@ static isds_error append_GMessageEnvelope(struct isds_ctx *context,
     EXTRACT_STRING("isds:dmRecipientAddress", (*envelope)->dmRecipientAddress);
     EXTRACT_BOOLEAN("isds:dmAmbiguousRecipient",
             (*envelope)->dmAmbiguousRecipient);
-    
+
     /* Extract envelope elements added by sender and ISDS
      * (XSD: gMessageEnvelope type) */
     err = append_GMessageEnvelopeSub(context, envelope, xpath_ctx);
@@ -4686,7 +4686,7 @@ leave:
 
 
 /* Convert other envelope elements from XML tree into isds_envelope structure:
- * dmMessageStatus, dmAttachmentSize, dmDeliveryTime, dmAcceptanceTime. 
+ * dmMessageStatus, dmAttachmentSize, dmDeliveryTime, dmAcceptanceTime.
  * The envelope is automatically allocated but not reallocated.
  * The data are just appended into envelope structure.
  * @context is ISDS context
@@ -4720,7 +4720,7 @@ static isds_error append_status_size_times(struct isds_ctx *context,
         zfree((*envelope)->dmAcceptanceTime);
     }
 
-    
+
     /* dmMessageStatus element is mandatory */
     EXTRACT_ULONGINT("sisds:dmMessageStatus", unumber, 0);
     if (!unumber) {
@@ -4736,7 +4736,7 @@ static isds_error append_status_size_times(struct isds_ctx *context,
         goto leave;
     }
     free(unumber); unumber = NULL;
-    
+
     EXTRACT_ULONGINT("sisds:dmAttachmentSize", (*envelope)->dmAttachmentSize,
             0);
 
@@ -4936,7 +4936,7 @@ static isds_error extract_document(struct isds_ctx *context,
     EXTRACT_STRING_ATTRIBUTE("dmUpFileGuid", (*document)->dmUpFileGuid, 0)
     EXTRACT_STRING_ATTRIBUTE("dmFileDescr", (*document)->dmFileDescr, 0)
     EXTRACT_STRING_ATTRIBUTE("dmFormat", (*document)->dmFormat, 0)
-    
+
 
     /* Extract document data.
      * Base64 encoded blob or XML subtree must be presented. */
@@ -5081,7 +5081,7 @@ static isds_error extract_documents(struct isds_ctx *context,
         if (err) goto leave;
     }
 
-    
+
 leave:
     if (err) isds_list_free(documents);
     xmlXPathFreeObject(result);
@@ -5130,8 +5130,8 @@ static isds_error extract_DmRecord(struct isds_ctx *context,
     /* Get message type */
     err = append_message_type(context, envelope, xpath_ctx);
     if (err) goto leave;
-    
-    
+
+
 leave:
     if (err) isds_envelope_free(envelope);
     xmlXPathFreeObject(result);
@@ -5202,7 +5202,7 @@ static isds_error extract_StateChangesRecord(struct isds_ctx *context,
     }
     zfree(unumber);
 
-    
+
 leave:
     free(unumber);
     free(string);
@@ -5278,7 +5278,7 @@ static isds_error find_and_extract_DmHash(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    
+
 leave:
     if (err) isds_hash_free(hash);
     free(string);
@@ -5335,7 +5335,7 @@ static isds_error find_and_append_DmQTimestamp(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    
+
 leave:
     if (err) isds_envelope_free(envelope);
     free(string);
@@ -5420,7 +5420,7 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
     err = find_and_append_DmQTimestamp(context, &(*message)->envelope,
             xpath_ctx);
     if (err) goto leave;
-   
+
     /* Get dmMessageStatus, dmAttachmentSize, dmDeliveryTime,
      * dmAcceptanceTime. */
     err = append_status_size_times(context, &((*message)->envelope), xpath_ctx);
@@ -5429,7 +5429,7 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
     /* Get message type */
     err = append_message_type(context, &((*message)->envelope), xpath_ctx);
     if (err) goto leave;
-    
+
 leave:
     if (err) isds_message_free(message);
     return err;
@@ -5476,7 +5476,7 @@ static isds_error extract_event(struct isds_ctx *context,
         }
         zfree(string);
     }
-    
+
     /* dmEventDescr element has prefix and the rest */
     EXTRACT_STRING("sisds:dmEventDescr", string);
     if (string) {
@@ -5624,7 +5624,7 @@ static isds_error insert_document(struct isds_ctx *context,
      * XXX: Main document must go first */
     if (document->dmFileMetaType == FILEMETATYPE_MAIN && dm_files->children)
         file = xmlAddPrevSibling(dm_files->children, new_file);
-    else 
+    else
         file = xmlAddChild(dm_files, new_file);
 
     if (!file) {
@@ -5890,7 +5890,7 @@ static isds_error build_send_check_dbdummy_request(struct isds_ctx *context,
     err = _isds(context, SERVICE_DB_ACCESS, request, response,
             raw_response, raw_response_length);
     xmlFreeNode(request); request = NULL;
-    
+
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                     _("Processing ISDS response on %s request failed\n"),
@@ -5914,7 +5914,7 @@ static isds_error build_send_check_dbdummy_request(struct isds_ctx *context,
     /* Request processed, but nothing found */
     if (xmlStrcmp(*code, BAD_CAST "0000")) {
         char *code_locale = _isds_utf82locale((char*) *code);
-        char *status_message_locale = 
+        char *status_message_locale =
             _isds_utf82locale((char*) *status_message);
         isds_log(ILF_ISDS, ILL_DEBUG,
                     _("Server refused %s request (code=%s, message=%s)\n"),
@@ -6563,7 +6563,7 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
 
     /* Sent request */
     err = _isds(context, SERVICE_ASWS, request, &response, NULL, NULL);
-   
+
     /* Remove temporal credentials */
     _isds_discard_credentials(context, 0);
     /* Detach pointer to OTP credentials from context */
@@ -6635,7 +6635,7 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
         err = IE_ISDS;
         goto leave;
     }
-    
+
     /* Otherwise new code sent successfully */
     /* Mimic otp->resolution according to the code, specification does
      * prescribe OTP header to be available. */
@@ -6826,13 +6826,13 @@ isds_error isds_change_password(struct isds_ctx *context,
     if (NULL != otp) {
         otp->resolution = OTP_RESOLUTION_UNKNOWN;
         switch (otp->method) {
-            case OTP_HMAC: 
+            case OTP_HMAC:
                 isds_log(ILF_SEC, ILL_INFO,
                         _("Selected authentication method: "
                             "HMAC-based one-time password\n"));
                 INSERT_STRING(request, "dbOTPType", BAD_CAST "HOTP");
                 break;
-            case OTP_TIME: 
+            case OTP_TIME:
                 isds_log(ILF_SEC, ILL_INFO,
                         _("Selected authentication method: "
                             "Time-based one-time password\n"));
@@ -6902,7 +6902,7 @@ isds_error isds_change_password(struct isds_ctx *context,
     /* Sent request */
     err = _isds(context, (NULL == otp) ? SERVICE_DB_ACCESS : SERVICE_ASWS,
             request, &response, NULL, NULL);
-   
+
     if (otp) {
         /* Remove temporal credentials */
         _isds_discard_credentials(context, 0);
@@ -6988,7 +6988,7 @@ isds_error isds_change_password(struct isds_ctx *context,
         err = IE_ISDS;
         goto leave;
     }
-    
+
     /* Otherwise password changed successfully */
 
 leave:
@@ -7037,7 +7037,7 @@ leave:
  * NULL, if you don't care. */
 static isds_error send_destroy_request_check_response(
         struct isds_ctx *context,
-        const isds_service service, const xmlChar *service_name, 
+        const isds_service service, const xmlChar *service_name,
         xmlNodePtr *request, xmlDocPtr *response, xmlChar **refnumber,
         const struct code_map_isds_error *map) {
     isds_error err = IE_SUCCESS;
@@ -7066,7 +7066,7 @@ static isds_error send_destroy_request_check_response(
     /* Send request */
     err = _isds(context, service, *request, response, NULL, NULL);
     xmlFreeNode(*request); *request = NULL;
-    
+
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                     _("Processing ISDS response on %s request failed\n"),
@@ -7143,7 +7143,7 @@ leave:
  * NULL, if you don't care. */
 static isds_error send_request_check_drop_response(
         struct isds_ctx *context,
-        const isds_service service, const xmlChar *service_name, 
+        const isds_service service, const xmlChar *service_name,
         xmlNodePtr *request, xmlChar **refnumber) {
     isds_error err = IE_SUCCESS;
     xmlDocPtr response = NULL;
@@ -7189,7 +7189,7 @@ static isds_error insert_credentials_delivery(struct isds_ctx *context,
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!parent) return IE_INVAL;
-        
+
     if (credentials_delivery) {
         /* Following elements are valid only for services:
          * NewAccessData, AddDataBoxUser, CreateDataBox */
@@ -7209,7 +7209,7 @@ leave:
  * @response is pointer to XML document with ISDS response
  * @request_name is UTF-8 encoded name of ISDS service the @response it to.
  * @return IE_SUCCESS even if new user name has not been found because it's not
- * clear whether it's returned always. */ 
+ * clear whether it's returned always. */
 static isds_error extract_credentials_delivery(struct isds_ctx *context,
         struct isds_credentials_delivery *credentials_delivery,
         xmlDocPtr response, const char *request_name) {
@@ -7363,9 +7363,9 @@ static isds_error build_CreateDBInput_request(struct isds_ctx *context,
     INSERT_STRING(*request, "dbFormerNames", former_names);
     INSERT_STRING(*request, "dbUpperDBId", upper_box_id);
     INSERT_STRING(*request, "dbCEOLabel", ceo_label);
-    
+
     err = insert_credentials_delivery(context, credentials_delivery, *request);
-    if (err) goto leave; 
+    if (err) goto leave;
 
     err = insert_GExtApproval(context, approval, *request);
     if (err) goto leave;
@@ -7534,7 +7534,7 @@ leave:
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
 static isds_error _isds_delete_box_common(struct isds_ctx *context,
-        const xmlChar *service_name, 
+        const xmlChar *service_name,
         const struct isds_DbOwnerInfo *box, const struct tm *since,
         const struct isds_approval *approval, char **refnumber) {
     isds_error err = IE_SUCCESS;
@@ -7805,7 +7805,7 @@ static isds_error build_send_dbid_request_check_response(
 
     /* Free output argument */
     xmlFreeDoc(*response); *response = NULL;
-   
+
     /* Prepare strings */
     service_name_locale = _isds_utf82locale((char*)service_name);
     if (!service_name_locale) {
@@ -8259,12 +8259,12 @@ isds_error isds_activate(struct isds_ctx *context,
     xmlXPathFreeObject(result); result = NULL;
 
     EXTRACT_STRING("isds:userId", *user_id);
-    if (!*user_id) 
+    if (!*user_id)
         isds_log(ILF_ISDS, ILL_ERR, _("Server accepted Activate request, "
                     "but did not return `userId' element.\n"));
 
     EXTRACT_STRING("isds:password", *password);
-    if (!*password) 
+    if (!*password)
         isds_log(ILF_ISDS, ILL_ERR, _("Server accepted Activate request, "
                     "but did not return `password' element.\n"));
 
@@ -8867,7 +8867,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
 
     /* Sent request */
     err = _isds(context, SERVICE_DB_SEARCH, request, &response, NULL, NULL);
-   
+
     /* Destroy request */
     xmlFreeNode(request); request = NULL;
 
@@ -8916,8 +8916,8 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         free(code_locale);
         free(message_locale);
         truncated = 1;
-    } 
-    
+    }
+
     /* Other error */
     else if (xmlStrcmp(code, BAD_CAST "0000")) {
         char *code_locale = _isds_utf82locale((char*)code);
@@ -8958,7 +8958,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
                 err = IE_NOMEM;
                 goto leave;
             }
-           
+
             item->destructor = (void (*)(void **))isds_DbOwnerInfo_free;
             if (i == 0) *boxes = item;
             else prev_item->next = item;
@@ -9780,7 +9780,7 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
     xpath_ctx->node = result->nodesetval->nodeTab[0];
     xmlXPathFreeObject(result); result = NULL;
 
-    EXTRACT_LONGINT("isds:dbState", box_status, 1); 
+    EXTRACT_LONGINT("isds:dbState", box_status, 1);
 
 
 leave:
@@ -10420,12 +10420,12 @@ leave:
  * code, destroy response and log success.
  * @context is ISDS session context.
  * @service_name is name of SERVICE_DB_MANIPULATION service
- * @box_id is UTF-8 encoded box identifier as zero terminated string 
+ * @box_id is UTF-8 encoded box identifier as zero terminated string
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
 static isds_error build_send_manipulationdbid_request_check_drop_response(
-        struct isds_ctx *context, const xmlChar *service_name, 
+        struct isds_ctx *context, const xmlChar *service_name,
         const xmlChar *box_id, const struct isds_approval *approval,
         xmlChar **refnumber) {
     isds_error err = IE_SUCCESS;
@@ -10467,14 +10467,14 @@ static isds_error build_send_manipulationdbid_request_check_drop_response(
  * default)
  * @context is ISDS session context.
  * @box_id is UTF-8 encoded box identifier as zero terminated string
- * @allow is true for enable, false for disable commercial messages income 
+ * @allow is true for enable, false for disable commercial messages income
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
 isds_error isds_switch_commercial_receiving(struct isds_ctx *context,
         const char *box_id, const _Bool allow,
         const struct isds_approval *approval, char **refnumber) {
-    return build_send_manipulationdbid_request_check_drop_response(context, 
+    return build_send_manipulationdbid_request_check_drop_response(context,
             (allow) ? BAD_CAST "SetOpenAddressing" :
                 BAD_CAST "ClearOpenAddressing",
             BAD_CAST box_id, approval, (xmlChar **) refnumber);
@@ -10493,7 +10493,7 @@ isds_error isds_switch_commercial_receiving(struct isds_ctx *context,
 isds_error isds_switch_effective_ovm(struct isds_ctx *context,
         const char *box_id, const _Bool allow,
         const struct isds_approval *approval, char **refnumber) {
-    return build_send_manipulationdbid_request_check_drop_response(context, 
+    return build_send_manipulationdbid_request_check_drop_response(context,
             (allow) ? BAD_CAST "SetEffectiveOVM" :
                 BAD_CAST "ClearEffectiveOVM",
             BAD_CAST box_id, approval, (xmlChar **) refnumber);
@@ -10509,7 +10509,7 @@ isds_error isds_switch_effective_ovm(struct isds_ctx *context,
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
 static isds_error build_send_manipulationdbowner_request_check_drop_response(
-        struct isds_ctx *context, const xmlChar *service_name, 
+        struct isds_ctx *context, const xmlChar *service_name,
         const struct isds_DbOwnerInfo *owner,
         const struct isds_approval *approval, xmlChar **refnumber) {
     isds_error err = IE_SUCCESS;
@@ -10820,7 +10820,7 @@ static isds_error insert_envelope_files(struct isds_ctx *context,
 
         if (err) goto leave;
     }
-    
+
 leave:
     free(string);
     return err;
@@ -10884,13 +10884,13 @@ isds_error isds_send_message(struct isds_ctx *context,
 
     /* Signal we can serialize message since now */
     /*message_is_complete = 1;*/
-    
+
 
     isds_log(ILF_ISDS, ILL_DEBUG, _("Sending CreateMessage request to ISDS\n"));
 
     /* Sent request */
     err = _isds(context, SERVICE_DM_OPERATIONS, request, &response, NULL, NULL);
-   
+
     /* Don't' destroy request, we want to provide it to application later */
 
     if (err) {
@@ -11230,7 +11230,7 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
         goto leave;
     }
 
-    /* Extract message ID and delivery status for each copy */ 
+    /* Extract message ID and delivery status for each copy */
     for (item = copies, i = 0; item && i < result->nodesetval->nodeNr;
             item = item->next, i++) {
         copy = (struct isds_message_copy *) item->data;
@@ -11323,7 +11323,7 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     isds_status_free(&(context->status));
-   
+
     /* Free former message list if any */
     if (messages) isds_list_free(messages);
 
@@ -11354,7 +11354,7 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
     }
     xmlSetNs(request, isds_ns);
 
-   
+
     if (from_time) {
         err = timeval2timestring(from_time, &string);
         if (err) goto leave;
@@ -11408,7 +11408,7 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
     /* Sent request */
     err = _isds(context, SERVICE_DM_INFO, request, &response, NULL, NULL);
     xmlFreeNode(request); request = NULL;
-    
+
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                 (outgoing_direction) ?
@@ -11477,7 +11477,7 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    
+
     /* Fill output arguments in */
     if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
         struct isds_envelope *envelope;
@@ -11511,7 +11511,7 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
             ((struct isds_message *) item->data)->envelope = envelope;
 
             /* Append new message into the list */
-            if (!*messages) { 
+            if (!*messages) {
                 *messages = last_item = item;
             } else {
                 last_item->next = item;
@@ -11655,7 +11655,7 @@ isds_error isds_get_list_of_sent_message_state_changes(
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     isds_status_free(&(context->status));
-   
+
     /* Free former message list if any */
     isds_list_free(changed_states);
 
@@ -11679,7 +11679,7 @@ isds_error isds_get_list_of_sent_message_state_changes(
     }
     xmlSetNs(request, isds_ns);
 
-   
+
     if (from_time) {
         err = timeval2timestring(from_time, &string);
         if (err) goto leave;
@@ -11719,7 +11719,7 @@ isds_error isds_get_list_of_sent_message_state_changes(
         err = IE_ERROR;
         goto leave;
     }
-    
+
     /* Fill output arguments in */
     if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
         struct isds_list *item = NULL, *last_item = NULL;
@@ -11745,7 +11745,7 @@ isds_error isds_get_list_of_sent_message_state_changes(
             }
 
             /* Append new message status change into the list */
-            if (!*changed_states) { 
+            if (!*changed_states) {
                 *changed_states = last_item = item;
             } else {
                 last_item->next = item;
@@ -11857,7 +11857,7 @@ static isds_error build_send_check_message_request(struct isds_ctx *context,
     err = _isds(context, service, request, response,
             raw_response, raw_response_length);
     xmlFreeNode(request); request = NULL;
-    
+
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                     _("Processing ISDS response on %s request failed\n"),
@@ -11935,7 +11935,7 @@ static isds_error find_extract_signed_data_free_response(
     xpath_expression = _isds_astrcat3("/isds:", (char *) request_name,
             "Response/isds:dmSignature");
     if (!xpath_expression) return IE_NOMEM;
-   
+
     /* Extract data */
     xpath_ctx = xmlXPathNewContext(*response);
     if (!xpath_ctx) {
@@ -11997,7 +11997,7 @@ static isds_error find_extract_signed_data_free_response(
         err = IE_ERROR;
         goto leave;
     }
-  
+
 leave:
     if (err) {
         zfree(*raw);
@@ -12036,7 +12036,7 @@ isds_error isds_get_received_envelope(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     isds_status_free(&(context->status));
-   
+
     /* Free former message if any */
     if (!message) return IE_INVAL;
     isds_message_free(message);
@@ -12218,7 +12218,7 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    result = xmlXPathEvalExpression( 
+    result = xmlXPathEvalExpression(
             BAD_CAST "/sisds:GetDeliveryInfoResponse/sisds:dmDelivery",
             xpath_ctx);
     if (!result) {
@@ -12321,7 +12321,7 @@ isds_error isds_get_signed_delivery_info(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     isds_status_free(&(context->status));
-   
+
     /* Free former message if any */
     if (!message) return IE_INVAL;
     isds_message_free(message);
@@ -12339,7 +12339,7 @@ isds_error isds_get_signed_delivery_info(struct isds_ctx *context,
             (xmlChar *)message_id, &response,
             BAD_CAST "GetSignedDeliveryInfo", &raw, &raw_length);
     if (err) goto leave;
-  
+
     /* Parse delivery info */
     err = isds_load_delivery_info(context,
             RAWTYPE_CMS_SIGNED_DELIVERYINFO, raw, raw_length,
@@ -12393,7 +12393,7 @@ isds_error isds_get_delivery_info(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     isds_status_free(&(context->status));
-   
+
     /* Free former message if any */
     if (!message) return IE_INVAL;
     isds_message_free(message);
@@ -12476,7 +12476,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     isds_status_free(&(context->status));
-   
+
     /* Free former message if any */
     if (NULL == message) return IE_INVAL;
     if (message) isds_message_free(message);
@@ -12725,7 +12725,7 @@ isds_error isds_load_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    result = xmlXPathEvalExpression( 
+    result = xmlXPathEvalExpression(
             BAD_CAST "/sisds:MessageDownloadResponse/sisds:dmReturnedMessage",
             xpath_ctx);
     if (!result) {
@@ -12812,7 +12812,7 @@ isds_error isds_guess_raw_type(struct isds_ctx *context,
     size_t xml_stream_length = 0;
     xmlDocPtr document = NULL;
     xmlNodePtr root = NULL;
-    
+
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     isds_status_free(&(context->status));
@@ -12855,17 +12855,17 @@ isds_error isds_guess_raw_type(struct isds_ctx *context,
 
     /* Test name space */
     if (!xmlStrcmp(root->ns->href, BAD_CAST SISDS_INCOMING_NS)) {
-        if (xml_stream == buffer) 
+        if (xml_stream == buffer)
             *raw_type = RAWTYPE_PLAIN_SIGNED_INCOMING_MESSAGE;
         else
             *raw_type = RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE;
     } else if (!xmlStrcmp(root->ns->href, BAD_CAST SISDS_OUTGOING_NS)) {
-        if (xml_stream == buffer) 
+        if (xml_stream == buffer)
             *raw_type = RAWTYPE_PLAIN_SIGNED_OUTGOING_MESSAGE;
         else
             *raw_type = RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE;
     } else if (!xmlStrcmp(root->ns->href, BAD_CAST SISDS_DELIVERY_NS)) {
-        if (xml_stream == buffer) 
+        if (xml_stream == buffer)
             *raw_type = RAWTYPE_PLAIN_SIGNED_DELIVERYINFO;
         else
             *raw_type = RAWTYPE_CMS_SIGNED_DELIVERYINFO;
@@ -12940,7 +12940,7 @@ static isds_error isds_get_signed_message(struct isds_ctx *context,
                 BAD_CAST "SignedMessageDownload",
             &raw, &raw_length);
     if (err) goto leave;
-  
+
     /* Parse message */
     err = isds_load_message(context,
             (outgoing) ? RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE :
@@ -13147,7 +13147,7 @@ isds_error isds_download_message_hash(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     isds_status_free(&(context->status));
-   
+
     isds_hash_free(hash);
 
 #if HAVE_LIBCURL
@@ -13248,7 +13248,7 @@ isds_error isds_delete_message_from_storage(struct isds_ctx *context,
     zfree(context->long_message);
     isds_status_free(&(context->status));
     if (NULL == message_id) return IE_INVAL;
-   
+
 #if HAVE_LIBCURL
     /* Check if connection is established
      * TODO: This check should be done downstairs. */
@@ -13281,7 +13281,7 @@ isds_error isds_delete_message_from_storage(struct isds_ctx *context,
                 "message ID %s to ISDS\n"), message_id);
     err = _isds(context, SERVICE_DM_INFO, request, &response, NULL, NULL);
     xmlFreeNode(request); request = NULL;
-    
+
     if (err) {
         isds_log(ILF_ISDS, ILL_DEBUG,
                     _("Processing ISDS response on EraseMessage request "
@@ -13358,7 +13358,7 @@ isds_error isds_mark_message_read(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     isds_status_free(&(context->status));
-   
+
 #if HAVE_LIBCURL
     /* Do request and check for success */
     err = build_send_check_message_request(context, SERVICE_DM_INFO,
@@ -13399,7 +13399,7 @@ isds_error isds_mark_message_received(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     isds_status_free(&(context->status));
-   
+
 #if HAVE_LIBCURL
     /* Do request and check for success */
     err = build_send_check_message_request(context, SERVICE_DM_INFO,
@@ -13504,7 +13504,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
         isds_log_message(context, _("Could not create empty name space"));
         err = IE_ERROR;
         goto leave;
-    } 
+    }
     INSERT_STRING_WITH_NS(request, empty_ns, "conversionID", "0");
     INSERT_STRING_WITH_NS(request, empty_ns, "fileName",
             document->dmFileDescr);
@@ -13608,7 +13608,7 @@ leave:
     xmlFreeNode(request);
 
     if (!err) {
-        char *id_locale = _isds_utf82locale((char *) *id); 
+        char *id_locale = _isds_utf82locale((char *) *id);
         isds_log(ILF_ISDS, ILL_DEBUG,
                 _("Document %s has been submitted for conversion "
                     "to server successfully\n"), id_locale);
@@ -13810,7 +13810,7 @@ isds_error isds_authenticate_message(struct isds_ctx *context,
 
     EXTRACT_BOOLEAN("/isds:AuthenticateMessageResponse/isds:dmAuthResult", authentic);
 
-    if (!authentic) { 
+    if (!authentic) {
         isds_log_message(context,
                 _("Server did not return any response on "
                     "AuthenticateMessage request"));
@@ -14060,13 +14060,13 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
     size_t phys_start, phys_end;
     char *phys_path = NULL;
     struct isds_hash *new_hash = NULL;
-    
+
 
     if (!context) return IE_INVALID_CONTEXT;
     zfree(context->long_message);
     isds_status_free(&(context->status));
     if (!message) return IE_INVAL;
-   
+
     if (!message->raw) {
         isds_log_message(context,
                 _("Message does not carry raw representation"));
@@ -14162,7 +14162,7 @@ isds_error isds_compute_message_hash(struct isds_ctx *context,
     }
     isds_hash_free(&message->envelope->hash);
     message->envelope->hash = new_hash;
-    
+
 leave:
     if (err) {
         isds_hash_free(&new_hash);
@@ -14273,7 +14273,7 @@ const struct isds_document *isds_find_document_by_id(
  * ISDS servers pass invalid MIME types (e.g. "pdf"). This function tries to
  * guess regular MIME type (e.g. "application/pdf").
  * @mime_type is UTF-8 encoded MIME type to fix
- * @return original @mime_type if no better interpretation exists, or 
+ * @return original @mime_type if no better interpretation exists, or
  * constant static UTF-8 encoded string with proper MIME type. */
 const char *isds_normalize_mime_type(const char *mime_type) {
     if (!mime_type) return NULL;

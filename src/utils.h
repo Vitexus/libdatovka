@@ -55,7 +55,7 @@ int isds_asprintf(char **buffer, const char *format, ...);
 
 /* Converts a block from charset to charset.
  * @from is input charset of @input block as known to iconv
- * @to is output charset @input will be converted to @output 
+ * @to is output charset @input will be converted to @output
  * @input is block in @from charset/encoding of length @input_length
  * @input_length is size of @input block in bytes
  * @output is automatically allocated block of data converted from @input. No

@@ -10,7 +10,7 @@ isds_error _isds_close_connection(struct isds_ctx *context);
 /* Do SOAP request.
  * @context holds the base URL,
  * @file is a (CGI) file of SOAP URL,
- * @request is XML node set with SOAP request body. 
+ * @request is XML node set with SOAP request body.
  * @file must be NULL, @request should be NULL rather than empty, if they should
  * not be signaled in the SOAP request.
  * @response_document is an automatically allocated XML document whose subtree

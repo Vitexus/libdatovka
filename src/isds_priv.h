@@ -12,7 +12,7 @@
 
 #ifndef _POSIX_SOURCE
 /* defined: strtok_r */
-#define _POSIX_SOURCE   
+#define _POSIX_SOURCE
 #endif
 
 /* Structures not to export outside library */

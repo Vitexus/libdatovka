@@ -40,9 +40,9 @@ _hidden size_t _isds_base64_decode_block(const int8_t *code_in,
 	const int8_t *codechar = code_in;
 	int8_t *plainchar = plaintext_out;
 	int8_t fragment;
-	
+
 	*plainchar = state_in->plainchar;
-	
+
 	switch (state_in->step) {
 		while (1) {
 	case step_a:
