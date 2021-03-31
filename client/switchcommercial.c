@@ -55,7 +55,7 @@ int main(void) {
     }
 
 
-    /* Switch commecrial message receiving status */
+    /* Switch commercial message receiving status */
     if (db_owner_info) {
         _Bool allow;
         struct isds_DbOwnerInfo *new_db_owner_info = NULL;
@@ -66,7 +66,7 @@ int main(void) {
         else
             allow = 1;
 
-        printf("Switching commerical receiving status to: %s\n",
+        printf("Switching commercial receiving status to: %s\n",
                 (allow) ? "true" : "false");
         err = isds_switch_commercial_receiving(ctx, db_owner_info->dbID, allow,
                 NULL, &refnumber);

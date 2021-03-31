@@ -131,12 +131,12 @@ int main(void) {
     }
 
 
-    /* Mark nonexistent message as read */
+    /* Mark non-existent message as read */
     {
         struct isds_message *message = NULL;
         char *id = "7777777";
 
-        printf("Marking as read nonexistent message with ID: %s\n", id);
+        printf("Marking as read non-existent message with ID: %s\n", id);
         err = isds_mark_message_read(ctx, id);
         if (err)
             printf("isds_mark_message_read() failed as assumed: %s: %s\n",

@@ -131,12 +131,12 @@ int main(void) {
     }
 
 
-    /* Download nonexistent message hash */
+    /* Download non-existent message hash */
     {
         struct isds_hash *hash = NULL;
         char *id = "7777777";
 
-        printf("Getting nonexistent message hash with ID: %s\n", id);
+        printf("Getting non-existent message hash with ID: %s\n", id);
         err = isds_download_message_hash(ctx, id, &hash);
         if (err)
             printf("isds_download_message_hash() failed as assumed: %s: %s\n",

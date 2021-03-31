@@ -140,15 +140,15 @@ int main(void) {
         printf("Sending message to box ID `%s' and box ID `%s'\n",
                 recipient1, recipient2);
         err = isds_send_message_to_multiple_recipients(ctx, &message, copies);
-        
+
         if (err == IE_SUCCESS || err == IE_PARTIAL_SUCCESS) {
             if (err == IE_SUCCESS){
                 printf("isds_send_message_to_multiple_recipients() succeeded "
-                        "cempletely:\n");
+                        "completely:\n");
             }
             if (err == IE_PARTIAL_SUCCESS){
                 printf("isds_send_message_to_multiple_recipients() succeeded "
-                        "partialy:\n");
+                        "partially:\n");
             }
             print_copies(copies);
         } else

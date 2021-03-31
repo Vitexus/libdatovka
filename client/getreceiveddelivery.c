@@ -133,12 +133,12 @@ int main(void) {
     }
 
 
-    /* Download nonexistent delivery info */
+    /* Download non-existent delivery info */
     {
         struct isds_message *message = NULL;
         char *id = "7777777";
 
-        printf("Getting nonexistent delivery info with ID: %s\n", id);
+        printf("Getting non-existent delivery info with ID: %s\n", id);
         err = isds_get_delivery_info(ctx, id, &message);
         if (err)
             printf("isds_get_delivery_info() failed as assumed: %s: %s\n",

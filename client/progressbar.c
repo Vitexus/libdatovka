@@ -32,7 +32,7 @@ int main(void) {
     }
 
 
-    /* Register progresbar */
+    /* Register progress bar */
     err = isds_set_progress_callback(ctx, progressbar, NULL);
     if (err) {
         printf("isds_set_progress_callback() failed: %s: %s\n",
@@ -50,7 +50,7 @@ int main(void) {
     }
 
 
-    /* Register aborting progresbar */
+    /* Register aborting progress bar */
     printf("\nTesting aborting progress callback\n");
     err = isds_set_progress_callback(ctx, progressbar, (void *)1);
     if (err) {
@@ -64,11 +64,11 @@ int main(void) {
         printf("isds_ping() failed: %s: %s\n", isds_strerror(err),
                 isds_long_message(ctx));
     } else {
-        printf("Ping succeded\n");
+        printf("Ping succeeded\n");
     }
 
 
-    /* Register normal progresbar */
+    /* Register normal progress bar */
     printf("\nTesting non-aborting progress callback\n");
     err = isds_set_progress_callback(ctx, progressbar, NULL);
     if (err) {
@@ -82,7 +82,7 @@ int main(void) {
         printf("isds_ping() failed: %s: %s\n", isds_strerror(err),
                 isds_long_message(ctx));
     } else {
-        printf("Ping succeded\n");
+        printf("Ping succeeded\n");
     }
 
 

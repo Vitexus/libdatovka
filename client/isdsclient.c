@@ -288,7 +288,7 @@ int main(void) {
         memset(&main_document, 0, sizeof(main_document));
         main_document.data = "Hello World!";
         main_document.data_length = strlen(main_document.data);
-        /* Server implementation sais text is not text file
+        /* Server implementation says text is not text file
          * See <http://www.abclinuxu.cz/forum/show/284940> */
         main_document.dmMimeType = "text/plain";
         /* XXX: This should fail */
