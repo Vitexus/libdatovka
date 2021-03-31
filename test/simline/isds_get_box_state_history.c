@@ -101,7 +101,7 @@ static int test_isds_get_box_state_history(const isds_error expected_error,
     if (compare_isds_box_state_period_lists(expected_results, results))
         return 1;
 
-    
+
     PASS_TEST;
 }
 

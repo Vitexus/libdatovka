@@ -88,7 +88,7 @@ int main(void) {
             isds_cleanup();
             ABORT_UNIT(server_error);
         }
-    
+
         free(url);
         url = NULL;
     }
@@ -110,7 +110,7 @@ int main(void) {
             isds_cleanup();
             ABORT_UNIT(server_error);
         }
-    
+
         free(url);
         url = NULL;
     }

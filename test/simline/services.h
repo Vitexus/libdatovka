@@ -156,7 +156,7 @@ struct server_list {
 };
 
 struct arguments_DS_df_DataBoxCreditInfo {
-    const char *status_code; 
+    const char *status_code;
     const char *status_message;
     const char *box_id;             /* Require this dbID in request */
     const struct tm *from_date;     /* Require this ciFromDate in request */
@@ -167,7 +167,7 @@ struct arguments_DS_df_DataBoxCreditInfo {
 };
 
 struct arguments_DS_df_FindDataBox {
-    const char *status_code; 
+    const char *status_code;
     const char *status_message;
     const struct server_owner_info *criteria;  /* generilized tDbOwnerInfo */
     const _Bool results_exists;     /* Return dbResults element */
@@ -177,7 +177,7 @@ struct arguments_DS_df_FindDataBox {
 };
 
 struct arguments_DS_df_GetDataBoxActivityStatus {
-    const char *status_code; 
+    const char *status_code;
     const char *status_message;
     const char *box_id;             /* Input */
     const struct timeval *from;     /* Input */
@@ -190,7 +190,7 @@ struct arguments_DS_df_GetDataBoxActivityStatus {
 };
 
 struct arguments_DS_df_ISDSSearch2 {
-    const char *status_code; 
+    const char *status_code;
     const char *status_message;
     const char *search_text;        /* Require this searchText in a request */
     const char *search_type;        /* Require this searchType in a request */
@@ -209,7 +209,7 @@ struct arguments_DS_df_ISDSSearch2 {
 };
 
 struct arguments_DS_Dz_ResignISDSDocument {
-    const char *status_code; 
+    const char *status_code;
     const char *status_message;
     const struct tm *valid_to;   /* Return this date if not NULL */
 };
@@ -233,7 +233,7 @@ struct arguments_asws_changePassword_ChangePasswordOTP {
 };
 
 struct arguments_asws_changePassword_SendSMSCode {
-    const char *status_code; 
+    const char *status_code;
     const char *status_message;
     const char *reference_number;   /* Return this string if not NULL */
 };

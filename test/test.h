@@ -142,7 +142,7 @@ extern void *test_destructor_argument;
             FAIL_TEST(STR(y) " differs: expected=`%s' is=`%s'", x, y); \
     } \
 }
- 
+
 #define TEST_INT_DUPLICITY(x, y) { \
     if ((x) != (y)) \
         FAIL_TEST(STR(y) " differs: expected=%ld is=%ld", (x), (y)); \

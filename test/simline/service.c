@@ -65,7 +65,7 @@ static http_error timestring2timeval(const char *string,
 #ifdef _WIN32
     int tmp;
 #endif
-    
+
     if (!time) return HTTP_ERROR_SERVER;
     if (!string) {
         free(*time);
@@ -110,7 +110,7 @@ static http_error timestring2timeval(const char *string,
         return HTTP_ERROR_CLIENT;
     }
 #endif
-    
+
     /* Get subseconds */
     if (*offset == '.' ) {
         offset++;
@@ -282,7 +282,7 @@ static http_error timestring2timeval(const char *string,
          \
         free(string); \
     } \
-} 
+}
 
 
 #define EXTRACT_DATE(element, tmPtr) { \
@@ -911,7 +911,7 @@ static http_error insert_isds_status(xmlNodePtr parent, _Bool dm,
         const xmlChar *db_ref_number) {
     http_error error = HTTP_ERROR_SUCCESS;
     xmlNodePtr status;
-    
+
     if (NULL == code || NULL == message) {
         error = HTTP_ERROR_SERVER;
         goto leave;
@@ -956,7 +956,7 @@ static http_error timeval2timestring(const struct timeval *time,
      * true for glibc "%04d". We should implement it.
      * time->tv_usec type is su_seconds_t which is required to be signed
      * integer to accomodate values from range [-1, 1000000].
-     * See <http://www.w3.org/TR/2001/REC-xmlschema-2-20010502/#dateTime> */ 
+     * See <http://www.w3.org/TR/2001/REC-xmlschema-2-20010502/#dateTime> */
     if (-1 == test_asprintf(string,
                 "%04d-%02d-%02dT%02d:%02d:%02d.%06" PRIdMAX,
                 broken.tm_year + 1900, broken.tm_mon + 1, broken.tm_mday,
@@ -1084,7 +1084,7 @@ static http_error service_EraseMessage(
         error = HTTP_ERROR_CLIENT;
         goto leave;
     }
-    
+
     code = "0000";
     message = strdup("Success");
 leave:
@@ -1117,7 +1117,7 @@ static http_error insert_ciRecords(xmlNodePtr isds_response,
             item = item->next) {
         const struct server_credit_event *event =
             (struct server_credit_event*)item->data;
-        
+
         INSERT_ELEMENT(record, records, "ciRecord");
         if (NULL == event) continue;
 
@@ -1208,7 +1208,7 @@ static http_error service_DataBoxCreditInfo(
         error = HTTP_ERROR_CLIENT;
         goto leave;
     }
-    
+
     ELEMENT_EXISTS("isds:ciFromDate", 0);
     EXTRACT_DATE("isds:ciFromDate", from_date);
     if (datecmp(configuration->from_date, from_date)) {
@@ -1271,7 +1271,7 @@ static http_error insert_tdbResultsArray(xmlNodePtr isds_response,
             item = item->next) {
         const struct server_db_result *result =
             (struct server_db_result *)item->data;
-        
+
         INSERT_ELEMENT(entry, root, "dbResult");
         if (NULL == result) continue;
 
@@ -1311,7 +1311,7 @@ static http_error insert_tDbOwnersArray(xmlNodePtr isds_response,
             item = item->next) {
         const struct server_owner_info *result =
             (struct server_owner_info *)item->data;
-        
+
         INSERT_ELEMENT(entry, root, "dbOwnerInfo");
         if (NULL == result) continue;
 
@@ -1531,7 +1531,7 @@ static http_error insert_tdbPeriodsArray(xmlNodePtr isds_response,
             item = item->next) {
         const struct server_box_state_period *result =
             (struct server_box_state_period *)item->data;
-        
+
         INSERT_ELEMENT(entry, root, "Period");
         if (NULL == result) continue;
 
@@ -1790,7 +1790,7 @@ static http_error check_passwd(
             goto leave;
         }
     }
-    
+
     {
         const char *forbidden_prefix[] = { "qwert", "asdgf", "12345" };
         for (size_t i = 0; i < sizeof(forbidden_prefix)/sizeof(*forbidden_prefix);
@@ -2042,7 +2042,7 @@ void soap(const struct http_connection *connection,
         http_send_response_400(connection, "Client sent invalid XML document");
         return;
     }
-    
+
     xpath_ctx = xmlXPathNewContext(request_doc);
     if (NULL == xpath_ctx) {
         xmlFreeDoc(request_doc);
@@ -2189,7 +2189,7 @@ void soap(const struct http_connection *connection,
             break;
         }
     }
-    
+
     /* Send response */
     if (service_passed) {
         /* Serialize the SOAP response */
@@ -2236,5 +2236,3 @@ leave:
     }
 
 }
-
-

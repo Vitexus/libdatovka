@@ -125,7 +125,7 @@ char *socket2address(int socket) {
         set_server_error("Could not resolve address of server socket");
         return NULL;
     }
-    
+
     if (-1 == test_asprintf(&address,
                 (strchr(host, ':') == NULL) ? "%s:%s" : "[%s]:%s",
                 host, service)) {
@@ -297,14 +297,14 @@ static void do_as_sendsms(const struct http_connection *connection,
                 arguments->username, arguments->password)) {
         case HTTP_ERROR_SUCCESS: {
                 /* Find final URI */
-                char *uri = strstr(request->uri, "&uri="); 
+                char *uri = strstr(request->uri, "&uri=");
                 if (uri == NULL) {
                     http_send_response_400(connection,
                             "Missing uri parameter in Request URI");
                     return;
                 }
                 uri += 5;
-                /* Build new location for second OTP phase */ 
+                /* Build new location for second OTP phase */
                 char *location = NULL;
                 if (-1 == test_asprintf(&location, "%s%s", as_path_dontsendsms, uri)) {
                     http_send_response_500(connection,
@@ -313,7 +313,7 @@ static void do_as_sendsms(const struct http_connection *connection,
                     return;
                 }
                 char *terminator = strchr(uri, '&');
-                if (NULL != terminator) 
+                if (NULL != terminator)
                     location[strlen(as_path_dontsendsms) + (uri - terminator)] = '\0';
                 http_send_response_302_totp(connection,
                         "authentication.info.totpSended",
@@ -380,14 +380,14 @@ static void do_as_phase_two(const struct http_connection *connection,
                 arguments->username, arguments->password, arguments->otp)) {
         case HTTP_ERROR_SUCCESS: {
                 /* Find final URI */
-                char *uri = strstr(request->uri, "&uri="); 
+                char *uri = strstr(request->uri, "&uri=");
                 if (uri == NULL) {
                     http_send_response_400(connection,
                             "Missing uri parameter in Request URI");
                     return;
                 }
                 uri += 5;
-                /* Build new location for final request */ 
+                /* Build new location for final request */
                 char *location = NULL;
                 if (NULL == (location = strdup(uri))) {
                     http_send_response_500(connection,
@@ -395,7 +395,7 @@ static void do_as_phase_two(const struct http_connection *connection,
                     return;
                 }
                 char *terminator = strchr(location, '&');
-                if (NULL != terminator) 
+                if (NULL != terminator)
                     *terminator = '\0';
                 /* Generate pseudo-random cookie value. This is to prevent
                  * client from reusing the cookie accidentally. We use the
@@ -442,7 +442,7 @@ static void do_as_phase_two(const struct http_connection *connection,
 /* FIXME: The ASWS URI hosts two services: for sending TOTP code for password
  * change and for changing OTP password. The problem is the former one is
  * basic-authenticated, the later one is otp-authenticated. But we cannot
- * decide which authentication to enforce without understadning request body. 
+ * decide which authentication to enforce without understanding request body.
  * I will just try both of them to choose the service.
  * But I hope official server implementation does it in more clever way. */
 static void do_asws(const struct http_connection *connection,
@@ -600,7 +600,7 @@ int server_otp_authentication(const struct http_connection *connection,
         } else {
             http_send_response_400(connection,
                     "Unknown path for OTP authenticating service");
-        }            
+        }
     } else {
         if (!strcmp(request->uri, ws_path)) {
             do_ws(connection, arguments->services, request,
@@ -608,7 +608,7 @@ int server_otp_authentication(const struct http_connection *connection,
         } else {
             http_send_response_400(connection,
                     "Unknown path for OTP authenticating service");
-        }            
+        }
     }
 
     return 0;
@@ -844,7 +844,7 @@ int start_server(pid_t *server_process, char **server_address,
         const void *server_arguments, const struct tls_authentication *tls) {
     int server_socket;
     int error;
- 
+
     if (server_address == NULL) {
         set_server_error("start_server(): Got invalid server_address pointer");
         return -1;
@@ -1026,7 +1026,7 @@ int start_server(pid_t *server_process, char **server_address,
                     /* And verify it in TLS handshake */
                     gnutls_certificate_set_verify_function(x509_credentials,
                          tls_verify_client);
-                } 
+                }
             }
 
             if (0 > (client_socket = accept(server_socket, NULL, NULL))) {

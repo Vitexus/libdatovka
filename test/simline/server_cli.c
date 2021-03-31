@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
             SERVICE_asws_changePassword_SendSMSCode;
         services[last_service-1].arguments = &service_sendsms_arguments;
         server_otp_arguments.otp = otp_code;
-        if (otp_type == 't') { 
+        if (otp_type == 't') {
             server_otp_arguments.method = AUTH_OTP_TIME;
         } else if (otp_type == 'h') {
             server_otp_arguments.method = AUTH_OTP_HMAC;
@@ -163,7 +163,7 @@ int main(int argc, char **argv) {
         server_otp_arguments.isds_deviations = 1;
         server_otp_arguments.services = services;
     }
-    
+
     /* Spawn the server */
     if ((SIG_ERR == signal(SIGTERM, terminator))) {
         fprintf(stderr, "Could not register SIGTERM handler\n");
