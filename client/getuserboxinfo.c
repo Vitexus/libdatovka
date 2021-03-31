@@ -12,7 +12,7 @@ int main(void) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
     struct isds_DbOwnerInfo *db_owner_info = NULL;
-    
+
     setlocale(LC_ALL, "");
 
     err = isds_init();
@@ -140,9 +140,9 @@ int main(void) {
         else {
             printf("isds_get_password_expiration() succeeded: "
                     "Password expires at: ");
-            if (expiration) 
+            if (expiration)
                 print_timeval(expiration);
-            else 
+            else
                 printf("<Never>\n");
         }
         free(expiration);

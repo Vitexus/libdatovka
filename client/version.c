@@ -10,7 +10,7 @@
 
 int main(void) {
     isds_error err;
-    
+
     setlocale(LC_ALL, "");
 
     err = isds_init();

@@ -14,7 +14,7 @@ int main(void) {
     isds_error err;
     struct isds_DbOwnerInfo *db_owner_info = NULL;
     char *recipient = NULL;
-    
+
     setlocale(LC_ALL, "");
 
     err = isds_init();
@@ -269,13 +269,13 @@ int main(void) {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"*/
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-       
+
         struct isds_document minor_document;
         memset(&minor_document, 0, sizeof(minor_document));
         minor_document.data = "hello world?";
         minor_document.data_length = strlen(minor_document.data);
         minor_document.dmMimeType = "text/plain";
-        /* XXX: This should fail 
+        /* XXX: This should fail
         minor_document.dmFileMetaType = FILEMETATYPE_MAIN; */
         minor_document.dmFileMetaType = FILEMETATYPE_ENCLOSURE;
         /* Server implementation demands dmFileDescr to be valid file name */

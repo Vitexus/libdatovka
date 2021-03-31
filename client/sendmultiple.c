@@ -13,7 +13,7 @@ int main(void) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
     char *recipient1 = NULL, *recipient2 = NULL;
-    
+
     setlocale(LC_ALL, "");
 
     err = isds_init();
@@ -91,7 +91,7 @@ int main(void) {
         long int dmSenderOrgUnitNum = 42;
         envelope.dmSenderOrgUnitNum = &dmSenderOrgUnitNum;
         envelope.dmAnnotation = "Multiple recipients";
-       
+
         struct isds_document minor_document;
         memset(&minor_document, 0, sizeof(minor_document));
         minor_document.data = "hello world?";
@@ -151,7 +151,7 @@ int main(void) {
                         "partialy:\n");
             }
             print_copies(copies);
-        } else 
+        } else
             printf("isds_send_message_to_multiple_recipients() failed: "
                     "%s: %s\n", isds_strerror(err), isds_long_message(ctx));
 

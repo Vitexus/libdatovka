@@ -12,7 +12,7 @@
 int main(int argc, char **argv) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
-    
+
     setlocale(LC_ALL, "");
 
     if (argc != 2 || !argv[1] || !*argv[1]) {

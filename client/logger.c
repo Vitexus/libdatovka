@@ -22,7 +22,7 @@ void logger(isds_log_facility facility, isds_log_level level,
 int main(void) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
-    
+
     setlocale(LC_ALL, "");
 
     err = isds_init();

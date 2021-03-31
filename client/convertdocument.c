@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
     int fd;
     char *id = NULL;
     struct tm *date = NULL;
-    
+
     setlocale(LC_ALL, "");
 
     if (argc < 3) {
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
     }
 
 
-    /* Load document */ 
+    /* Load document */
     memset(&document, 0, sizeof(document));
     if (mmap_file(argv[1], &fd, &document.data, &document.data_length)) {
         fprintf(stderr, "Could not map file with document");

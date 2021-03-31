@@ -10,7 +10,7 @@
 int main(void) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
-    
+
     setlocale(LC_ALL, "");
 
     err = isds_init();
@@ -31,7 +31,7 @@ int main(void) {
         printf("isds_set_timeout() failed: %s\n", isds_strerror(err));
     }
 
-   
+
     /* Register progresbar */
     err = isds_set_progress_callback(ctx, progressbar, NULL);
     if (err) {
