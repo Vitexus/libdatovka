@@ -84,7 +84,7 @@ err = isds_cleanup();
         non-reentrant blocking calls. Network communication progress reporting
         and operation logging and library debugging are implemented by calling
         back application-provided functions. Network operations can be
-        canceled from network reporting call-back.</para>
+        cancelled from network reporting call-back.</para>
     </refsection>
 
     <refsection>
@@ -196,7 +196,7 @@ err = isds_cleanup();
     <refsection>
       <title>Global Settings</title>
 
-      <para>Some functions influence library behavior globally. These are:</para>
+      <para>Some functions influence library behaviour globally. These are:</para>
 
       <itemizedlist>
         <listitem>
@@ -241,7 +241,7 @@ err = isds_cleanup();
         call-back function will be called periodically with arguments
         declaring amount of transferred data. The call-back return value
         determines whether to continue in the network operation or to cancel
-        the operation. Functions failed owing to canceling network operation
+        the operation. Functions failed owing to cancelling network operation
         will return <errorname>IE_ABORTED</errorname>.</para>
     </refsection>
 
@@ -719,7 +719,7 @@ err = isds_cleanup();
             <listitem><para>A path to client certificate, or a certificate
                 nickname in case of <abbrev>NSS</abbrev> as curl back-end, or
                 key slot identifier inside cryptographic engine. Some
-                cryptographinc engines can pair certificate with key
+                cryptographic engines can pair certificate with key
                 automatically (NULL value).</para></listitem>
           </varlistentry>
 
@@ -738,7 +738,7 @@ err = isds_cleanup();
             <term><type>char *</type><structfield>passphrase</structfield>;</term>
             <listitem><para>Zero terminated string with password for
                 decrypting private key, or engine <abbrev>PIN</abbrev>. Use
-                NULL for no pass-phrase or to let the engine to ask for 
+                NULL for no pass-phrase or to let the engine to ask for
                 it.</para></listitem>
           </varlistentry>
         </variablelist>
@@ -768,12 +768,12 @@ err = isds_cleanup();
         <variablelist>
           <varlistentry>
             <term><constant>OTP_RESOLUTION_SUCCESS</constant></term>
-            <listitem><para>Authentication succeded.</para></listitem>
+            <listitem><para>Authentication succeeded.</para></listitem>
           </varlistentry>
 
           <varlistentry>
             <term><constant>OTP_RESOLUTION_UNKNOWN</constant></term>
-            <listitem><para>Status is unkown.</para></listitem>
+            <listitem><para>Status is unknown.</para></listitem>
           </varlistentry>
 
           <varlistentry>
@@ -830,7 +830,7 @@ err = isds_cleanup();
         <synopsis>struct <structname>isds_otp</structname>;</synopsis>
         <para>This structure holds one-time password when authenticating
           a client and resolution of the authentication.</para>
-        
+
         <para>Input members are:</para>
         <variablelist>
           <varlistentry>
@@ -875,7 +875,7 @@ err = isds_cleanup();
             <term><constant>DBTYPE_SYSTEM</constant></term>
             <listitem><para>This is a special value for sender of messages sent
                 by the <abbrev>ISDS</abbrev>. You can find it only in
-                incomming messages. It's not accepted by any other
+                incoming messages. It's not accepted by any other
                 <abbrev>services</abbrev>.</para></listitem>
           </varlistentry>
 
@@ -1038,14 +1038,14 @@ err = isds_cleanup();
           <varlistentry>
             <term><constant>PRIVIL_READ_NON_PERSONAL</constant></term>
             <listitem><para>The user can download and read messages with
-                <structfield>dmPersonalDelivery</structfield> equaled to
+                <structfield>dmPersonalDelivery</structfield> equal to
                 false.</para></listitem>
           </varlistentry>
 
           <varlistentry>
             <term><constant>PRIVIL_READ_ALL</constant></term>
             <listitem><para>The user can download and read messages with
-                <structfield>dmPersonalDelivery</structfield> equaled to
+                <structfield>dmPersonalDelivery</structfield> equal to
                 true.</para></listitem>
           </varlistentry>
 
@@ -1588,7 +1588,7 @@ err = isds_cleanup();
         <variablelist>
           <varlistentry>
             <term><constant>EVENT_UNKNOWN</constant></term>
-            <listitem><para>Event uknown to this library.</para></listitem>
+            <listitem><para>Event unknown to this library.</para></listitem>
           </varlistentry>
 
           <varlistentry>
@@ -1638,7 +1638,7 @@ err = isds_cleanup();
 
           <varlistentry>
             <term><constant>EVENT_PRIMARY_LOGIN</constant></term>
-            <listitem><para>Primary user logged into recipent's
+            <listitem><para>Primary user logged into recipient's
                 box.</para></listitem>
           </varlistentry>
 
@@ -1670,11 +1670,11 @@ err = isds_cleanup();
 
           <varlistentry>
             <term><type>isds_event_type *</type><structfield>type</structfield>;</term>
-            <listitem><para>Type of the envent.</para></listitem>
+            <listitem><para>Type of the event.</para></listitem>
           </varlistentry>
 
           <varlistentry>
-            <term><type>charr *</type><structfield>description</structfield>;</term>
+            <term><type>char *</type><structfield>description</structfield>;</term>
             <listitem><para>Human-readable event description generated by the
                 <abbrev>ISDS</abbrev> system. (Very probably in Czech
                 language).</para></listitem>
@@ -1725,7 +1725,7 @@ err = isds_cleanup();
           <varlistentry>
             <term><type>long int *</type><structfield>dmSenderType</structfield>;</term>
             <listitem><para>Gross box type of the sender. You can use
-                <type>isds_DbType</type> to enumarate some known box types.
+                <type>isds_DbType</type> to enumerate some known box types.
                 This is a generic integer because the protocol keeps the value
                 unconstrained and the library must support any syntactically
                 correct value.</para></listitem>
@@ -1778,7 +1778,7 @@ err = isds_cleanup();
 
           <varlistentry>
             <term><type>struct timeval *</type><structfield>dmAcceptanceTime</structfield>;</term>
-            <listitem><para>The time of acceptancing the message by the
+            <listitem><para>The time of accepting the message by the
                 recipient. It will be <constant>NULL</constant>, if message
                 has not been accepted yet.</para></listitem>
           </varlistentry>
@@ -1817,7 +1817,7 @@ err = isds_cleanup();
         </variablelist>
 
         <para>Following members apply to both outgoing and incoming
-          messages:</para> 
+          messages:</para>
 
         <variablelist>
           <varlistentry>
@@ -1834,7 +1834,7 @@ err = isds_cleanup();
 
           <varlistentry>
             <term><type>char *</type><structfield>dbIDRecipient</structfield>;</term>
-            <listitem><para>Recipent's box identifier. This is mandatory.
+            <listitem><para>Recipient's box identifier. This is mandatory.
                 Maximal length is 7 characters.</para></listitem>
           </varlistentry>
 
@@ -1846,7 +1846,7 @@ err = isds_cleanup();
 
           <varlistentry>
             <term><type>long int *</type><structfield>dmRecipientOrgUnitNum</structfield>;</term>
-            <listitem><para>Recipent's organisation unit of as a number. This
+            <listitem><para>Recipient's organisation unit of as a number. This
                 is optional.</para></listitem>
           </varlistentry>
 
@@ -1891,13 +1891,13 @@ err = isds_cleanup();
           </varlistentry>
         </variablelist>
 
-        <para>Following five members constitue a reference to an item from the
+        <para>Following five members constitute a reference to an item from the
           Czech Act Collection. The human-readable reference looks
           like <phrase><emphasis>Point</emphasis>
             (<emphasis>Paragraph</emphasis>)
             § <emphasis>Section</emphasis>
             <emphasis>Law</emphasis>/<emphasis>Year</emphasis>
-            Coll.</phrase> The memebers apply to both incoming and outgoing
+            Coll.</phrase> The members apply to both incoming and outgoing
           messages:</para>
 
         <variablelist>
@@ -1949,7 +1949,7 @@ err = isds_cleanup();
                 <abbrev>I.e.</abbrev> Even if the recipient did not read this
                 message, the message is considered as delivered after
                 (currently) 10 days. This is called <phrase>delivery through
-                  fiction</phrase>. Oonly OVM dbType sender can set
+                  fiction</phrase>. Only OVM dbType sender can set
                 it.</para></listitem>
           </varlistentry>
 
@@ -1987,7 +1987,7 @@ err = isds_cleanup();
 
                 <varlistentry>
                   <term><literal>"V"</literal></term>
-                  <listitem><para>A noncommercial government message. This is
+                  <listitem><para>A non-commercial government message. This is
                       the default meaning if the value is undefined while
                       sending a message.</para></listitem>
                 </varlistentry>
@@ -2019,7 +2019,7 @@ err = isds_cleanup();
                 <varlistentry>
                   <term><literal>"D"</literal></term>
                   <listitem><para>This is an externally subsidized commercial
-                      messsage.</para></listitem>
+                      message.</para></listitem>
                 </varlistentry>
 
                 <varlistentry>
@@ -2030,7 +2030,7 @@ err = isds_cleanup();
 
                 <varlistentry>
                   <term><literal>"G"</literal></term>
-                  <listitem><para>This is a commerical message paid by
+                  <listitem><para>This is a commercial message paid by
                       a sponsor.</para></listitem>
                 </varlistentry>
 
@@ -2084,7 +2084,7 @@ err = isds_cleanup();
           <varlistentry>
             <term><type>_Bool *</type><structfield>dmOVM</structfield>;</term>
             <listitem><para>OVM sending mode. Non-OVM dbType boxes that have
-                dbEffectiveOVM equaled to true <emphasis>MUST</emphasis>
+                dbEffectiveOVM equal to true <emphasis>MUST</emphasis>
                 select between true (OVM mode) and false (non-OVM mode).
                 Otherwise the value is optional and the default value is
                 true.</para></listitem>
@@ -2106,7 +2106,7 @@ err = isds_cleanup();
       <refsection>
         <title><type>isds_FileMetaType</type></title>
         <synopsis>typedef enum <type>isds_FileMetaType</type>;</synopsis>
-        <para>Document type from point fo view of hierarchy of documents in
+        <para>Document type from point of view of hierarchy of documents in
           a message. Known values are:</para>
         <variablelist>
           <varlistentry>

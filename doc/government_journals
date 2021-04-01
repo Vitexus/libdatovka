@@ -25,7 +25,7 @@ The dedicated recipient box ID is `uur3q2i' and the box owner name is `Portál
 datových schránek (Ministerstvo vnitra)'.
 
 XML schemata of ISDS documents used to deliver or un-publish journal are
-described in 5th techical amendment of ISDS specification.
+described in 5th technical amendment of ISDS specification.
 
 
 XML Document for Publishing Journal
@@ -40,7 +40,7 @@ docMeta
     + dataPdf – type xs:base64Binary, obligate, the PDF journal encoded into
                 Base64, maximal size is 10 MB.
 
-Non-normative: No acknowledgment is defined by specification.
+Non-normative: No acknowledgement is defined by specification.
 
 
 XML Document for Un-publishing Journal
@@ -55,4 +55,4 @@ Journal identifier is assigned by recipient robot when publishing a journal.
 The identifier value can be found on web ISDS portal. It follows journal title
 in brackets there.
 
-Non-normative: No acknowledgment is defined by specification.
+Non-normative: No acknowledgement is defined by specification.

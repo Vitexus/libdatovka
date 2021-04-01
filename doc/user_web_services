@@ -95,7 +95,7 @@ GetDataBoxList (*)
 PDZInfo
     Get rules for sending commercial messages from given box
 DataBoxCreditInfo (*)
-    Get details about credit for comercial services
+    Get details about credit for commercial services
 ISDSSearch2 (*)
     Search for boxes conforming to full text criteria
 GetDataBoxActivityStatus (*)
@@ -146,7 +146,7 @@ CreateMultipleMessage (*)
 
 Create and send a message to multiple recipients.
 
-Input composes of nonempty list of recipients (maximal count is 50),
+Input composes of non-empty list of recipients (maximal count is 50),
 one envelope (different from envelope for CreateMessage, misses elements from
 dmRecipient) and list of documents to send to all of them to each recipient.
 
@@ -162,7 +162,7 @@ CreateMultipleMessage
     |   |   + dmRecipientOrgUnitNum
     |   |   + dmToHands – can be empty, but must not missing
     |   + dmRecipient
-    |   ⋮ 
+    |   ⋮
     + dmEnvelope
     |   + <other elements, usually empty>: dmSenderOrgUnit, dmSenderOrgUnitNum,
     |   |   dmAnnotation, dmRecipientRefNumber, dmSenderRefNumber,
@@ -175,7 +175,7 @@ CreateMultipleMessage
 
 It's not possible to send commercial message to multiple recipients. Though the
 dmEnvelope has @dmType attribute, so it should be possible to send a commercial
-message to one recient using CreateMultipleMessage service.
+message to one recipient using CreateMultipleMessage service.
 
 ISDS outputs list of assigned message IDs (each copy gets independent ID),
 list of sent status for each message ID and one cumulative status of
@@ -209,7 +209,7 @@ MessageDownload
 Retrieve incoming message identified by message ID.
 
 This service can return message without digital time-stamp (more precisely
-with empty dmQTimesamp element, see schema). 
+with empty dmQTimesamp element, see schema).
 
 Commercial message has set dmReturnedMessage/@dmType="K".
 
@@ -288,11 +288,11 @@ GetListOfSentMessages
 Download list of outgoing messages matching search criteria.
 
 Criteria are: delivery time not before, not after, organisation unit number of
-sender, message status filter, offset of first message in a list and limit on 
+sender, message status filter, offset of first message in a list and limit on
 number of messages to get.
 
 Message status filter is union of distinct message states expressed as
-exponents of 2. Effectively it's a polynom \sum_{x \in message_statux} 2^x.
+exponents of 2. Effectively it's a polynomial \sum_{x \in message_status} 2^x.
 Special value -1 means all messages. Meaning for value 1 or 0 is undefined.
 
 Messages are sorted in order of delivery time. Message type is stored in
@@ -307,7 +307,7 @@ Non-normative error codes:
 GetMessageAuthor
 ================
 
-Get information about sender as un user of given message.
+Get information about the sender of a given message as an user.
 
 Input is mandatory message identifier. Output is optional userType and
 optional authorName.
@@ -320,7 +320,7 @@ Value               Description
 --------------------------------------------------------------------------
 PRIMARY_USER        The sender was a owner of the box
 ENTRUSTED_USER      The sender was an entrusted user associated to the box
-ADMINISTRATOR       The sender was administrator assiciated to the box
+ADMINISTRATOR       The sender was administrator associated to the box
 OFFICIAL            The sender was ISDS (for system messages)
 VIRTUAL             The sender was an application authenticated by `system'
                     certificate
@@ -331,7 +331,7 @@ equivalent to PRIMARY_USER and PRIMARY_USER can send messages, thus I conclude
 these two now user types can occur in output of this service.
 
 authorName is a name of user logged into senders box (not a login name) if
-sender allowed to reveal his name explicitely.
+sender allowed to reveal his name explicitly.
 
 
 GetMessageStateChanges
@@ -346,7 +346,7 @@ changes (not older than 15 days currently) are reported.
 This service is designed for polling state changes of sent messages.
 
 Input are start (dmFromTime element) and end (dmToTime element) ISO times.
-Empty dmFromTime meands since last 15 days, empty dmToTime means till now.
+Empty dmFromTime means since last 15 days, empty dmToTime means till now.
 
 Server does not report changes recent more than few minutes.
 
@@ -370,11 +370,11 @@ AuthenticateMessage (*+)
 
 Allows to verify message authenticity by providing copy to ISDS.
 
-Only signed message encapsuleted into CMS structure with digital signature can
+Only signed message encapsulated into CMS structure with digital signature can
 be verified by this service. Client pass the raw message in Base64 encoding to
 ISDS, system performs checks and return boolean value: true if message has
 not been modified and has been delivered through ISDS, false if message
-has is unkown to ISDS. In both cases 0000 error code will be returned.
+hash is unknown to ISDS. In both cases 0000 error code will be returned.
 
 If message cannot be processed (e.g. broken CMS or XML syntax) or message
 contains has been signed by non-ISDS certificate or other error, non-zero
@@ -465,7 +465,7 @@ EraseMessage (*)
 Delete a message from long term storage (know as data safe formerly).
 
 Input is message ID in `dmID' element and boolean in `dmIncoming' element
-(true for incoming message, false for outgoing mesage).
+(true for incoming message, false for outgoing message).
 
 Output is standard `dmStatus' subtree.
 
@@ -496,7 +496,7 @@ distinguish the event meaning. Following prefixes are defined:
 
     Prefix  Meaning
     --------------------------------------------------------------------------
-    EV0:    Message enterend into ISDS
+    EV0:    Message entered ISDS
     EV1:    Message has been accepted by recipient action
     EV2:    Message has been delivered to box and is considered as accepted by
             no-user-action time out (through fiction)
@@ -505,14 +505,14 @@ distinguish the event meaning. Following prefixes are defined:
             this event is retroactive). In this case special system-generated
             message is sent to sender in addition.
     EV4:    Commercial message has been accepted by recipient confirmation
-    EV5:    Message has been delivered into recipent box
+    EV5:    Message has been delivered into recipient box
     EV6:    Message has been delivered, acceptance timed out because
             there was no user who could accept the message
     EV8:    A virus has been detected in the message, it won't be delivered
     EV11:   Primary user has logged into his box
-    EV12:   Entrusted user havin permission to read this message has logged in
+    EV12:   Entrusted user having permission to read this message has logged in
     EV13:   Application (not a human) has logged into box using `system'
-            certificate 
+            certificate
 
 
 GetSignedDeliveryInfo (+)
@@ -538,7 +538,7 @@ http://isds.czechpoint.cz/v20/delivery:
     </q:dmEvents>...</q:dmEvents>
   </q:dmDelivery>
 </q:GetDeliveryInfoResponse>
-             
+
 
 FindDataBox (*)
 ===========
@@ -632,7 +632,7 @@ as the input `dbOwnerInfo' element.
 The output differs from FindDataBox output. Here are `aifoIsds', `adCode', and
 `adDistrict' elements added. Some unused elements are missing.
 
-This service can be used only by an user with PRIVIL_SEARCH_DB permisson to a
+This service can be used only by an user with PRIVIL_SEARCH_DB permission to a
 gross OVM box type.
 
 Error codes:
@@ -659,7 +659,7 @@ GetDataBoxList (*)
 
 Get comma-separate list of all boxes of given type.
 
-Input is type of boxes of interrest (dblType element):
+Input is type of boxes of interest (dblType element):
 
 Value   Description             File name           Permission
 -------------------------------------------------------------------------------
@@ -673,7 +673,7 @@ UPG     Effectively OVM active  effovmYYYYMMDD.csv  Anybody
         boxes
 POA     Active boxes that       puboaYYYYMMDD.csv   Anybody
         allow to receive
-        commerical messages
+        commercial messages
 
 Non-normative: Following types are not documented anymore.
 
@@ -732,7 +732,7 @@ Error codes:
 PDZInfo
 =======
 
-Return posibilities of sending commerical messages. Only if one of the
+Return possibilities of sending commercial messages. Only if one of the
 possibility is the payer is the recipient (PDZType is `O'), then calling this
 service will cause marking messages as delivered.
 
@@ -746,10 +746,10 @@ dbPDZRecord
     + PDZType – rule type; see below for known values
     + PDZRecip – only this recipient box ID is possible. Empty value means no
     |   restriction on the recipient.
-    + PDZPayer – the message is payed by this box ID owner
+    + PDZPayer – the message is paid by this box ID owner
     + PDZExpire – expiration time of this rule. Empty value means no
     |   expiration.
-    + PDZCnt – number of remaining commecrial messages that can be sent based
+    + PDZCnt – number of remaining commercial messages that can be sent based
     |   on thid rule. Empty value means no limit.
     + ODZIdent – identifier referring to message enabling sending pre-paid
         answer. Must be added as dmRecipientRefNumber into sent message.
@@ -770,7 +770,7 @@ Z           Limitedly subsidized (undocumented)
 DataBoxCreditInfo (*)
 =================
 
-Return current credit value and and history of credit changes for given box
+Return current credit value and history of credit changes for given box
 and time interval.
 
 Input is `dbID' element with box ID whose credit you want to obtain and
@@ -791,7 +791,7 @@ ciRecord
     + ciCreditChange – value of the credit change
     + ciCreditAfter – value of the credit after the change
 
-ciEventType     Meaning                 
+ciEventType     Meaning
 ------------------------------------------
 1               Charge credit
 2               Discharge credit
@@ -820,7 +820,7 @@ All credit values are integers in hundredths of Czech Crowns.
 Output carries standard `dbStatus' tree with status code and status message.
 
 Error codes (codes are not normative):
-    1004    Insufficient priviledges for the box
+    1004    Insufficient privileges for the box
     2011    The box does not exist
     1093    Date is too long (history is not available after 15 months)
     1137    Interval is too long (limit is 3 months)
@@ -832,9 +832,9 @@ ISDSSearch2 (*)
 
 Return list of boxes matching a full text criteria.
 
-The search is perfomed on an index cached each 3 hours.
+The search is performed on an index cached each 3 hours.
 
-The search phrase is splitted on word boundaries and the words are looked up
+The search phrase is split on word boundaries and the words are looked up
 in the index. Only whole words matches. All search phrase words must be found
 in the same box metadata (not necessarily in the same attribute and in the
 same order). Diacritics supplementing, case folding, and lemmatization is
@@ -847,7 +847,7 @@ Input is this list of these elements:
 
 Element         Type                    Details
 --------------------------------------------------------------------------------
-searchText      String                  Mandatory, non-empty 
+searchText      String                  Mandatory, non-empty
 searchType      Enumerated string       Mandatory, can be empty,
                                         defaults to GENERAL
 searchScope     Enumerated string       Mandatory, can be empty,
@@ -879,7 +879,7 @@ Value          Meaning
 ---------------------------------------------------------------------------
 ALL            Search over all box types
 OVM
-OVM_MAIN       Search over main (without suboridanated, with secondary) OVM
+OVM_MAIN       Search over main (without subordinated, with secondary) OVM
                box types only
 OVM_REQ
 OVM_FO
@@ -924,22 +924,23 @@ dbResult
     + dbAddress – residence address as one string
     + dbBiDate – can be empty, date of birth
     + dbICO – can be empty, identifier of an organization
-    + dbEffectiveOVM – boolean, true for a box upgraded to an OVM role 
+    + dbEffectiveOVM – boolean, true for a box upgraded to an OVM role
     + dbSendOptions – enumerated string, capability to deliver different
-        kinds of messages, it depends on querrier's box type and the found box
+        kinds of messages, it depends on querying person's box type and
+        the found box
 
 Acceptable values for `dbSendOptions' element are:
 
 Value       Meaning
 -------------------
-DZ          Only noncommecrial messages can be sent
-ALL         Noncommercial and commercial messages can be sent
+DZ          Only non-commercial messages can be sent
+ALL         Non-commercial and commercial messages can be sent
 PDZ         Only commercial messages can be sent
 NONE        No message can be sent
 DISABLED    The box is not active
 
 If input `highlighting' is true, output `dbName' and `dbAddress' can contain
-delimeters highlighting the phrase found in the strings. The start of the
+delimiters highlighting the phrase found in the strings. The start of the
 phrase is marked by `|$*HL_START*$|' string, the end of the phrase is marked
 by `|$*HL_END*$|' string.
 
@@ -956,7 +957,7 @@ Error codes:
 GetDataBoxActivityStatus (*)
 ========================
 
-Retrive box state changes in given history time frame.
+Retrieve box state changes in given history time frame.
 
 Input is list of these elements:
 
@@ -981,8 +982,7 @@ Period
     + PeriodTo – xs:dateTime
     + DbState – non-negative integer
 
-`DbState' is 1 for accessible state. Inaccessible state is signaled by 0 for
+`DbState' is 1 for accessible state. Inaccessible state is signalled by 0 for
 OVM users authenticated by system certificate, by 2--6 as defined in box
-states for some internal priviledged users. Other users are not allowed to
+states for some internal privileged users. Other users are not allowed to
 call this service.
-

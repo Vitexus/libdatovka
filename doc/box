@@ -45,7 +45,7 @@ FO             40      Standard person
 Box states
 ==========
 
-Value       Description 
+Value       Description
 -------------------------------------------------------
 0 or empty  Error occurred while retrieving box state
 1           Box is accessible.
@@ -65,14 +65,14 @@ message sending, are not allowed then.
 Country values
 ==============
 
-The counries are denoted by two-letter abbreviation. Sometimes it can be full
+The countries are denoted by two-letter abbreviation. Sometimes it can be full
 or somewhat abbreviated name. Exact list of codes is in Appendix A of Webové
 služby ISDS pro vyhledávání datových schránek.
 
 Non-normative: It's a subset of ISO 3166-1 alpha-2 list with some non-standard
 extensions (borrowed from International Post Union).
 
-Missing codes: 
+Missing codes:
 
 Value   Description
 --------------------------------------------------
@@ -98,4 +98,3 @@ Value   Description
 ------------------------
 TA      Tristan da Cunha
 XZ      Kosovo
-

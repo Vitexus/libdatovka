@@ -39,25 +39,25 @@ Each user has set of permissions to operate on given box.
 
 Symbol                      Num Description
 --------------------------------------------------------------------------
-PRIVIL_READ_NON_PERSONAL    1   Permission to read incoming messages 
+PRIVIL_READ_NON_PERSONAL    1   Permission to read incoming messages
 PRIVIL_READ_ALL             2   Permission to read messages addresses only to
                                 concrete person
-PRIVIL_CREATE_DM            4   Permission to sent mesages, to download outgoing
-                                messages
+PRIVIL_CREATE_DM            4   Permission to sent messages, to download
+                                outgoing messages
 PRIVIL_VIEW_INFO            8   Permission to download list of messages, to
                                 download data about delivery (`Dodejka') and
                                 acceptance (`Doručenka')
 PRIVIL_SEARCH_DB            16  Permission to search boxes
-PRIVIL_OWNER_ADM            32  Permission to maintane a box (add users etc.)
+PRIVIL_OWNER_ADM            32  Permission to maintain a box (add users etc.)
 PRIVIL_READ_VAULT           64  Permission to read messages from long term
                                 storage (does not exists since 2012-05)
 PRIVIL_ERASE_VAULT          128 Permission to delete messages from long term
                                 storage
 
-User type ADMINSTRATOR has implicit non-revokable permission PRIVIL_OWNER_ADM.
+User type ADMINSTRATOR has implicit non-revocable permission PRIVIL_OWNER_ADM.
 Administrator can add other permissions to anybody, even to himself.
 
-User type PRIMARY_USER has implicit (non-revokable?) permissions 1–32.
+User type PRIMARY_USER has implicit (non-revocable?) permissions 1–32.
 
 In addition, internal users can have following permissions (to manage
 (= create, update) boxes or request for box updates):
@@ -74,13 +74,13 @@ PRIVIL_AUDITOR          1073741824  Manage PFO_AUDITOR type boxes
 PRIVIL_PFO              16384       Manage PFO* type boxes
 PRIVIL_OVMPOZAK         65536       Manage OVM, PO_ZAK and OVM_REQ type boxes
 PRIVIL_VAZBA            131072      Report imprisoning of a person etc.
-PRIVIL_MV               32768       Ministery of interiors officer
+PRIVIL_MV               32768       Ministry of the Interior officer
                                     who processes request (Service module)
 PRIVIL_CZP              262144      Czech POINT officer who processes requests
                                     (only for FO, PFO, PO_REQ box types)
 PRIVIL_ADMADM           1048576     Manage internal users
 PRIVIL_AD_DELIV         2097152     Store timestamp about credentials delivery
-                                    by off-line chanel
+                                    by off-line channel
 PRIVIL_ACTIVATE         8388608     Activate credentials on-line
 PRIVIL_POST             524288      Access to help desk IS of Czech POST
 PRIVIL_VAULT            33554432    Manage long term storage and commercial

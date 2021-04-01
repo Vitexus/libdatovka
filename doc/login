@@ -57,7 +57,7 @@ The device driver must provide any of the APIs in addition:
 
 Desktop applications accessing ISDS must log in only on manual request of
 a user. Daemon implementations can log in automatically, but they are forbidden
-to abuse ISDS (e.g. redownloading old messages).
+to abuse ISDS (e.g. re-downloading old messages).
 
 
 HTTP OTP Methods
@@ -189,7 +189,7 @@ will be delivered to client.
 
 Non-normative: The premium SMS costs CZK 3. The user can send `HELP' text to
 get more details or `STOP LOGINDEV' text to disable sending more codes. The
-destination SMS phone number is `90201' (available from Czech celular phone
+destination SMS phone number is `90201' (available from Czech mobile phone
 networks only). If the user sends the stop-message or looses his receiver or
 capability to receive premium messages, he will lose access to his data box
 effectively and the only remedy will be to ask for resetting credentials on

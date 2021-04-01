@@ -46,7 +46,7 @@ Currently (2011-02-21) allowed formats are (quotation follows):
     – wav (Waveform Audio Format)
     – mp2, mp3 (MPEG-1 Audio Layer 2 / Layer 3)
     – isdoc, isdocx (Information System Document) version 5.2 or higher
-    - edi (international standard EDIFACT, standards for electotronic
+    - edi (international standard EDIFACT, standards for electronic
     interchange of business documents [EDI] ODETTE and EANCOM)
     - dwg (AutoCAD DraWinG File Format) version 2007 or higher
     - shp, dbf, shx, prj, qix, sbn, sbx (ESRI Shapefile)
@@ -70,7 +70,7 @@ to detect Document format (according file name extension) and checks content
 for format conformance. Especially this attribute is subject of a string
 rewrite.
 
-List of allowed MIME types is copied (and sometimes agumented) in appendix
+List of allowed MIME types is copied (and sometimes augmented) in appendix
 of Webové služby rozhranní ISDS pro manipulaci s datovými zprávami.
 
 There is list of allowed file name extensions and MIME type mapping
@@ -88,7 +88,7 @@ dbf, prj, qix, sbn, sbx, shp, shx
 dgn         application/octet-stream    Bentley Microstation Format
 dwg         image/vnd.dwg               AutoCAD Drawing
 edi         application/edifact         EDIFACT (ODETTE, EANCOM standards for
-            application/edi-x12         inernational bussines document
+            application/edi-x12         international business document
             application/edi-consent     exchange)
             text/plain
             text/xml
@@ -121,15 +121,15 @@ odt         application/vnd.oasis.opendocument.text
                                         Open Document Format Text
 pdf         application/pdf             Portable Document Format
 p7b         application/pkcs7-certificates
-            application/pkcs7-mime      
+            application/pkcs7-mime
             application/x-pkcs7-certificates
                                         Crypto Message Syntax
 p7c, p7m    application/pkcs7-mime      Crypto Message Syntax
             application/x-pkcs7-mime
 p7f         application/pkcs7-signature
                                         Crypto Message Syntax
-p7s         application/pkcs7-signature      
-            application/x-pkcs7-signature      
+p7s         application/pkcs7-signature
+            application/x-pkcs7-signature
                                         Crypto Message Syntax
 pk7         application/pkcs7-mime      Crypto Message Syntax signatures
             application/x-pkcs7-mime
@@ -143,7 +143,7 @@ rtf         application/msword          Rich Text Format
             text/rtf
             application/rtf
 tif, tiff   image/tiff                  Tag Image File Format
-tsr, tst    application/timestamp-reply 
+tsr, tst    application/timestamp-reply
                                         Time Stamp Token (RFC 3161)
 txt         text/plain                  Plain text
                                         (no charset nor encoding signalled)
@@ -220,7 +220,7 @@ Since 2014-09, the time stamp conforms to ATSv3 format defined by CAdES
 Signatures Baseline Profile, ETSI TS 103 173, version 2.2.1. See
 <http://webapp.etsi.org/workprogram/Report_WorkItem.asp?WKI_ID=41927>.
 
-The signature and time stamp is computed on-the-fly, for each reponse again.
+The signature and time stamp is computed on-the-fly, for each response again.
 
 If time stamp authority is irresponsive, CMS without time stamp is returned
 with special ISDS error code 0005. Client can retry to get the same stamped
@@ -228,7 +228,7 @@ response two times in 20 minutes. Exceeding this quota leads to 50-second
 delay or error code 3005.
 
 If time stamp authority is failing, error code 9502 is returned without any
-message. 
+message.
 
 
 Message hash
@@ -239,7 +239,7 @@ part to hash must preserve physical XML serialization. The hash value is
 carried inside a message, it's stored in ISDS and it's used as a input form
 digital time stamp.
 
-Currently SHA-1 and SHA-256 algortihms are defined. They are identified by
+Currently SHA-1 and SHA-256 algorithms are defined. They are identified by
 dmHash/@algorithm attribute. Algorithm name in attribute value contains hyphen
 character.
 
@@ -264,8 +264,8 @@ Case    Meaning
         recipient.
 5       User has been added to your box.
 6       User permissions has been changed.
-7       Box has been made temporary inaccessible on court desicion (e.g. user
-        has been found eligable unresponsible).
+7       Box has been made temporary inaccessible on court decision (e.g. user
+        has been found eligible incapacitated).
 8       Box has been made temporary inaccessible on box owner or administrator
         request.
 9       Box has been made permanently inaccessible because organization does
@@ -286,7 +286,7 @@ SystemMessage – Attribute `type' is a number of case 2, 5, or 6.
 SystemMessage – Attribute `type' is a number of case 3.
     + dmID – undeliverable message ID
     + dbIDRecipient – inaccessible recipient box ID
-    + dbName – recipent box name
+    + dbName – recipient box name
     + undelivDate – date when the box was made inaccessible
     + dmAnnotation – message subject
     + dmSenderRefNumber – sender's reference number of the message
@@ -322,7 +322,7 @@ box ID.
 
 Commercial outgoing message is automatically recognized by ISDS using sender
 and recipient box type, commercial sending/receiving permission, and OVM
-message flag. All messages are noncommercial, so called public, except
+message flag. All messages are non-commercial, so called public, except
 following combinations when the message is considered as commercial:
 
         Sender                         Recipient
@@ -340,7 +340,7 @@ I       Commercial message offering paying the response instead of the
         recipient (so called initiatory message)
 K       Commercial message
 O       Commercial message as a response paid by sender of initiatory message
-V       Noncommercial standard message
+V       Non-commercial standard message
 
 Incoming message or downloaded sent message can have @dmType attribute in the
 message envelope with following meaning:
@@ -349,20 +349,20 @@ Value   Meaning
 -----------------------------------------------------------------------------
 A       Subsidized initiatory commercial message which can pay a response
 B       Subsidized initiatory commercial message which has already paid the
-        response 
+        response
 C       Subsidized initiatory commercial message where the response offer has
         expired
-D       Externally subsidized commercial messsage
+D       Externally subsidized commercial message
 E       Prepaid stamp
 G       Paid by a sponsor
 I       Initiatory commercial message which can pay a response
 K       Commercial message paid by sender
-O       Commercial message as a response paid by sended of initiatory message
+O       Commercial message as a response paid by sender of initiatory message
 X       Initiatory commercial message where the response offer has expired
 Y       Initiatory commercial message which has already paid the response
 Z       Limitedly subsidized commercial message
 
-Missing @dmType attribute means noncommercial standard message.
+Missing @dmType attribute means non-commercial standard message.
 
 Relation between initiatory message and reply paid by initiatory message
 sender is established by an identifier defined in dmSenderRefNumber element of
