@@ -982,7 +982,7 @@ error:
 
 /* Logs libxml2 errors. Should be registered to libxml2 library.
  * @ctx is unused currently
- * @msg is printf-like formated message from libxml2 (UTF-8?)
+ * @msg is printf-like formatted message from libxml2 (UTF-8?)
  * @... are variadic arguments for @msg */
 static void log_xml(void *ctx, const char *msg, ...) {
     va_list ap;
@@ -1210,7 +1210,7 @@ _hidden isds_error _isds_discard_credentials(struct isds_ctx *context,
 
 
 /* Destroy ISDS context and free memory.
- * @context will be NULLed on success. */
+ * @context will be set to NULL on success. */
 isds_error isds_ctx_free(struct isds_ctx **context) {
     if (!context || !*context) {
         return IE_INVALID_CONTEXT;
@@ -1866,7 +1866,7 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
                 _("Selected authentication method: username and mobile key\n"));
     } else {
         isds_log_message(context,
-                "Username, communication code and mep context must be supplied.\n");
+                "Username, communication code and MEP context must be supplied.\n");
         return IE_INVAL;
     }
     /* Close connection if already logged in, but don't close the connection
@@ -2888,7 +2888,7 @@ static isds_error timestring2static_timeval(const xmlChar *string,
     /* Get zone offset */
     /* ISO allows zone offset string only: "" | "Z" | ("+"|"-" "<HH>:<MM>")
      * "" equals to "Z" and it means UTC zone. */
-    /* One can not use strptime(, "%z",) becase it's RFC E-MAIL format without
+    /* One can not use strptime(, "%z",) because it's RFC E-MAIL format without
      * colon separator */
     if (offset && (*offset == '-' || *offset == '+')) {
         if (2 != sscanf(offset + 1, "%2d:%2d", &offset_hours, &offset_minutes)) {
@@ -2940,7 +2940,6 @@ static isds_error timestring2timeval(const xmlChar *string,
 
     return error;
 }
-
 
 /* Convert unsigned int into isds_message_status.
  * @context is session context
@@ -3344,7 +3343,7 @@ static isds_error eventstring2event(const xmlChar *string,
         free(buffer); (buffer) = NULL; \
     }
 
-/* Requires attribute_node variable, do not free it. Can be used to reffer to
+/* Requires attribute_node variable, do not free it. Can be used to refer to
  * new attribute. */
 #define INSERT_STRING_ATTRIBUTE(parent, attribute, string) \
     { \
@@ -3395,7 +3394,7 @@ static isds_error eventstring2event(const xmlChar *string,
 
 
 /* Find child element by name in given XPath context and switch context onto
- * it. The child must be uniq and must exist. Otherwise fails.
+ * it. The child must be unique and must exist. Otherwise fails.
  * @context is ISDS context
  * @child is child element name
  * @xpath_ctx is XPath context. In success, the @xpath_ctx will be changed
@@ -5006,7 +5005,7 @@ static isds_error extract_document(struct isds_ctx *context,
             (*document)->xml_node_list =
                 result->nodesetval->nodeTab[0]->children;
         } else {
-            /* No base64 blob, nor XML document */
+            /* No Base64 blob, nor XML document */
             isds_printf_message(context,
                     _("Document has no dmEncodedContent, nor dmXMLContent "
                         "element"));
@@ -6329,7 +6328,7 @@ leave:
  * @context is session context
  * @expiration is automatically reallocated time when password expires. If
  * password expiration is disabled, NULL will be returned. In case of error
- * it will be nulled too. */
+ * it will be set to NULL too. */
 isds_error isds_get_password_expiration(struct isds_ctx *context,
         struct timeval **expiration) {
     isds_error err = IE_SUCCESS;
@@ -6568,7 +6567,7 @@ static isds_error _isds_request_totp_code(struct isds_ctx *context,
     _isds_discard_credentials(context, 0);
     /* Detach pointer to OTP credentials from context */
     context->otp_credentials = NULL;
-    /* Keep context->otp true to keep signaling this is OTP session */
+    /* Keep context->otp true to keep signalling this is OTP session */
 
     /* Destroy request */
     xmlFreeNode(request); request = NULL;
@@ -6674,7 +6673,7 @@ leave:
  * handling.
  * @code is status code to translate
  * @message is non-localized status message to put into long message in case
- * of uknown error. It can be NULL if server did not provide any.
+ * of unknown error. It can be NULL if server did not provide any.
  * @return desired isds_error or IE_ISDS for unknown code or IE_INVAL for
  * invalid invocation. */
 static isds_error statuscode2isds_error(struct isds_ctx *context,
@@ -6714,7 +6713,7 @@ static isds_error statuscode2isds_error(struct isds_ctx *context,
 
 /* Change user password in ISDS.
  * User must supply old password, new password will takes effect after some
- * time, current session can continue. Password must fulfill some constraints.
+ * time, current session can continue. Password must fulfil some constraints.
  * @context is session context
  * @old_password is current password.
  * @new_password is requested new password
@@ -6763,7 +6762,7 @@ isds_error isds_change_password(struct isds_ctx *context,
                 "one lower-case, and one digit"),
         N_("Password cannot contain sequence of three identical characters"),
         N_("Password cannot contain user identifier"),
-        N_("Password is too simmple"),
+        N_("Password is too simple"),
         N_("Old password is not valid"),
         N_("Password cannot be reused"),
         N_("Unexpected error"),
@@ -6908,7 +6907,7 @@ isds_error isds_change_password(struct isds_ctx *context,
         _isds_discard_credentials(context, 0);
         /* Detach pointer to OTP credentials from context */
         context->otp_credentials = NULL;
-        /* Keep context->otp true to keep signaling this is OTP session */
+        /* Keep context->otp true to keep signalling this is OTP session */
     }
 
     /* Destroy request */
@@ -7526,7 +7525,7 @@ leave:
 
 /* Common implementation for removing given box.
  * @context is session context
- * @service_name is UTF-8 encoded name fo ISDS service
+ * @service_name is UTF-8 encoded name of ISDS service
  * @box is box description to delete
  * @since is date of box owner cancellation. Only tm_year, tm_mon and tm_mday
  * carry sane value. If NULL, do not inject this information into request.
@@ -8177,8 +8176,8 @@ leave:
  * @box_id is UTF-8 encoded box identifier
  * @token is UTF-8 encoded temporary password
  * @user_id outputs UTF-8 encoded reallocated user identifier
- * @password outpus UTF-8 encoded reallocated user password
- * Output arguments will be nulled in case of error */
+ * @password outputs UTF-8 encoded reallocated user password
+ * Output arguments will be set to NULL in case of error */
 isds_error isds_activate(struct isds_ctx *context,
         const char *box_id, const char *token,
         char **user_id, char **password) {
@@ -8400,7 +8399,7 @@ leave:
  * The output reallocated token user needs to use to authorize on the web
  * server to view his new password. Output reallocated
  * @credentials_delivery.new_user_name is user's log-in name that ISDS
- * assingned or changed up on this call.
+ * assigned or changed up on this call.
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care. */
@@ -8504,7 +8503,7 @@ leave:
  * The output reallocated token user needs to use to authorize on the web
  * server to view his new password. Output reallocated
  * @credentials_delivery.new_user_name is user's log-in name that ISDS
- * assingned up on this call.
+ * assigned up on this call.
  * @approval is optional external approval of box manipulation
  * @refnumber is reallocated serial number of request assigned by ISDS. Use
  * NULL, if you don't care.*/
@@ -8690,7 +8689,7 @@ leave:
 
 /* Get list of boxes in ZIP archive.
  * @context is session context
- * @list_identifier is UTF-8 encoded string identifying boxes of interrest.
+ * @list_identifier is UTF-8 encoded string identifying boxes of interest.
  * System recognizes following values currently: ALL (all boxes), UPG
  * (effectively OVM boxes), POA (active boxes allowing receiving commercial
  * messages), OVM (OVM gross type boxes), OPN (boxes allowing receiving
@@ -9210,9 +9209,9 @@ leave:
  * "|$*HL_START*$|" for start and "|$*HL_END*$|" for end of a match.
  * The markers will be removed from the string.
  * @starts is a reallocated list of static pointers into the @string pointing
- * to places where match start markers occured.
+ * to places where match start markers occurred.
  * @ends is a reallocated list of static pointers into the @string pointing
- * to places where match end markers occured.
+ * to places where match end markers occurred.
  * @return IE_SUCCESS in case of no failure. */
 static isds_error interpret_matches(xmlChar *string,
         struct isds_list **starts, struct isds_list **ends) {
@@ -9397,11 +9396,11 @@ leave:
  * don't care.
  * @box_type restricts searching to given box type. Value DBTYPE_SYSTEM means
  * to search in all box types. Value DBTYPE_OVM_MAIN means to search in
- * non-subsudiary OVM box types. Pass NULL to let server to use default value
+ * non-subsidiary OVM box types. Pass NULL to let server to use default value
  * which is DBTYPE_SYSTEM.
  * @page_size defines count of boxes to constitute a response page. It counts
  * from zero. Pass NULL to let server to use a default value (50 now).
- * @page_number defines ordinar number of the response page to return. It
+ * @page_number defines ordinary number of the response page to return. It
  * counts from zero. Pass NULL to let server to use a default value (0 now).
  * @track_matches points to true for marking @query words found in the box
  * attributes. It points to false for not marking. Pass NULL to let the server
@@ -9409,7 +9408,7 @@ leave:
  * @total_matching_boxes outputs reallocated number of all boxes matching the
  * query. Will be pointer to NULL if server did not provide the value.
  * Pass NULL if you don't care.
- * @current_page_beginning outputs reallocated ordinar number of the first box
+ * @current_page_beginning outputs reallocated ordinary number of the first box
  * in this @boxes page. It counts from zero. It will be pointer to NULL if the
  * server did not provide the value. Pass NULL if you don't care.
  * @current_page_size outputs reallocated count of boxes in the this @boxes
@@ -9417,7 +9416,7 @@ leave:
  * Pass NULL if you don't care.
  * @last_page outputs pointer to reallocated boolean. True if this @boxes page
  * is the last one, false if more boxes match, NULL if the server did not
- * provude the value. Pass NULL if you don't care.
+ * provide the value. Pass NULL if you don't care.
  * @boxes outputs reallocated list of isds_fulltext_result structures,
  * possibly empty.
  * @return:
@@ -9674,7 +9673,7 @@ leave:
  *  You can use isds_DbState to enumerate box status. However out of enum
  *  range value can be returned too. This is feature because ISDS
  *  specification leaves the set of values open.
- *  Be ware that status DBSTATE_REMOVED is signaled as IE_SUCCESS. That means
+ *  Be ware that status DBSTATE_REMOVED is signalled as IE_SUCCESS. That means
  *  the box has been deleted, but ISDS still lists its former existence. */
 isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
         long int *box_status) {
@@ -9886,12 +9885,12 @@ leave:
  * @from_time is first second of history to return in @history. Server ignores
  * subseconds. NULL means time of creating the box.
  * @to_time is last second of history to return in @history. Server ignores
- * subseconds. It's valid to have the @from_time equaled to the @to_time. The
+ * subseconds. It's valid to have the @from_time equal to the @to_time. The
  * interval is closed from both ends. NULL means now.
  * @history outputs auto-reallocated list of pointers to struct
  * isds_box_state_period. Each item describes a continues time when the box
  * was in one state. The state is 1 for accessible box. Otherwise the box
- * is inaccessible (priviledged users will get exact box state as enumerated
+ * is inaccessible (privileged users will get exact box state as enumerated
  * in isds_DbState, other users 0).
  * @return:
  *  IE_SUCCESS if the history has been obtained correctly,
@@ -9925,7 +9924,7 @@ isds_error isds_get_box_state_history(struct isds_ctx *context,
     if (NULL == context->curl) return IE_CONNECTION_CLOSED;
 
     /* ??? XML schema allows empty box ID, textual documentation
-     * requries the value. */
+     * requires the value. */
     /* Allow undefined box_id */
     if (NULL != box_id) {
         box_id_locale = _isds_utf82locale((char*)box_id);
@@ -10226,7 +10225,7 @@ isds_error isds_get_commercial_credit(struct isds_ctx *context,
         NULL
     };
     const char *meanings[] = {
-        "Insufficient priviledges for the box",
+        "Insufficient privileges for the box",
         "The box does not exist",
         "Date is too long (history is not available after 15 months)",
         "Interval is too long (limit is 3 months)",
@@ -11298,7 +11297,7 @@ leave:
  * Use NULL if you don't care about don't need the data (useful if you want to
  * know only the @number). If you provide &NULL, list will be allocated on
  * heap, if you provide pointer to non-NULL, list will be freed automatically
- * at first. Also in case of error the list will be NULLed.
+ * at first. Also in case of error the list will be set to NULL.
  * @return IE_SUCCESS or appropriate error code. */
 static isds_error isds_get_list_of_messages(struct isds_ctx *context,
         _Bool outgoing_direction,
@@ -11571,7 +11570,7 @@ leave:
  * Use NULL if you don't care about the meta data (useful if you want to know
  * only the @number). If you provide &NULL, list will be allocated on heap,
  * if you provide pointer to non-NULL, list will be freed automatically at
- * first. Also in case of error the list will be NULLed.
+ * first. Also in case of error the list will be set to NULL.
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
         const struct timeval *from_time, const struct timeval *to_time,
@@ -11607,7 +11606,7 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
  * Use NULL if you don't care about the meta data (useful if you want to know
  * only the @number). If you provide &NULL, list will be allocated on heap,
  * if you provide pointer to non-NULL, list will be freed automatically at
- * first. Also in case of error the list will be NULLed.
+ * first. Also in case of error the list will be set to NULL.
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
         const struct timeval *from_time, const struct timeval *to_time,
@@ -11630,9 +11629,9 @@ isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
  * @from_time is minimal time and date of status changes inclusive
  * @to_time is maximal time and date of status changes inclusive
  * @changed_states is automatically reallocated list of
- * isds_message_status_change's. If you provide &NULL, list will be allocated
- * on heap, if you provide pointer to non-NULL, list will be freed
- * automatically at first. Also in case of error the list will be NULLed.
+ * isds_message_status_change entries. If you provide &NULL, list will
+ * be allocated on heap, if you provide pointer to non-NULL, list will be freed
+ * automatically at first. Also in case of error the list will be set to NULL.
  * XXX: The list item ordering is not specified.
  * XXX: Server provides only `recent' changes.
  * @return IE_SUCCESS or appropriate error code. */
@@ -11906,14 +11905,15 @@ leave:
  * signed data and free ISDS response.
  * @context is session context
  * @message_id is UTF-8 encoded message ID for logging purpose
- * @response is parsed XML document. It will be freed and NULLed in the middle
- * of function run to save memory. This is not guaranteed in case of error.
+ * @response is parsed XML document. It will be freed and set to NULL in
+ * the middle of function run to save memory. This is not guaranteed in case
+ * of error.
  * @request_name is name of ISDS request used to construct response root
  * element name and for logging purpose.
  * @raw is reallocated output buffer with DER encoded CMS data
  * @raw_length is size of @raw buffer in bytes
  * @returns standard error codes, in case of error, @raw will be freed and
- * NULLed, @response sometimes. */
+ * set to NULL, @response sometimes. */
 static isds_error find_extract_signed_data_free_response(
         struct isds_ctx *context, const xmlChar *message_id,
         xmlDocPtr *response, const xmlChar *request_name,
@@ -11982,7 +11982,7 @@ static isds_error find_extract_signed_data_free_response(
         isds_log_message(context, _("dmSignature element is empty"));
     }
 
-    /* Here we have delivery info as standalone CMS in encoded_structure.
+    /* Here we have delivery info as stand-alone CMS in encoded_structure.
      * We don't need any other data, free them: */
     xmlXPathFreeObject(result); result = NULL;
     xmlXPathFreeContext(xpath_ctx); xpath_ctx = NULL;
@@ -12232,7 +12232,7 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
         err = IE_ISDS;
         goto leave;
     }
-    /* More delivery info's */
+    /* More delivery infos */
     if (result->nodesetval->nodeNr > 1) {
         isds_printf_message(context,
                 _("XML document has more sisds:dmDelivery elements"));
@@ -13230,7 +13230,7 @@ leave:
  * @message_id is message identifier.
  * @incoming is true for incoming message, false for outgoing message.
  * @return
- *  IE_SUCCESS  if message has ben removed
+ *  IE_SUCCESS  if message has been removed
  *  IE_INVAL    if message does not exist in long term storage or message
  *              belongs to different box
  * TODO: IE_NOEPRM  if user has no permission to erase a message */
@@ -14305,7 +14305,7 @@ int isds_address_free(struct isds_address **address);
 /* Makes known all relevant namespaces to given XPath context
  * @xpath_ctx is XPath context
  * @message_ns selects proper message name space. Unsigned and signed
- * messages and delivery info's differ in prefix and URI. */
+ * messages and delivery infos differ in prefix and URI. */
 _hidden isds_error _isds_register_namespaces(xmlXPathContextPtr xpath_ctx,
         const message_ns_type message_ns) {
     const xmlChar *message_namespace = NULL;
@@ -14341,4 +14341,3 @@ _hidden isds_error _isds_register_namespaces(xmlXPathContextPtr xpath_ctx,
         return IE_ERROR;
     return IE_SUCCESS;
 }
-

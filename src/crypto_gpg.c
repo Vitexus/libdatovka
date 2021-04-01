@@ -373,4 +373,3 @@ leave:
 #endif /* ndef ISDS_USE_KSBA */
     return err;
 }
-

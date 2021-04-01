@@ -12,7 +12,7 @@ isds_error _isds_close_connection(struct isds_ctx *context);
  * @file is a (CGI) file of SOAP URL,
  * @request is XML node set with SOAP request body.
  * @file must be NULL, @request should be NULL rather than empty, if they should
- * not be signaled in the SOAP request.
+ * not be signalled in the SOAP request.
  * @response_document is an automatically allocated XML document whose subtree
  * identified by @response_node_list holds the SOAP response body content. You
  * must xmlFreeDoc() it. If you don't care pass NULL and also
@@ -44,7 +44,7 @@ isds_error _isds_soap(struct isds_ctx *context, const char *file,
 isds_error _isds_build_url_from_context(struct isds_ctx *context,
         const char *template, char **new_url);
 
-/* Invalidate session cookie for otp authenticated @context */
+/* Invalidate session cookie for OTP authenticated @context */
 isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context);
 
 #endif

@@ -119,9 +119,8 @@ _hidden char *strndup(const char *s, size_t n) {
 }
 
 /* Convert UTC broken time to time_t.
- * @broken_utc it time in UTC in broken format. Despite its content is not
- * touched, it'sw not-const because underlying POSIX function has non-const
- * signature.
+ * @broken_utc time in UTC in broken format. Its content is not touched,
+ * it's non-const because underlying POSIX function has non-const signature.
  * @return (time_t) -1 in case of error */
 _hidden time_t _isds_timegm(struct tm *broken_utc) {
     time_t ret;

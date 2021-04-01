@@ -59,7 +59,7 @@ int isds_asprintf(char **buffer, const char *format, ...);
  * @input is block in @from charset/encoding of length @input_length
  * @input_length is size of @input block in bytes
  * @output is automatically allocated block of data converted from @input. No
- * NUL is apended. Can be NULL, if resulting size is 0. You must free it.
+ * NULL is appended. Can be NULL, if resulting size is 0. You must free it.
  * @return size of @output in bytes. In case of error returns (size_t) -1 and
  * deallocates @output if this function allocated it in this call. */
 _hidden size_t _isds_any2any(const char *from, const char *to,
@@ -74,7 +74,7 @@ char *_isds_utf82locale(const char *utf);
 /* Encode given data into MIME Base64 encoded zero terminated string.
  * @plain are input data (binary stream)
  * @length is length of @plain data in bytes
- * @return allocated string of base64 encoded plain data or NULL in case of
+ * @return allocated string of Base64 encoded plain data or NULL in case of
  * error. You must free it. */
 char *_isds_b64encode(const void *plain, const size_t length);
 
@@ -92,9 +92,8 @@ size_t _isds_b64decode(const char *encoded, void **plain);
 int _isds_hex2i(char digit);
 
 /* Convert UTC broken time to time_t.
- * @broken_utc it time in UTC in broken format. Despite its content is not
- * touched, it'sw not-const because underlying POSIX function has non-const
- * signature.
+ * @broken_utc time in UTC in broken format. Its content is not touched,
+ * it's non-const because underlying POSIX function has non-const signature.
  * @return (time_t) -1 in case of error */
 time_t _isds_timegm(struct tm *broken_utc);
 

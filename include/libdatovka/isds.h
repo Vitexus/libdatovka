@@ -1022,7 +1022,7 @@ char *isds_version(void);
 struct isds_ctx *isds_ctx_create(void);
 
 /* Destroy ISDS context and free memory.
- * @context will be NULLed on success. */
+ * @context will be set to NULL on success. */
 isds_error isds_ctx_free(struct isds_ctx **context);
 
 /* Return long message text produced by library function, e.g. detailed error
@@ -1079,7 +1079,7 @@ isds_error isds_set_timeout(struct isds_ctx *context,
  * unknown.
  * @upload_total is expected total upload,
  * @upload_current is cumulative current upload progress
- * @dowload_total is expected total download
+ * @download_total is expected total download
  * @download_current is cumulative current download progress
  * @data is pointer that will be passed unchanged to this function at run-time
  * @return 0 to continue HTTP transfer, or non-zero to abort transfer */
@@ -1222,7 +1222,7 @@ isds_error isds_GetUserInfoFromLogin2(struct isds_ctx *context,
  * @context is session context
  * @expiration is automatically reallocated time when password expires. If
  * password expiration is disabled, NULL will be returned. In case of error
- * it will be nulled too. */
+ * it will be set to NULL too. */
 isds_error isds_get_password_expiration(struct isds_ctx *context,
         struct timeval **expiration);
 
@@ -1378,8 +1378,8 @@ isds_error isds_UpdateDataBoxUser2(struct isds_ctx *context,
  * @box_id is UTF-8 encoded box identifier
  * @token is UTF-8 encoded temporary password
  * @user_id outputs UTF-8 encoded reallocated user identifier
- * @password outpus UTF-8 encoded reallocated user password
- * Output arguments will be nulled in case of error */
+ * @password outputs UTF-8 encoded reallocated user password
+ * Output arguments will be set to NULL in case of error */
 isds_error isds_activate(struct isds_ctx *context,
         const char *box_id, const char *token,
         char **user_id, char **password);
@@ -1587,7 +1587,7 @@ isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
  *  You can use isds_DbState to enumerate box status. However out of enum
  *  range value can be returned too. This is feature because ISDS
  *  specification leaves the set of values open.
- *  Be ware that status DBSTATE_REMOVED is signaled as IE_SUCCESS. That means
+ *  Be ware that status DBSTATE_REMOVED is signalled as IE_SUCCESS. That means
  *  the box has been deleted, but ISDS still lists its former existence. */
 isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
         long int *box_status);
@@ -1759,7 +1759,7 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
  * Use NULL if you don't care about the meta data (useful if you want to know
  * only the @number). If you provide &NULL, list will be allocated on heap,
  * if you provide pointer to non-NULL, list will be freed automatically at
- * first. Also in case of error the list will be NULLed.
+ * first. Also in case of error the list will be set to NULL.
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
         const struct timeval *from_time, const struct timeval *to_time,
@@ -1787,7 +1787,7 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
  * Use NULL if you don't care about the meta data (useful if you want to know
  * only the @number). If you provide &NULL, list will be allocated on heap,
  * if you provide pointer to non-NULL, list will be freed automatically at
- * first. Also in case of error the list will be NULLed.
+ * first. Also in case of error the list will be set to NULL.
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
         const struct timeval *from_time, const struct timeval *to_time,
@@ -1802,9 +1802,9 @@ isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
  * @from_time is minimal time and date of status changes inclusive
  * @to_time is maximal time and date of status changes inclusive
  * @changed_states is automatically reallocated list of
- * isds_message_status_change's. If you provide &NULL, list will be allocated
- * on heap, if you provide pointer to non-NULL, list will be freed
- * automatically at first. Also in case of error the list will be NULLed.
+ * isds_message_status_change entries. If you provide &NULL, list will
+ * be allocated on heap, if you provide pointer to non-NULL, list will be freed
+ * automatically at first. Also in case of error the list will be set to NULL.
  * XXX: The list item ordering is not specified.
  * XXX: Server provides only `recent' changes.
  * @return IE_SUCCESS or appropriate error code. */

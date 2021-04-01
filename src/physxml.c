@@ -132,7 +132,7 @@ static void XMLCALL element_start(void *userData, const XML_Char *name,
     const size_t boundary = index;
 
     /* Silent warning about unused argument.
-     * This protype is expat's XML_StartElementHandler type. */
+     * This prototype is expat's XML_StartElementHandler type. */
     (void)atts;
 
     isds_log(ILF_XML, ILL_DEBUG, _("Start: name=%s, depth=%zd, offset=%#jx "
@@ -263,4 +263,3 @@ _hidden isds_error _isds_find_element_boundary(void *document, size_t length,
     if (user_data.found) return IE_SUCCESS;
     else return IE_NONEXIST;
 }
-
