@@ -17,7 +17,7 @@ int main(void) {
     INIT_TEST("isds_credit_event_free()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     struct isds_credit_event *event = NULL;
     TEST("NULL", test_isds_credit_event_free, NULL);
     TEST("*NULL", test_isds_credit_event_free, &event);

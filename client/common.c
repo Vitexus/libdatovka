@@ -36,8 +36,8 @@ static int read_config(char **line, int order) {
             fprintf(stderr, "Could not read line #%d from %s: ",
                     i + 1, credentials_file);
             if (ferror(file))
-                fprintf(stderr, "error occured\n");
-            else if (feof(file)) 
+                fprintf(stderr, "error occurred\n");
+            else if (feof(file))
                 fprintf(stderr, "end of file reached\n");
             else
                 fprintf(stderr, "I don't know why\n");
@@ -189,7 +189,7 @@ void print_hash(const struct isds_hash *hash) {
         printf("NULL\n");
         return;
     }
-    
+
     switch(hash->algorithm) {
         case HASH_ALGORITHM_MD5: printf("MD5 "); break;
         case HASH_ALGORITHM_SHA_1: printf("SHA-1 "); break;
@@ -364,7 +364,7 @@ void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info) {
     printf("\tic = %s\n", info->ic);
 
     print_PersonName(info->personName);
-        
+
     printf("\tfirmName = %s\n", info->firmName);
 
     print_BirthInfo(info->birthInfo);
@@ -380,7 +380,7 @@ void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info) {
     printf("\tdbState = ");
     if (!info->dbState) printf("NULL\n");
     else print_DbState(*(info->dbState));
-    
+
     printf("\tdbEffectiveOVM = ");
     print_bool(info->dbEffectiveOVM);
 
@@ -456,10 +456,10 @@ void print_DbUserInfo(const struct isds_DbUserInfo *info) {
 
     printf("\tbiDate = ");
     print_date(info->biDate);
-        
+
     printf("\tic = %s\n", info->ic);
     printf("\tfirmName = %s\n", info->firmName);
-    
+
     printf("\tcaStreet = %s\n", info->caStreet);
     printf("\tcaCity = %s\n", info->caCity);
     printf("\tcaZipCode = %s\n", info->caZipCode);
@@ -590,14 +590,14 @@ void print_events(const struct isds_list *events) {
 
             printf("\t\t\t\ttime = ");
             print_timeval(event->time);
-            
+
             printf("\t\t\t}\n");
         }
     }
 
     printf("\t\t}\n");
 }
-    
+
 
 void print_envelope(const struct isds_envelope *envelope) {
     printf("\tenvelope = ");
@@ -917,7 +917,7 @@ static int save_data_to_file(const char *file, const void *data,
         const size_t length) {
     int fd;
     ssize_t written, left = length;
-    
+
     if (!file) return -1;
     if (length > 0 && !data) return -1;
 

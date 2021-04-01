@@ -12,7 +12,7 @@ int main(void) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
     struct isds_DbOwnerInfo *db_owner_info = NULL;
-    
+
     setlocale(LC_ALL, "");
 
     err = isds_init();
@@ -55,7 +55,7 @@ int main(void) {
     }
 
 
-    /* Disable access to my box exernally. It should fail. */
+    /* Disable access to my box externally. It should fail. */
     if (db_owner_info) {
         struct isds_DbOwnerInfo *new_db_owner_info = NULL;
         struct tm date = {
@@ -65,7 +65,7 @@ int main(void) {
         };
         char *refnumber = NULL;
 
-        printf("Disabling access to my box externaly since: ");
+        printf("Disabling access to my box externally since: ");
         print_date(&date);
         err = isds_disable_box_accessibility_externaly(ctx,
                 db_owner_info, &date, NULL, &refnumber);

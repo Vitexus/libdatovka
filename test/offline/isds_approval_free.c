@@ -17,7 +17,7 @@ int main(void) {
     INIT_TEST("isds_approval_free()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     struct isds_approval *approval = NULL;
 
     TEST("NULL", test_isds_approval_free, NULL);

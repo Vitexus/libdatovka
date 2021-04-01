@@ -18,7 +18,7 @@ int main(void) {
     INIT_TEST("isds_hash_free()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     struct isds_hash *hash = NULL;
     TEST("NULL", test_isds_hash_free, NULL);
     TEST("*NULL", test_isds_hash_free, &hash);

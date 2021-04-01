@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
     const char *request_password = password();
     _Bool use_otp = 0;
     struct isds_otp otp;
-    
+
     setlocale(LC_ALL, "");
 
     if (argc > 1) {

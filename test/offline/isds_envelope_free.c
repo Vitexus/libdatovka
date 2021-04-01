@@ -18,7 +18,7 @@ int main(void) {
     INIT_TEST("isds_envelope_free()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     struct isds_envelope *envelope = NULL;
     TEST("NULL", test_isds_envelope_free, NULL);
     TEST("*NULL", test_isds_envelope_free, &envelope);

@@ -81,7 +81,7 @@ int main(void) {
         const struct isds_approval approval = {
             .approved = 1, .reference = "Me"
         };
-        
+
         free(db_owner_info->email);
         db_owner_info->email = strdup("franta@example.com");
 

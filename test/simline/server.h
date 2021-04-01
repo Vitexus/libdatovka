@@ -70,7 +70,7 @@ struct arguments_otp_authentication {
     const char *username;   /* Sets required user name server has to require.
                                Set NULL to disable HTTP authentication. */
     const char *password;   /* Sets password server has to require */
-    const char *otp;        /* Sets OTP code server has to requiere */ 
+    const char *otp;        /* Sets OTP code server has to require */
     _Bool isds_deviations;  /* Is flag to set conformance level. If false,
                                server is compliant to standards (HTTP, SOAP)
                                if not conflicts with ISDS specification.
@@ -85,7 +85,7 @@ struct arguments_otp_authentication {
  * @connection is HTTP connection
  * @server_arguments is pointer to structure arguments_otp_authentication. It
  * selects OTP method to enable.
- * @request is parsed HTTP client requrest
+ * @request is parsed HTTP client request
  * @return 0 to accept new client, return -1 in case of fatal error. */
 int server_otp_authentication(const struct http_connection *connection,
         const void *server_arguments, const struct http_request *request);
@@ -93,7 +93,7 @@ int server_otp_authentication(const struct http_connection *connection,
 /* Implementation of server that is out of order.
  * It always sends back SOAP Fault with HTTP error 503.
  * @connection is HTTP connection
- * @server_arguments is ununsed pointer
+ * @server_arguments is unused pointer
  * @request is parsed HTTP client request
  * @return 0 to accept new client, return -1 in case of fatal error. */
 int server_out_of_order(const struct http_connection *connection,

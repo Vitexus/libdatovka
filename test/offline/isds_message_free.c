@@ -17,7 +17,7 @@ int main(void) {
     INIT_TEST("isds_message_free()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     struct isds_message *message = NULL;
     struct isds_document *document = NULL;
     xmlNode node = { .type = XML_TEXT_NODE, .content = BAD_CAST "data" };
@@ -30,7 +30,7 @@ int main(void) {
     TEST("Empty structure", test_isds_message_free, &message);
 
     TEST_CALLOC(message);
-    TEST_FILL_STRING(message->raw); 
+    TEST_FILL_STRING(message->raw);
     message->xml = NULL;    /* Parsed XML message */
     TEST_CALLOC(message->envelope);     /* Message envelope */
     TEST_CALLOC(message->documents);    /* List of isds_document's. */
@@ -38,7 +38,7 @@ int main(void) {
             &message);
 
     TEST_CALLOC(message);
-    TEST_FILL_STRING(message->raw); 
+    TEST_FILL_STRING(message->raw);
     message->xml = NULL;    /* Parsed XML message */
     TEST_CALLOC(message->envelope);     /* Message envelope */
     TEST_CALLOC(message->documents);    /* List of isds_document's. */
@@ -51,7 +51,7 @@ int main(void) {
         &message);
 
     TEST_CALLOC(message);
-    TEST_FILL_STRING(message->raw); 
+    TEST_FILL_STRING(message->raw);
     message->xml = tree;    /* Parsed XML message */
     TEST_CALLOC(message->envelope);     /* Message envelope */
     TEST_CALLOC(message->documents);    /* List of isds_document's. */

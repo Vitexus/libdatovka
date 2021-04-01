@@ -12,7 +12,7 @@ int main(void) {
     isds_error err;
     struct isds_DbOwnerInfo *db_owner_info = NULL;
     struct isds_DbUserInfo *db_user_info = NULL;
-    
+
     setlocale(LC_ALL, "");
 
     err = isds_init();

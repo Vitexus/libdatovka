@@ -140,12 +140,12 @@ int main(void) {
         TEST("Valid password and valid OTP code", test_login,
                 IE_SUCCESS, OTP_RESOLUTION_SUCCESS, context,
                 url, username, password, NULL, &otp_credentials);
-        TEST("Ping after succesfull OTP log-in", test_ping,
+        TEST("Ping after successful OTP log-in", test_ping,
                 IE_SUCCESS, context);
-        TEST("Log-out after successfull log-in", test_logout,
+        TEST("Log-out after successful log-in", test_logout,
                 IE_SUCCESS, context);
 
-        TEST("Ping after log-out after succesfull OTP log-in", test_ping,
+        TEST("Ping after log-out after successful OTP log-in", test_ping,
                 IE_CONNECTION_CLOSED, context);
 
         if (stop_server(server_process)) {
@@ -153,7 +153,7 @@ int main(void) {
             isds_cleanup();
             ABORT_UNIT(server_error);
         }
-    
+
         free(url);
         url = NULL;
     }
@@ -178,7 +178,7 @@ int main(void) {
             isds_cleanup();
             ABORT_UNIT(server_error);
         }
-    
+
         free(url);
         url = NULL;
     }

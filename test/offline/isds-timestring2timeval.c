@@ -12,7 +12,7 @@ static int test_timestring2timeval(const xmlChar *time, const isds_error error,
 
     if (err) {
         if (new_timeval && *new_timeval)
-            FAIL_TEST("timestring2timeval() failed as exprected "
+            FAIL_TEST("timestring2timeval() failed as expected "
                     "but did not freed output timeval structure")
         else
             PASS_TEST;

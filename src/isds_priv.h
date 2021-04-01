@@ -12,7 +12,7 @@
 
 #ifndef _POSIX_SOURCE
 /* defined: strtok_r */
-#define _POSIX_SOURCE   
+#define _POSIX_SOURCE
 #endif
 
 /* Structures not to export outside library */
@@ -57,7 +57,7 @@ typedef enum {
     CTX_TYPE_NONE = 0,  /* Not configured for any connection yet */
     CTX_TYPE_ISDS,      /* Connection to ISDS */
     CTX_TYPE_CZP,       /* Connection to Czech POINT document deposit */
-    CTX_TYPE_TESTING_REQUEST_COLLECTOR /* Connection to server collectiong
+    CTX_TYPE_TESTING_REQUEST_COLLECTOR /* Connection to server collecting
                                           new testing box requests */
 } context_type;
 
@@ -118,20 +118,20 @@ isds_error isds_log_message(struct isds_ctx *context, const char *message);
  * NULL message has void effect. */
 isds_error isds_append_message(struct isds_ctx *context, const char *message);
 
-/* Stores formated message into context' long_message buffer.
+/* Stores formatted message into context' long_message buffer.
  * Application can pick the message up using isds_long_message(). */
 isds_error isds_printf_message(struct isds_ctx *context,
         const char *format, ...);
 
 /* Log @message in class @facility with log @level into global log. @message
- * is printf(3) formating string, variadic arguments may be neccessary.
+ * is printf(3) formatting string, variadic arguments may be necessary.
  * For debugging purposes. */
 isds_error isds_log(const isds_log_facility facility,
         const isds_log_level level, const char *message, ...);
 
 /* Makes known all relevant namespaces to given XPath context
  * @xpath_ctx is XPath context
- * @message_ns selects propper message name space. Unsisnged and signed
+ * @message_ns selects proper message name space. Unsigned and signed
  * messages and delivery infos differ in prefix and URI. */
 isds_error _isds_register_namespaces(xmlXPathContextPtr xpath_ctx,
         const message_ns_type message_ns);

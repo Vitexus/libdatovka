@@ -19,7 +19,7 @@ int main(void) {
     INIT_TEST("isds_document_free()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     struct isds_document *document = NULL;
     TEST("NULL", test_isds_document_free, NULL);
     TEST("*NULL", test_isds_document_free, &document);

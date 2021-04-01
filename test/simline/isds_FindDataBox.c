@@ -168,7 +168,7 @@ static int test_isds_FindDataBox(const isds_error expected_error,
     if (compare_result_lists(expected_results, results))
         return 1;
 
-    
+
     PASS_TEST;
 }
 

@@ -53,7 +53,7 @@ AM_CONDITIONAL([WIN32], [test "$ac_cv_have_decl__WIN32" = "yes"])
 #TODO: Verify minimal version. libxml2-2.6.26 is just a guess.
 AM_PATH_XML2([2.6.26])
 
-# Checks for CURL 
+# Checks for CURL
 LIBCURL_CHECK_CONFIG()
 AS_IF([test -z "$LIBCURL"],
       AC_MSG_WARN([libcurl disabled or not found. Network features will be
@@ -95,7 +95,7 @@ AS_IF([test -z "$LIBCURL"],
     ])
 AM_CONDITIONAL([BUILD_CURL], [test -n "$LIBCURL"])
 
-dnl libcurl < 7.28.0 suffers from re-authorization bug, unfortunally there is
+dnl libcurl < 7.28.0 suffers from re-authorization bug, unfortunately there is
 dnl no way how to re-check libcurl version. Thus we use explicit switch.
 AC_ARG_ENABLE(curlreauthorizationbug,
               [AS_HELP_STRING([--enable-curlreauthorizationbug],

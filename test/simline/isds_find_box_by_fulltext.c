@@ -195,7 +195,7 @@ static int test_isds_find_box_by_fulltext(const isds_error expected_error,
     if (compare_result_lists(expected_results, allocated.results))
         return 1;
 
-    
+
     PASS_TEST;
 }
 
@@ -353,7 +353,7 @@ int main(void) {
 
 
     {
-        /* Client must support DBTYPE_OVM_MAIN, send an empty reponse */
+        /* Client must support DBTYPE_OVM_MAIN, send an empty response */
         char *url = NULL;
 
         isds_fulltext_target target = FULLTEXT_ALL;

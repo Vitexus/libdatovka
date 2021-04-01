@@ -19,7 +19,7 @@ isds_error compute_message_hash(struct isds_ctx *ctx,
     /* Recalculate hash */
     printf("Calculating message hash\n");
     err = isds_compute_message_hash(ctx, message, old_hash->algorithm);
-    if (err) 
+    if (err)
         printf("isds_compute_message_hash() failed: %s: %s\n",
                 isds_strerror(err), isds_long_message(ctx));
     else {
@@ -43,7 +43,7 @@ isds_error compute_message_hash(struct isds_ctx *ctx,
 int main(void) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
-    
+
     setlocale(LC_ALL, "");
 
     err = isds_init();
@@ -66,7 +66,7 @@ int main(void) {
         void *buffer;
         int fd;
         size_t length;
-        
+
         if (mmap_file(SRCDIR "/server/messages/received_message-151916.xml",
                 &fd, &buffer, &length)) {
             fprintf(stderr, "Could not map file with plain received message\n");
@@ -78,7 +78,7 @@ int main(void) {
         printf("Loading plain received message\n");
         err = isds_load_message(ctx, RAWTYPE_INCOMING_MESSAGE,
                 buffer, length, &message, BUFFER_COPY);
-        if (err) 
+        if (err)
             printf("isds_load_message() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
         else {
@@ -97,7 +97,7 @@ int main(void) {
         void *buffer;
         int fd;
         size_t length;
-        
+
         if (mmap_file(SRCDIR "/server/messages/sent_message-206720.xml",
                 &fd, &buffer, &length)) {
             fprintf(stderr, "Could not map file with plain signed message\n");
@@ -109,7 +109,7 @@ int main(void) {
         printf("Loading plain signed sent message\n");
         err = isds_load_message(ctx, RAWTYPE_PLAIN_SIGNED_OUTGOING_MESSAGE,
                 buffer, length, &message, BUFFER_COPY);
-        if (err) 
+        if (err)
             printf("isds_load_message() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
         else {
@@ -128,7 +128,7 @@ int main(void) {
         void *buffer;
         int fd;
         size_t length;
-        
+
         if (mmap_file(SRCDIR "/server/messages/signed_sent_message-151874.zfo",
                 &fd, &buffer, &length)) {
             fprintf(stderr, "Could not map file with CMS signed message\n");
@@ -140,7 +140,7 @@ int main(void) {
         printf("Loading CMS signed sent message\n");
         err = isds_load_message(ctx, RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE,
                 buffer, length, &message, BUFFER_COPY);
-        if (err) 
+        if (err)
             printf("isds_load_message() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));
         else {

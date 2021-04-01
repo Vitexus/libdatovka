@@ -7,7 +7,7 @@ static int test_isds_DbOwnerInfo_duplicate(struct isds_DbOwnerInfo *origin) {
     TEST_DESTRUCTOR((void(*)(void*))isds_DbOwnerInfo_free, &copy);
 
     if (!origin) {
-        if (copy) 
+        if (copy)
             FAIL_TEST("Duplicate of NULL should be NULL");
         PASS_TEST;
     }
@@ -83,7 +83,7 @@ int main(void) {
     INIT_TEST("isds_DbOwnerInfo_duplicate()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     TEST("NULL", test_isds_DbOwnerInfo_duplicate, NULL);
 
     struct isds_DbOwnerInfo empty;

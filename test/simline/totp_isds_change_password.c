@@ -191,13 +191,13 @@ int main(void) {
         TEST("sequence of the same characters", test_isds_change_password,
                 IE_INVAL, OTP_RESOLUTION_SUCCESS, "42",
                 context, password, "h222k$Aa", &otp_credentials, &refnum);
-        TEST("forbiden prefix qwert", test_isds_change_password,
+        TEST("forbidden prefix qwert", test_isds_change_password,
                 IE_INVAL, OTP_RESOLUTION_SUCCESS, "42",
                 context, password, "qwert$A8", &otp_credentials, &refnum);
-        TEST("forbiden prefix asdgf", test_isds_change_password,
+        TEST("forbidden prefix asdgf", test_isds_change_password,
                 IE_INVAL, OTP_RESOLUTION_SUCCESS, "42",
                 context, password, "asdgf$A8", &otp_credentials, &refnum);
-        TEST("forbiden prefix 12345", test_isds_change_password,
+        TEST("forbidden prefix 12345", test_isds_change_password,
                 IE_INVAL, OTP_RESOLUTION_SUCCESS, "42",
                 context, password, "12345$Aa", &otp_credentials, &refnum);
         TEST("valid request", test_isds_change_password, IE_SUCCESS,
@@ -212,7 +212,7 @@ int main(void) {
             isds_cleanup();
             ABORT_UNIT(server_error);
         }
-    
+
         free(url);
         url = NULL;
     }

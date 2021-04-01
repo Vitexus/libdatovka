@@ -22,7 +22,7 @@
 _hidden char *_isds_astrcat(const char *first, const char *second) {
     size_t first_len, second_len;
     char *buf;
-    
+
     first_len = (first) ? strlen(first) : 0;
     second_len = (second) ? strlen(second) : 0;
     buf = malloc(1 + first_len + second_len);
@@ -44,7 +44,7 @@ _hidden char *_isds_astrcat3(const char *first, const char *second,
         const char *third) {
     size_t first_len, second_len, third_len;
     char *buf, *next;
-    
+
     first_len = (first) ? strlen(first) : 0;
     second_len = (second) ? strlen(second) : 0;
     third_len = (third) ? strlen(third) : 0;
@@ -132,11 +132,11 @@ _hidden int isds_asprintf(char **buffer, const char *format, ...) {
 
 /* Converts a block from charset to charset.
  * @from is input charset of @input block as known to iconv
- * @to is output charset @input will be converted to @output 
+ * @to is output charset @input will be converted to @output
  * @input is block in @from charset/encoding of length @input_length
  * @input_length is size of @input block in bytes
  * @output is automatically allocated block of data converted from @input. No
- * NUL is apended. Can be NULL, if resulting size is 0. You must free it.
+ * NULL is appended. Can be NULL, if resulting size is 0. You must free it.
  * @return size of @output in bytes. In case of error returns (size_t) -1 and
  * deallocates @output if this function allocated it in this call. */
 _hidden size_t _isds_any2any(const char *from, const char *to,
@@ -173,7 +173,7 @@ _hidden size_t _isds_any2any(const char *from, const char *to,
         /* FIXME */
         outbuf = buffer + buffer_used;
         outleft = buffer_length - buffer_used;
-        
+
         /* Convert chunk of data */
         if ((size_t) -1 == iconv(state, &inbuf, &inleft, &outbuf, &outleft) &&
                 errno != E2BIG) {
@@ -215,7 +215,7 @@ _hidden char *_isds_utf82locale(const char *utf) {
         output = bigger_output;
         output[length] = '\0';
     }
-    
+
     return output;
 }
 
@@ -223,7 +223,7 @@ _hidden char *_isds_utf82locale(const char *utf) {
 /* Encode given data into MIME Base64 encoded zero terminated string.
  * @plain are input data (binary stream)
  * @length is length of @plain data in bytes
- * @return allocated string of base64 encoded plain data or NULL in case of
+ * @return allocated string of Base64 encoded plain data or NULL in case of
  * error. You must free it. */
 _hidden char *_isds_b64encode(const void *plain, const size_t length) {
 

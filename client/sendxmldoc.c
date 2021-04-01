@@ -36,7 +36,7 @@ int xpath2nodelist(xmlNodePtr *node_list, xmlXPathContextPtr xpath_ctx, const xm
             /* Make weak copy of the node */
             node = malloc(sizeof(*node));
             if (!node) {
-                fprintf(stderr, "Not enoungh memory\n");
+                fprintf(stderr, "Not enough memory\n");
                 xmlXPathFreeObject(result);
                 for (node = *node_list; node; node = node->next)
                     free(node);
@@ -55,7 +55,7 @@ int xpath2nodelist(xmlNodePtr *node_list, xmlXPathContextPtr xpath_ctx, const xm
             prev_node = node;
 
             /* Debug */
-            printf("* Embeding node #%d:\n", i);
+            printf("* Embedding node #%d:\n", i);
             xmlDebugDumpNode(stdout, node, 2);
         }
 
@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     char *recipient = NULL;
     xmlDocPtr xml = NULL;
     struct isds_list *documents = NULL;
-    
+
     setlocale(LC_ALL, "");
 
     err = isds_init();
@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
             printf("Bad number of arguments\n");
             printf("Usage: %s RECIPIENT XML_FILE XPATH_EXPRESSION...\n"
 "Send a message with XML document defined by XPATH_EXPRESSION on XML_FILE\n"
-"to RECIPIENT. If RECIPIENT is empty, send to random foubd one. If more\n"
+"to RECIPIENT. If RECIPIENT is empty, send to random found one. If more\n"
 "XPATH_EXPRESSIONS are specified creates XML document for each of them.\n",
             basename(argv[0]));
             exit(EXIT_FAILURE);
@@ -173,9 +173,9 @@ int main(int argc, char **argv) {
             document->is_xml = 1;
             document->dmMimeType = "text/xml";
             if (prev_documents_item)
-                document->dmFileMetaType = FILEMETATYPE_ENCLOSURE; 
+                document->dmFileMetaType = FILEMETATYPE_ENCLOSURE;
             else
-                document->dmFileMetaType = FILEMETATYPE_MAIN; 
+                document->dmFileMetaType = FILEMETATYPE_MAIN;
             document->dmFileDescr = "in-line.xml";
 
             if (xpath2nodelist(&document->xml_node_list, xpath_ctx,
@@ -193,7 +193,7 @@ int main(int argc, char **argv) {
 
             documents_item->data = document,
             documents_item->destructor = (void(*)(void**))isds_document_free;
-            if (!prev_documents_item) 
+            if (!prev_documents_item)
                 documents = prev_documents_item = documents_item;
             else {
                 prev_documents_item->next = documents_item;
@@ -222,11 +222,11 @@ int main(int argc, char **argv) {
 
         printf("Sending message to box ID `%s'\n", recipient);
         err = isds_send_message(ctx, &message);
-        
+
         if (err == IE_SUCCESS){
             printf("isds_send_message() succeeded: message ID = %s\n",
                     message.envelope->dmID);
-        } else 
+        } else
             printf("isds_send_message() failed: "
                     "%s: %s\n", isds_strerror(err), isds_long_message(ctx));
 

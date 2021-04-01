@@ -55,7 +55,7 @@ Additional configure options:
         pages are installed.
 
     --without-libcurl
-    
+
         Disable network operations by omitting cURL library. It disables
         on-line tests too. Library will keep capability to process local
         messages and delivery details. Library will not be able to connect to
@@ -67,7 +67,7 @@ Additional configure options:
         This is disabled by default. This bug will be fixed in cURL 7.28.0
         by cURL commit ce8311c7e49eca93c136b58efa6763853541ec97. This bug
         affects changing ISDS password while OTP authentication method is in
-        use. 
+        use.
 
 Large File Support (LFS) Notice: libdatovka uses GPGME by default, and GPGME is
 by default compiled with LFS on. You need to keep LFS compatibility on reverse

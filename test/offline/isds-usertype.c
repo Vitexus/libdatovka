@@ -5,7 +5,7 @@ static int test_usertype2string_must_fail(const isds_UserType type) {
     xmlChar *string;
 
     string = (xmlChar *) isds_UserType2string(type);
-    if (string) 
+    if (string)
         FAIL_TEST("conversion from isds_UserType to string did not fail");
 
     PASS_TEST;
@@ -28,7 +28,7 @@ static int test_usertype(const isds_UserType type, const xmlChar *name) {
     isds_UserType new_type;
 
     string = (xmlChar *) isds_UserType2string(type);
-    if (!string) 
+    if (!string)
         FAIL_TEST("conversion from isds_UserType to string failed");
 
     if (xmlStrcmp(name, string))
@@ -37,7 +37,7 @@ static int test_usertype(const isds_UserType type, const xmlChar *name) {
 
     err = string2isds_UserType(string, &new_type);
     if (err)
-        FAIL_TEST("conversion from string to isds_DbTyoe failed");
+        FAIL_TEST("conversion from string to isds_UserType failed");
 
     if (type != new_type)
         FAIL_TEST("double conversion not idempotent: expected=%d, got=%d",
@@ -48,7 +48,7 @@ static int test_usertype(const isds_UserType type, const xmlChar *name) {
 
 int main(void) {
     INIT_TEST("isds_UserType conversion");
-    
+
     isds_UserType types[] =  {
         USERTYPE_PRIMARY,
         USERTYPE_ENTRUSTED,
@@ -75,8 +75,8 @@ int main(void) {
     for (size_t i = 0; i < sizeof(types)/sizeof(types[0]); i++)
         TEST(names[i], test_usertype, types[i], names[i]);
 
-    TEST("1234", test_usertype2string_must_fail, 1234); 
-    
+    TEST("1234", test_usertype2string_must_fail, 1234);
+
     TEST("X-Invalid_Type", test_string2usertype_must_fail,
             BAD_CAST "X-Invalid_Type");
 

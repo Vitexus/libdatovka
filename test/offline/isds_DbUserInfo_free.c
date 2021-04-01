@@ -18,7 +18,7 @@ int main(void) {
     INIT_TEST("isds_DbUserInfo_free()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     struct isds_DbUserInfo *DbUserInfo = NULL;
     TEST("NULL", test_isds_DbUserInfo_free, NULL);
     TEST("*NULL", test_isds_DbUserInfo_free, &DbUserInfo);

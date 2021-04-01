@@ -18,7 +18,7 @@ int main(void) {
     INIT_TEST("isds_DbOwnerInfo_free()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     struct isds_DbOwnerInfo *DbOwnerInfo = NULL;
     TEST("NULL", test_isds_DbOwnerInfo_free, NULL);
     TEST("*NULL", test_isds_DbOwnerInfo_free, &DbOwnerInfo);
@@ -44,7 +44,7 @@ int main(void) {
     TEST_CALLOC(DbOwnerInfo->birthInfo);        /* Birth of person */
     TEST_CALLOC(DbOwnerInfo->birthInfo->biDate);      /* Date of Birth */
     TEST_FILL_STRING(DbOwnerInfo->birthInfo->biCity);
-    TEST_FILL_STRING(DbOwnerInfo->birthInfo->biCounty); 
+    TEST_FILL_STRING(DbOwnerInfo->birthInfo->biCounty);
     TEST_FILL_STRING(DbOwnerInfo->birthInfo->biState);
 
     TEST_CALLOC(DbOwnerInfo->address);          /* Post address */

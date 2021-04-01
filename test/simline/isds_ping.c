@@ -99,7 +99,7 @@ int main(void) {
         TEST("after logging in", test_isds_ping,
                 IE_SUCCESS, context);
 
-        /* Terminate server without loggin out, we will exhibit calls on the
+        /* Terminate server without logging out, we will exhibit calls on the
          * logged-in context later. */
         if (stop_server(server_process)) {
             isds_ctx_free(&context);

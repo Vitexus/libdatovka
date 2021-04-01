@@ -29,7 +29,7 @@ typedef enum {
     SERVER_CREDIT_CHARGED,        /* Credit has been charged */
     SERVER_CREDIT_DISCHARGED,     /* Credit has been discharged */
     SERVER_CREDIT_MESSAGE_SENT,   /* Credit has been spent for sending
-                                   a commerical message */
+                                   a commercial message */
     SERVER_CREDIT_STORAGE_SET,    /* Credit has been spent for setting
                                    a long-term storage */
     SERVER_CREDIT_EXPIRED         /* Credit has expired */
@@ -49,7 +49,7 @@ struct server_credit_event_discharged {
 
 /* Data specific for SERVER_CREDIT_MESSAGE_SENT server_credit_event_type */
 struct server_credit_event_message_sent {
-    char *recipient;                /* Recipent's box ID of the sent message */
+    char *recipient;                /* Recipient's box ID of the sent message */
     char *message_id;               /* ID of the sent message */
 };
 
@@ -69,7 +69,7 @@ struct server_credit_event_storage_set {
                                        change; Optional. */
 };
 
-/* Event about change of credit for sending commerical services */
+/* Event about change of credit for sending commercial services */
 struct server_credit_event {
     /* Common fields */
     struct timeval *time;           /* When the credit was changed. */
@@ -79,7 +79,7 @@ struct server_credit_event {
                                        The unit is 1/100 CZK. */
     server_credit_event_type type;    /* Type of the event */
 
-    /* Datails specific for the type */
+    /* Details specific for the type */
     union {
         struct server_credit_event_charged charged;
                                                 /* SERVER_CREDIT_CHARGED */
@@ -156,7 +156,7 @@ struct server_list {
 };
 
 struct arguments_DS_df_DataBoxCreditInfo {
-    const char *status_code; 
+    const char *status_code;
     const char *status_message;
     const char *box_id;             /* Require this dbID in request */
     const struct tm *from_date;     /* Require this ciFromDate in request */
@@ -167,7 +167,7 @@ struct arguments_DS_df_DataBoxCreditInfo {
 };
 
 struct arguments_DS_df_FindDataBox {
-    const char *status_code; 
+    const char *status_code;
     const char *status_message;
     const struct server_owner_info *criteria;  /* generilized tDbOwnerInfo */
     const _Bool results_exists;     /* Return dbResults element */
@@ -177,7 +177,7 @@ struct arguments_DS_df_FindDataBox {
 };
 
 struct arguments_DS_df_GetDataBoxActivityStatus {
-    const char *status_code; 
+    const char *status_code;
     const char *status_message;
     const char *box_id;             /* Input */
     const struct timeval *from;     /* Input */
@@ -190,7 +190,7 @@ struct arguments_DS_df_GetDataBoxActivityStatus {
 };
 
 struct arguments_DS_df_ISDSSearch2 {
-    const char *status_code; 
+    const char *status_code;
     const char *status_message;
     const char *search_text;        /* Require this searchText in a request */
     const char *search_type;        /* Require this searchType in a request */
@@ -209,7 +209,7 @@ struct arguments_DS_df_ISDSSearch2 {
 };
 
 struct arguments_DS_Dz_ResignISDSDocument {
-    const char *status_code; 
+    const char *status_code;
     const char *status_message;
     const struct tm *valid_to;   /* Return this date if not NULL */
 };
@@ -233,7 +233,7 @@ struct arguments_asws_changePassword_ChangePasswordOTP {
 };
 
 struct arguments_asws_changePassword_SendSMSCode {
-    const char *status_code; 
+    const char *status_code;
     const char *status_message;
     const char *reference_number;   /* Return this string if not NULL */
 };

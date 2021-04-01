@@ -10,7 +10,7 @@ Source: Podpora authentizace Mobilním klíčem v rozhraní WS v ISDS, version
 
 
 Servers are accessed by HTTPS protocol. Server fully qualified domain name varies on ISDS
-instance and authenticiation method.
+instance and authentication method.
 
 Two ISDS instances exist. Each instance has a unique two-level domain name:
 

@@ -18,7 +18,7 @@
  * @return IE_SUCCESS if everything is O.k. */
 static isds_error _isds_init_gcrypt(const char **current_version) {
     const char *gcrypt_version;
-    
+
     /* Check version and initialize gcrypt */
     gcrypt_version = gcry_check_version(NULL);
     if (current_version) *current_version = gcrypt_version;
@@ -93,7 +93,7 @@ _hidden isds_error _isds_compute_hash(const void *input, const size_t length,
 static isds_error _isds_init_gpgme(const char **current_version) {
     const char *gpgme_version;
     gpgme_error_t err;
-    
+
     /* Check version and initialize GPGME */
     gpgme_version = gpgme_check_version(NULL);
     if (current_version) *current_version = gpgme_version;
@@ -324,7 +324,7 @@ leave:
     FAIL_ON_GPGME_ERROR(gerr, _("Could not create GPGME context: %s"));
 
     gerr = gpgme_set_protocol(gctx, GPGME_PROTOCOL_CMS);
-    FAIL_ON_GPGME_ERROR(gerr, 
+    FAIL_ON_GPGME_ERROR(gerr,
                 _("Could not set CMS protocol for GPGME context: %s"));
 
     /* Create data handlers */
@@ -373,4 +373,3 @@ leave:
 #endif /* ndef ISDS_USE_KSBA */
     return err;
 }
-

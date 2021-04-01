@@ -13,7 +13,7 @@ int main(void) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
     char *last_message_id = NULL;
-    
+
     setlocale(LC_ALL, "");
 
     err = isds_init();
@@ -133,12 +133,12 @@ int main(void) {
     }
 
 
-    /* Download nonexistent signed message */
+    /* Download non-existent signed message */
     {
         struct isds_message *message = NULL;
         char *id = "7777777";
 
-        printf("Getting nonexistent signed received message with ID: %s\n", id);
+        printf("Getting non-existent signed received message with ID: %s\n", id);
         err = isds_get_signed_received_message(ctx, id, &message);
         if (err)
             printf("isds_get_signed_received_message() failed as assumed: %s: %s\n",

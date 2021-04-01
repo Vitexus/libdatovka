@@ -18,7 +18,7 @@ static int test_setup_gnupg(void) {
     int tmpfd;
 
     home = getenv("HOME");
-    if (!home) 
+    if (!home)
         FAIL_TEST("Could not get HOME variable");
 
     if (!*home)
@@ -43,7 +43,7 @@ static int test_setup_gnupg(void) {
 
 #ifndef _WIN32
     if (-1 == (tmpfd = mkstemp(tmpfile))) {
-        FAILURE_REASON("Directory `%s' is not writable: %s", path,
+        FAILURE_REASON("Directory `%s' is not writeable: %s", path,
                 strerror(errno));
         free(path);
         return 1;

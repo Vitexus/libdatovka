@@ -7,7 +7,7 @@ static int test_isds_Address_duplicate(struct isds_Address *origin) {
     TEST_DESTRUCTOR((void(*)(void*))isds_Address_free, (void *)&copy);
 
     if (!origin) {
-        if (copy) 
+        if (copy)
             FAIL_TEST("Duplicate of NULL should be NULL");
         PASS_TEST;
     }
@@ -33,7 +33,7 @@ int main(void) {
     INIT_TEST("isds_Address_duplicate()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     TEST("NULL", test_isds_Address_duplicate, NULL);
 
     struct isds_Address empty;

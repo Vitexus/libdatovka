@@ -62,7 +62,7 @@ String rewrite
 ==============
 
 The dmFileDescr document message value and some unspecified other values are transformed to
-more simple and "secure" form by the ISDS server when receving them from
+more simple and "secure" form by the ISDS server when receiving them from
 a client:
 
 Class           Input characters                    Output
@@ -78,4 +78,3 @@ Quotes          \u201C--\u201F                      " (ASCII double quotes)
 Formatting      \u200C--\u200F                      removed
 Formatting      \u202A--\u202F                      removed
 Invisible       \u2061--\u206F                      removed
-

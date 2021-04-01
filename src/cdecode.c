@@ -1,5 +1,5 @@
 /*
-cdecoder.c - c source to a base64 decoding algorithm implementation
+cdecoder.c - c source to a Base64 decoding algorithm implementation
 
 This is part of the libb64 project, and has been placed in the public domain.
 For details, see http://sourceforge.net/projects/libb64
@@ -40,9 +40,9 @@ _hidden size_t _isds_base64_decode_block(const int8_t *code_in,
 	const int8_t *codechar = code_in;
 	int8_t *plainchar = plaintext_out;
 	int8_t fragment;
-	
+
 	*plainchar = state_in->plainchar;
-	
+
 	switch (state_in->step) {
 		while (1) {
 	case step_a:

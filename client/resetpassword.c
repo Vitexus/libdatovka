@@ -37,7 +37,7 @@ int main(void) {
     isds_error err;
     struct isds_DbOwnerInfo *db_owner_info = NULL;
     struct isds_DbUserInfo *db_user_info = NULL;
-    
+
     setlocale(LC_ALL, "");
 
     err = isds_init();
@@ -107,7 +107,7 @@ int main(void) {
                 &credentials_delivery);
         free(credentials_delivery.token);
         free(credentials_delivery.new_user_name);
-        
+
         credentials_delivery.email = "42";
         credentials_delivery.token = NULL;
         credentials_delivery.new_user_name = NULL;

@@ -61,7 +61,7 @@ CleareEffectiveOVM
     Set box off OVM mode
 SetOpenAddressing
     Switch box into commercial message receiving mode
-ClearOpenAddressing 
+ClearOpenAddressing
     Set box off commercial message receiving mode
 GetDataBoxUsers
     Get list of users permitted to access a box
@@ -153,7 +153,7 @@ This service is only for sake of legislation. ISDS does use provided data
 anyhow.
 
 It does not create a box nor return new box ID. See CreateDataBox for more
-details. 
+details.
 
 
 DeleteDataBox
@@ -189,7 +189,7 @@ Mandatory input is box description and new user definition. The new user can
 have AIFOTicket attribute defined.
 
 If optional input dbVirtual is true, additional input element email specifies
-e-mail address to send notificication about new account and link where to get
+e-mail address to send notification about new account and link where to get
 find initial credentials for created user. Then two output elements are
 returned: dbUserID (XSD mistakenly says dbID) and dbAccessDataId for new
 user identifier and temporal token to login on the web page linked from
@@ -343,14 +343,14 @@ GetDataBoxUsersResponse
     |   |           The AIFOTicket attribute can exist. See
     |   |           GetUserInfoFromLogin request for more details.
     |   + dbUserInfo
-    |   ⋮ 
+    |   ⋮
     + dbStatus
 
 
 Activate
 ========
 
-This service is not documented. The only mention is in XML Schema.
+This service is not documented. It is only mentioned in the XML Schema.
 
 There are two elements on input: dbAccessDataId (temporary token for user to
 get access to his initial credentials probably) and dbID (box identifier).
@@ -362,8 +362,8 @@ and dbStatus (common service return code).
 DeleteDataBoxPromptly
 =====================
 
-This service is not documentd. The only mention is in XML Schema and change
-log. Even the SOAP end-point dsManage is not specified.
+This service is not documented. It is only mentioned in the XML Schema and
+change log. Even the SOAP end-point dsManage is not specified.
 
 There are following elements in input: dbOwnerInfo (identifies box by owner
 structure) and group of optional elements gExtApproval (sequence of dbApproved
@@ -441,7 +441,7 @@ Password must meet formal syntax rules assuring strong complexity:
     – Must not contain user ID
 
     – Must not contain sequence of 3 or more same characters
-    
+
     – Must not start with `qwert', `asdgf', or `12345'
 
 Service is meaningful only when user logs in with password but without
@@ -471,7 +471,7 @@ ChangePasswordOTP
 
 Change user password if OTP authentication is enabled and required by server.
 
-This service is meaningfull only with OTP authentication. Use
+This service is meaningful only with OTP authentication. Use
 `ChangeISDSPassword' instead, if authentication with static password is in
 use.
 
@@ -482,7 +482,7 @@ Input is current password in `dbOldPassword' element, new password in
 `dbNewPassword' element, and OTP method in `dbOTPType' element (known values
 are: `HOTP', `TOTP'). The selected OTP method must match log-in OTP method.
 
-This service is available without prior statefull log-in. This SOAP request
+This service is available without prior stateful log-in. This SOAP request
 must be accompanied with HTTP Basic authentication header delivering user
 name and current password concatenated with an OTP code.
 
@@ -518,7 +518,7 @@ service.
 This service resides on different URL path, not only on different path suffix.
 This service uses different name space <http://isds.czechpoint.cz/v20/asws>.
 
-This service is available without prior statefull log-in. This SOAP request
+This service is available without prior stateful log-in. This SOAP request
 must be accompanied with HTTP Basic authentication header delivering user
 name and current password.
 

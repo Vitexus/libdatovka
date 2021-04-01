@@ -9,7 +9,7 @@ struct test {
     isds_raw_type type;
     isds_error error;
 };
-    
+
 static int test_guess_raw_type(struct isds_ctx *context,
         const struct test *test) {
     isds_error err;
@@ -114,8 +114,8 @@ int main(void) {
     context = isds_ctx_create();
     if (!context)
         ABORT_UNIT("isds_ctx_create() failed");
-   
-    for (int i = 0; tests[i].name; i++) 
+
+    for (int i = 0; tests[i].name; i++)
         TEST(tests[i].name, test_guess_raw_type, context, &tests[i]);
 
     isds_ctx_free(&context);

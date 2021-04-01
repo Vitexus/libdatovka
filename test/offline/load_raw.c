@@ -9,7 +9,7 @@ struct test {
     isds_raw_type type;
     _Bool should_pass;
 };
-    
+
 
 static int test_load_message(struct isds_ctx *context,
         const struct test *test) {
@@ -37,7 +37,7 @@ static int test_load_message(struct isds_ctx *context,
 
     if (test->should_pass) {
         if (err)
-            FAIL_TEST("Message loading should succeded: got=%s",
+            FAIL_TEST("Message loading should succeed: got=%s",
                     isds_strerror(err));
     } else {
         if (!err)
@@ -69,7 +69,7 @@ static int test_load_delivery(struct isds_ctx *context,
 
     if (test->should_pass) {
         if (err)
-            FAIL_TEST("Message loading should succeded: got=%s",
+            FAIL_TEST("Message loading should succeed: got=%s",
                     isds_strerror(err));
     } else {
         if (!err)
@@ -170,10 +170,10 @@ int main(void) {
     context = isds_ctx_create();
     if (!context)
         ABORT_UNIT("isds_ctx_create() failed");
-   
-    for (int i = 0; messages[i].name; i++) 
+
+    for (int i = 0; messages[i].name; i++)
         TEST(messages[i].name, test_load_message, context, &messages[i]);
-    for (int i = 0; deliveries[i].name; i++) 
+    for (int i = 0; deliveries[i].name; i++)
         TEST(deliveries[i].name, test_load_delivery, context, &deliveries[i]);
 
     isds_ctx_free(&context);

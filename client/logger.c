@@ -10,7 +10,7 @@
 void logger(isds_log_facility facility, isds_log_level level,
         const char *message, int length, void *data) {
     /* Silent warning about unused argument.
-     * It's a protopype isds_log_callback. */
+     * It's a prototype isds_log_callback. */
     (void) data;
 
     printf("\033[32mLOG(%02d,%02d): ", facility, level);
@@ -22,7 +22,7 @@ void logger(isds_log_facility facility, isds_log_level level,
 int main(void) {
     struct isds_ctx *ctx = NULL;
     isds_error err;
-    
+
     setlocale(LC_ALL, "");
 
     err = isds_init();

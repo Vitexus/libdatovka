@@ -1,5 +1,5 @@
 /*
-cencoder.c - c source to a base64 encoding algorithm implementation
+cencoder.c - c source to a Base64 encoding algorithm implementation
 
 This is part of the libb64 project, and has been placed in the public domain.
 For details, see http://sourceforge.net/projects/libb64
@@ -33,9 +33,9 @@ _hidden size_t _isds_base64_encode_block(const int8_t* plaintext_in,
 	int8_t *codechar = code_out;
 	int8_t result;
 	int8_t fragment;
-	
+
 	result = state_in->result;
-	
+
 	switch (state_in->step) {
 		while (1) {
 	case step_A:
@@ -69,7 +69,7 @@ _hidden size_t _isds_base64_encode_block(const int8_t* plaintext_in,
 			*codechar++ = base64_encode_value(result);
 			result  = (fragment & 0x03f) >> 0;
 			*codechar++ = base64_encode_value(result);
-			
+
 			++(state_in->stepcount);
 			if (state_in->stepcount == CHARS_PER_LINE/4) {
 				*codechar++ = '\n';
@@ -86,7 +86,7 @@ _hidden size_t _isds_base64_encode_block(const int8_t* plaintext_in,
 _hidden size_t _isds_base64_encode_blockend(int8_t *code_out,
         base64_encodestate* state_in) {
 	int8_t *codechar = code_out;
-	
+
 	switch (state_in->step) {
 	case step_B:
 		*codechar++ = base64_encode_value(state_in->result);
@@ -101,6 +101,6 @@ _hidden size_t _isds_base64_encode_blockend(int8_t *code_out,
 		break;
 	}
 	*codechar++ = '\n';
-	
+
 	return codechar - code_out;
 }

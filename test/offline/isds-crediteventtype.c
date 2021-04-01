@@ -8,7 +8,7 @@ static int test_string2isds_credit_event_type(const xmlChar *string,
 
     err = string2isds_credit_event_type(string, (type) ? &new_type : NULL);
     if (err != error)
-        FAIL_TEST("string2isds_credit_event_type() returend wrong exit code: "
+        FAIL_TEST("string2isds_credit_event_type() returned wrong exit code: "
                 "expected=%s, got=%s",
                 isds_strerror(error), isds_strerror(err));
     if (err != IE_SUCCESS)
@@ -23,7 +23,7 @@ static int test_string2isds_credit_event_type(const xmlChar *string,
 
 int main(void) {
     INIT_TEST("credit_event_type conversion");
-    
+
     const xmlChar *names[] = {
         BAD_CAST "1",
         BAD_CAST "2",
@@ -46,7 +46,7 @@ int main(void) {
         TEST(names[i], test_string2isds_credit_event_type,
             names[i], IE_SUCCESS, &types[i]);
 
-    /* Uknown value */
+    /* Unknown value */
     TEST("X-Invalid_Type", test_string2isds_credit_event_type,
             BAD_CAST "X-Invalid_Type", IE_ENUM, &types[0]);
 

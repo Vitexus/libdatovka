@@ -37,7 +37,7 @@ static int test_login(const isds_error error, struct isds_ctx *context,
 }
 
 /* Compare isds_box_state_period.
- * @return 0 if equaled, 1 otherwise. */
+ * @return 0 if equal, 1 otherwise. */
 static int compare_isds_box_state_period(
         const struct isds_box_state_period *expected_result,
         const struct isds_box_state_period *result) {
@@ -54,7 +54,7 @@ static int compare_isds_box_state_period(
 }
 
 /* Compare list of isds_box_state_period structures.
- * @return 0 if equaled, 1 otherwise and set failure reason. */
+ * @return 0 if equal, 1 otherwise and set failure reason. */
 static int compare_isds_box_state_period_lists(const struct isds_list *expected_list,
         const struct isds_list *list) {
     const struct isds_list *expected_item, *item;
@@ -101,7 +101,7 @@ static int test_isds_get_box_state_history(const isds_error expected_error,
     if (compare_isds_box_state_period_lists(expected_results, results))
         return 1;
 
-    
+
     PASS_TEST;
 }
 

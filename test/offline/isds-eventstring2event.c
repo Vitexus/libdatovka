@@ -42,7 +42,7 @@ static int test_eventstring2event(const xmlChar *string, isds_error error,
         }
 
         if (!correct_event->description && new_event->description)
-            FAIL_TEST("Returned event description is not NUTLL as expected");
+            FAIL_TEST("Returned event description is not NULL as expected");
         if (correct_event->description) {
             if (!new_event->description)
                 FAIL_TEST("Returned event description is NULL as "
@@ -60,7 +60,7 @@ static int test_eventstring2event(const xmlChar *string, isds_error error,
 
 int main(void) {
     INIT_TEST("eventstring to event conversion");
-    
+
     xmlChar *input = NULL;
     isds_event_type event_type;
     struct isds_event event;

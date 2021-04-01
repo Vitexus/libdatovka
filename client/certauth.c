@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
     isds_error err;
     struct isds_pki_credentials *pki_credentials = NULL;
     _Bool use_nss = 0;
- 
+
     /* Software: OpenSSL, GnuTLS */
     struct isds_pki_credentials pki_software_ossl = {
         .engine = NULL,
@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
         .certificate_format = PKI_FORMAT_PEM,
         .certificate = "OpenSC Card (Bob Tester):Certificate"
     };
-    
+
     setlocale(LC_ALL, "");
 
     /* Parse arguments */

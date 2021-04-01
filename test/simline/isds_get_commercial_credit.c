@@ -43,10 +43,10 @@ struct test_destructor_argument {
 
 static void test_destructor(void *argument) {
     if (NULL == argument) return;
-    free(((struct test_destructor_argument *)argument)->returned_email); 
+    free(((struct test_destructor_argument *)argument)->returned_email);
     isds_list_free(
             &((struct test_destructor_argument *)argument)->returned_history
-    ); 
+    );
 }
 
 static int test_isds_get_commercial_credit(const isds_error error,
@@ -145,13 +145,13 @@ static int test_isds_get_commercial_credit(const isds_error error,
             case ISDS_CREDIT_EXPIRED:
                 break;
             default:
-                FAIL_TEST("Uknown credit event type returned");
+                FAIL_TEST("Unknown credit event type returned");
         }
     }
     if (NULL != returned_item)
         FAIL_TEST("Returned history has too many items");
 
-    
+
     PASS_TEST;
 }
 

@@ -7,7 +7,7 @@ static int test_isds_DbUserInfo_duplicate(struct isds_DbUserInfo *origin) {
     TEST_DESTRUCTOR((void (*)(void *))isds_DbUserInfo_free, &copy);
 
     if (!origin) {
-        if (copy) 
+        if (copy)
             FAIL_TEST("Duplicate of NULL should be NULL");
         PASS_TEST;
     }
@@ -67,7 +67,7 @@ int main(void) {
     INIT_TEST("isds_DbUserInfo_duplicate()");
     if (isds_init())
         ABORT_UNIT("isds_init() failed");
-    
+
     TEST("NULL", test_isds_DbUserInfo_duplicate, NULL);
 
     struct isds_DbUserInfo empty;

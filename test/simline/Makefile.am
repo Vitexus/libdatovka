@@ -39,7 +39,7 @@ endif
 libserver_la_CPPFLAGS = @XML_CPPFLAGS@ @LIBGNUTLS_CFLAGS@
 libserver_la_LIBADD = @XML_LIBS@ @LIBGNUTLS_LIBS@
 
-# Standalone server
+# Stand-alone server
 noinst_PROGRAMS = server_cli $(TESTS)
 server_cli_SOURCES = server_cli.c
 server_cli_LDADD = ./libserver.la -L.

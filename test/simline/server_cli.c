@@ -30,9 +30,9 @@ static void usage(const char *name) {
             "\t-p PASSWORD      Define password\n"
             "\t-t TOTP_CODE     Define time-based OTP code\n"
             "\t-u USERNAME      Define user name\n"
-            "\t-a CERTIFICATE   PEM-formated authority certiticate\n"
-            "\t-s CERTIFICATE   PEM-formated server certificate\n"
-            "\t-S KEY           PEM-formated server privat key\n"
+            "\t-a CERTIFICATE   PEM-formatted authority certificate\n"
+            "\t-s CERTIFICATE   PEM-formatted server certificate\n"
+            "\t-S KEY           PEM-formatted server private key\n"
             "\t-c NAME          Client distinguished name\n"
             );
 }
@@ -149,12 +149,12 @@ int main(int argc, char **argv) {
             SERVICE_asws_changePassword_SendSMSCode;
         services[last_service-1].arguments = &service_sendsms_arguments;
         server_otp_arguments.otp = otp_code;
-        if (otp_type == 't') { 
+        if (otp_type == 't') {
             server_otp_arguments.method = AUTH_OTP_TIME;
         } else if (otp_type == 'h') {
             server_otp_arguments.method = AUTH_OTP_HMAC;
         } else {
-            fprintf(stderr, "Internal error: Uknown OTP type: %c\n", otp_type);
+            fprintf(stderr, "Internal error: Unknown OTP type: %c\n", otp_type);
             exit(EXIT_FAILURE);
         }
         service_passwdotp_arguments.method = server_otp_arguments.method;
@@ -163,7 +163,7 @@ int main(int argc, char **argv) {
         server_otp_arguments.isds_deviations = 1;
         server_otp_arguments.services = services;
     }
-    
+
     /* Spawn the server */
     if ((SIG_ERR == signal(SIGTERM, terminator))) {
         fprintf(stderr, "Could not register SIGTERM handler\n");
