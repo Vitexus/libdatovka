@@ -144,7 +144,7 @@ static size_t base64_encode_blockend(int8_t *code_out,
  * @length is length of @plain data in bytes
  * @one_line is false for multi-line MIME encoding,
  * true for endless one-line format.
- * @return allocated string of base64 encoded plain data or NULL in case of
+ * @return allocated string of Base64 encoded plain data or NULL in case of
  * error. You must free it. */
 /* TODO: Allow one-line format */
 static char *base64encode(const void *plain, const size_t length,

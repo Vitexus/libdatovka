@@ -20,7 +20,7 @@ static int test_free(const isds_error error, struct isds_ctx **context) {
         FAIL_TEST("Wrong return code");
 
     if (*context)
-        FAIL_TEST("context not NULLed");
+        FAIL_TEST("context not set to NULL");
 
     PASS_TEST;
 }
