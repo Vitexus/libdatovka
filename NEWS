@@ -1,4 +1,4 @@
-0.1.2 /
+0.1.2 / 2021-04-14
  * Added support for the new PFO_ZNALEC and PFO_TLUMOCNIK data-box types
    introduced in the version 2.32 of the XSD and WSDL definitions.
  * Fixed found typos in documentation and commentaries in sources. Removed
