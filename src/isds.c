@@ -10179,6 +10179,123 @@ leave:
     return err;
 }
 
+isds_error isds_PDZSendInfo(struct isds_ctx *context, const char *box_id,
+    enum isds_commercial_message_type type, _Bool *can_send)
+{
+	isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	char *box_id_locale = NULL;
+	xmlNodePtr request = NULL;
+	xmlNodePtr node;
+	xmlNsPtr isds_ns = NULL;
+
+	xmlDocPtr response = NULL;
+	xmlXPathContextPtr xpath_ctx = NULL;
+	xmlXPathObjectPtr result = NULL;
+	_Bool *si_result = NULL;
+#endif
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if (NULL == box_id) {
+		return IE_INVAL;
+	}
+	if (NULL == result) {
+		return IE_INVAL;
+	}
+
+#if HAVE_LIBCURL
+	/* Check whether connection is established. */
+	if (NULL == context->curl) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	/* Build the request. */
+	box_id_locale = _isds_utf82locale((char*)box_id);
+	if (NULL == box_id_locale) {
+		err = IE_NOMEM;
+		goto leave;
+	}
+
+	request = xmlNewNode(NULL, BAD_CAST "PDZSendInfo");
+	if (NULL == request) {
+		isds_printf_message(context,
+		    _("Could not build PDZSendInfo request for %s box"),
+		    box_id_locale);
+		err = IE_ERROR;
+		goto leave;
+	}
+	isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+	if(NULL == isds_ns) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		err = IE_ERROR;
+		goto leave;
+	}
+	xmlSetNs(request, isds_ns);
+
+	/* Add dbId child. */
+	INSERT_STRING(request, BAD_CAST "dbID", box_id);
+	/* Add PDZType fild. */
+	INSERT_STRING(request, BAD_CAST "PDZType", (type == COMMERCIAL_NORMAL) ? "Normal" : "Init");
+
+	/* Send request and check response. */
+	err = send_destroy_request_check_response(context,
+	    SERVICE_DB_SEARCH, BAD_CAST "PDZSendInfo",
+	    &request, &response, NULL, NULL);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/* Extract data. */
+	/* Set context to the root. */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	result = xmlXPathEvalExpression(BAD_CAST "/isds:PDZSendInfoResponse",
+	    xpath_ctx);
+
+	EXTRACT_BOOLEAN("/isds:PDZSendInfoResponse/isds:PDZsiResult", si_result);
+
+	if (NULL == si_result) {
+		isds_log_message(context,
+		    _("Server did not return any response on PDZSendInfo request"));
+		err = IE_ISDS;
+		goto leave;
+	}
+
+	if (NULL != can_send) {
+		*can_send = *si_result;
+	}
+
+leave:
+	if (IE_SUCCESS == err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("PDZSendInfo request for %s box processed by server successfully.\n"),
+		    box_id_locale);
+	}
+
+	free(si_result);
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+	xmlFreeDoc(response);
+	xmlFreeNode(request);
+	free(box_id_locale);
+
+#else /* !HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+
+	return err;
+}
 
 /* Get details about credit for sending pre-paid commercial messages.
  * @context is ISDS session context.

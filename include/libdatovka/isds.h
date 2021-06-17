@@ -836,6 +836,12 @@ struct isds_commercial_permission {
                                        PAYMENT_RESPONSE. */
 };
 
+/* Type of commercial message. */
+typedef enum isds_commercial_message_type {
+    COMMERCIAL_NORMAL = 0, /* Normal commercial message. */
+    COMMERCIAL_INIT /* Initiatory commercial message. */
+} isds_commercial_message_type;
+
 /* Type of credit change event */
 typedef enum {
     ISDS_CREDIT_CHARGED,        /* Credit has been charged */
@@ -1627,6 +1633,19 @@ isds_error isds_get_box_state_history(struct isds_ctx *context,
  *  or other appropriate error. */
 isds_error isds_get_commercial_permissions(struct isds_ctx *context,
         const char *box_id, struct isds_list **permissions);
+
+/* Checks whether there can a commercial message be sent to the recipient
+ * (ISDS operation PDZSendInfo).
+ * @context is ISDS session context.
+ * @box_id is UTF-8 encoded recipient box identifier as zero terminated string.
+ * @type is a commercial message type value.
+ * @can_send is return value of the operation.
+ * @return:
+ *  IE_SUCCESS if the result has been obtained correctly,
+ *  or other appropriate error.
+ */
+isds_error isds_PDZSendInfo(struct isds_ctx *context, const char *box_id,
+    enum isds_commercial_message_type type, _Bool *can_send);
 
 /* Get details about credit for sending pre-paid commercial messages.
  * @context is ISDS session context.
