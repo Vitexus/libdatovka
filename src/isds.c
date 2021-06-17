@@ -10203,7 +10203,7 @@ isds_error isds_PDZSendInfo(struct isds_ctx *context, const char *box_id,
 	if (NULL == box_id) {
 		return IE_INVAL;
 	}
-	if (NULL == result) {
+	if (NULL == can_send) {
 		return IE_INVAL;
 	}
 
@@ -10237,7 +10237,7 @@ isds_error isds_PDZSendInfo(struct isds_ctx *context, const char *box_id,
 	xmlSetNs(request, isds_ns);
 
 	/* Add dbId child. */
-	INSERT_STRING(request, BAD_CAST "dbID", box_id);
+	INSERT_STRING(request, BAD_CAST "dbId", box_id);
 	/* Add PDZType fild. */
 	INSERT_STRING(request, BAD_CAST "PDZType", (type == COMMERCIAL_NORMAL) ? "Normal" : "Init");
 
