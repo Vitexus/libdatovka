@@ -1620,7 +1620,7 @@ isds_error isds_get_box_state_history(struct isds_ctx *context,
         const struct timeval *from_time, const struct timeval *to_time,
         struct isds_list **history);
 
-/* Get list of permissions to send commercial messages.
+/* Get list of permissions to send commercial messages (ISDS operation PDZInfo).
  * @context is ISDS session context.
  * @box_id is UTF-8 encoded sender box identifier as zero terminated string
  * @permissions is a reallocated list of permissions (struct
@@ -1647,7 +1647,7 @@ isds_error isds_get_commercial_permissions(struct isds_ctx *context,
 isds_error isds_PDZSendInfo(struct isds_ctx *context, const char *box_id,
     enum isds_commercial_message_type type, _Bool *can_send);
 
-/* Get details about credit for sending pre-paid commercial messages.
+/* Get details about credit for sending pre-paid commercial messages (ISDS operation DataBoxCreditInfo).
  * @context is ISDS session context.
  * @box_id is UTF-8 encoded sender box identifier as zero terminated string.
  * @from_date is first day of credit history to return in @history. Only
