@@ -25,6 +25,7 @@ libdatovka.so.0 libdatovka0 #MINVER#
  isds_GetOwnerInfoFromLogin2@Base 0.1
  isds_GetUserInfoFromLogin@Base 0.1
  isds_GetUserInfoFromLogin2@Base 0.1
+ isds_PDZSendInfo@Base 0.1
  isds_PersonName2_duplicate@Base 0.1
  isds_PersonName2_free@Base 0.1
  isds_PersonName_duplicate@Base 0.1
