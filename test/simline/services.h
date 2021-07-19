@@ -1,8 +1,7 @@
 #ifndef __ISDS_SERVICES_H
 #define __ISDS_SERVICES_H
 
-#include <time.h>           /* struct tm */
-#include <sys/time.h>       /* struct timeval */
+#include <time.h> /* struct tm */
 #include "server_types.h"
 
 typedef enum {
@@ -72,7 +71,7 @@ struct server_credit_event_storage_set {
 /* Event about change of credit for sending commercial services */
 struct server_credit_event {
     /* Common fields */
-    struct timeval *time;           /* When the credit was changed. */
+    struct isds_timeval *time;           /* When the credit was changed. */
     long int credit_change;         /* Difference in credit value caused by
                                        this event. The unit is 1/100 CZK. */
     long int new_credit;            /* Credit value after this event.
@@ -141,8 +140,8 @@ struct server_owner_info {
 
 /* Box state period */
 struct server_box_state_period {
-    struct timeval *from;
-    struct timeval *to;
+    struct isds_timeval *from;
+    struct isds_timeval *to;
     long int dbState;
 };
 
@@ -180,8 +179,8 @@ struct arguments_DS_df_GetDataBoxActivityStatus {
     const char *status_code;
     const char *status_message;
     const char *box_id;             /* Input */
-    const struct timeval *from;     /* Input */
-    const struct timeval *to;       /* Input */
+    const struct isds_timeval *from;     /* Input */
+    const struct isds_timeval *to;       /* Input */
     const char *result_box_id;    /* Output */
     const _Bool results_exists;     /* Return Periods element */
     const struct server_list *results;  /* Return list of

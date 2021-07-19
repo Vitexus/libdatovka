@@ -2,7 +2,7 @@
 #include "isds.c"
 
 static int test_timestring2timeval(const xmlChar *time, const isds_error error,
-        const struct timeval *correct_timeval, struct timeval **new_timeval) {
+        const struct isds_timeval *correct_timeval, struct isds_timeval **new_timeval) {
     isds_error err;
 
     err = timestring2timeval(time, new_timeval);
@@ -31,10 +31,10 @@ static int test_timestring2timeval(const xmlChar *time, const isds_error error,
                 "unexpectedly");
 
     if (correct_timeval->tv_sec != (*new_timeval)->tv_sec)
-        FAIL_TEST("Returned struct timeval differs in tv_sec: expected=%d, got=%d",
+        FAIL_TEST("Returned struct isds_timeval differs in tv_sec: expected=%d, got=%d",
                 correct_timeval->tv_sec, (*new_timeval)->tv_sec);
     if (correct_timeval->tv_usec != (*new_timeval)->tv_usec)
-        FAIL_TEST("Returned struct timeval differs in tv_usec: expected=%" PRIdMAX
+        FAIL_TEST("Returned struct isds_timeval differs in tv_usec: expected=%" PRIdMAX
                 ", got=%" PRIdMAX,
                 (intmax_t)correct_timeval->tv_usec,
                 (intmax_t)(*new_timeval)->tv_usec);
@@ -47,9 +47,9 @@ int main(void) {
     INIT_TEST("ISO date-time string to timeval conversion");
 
     /* Generic */
-    struct timeval *output = NULL;
+    struct isds_timeval *output = NULL;
     char *input = "2001-02-03T04:05:06.123456+01:45";
-    struct timeval time = {.tv_sec = 981166806, .tv_usec = 123456};
+    struct isds_timeval time = {.tv_sec = 981166806, .tv_usec = 123456};
     TEST(input, test_timestring2timeval, BAD_CAST input, IE_SUCCESS, &time,
             &output);
 

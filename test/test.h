@@ -173,10 +173,10 @@ extern void *test_destructor_argument;
     TEST_POINTER_DUPLICITY(x, y); \
     if ((x) != NULL && (y) != NULL) { \
         if ((x)->tv_sec != (y)->tv_sec) \
-            FAIL_TEST("struct timeval * differs in tv_sec: " \
+            FAIL_TEST("struct isds_timeval * differs in tv_sec: " \
                     "expected=%d, got=%d", (x)->tv_sec, (y)->tv_sec); \
         if ((x)->tv_usec != (y)->tv_usec) \
-            FAIL_TEST("struct timeval * differs in tv_usec: " \
+            FAIL_TEST("struct isds_timeval * differs in tv_usec: " \
                     "expected=%" PRIdMAX ", got=%" PRIdMAX, (intmax_t)(x)->tv_usec, \
                     (intmax_t)(y)->tv_usec); \
     } \

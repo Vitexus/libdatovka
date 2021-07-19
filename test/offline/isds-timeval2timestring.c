@@ -5,7 +5,7 @@ static void test_destructor(void *argument) {
     if (NULL != argument) zfree(*(void **)argument);
 }
 
-static int test_timeval2timestring(const struct timeval* time,
+static int test_timeval2timestring(const struct isds_timeval* time,
         const isds_error error, const xmlChar *correct_string,
         xmlChar **new_string) {
     isds_error err;
@@ -35,11 +35,11 @@ static int test_timeval2timestring(const struct timeval* time,
 }
 
 int main(void) {
-    INIT_TEST("Struct timeval to ISO time string conversion");
+    INIT_TEST("Struct isds_timeval to ISO time string conversion");
 
     xmlChar *output = NULL;
     xmlChar *time = BAD_CAST "2001-02-03T04:05:06.123456";
-    struct timeval input = {.tv_sec = 981173106, .tv_usec = 123456 };
+    struct isds_timeval input = {.tv_sec = 981173106, .tv_usec = 123456 };
     TEST("tv_sec=981173106 tv_usec=123456", test_timeval2timestring, &input,
             IE_SUCCESS, time, &output);
     input.tv_sec = 981173106; input.tv_usec = 12;

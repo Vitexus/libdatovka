@@ -211,7 +211,7 @@ int main(void) {
         const long int credit = 42;
         long int old_capacity = 43;
         const char *email = "joe@example.com";
-        struct timeval event_time = {
+        struct isds_timeval event_time = {
             .tv_sec = 981173106,
             .tv_usec = 123456
         };

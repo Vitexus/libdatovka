@@ -78,7 +78,7 @@ static int compare_isds_box_state_period_lists(const struct isds_list *expected_
 
 static int test_isds_get_box_state_history(const isds_error expected_error,
         struct isds_ctx *context,
-        const char *dbID, const struct timeval *from, const struct timeval *to,
+        const char *dbID, const struct isds_timeval *from, const struct isds_timeval *to,
         const struct isds_list *expected_results) {
     isds_error error;
     struct isds_list *results;
@@ -130,11 +130,11 @@ int main(void) {
         char *url = NULL;
 
         char *input_dbID = "A123456";
-        struct timeval input_from = {
+        struct isds_timeval input_from = {
             .tv_sec = 5,
             .tv_usec = 0
         };
-        struct timeval input_to = {
+        struct isds_timeval input_to = {
             .tv_sec = 6,
             .tv_usec = 0
         };
@@ -243,11 +243,11 @@ int main(void) {
         char *url = NULL;
 
         char *input_dbID = "A123456";
-        struct timeval input_from = {
+        struct isds_timeval input_from = {
             .tv_sec = 5,
             .tv_usec = 0
         };
-        struct timeval input_to = {
+        struct isds_timeval input_to = {
             .tv_sec = 6,
             .tv_usec = 0
         };

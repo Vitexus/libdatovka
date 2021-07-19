@@ -8,6 +8,7 @@
 #include <stdint.h>     /* For intmax_t */
 #include <inttypes.h>   /* For PRIdMAX */
 #include <ctype.h>      /* for isdigit() */
+#include <libdatovka/isds.h> /* struct isds_timeval */
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
@@ -49,11 +50,11 @@ struct service {
 };
 
 
-/* Convert UTF-8 ISO 8601 date-time @string to struct timeval.
+/* Convert UTF-8 ISO 8601 date-time @string to struct isds_timeval.
  * It respects microseconds too. Microseconds are rounded half up.
  * In case of error, @time will be freed. */
 static http_error timestring2timeval(const char *string,
-        struct timeval **time) {
+        struct isds_timeval **time) {
     struct tm broken;
     char *offset, *delim, *endptr;
     const int subsecond_resolution = 6;
@@ -531,9 +532,9 @@ static int datecmp(const struct tm *a, const struct tm *b) {
 }
 
 
-/* Compare times represented by pointer to struct timeval.
+/* Compare times represented by pointer to struct isds_timeval.
  * @return 0 if equal, non-0 otherwise. */
-static int timecmp(const struct timeval *a, const struct timeval *b) {
+static int timecmp(const struct isds_timeval *a, const struct isds_timeval *b) {
     if (NULL == a && b == NULL) return 0;
     if ((NULL == a && b != NULL) || (NULL != a && b == NULL)) return 1;
     if (a->tv_sec != b->tv_sec) return 1;
@@ -840,10 +841,10 @@ leave:
  * internal error occurred. */
 static http_error element_equals_time(const char **code, char **message,
         xmlXPathContextPtr xpath_ctx, const char *element_name,
-        _Bool must_exist, const struct timeval *expected_value) {
+        _Bool must_exist, const struct isds_timeval *expected_value) {
     http_error error = HTTP_ERROR_SUCCESS;
     char *string = NULL;
-    struct timeval *value = NULL;
+    struct isds_timeval *value = NULL;
 
     if (must_exist) {
         error = element_exists(code, message, xpath_ctx, element_name, 0);
@@ -941,9 +942,9 @@ static http_error tm2datestring(const struct tm *time, char **string) {
 }
 
 
-/* Convert struct timeval *@time to UTF-8 ISO 8601 date-time @string. It
+/* Convert struct isds_timeval *@time to UTF-8 ISO 8601 date-time @string. It
  * respects the @time microseconds too. */
-static http_error timeval2timestring(const struct timeval *time,
+static http_error timeval2timestring(const struct isds_timeval *time,
         char **string) {
     struct tm broken;
 
