@@ -2743,9 +2743,9 @@ static isds_error tm2datestring(const struct tm *time, xmlChar **string) {
 }
 
 
-/* Convert struct timeval * @time to UTF-8 ISO 8601 date-time @string. It
+/* Convert struct isds_timeval * @time to UTF-8 ISO 8601 date-time @string. It
  * respects the @time microseconds too. */
-static isds_error timeval2timestring(const struct timeval *time,
+static isds_error timeval2timestring(const struct isds_timeval *time,
         xmlChar **string) {
     struct tm broken;
     time_t seconds_as_time_t;
@@ -2756,7 +2756,7 @@ static isds_error timeval2timestring(const struct timeval *time,
      * 32-bit long in Microsoft API. Convert value to the type expected by
      * gmtime_r(). */
     seconds_as_time_t = time->tv_sec;
-    if (!gmtime_r(&seconds_as_time_t, &broken)) return IE_DATE;
+    if (!gmtime_r(&seconds_as_time_t, &broken)) return IE_DATE; // !!!
     if (time->tv_usec < 0 || time->tv_usec > 999999) return IE_DATE;
 
     /* TODO: small negative year should be formatted as "-0012". This is not
@@ -2779,11 +2779,11 @@ static isds_error timeval2timestring(const struct timeval *time,
 #endif /* HAVE_LIBCURL */
 
 
-/* Convert UTF-8 ISO 8601 date-time @string to static struct timeval.
+/* Convert UTF-8 ISO 8601 date-time @string to static struct isds_timeval.
  * It respects microseconds too. Microseconds are rounded half up.
  * In case of error, @time will be undefined. */
 static isds_error timestring2static_timeval(const xmlChar *string,
-        struct timeval *time) {
+        struct isds_timeval *time) {
     struct tm broken;
     char *offset, *delim, *endptr;
     const int subsecond_resolution = 6;
@@ -2913,11 +2913,11 @@ static isds_error timestring2static_timeval(const xmlChar *string,
 }
 
 
-/* Convert UTF-8 ISO 8601 date-time @string to reallocated struct timeval.
+/* Convert UTF-8 ISO 8601 date-time @string to reallocated struct isds_timeval.
  * It respects microseconds too. Microseconds are rounded half up.
  * In case of error, @time will be freed. */
 static isds_error timestring2timeval(const xmlChar *string,
-        struct timeval **time) {
+        struct isds_timeval **time) {
     isds_error error;
 
     if (!time) return IE_INVAL;
@@ -6330,7 +6330,7 @@ leave:
  * password expiration is disabled, NULL will be returned. In case of error
  * it will be set to NULL too. */
 isds_error isds_get_password_expiration(struct isds_ctx *context,
-        struct timeval **expiration) {
+        struct isds_timeval **expiration) {
     isds_error err = IE_SUCCESS;
 #if HAVE_LIBCURL
     xmlDocPtr response = NULL;
@@ -9898,7 +9898,7 @@ leave:
  *  the history only to some users. */
 isds_error isds_get_box_state_history(struct isds_ctx *context,
         const char *box_id,
-        const struct timeval *from_time, const struct timeval *to_time,
+        const struct isds_timeval *from_time, const struct isds_timeval *to_time,
         struct isds_list **history) {
     isds_error err = IE_SUCCESS;
 #if HAVE_LIBCURL
@@ -11418,7 +11418,7 @@ leave:
  * @return IE_SUCCESS or appropriate error code. */
 static isds_error isds_get_list_of_messages(struct isds_ctx *context,
         _Bool outgoing_direction,
-        const struct timeval *from_time, const struct timeval *to_time,
+        const struct isds_timeval *from_time, const struct isds_timeval *to_time,
         const long int *organization_unit_number,
         const unsigned int status_filter,
         const unsigned long int offset, unsigned long int *number,
@@ -11690,7 +11690,7 @@ leave:
  * first. Also in case of error the list will be set to NULL.
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
-        const struct timeval *from_time, const struct timeval *to_time,
+        const struct isds_timeval *from_time, const struct isds_timeval *to_time,
         const long int *dmSenderOrgUnitNum, const unsigned int status_filter,
         const unsigned long int offset, unsigned long int *number,
         struct isds_list **messages) {
@@ -11726,7 +11726,7 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
  * first. Also in case of error the list will be set to NULL.
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
-        const struct timeval *from_time, const struct timeval *to_time,
+        const struct isds_timeval *from_time, const struct isds_timeval *to_time,
         const long int *dmRecipientOrgUnitNum,
         const unsigned int status_filter,
         const unsigned long int offset, unsigned long int *number,
@@ -11754,7 +11754,7 @@ isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_sent_message_state_changes(
         struct isds_ctx *context,
-        const struct timeval *from_time, const struct timeval *to_time,
+        const struct isds_timeval *from_time, const struct isds_timeval *to_time,
         struct isds_list **changed_states) {
 
     isds_error err = IE_SUCCESS;
