@@ -54,7 +54,7 @@ int main(void) {
             .tm_isdst = -1
         };
         time_t from_time_t = mktime(&from_time_tm);
-        struct timeval from_time = {
+        struct isds_timeval from_time = {
             .tv_sec = from_time_t,
             .tv_usec = 4000
         };

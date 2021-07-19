@@ -43,8 +43,8 @@ int main(void) {
 
     {
         struct isds_list *changed_states = NULL, *item;
-        struct timeval not_before = { .tv_sec = 0, .tv_usec = 0 };
-        struct timeval not_after;
+        struct isds_timeval not_before = { .tv_sec = 0, .tv_usec = 0 };
+        struct isds_timeval not_after;
 
         if (!gettimeofday(&not_after, NULL)) {
             /* Changes older than 15 days are not reported currently. */

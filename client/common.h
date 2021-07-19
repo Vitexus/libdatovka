@@ -15,7 +15,7 @@ void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info);
 void print_DbOwnerInfoExt2(const struct isds_DbOwnerInfoExt2 *info);
 void print_DbUserInfo(const struct isds_DbUserInfo *info);
 void print_DbUserInfoExt2(const struct isds_DbUserInfoExt2 *info);
-void print_timeval(const struct timeval *time);
+void print_timeval(const struct isds_timeval *time);
 void print_hash(const struct isds_hash *hash);
 void print_envelope(const struct isds_envelope *envelope);
 void print_message(const struct isds_message *message);

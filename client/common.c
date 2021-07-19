@@ -508,7 +508,7 @@ void print_DbUserInfoExt2(const struct isds_DbUserInfoExt2 *info) {
 }
 
 
-void print_timeval(const struct timeval *time) {
+void print_timeval(const struct isds_timeval *time) { // !!!
     struct tm broken;
     char buffer[128];
     time_t seconds_as_time_t;
