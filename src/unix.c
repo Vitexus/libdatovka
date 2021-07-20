@@ -68,12 +68,8 @@ static void _isds_switch_tz_to_native(void) {
     tzset();
 }
 
-/* Convert UTC broken time to time_t.
- * @broken_utc time in UTC in broken format. Its content is not touched,
- * it's non-const because underlying POSIX function has non-const signature.
- * @return (time_t) -1 in case of error */
-_hidden time_t _isds_timegm(struct tm *broken_utc) {
-    time_t ret;
+_hidden int64_t _isds_timegm(struct tm *broken_utc) {
+    int64_t ret;
 
     _isds_switch_tz_to_utc();
     ret = mktime(broken_utc);

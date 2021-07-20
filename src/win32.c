@@ -118,28 +118,23 @@ _hidden char *strndup(const char *s, size_t n) {
     return ret;
 }
 
-/* Convert UTC broken time to time_t.
- * @broken_utc time in UTC in broken format. Its content is not touched,
- * it's non-const because underlying POSIX function has non-const signature.
- * @return (time_t) -1 in case of error */
-_hidden time_t _isds_timegm(struct tm *broken_utc) {
+_hidden int64_t _isds_timegm(struct tm *broken_utc) {
     time_t ret;
     time_t diff;
     struct tm broken, *tmp;
 
-    ret = time(0);
+    ret = time(NULL);
     tmp = gmtime(&ret);
 
     if (!tmp) {
-        return (time_t)-1;
+        return (int64_t)-1;
     }
 
     tmp->tm_isdst = broken_utc->tm_isdst;
     diff = ret - mktime(tmp);
     memcpy(&broken, broken_utc, sizeof(struct tm));
     broken.tm_isdst = tmp->tm_isdst; /* handle broken_utc->tm_isdst < 0 */
-    ret = mktime(&broken) + diff;
-    return ret;
+    return mktime(&broken) + diff;
 }
 
 ssize_t getline(char **bufptr, size_t *length, FILE *fp) {
