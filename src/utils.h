@@ -1,7 +1,6 @@
 #ifndef __ISDS_UTILS_H__
 #define __ISDS_UTILS_H__
 
-#include <stdint.h> /* int64_t */
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -90,12 +89,6 @@ size_t _isds_b64decode(const char *encoded, void **plain);
 /* Convert hexadecimal digit to integer. Return negative value if character is
  * not valid hexadecimal digit. */
 int _isds_hex2i(char digit);
-
-/* Convert UTC broken time to int64_t representing seconds since the Epoch.
- * @broken_utc time in UTC in broken format. Its content is not touched,
- * it's non-const because underlying POSIX function has non-const signature.
- * @return -1 in case of error */
-int64_t _isds_timegm(struct tm *broken_utc);
 
 /* Convert size_t to int.
  * @val Value to be converted to int.

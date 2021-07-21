@@ -19,7 +19,9 @@ libdatovka_la_SOURCES = \
 	utils.h \
 	validator.c \
 	validator.h \
-	system.h
+	system.h \
+	time_conversion.c \
+	time_conversion.h
 
 if USE_OPENSSL_BACKEND
 libdatovka_la_SOURCES += \
@@ -37,10 +39,12 @@ endif
 
 if WIN32
 libdatovka_la_SOURCES += \
+	time_conversion_win32.c \
 	win32.c \
 	win32.h
 else
 libdatovka_la_SOURCES += \
+	time_conversion_unix.c \
 	unix.c \
 	unix.h
 endif

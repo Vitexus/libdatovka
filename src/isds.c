@@ -15,6 +15,7 @@
 #include "crypto.h"
 #include "physxml.h"
 #include "system.h"
+#include "time_conversion.h"
 
 unsigned long isds_lib_ver_num(void)
 {
