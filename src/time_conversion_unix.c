@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include "time_conversion.h"
-#include "utils.h" /* PANIC */
+#include "utils.h" /* _hidden, PANIC */
 
 static char *tz_orig = NULL; /* Copy of original TZ variable */
 

@@ -118,25 +118,6 @@ _hidden char *strndup(const char *s, size_t n) {
     return ret;
 }
 
-_hidden int64_t _isds_timegm(struct tm *broken_utc) {
-    time_t ret;
-    time_t diff;
-    struct tm broken, *tmp;
-
-    ret = time(NULL);
-    tmp = gmtime(&ret);
-
-    if (!tmp) {
-        return (int64_t)-1;
-    }
-
-    tmp->tm_isdst = broken_utc->tm_isdst;
-    diff = ret - mktime(tmp);
-    memcpy(&broken, broken_utc, sizeof(struct tm));
-    broken.tm_isdst = tmp->tm_isdst; /* handle broken_utc->tm_isdst < 0 */
-    return mktime(&broken) + diff;
-}
-
 ssize_t getline(char **bufptr, size_t *length, FILE *fp) {
     int pos = 0;
     char *ret = NULL;
