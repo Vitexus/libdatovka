@@ -27,13 +27,16 @@ endif
 
 # Server library
 noinst_LTLIBRARIES = libserver.la
-libserver_la_SOURCES = ../test.c ../test-tools.h http.c http.h \
-						server.c server.h service.c service.h \
-						services.h server_types.h system.h
+libserver_la_SOURCES = ../test.c ../test-tools.h \
+		$(top_srcdir)/src/time_conversion.c \
+		$(top_srcdir)/src/time_conversion.h \
+		http.c http.h \
+		server.c server.h service.c service.h \
+		services.h server_types.h system.h
 if WIN32
 libserver_la_SOURCES += win32.c win32.h
 else
-libserver_la_SOURCES += unix.c unix.h
+libserver_la_SOURCES += $(top_srcdir)/src/time_conversion_unix.c unix.c unix.h
 endif
 
 libserver_la_CPPFLAGS = @XML_CPPFLAGS@ @LIBGNUTLS_CFLAGS@
