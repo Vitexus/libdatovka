@@ -87,20 +87,6 @@ isds_error _isds_datestring2tm(const xmlChar *string, struct tm *time) {
 }
 #endif
 
-/* MSVCRT gmtime() uses thread-local buffer. This is reentrant. */
-_hidden struct tm *gmtime_r(const time_t *timep, struct tm *result) {
-    struct tm *buf;
-
-    buf = gmtime(timep);
-
-    if (!buf) {
-        return NULL;
-    }
-
-    memcpy(result, buf, sizeof(struct tm));
-    return result;
-}
-
 _hidden char *strndup(const char *s, size_t n) {
     char *ret;
     size_t len;
