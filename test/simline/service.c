@@ -1,6 +1,7 @@
 #include "../../config.h"
 #define _XOPEN_SOURCE XOPEN_SOURCE_LEVEL_FOR_STRDUP
 #include "../test-tools.h"
+#include "../../src/time_conversion.h"
 #include "http.h"
 #include "services.h"
 #include "system.h"
@@ -950,7 +951,7 @@ static http_error timeval2timestring(const struct isds_timeval *time,
 
     if (!time || !string) return HTTP_ERROR_SERVER;
 
-    if (!gmtime_r(&time->tv_sec, &broken)) return HTTP_ERROR_SERVER;
+    if (!_isds_gmtime_r(&time->tv_sec, &broken)) return HTTP_ERROR_SERVER;
     if (time->tv_usec < 0 || time->tv_usec > 999999) return HTTP_ERROR_SERVER;
 
     /* TODO: small negative year should be formatted as "-0012". This is not

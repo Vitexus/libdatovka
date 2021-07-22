@@ -34,7 +34,7 @@ libserver_la_SOURCES = ../test.c ../test-tools.h \
 		server.c server.h service.c service.h \
 		services.h server_types.h system.h
 if WIN32
-libserver_la_SOURCES += win32.c win32.h
+libserver_la_SOURCES += $(top_srcdir)/src/time_conversion_win32.c win32.c win32.h
 else
 libserver_la_SOURCES += $(top_srcdir)/src/time_conversion_unix.c unix.c unix.h
 endif

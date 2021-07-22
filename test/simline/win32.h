@@ -13,8 +13,6 @@
 #define strtok_r strtok_s
 #endif
 
-struct tm *gmtime_r(const time_t *timep, struct tm *result);
-
 // disabled under MinGW by -std=c99
 _CRTIMP char* __cdecl __MINGW_NOTHROW strdup (const char*) __MINGW_ATTRIB_MALLOC;
 

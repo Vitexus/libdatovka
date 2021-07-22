@@ -14,10 +14,4 @@
 
 http_error _server_datestring2tm(const char *string, struct tm *time);
 
-/* Convert UTC broken time to time_t.
- * @broken_utc time in UTC in broken format. Its content is not touched,
- * it's non-const because underlying POSIX function has non-const signature.
- * @return (time_t) -1 in case of error */
-time_t _isds_timegm(struct tm *broken_utc);
-
 #endif
