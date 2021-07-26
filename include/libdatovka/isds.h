@@ -1049,6 +1049,30 @@ char *isds_version(void);
  * Returns new context, or NULL */
 struct isds_ctx *isds_ctx_create(void);
 
+/*
+ * Set a different function to replace the default timegm() function.
+ * @f_gmtime_r is a function pointer to the replacement function which always
+ * returns a 64-bit integer to represent a time value.
+ */
+void isds_set_func_timegm(int64_t (*f_timegm)(struct tm *));
+
+/*
+ * Check whether the timegm() function in use behaves as expected.
+ */
+isds_error isds_check_func_timegm(struct isds_ctx *context);
+
+/*
+ * Set a different function to replace the default gmtime_r() function.
+ * @f_gmtime_r is a function pointer to the replacement function which always
+ * takes a 64-bit integer to represent a time value.
+ */
+void isds_set_func_gmtime_r(struct tm *(*f_gmtime_r)(const int64_t *, struct tm *));
+
+/*
+ * Check whether the gmtime_r() function in use behaves as expected.
+ */
+isds_error isds_check_func_gmtime_r(struct isds_ctx *context);
+
 /* Destroy ISDS context and free memory.
  * @context will be set to NULL on success. */
 isds_error isds_ctx_free(struct isds_ctx **context);

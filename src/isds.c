@@ -115,6 +115,13 @@ static const xmlChar *extension_map_mime[] = {
     BAD_CAST "zfo", BAD_CAST "application/vnd.software602.filler.form-xml-zip"
 };
 
+/*
+ * Default timegm() and gmtime_r() implementations.
+ * These may not work on all systems well particularly past the year 2038.
+ */
+static int64_t (*func_timegm)(struct tm *) = _isds_timegm;
+static struct tm *(*func_gmtime_r)(const int64_t *, struct tm *) = _isds_gmtime_r;
+
 /* Structure type to hold conversion table from status code to isds_error and
  * long message */
 struct code_map_isds_error {
@@ -1168,6 +1175,154 @@ struct isds_ctx *isds_ctx_create(void) {
     if (context) memset(context, 0, sizeof(*context));
     return context;
 };
+
+void isds_set_func_timegm(int64_t (*f_timegm)(struct tm *))
+{
+	if (f_timegm != NULL) {
+		func_timegm = f_timegm;
+	} else {
+		/* Reset defaults. */
+		func_timegm = _isds_timegm;
+	}
+}
+
+/*
+ * Check the result of the conversion using the preset func_timegm.
+ */
+static
+isds_error check_time(struct isds_ctx *context, struct tm *tm, const int64_t expected)
+{
+	if (tm == NULL) {
+		return IE_INVAL;
+	}
+
+	int64_t secs = func_timegm(tm);
+
+	if (secs == expected) {
+		return IE_SUCCESS;
+	} else {
+		int64_t diff = expected - secs;
+		isds_printf_message(context,
+		    _("Unexpected timegm() outcome %" PRId64 "; expected %" PRId64 "; difference %" PRId64 ")\n"),
+		    secs, expected, diff);
+		return IE_ERROR;
+	}
+}
+
+isds_error isds_check_func_timegm(struct isds_ctx *context)
+{
+	struct tm tm;
+
+	memset(&tm, 0, sizeof(tm));
+	tm.tm_sec = 7 - 0;
+	tm.tm_min = 14 - 0;
+	tm.tm_hour = 3 - 0;
+	tm.tm_mday = 19 - 0;
+	tm.tm_mon = 1 - 1;
+	tm.tm_year = 2038 - 1900;
+	//tm.tm_wday;
+	//tm.tm_yday;
+	//tm.tm_isdst;
+
+	isds_error ret = check_time(context, &tm, 2147483647ll);
+	if (ret != IE_SUCCESS) {
+		return ret;
+	}
+
+	memset(&tm, 0, sizeof(tm));
+	tm.tm_sec = 7 - 0;
+	tm.tm_min = 14 - 0;
+	tm.tm_hour = 3 - 0;
+	tm.tm_mday = 19 - 0;
+	tm.tm_mon = 1 - 1;
+	tm.tm_year = 2138 - 1900;
+	//tm.tm_wday;
+	//tm.tm_yday;
+	//tm.tm_isdst;
+
+	return check_time(context, &tm, 5303157247ll);
+}
+
+void isds_set_func_gmtime_r(struct tm *(*f_gmtime_r)(const int64_t *, struct tm *))
+{
+	if (f_gmtime_r != NULL) {
+		func_gmtime_r = f_gmtime_r;
+	} else {
+		/* Reset defaults. */
+		func_gmtime_r = _isds_gmtime_r;
+	}
+}
+
+/*
+ * Check the result of the conversion using the preset func_gmtime_r.
+ */
+static
+isds_error check_tm(struct isds_ctx *context, const int64_t time, const struct tm *expected)
+{
+	if (expected == NULL) {
+		return IE_INVAL;
+	}
+
+	struct tm tm;
+	struct tm *result;
+
+	result = func_gmtime_r(&time, &tm);
+	if (result == NULL) {
+		isds_log_message(context, _("Unexpected gmtime_r() NULL outcome."));
+		return IE_ERROR;
+	}
+
+	if ((result->tm_sec == expected->tm_sec) &&
+	    (result->tm_min == expected->tm_min) &&
+	    (result->tm_hour == expected->tm_hour) &&
+	    (result->tm_mday == expected->tm_mday) &&
+	    (result->tm_mon == expected->tm_mon) &&
+	    (result->tm_year == expected->tm_year)) {
+		return IE_SUCCESS;
+	} else {
+		isds_printf_message(context,
+		    _("Unexpected gmtime_r() outcome %04d-%02d-%02d;%02d:%02d:%02d; expected %04d-%02d-%02d;%02d:%02d:%02d\n"),
+		    result->tm_year + 1900, result->tm_mon + 1, result->tm_mday,
+		    result->tm_hour, result->tm_min, result->tm_sec,
+		    expected->tm_year + 1900, expected->tm_mon + 1, expected->tm_mday,
+		    expected->tm_hour, expected->tm_min, expected->tm_sec);
+		return IE_ERROR;
+	}
+}
+
+isds_error isds_check_func_gmtime_r(struct isds_ctx *context)
+{
+	struct tm tm;
+
+	memset(&tm, 0, sizeof(tm));
+	tm.tm_sec = 7 - 0;
+	tm.tm_min = 14 - 0;
+	tm.tm_hour = 3 - 0;
+	tm.tm_mday = 19 - 0;
+	tm.tm_mon = 1 - 1;
+	tm.tm_year = 2038 - 1900;
+	//tm.tm_wday;
+	//tm.tm_yday;
+	//tm.tm_isdst;
+
+	isds_error ret = check_tm(context, 2147483647ll, &tm);
+	if (ret != IE_SUCCESS) {
+		return ret;
+	}
+
+	memset(&tm, 0, sizeof(tm));
+	tm.tm_sec = 7 - 0;
+	tm.tm_min = 14 - 0;
+	tm.tm_hour = 3 - 0;
+	tm.tm_mday = 19 - 0;
+	tm.tm_mon = 1 - 1;
+	tm.tm_year = 2138 - 1900;
+	//tm.tm_wday;
+	//tm.tm_yday;
+	//tm.tm_isdst;
+
+	return check_tm(context, 5303157247ll, &tm);
+}
 
 #if HAVE_LIBCURL
 /* Close possibly opened connection to Czech POINT document deposit without
@@ -2752,7 +2907,7 @@ static isds_error timeval2timestring(const struct isds_timeval *time,
 
     if (!time || !string) return IE_INVAL;
 
-    if (!_isds_gmtime_r(&time->tv_sec, &broken)) return IE_DATE;
+    if (!func_gmtime_r(&time->tv_sec, &broken)) return IE_DATE;
     if (time->tv_usec < 0 || time->tv_usec > 999999) return IE_DATE;
 
     /* TODO: small negative year should be formatted as "-0012". This is not
@@ -2900,7 +3055,7 @@ static isds_error timestring2static_timeval(const xmlChar *string,
     }
 
     /* Convert to time_t */
-    time->tv_sec = _isds_timegm(&broken);
+    time->tv_sec = func_timegm(&broken);
     if (time->tv_sec == (time_t) -1) {
         return IE_DATE;
     }
