@@ -15,7 +15,7 @@ noinst_PROGRAMS = isdsclient login certauth version progressbar logger \
 	getsenderbyid downloadmessagehash verifyreceivedhash \
 	computemessagehash authenticatemessage \
 	loaddelivery getreceiveddelivery getreceivedsigneddelivery \
-	convertdocument requestnewtestingbox getboxlist
+	convertdocument requestnewtestingbox getboxlist check_time_conversion
 
 common = common.c common.h
 
@@ -67,3 +67,4 @@ getreceivedsigneddelivery_SOURCES = getreceivedsigneddelivery.c $(common)
 convertdocument_SOURCES = convertdocument.c $(common)
 requestnewtestingbox_SOURCES = requestnewtestingbox.c $(common)
 getboxlist_SOURCES = getboxlist.c $(common)
+check_time_conversion_SOURCES = check_time_conversion.c $(common)
