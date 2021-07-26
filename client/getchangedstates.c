@@ -44,9 +44,13 @@ int main(void) {
     {
         struct isds_list *changed_states = NULL, *item;
         struct isds_timeval not_before = { .tv_sec = 0, .tv_usec = 0 };
+        struct timeval tv_not_after; /* gettimeofday() doesn't know struct isds_timeval */
         struct isds_timeval not_after;
 
-        if (!gettimeofday(&not_after, NULL)) {
+        if (!gettimeofday(&tv_not_after, NULL)) {
+            /* struct timeval -> struct isds_timeval */
+            not_after.tv_sec = tv_not_after.tv_sec;
+            not_after.tv_usec = tv_not_after.tv_usec;
             /* Changes older than 15 days are not reported currently. */
             not_before.tv_sec = not_after.tv_sec - 10 * 24 * 3600;
 
