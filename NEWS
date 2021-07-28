@@ -1,6 +1,10 @@
 0.1.3 /
  * Added function isds_PDZSendInfo() which supports the PDZSendInfo ISDS
    operation.
+ * Using struct isds_timeval instead of struct timeval in the library interface.
+   The new structure always uses 64-bit integers for seconds.
+ * Added functions to provide own time conversion functions for example in
+   situations in which the target system suffers from the year 2038 problem.
 
 0.1.2 / 2021-04-14
  * Added support for the new PFO_ZNALEC and PFO_TLUMOCNIK data-box types
