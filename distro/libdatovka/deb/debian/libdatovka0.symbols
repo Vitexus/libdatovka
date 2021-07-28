@@ -46,6 +46,8 @@ libdatovka.so.0 libdatovka0 #MINVER#
  isds_cert_locator@Base 0.1
  isds_cert_testing_locator@Base 0.1
  isds_change_password@Base 0.1
+ isds_check_func_gmtime_r@Base 0.2
+ isds_check_func_timegm@Base 0.2
  isds_cleanup@Base 0.1
  isds_commercial_permission_free@Base 0.1
  isds_compute_message_hash@Base 0.1
@@ -112,6 +114,8 @@ libdatovka.so.0 libdatovka0 #MINVER#
  isds_resign_message@Base 0.1
  isds_send_message@Base 0.1
  isds_send_message_to_multiple_recipients@Base 0.1
+ isds_set_func_gmtime_r@Base 0.2
+ isds_set_func_timegm@Base 0.2
  isds_set_log_callback@Base 0.1
  isds_set_logging@Base 0.1
  isds_set_opt@Base 0.1
