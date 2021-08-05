@@ -114,13 +114,15 @@ int main(void)
 	struct isds_DbUserInfo *user_existing = NULL;
 	struct isds_DbUserInfo *user_to_be_created = NULL;
 	struct isds_DbUserInfo *user_actually_created = NULL;
+	int ret = EXIT_FAILURE;
 
 	setlocale(LC_ALL, "");
 
 	err = isds_init();
 	if (err != IE_SUCCESS) {
 		fprintf(stderr, "isds_init() failed: %s\n", isds_strerror(err));
-		exit(EXIT_FAILURE);
+		ret = EXIT_FAILURE;
+		goto fail;
 	}
 
 	isds_set_logging(ILF_ALL & ~ILF_HTTP, ILL_ALL);
@@ -128,7 +130,8 @@ int main(void)
 	ctx = isds_ctx_create();
 	if (ctx == NULL) {
 		fprintf(stderr, "isds_ctx_create() failed\n");
-		exit(EXIT_FAILURE);
+		ret = EXIT_FAILURE;
+		goto fail;
 	}
 
 	err = isds_set_timeout(ctx, 10000);
@@ -141,19 +144,22 @@ int main(void)
 	if (err != IE_SUCCESS) {
 		fprintf(stderr, "isds_login() failed: %s: %s\n",
 		    isds_strerror(err), isds_long_message(ctx));
-		exit(EXIT_FAILURE);
+		ret = EXIT_FAILURE;
+		goto fail;
 	} else {
 		printf("Logged in :)\n");
 	}
 
 	err = get_owner(ctx, &db_owner_info);
 	if (err != IE_SUCCESS) {
-		exit(EXIT_FAILURE);
+		ret = EXIT_FAILURE;
+		goto fail;
 	}
 
 	err = get_user(ctx, &user_existing);
 	if (err != IE_SUCCESS) {
-		exit(EXIT_FAILURE);
+		ret = EXIT_FAILURE;
+		goto fail;
 	}
 
 	/* Alter existing user description. */
@@ -161,7 +167,8 @@ int main(void)
 		user_to_be_created = isds_DbUserInfo_duplicate(user_existing);
 		if (user_to_be_created == NULL) {
 			fprintf(stderr, "Not enough memory\n");
-			exit(EXIT_FAILURE);
+			ret = EXIT_FAILURE;
+			goto fail;
 		}
 
 		/* Modify name. Add first to middle and replace first. */
@@ -182,12 +189,13 @@ int main(void)
 		user_to_be_created->personName->pnFirstName =
 		    join_str("Another", NULL);
 
-		if (user_to_be_created->address != NULL) {
+		if (user_to_be_created->address == NULL) {
 			user_to_be_created->address =
 			    calloc(1, sizeof(*user_to_be_created->address));
 			if (user_to_be_created->address == NULL) {
 				fprintf(stderr, "Not enough memory\n");
-				exit(EXIT_FAILURE);
+				ret = EXIT_FAILURE;
+				goto fail;
 			}
 		}
 		/* Add address if missing. */
@@ -237,7 +245,8 @@ int main(void)
 		if (err != IE_SUCCESS) {
 			fprintf(stderr, "isds_add_user() failed: %s: %s\n",
 			    isds_strerror(err), isds_long_message(ctx));
-			exit(EXIT_FAILURE);
+			ret = EXIT_FAILURE;
+			goto fail;
 		} else {
 			printf(
 			    "isds_add_user() succeeded with reference number: %s\n",
@@ -250,7 +259,8 @@ int main(void)
 			    status->code, status->message, status->ref_number);
 		} else {
 			fprintf(stderr, "Cannot obtain status after calling isds_add_user()\n");
-			exit(EXIT_FAILURE);
+			ret = EXIT_FAILURE;
+			goto fail;
 		}
 
 		free(refnumber); refnumber = NULL;
@@ -290,12 +300,14 @@ int main(void)
 						if (user_actually_created == NULL) {
 							fprintf(stderr,
 							    "Not enough memory\n");
-							exit(EXIT_FAILURE);
+							ret = EXIT_FAILURE;
+							goto fail;
 						}
 					} else {
 						fprintf(stderr,
 						    "Found more than one matching user entry\n");
-						exit(EXIT_FAILURE);
+						ret = EXIT_FAILURE;
+						goto fail;
 					}
 				}
 			}
@@ -312,14 +324,17 @@ int main(void)
 		aux = isds_DbUserInfo_duplicate(user_actually_created);
 		if (aux == NULL) {
 			fprintf(stderr, "Not enough memory\n");
-			exit(EXIT_FAILURE);
+			ret = EXIT_FAILURE;
+			goto fail;
 		}
 
 		user_actually_created->personName->pnFirstName =
 		    join_str("Yet ", aux->personName->pnFirstName);
 		if (user_actually_created->personName->pnFirstName == NULL) {
 			fprintf(stderr, "Not enough memory\n");
-			exit(EXIT_FAILURE);
+			isds_DbUserInfo_free(&aux);
+			ret = EXIT_FAILURE;
+			goto fail;
 		}
 
 		*user_to_be_created->userPrivils = PRIVIL_VIEW_INFO;
@@ -333,7 +348,9 @@ int main(void)
 			fprintf(stderr,
 			    "isds_UpdateDataBoxUser() failed: %s: %s\n",
 			    isds_strerror(err), isds_long_message(ctx));
-			exit(EXIT_FAILURE);
+			isds_DbUserInfo_free(&aux);
+			ret = EXIT_FAILURE;
+			goto fail;
 		} else {
 			printf(
 			    "isds_UpdateDataBoxUser() succeeded with reference number: %s\n",
@@ -357,7 +374,8 @@ int main(void)
 		if (err != IE_SUCCESS) {
 			fprintf(stderr, "isds_delete_user() failed: %s: %s\n",
 			    isds_strerror(err), isds_long_message(ctx));
-			exit(EXIT_FAILURE);
+			ret = EXIT_FAILURE;
+			goto fail;
 		} else {
 			printf(
 			    "isds_delete_user() succeeded with reference number: %s\n",
@@ -367,6 +385,9 @@ int main(void)
 		free(refnumber); refnumber = NULL;
 	}
 
+	ret = EXIT_SUCCESS;
+
+fail:
 	isds_DbUserInfo_free(&user_actually_created);
 	isds_DbUserInfo_free(&user_to_be_created);
 	isds_DbUserInfo_free(&user_existing);
@@ -390,5 +411,5 @@ int main(void)
 		    isds_strerror(err));
 	}
 
-	exit (EXIT_SUCCESS);
+	exit(ret);
 }
