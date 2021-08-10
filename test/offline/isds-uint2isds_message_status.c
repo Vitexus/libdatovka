@@ -85,6 +85,8 @@ int main(void) {
     TEST("NULL output", test_uint2isds_message_status, context, &numbers[0],
             IE_INVAL, states[0], NULL);
 
+    free(text);
+
     isds_ctx_free(&context);
     isds_cleanup();
     SUM_TEST();

@@ -214,6 +214,9 @@ int main(void) {
     TEST("NULL output", test_eventstring2event, input,
             IE_INVAL, &event, NULL);
 
+    free(output.type);
+    free(output.description);
+
     isds_cleanup();
     SUM_TEST();
 }
