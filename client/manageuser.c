@@ -106,6 +106,45 @@ static _Bool isds_DbUserInfo_match(const struct isds_DbUserInfo *u1,
 	        isds_Address_eq(u1->address, u2->address));
 }
 
+static char *login_from_status_message(const char *status_message)
+{
+	/*
+	 * The status message in the testing environment usually has
+	 * the following format:
+	 * ```
+	 * Provedeno úspěšně.Login 6u2syv password Tn9_yZQvHe
+	 * ```
+	 */
+
+	/* Find the occurrence of 'ogin '. */
+	const char *log_pref_str = "ogin ";
+	size_t log_pref_len = strlen(log_pref_str);
+
+	const char *found_start = strstr(status_message, log_pref_str);
+	const char *found_end = NULL;
+	size_t found_len = 0;
+	if (found_start == NULL) {
+		return NULL;
+	}
+
+	found_start += log_pref_len;
+	found_end = found_start;
+	while ((found_end != NULL) && (*found_end != '\0') && (*found_end != ' ')) {
+		++found_end;
+	}
+	found_len = found_end - found_start;
+
+	char *passwd_str = malloc(found_len + 1);
+	if (passwd_str == NULL) {
+		return NULL;
+	}
+
+	memcpy(passwd_str, found_start, found_len);
+	passwd_str[found_len] = '\0';
+
+	return passwd_str;
+}
+
 int main(void)
 {
 	struct isds_ctx *ctx = NULL;
@@ -114,6 +153,7 @@ int main(void)
 	struct isds_DbUserInfo *user_existing = NULL;
 	struct isds_DbUserInfo *user_to_be_created = NULL;
 	struct isds_DbUserInfo *user_actually_created = NULL;
+	char *newly_added_username = NULL;
 	int ret = EXIT_FAILURE;
 
 	setlocale(LC_ALL, "");
@@ -212,8 +252,7 @@ int main(void)
 				    join_str("Pappenheimergasse", NULL);
 			}
 			if (address->adNumberInStreet == NULL) {
-				address->adNumberInStreet =
-				    join_str("6", NULL);
+				address->adNumberInStreet = join_str("6", NULL);
 			}
 			if (address->adNumberInMunicipality == NULL) {
 				address->adNumberInMunicipality =
@@ -257,6 +296,15 @@ int main(void)
 			printf(
 			    "Obtained status code: '%s'; message: '%s'; reference number: '%s'\n",
 			    status->code, status->message, status->ref_number);
+			newly_added_username = login_from_status_message(status->message);
+			if (newly_added_username != NULL) {
+				printf("Username of newly added user: %s\n",
+				    newly_added_username);
+			} else {
+				fprintf(stderr, "Cannot obtain username for newly added user.\n");
+				ret = EXIT_FAILURE;
+				goto fail;
+			}
 		} else {
 			fprintf(stderr, "Cannot obtain status after calling isds_add_user()\n");
 			ret = EXIT_FAILURE;
@@ -279,7 +327,10 @@ int main(void)
 	 * by acquiring the status via isds_operation_status().
 	 */
 
-	/* Download user data and search for newly created user. */
+	/*
+	 * Download user data and search for newly created user.
+	 * The service GetDataBoxUsers is no longer supported in ISDS.
+	 */
 	{
 		struct isds_list *users = NULL, *item;
 
@@ -316,6 +367,15 @@ int main(void)
 		isds_list_free(&users);
 	}
 
+	/* Fake the created user info as GetDataBoxUsers does not work. */
+	if ((newly_added_username != NULL) && (user_actually_created == NULL)) {
+		user_actually_created =
+		    isds_DbUserInfo_duplicate(user_to_be_created);
+		free(user_actually_created->userID);
+		user_actually_created->userID = newly_added_username;
+		newly_added_username = NULL;
+	}
+
 	/* Modify user name and privileges. */
 	if (user_actually_created != NULL) {
 		char *refnumber = NULL;
@@ -328,6 +388,7 @@ int main(void)
 			goto fail;
 		}
 
+		free(user_actually_created->personName->pnFirstName);
 		user_actually_created->personName->pnFirstName =
 		    join_str("Yet ", aux->personName->pnFirstName);
 		if (user_actually_created->personName->pnFirstName == NULL) {
@@ -366,7 +427,7 @@ int main(void)
 		char *refnumber = NULL;
 
 		printf("Deleting newly added user from data box with ID `%s':\n",
-		        db_owner_info->dbID);
+		    db_owner_info->dbID);
 		print_DbUserInfo(user_actually_created);
 
 		err = isds_delete_user(ctx, db_owner_info,
@@ -388,6 +449,7 @@ int main(void)
 	ret = EXIT_SUCCESS;
 
 fail:
+	free(newly_added_username);
 	isds_DbUserInfo_free(&user_actually_created);
 	isds_DbUserInfo_free(&user_to_be_created);
 	isds_DbUserInfo_free(&user_existing);
