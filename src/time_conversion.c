@@ -1,13 +1,14 @@
 
 #include "isds_priv.h" /* _XOPEN_SOURCE -- gmtime_r */
 #include "time_conversion.h"
+#include "utils.h" /* _hidden */
 
 #ifdef _WIN32
 /* time_conversion_win32.c */
 struct tm *gmtime_r(const time_t *timep, struct tm *result);
 #endif /* _WIN32 */
 
-struct tm *_isds_gmtime_r(const int64_t *timep, struct tm *result)
+_hidden struct tm *_isds_gmtime_r(const int64_t *timep, struct tm *result)
 {
 	/*
 	 * Various systems use various time_t representation.
