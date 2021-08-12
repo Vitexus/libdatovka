@@ -3056,7 +3056,7 @@ static isds_error timestring2static_timeval(const xmlChar *string,
 
     /* Convert to time_t */
     time->tv_sec = func_timegm(&broken);
-    if (time->tv_sec == (time_t) -1) {
+    if (time->tv_sec == -1) { /* Used to be (time_t)-1 for struct timeval. */
         return IE_DATE;
     }
 
