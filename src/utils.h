@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <time.h>
 
 /* _hidden macro marks library private symbols. GCC can exclude them from global
  * symbols table */
@@ -62,7 +61,7 @@ int isds_asprintf(char **buffer, const char *format, ...);
  * NULL is appended. Can be NULL, if resulting size is 0. You must free it.
  * @return size of @output in bytes. In case of error returns (size_t) -1 and
  * deallocates @output if this function allocated it in this call. */
-_hidden size_t _isds_any2any(const char *from, const char *to,
+size_t _isds_any2any(const char *from, const char *to,
         const void *input, size_t input_length, void **output);
 
 /* Converts UTF8 string into locale encoded string.
@@ -90,12 +89,6 @@ size_t _isds_b64decode(const char *encoded, void **plain);
 /* Convert hexadecimal digit to integer. Return negative value if character is
  * not valid hexadecimal digit. */
 int _isds_hex2i(char digit);
-
-/* Convert UTC broken time to time_t.
- * @broken_utc time in UTC in broken format. Its content is not touched,
- * it's non-const because underlying POSIX function has non-const signature.
- * @return (time_t) -1 in case of error */
-time_t _isds_timegm(struct tm *broken_utc);
 
 /* Convert size_t to int.
  * @val Value to be converted to int.

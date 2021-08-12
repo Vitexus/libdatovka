@@ -15,6 +15,7 @@
 #include "crypto.h"
 #include "physxml.h"
 #include "system.h"
+#include "time_conversion.h"
 
 unsigned long isds_lib_ver_num(void)
 {
@@ -113,6 +114,13 @@ static const xmlChar *extension_map_mime[] = {
     BAD_CAST "xsd", BAD_CAST "application/xml",
     BAD_CAST "zfo", BAD_CAST "application/vnd.software602.filler.form-xml-zip"
 };
+
+/*
+ * Default timegm() and gmtime_r() implementations.
+ * These may not work on all systems well particularly past the year 2038.
+ */
+static int64_t (*func_timegm)(struct tm *) = _isds_timegm;
+static struct tm *(*func_gmtime_r)(const int64_t *, struct tm *) = _isds_gmtime_r;
 
 /* Structure type to hold conversion table from status code to isds_error and
  * long message */
@@ -1167,6 +1175,154 @@ struct isds_ctx *isds_ctx_create(void) {
     if (context) memset(context, 0, sizeof(*context));
     return context;
 };
+
+void isds_set_func_timegm(int64_t (*f_timegm)(struct tm *))
+{
+	if (f_timegm != NULL) {
+		func_timegm = f_timegm;
+	} else {
+		/* Reset defaults. */
+		func_timegm = _isds_timegm;
+	}
+}
+
+/*
+ * Check the result of the conversion using the preset func_timegm.
+ */
+static
+isds_error check_time(struct isds_ctx *context, struct tm *tm, const int64_t expected)
+{
+	if (tm == NULL) {
+		return IE_INVAL;
+	}
+
+	int64_t secs = func_timegm(tm);
+
+	if (secs == expected) {
+		return IE_SUCCESS;
+	} else {
+		int64_t diff = expected - secs;
+		isds_printf_message(context,
+		    _("Unexpected timegm() outcome %" PRId64 "; expected %" PRId64 "; difference %" PRId64 ")\n"),
+		    secs, expected, diff);
+		return IE_ERROR;
+	}
+}
+
+isds_error isds_check_func_timegm(struct isds_ctx *context)
+{
+	struct tm tm;
+
+	memset(&tm, 0, sizeof(tm));
+	tm.tm_sec = 7 - 0;
+	tm.tm_min = 14 - 0;
+	tm.tm_hour = 3 - 0;
+	tm.tm_mday = 19 - 0;
+	tm.tm_mon = 1 - 1;
+	tm.tm_year = 2038 - 1900;
+	//tm.tm_wday;
+	//tm.tm_yday;
+	//tm.tm_isdst;
+
+	isds_error ret = check_time(context, &tm, 2147483647ll);
+	if (ret != IE_SUCCESS) {
+		return ret;
+	}
+
+	memset(&tm, 0, sizeof(tm));
+	tm.tm_sec = 7 - 0;
+	tm.tm_min = 14 - 0;
+	tm.tm_hour = 3 - 0;
+	tm.tm_mday = 19 - 0;
+	tm.tm_mon = 1 - 1;
+	tm.tm_year = 2138 - 1900;
+	//tm.tm_wday;
+	//tm.tm_yday;
+	//tm.tm_isdst;
+
+	return check_time(context, &tm, 5303157247ll);
+}
+
+void isds_set_func_gmtime_r(struct tm *(*f_gmtime_r)(const int64_t *, struct tm *))
+{
+	if (f_gmtime_r != NULL) {
+		func_gmtime_r = f_gmtime_r;
+	} else {
+		/* Reset defaults. */
+		func_gmtime_r = _isds_gmtime_r;
+	}
+}
+
+/*
+ * Check the result of the conversion using the preset func_gmtime_r.
+ */
+static
+isds_error check_tm(struct isds_ctx *context, const int64_t time, const struct tm *expected)
+{
+	if (expected == NULL) {
+		return IE_INVAL;
+	}
+
+	struct tm tm;
+	struct tm *result;
+
+	result = func_gmtime_r(&time, &tm);
+	if (result == NULL) {
+		isds_log_message(context, _("Unexpected gmtime_r() NULL outcome."));
+		return IE_ERROR;
+	}
+
+	if ((result->tm_sec == expected->tm_sec) &&
+	    (result->tm_min == expected->tm_min) &&
+	    (result->tm_hour == expected->tm_hour) &&
+	    (result->tm_mday == expected->tm_mday) &&
+	    (result->tm_mon == expected->tm_mon) &&
+	    (result->tm_year == expected->tm_year)) {
+		return IE_SUCCESS;
+	} else {
+		isds_printf_message(context,
+		    _("Unexpected gmtime_r() outcome %04d-%02d-%02d;%02d:%02d:%02d; expected %04d-%02d-%02d;%02d:%02d:%02d\n"),
+		    result->tm_year + 1900, result->tm_mon + 1, result->tm_mday,
+		    result->tm_hour, result->tm_min, result->tm_sec,
+		    expected->tm_year + 1900, expected->tm_mon + 1, expected->tm_mday,
+		    expected->tm_hour, expected->tm_min, expected->tm_sec);
+		return IE_ERROR;
+	}
+}
+
+isds_error isds_check_func_gmtime_r(struct isds_ctx *context)
+{
+	struct tm tm;
+
+	memset(&tm, 0, sizeof(tm));
+	tm.tm_sec = 7 - 0;
+	tm.tm_min = 14 - 0;
+	tm.tm_hour = 3 - 0;
+	tm.tm_mday = 19 - 0;
+	tm.tm_mon = 1 - 1;
+	tm.tm_year = 2038 - 1900;
+	//tm.tm_wday;
+	//tm.tm_yday;
+	//tm.tm_isdst;
+
+	isds_error ret = check_tm(context, 2147483647ll, &tm);
+	if (ret != IE_SUCCESS) {
+		return ret;
+	}
+
+	memset(&tm, 0, sizeof(tm));
+	tm.tm_sec = 7 - 0;
+	tm.tm_min = 14 - 0;
+	tm.tm_hour = 3 - 0;
+	tm.tm_mday = 19 - 0;
+	tm.tm_mon = 1 - 1;
+	tm.tm_year = 2138 - 1900;
+	//tm.tm_wday;
+	//tm.tm_yday;
+	//tm.tm_isdst;
+
+	return check_tm(context, 5303157247ll, &tm);
+}
 
 #if HAVE_LIBCURL
 /* Close possibly opened connection to Czech POINT document deposit without
@@ -2743,20 +2899,15 @@ static isds_error tm2datestring(const struct tm *time, xmlChar **string) {
 }
 
 
-/* Convert struct timeval * @time to UTF-8 ISO 8601 date-time @string. It
+/* Convert struct isds_timeval * @time to UTF-8 ISO 8601 date-time @string. It
  * respects the @time microseconds too. */
-static isds_error timeval2timestring(const struct timeval *time,
+static isds_error timeval2timestring(const struct isds_timeval *time,
         xmlChar **string) {
     struct tm broken;
-    time_t seconds_as_time_t;
 
     if (!time || !string) return IE_INVAL;
 
-    /* MinGW32 GCC 4.8+ uses 64-bit time_t but time->tv_sec is defined as
-     * 32-bit long in Microsoft API. Convert value to the type expected by
-     * gmtime_r(). */
-    seconds_as_time_t = time->tv_sec;
-    if (!gmtime_r(&seconds_as_time_t, &broken)) return IE_DATE;
+    if (!func_gmtime_r(&time->tv_sec, &broken)) return IE_DATE;
     if (time->tv_usec < 0 || time->tv_usec > 999999) return IE_DATE;
 
     /* TODO: small negative year should be formatted as "-0012". This is not
@@ -2779,11 +2930,11 @@ static isds_error timeval2timestring(const struct timeval *time,
 #endif /* HAVE_LIBCURL */
 
 
-/* Convert UTF-8 ISO 8601 date-time @string to static struct timeval.
+/* Convert UTF-8 ISO 8601 date-time @string to static struct isds_timeval.
  * It respects microseconds too. Microseconds are rounded half up.
  * In case of error, @time will be undefined. */
 static isds_error timestring2static_timeval(const xmlChar *string,
-        struct timeval *time) {
+        struct isds_timeval *time) {
     struct tm broken;
     char *offset, *delim, *endptr;
     const int subsecond_resolution = 6;
@@ -2904,8 +3055,8 @@ static isds_error timestring2static_timeval(const xmlChar *string,
     }
 
     /* Convert to time_t */
-    time->tv_sec = _isds_timegm(&broken);
-    if (time->tv_sec == (time_t) -1) {
+    time->tv_sec = func_timegm(&broken);
+    if (time->tv_sec == -1) { /* Used to be (time_t)-1 for struct timeval. */
         return IE_DATE;
     }
 
@@ -2913,11 +3064,11 @@ static isds_error timestring2static_timeval(const xmlChar *string,
 }
 
 
-/* Convert UTF-8 ISO 8601 date-time @string to reallocated struct timeval.
+/* Convert UTF-8 ISO 8601 date-time @string to reallocated struct isds_timeval.
  * It respects microseconds too. Microseconds are rounded half up.
  * In case of error, @time will be freed. */
 static isds_error timestring2timeval(const xmlChar *string,
-        struct timeval **time) {
+        struct isds_timeval **time) {
     isds_error error;
 
     if (!time) return IE_INVAL;
@@ -6330,7 +6481,7 @@ leave:
  * password expiration is disabled, NULL will be returned. In case of error
  * it will be set to NULL too. */
 isds_error isds_get_password_expiration(struct isds_ctx *context,
-        struct timeval **expiration) {
+        struct isds_timeval **expiration) {
     isds_error err = IE_SUCCESS;
 #if HAVE_LIBCURL
     xmlDocPtr response = NULL;
@@ -9898,7 +10049,7 @@ leave:
  *  the history only to some users. */
 isds_error isds_get_box_state_history(struct isds_ctx *context,
         const char *box_id,
-        const struct timeval *from_time, const struct timeval *to_time,
+        const struct isds_timeval *from_time, const struct isds_timeval *to_time,
         struct isds_list **history) {
     isds_error err = IE_SUCCESS;
 #if HAVE_LIBCURL
@@ -11418,7 +11569,7 @@ leave:
  * @return IE_SUCCESS or appropriate error code. */
 static isds_error isds_get_list_of_messages(struct isds_ctx *context,
         _Bool outgoing_direction,
-        const struct timeval *from_time, const struct timeval *to_time,
+        const struct isds_timeval *from_time, const struct isds_timeval *to_time,
         const long int *organization_unit_number,
         const unsigned int status_filter,
         const unsigned long int offset, unsigned long int *number,
@@ -11690,7 +11841,7 @@ leave:
  * first. Also in case of error the list will be set to NULL.
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
-        const struct timeval *from_time, const struct timeval *to_time,
+        const struct isds_timeval *from_time, const struct isds_timeval *to_time,
         const long int *dmSenderOrgUnitNum, const unsigned int status_filter,
         const unsigned long int offset, unsigned long int *number,
         struct isds_list **messages) {
@@ -11726,7 +11877,7 @@ isds_error isds_get_list_of_sent_messages(struct isds_ctx *context,
  * first. Also in case of error the list will be set to NULL.
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
-        const struct timeval *from_time, const struct timeval *to_time,
+        const struct isds_timeval *from_time, const struct isds_timeval *to_time,
         const long int *dmRecipientOrgUnitNum,
         const unsigned int status_filter,
         const unsigned long int offset, unsigned long int *number,
@@ -11754,7 +11905,7 @@ isds_error isds_get_list_of_received_messages(struct isds_ctx *context,
  * @return IE_SUCCESS or appropriate error code. */
 isds_error isds_get_list_of_sent_message_state_changes(
         struct isds_ctx *context,
-        const struct timeval *from_time, const struct timeval *to_time,
+        const struct isds_timeval *from_time, const struct isds_timeval *to_time,
         struct isds_list **changed_states) {
 
     isds_error err = IE_SUCCESS;

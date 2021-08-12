@@ -131,7 +131,7 @@ int main(void) {
 
     {
         /* Get password expiration time */
-        struct timeval *expiration = NULL;
+        struct isds_timeval *expiration = NULL;
         printf("Getting password expiration time\n");
         err = isds_get_password_expiration(ctx, &expiration);
         if (err)

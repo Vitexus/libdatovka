@@ -87,20 +87,6 @@ isds_error _isds_datestring2tm(const xmlChar *string, struct tm *time) {
 }
 #endif
 
-/* MSVCRT gmtime() uses thread-local buffer. This is reentrant. */
-_hidden struct tm *gmtime_r(const time_t *timep, struct tm *result) {
-    struct tm *buf;
-
-    buf = gmtime(timep);
-
-    if (!buf) {
-        return NULL;
-    }
-
-    memcpy(result, buf, sizeof(struct tm));
-    return result;
-}
-
 _hidden char *strndup(const char *s, size_t n) {
     char *ret;
     size_t len;
@@ -115,30 +101,6 @@ _hidden char *strndup(const char *s, size_t n) {
 
     strncpy(ret, s, len);
     ret[len] = '\0';
-    return ret;
-}
-
-/* Convert UTC broken time to time_t.
- * @broken_utc time in UTC in broken format. Its content is not touched,
- * it's non-const because underlying POSIX function has non-const signature.
- * @return (time_t) -1 in case of error */
-_hidden time_t _isds_timegm(struct tm *broken_utc) {
-    time_t ret;
-    time_t diff;
-    struct tm broken, *tmp;
-
-    ret = time(0);
-    tmp = gmtime(&ret);
-
-    if (!tmp) {
-        return (time_t)-1;
-    }
-
-    tmp->tm_isdst = broken_utc->tm_isdst;
-    diff = ret - mktime(tmp);
-    memcpy(&broken, broken_utc, sizeof(struct tm));
-    broken.tm_isdst = tmp->tm_isdst; /* handle broken_utc->tm_isdst < 0 */
-    ret = mktime(&broken) + diff;
     return ret;
 }
 

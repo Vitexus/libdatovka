@@ -13,7 +13,6 @@
 #define strtok_r strtok_s
 #endif
 
-struct tm *gmtime_r(const time_t *timep, struct tm *result);
 char *strndup(const char *s, size_t n);
 
 // disabled under MinGW by -std=c99

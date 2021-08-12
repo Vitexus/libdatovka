@@ -56,6 +56,7 @@ common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/isds.c \
 	$(LIBDIR)/physxml.c \
+	$(LIBDIR)/time_conversion.c \
 	$(LIBDIR)/utils.c \
 	$(LIBDIR)/validator.c \
 	$(LIBDIR)/cdecode.h \
@@ -64,6 +65,7 @@ common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/gettext.h \
 	$(LIBDIR)/isds_priv.h \
 	$(LIBDIR)/physxml.h \
+	$(LIBDIR)/time_conversion.h \
 	$(LIBDIR)/utils.h \
 	$(LIBDIR)/validator.h
 if USE_OPENSSL_BACKEND
@@ -77,9 +79,9 @@ if BUILD_CURL
 common += $(LIBDIR)/soap.c $(LIBDIR)/soap.h
 endif
 if WIN32
-common += $(LIBDIR)/win32.c $(LIBDIR)/win32.h
+common += $(LIBDIR)/time_conversion_win32.c $(LIBDIR)/win32.c $(LIBDIR)/win32.h
 else
-common += $(LIBDIR)/unix.c $(LIBDIR)/unix.h
+common += $(LIBDIR)/time_conversion_unix.c $(LIBDIR)/unix.c $(LIBDIR)/unix.h
 endif
 
 # Omit isds.c
@@ -88,6 +90,7 @@ isds_common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/cdecode.c \
 	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/physxml.c \
+	$(LIBDIR)/time_conversion.c \
 	$(LIBDIR)/utils.c \
 	$(LIBDIR)/validator.c \
 	$(LIBDIR)/cdecode.h \
@@ -95,6 +98,7 @@ isds_common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/crypto.h \
 	$(LIBDIR)/isds_priv.h \
 	$(LIBDIR)/physxml.h \
+	$(LIBDIR)/time_conversion.h \
 	$(LIBDIR)/utils.h \
 	$(LIBDIR)/validator.h
 if USE_OPENSSL_BACKEND
@@ -108,9 +112,9 @@ if BUILD_CURL
 isds_common += $(LIBDIR)/soap.c $(LIBDIR)/soap.h
 endif
 if WIN32
-isds_common += $(LIBDIR)/win32.c $(LIBDIR)/win32.h
+isds_common += $(LIBDIR)/time_conversion_win32.c $(LIBDIR)/win32.c $(LIBDIR)/win32.h
 else
-isds_common += $(LIBDIR)/unix.c $(LIBDIR)/unix.h
+isds_common += $(LIBDIR)/time_conversion_unix.c $(LIBDIR)/unix.c $(LIBDIR)/unix.h
 endif
 
 # Omit soap.c
@@ -120,6 +124,7 @@ soap_common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/isds.c \
 	$(LIBDIR)/physxml.c \
+	$(LIBDIR)/time_conversion.c \
 	$(LIBDIR)/utils.c \
 	$(LIBDIR)/validator.c \
 	$(LIBDIR)/cdecode.h \
@@ -127,6 +132,7 @@ soap_common = ../test.c ../test.h ../test-tools.h \
 	$(LIBDIR)/crypto.h \
 	$(LIBDIR)/isds_priv.h \
 	$(LIBDIR)/physxml.h \
+	$(LIBDIR)/time_conversion.h \
 	$(LIBDIR)/utils.h \
 	$(LIBDIR)/validator.h
 if USE_OPENSSL_BACKEND
@@ -140,9 +146,9 @@ if BUILD_CURL
 soap_common += $(LIBDIR)/soap.h
 endif
 if WIN32
-soap_common += $(LIBDIR)/win32.c $(LIBDIR)/win32.h
+soap_common += $(LIBDIR)/time_conversion_win32.c $(LIBDIR)/win32.c $(LIBDIR)/win32.h
 else
-soap_common += $(LIBDIR)/unix.c $(LIBDIR)/unix.h
+soap_common += $(LIBDIR)/time_conversion_unix.c $(LIBDIR)/unix.c $(LIBDIR)/unix.h
 endif
 
 # Access _hidden symbols

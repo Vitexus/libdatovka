@@ -1664,7 +1664,7 @@ err = isds_cleanup();
           optional. Members are:</para>
         <variablelist>
           <varlistentry>
-            <term><type>struct timeval *</type><structfield>time</structfield>;</term>
+            <term><type>struct isds_timeval *</type><structfield>time</structfield>;</term>
             <listitem><para>When the event occurred.</para></listitem>
           </varlistentry>
 
@@ -1770,14 +1770,14 @@ err = isds_cleanup();
           </varlistentry>
 
           <varlistentry>
-            <term><type>struct timeval *</type><structfield>dmDeliveryTime</structfield>;</term>
+            <term><type>struct isds_timeval *</type><structfield>dmDeliveryTime</structfield>;</term>
             <listitem><para>The time of delivering the message into recipient's
                 box. It will be <constant>NULL</constant>, if the message has not
                 been delivered yet.</para></listitem>
           </varlistentry>
 
           <varlistentry>
-            <term><type>struct timeval *</type><structfield>dmAcceptanceTime</structfield>;</term>
+            <term><type>struct isds_timeval *</type><structfield>dmAcceptanceTime</structfield>;</term>
             <listitem><para>The time of accepting the message by the
                 recipient. It will be <constant>NULL</constant>, if message
                 has not been accepted yet.</para></listitem>
@@ -2237,12 +2237,12 @@ err = isds_cleanup();
         <para>A box state valid in the time range. Members are:</para>
         <variablelist>
           <varlistentry>
-            <term><type>struct timeval *</type><structfield>from</structfield>;</term>
+            <term><type>struct isds_timeval *</type><structfield>from</structfield>;</term>
             <listitem><para>Time range beginning.</para></listitem>
           </varlistentry>
 
           <varlistentry>
-            <term><type>struct timeval *</type><structfield>to</structfield>;</term>
+            <term><type>struct isds_timeval *</type><structfield>to</structfield>;</term>
             <listitem><para>Time range end.</para></listitem>
           </varlistentry>
 
