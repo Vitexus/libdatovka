@@ -836,6 +836,12 @@ struct isds_commercial_permission {
                                        PAYMENT_RESPONSE. */
 };
 
+/* Type of commercial message. */
+typedef enum isds_commercial_message_type {
+    COMMERCIAL_NORMAL = 0, /* Normal commercial message. */
+    COMMERCIAL_INIT /* Initiatory commercial message. */
+} isds_commercial_message_type;
+
 /* Type of credit change event */
 typedef enum {
     ISDS_CREDIT_CHARGED,        /* Credit has been charged */
@@ -1614,7 +1620,7 @@ isds_error isds_get_box_state_history(struct isds_ctx *context,
         const struct timeval *from_time, const struct timeval *to_time,
         struct isds_list **history);
 
-/* Get list of permissions to send commercial messages.
+/* Get list of permissions to send commercial messages (ISDS operation PDZInfo).
  * @context is ISDS session context.
  * @box_id is UTF-8 encoded sender box identifier as zero terminated string
  * @permissions is a reallocated list of permissions (struct
@@ -1628,7 +1634,20 @@ isds_error isds_get_box_state_history(struct isds_ctx *context,
 isds_error isds_get_commercial_permissions(struct isds_ctx *context,
         const char *box_id, struct isds_list **permissions);
 
-/* Get details about credit for sending pre-paid commercial messages.
+/* Checks whether there can a commercial message be sent to the recipient
+ * (ISDS operation PDZSendInfo).
+ * @context is ISDS session context.
+ * @box_id is UTF-8 encoded recipient box identifier as zero terminated string.
+ * @type is a commercial message type value.
+ * @can_send is return value of the operation.
+ * @return:
+ *  IE_SUCCESS if the result has been obtained correctly,
+ *  or other appropriate error.
+ */
+isds_error isds_PDZSendInfo(struct isds_ctx *context, const char *box_id,
+    enum isds_commercial_message_type type, _Bool *can_send);
+
+/* Get details about credit for sending pre-paid commercial messages (ISDS operation DataBoxCreditInfo).
  * @context is ISDS session context.
  * @box_id is UTF-8 encoded sender box identifier as zero terminated string.
  * @from_date is first day of credit history to return in @history. Only
