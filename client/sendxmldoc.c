@@ -72,13 +72,15 @@ int main(int argc, char **argv) {
     char *recipient = NULL;
     xmlDocPtr xml = NULL;
     struct isds_list *documents = NULL;
+    int ret = EXIT_FAILURE;
 
     setlocale(LC_ALL, "");
 
     err = isds_init();
     if (err) {
         printf("isds_init() failed: %s\n", isds_strerror(err));
-        exit(EXIT_FAILURE);
+        ret = EXIT_FAILURE;
+        goto fail;
     }
 
     isds_set_logging(ILF_ALL & ~ILF_HTTP, ILL_ALL);
@@ -147,19 +149,22 @@ int main(int argc, char **argv) {
 "to RECIPIENT. If RECIPIENT is empty, send to random found one. If more\n"
 "XPATH_EXPRESSIONS are specified creates XML document for each of them.\n",
             basename(argv[0]));
-            exit(EXIT_FAILURE);
+            ret = EXIT_FAILURE;
+            goto fail;
         }
 
         xml = xmlParseFile(argv[2]);
         if (!xml) {
             printf("Error while parsing `%s'\n", argv[1]);
-            exit(EXIT_FAILURE);
+            ret = EXIT_FAILURE;
+            goto fail;
         }
 
         xpath_ctx = xmlXPathNewContext(xml);
         if (!xpath_ctx) {
             printf("Error while creating XPath context\n");
-            exit(EXIT_FAILURE);
+            ret = EXIT_FAILURE;
+            goto fail;
         }
 
         for (int j = 3; j < argc; j++) {
@@ -168,7 +173,8 @@ int main(int argc, char **argv) {
             document = calloc(1, sizeof(*document));
             if (!document) {
                 printf("Not enough memory\n");
-                exit(EXIT_FAILURE);
+                ret = EXIT_FAILURE;
+                goto fail;
             }
             document->is_xml = 1;
             document->dmMimeType = "text/xml";
@@ -182,13 +188,15 @@ int main(int argc, char **argv) {
                     BAD_CAST argv[j])) {
                 printf("Could not convert XPath result to node list: %s\n",
                         argv[j]);
-                exit(EXIT_FAILURE);
+                ret = EXIT_FAILURE;
+                goto fail;
             }
 
             documents_item = calloc(1, sizeof(*documents_item));
             if (!documents_item) {
                 printf("Not enough memory\n");
-                exit(EXIT_FAILURE);
+                ret = EXIT_FAILURE;
+                goto fail;
             }
 
             documents_item->data = document,
@@ -232,6 +240,9 @@ int main(int argc, char **argv) {
 
     }
 
+    ret = EXIT_SUCCESS;
+
+fail:
     /* Free document xml_node_lists because they are weak copies of nodes in
      * message->xml and isds_document_free() does not free it. */
     for (struct isds_list *item = documents; item; item = item->next) {
@@ -249,23 +260,20 @@ int main(int argc, char **argv) {
     free(recipient);
     xmlFreeDoc(xml);
 
-
     err = isds_logout(ctx);
     if (err) {
         printf("isds_logout() failed: %s\n", isds_strerror(err));
     }
-
 
     err = isds_ctx_free(&ctx);
     if (err) {
         printf("isds_ctx_free() failed: %s\n", isds_strerror(err));
     }
 
-
     err = isds_cleanup();
     if (err) {
         printf("isds_cleanup() failed: %s\n", isds_strerror(err));
     }
 
-    exit (EXIT_SUCCESS);
+    exit(ret);
 }

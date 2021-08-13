@@ -91,7 +91,7 @@ int main(void) {
     }
 
 
-    if (last_message_id) {
+    if (last_message_id != NULL) {
 
         /* Download last message hash */
         struct isds_hash *hash = NULL;
@@ -107,7 +107,8 @@ int main(void) {
             print_hash(hash);
         }
 
-        free(last_message_id);
+        isds_hash_free(&hash);
+        free(last_message_id); last_message_id = NULL;
     }
 
 

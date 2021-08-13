@@ -9,6 +9,7 @@
 
 
 int main(void) {
+    char *version_str = NULL;
     isds_error err;
 
     setlocale(LC_ALL, "");
@@ -19,7 +20,9 @@ int main(void) {
         exit(EXIT_FAILURE);
     }
 
-    printf("libdatovka version: %s\n", isds_version());
+    version_str = isds_version();
+    printf("libdatovka version: %s\n", version_str);
+    free(version_str);
 
     err = isds_cleanup();
     if (err) {

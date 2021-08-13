@@ -192,8 +192,11 @@ int main(void) {
                     printf("List item #%d:\n", n);
                     print_DbOwnerInfo(item->data);
                 }
-                if (n == 1) recipient = strdup(
+                if (n == 1) {
+                    free(recipient);
+                    recipient = strdup(
                         ((struct isds_DbOwnerInfo *)(item->data))->dbID);
+                }
             }
             if (err == IE_TOO_BIG)
                 printf("isds_FindDataBox() results truncated to %d boxes\n",
@@ -326,7 +329,7 @@ int main(void) {
         free(message.envelope->dmID);
     }
 
-
+    free(recipient); recipient = NULL;
 
     err = isds_logout(ctx);
     if (err) {

@@ -92,7 +92,7 @@ int main(void) {
 
 
     /* Download last message envelope*/
-    if (last_message_id) {
+    if (last_message_id != NULL) {
         struct isds_message *message = NULL;
 
         printf("Getting last received envelope with ID: %s\n", last_message_id);
@@ -106,7 +106,7 @@ int main(void) {
         }
 
         isds_message_free(&message);
-        free(last_message_id);
+        free(last_message_id); last_message_id = NULL;
     }
 
 

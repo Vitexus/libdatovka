@@ -2381,7 +2381,8 @@ static isds_error serialize_subtree(struct isds_ctx *context,
      * XXX: Check xmlDOMWrapRemoveNode(). It could solve NS references
      * automatically.
      * XXX: Check xmlSaveTree() too. */
-    subtree_copy = xmlCopyNodeList(subtree);
+    /* Usage of xmlCopyNodeList(subtree) leaks memory. */
+    subtree_copy = xmlCopyNode(subtree, 1);
     if (!subtree_copy) {
         isds_log_message(context, _("Could not copy subtree"));
         err = IE_ERROR;
