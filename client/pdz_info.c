@@ -3,6 +3,7 @@
 
 #include <libdatovka/isds.h>
 #include <locale.h>
+#include <stdbool.h> /* true */
 #include <stdio.h>
 #include <stdlib.h>
 
