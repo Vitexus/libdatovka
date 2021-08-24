@@ -1,4 +1,4 @@
-0.2.0 /
+0.2.0 / 2021-08-24
  * Added function isds_PDZSendInfo() which supports the PDZSendInfo ISDS
    operation.
  * Using struct isds_timeval instead of struct timeval in the library interface.
