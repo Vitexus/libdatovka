@@ -10705,7 +10705,124 @@ leave:
 isds_error isds_DTInfo(struct isds_ctx *context, const char *box_id,
     struct isds_DTInfoOutput **dt_info_response)
 {
-	return IE_NOTSUP;
+	isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	char *box_id_locale = NULL;
+	xmlNodePtr request = NULL;
+	xmlNodePtr node;
+	xmlNsPtr isds_ns = NULL;
+
+	xmlDocPtr response = NULL;
+	xmlXPathContextPtr xpath_ctx = NULL;
+	xmlXPathObjectPtr result = NULL;
+#endif /* HAVE_LIBCURL */
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if (NULL == box_id) {
+		return IE_INVAL;
+	}
+	if (NULL == dt_info_response) {
+		return IE_INVAL;
+	}
+
+#if HAVE_LIBCURL
+	/* Check whether connection is established. */
+	if (NULL == context->curl) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	/* Build the request. */
+	box_id_locale = _isds_utf82locale((char*)box_id);
+	if (NULL == box_id_locale) {
+		err = IE_NOMEM;
+		goto leave;
+	}
+
+	request = xmlNewNode(NULL, BAD_CAST "DTInfo");
+	if (NULL == request) {
+		isds_printf_message(context,
+		    _("Could not build DTInfo request for %s box"),
+		    box_id_locale);
+		err = IE_ERROR;
+		goto leave;
+	}
+	isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+	if(NULL == isds_ns) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		err = IE_ERROR;
+		goto leave;
+	}
+	xmlSetNs(request, isds_ns);
+
+	/* Add dbId child. */
+	INSERT_STRING(request, BAD_CAST "dbId", box_id);
+
+	/* Send request and check response. */
+	err = send_destroy_request_check_response(context,
+	    SERVICE_DB_SEARCH, BAD_CAST "DTInfo",
+	    &request, &response, NULL, NULL);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/* Extract data. */
+	/* Set context to the root */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	result = xmlXPathEvalExpression(BAD_CAST "/isds:DTInfoResponse",
+	    xpath_ctx);
+	if (NULL == result) {
+		err = IE_ERROR;
+		goto leave;
+	}
+
+	/* Empty response */
+	if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+		isds_log_message(context, _("Missing DTInfoResponse element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	/* More envelops */
+	if (result->nodesetval->nodeNr > 1) {
+		isds_log_message(context, _("Multiple DTInfoResponse elements"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	xpath_ctx->node = result->nodesetval->nodeTab[0];
+	xmlXPathFreeObject(result); result = NULL;
+
+	/* Extract it */
+	/* TODO */
+
+leave:
+	if (IE_SUCCESS == err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("DTInfo request for %s box processed by server successfully.\n"),
+		    box_id_locale);
+	}
+
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+	xmlFreeDoc(response);
+	xmlFreeNode(request);
+	free(box_id_locale);
+
+#else /* !HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+
+	return err;
 }
 
 /* Build ISDS request of XSD tIdDbInput type, sent it, check for error
