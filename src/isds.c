@@ -514,6 +514,25 @@ void isds_commercial_permission_free(
     zfree(*permission);
 }
 
+void isds_DTInfoOutput_free(struct isds_DTInfoOutput **info)
+{
+	if ((NULL == info) || (NULL == *info)) {
+		return;
+	}
+
+	free((*info)->act_type);
+	free((*info)->act_capacity);
+	free((*info)->act_from);
+	free((*info)->act_to);
+	free((*info)->act_cap_used);
+	free((*info)->fut_type);
+	free((*info)->fut_capacity);
+	free((*info)->fut_from);
+	free((*info)->fut_to);
+	free((*info)->fut_paid);
+
+	zfree(*info);
+}
 
 /* Deallocate struct isds_credit_event recursively and NULL it */
 void isds_credit_event_free(struct isds_credit_event **event) {
@@ -10683,6 +10702,11 @@ leave:
     return err;
 }
 
+isds_error isds_DTInfo(struct isds_ctx *context, const char *box_id,
+    struct isds_DTInfoOutput **dt_info_response)
+{
+	return IE_NOTSUP;
+}
 
 /* Build ISDS request of XSD tIdDbInput type, sent it, check for error
  * code, destroy response and log success.

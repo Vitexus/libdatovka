@@ -859,6 +859,55 @@ typedef enum isds_commercial_message_type {
     COMMERCIAL_INIT /* Initiatory commercial message. */
 } isds_commercial_message_type;
 
+/*
+ * Data vault (long term storage) type.
+ * Described in pril_2/WS_ISDS_vyhledavani_datovych_schranek.pdf
+ *     section 2.8.
+ */
+typedef enum isds_vault_type {
+	VAULT_NONE = 0, /* Long term storage is inactive. */
+	VAULT_PREPAID = 1, /* Long term storage is active using a prepaid service. */
+	VAULT_UNUSED_2 = 2, /* This type was used until 2013. No more used since then. */
+	VAULT_CONTRACTUAL = 3, /* Long term storage is active based on a contract. */
+	VAULT_TRIAL = 4, /* Long term storage is active to try it out. */
+	VAULT_UNUSED_5 = 5, /* No more used. */
+	VAULT_SPECIAL_OFFER = 6 /* Long term storage is active because of an special offer. */
+} isds_vault_type;
+
+/*
+ * Data vault (long term storage) payment state.
+ * Described in pril_2/WS_ISDS_vyhledavani_datovych_schranek.pdf
+ *     section 2.8.
+ */
+typedef enum isds_vault_payment_status {
+	VAULT_NOT_PAID_YET = 0, /* Long term storage has not been paid yet. */
+	VAULT_PAID_ALREADY = 1 /* Long term storage has already been paid. */
+} isds_vault_payment_status;
+
+/*
+ * Data vault (long term storage) information structure.
+ * Described in pril_2/WS_ISDS_vyhledavani_datovych_schranek.pdf
+ *     section 2.8.
+ */
+struct isds_DTInfoOutput {
+	enum isds_vault_type *act_type; /*
+	                                 * Type of the active long term storage.
+	                                 * It is suggested in dbTypes.xsd that this value may not be presented.
+	                                 */
+	unsigned long int *act_capacity; /* The capacity of the long term storage. */
+	struct tm *act_from; /* Inception date of the current active status. */
+	struct tm *act_to; /* Termination date of the current active status. */
+	unsigned long int *act_cap_used; /* Used capacity in units of messages. */
+	enum isds_vault_type *fut_type; /*
+	                                 * Type of the future long term storage.
+	                                 * It is suggested in dbTypes.xsd that this value may not be presented.
+	                                 */
+	unsigned long int *fut_capacity; /* Ordered capacity of the long term storage. */
+	struct tm *fut_from; /* Ordered from. */
+	struct tm *fut_to; /* Ordered to. */
+	enum isds_vault_payment_status *fut_paid; /* Acknowledgement of payment. */
+};
+
 /* Type of credit change event */
 typedef enum {
     ISDS_CREDIT_CHARGED,        /* Credit has been charged */
@@ -1719,6 +1768,19 @@ isds_error isds_get_commercial_credit(struct isds_ctx *context,
         const struct tm *from_date, const struct tm *to_date,
         long int *credit, char **email, struct isds_list **history);
 
+/*
+ * Get details about the data vault (long term storage) (ISDS operation DTInfo).
+ * @context is ISDS session context.
+ * @box_id is UTF-8 encoded sender box identifier as zero terminated string.
+ * @dt_info_response is an automatically reallocated structure containing
+ *     information about the long term storage.
+ * @return:
+ *     IE_SUCCESS if the long term storage information has been obtained correctly,
+ *     other error code else.
+ */
+isds_error isds_DTInfo(struct isds_ctx *context, const char *box_id,
+    struct isds_DTInfoOutput **dt_info_response);
+
 /* Switch box into state where box can receive commercial messages (off by
  * default)
  * @context is ISDS session context.
@@ -2231,6 +2293,9 @@ void isds_approval_free(struct isds_approval **approval);
 /* Deallocate struct isds_commercial_permission recursively and NULL it */
 void isds_commercial_permission_free(
         struct isds_commercial_permission **permission);
+
+/* Deallocate struct isds_DTInfoOutput_free recursively and set it to NULL. */
+void isds_DTInfoOutput_free(struct isds_DTInfoOutput **info);
 
 /* Deallocate struct isds_credit_event recursively and NULL it */
 void isds_credit_event_free(struct isds_credit_event **event);
