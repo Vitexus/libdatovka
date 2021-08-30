@@ -3,25 +3,11 @@ AM_CPPFLAGS = @XML_CPPFLAGS@ -I$(top_srcdir)/include
 AM_CFLAGS = -I$(srcdir)/$(LIBDIR) -DSRCDIR=\"$(top_srcdir)\"
 LDADD = $(LIBDIR)/libdatovka.la -L$(LIBDIR) @XML_LIBS@
 
-noinst_PROGRAMS = isdsclient login certauth version progressbar logger \
-	getuserboxinfo getuserboxinfo2 addbox changebox changebox2 \
-	changepassword activate resetpassword deleteuser deleteuser2 \
-	changeuser switchcommercial switchaccessibility \
-	disableaccesibilityexternaly sendmultiple getsent getsignedsent \
-	getsignedsentbyid getchangedstates loadreceivedmessage \
-	loadcmssignedsentmessage sendxmldoc loadsentmessagewithxmldocuments \
-	getreceived getsignedreceived \
-	getreceivedenvelope manageuser manageuser2 markasread markasreceived \
-	getsenderbyid downloadmessagehash verifyreceivedhash \
-	computemessagehash authenticatemessage \
-	loaddelivery getreceiveddelivery getreceivedsigneddelivery \
-	convertdocument requestnewtestingbox getboxlist check_time_conversion
-
 noinst_PROGRAMS = \
 	activate addbox authenticatemessage certauth changebox changebox2 \
 	changepassword changeuser check_time_conversion computemessagehash \
 	convertdocument deleteuser deleteuser2 disableaccesibilityexternaly \
-	downloadmessagehash getboxlist getchangedstates getreceived \
+	downloadmessagehash dtinfo getboxlist getchangedstates getreceived \
 	getreceiveddelivery getreceivedenvelope getreceivedsigneddelivery \
 	getsenderbyid getsent getsignedreceived getsignedsent \
 	getsignedsentbyid getuserboxinfo getuserboxinfo2 isdsclient \
@@ -48,6 +34,7 @@ deleteuser_SOURCES = deleteuser.c $(common)
 deleteuser2_SOURCES = deleteuser2.c $(common)
 disableaccesibilityexternaly_SOURCES = disableaccesibilityexternaly.c $(common)
 downloadmessagehash_SOURCES = downloadmessagehash.c $(common)
+dtinfo_SOURCES = dtinfo.c $(common)
 getboxlist_SOURCES = getboxlist.c $(common)
 getchangedstates_SOURCES = getchangedstates.c $(common)
 getreceived_SOURCES = getreceived.c $(common)

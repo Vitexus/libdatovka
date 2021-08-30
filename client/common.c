@@ -262,6 +262,13 @@ void print_longint(const long int *number) {
     else printf("%ld\n", *number);
 }
 
+void print_ulongint(const unsigned long int *number)
+{
+	if (NULL == number) {
+		fputs("NULL\n", stderr);
+	}
+	fprintf(stdout, "%lu\n", *number);
+}
 
 void print_PersonName(const struct isds_PersonName *personName) {
     printf("\tpersonName = ");
@@ -507,6 +514,81 @@ void print_DbUserInfoExt2(const struct isds_DbUserInfoExt2 *info) {
     printf("}\n");
 }
 
+static
+void print_vault_type(enum isds_vault_type *type)
+{
+	if (NULL == type) {
+		fputs("NULL\n", stderr);
+	}
+
+	switch (*type) {
+	case VAULT_NONE: fputs("VAULT_NONE\n", stdout); break;
+	case VAULT_PREPAID: fputs("VAULT_PREPAID\n", stdout); break;
+	case VAULT_UNUSED_2: fputs("VAULT_UNUSED_2\n", stdout); break;
+	case VAULT_CONTRACTUAL: fputs("VAULT_CONTRACTUAL\n", stdout); break;
+	case VAULT_TRIAL: fputs("VAULT_TRIAL\n", stdout); break;
+	case VAULT_UNUSED_5: fputs("VAULT_UNUSED_5\n", stdout); break;
+	case VAULT_SPECIAL_OFFER: fputs("VAULT_SPECIAL_OFFER\n", stdout); break;
+	default: fprintf(stdout, "<unknown value %d>\n", *type);
+	}
+}
+
+static
+void print_vault_payment_status(enum isds_vault_payment_status *status)
+{
+	if (NULL == status) {
+		fputs("NULL\n", stderr);
+	}
+
+	switch (*status) {
+	case VAULT_NOT_PAID_YET: fputs("VAULT_NOT_PAID_YET\n", stdout); break;
+	case VAULT_PAID_ALREADY: fputs("VAULT_PAID_ALREADY\n", stdout); break;
+	default: fprintf(stdout, "<unknown value %d>\n", *status);
+	}
+}
+
+void print_DTInfoOutput(const struct isds_DTInfoOutput *info)
+{
+	fputs("DTInfoOutput = ", stdout);
+
+	if (NULL == info) {
+		printf("NULL\n");
+		return;
+	}
+
+	fputs("{\n", stdout);
+	fputs("\tactDTType = ", stdout);
+	print_vault_type(info->actDTType);
+
+	fputs("\tactDTCapacity = ", stdout);
+	print_ulongint(info->actDTCapacity);
+
+	fputs("\tactDTFrom = ", stdout);
+	print_date(info->actDTFrom);
+
+	fputs("\tactDTTo = ", stdout);
+	print_date(info->actDTTo);
+
+	fputs("\tactDTCapUsed = ", stdout);
+	print_ulongint(info->actDTCapUsed);
+
+	fputs("\tfutDTType = ", stdout);
+	print_vault_type(info->futDTType);
+
+	fputs("\tfutDTCapacity = ", stdout);
+	print_ulongint(info->futDTCapacity);
+
+	fputs("\tfutDTFrom = ", stdout);
+	print_date(info->futDTFrom);
+
+	fputs("\tfutDTTo = ", stdout);
+	print_date(info->futDTTo);
+
+	fputs("\tfutDTPaid = ", stdout);
+	print_vault_payment_status(info->futDTPaid);
+
+	fputs("}\n", stdout);
+}
 
 void print_timeval(const struct isds_timeval *time) { // !!!
     struct tm broken;

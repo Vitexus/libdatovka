@@ -890,22 +890,22 @@ typedef enum isds_vault_payment_status {
  *     section 2.8.
  */
 struct isds_DTInfoOutput {
-	enum isds_vault_type *act_type; /*
+	enum isds_vault_type *actDTType; /*
 	                                 * Type of the active long term storage.
 	                                 * It is suggested in dbTypes.xsd that this value may not be presented.
 	                                 */
-	unsigned long int *act_capacity; /* The capacity of the long term storage. */
-	struct tm *act_from; /* Inception date of the current active status. */
-	struct tm *act_to; /* Termination date of the current active status. */
-	unsigned long int *act_cap_used; /* Used capacity in units of messages. */
-	enum isds_vault_type *fut_type; /*
+	unsigned long int *actDTCapacity; /* The capacity of the long term storage. */
+	struct tm *actDTFrom; /* Inception date of the current active status. */
+	struct tm *actDTTo; /* Termination date of the current active status. */
+	unsigned long int *actDTCapUsed; /* Used capacity in units of messages. */
+	enum isds_vault_type *futDTType; /*
 	                                 * Type of the future long term storage.
 	                                 * It is suggested in dbTypes.xsd that this value may not be presented.
 	                                 */
-	unsigned long int *fut_capacity; /* Ordered capacity of the long term storage. */
-	struct tm *fut_from; /* Ordered from. */
-	struct tm *fut_to; /* Ordered to. */
-	enum isds_vault_payment_status *fut_paid; /* Acknowledgement of payment. */
+	unsigned long int *futDTCapacity; /* Ordered capacity of the long term storage. */
+	struct tm *futDTFrom; /* Ordered from. */
+	struct tm *futDTTo; /* Ordered to. */
+	enum isds_vault_payment_status *futDTPaid; /* Acknowledgement of payment. */
 };
 
 /* Type of credit change event */

@@ -520,16 +520,16 @@ void isds_DTInfoOutput_free(struct isds_DTInfoOutput **info)
 		return;
 	}
 
-	free((*info)->act_type);
-	free((*info)->act_capacity);
-	free((*info)->act_from);
-	free((*info)->act_to);
-	free((*info)->act_cap_used);
-	free((*info)->fut_type);
-	free((*info)->fut_capacity);
-	free((*info)->fut_from);
-	free((*info)->fut_to);
-	free((*info)->fut_paid);
+	free((*info)->actDTType);
+	free((*info)->actDTCapacity);
+	free((*info)->actDTFrom);
+	free((*info)->actDTTo);
+	free((*info)->actDTCapUsed);
+	free((*info)->futDTType);
+	free((*info)->futDTCapacity);
+	free((*info)->futDTFrom);
+	free((*info)->futDTTo);
+	free((*info)->futDTPaid);
 
 	zfree(*info);
 }
