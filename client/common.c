@@ -271,6 +271,32 @@ void print_ulongint(const unsigned long int *number)
 	fprintf(stdout, "%lu\n", *number);
 }
 
+void print_isds_status(const struct isds_status *status)
+{
+	const char *db = "db";
+	const char *dm = "dm";
+	const char *unknown = "?";
+	const char *pref = unknown;
+
+	if (NULL == status) {
+		fputs("?Status = NULL\n", stdout);
+		return;
+	}
+
+	switch (status->type) {
+	case STAT_DB: pref = db; break;
+	case STAT_DM: pref = dm; break;
+	default:
+	    break;
+	}
+
+	fprintf(stdout, "%sStatus = {\n", pref);
+	fprintf(stdout, "\t%sStatusCode = %s\n", pref, status->code);
+	fprintf(stdout, "\t%sStatusMessage = %s\n", pref, status->message);
+	fprintf(stdout, "\t%sStatusRefNumber = %s\n", pref, status->ref_number);
+	fputs("}\n", stdout);
+}
+
 void print_PersonName(const struct isds_PersonName *personName) {
     printf("\tpersonName = ");
     if (!personName) printf("NULL\n");

@@ -77,6 +77,7 @@ int main(void)
 	if (err != IE_SUCCESS) {
 		fprintf(stderr, "isds_DTInfo() failed: %s: %s\n",
 		    isds_strerror(err), isds_long_message(ctx));
+		print_isds_status(isds_operation_status(ctx));
 		goto fail;
 	} else {
 		fputs("isds_DTInfo() succeeded\n", stdout);
