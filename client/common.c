@@ -265,7 +265,8 @@ void print_longint(const long int *number) {
 void print_ulongint(const unsigned long int *number)
 {
 	if (NULL == number) {
-		fputs("NULL\n", stderr);
+		fputs("NULL\n", stdout);
+		return;
 	}
 	fprintf(stdout, "%lu\n", *number);
 }
@@ -518,7 +519,8 @@ static
 void print_vault_type(enum isds_vault_type *type)
 {
 	if (NULL == type) {
-		fputs("NULL\n", stderr);
+		fputs("NULL\n", stdout);
+		return;
 	}
 
 	switch (*type) {
@@ -537,7 +539,8 @@ static
 void print_vault_payment_status(enum isds_vault_payment_status *status)
 {
 	if (NULL == status) {
-		fputs("NULL\n", stderr);
+		fputs("NULL\n", stdout);
+		return;
 	}
 
 	switch (*status) {
