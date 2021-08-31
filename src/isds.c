@@ -10702,6 +10702,201 @@ leave:
     return err;
 }
 
+#if HAVE_LIBCURL
+/*
+ * Convert unsigned int into enum isds_vault_type.
+ * @context is session context
+ * @number is pointer to number value. NULL will be treated as invalid value.
+ * @type is automatically reallocated type
+ * @return IE_SUCCESS, or error code and free type
+ */
+static isds_error uint2isds_vault_type(struct isds_ctx *context,
+    const unsigned long int *number, enum isds_vault_type **type)
+{
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (NULL == type) {
+		return IE_INVAL;
+	}
+
+	free(*type); *type = NULL;
+	if (NULL == number) {
+		return IE_INVAL;
+	}
+
+	switch (*number) {
+	case VAULT_NONE:
+	case VAULT_PREPAID:
+	case VAULT_UNUSED_2:
+	case VAULT_CONTRACTUAL:
+	case VAULT_TRIAL:
+	case VAULT_UNUSED_5:
+	case VAULT_SPECIAL_OFFER:
+		/* Continue. */
+		break;
+	default:
+		isds_printf_message(context,
+		    _("Invalid data vault type value: %lu"), *number);
+		return IE_ENUM;
+		break;
+	}
+
+	*type = malloc(sizeof(**type));
+	if (NULL == *type) {
+		return IE_NOMEM;
+	}
+
+	**type = (enum isds_vault_type)*number;
+	return IE_SUCCESS;
+}
+
+/*
+ * Convert unsigned int into enum isds_vault_payment_status.
+ * @context is session context
+ * @number is pointer to number value. NULL will be treated as invalid value.
+ * @status is automatically reallocated status
+ * @return IE_SUCCESS, or error code and free status
+ */
+static isds_error uint2isds_vault_payment_status(struct isds_ctx *context,
+    const unsigned long int *number, enum isds_vault_payment_status **status)
+{
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (NULL == status) {
+		return IE_INVAL;
+	}
+
+	free(*status); *status = NULL;
+	if (NULL == number) {
+		return IE_INVAL;
+	}
+
+	switch (*number) {
+	case VAULT_NOT_PAID_YET:
+	case VAULT_PAID_ALREADY:
+		/* Continue. */
+		break;
+	default:
+		isds_printf_message(context,
+		    _("Invalid data vault payment status value: %lu"),
+		    *number);
+		return IE_ENUM;
+		break;
+	}
+
+	*status = malloc(sizeof(**status));
+	if (NULL == *status) {
+		return IE_NOMEM;
+	}
+
+	**status = (enum isds_vault_payment_status)*number;
+	return IE_SUCCESS;
+}
+
+/*
+ * Convert isds::DTInfoResponse XML tree into structure
+ * @context is ISDS context
+ * @dt_info_response is automatically reallocated long term storage info structure
+ * @xpath_ctx is XPath context with current node as isds:dBOwnerInfo element
+ * In case of error @dt_info_response will be freed.
+ */
+static isds_error extract_DTInfoOutput(struct isds_ctx *context,
+    struct isds_DTInfoOutput **dt_info_response, xmlXPathContextPtr xpath_ctx)
+{
+	isds_error err = IE_SUCCESS;
+	xmlXPathObjectPtr result = NULL;
+	unsigned long int *ulongint = NULL;
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (NULL == dt_info_response) {
+		return IE_INVAL;
+	}
+	isds_DTInfoOutput_free(dt_info_response);
+	if (NULL == xpath_ctx) {
+		return IE_INVAL;
+	}
+
+	*dt_info_response = calloc(1, sizeof(**dt_info_response));
+	if (NULL == *dt_info_response) {
+		err = IE_NOMEM;
+		goto leave;
+	}
+
+	EXTRACT_ULONGINT("isds:ActDTType", ulongint, 0);
+	if (NULL != ulongint) {
+		err = uint2isds_vault_type(context, ulongint,
+		    &((*dt_info_response)->actDTType));
+		if (IE_SUCCESS != err) {
+			if (err == IE_ENUM) {
+				err = IE_ISDS;
+			}
+			goto leave;
+		}
+		free(ulongint); ulongint = NULL;
+	} else {
+		isds_log_message(context,
+		    _("Missing mandatory isds:ActDTType integer"));
+		err = IE_ISDS;
+		goto leave;
+	}
+
+	EXTRACT_ULONGINT("isds:ActDTCapacity",
+	    (*dt_info_response)->actDTCapacity, 0);
+	EXTRACT_DATE("isds:ActDTFrom", (*dt_info_response)->actDTFrom);
+	EXTRACT_DATE("isds:ActDTTo", (*dt_info_response)->actDTTo);
+	EXTRACT_ULONGINT("isds:ActDTCapUsed",
+	    (*dt_info_response)->actDTCapUsed, 0);
+
+	EXTRACT_ULONGINT("isds:FutDTType", ulongint, 0);
+	if (NULL != ulongint) {
+		err = uint2isds_vault_type(context, ulongint,
+		    &((*dt_info_response)->futDTType));
+		if (IE_SUCCESS != err) {
+			if (err == IE_ENUM) {
+				err = IE_ISDS;
+			}
+			goto leave;
+		}
+		free(ulongint); ulongint = NULL;
+	} else {
+		isds_log_message(context,
+		    _("Missing mandatory isds:FutDTType integer"));
+		err = IE_ISDS;
+		goto leave;
+	}
+
+	EXTRACT_ULONGINT("isds:FutDTCapacity",
+	    (*dt_info_response)->futDTCapacity, 0);
+	EXTRACT_DATE("isds:FutDTFrom", (*dt_info_response)->futDTFrom);
+	EXTRACT_DATE("isds:FutDTTo", (*dt_info_response)->futDTTo);
+
+	EXTRACT_ULONGINT("isds:FutDTPaid", ulongint, 0);
+	if (NULL != ulongint) {
+		err = uint2isds_vault_payment_status(context, ulongint,
+		    &((*dt_info_response)->futDTPaid));
+		if (IE_SUCCESS != err) {
+			if (err == IE_ENUM) {
+				err = IE_ISDS;
+			}
+			goto leave;
+		}
+		free(ulongint); ulongint = NULL;
+	}
+
+leave:
+	if (IE_SUCCESS != err) {
+		isds_DTInfoOutput_free(dt_info_response);
+	}
+	free(ulongint);
+	xmlXPathFreeObject(result);
+	return err;
+}
+#endif /* HAVE_LIBCURL */
+
 isds_error isds_DTInfo(struct isds_ctx *context, const char *box_id,
     struct isds_DTInfoOutput **dt_info_response)
 {
@@ -10803,9 +10998,14 @@ isds_error isds_DTInfo(struct isds_ctx *context, const char *box_id,
 	xmlXPathFreeObject(result); result = NULL;
 
 	/* Extract it */
+	err = extract_DTInfoOutput(context, dt_info_response, xpath_ctx);
 	/* TODO */
 
 leave:
+	if (IE_SUCCESS != err) {
+		isds_DTInfoOutput_free(dt_info_response);
+	}
+
 	if (IE_SUCCESS == err) {
 		isds_log(ILF_ISDS, ILL_DEBUG,
 		    _("DTInfo request for %s box processed by server successfully.\n"),
