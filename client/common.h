@@ -10,6 +10,7 @@ const char *password(void);
 void print_bool(const _Bool *boolean);
 void print_longint(const long int *number);
 void print_ulongint(const unsigned long int *number);
+void print_isds_status(const struct isds_status *status);
 void print_DbState(const long int state);
 void print_date(const struct tm *date);
 void print_isds_status(const struct isds_status *status);
