@@ -1769,7 +1769,7 @@ isds_error isds_get_commercial_credit(struct isds_ctx *context,
         long int *credit, char **email, struct isds_list **history);
 
 /*
- * Get details about the data vault (long term storage) (ISDS operation DTInfo).
+ * Get details about the data vault/long term storage (ISDS operation DTInfo).
  * @context is ISDS session context.
  * @box_id is UTF-8 encoded sender box identifier as zero terminated string.
  * @dt_info_response is an automatically reallocated structure containing
@@ -2294,7 +2294,7 @@ void isds_approval_free(struct isds_approval **approval);
 void isds_commercial_permission_free(
         struct isds_commercial_permission **permission);
 
-/* Deallocate struct isds_DTInfoOutput_free recursively and set it to NULL. */
+/* Deallocate struct isds_DTInfoOutput recursively and set it to NULL. */
 void isds_DTInfoOutput_free(struct isds_DTInfoOutput **info);
 
 /* Deallocate struct isds_credit_event recursively and NULL it */

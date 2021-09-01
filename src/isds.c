@@ -10807,7 +10807,7 @@ static isds_error extract_DTInfoOutput(struct isds_ctx *context,
 {
 	isds_error err = IE_SUCCESS;
 	xmlXPathObjectPtr result = NULL;
-	unsigned long int *ulongint = NULL;
+	unsigned long int *ulongptr = NULL;
 
 	if (NULL == context) {
 		return IE_INVALID_CONTEXT;
@@ -10826,9 +10826,9 @@ static isds_error extract_DTInfoOutput(struct isds_ctx *context,
 		goto leave;
 	}
 
-	EXTRACT_ULONGINT("isds:ActDTType", ulongint, 0);
-	if (NULL != ulongint) {
-		err = uint2isds_vault_type(context, ulongint,
+	EXTRACT_ULONGINT("isds:ActDTType", ulongptr, 0);
+	if (NULL != ulongptr) {
+		err = uint2isds_vault_type(context, ulongptr,
 		    &((*dt_info_response)->actDTType));
 		if (IE_SUCCESS != err) {
 			if (err == IE_ENUM) {
@@ -10836,7 +10836,7 @@ static isds_error extract_DTInfoOutput(struct isds_ctx *context,
 			}
 			goto leave;
 		}
-		free(ulongint); ulongint = NULL;
+		free(ulongptr); ulongptr = NULL;
 	} else {
 		isds_log_message(context,
 		    _("Missing mandatory isds:ActDTType integer"));
@@ -10851,9 +10851,9 @@ static isds_error extract_DTInfoOutput(struct isds_ctx *context,
 	EXTRACT_ULONGINT("isds:ActDTCapUsed",
 	    (*dt_info_response)->actDTCapUsed, 0);
 
-	EXTRACT_ULONGINT("isds:FutDTType", ulongint, 0);
-	if (NULL != ulongint) {
-		err = uint2isds_vault_type(context, ulongint,
+	EXTRACT_ULONGINT("isds:FutDTType", ulongptr, 0);
+	if (NULL != ulongptr) {
+		err = uint2isds_vault_type(context, ulongptr,
 		    &((*dt_info_response)->futDTType));
 		if (IE_SUCCESS != err) {
 			if (err == IE_ENUM) {
@@ -10861,7 +10861,7 @@ static isds_error extract_DTInfoOutput(struct isds_ctx *context,
 			}
 			goto leave;
 		}
-		free(ulongint); ulongint = NULL;
+		free(ulongptr); ulongptr = NULL;
 	} else {
 		isds_log_message(context,
 		    _("Missing mandatory isds:FutDTType integer"));
@@ -10874,9 +10874,9 @@ static isds_error extract_DTInfoOutput(struct isds_ctx *context,
 	EXTRACT_DATE("isds:FutDTFrom", (*dt_info_response)->futDTFrom);
 	EXTRACT_DATE("isds:FutDTTo", (*dt_info_response)->futDTTo);
 
-	EXTRACT_ULONGINT("isds:FutDTPaid", ulongint, 0);
-	if (NULL != ulongint) {
-		err = uint2isds_vault_payment_status(context, ulongint,
+	EXTRACT_ULONGINT("isds:FutDTPaid", ulongptr, 0);
+	if (NULL != ulongptr) {
+		err = uint2isds_vault_payment_status(context, ulongptr,
 		    &((*dt_info_response)->futDTPaid));
 		if (IE_SUCCESS != err) {
 			if (err == IE_ENUM) {
@@ -10884,14 +10884,14 @@ static isds_error extract_DTInfoOutput(struct isds_ctx *context,
 			}
 			goto leave;
 		}
-		free(ulongint); ulongint = NULL;
+		free(ulongptr); ulongptr = NULL;
 	}
 
 leave:
 	if (IE_SUCCESS != err) {
 		isds_DTInfoOutput_free(dt_info_response);
 	}
-	free(ulongint);
+	free(ulongptr);
 	xmlXPathFreeObject(result);
 	return err;
 }
@@ -10999,7 +10999,6 @@ isds_error isds_DTInfo(struct isds_ctx *context, const char *box_id,
 
 	/* Extract it */
 	err = extract_DTInfoOutput(context, dt_info_response, xpath_ctx);
-	/* TODO */
 
 leave:
 	if (IE_SUCCESS != err) {
