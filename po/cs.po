@@ -1472,7 +1472,7 @@ msgstr "Požadavek DataBoxCreditInfo úspěšně zpracován serverem.\n"
 #: src/isds.c:10740
 #, c-format
 msgid "Invalid data vault type value: %lu"
-msgstr "Neplatná hodnota typu datového trezoru: %d"
+msgstr "Neplatná hodnota typu datového trezoru: %lu"
 
 #: src/isds.c:10783
 #, c-format
