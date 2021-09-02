@@ -17,6 +17,8 @@ libdatovka.so.0 libdatovka0 #MINVER#
  isds_DbUserInfo_duplicate@Base 0.1
  isds_DbUserInfo_free@Base 0.1
  isds_DeleteDataBoxUser2@Base 0.1
+ isds_DTInfo@Base 0.2
+ isds_DTInfoOutput_free@Base 0.2
  isds_FindDataBox@Base 0.1
  isds_FindDataBox2@Base 0.1
  isds_GetDataBoxUsers@Base 0.1

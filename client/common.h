@@ -9,12 +9,16 @@ const char *password(void);
 
 void print_bool(const _Bool *boolean);
 void print_longint(const long int *number);
+void print_ulongint(const unsigned long int *number);
+void print_isds_status(const struct isds_status *status);
 void print_DbState(const long int state);
 void print_date(const struct tm *date);
+void print_isds_status(const struct isds_status *status);
 void print_DbOwnerInfo(const struct isds_DbOwnerInfo *info);
 void print_DbOwnerInfoExt2(const struct isds_DbOwnerInfoExt2 *info);
 void print_DbUserInfo(const struct isds_DbUserInfo *info);
 void print_DbUserInfoExt2(const struct isds_DbUserInfoExt2 *info);
+void print_DTInfoOutput(const struct isds_DTInfoOutput *info);
 void print_timeval(const struct isds_timeval *time);
 void print_hash(const struct isds_hash *hash);
 void print_envelope(const struct isds_envelope *envelope);
