@@ -1,4 +1,4 @@
-0.2.1 *
+0.2.1 / 2021-11-03
  * Added function isds_DTInfo() which implements the DTInfo ISDS operation and
    corresponding data structures.
 
