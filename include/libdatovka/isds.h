@@ -388,7 +388,7 @@ struct isds_PersonName2 {
 
 /* Date and place of birth */
 struct isds_BirthInfo {
-    struct tm *biDate;      /* Date of Birth in local time at birth place,
+    struct tm *biDate;      /* Date of birth in local time at birth place,
                                only tm_year, tm_mon and tm_mday carry sane
                                value */
     char *biCity;
@@ -504,7 +504,7 @@ struct isds_DbUserInfo {
  * NULL pointer means undefined value */
 struct isds_DbUserInfoExt2 {
     _Bool *aifoIsds;            /* Set if user data are held within
-                                   the Person registry (Registr osob/ROB) */
+                                   the Person registry (Registr obyvatel/ROB) */
     struct isds_PersonName2 *personName; /* Name of the person */
     struct isds_AddressExt2 *address;    /* Post address */
     struct tm *biDate;          /* Date of birth in local time,
