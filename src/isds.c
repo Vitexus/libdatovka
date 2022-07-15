@@ -409,6 +409,7 @@ void isds_envelope_free(struct isds_envelope **envelope) {
 
     free((*envelope)->dmOVM);
     free((*envelope)->dmPublishOwnID);
+    free((*envelope)->idLevel);
 
     free(*envelope);
     *envelope = NULL;
@@ -11296,6 +11297,7 @@ static isds_error insert_envelope_files(struct isds_ctx *context,
 
     isds_error err = IE_SUCCESS;
     xmlNodePtr envelope, dm_files, node;
+    xmlAttrPtr attribute_node;
     xmlChar *string = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -11390,6 +11392,16 @@ static isds_error insert_envelope_files(struct isds_ctx *context,
     INSERT_BOOLEAN(envelope, "dmOVM", outgoing_message->envelope->dmOVM);
     INSERT_BOOLEAN(envelope, "dmPublishOwnID",
             outgoing_message->envelope->dmPublishOwnID);
+    if ((outgoing_message->envelope->dmPublishOwnID != NULL) &&
+        (*outgoing_message->envelope->dmPublishOwnID) &&
+        (outgoing_message->envelope->idLevel != NULL) &&
+        ((*outgoing_message->envelope->idLevel) > 0)) {
+        if (-1 == isds_asprintf((char**)&string, "%d", *(outgoing_message->envelope->idLevel))) {
+            err = IE_NOMEM;
+            goto leave;
+        }
+        INSERT_STRING_ATTRIBUTE(node, "IdLevel", string);
+    }
 
 
     /* Append dmFiles */
