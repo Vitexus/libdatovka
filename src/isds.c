@@ -592,6 +592,23 @@ void isds_box_state_period_free(struct isds_box_state_period **period) {
     zfree(*period);
 }
 
+void isds_dmMessageAuthor_free(struct isds_dmMessageAuthor **author)
+{
+	if ((NULL == author) || (NULL == *author)) {
+		return;
+	}
+
+	free((*author)->userType);
+	isds_PersonName2_free(&((*author)->personName));
+	free((*author)->biDate);
+	free((*author)->biCity);
+	free((*author)->biCounty);
+	free((*author)->adCode);
+	free((*author)->fullAddress);
+	free((*author)->robIdent);
+
+	zfree(*author);
+}
 
 /* *DUP_OR_ERROR macros needs error label */
 #define STRDUP_OR_ERROR(new, template) { \
@@ -3243,6 +3260,32 @@ static isds_error eventstring2event(const xmlChar *string,
     } \
 }
 
+#define EXTRACT_BOOLEAN_FROM_STRING(string, booleanPtr) \
+    { \
+        (booleanPtr) = calloc(1, sizeof(*(booleanPtr))); \
+        if (NULL == (booleanPtr)) { \
+            /* free(string); */ \
+            err = IE_NOMEM; \
+            goto leave; \
+        } \
+        \
+        if ((0 == xmlStrcmp((xmlChar *)string, BAD_CAST "true")) || \
+            (0 == xmlStrcmp((xmlChar *)string, BAD_CAST "1"))) { \
+            *(booleanPtr) = 1; \
+        } else if ((0 == xmlStrcmp((xmlChar *)string, BAD_CAST "false")) || \
+                   (0 == xmlStrcmp((xmlChar *)string, BAD_CAST "0"))) { \
+            *(booleanPtr) = 0; \
+        } else { \
+            char *string_locale = _isds_utf82locale((char*)string); \
+            isds_printf_message(context, _("value is not valid boolean: %s"), \
+                string_locale); \
+            free(string_locale); \
+            /* free(string); */ \
+            err = IE_ERROR; \
+            goto leave; \
+        } \
+    }
+
 #define EXTRACT_BOOLEAN(element, booleanPtr) \
     { \
         char *string = NULL; \
@@ -3400,6 +3443,28 @@ static isds_error eventstring2event(const xmlChar *string,
                 } \
             } \
             *(ulongintPtr) = number; \
+        } \
+    }
+
+#define EXTRACT_DATE_FROM_STRING(string, tmPtr) \
+    { \
+        (tmPtr) = calloc(1, sizeof(*(tmPtr))); \
+        if (NULL == (tmPtr)) { \
+            /* free(string); */ \
+            err = IE_NOMEM; \
+            goto leave; \
+        } \
+        err = _isds_datestring2tm((xmlChar *)string, (tmPtr)); \
+        if (IE_SUCCESS != err) { \
+            if (err == IE_NOTSUP) { \
+                err = IE_ISDS; \
+                char *string_locale = _isds_utf82locale(string); \
+                isds_printf_message(context, _("Invalid value: %s"), \
+                        string_locale); \
+                free(string_locale); \
+            } \
+            /* free(string); */ \
+            goto leave; \
         } \
     }
 
@@ -13748,6 +13813,215 @@ leave:
     return err;
 }
 
+isds_error isds_GetMessageAuthor2(struct isds_ctx *context,
+    const char *message_id, struct isds_dmMessageAuthor **author)
+{
+	isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlDocPtr response = NULL;
+	xmlChar *code = NULL, *status_message = NULL;
+	xmlXPathContextPtr xpath_ctx = NULL;
+	xmlXPathObjectPtr result = NULL;
+	struct isds_dmMessageAuthor *auxAuthor = NULL;
+	int count = 0;
+	char *key_string = NULL;
+	char *value_string = NULL;
+#endif /* HAVE_LIBCURL */
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	isds_dmMessageAuthor_free(author);
+
+#if HAVE_LIBCURL
+	/* Do request and check for success. */
+	err = build_send_check_message_request(context, SERVICE_DM_INFO,
+	    BAD_CAST "GetMessageAuthor2",
+	    message_id, &response, NULL, NULL, &code, &status_message);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/* Extract data */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	result = xmlXPathEvalExpression(
+	    BAD_CAST "/isds:GetMessageAuthor2Response/isds:dmMessageAuthor/isds:maItem",
+	    xpath_ctx);
+	if (NULL == result) {
+		err = IE_ERROR;
+		goto leave;
+	}
+
+	/* Fill output arguments in. */
+	if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+		/* Create temporary author. */
+		auxAuthor = calloc(1, sizeof(*auxAuthor));
+		if (NULL == auxAuthor) {
+			err = IE_NOMEM;
+			goto leave;
+		}
+
+		for (count = 0; count < result->nodesetval->nodeNr; ++count) {
+			/* Extract message author data. */
+			xpath_ctx->node = result->nodesetval->nodeTab[count];
+
+			zfree(key_string);
+			zfree(value_string);
+			EXTRACT_STRING_ATTRIBUTE("key", key_string, 1);
+			EXTRACT_STRING_ATTRIBUTE("value", value_string, 1);
+			fprintf(stderr, "AAA %s %s\n", key_string, value_string);
+
+			if (0 == strcmp(key_string, "userType")) {
+				if (NULL != auxAuthor->userType) {
+					isds_log_message(context, _("Multiple maItem elements containing key attribute with userType value"));
+					err = IE_ISDS;
+					goto leave;
+				}
+				auxAuthor->userType = calloc(1, sizeof(*auxAuthor->userType));
+				if (auxAuthor->userType == NULL) {
+					err = IE_NOMEM;
+					goto leave;
+				}
+				err = string2isds_sender_type((xmlChar *)value_string,
+				    auxAuthor->userType);
+				if (IE_SUCCESS != err) {
+					if (IE_ENUM == err) {
+						err = IE_SUCCESS;
+						char *type_string_locale = _isds_utf82locale(value_string);
+						isds_log(ILF_ISDS, ILL_WARNING,
+						    _("Unknown isds:userType value: %s"),
+						    type_string_locale);
+						free(type_string_locale);
+
+						zfree(auxAuthor->userType);
+					}
+				}
+			} else if (0 == strcmp(key_string, "pnGivenNames")) {
+				if (NULL == auxAuthor->personName) {
+					auxAuthor->personName = calloc(1, sizeof(*auxAuthor->personName));
+					if (NULL == auxAuthor->personName) {
+						err = IE_NOMEM;
+						goto leave;
+					}
+				}
+				if (NULL != auxAuthor->personName->pnGivenNames) {
+					isds_log_message(context,
+					    _("Multiple maItem elements containing key attribute with pnGivenNames value"));
+					err = IE_ISDS;
+					goto leave;
+				}
+				auxAuthor->personName->pnGivenNames = value_string;
+				value_string = NULL;
+			} else if (0 == strcmp(key_string, "pnLastName")) {
+				if (NULL == auxAuthor->personName) {
+					auxAuthor->personName = calloc(1, sizeof(*auxAuthor->personName));
+					if (NULL == auxAuthor->personName) {
+						err = IE_NOMEM;
+						goto leave;
+					}
+				}
+				if (NULL != auxAuthor->personName->pnLastName) {
+					isds_log_message(context,
+					    _("Multiple maItem elements containing key attribute with pnLastName value"));
+					err = IE_ISDS;
+					goto leave;
+				}
+				auxAuthor->personName->pnLastName = value_string;
+				value_string = NULL;
+			} else if (0 == strcmp(key_string, "biDate")) {
+				if (NULL != auxAuthor->biDate) {
+					isds_log_message(context,
+					    _("Multiple maItem elements containing key attribute with biDate value"));
+					err = IE_ISDS;
+					goto leave;
+				}
+				EXTRACT_DATE_FROM_STRING(value_string, auxAuthor->biDate);
+			} else if (0 == strcmp(key_string, "biCity")) {
+				if (NULL != auxAuthor->biCity) {
+					isds_log_message(context,
+					    _("Multiple maItem elements containing key attribute with biCity value"));
+					err = IE_ISDS;
+					goto leave;
+				}
+				auxAuthor->biCity = value_string;
+				value_string = NULL;
+			} else if (0 == strcmp(key_string, "biCounty")) {
+				if (NULL != auxAuthor->biCounty) {
+					isds_log_message(context,
+					    _("Multiple maItem elements containing key attribute with biCounty value"));
+					err = IE_ISDS;
+					goto leave;
+				}
+				auxAuthor->biCounty = value_string;
+				value_string = NULL;
+			} else if (0 == strcmp(key_string, "adCode")) {
+				if (NULL != auxAuthor->adCode) {
+					isds_log_message(context,
+					    _("Multiple maItem elements containing key attribute with adCode value"));
+					err = IE_ISDS;
+					goto leave;
+				}
+				auxAuthor->adCode = value_string;
+				value_string = NULL;
+			} else if (0 == strcmp(key_string, "fullAddress")) {
+				if (NULL != auxAuthor->fullAddress) {
+					isds_log_message(context,
+					    _("Multiple maItem elements containing key attribute with fullAddress value"));
+					err = IE_ISDS;
+					goto leave;
+				}
+				auxAuthor->fullAddress = value_string;
+				value_string = NULL;
+			} else if (0 == strcmp(key_string, "robIdent")) {
+				if (NULL != auxAuthor->robIdent) {
+					isds_log_message(context,
+					    _("Multiple maItem elements containing key attribute with robIdent value"));
+					err = IE_ISDS;
+					goto leave;
+				}
+				EXTRACT_BOOLEAN_FROM_STRING(value_string, auxAuthor->robIdent);
+			}
+		}
+	}
+//
+
+leave:
+	if (IE_SUCCESS != err) {
+		isds_dmMessageAuthor_free(&auxAuthor);
+	}
+
+	zfree(key_string);
+	zfree(value_string);
+
+	isds_dmMessageAuthor_free(author);
+	*author = auxAuthor;
+
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+
+	free(code);
+	free(status_message);
+	xmlFreeDoc(response);
+
+	if (IE_SUCCESS == err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("GetMessageAuthor2 request processed by server successfully.\n"));
+	}
+#else /* !HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+	return err;
+}
 
 /* Retrieve hash of message identified by ID stored in ISDS.
  * @context is session context

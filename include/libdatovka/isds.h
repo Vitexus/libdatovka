@@ -567,8 +567,8 @@ struct isds_event {
  * sending a message.
  */
 typedef enum isds_IdLevel_value {
-    PUBLISH_USER_TYPE = 0, /* The sender user type isds_UserType us always enabled. */
-    PUBLISH_PERSON_NAME = 1, /* Publish name. Comprises pnGivenNames and pnLastName. */
+    PUBLISH_USERTYPE = 0, /* The sender user type isds_UserType us always enabled. */
+    PUBLISH_PERSONNAME = 1, /* Publish name. Comprises pnGivenNames and pnLastName. */
     PUBLISH_BIDATE = 2, /* Publish biDate. */
     PUBLISH_BICITY = 4, /* Publish biCity - only when sender is SENDERTYPE_ENTRUSTED of FO or PFO box. */
     PUBLISH_BICOUNTY = 8, /* Publish biCounty - only when sender is SENDERTYPE_ENTRUSTED of FO or PFO box. */
@@ -1104,9 +1104,7 @@ struct isds_box_state_period {
  */
 struct isds_dmMessageAuthor {
     isds_sender_type *userType; /* Message sender type. */
-    /* Intentionally not using struct isds_PersonName2. */
-    char *pnGivenNames; /* First name and other given (middle) names */
-    char *pnLastName; /* Family name */
+    struct isds_PersonName2 *personName; /* Contains pnGivenNames and pnLastName. */
     struct tm *biDate; /* Date of birth in local time at birth place,
                           only tm_year, tm_mon and tm_mday carry sane
                           value. */
@@ -2094,6 +2092,12 @@ isds_error isds_get_message_sender(struct isds_ctx *context,
         const char *message_id, isds_sender_type **sender_type,
         char **raw_sender_type, char **sender_name);
 
+/*
+ * Get information about the user who sent a message identified by ID.
+ * @context is session context
+ * @message_id is message identifier
+ * @author is automatically reallocated author information retrieved form ISDS.
+ */
 isds_error isds_GetMessageAuthor2(struct isds_ctx *context,
     const char *message_id, struct isds_dmMessageAuthor **author);
 
@@ -2353,6 +2357,9 @@ void isds_fulltext_result_free(
 
 /* Deallocate struct isds_box_state_period recursively and NULL it */
 void isds_box_state_period_free(struct isds_box_state_period **period);
+
+/* Deallocate struct isds_dmMessageAuthor recursively and NULL it. */
+void isds_dmMessageAuthor_free(struct isds_dmMessageAuthor **author);
 
 /* Copy structure isds_status recursively */
 struct isds_status *isds_status_duplicate(const struct isds_status *src);
