@@ -273,6 +273,13 @@ int main(void) {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"*/
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
+        _Bool dmPublishOwnID = true;
+        envelope.dmPublishOwnID = &dmPublishOwnID;
+        int idLevel = PUBLISH_USERTYPE | PUBLISH_PERSONNAME | PUBLISH_BIDATE
+            | PUBLISH_BICITY | PUBLISH_BICOUNTY | PUBLISH_ADCODE
+            | PUBLISH_FULLADDRESS | PUBLISH_ROBIDENT;
+        envelope.idLevel = &idLevel;
+
         struct isds_document minor_document;
         memset(&minor_document, 0, sizeof(minor_document));
         minor_document.data = "hello world?";

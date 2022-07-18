@@ -28,6 +28,8 @@ void print_message_status_change(
         const struct isds_message_status_change *changed_status);
 void print_sender_type(const isds_sender_type *type);
 
+void print_dmMessageAuthor(struct isds_dmMessageAuthor *author);
+
 void compare_hashes(const struct isds_hash *hash1,
         const struct isds_hash *hash2);
 int progressbar(double upload_total, double upload_current,

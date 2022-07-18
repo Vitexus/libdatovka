@@ -152,7 +152,7 @@ void print_sender_type(const isds_sender_type *type) {
         }
 }
 
-
+static
 void print_UserPrivils(const long int *privils) {
 
     const char *priviledges[] = {
@@ -297,6 +297,7 @@ void print_isds_status(const struct isds_status *status)
 	fputs("}\n", stdout);
 }
 
+static
 void print_PersonName(const struct isds_PersonName *personName) {
     printf("\tpersonName = ");
     if (!personName) printf("NULL\n");
@@ -310,7 +311,7 @@ void print_PersonName(const struct isds_PersonName *personName) {
     }
 }
 
-
+static
 void print_PersonName2(const struct isds_PersonName2 *personName) {
     printf("\tpersonName = ");
     if (!personName) printf("NULL\n");
@@ -339,7 +340,7 @@ void print_Address(const struct isds_Address *address) {
     }
 }
 
-
+static
 void print_AddressExt2(const struct isds_AddressExt2 *address) {
     printf("\taddress = ");
     if (!address) printf("NULL\n");
@@ -364,7 +365,7 @@ void print_date(const struct tm *date) {
     else printf("%s", asctime(date));
 }
 
-
+static
 void print_BirthInfo(const struct isds_BirthInfo *birthInfo) {
     printf("\tbirthInfo = ");
     if (!birthInfo) printf("NULL\n");
@@ -923,6 +924,35 @@ void print_message_status_change(
     print_timeval(changed_status->time);
 
     printf("}\n");
+}
+
+void print_dmMessageAuthor(struct isds_dmMessageAuthor *author)
+{
+	printf("dmMessageAuthor = ");
+
+	if (NULL == author) {
+		printf("NULL\n");
+		return;
+	}
+
+	printf("{\n");
+	printf("\tuserType = ");
+	print_sender_type(author->userType);
+
+	print_PersonName2(author->personName);
+
+	printf("\tbiDate = ");
+	print_date(author->biDate);
+
+	printf("\tbiCity = %s\n", author->biCity);
+	printf("\tbiCounty = %s\n", author->biCounty);
+	printf("\tadCode = %s\n", author->adCode);
+	printf("\tfullAddress = %s\n", author->fullAddress);
+
+	printf("\trobIdent = ");
+	print_bool(author->robIdent);
+
+	printf("}\n");
 }
 
 void compare_hashes(const struct isds_hash *hash1,
