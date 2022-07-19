@@ -13879,7 +13879,6 @@ isds_error isds_GetMessageAuthor2(struct isds_ctx *context,
 			zfree(value_string);
 			EXTRACT_STRING_ATTRIBUTE("key", key_string, 1);
 			EXTRACT_STRING_ATTRIBUTE("value", value_string, 1);
-			fprintf(stderr, "AAA %s %s\n", key_string, value_string);
 
 			if (0 == strcmp(key_string, "userType")) {
 				if (NULL != auxAuthor->userType) {
