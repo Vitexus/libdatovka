@@ -570,11 +570,11 @@ typedef enum isds_IdLevel_value {
     PUBLISH_USERTYPE = 0, /* The sender user type isds_UserType us always enabled. */
     PUBLISH_PERSONNAME = 1, /* Publish name. Comprises pnGivenNames and pnLastName. */
     PUBLISH_BIDATE = 2, /* Publish biDate. */
-    PUBLISH_BICITY = 4, /* Publish biCity - only when sender is SENDERTYPE_ENTRUSTED of FO or PFO box. */
-    PUBLISH_BICOUNTY = 8, /* Publish biCounty - only when sender is SENDERTYPE_ENTRUSTED of FO or PFO box. */
+    PUBLISH_BICITY = 4, /* Publish biCity - only when sender is SENDERTYPE_ENTRUSTED of a FO or PFO box. */
+    PUBLISH_BICOUNTY = 8, /* Publish biCounty - only when sender is SENDERTYPE_ENTRUSTED of a FO or PFO box. */
     PUBLISH_ADCODE = 16, /* Publish adCode (RUIAN address code). */
     PUBLISH_FULLADDRESS = 32, /* Publish fullAddress. */
-    PUBLISH_ROBIDENT = 64 /* Publish robIdent - flag whether the person is identifiers within the ROB (Registr obyvatel/citizen registry). */
+    PUBLISH_ROBIDENT = 64 /* Publish robIdent - flag whether the person is identified within the ROB (Registr obyvatel/citizen registry). */
 } isds_IdLevel_value;
 
 /* Message envelope
