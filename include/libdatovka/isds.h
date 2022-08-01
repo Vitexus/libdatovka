@@ -2096,7 +2096,7 @@ isds_error isds_get_message_sender(struct isds_ctx *context,
  * Get information about the user who sent a message identified by ID.
  * @context is session context
  * @message_id is message identifier
- * @author is automatically reallocated author information retrieved form ISDS.
+ * @author is automatically reallocated author information retrieved from ISDS.
  */
 isds_error isds_GetMessageAuthor2(struct isds_ctx *context,
     const char *message_id, struct isds_dmMessageAuthor **author);
