@@ -3277,7 +3277,7 @@ static isds_error eventstring2event(const xmlChar *string,
             *(booleanPtr) = 0; \
         } else { \
             char *string_locale = _isds_utf82locale((char*)string); \
-            isds_printf_message(context, _("value is not valid boolean: %s"), \
+            isds_printf_message(context, _("Invalid boolean value: %s"), \
                 string_locale); \
             free(string_locale); \
             /* free(string); */ \
@@ -3459,7 +3459,7 @@ static isds_error eventstring2event(const xmlChar *string,
             if (err == IE_NOTSUP) { \
                 err = IE_ISDS; \
                 char *string_locale = _isds_utf82locale(string); \
-                isds_printf_message(context, _("Invalid value: %s"), \
+                isds_printf_message(context, _("Invalid date value: %s"), \
                         string_locale); \
                 free(string_locale); \
             } \
