@@ -388,7 +388,7 @@ struct isds_PersonName2 {
 
 /* Date and place of birth */
 struct isds_BirthInfo {
-    struct tm *biDate;      /* Date of Birth in local time at birth place,
+    struct tm *biDate;      /* Date of birth in local time at birth place,
                                only tm_year, tm_mon and tm_mday carry sane
                                value */
     char *biCity;
@@ -504,7 +504,7 @@ struct isds_DbUserInfo {
  * NULL pointer means undefined value */
 struct isds_DbUserInfoExt2 {
     _Bool *aifoIsds;            /* Set if user data are held within
-                                   the Person registry (Registr osob/ROB) */
+                                   the Person registry (Registr obyvatel/ROB) */
     struct isds_PersonName2 *personName; /* Name of the person */
     struct isds_AddressExt2 *address;    /* Post address */
     struct tm *biDate;          /* Date of birth in local time,
@@ -561,6 +561,21 @@ struct isds_event {
                         * (in Czech).
                         */
 };
+
+/*
+ * Allows the sender to publish specified information about his person when
+ * sending a message.
+ */
+typedef enum isds_IdLevel_value {
+    PUBLISH_USERTYPE = 0, /* The sender user type isds_UserType us always enabled. */
+    PUBLISH_PERSONNAME = 1, /* Publish name. Comprises pnGivenNames and pnLastName. */
+    PUBLISH_BIDATE = 2, /* Publish biDate. */
+    PUBLISH_BICITY = 4, /* Publish biCity - only when sender is SENDERTYPE_ENTRUSTED of a FO or PFO box. */
+    PUBLISH_BICOUNTY = 8, /* Publish biCounty - only when sender is SENDERTYPE_ENTRUSTED of a FO or PFO box. */
+    PUBLISH_ADCODE = 16, /* Publish adCode (RUIAN address code). */
+    PUBLISH_FULLADDRESS = 32, /* Publish fullAddress. */
+    PUBLISH_ROBIDENT = 64 /* Publish robIdent - flag whether the person is identified within the ROB (Registr obyvatel/citizen registry). */
+} isds_IdLevel_value;
 
 /* Message envelope
  * Be ware that the string length constraints are forced only on output
@@ -712,6 +727,10 @@ struct isds_envelope {
                                        isds_get_message_sender(). Sender type
                                        will be always available.
                                        Optional; Default value is false. */
+    int *idLevel;                   /* Sum of isds_IdLevel_value. Additionally
+                                       specifies which personal information
+                                       the user wants to publish when sending
+                                       a message. */
 };
 
 
@@ -1076,6 +1095,24 @@ struct isds_box_state_period {
                        * Box state; 1 <=> active box, otherwise inaccessible;
                        * use isds_DbState enum to identify some states.
                        */
+};
+
+/*
+ * Response for GetMessageAuthor2.
+ * Described in pril_2/WS_manipulace_s_datovymi_zpravami.pdf,
+ *     section 2.10.
+ */
+struct isds_dmMessageAuthor {
+    isds_sender_type *userType; /* Message sender type. */
+    struct isds_PersonName2 *personName; /* Contains pnGivenNames and pnLastName. */
+    struct tm *biDate; /* Date of birth in local time at birth place,
+                          only tm_year, tm_mon and tm_mday carry sane
+                          value. */
+    char *biCity;
+    char *biCounty; /* German: Bezirk, Czech: okres */
+    char *adCode; /* RUIAN address code */
+    char *fullAddress;
+    _Bool *robIdent; /* Flag whether the person is identifiers within the ROB. */
 };
 
 /* Initialize ISDS library.
@@ -2055,6 +2092,15 @@ isds_error isds_get_message_sender(struct isds_ctx *context,
         const char *message_id, isds_sender_type **sender_type,
         char **raw_sender_type, char **sender_name);
 
+/*
+ * Get information about the user who sent a message identified by ID.
+ * @context is session context
+ * @message_id is message identifier
+ * @author is automatically reallocated author information retrieved from ISDS.
+ */
+isds_error isds_GetMessageAuthor2(struct isds_ctx *context,
+    const char *message_id, struct isds_dmMessageAuthor **author);
+
 /* Retrieve hash of message identified by ID stored in ISDS.
  * @context is session context
  * @message_id is message identifier
@@ -2311,6 +2357,9 @@ void isds_fulltext_result_free(
 
 /* Deallocate struct isds_box_state_period recursively and NULL it */
 void isds_box_state_period_free(struct isds_box_state_period **period);
+
+/* Deallocate struct isds_dmMessageAuthor recursively and NULL it. */
+void isds_dmMessageAuthor_free(struct isds_dmMessageAuthor **author);
 
 /* Copy structure isds_status recursively */
 struct isds_status *isds_status_duplicate(const struct isds_status *src);

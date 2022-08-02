@@ -71,6 +71,21 @@ int main(int argc, char **argv) {
         free(name);
     }
 
+    if (NULL != argv[0]) {
+        struct isds_dmMessageAuthor *author = NULL;
+
+        printf("Getting sender of message with ID: %s\n", argv[1]);
+        err = isds_GetMessageAuthor2(ctx, argv[1], &author);
+        if (IE_SUCCESS != err) {
+            printf("isds_GetMessageAuthor2() failed: %s: %s\n",
+                    isds_strerror(err), isds_long_message(ctx));
+        } else {
+            printf("isds_GetMessageAuthor2() succeeded:\n");
+            print_dmMessageAuthor(author);
+        }
+
+        isds_dmMessageAuthor_free(&author);
+    }
 
     err = isds_logout(ctx);
     if (err) {

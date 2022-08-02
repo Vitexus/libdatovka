@@ -23,6 +23,7 @@ libdatovka.so.0 libdatovka0 #MINVER#
  isds_FindDataBox2@Base 0.1
  isds_GetDataBoxUsers@Base 0.1
  isds_GetDataBoxUsers2@Base 0.1
+ isds_GetMessageAuthor2@Base 0.3
  isds_GetOwnerInfoFromLogin@Base 0.1
  isds_GetOwnerInfoFromLogin2@Base 0.1
  isds_GetUserInfoFromLogin@Base 0.1
@@ -62,6 +63,7 @@ libdatovka.so.0 libdatovka0 #MINVER#
  isds_delete_message_from_storage@Base 0.1
  isds_delete_user@Base 0.1
  isds_disable_box_accessibility_externaly@Base 0.1
+ isds_dmMessageAuthor_free@Base 0.3
  isds_document_free@Base 0.1
  isds_download_message_hash@Base 0.1
  isds_envelope_free@Base 0.1

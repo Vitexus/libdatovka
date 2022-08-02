@@ -1683,6 +1683,57 @@ err = isds_cleanup();
       </refsection>
 
       <refsection>
+        <title><type>enum isds_IdLevel_value</type></title>
+        <synopsis><type>enum isds_IdLevel_value</type>;</synopsis>
+        <para>Specifies which information the sender of a data message wants
+          to publish about his person.</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>PUBLISH_USERTYPE</constant></term>
+            <listitem><para>Publish information about the sender type.
+                This information is always revealed to the recipient.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>PUBLISH_PERSONNAME</constant></term>
+            <listitem><para>Publish sender's personal name.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>PUBLISH_BIDATE</constant></term>
+            <listitem><para>Publish sender's birth date.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>PUBLISH_BICITY</constant></term>
+            <listitem><para>Publish sender's birth city. This information is available
+                only when sender is SENDERTYPE_ENTRUSTED of a FO or PFO box.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>PUBLISH_BICOUNTY</constant></term>
+            <listitem><para>Publish sender's birth county. This information is available
+                only when sender is SENDERTYPE_ENTRUSTED of a FO or PFO box.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>PUBLISH_ADCODE</constant></term>
+            <listitem><para>Publish sender's RUIAN address code.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>PUBLISH_FULLADDRESS</constant></term>
+            <listitem><para>Publish sender's full address.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>PUBLISH_ROBIDENT</constant></term>
+            <listitem><para>Publish information whether sender is identified within the ROB.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
         <title>struct <structname>isds_envelope</structname></title>
         <synopsis>struct <structname>isds_envelope</structname>;</synopsis>
         <para>Message envelope. These are the metadata about a message. It
@@ -2099,6 +2150,20 @@ err = isds_cleanup();
                 This feature exists because more users can have access to one
                 box and the recipient could not tell who was the sender. This
                 value is optional. Default value is false.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>int *</type><structfield>idLevel</structfield>;</term>
+            <listitem><para>Specifies which personal information about the
+                sender should be revealed to the recipient. All specified
+                information can be acquired by the recipient by using the
+                <function>isds_GetMessageAuthor2</function> function. The
+                sender's box type and identifier will always be available.
+                The value of <structfield>dmPublishOwnID</structfield>
+                <emphasis>MUST</emphasis> be set to true in order to specify
+                which additional information the sender wants to disclose.
+                The actual value of the <structfield>idLevel</structfield> is
+                the sum of actual <type>enum isds_IdLevel_value</type> values.</para></listitem>
           </varlistentry>
         </variablelist>
       </refsection>

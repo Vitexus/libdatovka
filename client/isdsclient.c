@@ -1,5 +1,6 @@
 #include "../config.h"
 #define _XOPEN_SOURCE XOPEN_SOURCE_LEVEL_FOR_STRDUP
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <locale.h>
@@ -272,6 +273,13 @@ int main(void) {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"*/
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+        _Bool dmPublishOwnID = true;
+        envelope.dmPublishOwnID = &dmPublishOwnID;
+        int idLevel = PUBLISH_USERTYPE | PUBLISH_PERSONNAME | PUBLISH_BIDATE
+            | PUBLISH_BICITY | PUBLISH_BICOUNTY | PUBLISH_ADCODE
+            | PUBLISH_FULLADDRESS | PUBLISH_ROBIDENT;
+        envelope.idLevel = &idLevel;
 
         struct isds_document minor_document;
         memset(&minor_document, 0, sizeof(minor_document));
