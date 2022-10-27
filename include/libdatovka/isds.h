@@ -135,20 +135,18 @@ typedef enum {
 const char *isds_strerror(const isds_error error);
 
 /* library options */
-typedef enum {
-    IOPT_TLS_VERIFY_SERVER,     /*  _Bool: Verify server identity?
+typedef enum isds_option {
+    IOPT_TLS_VERIFY_SERVER = 1, /* _Bool: Verify server identity?
                                    Default value is true. */
-    IOPT_TLS_CA_FILE,           /* char *: File name with CA certificates.
-                                   Default value depends on cryptographic
+    IOPT_TLS_CA_FILE = 2, /* char *: File name with CA certificates.
+                             Default value depends on cryptographic library. */
+    IOPT_TLS_CA_DIRECTORY = 3, /* char *: Directory name with CA certificates.
+                                  Default value depends on cryptographic
                                    library. */
-    IOPT_TLS_CA_DIRECTORY,      /* char *: Directory name with CA certificates.
-                                   Default value depends on cryptographic
-                                   library. */
-    IOPT_TLS_CRL_FILE,          /* char *: File  name with CRL in PEM format.
-                                   Default value depends on cryptographic
-                                   library. */
-    IOPT_NORMALIZE_MIME_TYPE,   /*  _Bool: Normalize MIME type values?
-                                   Default value is false. */
+    IOPT_TLS_CRL_FILE = 4, /* char *: File  name with CRL in PEM format.
+                              Default value depends on cryptographic library. */
+    IOPT_NORMALIZE_MIME_TYPE = 5, /* _Bool: Normalize MIME type values?
+                                     Default value is false. */
 } isds_option;
 
 /* library TLS options */
@@ -1235,12 +1233,14 @@ typedef int (*isds_progress_callback)(
 isds_error isds_set_progress_callback(struct isds_ctx *context,
         isds_progress_callback callback, void *data);
 
-/* Change context settings.
- * @context is context which setting will be applied to
- * @option is name of option. It determines the type of last argument. See
- * isds_option definition for more info.
+/*
+ * Change context settings.
+ * @context is the context which specified setting will be applied to
+ * @option is the code of the option as specified by enum isds_option.
+ *     It determines the type of last argument.
+ *     See the definition of enum isds_option for more information.
  * @... is value of new setting. Type is determined by @option
- * */
+ */
 isds_error isds_set_opt(struct isds_ctx *context, int option, ...);
 
 /* Connect and log into ISDS server.

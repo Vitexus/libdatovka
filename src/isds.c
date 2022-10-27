@@ -1641,13 +1641,6 @@ isds_error isds_set_progress_callback(struct isds_ctx *context,
 #endif
 }
 
-
-/* Change context settings.
- * @context is context which setting will be applied to
- * @option is name of option. It determines the type of last argument. See
- * isds_option definition for more info.
- * @... is value of new setting. Type is determined by @option
- * */
 isds_error isds_set_opt(struct isds_ctx *context, int option, ...) {
     isds_error err = IE_SUCCESS;
     va_list ap;
