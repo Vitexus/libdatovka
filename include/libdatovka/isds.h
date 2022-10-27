@@ -145,8 +145,8 @@ typedef enum isds_option {
                                    library. */
     IOPT_TLS_CRL_FILE = 4, /* char *: File  name with CRL in PEM format.
                               Default value depends on cryptographic library. */
-    IOPT_NORMALIZE_MIME_TYPE = 5, /* _Bool: Normalize MIME type values?
-                                     Default value is false. */
+    IOPT_NORMALIZE_MIME_TYPE = 5 /* _Bool: Normalize MIME type values?
+                                    Default value is false. */
 } isds_option;
 
 /* library TLS options */
