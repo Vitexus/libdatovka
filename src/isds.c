@@ -1648,8 +1648,7 @@ isds_error isds_set_progress_callback(struct isds_ctx *context,
  * isds_option definition for more info.
  * @... is value of new setting. Type is determined by @option
  * */
-isds_error isds_set_opt(struct isds_ctx *context, const isds_option option,
-        ...) {
+isds_error isds_set_opt(struct isds_ctx *context, int option, ...) {
     isds_error err = IE_SUCCESS;
     va_list ap;
 #if HAVE_LIBCURL
