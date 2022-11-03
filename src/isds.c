@@ -1250,6 +1250,24 @@ isds_error isds_check_func_timegm(struct isds_ctx *context)
 {
 	struct tm tm;
 
+	/* "2021-09-20T01:28:49+02:00" */
+	memset(&tm, 0, sizeof(tm));
+	tm.tm_sec = 49 - 0;
+	tm.tm_min = 28 - 0;
+	tm.tm_hour = -1 - 0;
+	tm.tm_mday = 20 - 0;
+	tm.tm_mon = 9 - 1;
+	tm.tm_year = 2021 - 1900;
+	//tm.tm_wday;
+	//tm.tm_yday;
+	//tm.tm_isdst;
+
+	isds_error ret = check_time(context, &tm, 1632094129ll);
+	if (ret != IE_SUCCESS) {
+		return ret;
+	}
+
+	/* "2038-01-19T03:17:07" */
 	memset(&tm, 0, sizeof(tm));
 	tm.tm_sec = 7 - 0;
 	tm.tm_min = 14 - 0;
@@ -1261,11 +1279,12 @@ isds_error isds_check_func_timegm(struct isds_ctx *context)
 	//tm.tm_yday;
 	//tm.tm_isdst;
 
-	isds_error ret = check_time(context, &tm, 2147483647ll);
+	ret = check_time(context, &tm, 2147483647ll);
 	if (ret != IE_SUCCESS) {
 		return ret;
 	}
 
+	/* "2138-0-19T03:14:07" */
 	memset(&tm, 0, sizeof(tm));
 	tm.tm_sec = 7 - 0;
 	tm.tm_min = 14 - 0;
@@ -1331,6 +1350,24 @@ isds_error isds_check_func_gmtime_r(struct isds_ctx *context)
 {
 	struct tm tm;
 
+	/* "2021-09-19T23:28:49" */
+	memset(&tm, 0, sizeof(tm));
+	tm.tm_sec = 49 - 0;
+	tm.tm_min = 28 - 0;
+	tm.tm_hour = 23 - 0;
+	tm.tm_mday = 19 - 0;
+	tm.tm_mon = 9 - 1;
+	tm.tm_year = 2021 - 1900;
+	//tm.tm_wday;
+	//tm.tm_yday;
+	//tm.tm_isdst;
+
+	isds_error ret = check_tm(context, 1632094129ll, &tm);
+	if (ret != IE_SUCCESS) {
+		return ret;
+	}
+
+	/* "2038-01-19T03:17:07" */
 	memset(&tm, 0, sizeof(tm));
 	tm.tm_sec = 7 - 0;
 	tm.tm_min = 14 - 0;
@@ -1342,11 +1379,12 @@ isds_error isds_check_func_gmtime_r(struct isds_ctx *context)
 	//tm.tm_yday;
 	//tm.tm_isdst;
 
-	isds_error ret = check_tm(context, 2147483647ll, &tm);
+	ret = check_tm(context, 2147483647ll, &tm);
 	if (ret != IE_SUCCESS) {
 		return ret;
 	}
 
+	/* "2138-0-19T03:14:07" */
 	memset(&tm, 0, sizeof(tm));
 	tm.tm_sec = 7 - 0;
 	tm.tm_min = 14 - 0;
@@ -3076,6 +3114,10 @@ static isds_error timestring2static_timeval(const xmlChar *string,
             return IE_DATE;
         }
         if (*offset == '+') {
+            /*
+             * Warning: This may cause negative values
+             * (e.g. at 01:00 in zone +02:00).
+             */
             broken.tm_hour -= offset_hours;
             broken.tm_min -= offset_minutes;
         } else {
