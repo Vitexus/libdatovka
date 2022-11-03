@@ -58,15 +58,19 @@ const char *isds_lib_ver_str(void);
 
 /* Service locators */
 /* Base URL of production ISDS instance */
-extern const char isds_locator[];       /* Without client certificate auth. */
-extern const char isds_cert_locator[];  /* With client certificate auth. */
-extern const char isds_otp_locator[];   /* With OTP authentication */
-extern const char isds_mep_locator[];   /* Mobile key application. */
+extern const char isds_locator[]; /* Without client certificate authentication. */
+extern const char isds_cert_locator[]; /* With client certificate authentication. */
+extern const char isds_vodz_locator[]; /* High-volume data message without client certificate. */
+extern const char isds_vodz_cert_locator[]; /* High-volume data message without client certificate. */
+extern const char isds_otp_locator[]; /* With OTP authentication. */
+extern const char isds_mep_locator[]; /* Mobile key application. */
 /* Base URL of testing ISDS instance */
-extern const char isds_testing_locator[];       /* Without client certificate */
-extern const char isds_cert_testing_locator[];  /* With client certificate */
-extern const char isds_otp_testing_locator[];   /* With OTP authentication */
-extern const char isds_mep_testing_locator[];   /* Mobile key application. */
+extern const char isds_testing_locator[]; /* Without client certificate */
+extern const char isds_cert_testing_locator[]; /* With client certificate */
+extern const char isds_vodz_testing_locator[]; /* High-volume data message without client certificate. */
+extern const char isds_vodz_cert_testing_locator[]; /* High-volume data message without client certificate. */
+extern const char isds_otp_testing_locator[]; /* With OTP authentication */
+extern const char isds_mep_testing_locator[]; /* Mobile key application. */
 
 
 struct isds_ctx;    /* Context for specific ISDS box */
@@ -83,7 +87,7 @@ struct isds_timeval {
 	int32_t tv_usec;
 };
 
-typedef enum {
+typedef enum isds_error {
     IE_SUCCESS = 0, /* No error, just for C convenience (0 means Ok) */
     IE_ERROR,       /* Unspecified error */
     IE_NOTSUP,

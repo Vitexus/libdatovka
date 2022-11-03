@@ -4,20 +4,24 @@
 #include "libdatovka/isds.h"
 
 #if HAVE_LIBCURL
-typedef enum {
-    SERVICE_DM_OPERATIONS,
-    SERVICE_DM_INFO,
-    SERVICE_DB_SEARCH,
-    SERVICE_DB_ACCESS,
-    SERVICE_DB_MANIPULATION,
-    SERVICE_ASWS
+typedef enum isds_service {
+	SERVICE_DM_OPERATIONS,
+	SERVICE_DM_INFO,
+	SERVICE_VODZ_DM_OPERATIONS,
+	SERVICE_DB_SEARCH,
+	SERVICE_DB_ACCESS,
+	SERVICE_DB_MANIPULATION,
+	SERVICE_ASWS
 } isds_service;
 
-/* Convert isds_service to enum isds_status_type.
- * @service is ISDS web service identifier */
-enum isds_status_type _isds_service_to_status_type(isds_service service);
+/*
+ * Convert enum isds_service to enum isds_status_type.
+ * @service is ISDS web service identifier
+ */
+enum isds_status_type _isds_service_to_status_type(enum isds_service service);
 
-/* Get ISDS status info from ISDS @response XML document.
+/*
+ * Get ISDS status info from ISDS @response XML document.
  * Be ware that different request families return differently encoded status
  * (e.g. dmStatus, dbStatus)
  * @context is ISDS context
@@ -28,12 +32,14 @@ enum isds_status_type _isds_service_to_status_type(isds_service service);
  * message was delivered by server. Use NULL if you don't care.
  * @refnumber is automatically reallocated request serial number assigned by
  * ISDS. Returned *NULL means no number was delivered by server.
- * Use NULL if you don't care. */
-isds_error isds_response_status(struct isds_ctx *context,
-        const isds_service service, xmlDocPtr response,
-        xmlChar **code, xmlChar **message, xmlChar **refnumber);
+ * Use NULL if you don't care.
+ */
+enum isds_error isds_response_status(struct isds_ctx *context,
+    const enum isds_service service, xmlDocPtr response,
+    xmlChar **code, xmlChar **message, xmlChar **refnumber);
 
-/* Send @request to ISDS and return ISDS @response as XML document.
+/*
+ * Send @request to ISDS and return ISDS @response as XML document.
  * Be ware the @response can be invalid (in sense of XML Schema).
  * (And it is because current ISDS server does not follow its own
  * specification. Please apology my government, its herd of incompetent
@@ -46,10 +52,10 @@ isds_error isds_response_status(struct isds_ctx *context,
  * NULL if you don't care
  * @raw_response_length is size of @raw_response in bytes
  * In case of error, @response and @raw_response will be deallocated.
- * */
-isds_error _isds(struct isds_ctx *context, const isds_service service,
-        const xmlNodePtr request, xmlDocPtr *response,
-        void **raw_response, size_t *raw_response_length);
+ */
+enum isds_error _isds(struct isds_ctx *context, const enum isds_service service,
+    const xmlNodePtr request, xmlDocPtr *response,
+    void **raw_response, size_t *raw_response_length);
 #endif /* HAVE_LIBCURL */
 
 /* Walk through list of isds_documents and check for their types and

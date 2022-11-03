@@ -8,251 +8,252 @@
 
 #if HAVE_LIBCURL
 _hidden enum isds_status_type _isds_service_to_status_type(
-        isds_service service) {
-    enum isds_status_type type = STAT_DB;
+    enum isds_service service)
+{
+	enum isds_status_type type = STAT_DB;
 
-    switch (service) {
-        case SERVICE_DM_OPERATIONS:
-        case SERVICE_DM_INFO:
-            type = STAT_DM;
-        case SERVICE_DB_SEARCH:
-        case SERVICE_DB_ACCESS:
-        case SERVICE_DB_MANIPULATION:
-            type = STAT_DB;
-        case SERVICE_ASWS:
-            type = STAT_DB;
-    }
-    return type;
+	switch (service) {
+	case SERVICE_DM_OPERATIONS:
+	case SERVICE_DM_INFO:
+	case SERVICE_VODZ_DM_OPERATIONS:
+		type = STAT_DM;
+		break;
+	case SERVICE_DB_SEARCH:
+	case SERVICE_DB_ACCESS:
+	case SERVICE_DB_MANIPULATION:
+		type = STAT_DB;
+		break;
+	case SERVICE_ASWS:
+		type = STAT_DB;
+		break;
+	}
+	return type;
 }
 
-/* Get ISDS status info from ISDS @response XML document.
- * Be ware that different request families return differently encoded status
- * (e.g. dmStatus, dbStatus)
- * @context is ISDS context
- * @service is ISDS web service identifier
- * @response is ISDS response document
- * @code is automatically allocated status code of the response
- * @message is automatically allocated status message. Returned NULL means no
- * message was delivered by server. Use NULL if you don't care.
- * @refnumber is automatically reallocated request serial number assigned by
- * ISDS. Returned *NULL means no number was delivered by server.
- * Use NULL if you don't care. */
-_hidden isds_error isds_response_status(struct isds_ctx *context,
-        const isds_service service, xmlDocPtr response,
-        xmlChar **code, xmlChar **message, xmlChar **refnumber) {
-    isds_error err = IE_SUCCESS;
-    xmlChar *status_code_expr = NULL, *status_message_expr = NULL;
-    xmlXPathContextPtr xpath_ctx = NULL;
-    xmlXPathObjectPtr result = NULL;
+_hidden enum isds_error isds_response_status(struct isds_ctx *context,
+    const enum isds_service service, xmlDocPtr response,
+    xmlChar **code, xmlChar **message, xmlChar **refnumber)
+{
+	enum isds_error err = IE_SUCCESS;
+	xmlChar *status_code_expr = NULL;
+	xmlChar *status_message_expr = NULL;
+	xmlXPathContextPtr xpath_ctx = NULL;
+	xmlXPathObjectPtr result = NULL;
 
-    if (!response || !code) {
-        err = IE_INVAL;
-        goto leave;
-    }
+	if ((NULL == response) || (NULL == code)) {
+		err = IE_INVAL;
+		goto leave;
+	}
 
-    switch (service) {
-        case SERVICE_DM_OPERATIONS:
-        case SERVICE_DM_INFO:
-            status_code_expr = BAD_CAST
-                "/*/isds:dmStatus/isds:dmStatusCode/text()";
-            status_message_expr = BAD_CAST
-                "/*/isds:dmStatus/isds:dmStatusMessage/text()";
-            break;
-        case SERVICE_DB_SEARCH:
-        case SERVICE_DB_ACCESS:
-        case SERVICE_DB_MANIPULATION:
-            status_code_expr = BAD_CAST
-                "/*/isds:dbStatus/isds:dbStatusCode/text()";
-            status_message_expr = BAD_CAST
-                "/*/isds:dbStatus/isds:dbStatusMessage/text()";
-            break;
-        case SERVICE_ASWS:
-            status_code_expr = BAD_CAST
-                "/*/oisds:dbStatus/oisds:dbStatusCode/text()";
-            status_message_expr = BAD_CAST
-                "/*/oisds:dbStatus/oisds:dbStatusMessage/text()";
-            break;
-        default:
-            err = IE_NOTSUP;
-            goto leave;
-    }
+	switch (service) {
+	case SERVICE_DM_OPERATIONS:
+	case SERVICE_DM_INFO:
+	case SERVICE_VODZ_DM_OPERATIONS:
+		status_code_expr = BAD_CAST
+		    "/*/isds:dmStatus/isds:dmStatusCode/text()";
+		status_message_expr = BAD_CAST
+		    "/*/isds:dmStatus/isds:dmStatusMessage/text()";
+		break;
+	case SERVICE_DB_SEARCH:
+	case SERVICE_DB_ACCESS:
+	case SERVICE_DB_MANIPULATION:
+		status_code_expr = BAD_CAST
+		    "/*/isds:dbStatus/isds:dbStatusCode/text()";
+		status_message_expr = BAD_CAST
+		    "/*/isds:dbStatus/isds:dbStatusMessage/text()";
+		break;
+	case SERVICE_ASWS:
+		status_code_expr = BAD_CAST
+		    "/*/oisds:dbStatus/oisds:dbStatusCode/text()";
+		status_message_expr = BAD_CAST
+		    "/*/oisds:dbStatus/oisds:dbStatusMessage/text()";
+		break;
+	default:
+		err = IE_NOTSUP;
+		goto leave;
+	}
 
-    xpath_ctx = xmlXPathNewContext(response);
-    if (!xpath_ctx) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (_isds_register_namespaces(xpath_ctx,
-                (context->type == CTX_TYPE_TESTING_REQUEST_COLLECTOR) ?
-                    MESSAGE_NS_1 : MESSAGE_NS_UNSIGNED)) {
-        err = IE_ERROR;
-        goto leave;
-    }
+	xpath_ctx = xmlXPathNewContext(response);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx,
+	        (context->type == CTX_TYPE_TESTING_REQUEST_COLLECTOR) ?
+	            MESSAGE_NS_1 : MESSAGE_NS_UNSIGNED)) {
+		err = IE_ERROR;
+		goto leave;
+	}
 
-    /* Get status code */
-    result = xmlXPathEvalExpression(status_code_expr, xpath_ctx);
-    if (!result) {
-        err = IE_ERROR;
-        goto leave;
-    }
-    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-        isds_log_message(context,
-                (context->type == CTX_TYPE_TESTING_REQUEST_COLLECTOR) ?
-                    _("ISDS1 response is missing StatusCode element") :
-                    _("ISDS response is missing StatusCode element"));
-        err = IE_ISDS;
-        goto leave;
-    }
-    *code = xmlXPathCastNodeSetToString(result->nodesetval);
-    if (NULL == *code) {
-        err = IE_ERROR;
-        goto leave;
-    }
+	/* Get status code. */
+	result = xmlXPathEvalExpression(status_code_expr, xpath_ctx);
+	if (NULL == result) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+		isds_log_message(context,
+		    (context->type == CTX_TYPE_TESTING_REQUEST_COLLECTOR) ?
+		        _("ISDS1 response is missing StatusCode element") :
+		        _("ISDS response is missing StatusCode element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	*code = xmlXPathCastNodeSetToString(result->nodesetval);
+	if (NULL == *code) {
+		err = IE_ERROR;
+		goto leave;
+	}
 
-    if (message) {
-        /* Get status message */
-        xmlXPathFreeObject(result);
-        result = xmlXPathEvalExpression(status_message_expr, xpath_ctx);
-        if (!result) {
-            err = IE_ERROR;
-            goto leave;
-        }
-        if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-            /* E.g. CreateMessageResponse with dmStatusCode 9005 has empty
-             * message */
-            *message = NULL;
-        } else {
-            *message = xmlXPathCastNodeSetToString(result->nodesetval);
-            if (NULL == *message) {
-                err = IE_ERROR;
-                goto leave;
-            }
-        }
-    }
+	if (NULL != message) {
+		/* Get status message. */
+		xmlXPathFreeObject(result);
+		result = xmlXPathEvalExpression(status_message_expr, xpath_ctx);
+		if (NULL == result) {
+			err = IE_ERROR;
+			goto leave;
+		}
+		if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+			/*
+			 * E.g. CreateMessageResponse with dmStatusCode 9005
+			 * has empty message.
+			 */
+			*message = NULL;
+		} else {
+			*message = xmlXPathCastNodeSetToString(result->nodesetval);
+			if (NULL == *message) {
+				err = IE_ERROR;
+				goto leave;
+			}
+		}
+	}
 
-    if (refnumber) {
-        /* Get reference number of client request */
-        zfree(*refnumber);
-        xmlXPathFreeObject(result);
-        result = xmlXPathEvalExpression(
-                (SERVICE_ASWS == service) ?
-                    BAD_CAST "/*/oisds:dbStatus/oisds:dbStatusRefNumber/text()":
-                    BAD_CAST "/*/isds:dbStatus/isds:dbStatusRefNumber/text()",
-                xpath_ctx);
-        if (!result) {
-            err = IE_ERROR;
-            goto leave;
-        }
-        if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-            *refnumber = NULL;
-        } else {
-            *refnumber = xmlXPathCastNodeSetToString(result->nodesetval);
-            if (NULL == *refnumber) {
-                err = IE_ERROR;
-                goto leave;
-            }
-        }
-    }
+	if (NULL != refnumber) {
+		/* Get reference number of client request. */
+		zfree(*refnumber);
+		xmlXPathFreeObject(result);
+		result = xmlXPathEvalExpression(
+		    (SERVICE_ASWS == service) ?
+		        BAD_CAST "/*/oisds:dbStatus/oisds:dbStatusRefNumber/text()":
+		        BAD_CAST "/*/isds:dbStatus/isds:dbStatusRefNumber/text()",
+		    xpath_ctx);
+		if (NULL == result) {
+			err = IE_ERROR;
+			goto leave;
+		}
+		if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+			*refnumber = NULL;
+		} else {
+			*refnumber = xmlXPathCastNodeSetToString(result->nodesetval);
+			if (NULL == *refnumber) {
+				err = IE_ERROR;
+				goto leave;
+			}
+		}
+	}
 leave:
-    xmlXPathFreeObject(result);
-    xmlXPathFreeContext(xpath_ctx);
-    return err;
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+	return err;
 }
 
+_hidden enum isds_error _isds(struct isds_ctx *context,
+    const enum isds_service service, const xmlNodePtr request,
+    xmlDocPtr *response, void **raw_response, size_t *raw_response_length)
+{
+	enum isds_error err = IE_SUCCESS;
+	xmlDocPtr response_document = NULL;
+	xmlNodePtr response_body;
+	xmlNodePtr isds_node;
+	char *file = NULL;
+	const char *name_space = ISDS_NS;
 
-/* Send @request to ISDS and return ISDS @response as XML document.
- * Be ware the @response can be invalid (in sense of XML Schema).
- * (And it is because current ISDS server does not follow its own
- * specification. Please apology my government, its herd of incompetent
- * creatures.)
- * @context is ISDS session context,
- * @service identifies ISDS web service
- * @request is tree with ISDS message, can be NULL
- * @response is automatically allocated response from server as XML Document
- * @raw_response is automatically allocated bit stream with response body. Use
- * NULL if you don't care
- * @raw_response_length is size of @raw_response in bytes
- * In case of error, @response and @raw_response will be deallocated.
- * */
-_hidden isds_error _isds(struct isds_ctx *context, const isds_service service,
-        const xmlNodePtr request, xmlDocPtr *response,
-        void **raw_response, size_t *raw_response_length) {
-    isds_error err = IE_SUCCESS;
-    xmlDocPtr response_document = NULL;
-    xmlNodePtr response_body, isds_node;
-    char *file = NULL;
-    const char *name_space = ISDS_NS;
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (NULL == response) {
+		return IE_INVAL;
+	}
+	if ((NULL == raw_response_length) && (NULL != raw_response)) {
+		return IE_INVAL;
+	}
 
-    if (!context) return IE_INVALID_CONTEXT;
-    if (!response) return IE_INVAL;
-    if (!raw_response_length && raw_response) return IE_INVAL;
+	/*
+	 * Effective ISDS URL is build from base URL and suffix.
+	 * Other connection types has specific stable URL.
+	 */
+	if (context->type == CTX_TYPE_ISDS) {
+		switch (service) {
+		case SERVICE_DM_OPERATIONS:      file = "DS/dz"; break;
+		case SERVICE_DM_INFO:            file = "DS/dx"; break;
+		case SERVICE_VODZ_DM_OPERATIONS: file = "DS/vodz"; break;
+		case SERVICE_DB_SEARCH:          file = "DS/df"; break;
+		case SERVICE_DB_ACCESS:          file = "DS/DsManage"; break;
+		case SERVICE_DB_MANIPULATION:    file = "DS/DsManage"; break;
+		case SERVICE_ASWS:               file = ""; break;
+		default: return (IE_INVAL); break;
+		}
+	}
 
-    /* Effective ISDS URL is build from base URL and suffix.
-     * Other connection types has specific stable URL. */
-    if (context->type == CTX_TYPE_ISDS) {
-        switch (service) {
-            case SERVICE_DM_OPERATIONS:     file = "DS/dz"; break;
-            case SERVICE_DM_INFO:           file = "DS/dx"; break;
-            case SERVICE_DB_SEARCH:         file = "DS/df"; break;
-            case SERVICE_DB_ACCESS:         file = "DS/DsManage"; break;
-            case SERVICE_DB_MANIPULATION:   file = "DS/DsManage"; break;
-            case SERVICE_ASWS:              file = ""; break;
-            default: return (IE_INVAL);
-        }
-    }
+	/* Also name space differs in some cases. */
+	if (CTX_TYPE_TESTING_REQUEST_COLLECTOR == context->type) {
+		name_space = ISDS1_NS;
+	} else if (SERVICE_ASWS == service) {
+		name_space = OISDS_NS;
+	}
 
-    /* Also name space differs in some cases */
-    if (CTX_TYPE_TESTING_REQUEST_COLLECTOR == context->type)
-        name_space = ISDS1_NS;
-    else if (SERVICE_ASWS == service)
-        name_space = OISDS_NS;
+	err = _isds_soap(context, file, request, &response_document,
+	    &response_body, raw_response, raw_response_length);
 
-    err = _isds_soap(context, file, request, &response_document, &response_body,
-            raw_response, raw_response_length);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
 
-    if (err) goto leave;
+	if (NULL == response_body) {
+		isds_log_message(context, _("SOAP returned empty body"));
+		err = IE_ISDS;
+	}
 
-    if (!response_body) {
-        isds_log_message(context, _("SOAP returned empty body"));
-        err = IE_ISDS;
-    }
+	/* Find ISDS element. */
+	for (isds_node = response_body; isds_node; isds_node = isds_node->next) {
+		if ((isds_node->type == XML_ELEMENT_NODE) &&
+		    (NULL != isds_node->ns) &&
+		    (0 == xmlStrcmp(isds_node->ns->href, BAD_CAST name_space))) {
+			break;
+		}
+	}
+	if (NULL == isds_node) {
+		char *name_space_local = _isds_utf82locale(name_space);
+		isds_printf_message(context,
+		    _("SOAP response does not contain element from name space %s"),
+		    name_space_local);
+		free(name_space_local);
+		err = IE_ISDS;
+		goto leave;
+	}
 
-    /* Find ISDS element */
-    for (isds_node = response_body; isds_node; isds_node = isds_node->next) {
-        if (isds_node->type == XML_ELEMENT_NODE &&
-                isds_node->ns &&
-                !xmlStrcmp(isds_node->ns->href, BAD_CAST name_space))
-            break;
-    }
-    if (!isds_node) {
-        char *name_space_local = _isds_utf82locale(name_space);
-        isds_printf_message(context,
-                _("SOAP response does not contain element from name space %s"),
-                name_space_local);
-        free(name_space_local);
-        err = IE_ISDS;
-        goto leave;
-    }
+	/* TODO: validate the response */
 
-    /* TODO: validate the response */
-
-    /* Build XML document */
-    *response = xmlNewDoc(BAD_CAST "1.0");
-    if (!*response) {
-        isds_log_message(context, _("Could not build ISDS response document"));
-        err = IE_ERROR;
-        goto leave;
-    }
-    xmlDocSetRootElement(*response, isds_node);
+	/* Build XML document */
+	*response = xmlNewDoc(BAD_CAST "1.0");
+	if (NULL == *response) {
+		isds_log_message(context,
+		    _("Could not build ISDS response document"));
+		err = IE_ERROR;
+		goto leave;
+	}
+	xmlDocSetRootElement(*response, isds_node);
 
 leave:
-    if (err) {
-        xmlFreeDoc(*response);
-        if (raw_response) zfree(*raw_response);
-    }
-    xmlFreeDoc(response_document);
+	if (IE_SUCCESS != err) {
+		xmlFreeDoc(*response);
+		if (NULL != raw_response) {
+			zfree(*raw_response);
+		}
+	}
+	xmlFreeDoc(response_document);
 
-    return err;
+	return err;
 }
 #endif /* HAVE_LIBCURL */
 

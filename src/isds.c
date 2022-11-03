@@ -42,12 +42,16 @@ _hidden const char *version_expat = N_("n/a");
 /* Base URL of production ISDS instance */
 const char isds_locator[] = "https://ws1.mojedatovaschranka.cz/";
 const char isds_cert_locator[] = "https://ws1c.mojedatovaschranka.cz/";
+const char isds_vodz_locator[] = "https://ws2.mojedatovaschranka.cz/";
+const char isds_vodz_cert_locator[] = "https://ws2c.mojedatovaschranka.cz/";
 const char isds_otp_locator[] = "https://www.mojedatovaschranka.cz/";
 const char isds_mep_locator[] = "https://www.mojedatovaschranka.cz/";
 
 /* Base URL of production ISDS instance */
 const char isds_testing_locator[] = "https://ws1.czebox.cz/";
 const char isds_cert_testing_locator[] = "https://ws1c.czebox.cz/";
+const char isds_vodz_testing_locator[] = "https://ws2.czebox.cz/";
+const char isds_vodz_cert_testing_locator[] = "https://ws2c.czebox.cz/";
 const char isds_otp_testing_locator[] = "https://www.czebox.cz/";
 const char isds_mep_testing_locator[] = "https://www.czebox.cz/";
 
