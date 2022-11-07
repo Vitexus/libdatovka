@@ -1507,7 +1507,7 @@ redirect:
         auth_headers_free(&response_otp_headers);
     }
     isds_log(ILF_SOAP, ILL_DEBUG,
-            _("SOAP request to sent to %s:\n%.*s\nEnd of SOAP request\n"),
+            _("SOAP request to be sent to %s:\n%.*s\nEnd of SOAP request\n"),
             url, http_request->use, http_request->content);
 
     if ((NULL != context->mep_credentials) && (NULL != context->mep_credentials->intermediate_uri)) {
@@ -1653,7 +1653,7 @@ redirect:
                        presents. */
         case 403:   /* HTTP/1.0 prescribes 403 if Authorization presents. */
             err = IE_NOT_LOGGED_IN;
-            isds_log_message(context, _("Authentication failed"));
+            isds_log_message(context, _("Authentication failed."));
             goto leave;
             break;
         case 404:
@@ -1708,6 +1708,154 @@ leave:
     return err;
 }
 
+_hidden isds_error _isds_soap_vodz(struct isds_ctx *context, const char *file,
+    const xmlNodePtr request,
+    xmlDoc **response_document, xmlNode **response_node_list,
+    void **raw_response, size_t *raw_response_length)
+{
+	enum isds_error err = IE_SUCCESS;
+	char *url = NULL;
+	char *mime_type = NULL;
+	long http_code = 0;
+	xmlBuffer *http_request = NULL;
+	void *http_response = NULL;
+	size_t response_length = 0;
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if ((NULL == response_document && NULL != response_node_list) ||
+	    (NULL != response_document && NULL == response_node_list)) {
+		return IE_INVAL;
+	}
+	if ((NULL == raw_response_length) && (NULL != raw_response)) {
+		return IE_INVAL;
+	}
+
+	if (NULL != response_document) {
+		*response_document = NULL;
+	}
+	if (NULL != response_node_list) {
+		*response_node_list = NULL;
+	}
+	if (NULL != raw_response) {
+		*raw_response = NULL;
+	}
+
+	url = _isds_astrcat(context->url_vodz, file);
+	if (NULL == url) {
+		return IE_NOMEM;
+	}
+
+	err = build_http_request(context, request, &http_request);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/* Don't handle OTP or MEP login credentials here. */
+	if ((context->otp_credentials != NULL) || (context->mep_credentials != NULL)) {
+		err = IE_INVAL;
+		isds_printf_message(context,
+		    _("High-volume data message end point doesn't handle OTP nor MEP login credentials."));
+		goto leave;
+	}
+
+	isds_log(ILF_SOAP, ILL_DEBUG,
+	    _("SOAP request to be sent to %s:\n%.*s\nEnd of SOAP request\n"),
+	    url, http_request->use, http_request->content);
+
+	/* Don't handle OTP or MEP login credentials here. */
+	err = http(context, url, 0, http_request->content, http_request->use,
+	    &http_response, &response_length,
+	    &mime_type, NULL, &http_code, NULL);
+
+	/*
+	 * TODO: HTTP binding for SOAP prescribes non-200 HTTP return codes
+	 * to be processed too.
+	 */
+
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/* Don't handle OTP or MEP login credentials here. */
+
+	/* Check for HTTP return code */
+	isds_log(ILF_SOAP, ILL_DEBUG, _("Server returned %ld HTTP code\n"),
+	    http_code);
+	switch (http_code) {
+	/*
+	 * XXX: We must see which code is used for not permitted ISDS
+	 * operation like downloading message without proper user
+	 * permissions. In that case we should keep connection opened.
+	 */
+	case 200:
+		break;
+	case 302:
+		err = IE_HTTP;
+		isds_printf_message(context,
+		    _("Code 302: Server redirects on <%s> request. Redirection is forbidden in stateless mode."),
+		    url);
+		goto leave;
+		break;
+	case 400:
+		break;
+	case 401: /* ISDS server returns 401 even if Authorization presents. */
+	case 403: /* HTTP/1.0 prescribes 403 if Authorization presents. */
+		err = IE_NOT_LOGGED_IN;
+		isds_log_message(context, _("Authentication failed."));
+		goto leave;
+		break;
+	case 404:
+		err = IE_HTTP;
+		isds_printf_message(context,
+		        _("Code 404: Document (%s) not found on server"), url);
+		goto leave;
+		break;
+	/* 500 should return standard SOAP message */
+	}
+
+	/*
+	 * Check for Content-Type: text/xml.
+	 * Do it after HTTP code check because 401 Unauthorized returns HTML web
+	 * page for browsers.
+	 */
+	if ((NULL != mime_type) && (0 != strcmp(mime_type, "text/xml"))
+	    && (0 != strcmp(mime_type, "application/soap+xml"))
+	    && (0 != strcmp(mime_type, "application/xml"))) {
+		char *mime_type_locale = _isds_utf82locale(mime_type);
+		isds_printf_message(context,
+		    _("%s: bad MIME type sent by server: %s"), url,
+		    mime_type_locale);
+		free(mime_type_locale);
+		err = IE_SOAP;
+		goto leave;
+	}
+
+	err = process_http_response(context, http_response, response_length,
+	    response_document, response_node_list);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/* Save raw response */
+	if (NULL != raw_response) {
+		*raw_response = http_response;
+		http_response = NULL;
+	}
+	if (NULL != raw_response_length) {
+		*raw_response_length = response_length;
+	}
+
+leave:
+	/* Don't handle OTP or MEP login credentials here. */
+	free(mime_type);
+	free(http_response);
+	xmlBufferFree(http_request);
+	free(url);
+
+	return err;
+}
 
 /* Build new URL from current @context and template.
  * @context is context carrying an URL

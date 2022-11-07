@@ -1466,6 +1466,7 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
 
     /* Free other structures */
     free((*context)->url);
+    free((*context)->url_vodz);
     free((*context)->tls_verify_server);
     free((*context)->tls_ca_file);
     free((*context)->tls_ca_dir);
@@ -1813,6 +1814,36 @@ static isds_error _isds_store_credentials(struct isds_ctx *context,
 }
 #endif
 
+/*
+ * Determine the high-volume data message locator in relation to other service
+ * locators.
+ * @url is base address of ISDS web service. Passing null causes the default
+ * (non-certificate) production service to be used.
+ * @return high-volume data message ISDS service base URL.
+ */
+static const char *determine_vodz_locator(const char *url)
+{
+	if ((NULL == url)
+	    || (0 == strcmp(url, isds_locator))
+	    || (0 == strcmp(url, isds_vodz_locator))
+	    || (0 == strcmp(url, isds_otp_locator))
+	    || (0 == strcmp(url, isds_mep_locator))) {
+		return isds_vodz_locator;
+	} else if ((0 == strcmp(url, isds_cert_locator))
+	    || (0 == strcmp(url, isds_vodz_cert_locator))) {
+		return isds_vodz_cert_locator;
+	} else if ((0 == strcmp(url, isds_testing_locator))
+	    || (0 == strcmp(url, isds_vodz_testing_locator))
+	    || (0 == strcmp(url, isds_otp_testing_locator))
+	    || (0 == strcmp(url, isds_mep_testing_locator))) {
+		return isds_vodz_testing_locator;
+	} else if ((0 == strcmp(url, isds_cert_testing_locator))
+	    || (0 == strcmp(url, isds_vodz_cert_testing_locator))) {
+		return isds_vodz_cert_testing_locator;
+	} else {
+		return NULL;
+	}
+}
 
 /* Connect and log into ISDS server.
  * All required arguments will be copied, you do not have to keep them after
@@ -1884,6 +1915,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     /* Store configuration */
     context->type = CTX_TYPE_ISDS;
     zfree(context->url);
+    zfree(context->url_vodz);
 
     /* Mangle base URI according to requested authentication method */
     if (NULL == pki_credentials) {
@@ -1973,6 +2005,10 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     }
     if (!(context->url))
         return IE_NOMEM;
+    context->url_vodz = strdup(determine_vodz_locator(url));
+    if (NULL == context->url_vodz) {
+        return IE_NOMEM;
+    }
 
     /* Prepare CURL handle */
     context->curl = curl_easy_init();
@@ -2051,7 +2087,6 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 #endif
 }
 
-
 /* Connect and log into ISDS server using the MEP login method.
  * All arguments are copied, you don't have to keep them after successful
  * return.
@@ -2077,6 +2112,7 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
     isds_error soap_err;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
+    const _Bool testing = (url != NULL) && (0 == strcmp(url, isds_mep_locator));
 #endif /* HAVE_LIBCURL */
 
     if (NULL == context) {
@@ -2087,6 +2123,8 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
 
 #if HAVE_LIBCURL
     context->type = CTX_TYPE_ISDS;
+    zfree(context->url);
+    zfree(context->url_vodz);
 
     if ((NULL != username) && (NULL != code) && (NULL != mep)) {
         isds_log(ILF_SEC, ILL_INFO,
@@ -2107,7 +2145,7 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
 
     if (context->mep) {
         if (NULL == url) {
-            url = isds_mep_locator;
+            url = isds_mep_locator; /* Fall back to default locator. */
         }
         mep->resolution = MEP_RESOLUTION_UNKNOWN;
         const char *authenticator_uri =
@@ -2182,6 +2220,11 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
         if (context->url == NULL) {
             soap_err = IE_NOMEM;
         }
+        context->url_vodz = strdup(
+            (!testing) ? isds_vodz_locator : isds_vodz_testing_locator);
+        if (context->url_vodz == NULL) {
+            soap_err = IE_NOMEM;
+        }
         /* Detach credentials pointer from context. */
         context->mep_credentials = NULL;
     }
@@ -2239,6 +2282,7 @@ isds_error isds_logout(struct isds_ctx *context) {
         _isds_discard_credentials(context, 1);
     }
     zfree(context->url);
+    zfree(context->url_vodz);
     return IE_SUCCESS;
 #else /* not HAVE_LIBCURL */
     return IE_NOTSUP;

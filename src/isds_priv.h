@@ -82,6 +82,7 @@ struct isds_ctx {
 #if HAVE_LIBCURL
     unsigned int timeout;   /* milliseconds */
     char *url;              /* URL of the ISDS web service */
+    char *url_vodz;         /* URL of the ISDS web service related to high-volume messages. */
     char *username;
     char *password;
     struct isds_pki_credentials *pki_credentials;
