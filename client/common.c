@@ -711,6 +711,24 @@ void print_events(const struct isds_list *events) {
     printf("\t\t}\n");
 }
 
+void print_dmAtt(const struct isds_dmAtt *dm_att)
+{
+	fputs("\tattachment = ", stdout);
+
+	if (NULL == dm_att) {
+		fputs("NULL\n", stdout);
+		return;
+	}
+	fputs("\n", stdout);
+
+	printf("\t\tdmAttID = %s\n", dm_att->dmAttID);
+	printf("\t\tdmAttHash1 = %s\n", dm_att->dmAttHash1);
+	printf("\t\tdmAttHash1Alg = %s\n", dm_att->dmAttHash1Alg);
+	printf("\t\tdmAttHash2 = %s\n", dm_att->dmAttHash2);
+	printf("\t\tdmAttHash2Alg = %s\n", dm_att->dmAttHash2Alg);
+
+	fputs("\t}\n", stdout);
+}
 
 void print_envelope(const struct isds_envelope *envelope) {
     printf("\tenvelope = ");
