@@ -451,6 +451,37 @@ void isds_document_free(struct isds_document **document) {
     *document = NULL;
 }
 
+void isds_dmAtt_free(struct isds_dmAtt **att)
+{
+	if ((NULL == att) || (NULL == *att)) {
+		return;
+	}
+
+	free((*att)->dmAttID);
+	free((*att)->dmAttHash1);
+	free((*att)->dmAttHash1Alg);
+	free((*att)->dmAttHash2);
+	free((*att)->dmAttHash2Alg);
+
+	free(*att);
+	*att = NULL;
+}
+
+void isds_dmExtFile_free(struct isds_dmExtFile **ext_file)
+{
+	if ((NULL == ext_file) || (NULL == *ext_file)) {
+		return;
+	}
+
+	free((*ext_file)->dmAtt.dmAttID);
+	free((*ext_file)->dmAtt.dmAttHash1);
+	free((*ext_file)->dmAtt.dmAttHash1Alg);
+	free((*ext_file)->dmAtt.dmAttHash2);
+	free((*ext_file)->dmAtt.dmAttHash2Alg);
+
+	free(*ext_file);
+	*ext_file = NULL;
+}
 
 /* Deallocate struct isds_message_copy recursively and NULL it */
 void isds_message_copy_free(struct isds_message_copy **copy) {
@@ -12043,6 +12074,311 @@ leave:
     return err;
 }
 
+#if HAVE_LIBCURL
+/*
+ * Insert struct isds_dmFile data (attachment content) into XML tree
+ * @context is session context
+ * @dm_file is a structure containing attachment description
+ * @parent_node is parent XML elemen
+ * @ignore_meta_type indicates whether @dm_file->dmFileMetaType should be inserted
+ * @return error code.
+ */
+static enum isds_error insert_dmFile(struct isds_ctx *context,
+    const struct isds_dmFile *dm_file, xmlNode *parent_node,
+    _Bool ignore_meta_type)
+{
+	enum isds_error err = IE_SUCCESS;
+	xmlNode *file_node;
+	xmlAttr *attribute_node;
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if ((NULL == dm_file) || (NULL == parent_node)) {
+		return IE_INVAL;
+	}
+
+	/* Build dmFile. */
+	file_node = xmlNewChild(parent_node, NULL, BAD_CAST "dmFile", NULL);
+	if (NULL == file_node) {
+		isds_printf_message(context,
+		    _("Could not add dmFile child to %s element"),
+		    parent_node->name);
+		return IE_ERROR;
+	}
+
+	if ((NULL == dm_file->data) || (0 == dm_file->data_length)) {
+		isds_log_message(context, _("dmFile is missing content"));
+		err = IE_INVAL;
+		goto leave;
+	}
+
+	/* Insert content. */
+	err = insert_base64_encoded_string(context, file_node, NULL,
+	    "dmEncodedContent", dm_file->data, dm_file->data_length);
+        if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	if (!ignore_meta_type) {
+		const xmlChar *string = isds_FileMetaType2string(dm_file->dmFileMetaType);
+		if (NULL == string) {
+			isds_printf_message(context,
+			    _("dmFile has unknown dmFileMetaType: %ld"),
+			    dm_file->dmFileMetaType);
+			err = IE_ENUM;
+			goto leave;
+		}
+		INSERT_STRING_ATTRIBUTE(file_node, "dmFileMetaType", string);
+	}
+
+	/* @dmMimeType is required */
+	if (NULL == dm_file->dmMimeType) {
+		isds_log_message(context,
+		    _("dmFile is missing mandatory MIME type definition"));
+		err = IE_INVAL;
+		goto leave;
+	}
+	INSERT_STRING_ATTRIBUTE(file_node, "dmMimeType", dm_file->dmMimeType);
+
+	/* @dmFileDescr is required */
+	if (NULL == dm_file->dmFileDescr) {
+		isds_log_message(context,
+		    _("dmFile is missing mandatory description (title)"));
+		err = IE_INVAL;
+		goto leave;
+	}
+	INSERT_STRING_ATTRIBUTE(file_node, "dmFileDescr", dm_file->dmFileDescr);
+
+leave:
+	return err;
+}
+
+/* Convert XSD:UploadAttachmentResponse XML tree into structure
+ * @context is ISDS context
+ * @dm_att is automatically reallocated attachment identification structure
+ * @xpath_ctx is XPath context with current node as XSD:UploadAttachmentResponse element
+ * In case of error @dm_att will be freed. */
+static enum isds_error extract_dmAtt(struct isds_ctx *context,
+    struct isds_dmAtt **dm_att, xmlXPathContext *xpath_ctx)
+{
+	enum isds_error err = IE_SUCCESS;
+	xmlNode *old_ctx_node;
+	xmlXPathObject *result = NULL;
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (NULL == dm_att) {
+		return IE_INVAL;
+	}
+	isds_dmAtt_free(dm_att);
+	if (NULL == xpath_ctx) {
+		return IE_INVAL;
+	}
+
+	old_ctx_node = xpath_ctx->node;
+
+	*dm_att = calloc(1, sizeof(**dm_att));
+	if (NULL == *dm_att) {
+		err = IE_NOMEM;
+		goto leave;
+	}
+
+	EXTRACT_STRING("isds:dmAttID", (*dm_att)->dmAttID);
+	if (NULL == (*dm_att)->dmAttID) {
+		isds_log(ILF_ISDS, ILL_ERR,
+		    _("Server accepted uploaded attachment, but did not return assigned attachment ID\n"));
+		err = IE_ISDS;
+		goto leave;
+	}
+
+	EXTRACT_STRING("isds:dmAttHash1", (*dm_att)->dmAttHash1);
+	if (NULL == (*dm_att)->dmAttHash1) {
+		isds_log(ILF_ISDS, ILL_ERR,
+		    _("Server accepted uploaded attachment, but did not return first attachment hash\n"));
+	}
+	err = move_xpathctx_to_child(context, BAD_CAST "isds:dmAttHash1", xpath_ctx);
+	if (IE_SUCCESS != err) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	EXTRACT_STRING_ATTRIBUTE("AttHashAlg", (*dm_att)->dmAttHash1Alg, 1);
+
+	/* Return to parent. */
+	xpath_ctx->node = old_ctx_node;
+
+	EXTRACT_STRING("isds:dmAttHash2", (*dm_att)->dmAttHash2);
+	if (NULL == (*dm_att)->dmAttHash2) {
+		isds_log(ILF_ISDS, ILL_ERR,
+		    _("Server accepted uploaded attachment, but did not return second attachment hash\n"));
+	}
+	err = move_xpathctx_to_child(context, BAD_CAST "isds:dmAttHash2", xpath_ctx);
+	if (IE_SUCCESS != err) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	EXTRACT_STRING_ATTRIBUTE("AttHashAlg", (*dm_att)->dmAttHash2Alg, 1);
+
+leave:
+	if (IE_SUCCESS != err) {
+		isds_dmAtt_free(dm_att);
+	}
+	xmlXPathFreeObject(result);
+	xpath_ctx->node = old_ctx_node;
+	return err;
+}
+#endif /* HAVE_LIBCURL */
+
+enum isds_error isds_UploadAttachment(struct isds_ctx *context,
+    const struct isds_dmFile *dm_file, struct isds_dmAtt **dm_att)
+{
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlNs *isds_ns = NULL;
+	xmlNode *request = NULL;
+	xmlDoc *response = NULL;
+	xmlChar *code = NULL;
+	xmlChar *message = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+#endif /* HAVE_LIBCURL */
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if (NULL == dm_file) {
+		return IE_INVAL;
+	}
+	isds_dmAtt_free(dm_att);
+
+#if HAVE_LIBCURL
+	/*
+	 * Check if connection is established
+	 * TODO: This check should be done downstairs.
+	 */
+	if (NULL == context->curl) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	/* Build UploadAttachment request */
+	request = xmlNewNode(NULL, BAD_CAST "UploadAttachment");
+	if (NULL == request) {
+		isds_log_message(context,
+		    _("Could not build UploadAttachment request"));
+		return IE_ERROR;
+	}
+	isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+	if (NULL == isds_ns) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		xmlFreeNode(request);
+		return IE_ERROR;
+	}
+	xmlSetNs(request, isds_ns);
+
+	err = insert_dmFile(context, dm_file, request, 1);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	isds_log(ILF_ISDS, ILL_DEBUG,
+	    _("Sending UploadAttachment request to ISDS\n"));
+
+	/* Sent request. */
+	err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS, request,
+	    &response, NULL, NULL);
+
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Processing ISDS response on UploadAttachment request failed\n"));
+		goto leave;
+	}
+
+	/* Check for response status. */
+	err = isds_response_status(context, SERVICE_VODZ_DM_OPERATIONS,
+	    response, &code, &message, NULL);
+	build_isds_status(&(context->status),
+	    _isds_service_to_status_type(SERVICE_VODZ_DM_OPERATIONS),
+	    (char *)code, (char *)message, NULL);
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		_("ISDS response on UploadAttachment is missing status\n"));
+		goto leave;
+	}
+
+	/* Request processed, but refused by server or server failed. */
+	if (0 != xmlStrcmp(code, BAD_CAST "0000")) {
+		char *file_descr_locale = _isds_utf82locale(dm_file->dmFileDescr);
+		char *code_locale = _isds_utf82locale((char*)code);
+		char *message_locale = _isds_utf82locale((char*)message);
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Server did not accept attachment '%s' on UploadAttachment request (code=%s, message=%s)\n"),
+		    file_descr_locale, code_locale, message_locale);
+		free(file_descr_locale);
+		free(code_locale);
+		free(message_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
+
+	/* Extract data. */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	result = xmlXPathEvalExpression(BAD_CAST "/isds:UploadAttachmentResponse",
+	    xpath_ctx);
+	if (NULL == result) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+		isds_log_message(context, _("Missing UploadAttachmentResponse element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	if (result->nodesetval->nodeNr > 1) {
+		isds_log_message(context, _("Multiple UploadAttachmentResponse element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	/* One response */
+	xpath_ctx->node = result->nodesetval->nodeTab[0];
+	xmlXPathFreeObject(result); result = NULL;
+
+	err = extract_dmAtt(context, dm_att, xpath_ctx);
+
+leave:
+	/* Clean up */
+	if (IE_SUCCESS != err) {
+		isds_dmAtt_free(dm_att);
+	}
+
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+
+	free(code);
+	free(message);
+	xmlFreeDoc(response);
+	xmlFreeNode(request);
+
+	if (IE_SUCCESS == err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("UploadAttachment request processed by server successfully.\n"));
+	}
+#else /* not HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+
+	return err;
+}
 
 /* Get list of messages. This is common core for getting sent or received
  * messages.

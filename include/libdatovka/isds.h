@@ -738,7 +738,7 @@ struct isds_envelope {
 
 
 /* Document type from point of hierarchy */
-typedef enum {
+typedef enum isds_FileMetaType {
     FILEMETATYPE_MAIN,              /* Main document */
     FILEMETATYPE_ENCLOSURE,         /* Appendix */
     FILEMETATYPE_SIGNATURE,         /* Digital signature of other document */
@@ -777,6 +777,37 @@ struct isds_document {
     char *dmFormat;                 /* Reference to XML form definition;
                                        Defines how to interpret XML document;
                                        Optional. */
+};
+
+/* Attachment, used for high-volume data messages. */
+struct isds_dmFile {
+	void *data; /*
+	             * Document content.
+	             * The encoding and interpretation depends on dmMimeType.
+	             */
+	size_t data_length; /* Length of the data in bytes. */
+	isds_FileMetaType dmFileMetaType; /* Document type to create hierarchy. */
+	char *dmMimeType; /* MIME type of the data; Mandatory. */
+	char *dmFileDescr; /* Document name (title). E.g. file name; Mandatory. */
+};
+
+/*
+ * Response for UploadAttachment.
+ * Complete attachment identification.
+ * Encapsulates the attachment identifier and hashes for high-volume data messages.
+ */
+struct isds_dmAtt {
+	char *dmAttID; /* Attachment identifier, nothing to do with message identifier. */
+	char *dmAttHash1; /* Hash1 value. */
+	char *dmAttHash1Alg; /* Hash1 algorithm identifier. */
+	char *dmAttHash2; /* Hash2 value. */
+	char *dmAttHash2Alg; /* Hash2 algorithm identifier. */
+};
+
+/* Attachment, used for high-volume data messages. */
+struct isds_dmExtFile {
+	enum isds_FileMetaType dmFileMetaType; /* Document type to create hierarchy. */
+	struct isds_dmAtt dmAtt; /* Complete attachment identification. */
 };
 
 /* Raw message representation content type.
@@ -1906,6 +1937,17 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
         const struct isds_message *outgoing_message,
         struct isds_list *copies);
 
+/*
+ * Send an attachment (file) into the ISDS attachment storage.
+ * @context is session context
+ * @dm_file attachment description, @dmFile->dmFileMetaType value is ignored here.
+ * @dm_att automatically reallocated attachment description which can be used
+ * to create a high-volume data message.
+ * @return ISDS_SUCCESS, or other error codes if something goes wrong.
+ */
+enum isds_error isds_UploadAttachment(struct isds_ctx *context,
+    const struct isds_dmFile *dm_file, struct isds_dmAtt **dm_att);
+
 /* Get list of outgoing (already sent) messages.
  * Any criterion argument can be NULL, if you don't care about it.
  * @context is session context. Must not be NULL.
@@ -2326,6 +2368,12 @@ void isds_envelope_free(struct isds_envelope **envelope);
 
 /* Deallocate struct isds_document recursively and NULL it */
 void isds_document_free(struct isds_document **document);
+
+/* Deallocate struct isds_dmAtt recursively and NULL it */
+void isds_dmAtt_free(struct isds_dmAtt **att);
+
+/* Deallocate struct isds_dmExtFile recursively and NULL it */
+void isds_dmExtFile_free(struct isds_dmExtFile **ext_file);
 
 /* Deallocate struct isds_message recursively and NULL it */
 void isds_message_free(struct isds_message **message);
