@@ -39,6 +39,7 @@
 #define SISDS_OUTGOING_NS "http://isds.czechpoint.cz/v20/SentMessage"
 #define SISDS_DELIVERY_NS "http://isds.czechpoint.cz/v20/delivery"
 #define SCHEMA_NS "http://www.w3.org/2001/XMLSchema"
+#define XOP_INCLUDE_NS "http://www.w3.org/2004/08/xop/include"
 #define DEPOSIT_NS "urn:uschovnaWSDL"
 
 

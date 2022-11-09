@@ -12075,17 +12075,85 @@ leave:
 }
 
 #if HAVE_LIBCURL
+/* Insert XOM include element within another parent element.
+ * @context is session context
+ * @parent is XML node to append @element with Include element
+ *     with @href_cid href attribute as child
+ * @ns is XML namespace of @element, use NULL to inherit from @parent
+ * @element is UTF-8 encoded name of new element
+ * @href_cid Include href attribute value
+ * @return standard error code and fill long error message if needed */
+static enum isds_error insert_xop_include(struct isds_ctx *context,
+    xmlNode *parent, const xmlNs *ns, const char *element,
+    const char *href_cid) {
+#define INC_PREFIX "inc"
+	enum isds_error err = IE_SUCCESS;
+	xmlNs *xop_inc_ns = NULL;
+	xmlNode *node;
+	xmlAttr *attribute_node;
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if ((NULL == parent) || (NULL == element)) {
+		return IE_INVAL;
+	}
+	if ((NULL == href_cid) || ('\0' == *href_cid)) {
+		return IE_INVAL;
+	}
+
+	node = xmlNewChild(parent, NULL, BAD_CAST "dmEncodedContent", NULL);
+	if (NULL == node) {
+		isds_printf_message(context,
+		    _("Could not add dmEncodedContent child to %s element"),
+		    parent->name);
+		return IE_ERROR;
+	}
+
+	/* New parent. */
+	parent = node;
+	node = xmlNewChild(parent, NULL, BAD_CAST "Include", NULL);
+	if (NULL == node) {
+		isds_printf_message(context,
+		    _("Could not add Include child to %s element"),
+		    parent->name);
+		return IE_ERROR;
+	}
+	xop_inc_ns = xmlNewNs(node, BAD_CAST XOP_INCLUDE_NS, BAD_CAST INC_PREFIX);
+	if (NULL == xop_inc_ns) {
+		isds_log_message(context, _("Could not create XOP include name space"));
+		return IE_ERROR;
+	}
+	xmlSetNs(node, xop_inc_ns);
+	{
+		char *href_str = _isds_astrcat("cid:", href_cid);
+		if (NULL == href_str) {
+			isds_printf_message(context,
+			    _("Not enough memory to construct href attribute to %s element"),
+			    node->name);
+			return IE_NOMEM;
+		}
+		INSERT_STRING_ATTRIBUTE(node, "href", href_str);
+		free(href_str);
+	}
+
+leave:
+	return err;
+#undef INC_PREFIX
+}
+
 /*
  * Insert struct isds_dmFile data (attachment content) into XML tree
  * @context is session context
  * @dm_file is a structure containing attachment description
  * @parent_node is parent XML elemen
  * @ignore_meta_type indicates whether @dm_file->dmFileMetaType should be inserted
+ * @xop_cid XOP content identifier, pass null value to insert Base64 encoded content
  * @return error code.
  */
 static enum isds_error insert_dmFile(struct isds_ctx *context,
     const struct isds_dmFile *dm_file, xmlNode *parent_node,
-    _Bool ignore_meta_type)
+    _Bool ignore_meta_type, const char *xop_cid)
 {
 	enum isds_error err = IE_SUCCESS;
 	xmlNode *file_node;
@@ -12114,9 +12182,14 @@ static enum isds_error insert_dmFile(struct isds_ctx *context,
 	}
 
 	/* Insert content. */
-	err = insert_base64_encoded_string(context, file_node, NULL,
-	    "dmEncodedContent", dm_file->data, dm_file->data_length);
-        if (IE_SUCCESS != err) {
+	if (NULL == xop_cid) {
+		err = insert_base64_encoded_string(context, file_node, NULL,
+		    "dmEncodedContent", dm_file->data, dm_file->data_length);
+	} else {
+		err = insert_xop_include(context, file_node, NULL,
+		    "dmEncodedContent", "att_1");
+	}
+	if (IE_SUCCESS != err) {
 		goto leave;
 	}
 
@@ -12278,7 +12351,7 @@ enum isds_error isds_UploadAttachment(struct isds_ctx *context,
 	}
 	xmlSetNs(request, isds_ns);
 
-	err = insert_dmFile(context, dm_file, request, 1);
+	err = insert_dmFile(context, dm_file, request, 1, NULL);
 	if (IE_SUCCESS != err) {
 		goto leave;
 	}
