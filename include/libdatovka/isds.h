@@ -1948,6 +1948,18 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
 enum isds_error isds_UploadAttachment(struct isds_ctx *context,
     const struct isds_dmFile *dm_file, struct isds_dmAtt **dm_att);
 
+/*
+ * Send an attachment (file) into the ISDS attachment storage. This
+ * implementation uses the MOTOM/XOP.
+ * @context is session context
+ * @dm_file attachment description, @dmFile->dmFileMetaType value is ignored here.
+ * @dm_att automatically reallocated attachment description which can be used
+ * to create a high-volume data message.
+ * @return ISDS_SUCCESS, or other error codes if something goes wrong.
+ */
+enum isds_error isds_UploadAttachment_mtomxop(struct isds_ctx *context,
+    const struct isds_dmFile *dm_file, struct isds_dmAtt **dm_att);
+
 /* Get list of outgoing (already sent) messages.
  * Any criterion argument can be NULL, if you don't care about it.
  * @context is session context. Must not be NULL.

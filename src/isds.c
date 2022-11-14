@@ -6333,7 +6333,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -6433,7 +6433,7 @@ isds_error isds_GetOwnerInfoFromLogin2(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -6528,7 +6528,7 @@ isds_error isds_GetUserInfoFromLogin(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -6625,7 +6625,7 @@ isds_error isds_GetUserInfoFromLogin2(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -6717,7 +6717,7 @@ isds_error isds_get_password_expiration(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -7585,7 +7585,7 @@ static isds_error extract_credentials_delivery(struct isds_ctx *context,
             err = IE_ERROR;
             goto leave;
         }
-        if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
             err = IE_ERROR;
             goto leave;
         }
@@ -7798,7 +7798,7 @@ isds_error isds_add_box(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -8243,7 +8243,7 @@ isds_error isds_GetDataBoxUsers(struct isds_ctx *context, const char *box_id,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -8337,7 +8337,7 @@ isds_error isds_GetDataBoxUsers2(struct isds_ctx *context, const char *box_id,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -8587,7 +8587,7 @@ isds_error isds_activate(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -9109,7 +9109,7 @@ isds_error isds_get_box_list_archive(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -9289,7 +9289,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -9494,7 +9494,7 @@ isds_error isds_FindDataBox2(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -9921,7 +9921,7 @@ isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -10109,7 +10109,7 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -10346,7 +10346,7 @@ isds_error isds_get_box_state_history(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -10476,7 +10476,7 @@ isds_error isds_get_commercial_permissions(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -10609,7 +10609,7 @@ isds_error isds_PDZSendInfo(struct isds_ctx *context, const char *box_id,
 		err = IE_ERROR;
 		goto leave;
 	}
-	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
 		err = IE_ERROR;
 		goto leave;
 	}
@@ -10797,7 +10797,7 @@ isds_error isds_get_commercial_credit(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -11153,7 +11153,7 @@ isds_error isds_DTInfo(struct isds_ctx *context, const char *box_id,
 		err = IE_ERROR;
 		goto leave;
 	}
-	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
 		err = IE_ERROR;
 		goto leave;
 	}
@@ -11739,7 +11739,7 @@ isds_error isds_send_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -12013,7 +12013,7 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -12402,7 +12402,7 @@ enum isds_error isds_UploadAttachment(struct isds_ctx *context,
 		err = IE_ERROR;
 		goto leave;
 	}
-	if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+	if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
 		err = IE_ERROR;
 		goto leave;
 	}
@@ -12451,6 +12451,158 @@ leave:
 #endif /* HAVE_LIBCURL */
 
 	return err;
+}
+
+enum isds_error isds_UploadAttachment_mtomxop(struct isds_ctx *context,
+    const struct isds_dmFile *dm_file, struct isds_dmAtt **dm_att)
+{
+#define ATTACHMENT_CID "att_1"
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlNs *isds_ns = NULL;
+	xmlNode *request = NULL;
+	xmlDoc *response = NULL;
+	xmlChar *code = NULL;
+	xmlChar *message = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+#endif /* HAVE_LIBCURL */
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if (NULL == dm_file) {
+		return IE_INVAL;
+	}
+	isds_dmAtt_free(dm_att);
+
+#if HAVE_LIBCURL
+	/*
+	 * Check if connection is established
+	 * TODO: This check should be done downstairs.
+	 */
+	if (NULL == context->curl) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	/* Build UploadAttachment request */
+	request = xmlNewNode(NULL, BAD_CAST "UploadAttachment");
+	if (NULL == request) {
+		isds_log_message(context,
+		    _("Could not build UploadAttachment request"));
+		return IE_ERROR;
+	}
+	isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+	if (NULL == isds_ns) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		xmlFreeNode(request);
+		return IE_ERROR;
+	}
+	xmlSetNs(request, isds_ns);
+
+	err = insert_dmFile(context, dm_file, request, 1, ATTACHMENT_CID);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	isds_log(ILF_ISDS, ILL_DEBUG,
+	    _("Sending MTOM/XOP UploadAttachment request to ISDS\n"));
+
+	/* Sent request. */
+	err = _isds_vodz_mtomxop(context, SERVICE_VODZ_DM_OPERATIONS, request,
+	    ATTACHMENT_CID, dm_file, &response, NULL, NULL);
+
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Processing ISDS response on MTOM/XOP UploadAttachment request failed\n"));
+		goto leave;
+	}
+
+	/* Check for response status. */
+	err = isds_response_status(context, SERVICE_VODZ_DM_OPERATIONS,
+	    response, &code, &message, NULL);
+	build_isds_status(&(context->status),
+	    _isds_service_to_status_type(SERVICE_VODZ_DM_OPERATIONS),
+	    (char *)code, (char *)message, NULL);
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		_("ISDS response on MTOM/XOP UploadAttachment is missing status\n"));
+		goto leave;
+	}
+
+	/* Request processed, but refused by server or server failed. */
+	if (0 != xmlStrcmp(code, BAD_CAST "0000")) {
+		char *file_descr_locale = _isds_utf82locale(dm_file->dmFileDescr);
+		char *code_locale = _isds_utf82locale((char*)code);
+		char *message_locale = _isds_utf82locale((char*)message);
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Server did not accept attachment '%s' on MTOM/XOP UploadAttachment request (code=%s, message=%s)\n"),
+		    file_descr_locale, code_locale, message_locale);
+		free(file_descr_locale);
+		free(code_locale);
+		free(message_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
+
+	/* Extract data. */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_2)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	result = xmlXPathEvalExpression(BAD_CAST "/isds:UploadAttachmentResponse",
+	    xpath_ctx);
+	if (NULL == result) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+		isds_log_message(context, _("Missing UploadAttachmentResponse element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	if (result->nodesetval->nodeNr > 1) {
+		isds_log_message(context, _("Multiple UploadAttachmentResponse element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	/* One response */
+	xpath_ctx->node = result->nodesetval->nodeTab[0];
+	xmlXPathFreeObject(result); result = NULL;
+
+	err = extract_dmAtt(context, dm_att, xpath_ctx);
+
+leave:
+	/* Clean up */
+	if (IE_SUCCESS != err) {
+		isds_dmAtt_free(dm_att);
+	}
+
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+
+	free(code);
+	free(message);
+	xmlFreeDoc(response);
+	xmlFreeNode(request);
+
+	if (IE_SUCCESS == err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("UploadAttachment MTOM/XOP request processed by server successfully.\n"));
+	}
+#else /* not HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+
+	return err;
+#undef ATTACHMENT_CID
 }
 
 /* Get list of messages. This is common core for getting sent or received
@@ -12641,7 +12793,7 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -12887,7 +13039,7 @@ isds_error isds_get_list_of_sent_message_state_changes(
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -13122,7 +13274,7 @@ static isds_error find_extract_signed_data_free_response(
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -13234,7 +13386,7 @@ isds_error isds_get_received_envelope(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -13394,7 +13546,7 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
      *   </q:dmDelivery>
      * </q:GetDeliveryInfoResponse>
      * */
-    if (_isds_register_namespaces(xpath_ctx, message_ns)) {
+    if (_isds_register_namespaces(xpath_ctx, message_ns, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -13675,7 +13827,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -13901,7 +14053,7 @@ isds_error isds_load_message(struct isds_ctx *context,
      * </q:MessageDownloadResponse>
      *
      * Stupidity of ISDS developers is unlimited */
-    if (_isds_register_namespaces(xpath_ctx, message_ns)) {
+    if (_isds_register_namespaces(xpath_ctx, message_ns, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -14227,7 +14379,7 @@ isds_error isds_get_message_sender(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -14344,7 +14496,7 @@ isds_error isds_GetMessageAuthor2(struct isds_ctx *context,
 		err = IE_ERROR;
 		goto leave;
 	}
-	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
 		err = IE_ERROR;
 		goto leave;
 	}
@@ -14551,7 +14703,7 @@ isds_error isds_download_message_hash(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -14921,7 +15073,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -15101,7 +15253,7 @@ isds_error isds_request_new_testing_box(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -15191,7 +15343,7 @@ isds_error isds_authenticate_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -15337,7 +15489,7 @@ isds_error isds_resign_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -15693,43 +15845,59 @@ int isds_message_free(struct isds_message **message);
 int isds_address_free(struct isds_address **address);
 */
 
-
-/* Makes known all relevant namespaces to given XPath context
- * @xpath_ctx is XPath context
- * @message_ns selects proper message name space. Unsigned and signed
- * messages and delivery infos differ in prefix and URI. */
 _hidden isds_error _isds_register_namespaces(xmlXPathContextPtr xpath_ctx,
-        const message_ns_type message_ns) {
-    const xmlChar *message_namespace = NULL;
+    const message_ns_type message_ns, enum soap_ns_type sv)
+{
+	const xmlChar *message_namespace = NULL;
 
-    if (!xpath_ctx) return IE_ERROR;
+	if (NULL == xpath_ctx) {
+		return IE_ERROR;
+	}
 
-    switch(message_ns) {
-        case MESSAGE_NS_1:
-            message_namespace = BAD_CAST ISDS1_NS; break;
-        case MESSAGE_NS_UNSIGNED:
-            message_namespace = BAD_CAST ISDS_NS; break;
-        case MESSAGE_NS_SIGNED_INCOMING:
-            message_namespace = BAD_CAST SISDS_INCOMING_NS; break;
-        case MESSAGE_NS_SIGNED_OUTGOING:
-            message_namespace = BAD_CAST SISDS_OUTGOING_NS; break;
-        case MESSAGE_NS_SIGNED_DELIVERY:
-            message_namespace = BAD_CAST SISDS_DELIVERY_NS; break;
-        default:
-            return IE_ENUM;
-    }
+	switch(message_ns) {
+	case MESSAGE_NS_1:
+		message_namespace = BAD_CAST ISDS1_NS;
+		break;
+	case MESSAGE_NS_UNSIGNED:
+		message_namespace = BAD_CAST ISDS_NS;
+		break;
+	case MESSAGE_NS_SIGNED_INCOMING:
+		message_namespace = BAD_CAST SISDS_INCOMING_NS;
+		break;
+	case MESSAGE_NS_SIGNED_OUTGOING:
+		message_namespace = BAD_CAST SISDS_OUTGOING_NS;
+		break;
+	case MESSAGE_NS_SIGNED_DELIVERY:
+		message_namespace = BAD_CAST SISDS_DELIVERY_NS;
+		break;
+	default:
+		return IE_ENUM;
+		break;
+	}
 
-    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "soap", BAD_CAST SOAP_NS))
-        return IE_ERROR;
-    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "isds", BAD_CAST ISDS_NS))
-        return IE_ERROR;
-    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "oisds", BAD_CAST OISDS_NS))
-        return IE_ERROR;
-    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "sisds", message_namespace))
-        return IE_ERROR;
-    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "xs", BAD_CAST SCHEMA_NS))
-        return IE_ERROR;
-    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "deposit", BAD_CAST DEPOSIT_NS))
-        return IE_ERROR;
-    return IE_SUCCESS;
+	if (SOAP_1_1 == sv) {
+		if (0 != xmlXPathRegisterNs(xpath_ctx, BAD_CAST "soap", BAD_CAST SOAP_NS)) {
+			return IE_ERROR;
+		}
+	} else {
+		if (0 != xmlXPathRegisterNs(xpath_ctx, BAD_CAST "soap", BAD_CAST SOAP2_NS)) {
+			return IE_ERROR;
+		}
+	}
+	if (0 != xmlXPathRegisterNs(xpath_ctx, BAD_CAST "isds", BAD_CAST ISDS_NS)) {
+		return IE_ERROR;
+	}
+	if (0 != xmlXPathRegisterNs(xpath_ctx, BAD_CAST "oisds", BAD_CAST OISDS_NS)) {
+		return IE_ERROR;
+	}
+	if (0 != xmlXPathRegisterNs(xpath_ctx, BAD_CAST "sisds", message_namespace)) {
+		return IE_ERROR;
+	}
+	if (0 != xmlXPathRegisterNs(xpath_ctx, BAD_CAST "xs", BAD_CAST SCHEMA_NS)) {
+		return IE_ERROR;
+	}
+	if (0 != xmlXPathRegisterNs(xpath_ctx, BAD_CAST "deposit", BAD_CAST DEPOSIT_NS)) {
+		return IE_ERROR;
+	}
+	return IE_SUCCESS;
 }

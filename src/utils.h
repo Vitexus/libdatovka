@@ -36,6 +36,15 @@ char *_isds_astrcat(const char *first, const char *second);
 char *_isds_astrcat3(const char *first, const char *second,
         const char *third);
 
+/*
+ * Concatenates multiple strings into newly allocated buffer.
+ * You must free() them, when you don't need it anymore.
+ * All of the arguments are processes as const char pointers.
+ * Last argument must be NULL.
+ * In case of error returns NULL.
+ */
+char *_isds_astrcatN(const char *first, ...);
+
 /* Print formatted string into automatically reallocated @buffer.
  * @buffer automatically reallocated buffer. Must be &NULL or preallocated
  * memory.

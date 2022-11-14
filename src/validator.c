@@ -80,7 +80,8 @@ _hidden enum isds_error isds_response_status(struct isds_ctx *context,
 	}
 	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx,
 	        (context->type == CTX_TYPE_TESTING_REQUEST_COLLECTOR) ?
-	            MESSAGE_NS_1 : MESSAGE_NS_UNSIGNED)) {
+	            MESSAGE_NS_1 : MESSAGE_NS_UNSIGNED,
+	        SOAP_1_1)) {
 		err = IE_ERROR;
 		goto leave;
 	}
@@ -296,10 +297,107 @@ _hidden enum isds_error _isds_vodz(struct isds_ctx *context,
 		name_space = OISDS_NS;
 	}
 
-	err = _isds_soap_vodz(context, file, request, &response_document,
+	err = _isds_soap_vodz(context, file, request, NULL, NULL, &response_document,
 	    &response_body, raw_response, raw_response_length);
 
 	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	if (NULL == response_body) {
+		isds_log_message(context, _("SOAP returned empty body"));
+		err = IE_ISDS;
+	}
+
+	/* Find ISDS element. */
+	for (isds_node = response_body; isds_node; isds_node = isds_node->next) {
+		if ((isds_node->type == XML_ELEMENT_NODE) &&
+		    (NULL != isds_node->ns) &&
+		    (0 == xmlStrcmp(isds_node->ns->href, BAD_CAST name_space))) {
+			break;
+		}
+	}
+	if (NULL == isds_node) {
+		char *name_space_local = _isds_utf82locale(name_space);
+		isds_printf_message(context,
+		    _("SOAP response does not contain element from name space %s"),
+		    name_space_local);
+		free(name_space_local);
+		err = IE_ISDS;
+		goto leave;
+	}
+
+	/* TODO: validate the response */
+
+	/* Build XML document */
+	*response = xmlNewDoc(BAD_CAST "1.0");
+	if (NULL == *response) {
+		isds_log_message(context,
+		    _("Could not build ISDS response document"));
+		err = IE_ERROR;
+		goto leave;
+	}
+	xmlDocSetRootElement(*response, isds_node);
+
+leave:
+	if (IE_SUCCESS != err) {
+		xmlFreeDoc(*response);
+		if (NULL != raw_response) {
+			zfree(*raw_response);
+		}
+	}
+	xmlFreeDoc(response_document);
+
+	return err;
+}
+
+enum isds_error _isds_vodz_mtomxop(struct isds_ctx *context,
+    const enum isds_service service, const xmlNodePtr request,
+    const char *content_id, const struct isds_dmFile *dm_file,
+    xmlDoc **response, void **raw_response, size_t *raw_response_length)
+{
+	enum isds_error err = IE_SUCCESS;
+	xmlDoc *response_document = NULL;
+	xmlNode *response_body;
+	xmlNode *isds_node;
+	char *file = NULL;
+	const char *name_space = ISDS_NS;
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (NULL == response) {
+		return IE_INVAL;
+	}
+	if ((NULL == raw_response_length) && (NULL != raw_response)) {
+		return IE_INVAL;
+	}
+
+	/*
+	 * Effective ISDS URL is build from base URL and suffix.
+	 * Other connection types has specific stable URL.
+	 */
+	if (context->type == CTX_TYPE_ISDS) {
+		switch (service) {
+		case SERVICE_VODZ_DM_OPERATIONS: file = "DS/vodz"; break;
+		/* Only VODZ supported. */
+		default: return (IE_INVAL); break;
+		}
+	}
+
+	/* Also name space differs in some cases. */
+	if (CTX_TYPE_TESTING_REQUEST_COLLECTOR == context->type) {
+		name_space = ISDS1_NS;
+	} else if (SERVICE_ASWS == service) {
+		name_space = OISDS_NS;
+	}
+
+	err = _isds_soap_vodz(context, file, request, content_id, dm_file,
+	    &response_document,
+	    &response_body, raw_response, raw_response_length);
+
+	if (IE_SUCCESS != err) {
+		fprintf(stderr, "AAA\n");
 		goto leave;
 	}
 

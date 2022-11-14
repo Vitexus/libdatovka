@@ -532,6 +532,104 @@ static int log_curl(CURL *curl, curl_infotype type, char *buffer, size_t size,
     return 0;
 }
 
+/*
+ * Construct a multi-part message with MTOM/XOP content.
+ * @curl is cURL context
+ * @request is pointer to SOAP request
+ * @request_length number of bytes
+ * @content_id href value of the Include MTOM/XOP element
+ * @dm_file file content
+ */
+static struct curl_mime *mimepost(CURL *curl,
+    const void *request, const size_t request_length,
+    const char *content_id, const struct isds_dmFile *dm_file)
+{
+	CURLcode curl_err;
+	struct curl_mime *multipart = NULL;
+	struct curl_mimepart *part;
+	struct curl_slist *headers = NULL;
+	char *string;
+
+	multipart = curl_mime_init(curl);
+	if (NULL == multipart) {
+		goto fail;
+	}
+
+	part = curl_mime_addpart(multipart);
+	if (NULL == part) {
+		goto fail;
+	}
+	curl_err = curl_mime_data(part, request, request_length);
+	if (CURLE_OK != curl_err) {
+		goto fail;
+	}
+	curl_err = curl_mime_type(part, "application/xop+xml; charset=UTF-8; type=\"application/soap+xml\"");
+	if (CURLE_OK != curl_err) {
+		goto fail;
+	}
+	headers = curl_slist_append(headers, "Content-Transfer-Encoding: 8bit");
+	if (NULL == headers) {
+		goto fail;
+	}
+	headers = curl_slist_append(headers, "Content-ID: <rootpart@soapui.org>");
+	if (NULL == headers) {
+		goto fail;
+	}
+	curl_mime_headers(part, headers, 1); headers = NULL;
+
+	part = curl_mime_addpart(multipart);
+	if (NULL == part) {
+		goto fail;
+	}
+	curl_err = curl_mime_data(part, dm_file->data, dm_file->data_length);
+	if (CURLE_OK != curl_err) {
+		goto fail;
+	}
+	{
+		string = _isds_astrcatN("Content-Type: ", dm_file->dmMimeType, "; name=", dm_file->dmFileDescr, NULL);
+		if (NULL == string) {
+			goto fail;
+		}
+		headers = curl_slist_append(headers, string);
+		free(string); string = NULL;
+	}
+	if (NULL == headers) {
+		goto fail;
+	}
+	headers = curl_slist_append(headers, "Content-Transfer-Encoding: binary");
+	if (NULL == headers) {
+		goto fail;
+	}
+	{
+		string = _isds_astrcatN("Content-ID: <", content_id, ">", NULL);
+		if (NULL == string) {
+			goto fail;
+		}
+		headers = curl_slist_append(headers, string);
+		free(string); string = NULL;
+	}
+	if (NULL == headers) {
+		goto fail;
+	}
+	{
+		string = _isds_astrcatN("Content-Disposition: attachment; name=\"", dm_file->dmFileDescr, "\"; filename=\"", dm_file->dmFileDescr, "\"", NULL);
+		if (NULL == string) {
+			goto fail;
+		}
+		headers = curl_slist_append(headers, string);
+		free(string); string = NULL;
+	}
+	if (NULL == headers) {
+		goto fail;
+	}
+	curl_mime_headers(part, headers, 1); headers = NULL;
+
+	return multipart;
+
+fail:
+	curl_mime_free(multipart);
+	return NULL;
+}
 
 /* Do HTTP request.
  * @context holds the base URL,
@@ -539,6 +637,8 @@ static int log_curl(CURL *curl, curl_infotype type, char *buffer, size_t size,
  * @use_get is a false to do a POST request, true to do a GET request.
  * @request is body for POST request
  * @request_length is length of @request in bytes
+ * @content_id href value of the Include MTOM/XOP element
+ * @dm_file file content
  * @reponse is automatically reallocated() buffer to fit HTTP response with
  * @response_length (does not need to match allocated memory exactly). You must
  * free() the @response.
@@ -561,6 +661,7 @@ static int log_curl(CURL *curl, curl_infotype type, char *buffer, size_t size,
 static isds_error http(struct isds_ctx *context,
         const char *url, _Bool use_get,
         const void *request, const size_t request_length,
+        const char *content_id, const struct isds_dmFile *dm_file,
         void **response, size_t *response_length,
         char **mime_type, char **charset, long *http_code,
         struct auth_headers *response_otp_headers) {
@@ -570,11 +671,15 @@ static isds_error http(struct isds_ctx *context,
     struct soap_body body;
     char *content_type;
     struct curl_slist *headers = NULL;
-
+    struct curl_mime *multipart = NULL;
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!url) return IE_INVAL;
     if (request_length > 0 && !request) return IE_INVAL;
+    if (((NULL == content_id) && (NULL != dm_file)) ||
+        ((NULL != content_id) && (NULL == dm_file))) {
+        return IE_INVAL;
+    }
     if (!response || !response_length) return IE_INVAL;
 
     /* Clean authentication headers */
@@ -847,7 +952,11 @@ static isds_error http(struct isds_ctx *context,
             err = IE_NOMEM;
             goto leave;
         }
-        headers = curl_slist_append(headers, "Content-Type: text/xml");
+        if (NULL == content_id) {
+            headers = curl_slist_append(headers, "Content-Type: text/xml");
+        } else {
+            headers = curl_slist_append(headers, "Content-Type: multipart/related; type=\"application/xop+xml\"; start=\"<rootpart@soapui.org>\"; start-info=\"application/soap+xml\"; action=\"\"");
+        }
         if (!headers) {
             err = IE_NOMEM;
             goto leave;
@@ -875,12 +984,18 @@ static isds_error http(struct isds_ctx *context,
         if (!curl_err) {
             curl_err = curl_easy_setopt(context->curl, CURLOPT_POST, 1);
         }
-        if (!curl_err) {
-            curl_err = curl_easy_setopt(context->curl, CURLOPT_POSTFIELDS, request);
-        }
-        if (!curl_err) {
-            curl_err = curl_easy_setopt(context->curl, CURLOPT_POSTFIELDSIZE,
+        if (NULL == content_id) {
+            if (!curl_err) {
+                curl_err = curl_easy_setopt(context->curl, CURLOPT_POSTFIELDS, request);
+            }
+            if (!curl_err) {
+                curl_err = curl_easy_setopt(context->curl, CURLOPT_POSTFIELDSIZE,
                     request_length);
+            }
+        } else {
+            multipart = mimepost(context->curl, request, request_length,
+                content_id, dm_file);
+            curl_easy_setopt(context->curl, CURLOPT_MIMEPOST, multipart);
         }
     }
 
@@ -920,6 +1035,8 @@ static isds_error http(struct isds_ctx *context,
 
     /*  Do the request */
     curl_err = curl_easy_perform(context->curl);
+
+    curl_mime_free(multipart); multipart = NULL;
 
     if (!curl_err)
         curl_err = curl_easy_getinfo(context->curl, CURLINFO_CONTENT_TYPE,
@@ -1061,6 +1178,7 @@ static isds_error http(struct isds_ctx *context,
     }
 leave:
     curl_slist_free_all(headers);
+    curl_mime_free(multipart);
 
     if (err) {
         free(body.data);
@@ -1133,15 +1251,16 @@ static isds_mep_resolution mep_ws_state_response(const char *str, size_t len) {
     return res;
 }
 
-
 /* Build SOAP request.
  * @context needed for error logging,
  * @request is XML node set with SOAP request body,
  * @http_request_ptr the address of a pointer to an automatically allocated
+ * @sv SOAP version specifier
  * buffer to which the request data are written.
  */
 static isds_error build_http_request(struct isds_ctx *context,
-        const xmlNodePtr request, xmlBufferPtr *http_request_ptr) {
+        const xmlNodePtr request, xmlBufferPtr *http_request_ptr,
+        enum soap_ns_type sv) {
 
     isds_error err = IE_SUCCESS;
     xmlBufferPtr http_request = NULL;
@@ -1174,7 +1293,9 @@ static isds_error build_http_request(struct isds_ctx *context,
     xmlDocSetRootElement(request_soap_doc, request_soap_envelope);
     /* Only this way we get namespace definition as @xmlns:soap,
      * otherwise we get namespace prefix without definition */
-    soap_ns = xmlNewNs(request_soap_envelope, BAD_CAST SOAP_NS, NULL);
+    soap_ns = xmlNewNs(request_soap_envelope,
+        (SOAP_1_1 == sv) ? BAD_CAST SOAP_NS : BAD_CAST SOAP2_NS,
+        NULL);
     if(NULL == soap_ns) {
         isds_log_message(context, _("Could not create SOAP name space"));
         err = IE_ERROR;
@@ -1265,11 +1386,13 @@ leave:
  * content. The returned pointer points into @response_document to the first
  * child of SOAP Body element. Pass NULL and NULL @response_document, if you
  * don't care.
+ * @sv SOAP version specifier
  */
 static
 isds_error process_http_response(struct isds_ctx *context,
         const void *response, size_t response_length,
-        xmlDocPtr *response_document, xmlNodePtr *response_node_list) {
+        xmlDocPtr *response_document, xmlNodePtr *response_node_list,
+        enum soap_ns_type sv) {
 
     isds_error err = IE_SUCCESS;
     xmlDocPtr response_soap_doc = NULL;
@@ -1302,7 +1425,7 @@ isds_error process_http_response(struct isds_ctx *context,
     }
 
     if (IE_SUCCESS !=
-            _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+            _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, sv)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -1321,8 +1444,10 @@ isds_error process_http_response(struct isds_ctx *context,
         goto leave;
     }
     if (xmlStrcmp(response_root->name, BAD_CAST "Envelope") ||
-            xmlStrcmp(response_root->ns->href, BAD_CAST SOAP_NS)) {
-        isds_log_message(context, "SOAP response is not SOAP 1.1 document");
+            xmlStrcmp(response_root->ns->href,
+            (SOAP_1_1 == sv) ? BAD_CAST SOAP_NS : BAD_CAST SOAP2_NS)) {
+        isds_log_message(context,
+                (SOAP_1_1 == sv) ? "SOAP response is not SOAP 1.1 document" : "SOAP response is not SOAP 1.2 document");
         err = IE_SOAP;
         goto leave;
     }
@@ -1493,7 +1618,7 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
     if (!url) return IE_NOMEM;
 
 
-    err = build_http_request(context, request, &http_request);
+    err = build_http_request(context, request, &http_request, SOAP_1_1);
     if (IE_SUCCESS != err) {
         goto leave;
     }
@@ -1512,12 +1637,12 @@ redirect:
 
     if ((NULL != context->mep_credentials) && (NULL != context->mep_credentials->intermediate_uri)) {
         /* POST does not work for the intermediate URI, using GET here. */
-        err = http(context, context->mep_credentials->intermediate_uri, 1, NULL, 0,
+        err = http(context, context->mep_credentials->intermediate_uri, 1, NULL, 0, NULL, NULL,
                 &http_response, &response_length,
                 &mime_type, NULL, &http_code,
                 ((context->otp_credentials == NULL) && (context->mep_credentials == NULL)) ? NULL: &response_otp_headers);
     } else {
-        err = http(context, url, 0, http_request->content, http_request->use,
+        err = http(context, url, 0, http_request->content, http_request->use, NULL, NULL,
                 &http_response, &response_length,
                 &mime_type, NULL, &http_code,
                 ((context->otp_credentials == NULL) && (context->mep_credentials == NULL)) ? NULL: &response_otp_headers);
@@ -1682,7 +1807,7 @@ redirect:
 
 
     err = process_http_response(context, http_response, response_length,
-            response_document, response_node_list);
+            response_document, response_node_list, SOAP_1_1);
     if (IE_SUCCESS != err) {
         goto leave;
     }
@@ -1710,6 +1835,7 @@ leave:
 
 _hidden isds_error _isds_soap_vodz(struct isds_ctx *context, const char *file,
     const xmlNodePtr request,
+    const char *content_id, const struct isds_dmFile *dm_file,
     xmlDoc **response_document, xmlNode **response_node_list,
     void **raw_response, size_t *raw_response_length)
 {
@@ -1747,7 +1873,8 @@ _hidden isds_error _isds_soap_vodz(struct isds_ctx *context, const char *file,
 		return IE_NOMEM;
 	}
 
-	err = build_http_request(context, request, &http_request);
+	err = build_http_request(context, request, &http_request,
+	    ((NULL == content_id) || ('\0' == *content_id)) ? SOAP_1_1 : SOAP_1_2);
 	if (IE_SUCCESS != err) {
 		goto leave;
 	}
@@ -1765,7 +1892,7 @@ _hidden isds_error _isds_soap_vodz(struct isds_ctx *context, const char *file,
 	    url, http_request->use, http_request->content);
 
 	/* Don't handle OTP or MEP login credentials here. */
-	err = http(context, url, 0, http_request->content, http_request->use,
+	err = http(context, url, 0, http_request->content, http_request->use, content_id, dm_file,
 	    &http_response, &response_length,
 	    &mime_type, NULL, &http_code, NULL);
 
@@ -1833,8 +1960,10 @@ _hidden isds_error _isds_soap_vodz(struct isds_ctx *context, const char *file,
 	}
 
 	err = process_http_response(context, http_response, response_length,
-	    response_document, response_node_list);
+	    response_document, response_node_list,
+	    ((NULL == content_id) || ('\0' == *content_id)) ? SOAP_1_1 : SOAP_1_2);
 	if (IE_SUCCESS != err) {
+		fprintf(stderr, "BBB\n");
 		goto leave;
 	}
 
@@ -1923,7 +2052,7 @@ _hidden isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context) {
     /* Invalidate the cookie by GET request */
     err = http(context,
             url, 1,
-            NULL, 0,
+            NULL, 0, NULL, NULL,
             &response, &response_length,
             NULL, NULL, &http_code,
             NULL);

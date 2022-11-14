@@ -67,6 +67,48 @@ _hidden char *_isds_astrcat3(const char *first, const char *second,
     return buf;
 }
 
+_hidden char *_isds_astrcatN(const char *first, ...)
+{
+	va_list ap;
+	va_list aq;
+	const char *str;
+	size_t length = 0;
+	char *buf;
+	char *next;
+
+	if (NULL == first) {
+		return NULL;
+	}
+
+	va_start(ap, first);
+	va_copy(aq, ap);
+
+	/* Compute total length. */
+	str = first;
+	while (NULL != str) {
+		length += strlen(str);
+
+		str = va_arg(ap, char *);
+	}
+
+	buf = malloc(1 + length);
+	if (NULL != buf) {
+		buf[0] = '\0';
+		next = buf;
+		str = first;
+		while (NULL != str) {
+			strcpy(next, str);
+			next += strlen(str);
+
+			str = va_arg(aq, char *);
+		}
+	}
+
+	va_end(aq);
+	va_end(ap);
+
+	return buf;
+}
 
 /* Print formatted string into automatically reallocated @buffer.
  * @buffer automatically reallocated buffer. Must be &NULL or preallocated
