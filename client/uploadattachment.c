@@ -11,6 +11,8 @@ int main(int argc, char *argv[])
 	struct isds_ctx *ctx = NULL;
 	enum isds_error err = IE_SUCCESS;
 	int ret = EXIT_FAILURE;
+	struct isds_dmFile dm_file = {0, };
+	int fd;
 	struct isds_dmAtt *dm_att = NULL;
 
 	setlocale(LC_ALL, "");
@@ -53,9 +55,8 @@ int main(int argc, char *argv[])
 		printf("Logged in :)\n");
 	}
 
+	/* Prepare attachment description. */
 	{
-		struct isds_dmFile dm_file = {0, };
-		int fd;
 		const char *file_path = argv[1];
 		const char *file_name = basename((char *)file_path);
 		const char *suff = strchr(file_name, '.');
@@ -81,11 +82,10 @@ int main(int argc, char *argv[])
 		    dm_file.dmMimeType, file_path);
 
 		dm_file.dmFileDescr = (char *)file_name;
-
-		err = isds_UploadAttachment(ctx, &dm_file, &dm_att);
-
-		munmap_file(fd, dm_file.data, dm_file.data_length);
 	}
+
+	/* SOAP/1.1 implementation. */
+	err = isds_UploadAttachment(ctx, &dm_file, &dm_att);
 	if (err != IE_SUCCESS) {
 		fprintf(stderr, "isds_UploadAttachment() failed: %s: %s\n",
 		    isds_strerror(err), isds_long_message(ctx));
@@ -107,6 +107,34 @@ int main(int argc, char *argv[])
 		}
 	}
 	print_dmAtt(dm_att);
+
+	isds_dmAtt_free(&dm_att);
+
+	/* SOAP/1.2 MTOM/XOP implementation. */
+	err = isds_UploadAttachment_mtomxop(ctx, &dm_file, &dm_att);
+	if (err != IE_SUCCESS) {
+		fprintf(stderr, "isds_UploadAttachment_mtomxop() failed: %s: %s\n",
+		    isds_strerror(err), isds_long_message(ctx));
+		ret = EXIT_FAILURE;
+		goto fail;
+	} else {
+		printf("isds_UploadAttachment_mtomxop() succeeded\n");
+	}
+	{
+		const struct isds_status *status = isds_operation_status(ctx);
+		if (status != NULL) {
+			printf(
+			    "Obtained status code: '%s'; message: '%s'; reference number: '%s'\n",
+			    status->code, status->message, status->ref_number);
+		} else {
+			fputs("Cannot obtain status after calling isds_UploadAttachment_mtomxop()\n", stderr);
+			ret = EXIT_FAILURE;
+			goto fail;
+		}
+	}
+	print_dmAtt(dm_att);
+
+	munmap_file(fd, dm_file.data, dm_file.data_length);
 
 fail:
 	isds_dmAtt_free(&dm_att);
