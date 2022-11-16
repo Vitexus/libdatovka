@@ -1963,7 +1963,6 @@ _hidden isds_error _isds_soap_vodz(struct isds_ctx *context, const char *file,
 	    response_document, response_node_list,
 	    ((NULL == content_id) || ('\0' == *content_id)) ? SOAP_1_1 : SOAP_1_2);
 	if (IE_SUCCESS != err) {
-		fprintf(stderr, "BBB\n");
 		goto leave;
 	}
 

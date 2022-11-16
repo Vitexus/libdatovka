@@ -397,7 +397,6 @@ enum isds_error _isds_vodz_mtomxop(struct isds_ctx *context,
 	    &response_body, raw_response, raw_response_length);
 
 	if (IE_SUCCESS != err) {
-		fprintf(stderr, "AAA\n");
 		goto leave;
 	}
 
