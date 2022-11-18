@@ -544,6 +544,87 @@ static int log_curl(CURL *curl, curl_infotype type, char *buffer, size_t size,
     return 0;
 }
 
+/* Build start section headers. */
+static struct curl_slist *build_start_headers(_Bool add_content_type)
+{
+	struct curl_slist *headers = NULL;
+
+	if (add_content_type) {
+		headers = curl_slist_append(headers,
+		    "Content-Type: application/xop+xml; charset=UTF-8; type=\"application/soap+xml\"");
+		if (NULL == headers) {
+			goto fail;
+		}
+	}
+	headers = curl_slist_append(headers, "Content-Transfer-Encoding: 8bit");
+	if (NULL == headers) {
+		goto fail;
+	}
+	headers = curl_slist_append(headers, "Content-ID: <rootpart@soapui.org>");
+	if (NULL == headers) {
+		goto fail;
+	}
+
+	return headers;
+
+fail:
+	return NULL;
+}
+
+/* Build attachment section headers. */
+static struct curl_slist *build_attachment_headers(
+    const char *content_id, const struct isds_dmFile *dm_file)
+{
+	struct curl_slist *headers = NULL;
+	char *string;
+
+	{
+		string = _isds_astrcatN("Content-Type: ", dm_file->dmMimeType,
+		    "; name=", dm_file->dmFileDescr, NULL);
+		if (NULL == string) {
+			goto fail;
+		}
+		headers = curl_slist_append(headers, string);
+		free(string); string = NULL;
+	}
+	if (NULL == headers) {
+		goto fail;
+	}
+	headers = curl_slist_append(headers, "Content-Transfer-Encoding: binary");
+	if (NULL == headers) {
+		goto fail;
+	}
+	{
+		string = _isds_astrcatN("Content-ID: <", content_id, ">", NULL);
+		if (NULL == string) {
+			goto fail;
+		}
+		headers = curl_slist_append(headers, string);
+		free(string); string = NULL;
+	}
+	if (NULL == headers) {
+		goto fail;
+	}
+	{
+		string = _isds_astrcatN(
+		    "Content-Disposition: attachment; name=\"", dm_file->dmFileDescr,
+		    "\"; filename=\"", dm_file->dmFileDescr, "\"", NULL);
+		if (NULL == string) {
+			goto fail;
+		}
+		headers = curl_slist_append(headers, string);
+		free(string); string = NULL;
+	}
+	if (NULL == headers) {
+		goto fail;
+	}
+
+	return headers;
+
+fail:
+	return NULL;
+}
+
 #if HAVE_DECL_CURLOPT_MIMEPOST /* Since curl-7.56.0 */
 /*
  * CURL read callback function needed to post MIME data without copying the
@@ -629,7 +710,6 @@ static struct curl_mime *mimepost(CURL *curl,
 	struct curl_mime *multipart = NULL;
 	struct curl_mimepart *part;
 	struct curl_slist *headers = NULL;
-	char *string;
 
 	multipart = curl_mime_init(curl);
 	if (NULL == multipart) {
@@ -648,11 +728,7 @@ static struct curl_mime *mimepost(CURL *curl,
 	if (CURLE_OK != curl_err) {
 		goto fail;
 	}
-	headers = curl_slist_append(headers, "Content-Transfer-Encoding: 8bit");
-	if (NULL == headers) {
-		goto fail;
-	}
-	headers = curl_slist_append(headers, "Content-ID: <rootpart@soapui.org>");
+	headers = build_start_headers(0);
 	if (NULL == headers) {
 		goto fail;
 	}
@@ -673,40 +749,7 @@ static struct curl_mime *mimepost(CURL *curl,
 	if (CURLE_OK != curl_err) {
 		goto fail;
 	}
-	{
-		string = _isds_astrcatN("Content-Type: ", dm_file->dmMimeType, "; name=", dm_file->dmFileDescr, NULL);
-		if (NULL == string) {
-			goto fail;
-		}
-		headers = curl_slist_append(headers, string);
-		free(string); string = NULL;
-	}
-	if (NULL == headers) {
-		goto fail;
-	}
-	headers = curl_slist_append(headers, "Content-Transfer-Encoding: binary");
-	if (NULL == headers) {
-		goto fail;
-	}
-	{
-		string = _isds_astrcatN("Content-ID: <", content_id, ">", NULL);
-		if (NULL == string) {
-			goto fail;
-		}
-		headers = curl_slist_append(headers, string);
-		free(string); string = NULL;
-	}
-	if (NULL == headers) {
-		goto fail;
-	}
-	{
-		string = _isds_astrcatN("Content-Disposition: attachment; name=\"", dm_file->dmFileDescr, "\"; filename=\"", dm_file->dmFileDescr, "\"", NULL);
-		if (NULL == string) {
-			goto fail;
-		}
-		headers = curl_slist_append(headers, string);
-		free(string); string = NULL;
-	}
+	headers = build_attachment_headers(content_id, dm_file);
 	if (NULL == headers) {
 		goto fail;
 	}
@@ -738,7 +781,6 @@ static void formpost_header_list_free(struct formpost_header_list *list)
 
 /*
  * Construct a multi-part message with MTOM/XOP content.
- * @curl is cURL context
  * @request is pointer to SOAP request
  * @request_length number of bytes
  * @content_id href value of the Include MTOM/XOP element
@@ -746,7 +788,7 @@ static void formpost_header_list_free(struct formpost_header_list *list)
  * @hlist is a allocated pointer to a list of HTTP headers, the list must be
  * freed by the user after the HTTP request is processed.
  */
-static struct curl_httppost *formpost(CURL *curl,
+static struct curl_httppost *formpost(
     const void *request, const size_t request_length,
     const char *content_id, const struct isds_dmFile *dm_file,
     struct formpost_header_list **hlist)
@@ -755,7 +797,6 @@ static struct curl_httppost *formpost(CURL *curl,
 	struct curl_httppost* post = NULL;
 	struct curl_httppost* last = NULL;
 	struct formpost_header_list *hlast;
-	char *string;
 
 	/* Headers must be created. */
 	if (NULL == hlist) {
@@ -768,15 +809,7 @@ static struct curl_httppost *formpost(CURL *curl,
 	}
 	hlast = *hlist;
 
-	hlast->headers = curl_slist_append(hlast->headers, "Content-Type: application/xop+xml; charset=UTF-8; type=\"application/soap+xml\"");
-	if (NULL == hlast->headers) {
-		goto fail;
-	}
-	hlast->headers = curl_slist_append(hlast->headers, "Content-Transfer-Encoding: 8bit");
-	if (NULL == hlast->headers) {
-		goto fail;
-	}
-	hlast->headers = curl_slist_append(hlast->headers, "Content-ID: <rootpart@soapui.org>");
+	hlast->headers = build_start_headers(1);
 	if (NULL == hlast->headers) {
 		goto fail;
 	}
@@ -797,40 +830,7 @@ static struct curl_httppost *formpost(CURL *curl,
 	}
 	hlast = hlast->next;
 
-	{
-		string = _isds_astrcatN("Content-Type: ", dm_file->dmMimeType, "; name=", dm_file->dmFileDescr, NULL);
-		if (NULL == string) {
-			goto fail;
-		}
-		hlast->headers = curl_slist_append(hlast->headers, string);
-		free(string); string = NULL;
-	}
-	if (NULL == hlast->headers) {
-		goto fail;
-	}
-	hlast->headers = curl_slist_append(hlast->headers, "Content-Transfer-Encoding: binary");
-	if (NULL == hlast->headers) {
-		goto fail;
-	}
-	{
-		string = _isds_astrcatN("Content-ID: <", content_id, ">", NULL);
-		if (NULL == string) {
-			goto fail;
-		}
-		hlast->headers = curl_slist_append(hlast->headers, string);
-		free(string); string = NULL;
-	}
-	if (NULL == hlast->headers) {
-		goto fail;
-	}
-	{
-		string = _isds_astrcatN("Content-Disposition: attachment; name=\"", dm_file->dmFileDescr, "\"; filename=\"", dm_file->dmFileDescr, "\"", NULL);
-		if (NULL == string) {
-			goto fail;
-		}
-		hlast->headers = curl_slist_append(hlast->headers, string);
-		free(string); string = NULL;
-	}
+	hlast->headers = build_attachment_headers(content_id, dm_file);
 	if (NULL == hlast->headers) {
 		goto fail;
 	}
@@ -1226,8 +1226,7 @@ static isds_error http(struct isds_ctx *context,
                 content_id, dm_file, &p);
             curl_err = curl_easy_setopt(context->curl, CURLOPT_MIMEPOST, multipart);
 #else /* !HAVE_DECL_CURLOPT_MIMEPOST */
-            post = formpost(context->curl, request, request_length,
-                content_id, dm_file, &hl);
+            post = formpost(request, request_length, content_id, dm_file, &hl);
             curl_err = curl_easy_setopt(context->curl, CURLOPT_HTTPPOST, post);
 #endif /* HAVE_DECL_CURLOPT_MIMEPOST */
         }
