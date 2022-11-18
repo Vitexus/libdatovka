@@ -31,6 +31,12 @@ struct multipart_read_status {
 	curl_off_t position;
 };
 
+/* MIME part headers allocated during a HTTP formpost. */
+struct formpost_header_list {
+	struct curl_slist *headers;
+	struct formpost_header_list *next;
+};
+
 /* Deallocate content of struct auth_headers */
 static void auth_headers_free(struct auth_headers *headers) {
     zfree(headers->last_header);
@@ -712,6 +718,139 @@ fail:
 	curl_mime_free(multipart);
 	return NULL;
 }
+#else /* !HAVE_DECL_CURLOPT_MIMEPOST */
+
+/*
+ * Deallocate list of HTTP headers.
+ * @list is a list to be freed
+ */
+static void formpost_header_list_free(struct formpost_header_list *list)
+{
+	struct formpost_header_list *next;
+
+	while (NULL != list) {
+		curl_slist_free_all(list->headers);
+		next = list->next;
+		free(list);
+		list = next;
+	}
+}
+
+/*
+ * Construct a multi-part message with MTOM/XOP content.
+ * @curl is cURL context
+ * @request is pointer to SOAP request
+ * @request_length number of bytes
+ * @content_id href value of the Include MTOM/XOP element
+ * @dm_file file content
+ * @hlist is a allocated pointer to a list of HTTP headers, the list must be
+ * freed by the user after the HTTP request is processed.
+ */
+static struct curl_httppost *formpost(CURL *curl,
+    const void *request, const size_t request_length,
+    const char *content_id, const struct isds_dmFile *dm_file,
+    struct formpost_header_list **hlist)
+{
+	CURLFORMcode form_err;
+	struct curl_httppost* post = NULL;
+	struct curl_httppost* last = NULL;
+	struct formpost_header_list *hlast;
+	char *string;
+
+	/* Headers must be created. */
+	if (NULL == hlist) {
+		return NULL;
+	}
+
+	*hlist = calloc(1, sizeof(**hlist));
+	if (NULL == hlist) {
+		return NULL;
+	}
+	hlast = *hlist;
+
+	hlast->headers = curl_slist_append(hlast->headers, "Content-Type: application/xop+xml; charset=UTF-8; type=\"application/soap+xml\"");
+	if (NULL == hlast->headers) {
+		goto fail;
+	}
+	hlast->headers = curl_slist_append(hlast->headers, "Content-Transfer-Encoding: 8bit");
+	if (NULL == hlast->headers) {
+		goto fail;
+	}
+	hlast->headers = curl_slist_append(hlast->headers, "Content-ID: <rootpart@soapui.org>");
+	if (NULL == hlast->headers) {
+		goto fail;
+	}
+
+	form_err = curl_formadd(&post, &last,
+	    CURLFORM_COPYNAME, "<rootpart@soapui.org>",
+	    CURLFORM_CONTENTHEADER, hlast->headers,
+	    CURLFORM_PTRCONTENTS, request,
+	    CURLFORM_CONTENTSLENGTH, (long)request_length,
+	    CURLFORM_END);
+	if (CURL_FORMADD_OK != form_err) {
+		goto fail;
+	}
+
+	hlast->next = calloc(1, sizeof(*hlast->next));
+	if (NULL == hlast->next) {
+		goto fail;
+	}
+	hlast = hlast->next;
+
+	{
+		string = _isds_astrcatN("Content-Type: ", dm_file->dmMimeType, "; name=", dm_file->dmFileDescr, NULL);
+		if (NULL == string) {
+			goto fail;
+		}
+		hlast->headers = curl_slist_append(hlast->headers, string);
+		free(string); string = NULL;
+	}
+	if (NULL == hlast->headers) {
+		goto fail;
+	}
+	hlast->headers = curl_slist_append(hlast->headers, "Content-Transfer-Encoding: binary");
+	if (NULL == hlast->headers) {
+		goto fail;
+	}
+	{
+		string = _isds_astrcatN("Content-ID: <", content_id, ">", NULL);
+		if (NULL == string) {
+			goto fail;
+		}
+		hlast->headers = curl_slist_append(hlast->headers, string);
+		free(string); string = NULL;
+	}
+	if (NULL == hlast->headers) {
+		goto fail;
+	}
+	{
+		string = _isds_astrcatN("Content-Disposition: attachment; name=\"", dm_file->dmFileDescr, "\"; filename=\"", dm_file->dmFileDescr, "\"", NULL);
+		if (NULL == string) {
+			goto fail;
+		}
+		hlast->headers = curl_slist_append(hlast->headers, string);
+		free(string); string = NULL;
+	}
+	if (NULL == hlast->headers) {
+		goto fail;
+	}
+
+	form_err = curl_formadd(&post, &last,
+	    CURLFORM_COPYNAME, dm_file->dmFileDescr,
+	    CURLFORM_CONTENTHEADER, hlast->headers,
+	    CURLFORM_PTRCONTENTS, dm_file->data,
+	    CURLFORM_CONTENTSLENGTH, (long)dm_file->data_length,
+	    CURLFORM_END);
+	if (CURL_FORMADD_OK != form_err) {
+		goto fail;
+	}
+
+	return post;
+fail:
+	curl_formfree(post);
+	formpost_header_list_free(*hlist); *hlist = NULL;
+	return NULL;
+}
 #endif /* HAVE_DECL_CURLOPT_MIMEPOST */
 
 /* Do HTTP request.
@@ -757,6 +896,9 @@ static isds_error http(struct isds_ctx *context,
 #if HAVE_DECL_CURLOPT_MIMEPOST /* Since curl-7.56.0 */
     struct curl_mime *multipart = NULL;
     struct multipart_read_status p = {0, };
+#else /* !HAVE_DECL_CURLOPT_MIMEPOST */
+    struct curl_httppost *post = NULL;
+    struct formpost_header_list *hl = NULL;
 #endif /* HAVE_DECL_CURLOPT_MIMEPOST */
 
     if (!context) return IE_INVALID_CONTEXT;
@@ -1082,7 +1224,11 @@ static isds_error http(struct isds_ctx *context,
 #if HAVE_DECL_CURLOPT_MIMEPOST /* Since curl-7.56.0 */
             multipart = mimepost(context->curl, request, request_length,
                 content_id, dm_file, &p);
-            curl_easy_setopt(context->curl, CURLOPT_MIMEPOST, multipart);
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_MIMEPOST, multipart);
+#else /* !HAVE_DECL_CURLOPT_MIMEPOST */
+            post = formpost(context->curl, request, request_length,
+                content_id, dm_file, &hl);
+            curl_err = curl_easy_setopt(context->curl, CURLOPT_HTTPPOST, post);
 #endif /* HAVE_DECL_CURLOPT_MIMEPOST */
         }
     }
@@ -1126,6 +1272,9 @@ static isds_error http(struct isds_ctx *context,
 
 #if HAVE_DECL_CURLOPT_MIMEPOST /* Since curl-7.56.0 */
     curl_mime_free(multipart); multipart = NULL;
+#else /* !HAVE_DECL_CURLOPT_MIMEPOST */
+    curl_formfree(post); post = NULL;
+    formpost_header_list_free(hl); hl = NULL;
 #endif /* HAVE_DECL_CURLOPT_MIMEPOST */
 
     if (!curl_err)
@@ -1270,6 +1419,9 @@ leave:
     curl_slist_free_all(headers);
 #if HAVE_DECL_CURLOPT_MIMEPOST /* Since curl-7.56.0 */
     curl_mime_free(multipart);
+#else /* !HAVE_DECL_CURLOPT_MIMEPOST */
+    curl_formfree(post);
+    formpost_header_list_free(hl);
 #endif /* HAVE_DECL_CURLOPT_MIMEPOST */
 
     if (err) {
