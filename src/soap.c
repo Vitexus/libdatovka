@@ -24,6 +24,12 @@ struct auth_headers {
     char *redirect;     /* Redirect URL */
 };
 
+/* Context structure needed to keep track with sent MIME data. */
+struct multipart_read_status {
+	char *buffer;
+	curl_off_t size;
+	curl_off_t position;
+};
 
 /* Deallocate content of struct auth_headers */
 static void auth_headers_free(struct auth_headers *headers) {
@@ -533,16 +539,84 @@ static int log_curl(CURL *curl, curl_infotype type, char *buffer, size_t size,
 }
 
 /*
+ * CURL read callback function needed to post MIME data without copying the
+ * source.
+ * @buffer is buffer to be filled with data
+ * @size is size of copied items
+ * @nitems is number of copied items
+ * @arg is source context
+ * Returns returns number of copied data.
+ */
+static size_t read_callback(char *buffer, size_t size, size_t nitems, void *arg)
+{
+	struct multipart_read_status *p = (struct multipart_read_status *)arg;
+	if (NULL == p) {
+		return CURL_READFUNC_ABORT;
+	}
+	curl_off_t sz = p->size - p->position;
+
+	nitems *= size;
+	if (sz > nitems) {
+		sz = nitems;
+	}
+	if (sz) {
+		memcpy(buffer, p->buffer + p->position, sz);
+	}
+	p->position += sz;
+	return sz;
+}
+
+/*
+ * CURL seek callback function needed to post MIME data without copying the
+ * source.
+ * @arg is source context
+ * @offset is the offset from the @origin
+ * @origin specifies the position in the source
+ * Returns seek status.
+ */
+static int seek_callback(void *arg, curl_off_t offset, int origin)
+{
+	struct multipart_read_status *p = (struct multipart_read_status *)arg;
+	if (NULL == p) {
+		return CURL_SEEKFUNC_FAIL;
+	}
+
+	switch(origin) {
+	case SEEK_END:
+		offset += p->size;
+		break;
+	case SEEK_CUR:
+		offset += p->position;
+		break;
+	case SEEK_SET:
+		/* Do nothing. */
+		break;
+	default:
+		return CURL_SEEKFUNC_CANTSEEK;
+		break;
+	}
+
+	if (offset < 0) {
+		return CURL_SEEKFUNC_FAIL;
+	}
+	p->position = offset;
+	return CURL_SEEKFUNC_OK;
+}
+
+/*
  * Construct a multi-part message with MTOM/XOP content.
  * @curl is cURL context
  * @request is pointer to SOAP request
  * @request_length number of bytes
  * @content_id href value of the Include MTOM/XOP element
  * @dm_file file content
+ * @p is the data read context, can be set to NULL in order to pass data
+ * at once at the cost of creating a complete potentially huge copy.
  */
 static struct curl_mime *mimepost(CURL *curl,
     const void *request, const size_t request_length,
-    const char *content_id, const struct isds_dmFile *dm_file)
+    const char *content_id, const struct isds_dmFile *dm_file,
+    struct multipart_read_status *p)
 {
 	CURLcode curl_err;
 	struct curl_mime *multipart = NULL;
@@ -581,7 +655,14 @@ static struct curl_mime *mimepost(CURL *curl,
 	if (NULL == part) {
 		goto fail;
 	}
-	curl_err = curl_mime_data(part, dm_file->data, dm_file->data_length);
+	if (NULL != p) {
+		p->buffer = dm_file->data;
+		p->size = dm_file->data_length;
+		p->position = 0;
+		curl_err = curl_mime_data_cb(part, p->size, read_callback, seek_callback, NULL, p);
+	} else {
+		curl_err = curl_mime_data(part, dm_file->data, dm_file->data_length);
+	}
 	if (CURLE_OK != curl_err) {
 		goto fail;
 	}
@@ -672,6 +753,7 @@ static isds_error http(struct isds_ctx *context,
     char *content_type;
     struct curl_slist *headers = NULL;
     struct curl_mime *multipart = NULL;
+    struct multipart_read_status p = {0, };
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!url) return IE_INVAL;
@@ -994,7 +1076,7 @@ static isds_error http(struct isds_ctx *context,
             }
         } else {
             multipart = mimepost(context->curl, request, request_length,
-                content_id, dm_file);
+                content_id, dm_file, &p);
             curl_easy_setopt(context->curl, CURLOPT_MIMEPOST, multipart);
         }
     }
