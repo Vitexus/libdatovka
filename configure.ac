@@ -85,6 +85,11 @@ AS_IF([test -z "$LIBCURL"],
                      declaration.
                      Consider upgrade to 7.19.0 version.]),
         [[#include <curl/curl.h>]])
+    AC_CHECK_DECLS([CURLOPT_MIMEPOST], [],
+        AC_MSG_WARN([Your libcurl does not support sending data from MIME
+                     structures.
+                     Consider upgrading to version 7.56.0.]),
+        [[#include <curl/curl.h>]])
     AC_CHECK_DECLS([CURLINFO_REDIRECT_URL], [],
         AC_MSG_ERROR([Your libcurl does not support getting redirected URL.
                      You must upgrade to 7.18.2 version.]),

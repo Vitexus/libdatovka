@@ -538,6 +538,7 @@ static int log_curl(CURL *curl, curl_infotype type, char *buffer, size_t size,
     return 0;
 }
 
+#if HAVE_DECL_CURLOPT_MIMEPOST /* Since curl-7.56.0 */
 /*
  * CURL read callback function needed to post MIME data without copying the
  * source.
@@ -711,6 +712,7 @@ fail:
 	curl_mime_free(multipart);
 	return NULL;
 }
+#endif /* HAVE_DECL_CURLOPT_MIMEPOST */
 
 /* Do HTTP request.
  * @context holds the base URL,
@@ -752,8 +754,10 @@ static isds_error http(struct isds_ctx *context,
     struct soap_body body;
     char *content_type;
     struct curl_slist *headers = NULL;
+#if HAVE_DECL_CURLOPT_MIMEPOST /* Since curl-7.56.0 */
     struct curl_mime *multipart = NULL;
     struct multipart_read_status p = {0, };
+#endif /* HAVE_DECL_CURLOPT_MIMEPOST */
 
     if (!context) return IE_INVALID_CONTEXT;
     if (!url) return IE_INVAL;
@@ -1075,9 +1079,11 @@ static isds_error http(struct isds_ctx *context,
                     request_length);
             }
         } else {
+#if HAVE_DECL_CURLOPT_MIMEPOST /* Since curl-7.56.0 */
             multipart = mimepost(context->curl, request, request_length,
                 content_id, dm_file, &p);
             curl_easy_setopt(context->curl, CURLOPT_MIMEPOST, multipart);
+#endif /* HAVE_DECL_CURLOPT_MIMEPOST */
         }
     }
 
@@ -1118,7 +1124,9 @@ static isds_error http(struct isds_ctx *context,
     /*  Do the request */
     curl_err = curl_easy_perform(context->curl);
 
+#if HAVE_DECL_CURLOPT_MIMEPOST /* Since curl-7.56.0 */
     curl_mime_free(multipart); multipart = NULL;
+#endif /* HAVE_DECL_CURLOPT_MIMEPOST */
 
     if (!curl_err)
         curl_err = curl_easy_getinfo(context->curl, CURLINFO_CONTENT_TYPE,
@@ -1260,7 +1268,9 @@ static isds_error http(struct isds_ctx *context,
     }
 leave:
     curl_slist_free_all(headers);
+#if HAVE_DECL_CURLOPT_MIMEPOST /* Since curl-7.56.0 */
     curl_mime_free(multipart);
+#endif /* HAVE_DECL_CURLOPT_MIMEPOST */
 
     if (err) {
         free(body.data);
