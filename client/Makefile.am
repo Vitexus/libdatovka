@@ -6,7 +6,8 @@ LDADD = $(LIBDIR)/libdatovka.la -L$(LIBDIR) @XML_LIBS@
 noinst_PROGRAMS = \
 	activate addbox authenticatemessage certauth changebox changebox2 \
 	changepassword changeuser check_time_conversion computemessagehash \
-	convertdocument deleteuser deleteuser2 disableaccesibilityexternaly \
+	convertdocument createbigmessage deleteuser deleteuser2 \
+	disableaccesibilityexternaly \
 	downloadmessagehash dtinfo getboxlist getchangedstates getreceived \
 	getreceiveddelivery getreceivedenvelope getreceivedsigneddelivery \
 	getsenderbyid getsent getsignedreceived getsignedsent \
@@ -30,6 +31,7 @@ changeuser_SOURCES = changeuser.c $(common)
 check_time_conversion_SOURCES = check_time_conversion.c $(common)
 computemessagehash_SOURCES = computemessagehash.c $(common)
 convertdocument_SOURCES = convertdocument.c $(common)
+createbigmessage_SOURCES = createbigmessage.c $(common)
 deleteuser_SOURCES = deleteuser.c $(common)
 deleteuser2_SOURCES = deleteuser2.c $(common)
 disableaccesibilityexternaly_SOURCES = disableaccesibilityexternaly.c $(common)

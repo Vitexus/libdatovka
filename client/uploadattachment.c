@@ -1,10 +1,11 @@
 #define _XOPEN_SOURCE 500
-#include "common.h"
 #include <libdatovka/isds.h>
 #include <libgen.h> /* basename() */
 #include <locale.h> /* setlocale() */
 #include <stdlib.h>
 #include <string.h> /* strchr() */
+
+#include "common.h"
 
 int main(int argc, char *argv[])
 {
