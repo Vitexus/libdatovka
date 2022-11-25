@@ -427,6 +427,7 @@ void isds_message_free(struct isds_message **message) {
     free((*message)->raw);
     isds_envelope_free(&((*message)->envelope));
     isds_list_free(&((*message)->documents));
+    isds_list_free(&((*message)->ext_files));
     xmlFreeDoc((*message)->xml); (*message)->xml = NULL;
 
     free(*message);
@@ -6082,6 +6083,108 @@ leave:
     return err;
 }
 
+/*
+ * Convert isds_dmExtFile structure into XML tree and append to dmFiles node.
+ * @context is session context
+ * @ext_file is ISDS ExtFile
+ * @dm_files is XML element the resulting tree will be appended to as a child.
+ * @return error code, in case of error context' message is filled.
+ */
+static enum isds_error insert_ext_file(struct isds_ctx *context,
+    struct isds_dmExtFile *ext_file, xmlNode *dm_files)
+{
+	enum isds_error err = IE_SUCCESS;
+	xmlNode *new_file = NULL;
+	xmlNode *file = NULL;
+	xmlAttr *attribute_node;
+	const xmlChar *string;
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if ((NULL == ext_file) || (NULL == dm_files)) {
+		return IE_INVAL;
+	}
+
+	/* Allocate new dmExtFile */
+	new_file = xmlNewNode(dm_files->ns, BAD_CAST "dmExtFile");
+	if (NULL == new_file) {
+		isds_printf_message(context, _("Could not allocate main dmExtFile"));
+		err = IE_ERROR;
+		goto leave;
+	}
+	/*
+	 * Append the new dmExtFile.
+	 * XXX: Main document must go first
+	 */
+	if ((ext_file->dmFileMetaType == FILEMETATYPE_MAIN) && (NULL != dm_files->children)) {
+		file = xmlAddPrevSibling(dm_files->children, new_file);
+	} else {
+		file = xmlAddChild(dm_files, new_file);
+	}
+
+	if (NULL == file) {
+		xmlFreeNode(new_file); new_file = NULL;
+		isds_printf_message(context,
+		    _("Could not add dmExtFile child to %s element"), dm_files->name);
+		err = IE_ERROR;
+		goto leave;
+	}
+
+	string = isds_FileMetaType2string(ext_file->dmFileMetaType);
+	if (NULL == string) {
+		isds_printf_message(context,
+		    _("ExtFile has unknown dmFileMetaType: %ld"),
+		    ext_file->dmFileMetaType);
+		err = IE_ENUM;
+		goto leave;
+	}
+	INSERT_STRING_ATTRIBUTE(file, "dmFileMetaType", string);
+
+	/* @dmAttID is required */
+	if (NULL == ext_file->dmAtt.dmAttID) {
+		isds_log_message(context,
+		   _("ExtFile is missing mandatory attachment identifier"));
+		err = IE_INVAL;
+		goto leave;
+	}
+	INSERT_STRING_ATTRIBUTE(file, "dmAttID", ext_file->dmAtt.dmAttID);
+	/* @dmAttHash1 required */
+	if (NULL == ext_file->dmAtt.dmAttHash1) {
+		isds_log_message(context,
+		   _("ExtFile is missing mandatory Hash1 value"));
+		err = IE_INVAL;
+		goto leave;
+	}
+	INSERT_STRING_ATTRIBUTE(file, "dmAttHash1", ext_file->dmAtt.dmAttHash1);
+	/* @dmAttHash1Alg required */
+	if (NULL == ext_file->dmAtt.dmAttHash1Alg) {
+		isds_log_message(context,
+		   _("ExtFile is missing mandatory Hash1 algorithm identifier"));
+		err = IE_INVAL;
+		goto leave;
+	}
+	INSERT_STRING_ATTRIBUTE(file, "dmAttHash1Alg", ext_file->dmAtt.dmAttHash1Alg);
+	/* @dmAttHash2 required */
+	if (NULL == ext_file->dmAtt.dmAttHash2) {
+		isds_log_message(context,
+		   _("ExtFile is missing mandatory Hash2 value"));
+		err = IE_INVAL;
+		goto leave;
+	}
+	INSERT_STRING_ATTRIBUTE(file, "dmAttHash2", ext_file->dmAtt.dmAttHash2);
+	/* @dmAttHash2Alg required */
+	if (NULL == ext_file->dmAtt.dmAttHash2Alg) {
+		isds_log_message(context,
+		   _("ExtFile is missing mandatory Hash2 algorithm identifier"));
+		err = IE_INVAL;
+		goto leave;
+	}
+	INSERT_STRING_ATTRIBUTE(file, "dmAttHash2Alg", ext_file->dmAtt.dmAttHash2Alg);
+
+leave:
+	return err;
+}
 
 /* Append XSD tMStatus XML tree into isds_message_copy structure.
  * The copy must be preallocated, the date are just appended into structure.
@@ -11465,16 +11568,19 @@ leave:
 
 
 #if HAVE_LIBCURL
-/* Insert struct isds_message data (envelope (recipient data optional) and
+/*
+ * Insert struct isds_message data (envelope (recipient data optional) and
  * documents into XML tree
  * @context is session context
  * @outgoing_message is a structure containing message data
  * @create_message is XML CreateMessage or CreateMultipleMessage element
  * @process_recipient true for recipient data serialization, false for no
- * serialization */
+ * serialization
+ * @allow_ext_files true if ext_files should also be added
+ */
 static isds_error insert_envelope_files(struct isds_ctx *context,
         const struct isds_message *outgoing_message, xmlNodePtr create_message,
-        const _Bool process_recipient) {
+        const _Bool process_recipient, const _Bool allow_ext_files) {
 
     isds_error err = IE_SUCCESS;
     xmlNodePtr envelope, dm_files, node;
@@ -11584,9 +11690,15 @@ static isds_error insert_envelope_files(struct isds_ctx *context,
         INSERT_STRING_ATTRIBUTE(node, "IdLevel", string);
     }
 
+    if ((!allow_ext_files) && (NULL != outgoing_message->ext_files)) {
+        isds_log_message(context,
+            _("ExtFile entries are not allowed when sending ordinary data messages."));
+        err = IE_INVAL;
+        goto leave;
+    }
 
     /* Append dmFiles */
-    if (!outgoing_message->documents) {
+    if ((NULL == outgoing_message->documents) && (NULL == outgoing_message->ext_files)) {
         isds_log_message(context,
                 _("Outgoing message is missing list of documents"));
         err = IE_INVAL;
@@ -11601,7 +11713,8 @@ static isds_error insert_envelope_files(struct isds_ctx *context,
     }
 
     /* Check for document hierarchy */
-    err = _isds_check_documents_hierarchy(context, outgoing_message->documents);
+    err = _isds_check_documents_hierarchy(context, outgoing_message->documents,
+        outgoing_message->ext_files);
     if (err) goto leave;
 
     /* Process each document */
@@ -11621,6 +11734,19 @@ static isds_error insert_envelope_files(struct isds_ctx *context,
 
         if (err) goto leave;
     }
+    /* Process each ext_file */
+    for (struct isds_list *item = outgoing_message->ext_files; NULL != item; item = item->next) {
+        if (NULL == item->data) {
+            isds_log_message(context,
+                    _("List of ExtFile entries contains empty item"));
+            err = IE_INVAL;
+            goto leave;
+        }
+        err = insert_ext_file(context, (struct isds_dmExtFile *)item->data, dm_files);
+        if (IE_SUCCESS != err) {
+           goto leave;
+        }
+    }
 
 leave:
     free(string);
@@ -11628,16 +11754,6 @@ leave:
 }
 #endif /* HAVE_LIBCURL */
 
-
-/* Send a message via ISDS to a recipient
- * @context is session context
- * @outgoing_message is message to send; Some members are mandatory (like
- * dbIDRecipient), some are optional and some are irrelevant (especially data
- * about sender). Included pointer to isds_list documents must contain at
- * least one document of FILEMETATYPE_MAIN. This is read-write structure, some
- * members will be filled with valid data from ISDS. Exact list of write
- * members is subject to change. Currently dmID is changed.
- * @return ISDS_SUCCESS, or other error code if something goes wrong. */
 isds_error isds_send_message(struct isds_ctx *context,
         struct isds_message *outgoing_message) {
 
@@ -11679,7 +11795,7 @@ isds_error isds_send_message(struct isds_ctx *context,
     xmlSetNs(request, isds_ns);
 
     /* Append envelope and files */
-    err = insert_envelope_files(context, outgoing_message, request, 1);
+    err = insert_envelope_files(context, outgoing_message, request, 1, 0);
     if (err) goto leave;
 
 
@@ -11837,22 +11953,6 @@ serialization_failed:
     return err;
 }
 
-
-/* Send a message via ISDS to a multiple recipients
- * @context is session context
- * @outgoing_message is message to send; Some members are mandatory,
- * some are optional and some are irrelevant (especially data
- * about sender). Data about recipient will be substituted by ISDS from
- * @copies. Included pointer to isds_list documents must
- * contain at least one document of FILEMETATYPE_MAIN.
- * @copies is list of isds_message_copy structures addressing all desired
- * recipients. This is read-write structure, some members will be filled with
- * valid data from ISDS (message IDs, error codes, error descriptions).
- * @return
- *  ISDS_SUCCESS if all messages have been sent
- *  ISDS_PARTIAL_SUCCESS if sending of some messages has failed (failed and
- *      succeeded messages can be identified by copies->data->error),
- *  or other error code if something other goes wrong. */
 isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
         const struct isds_message *outgoing_message,
         struct isds_list *copies) {
@@ -11941,7 +12041,7 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
     }
 
     /* Append envelope and files */
-    err = insert_envelope_files(context, outgoing_message, request, 0);
+    err = insert_envelope_files(context, outgoing_message, request, 0, 0);
     if (err) goto leave;
 
 
@@ -12553,7 +12653,8 @@ enum isds_error isds_UploadAttachment_mtomxop(struct isds_ctx *context,
 		err = IE_ERROR;
 		goto leave;
 	}
-	if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_2)) {
+	if (IE_SUCCESS != _isds_register_namespaces(
+	        xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_2)) {
 		err = IE_ERROR;
 		goto leave;
 	}
@@ -12603,6 +12704,161 @@ leave:
 
 	return err;
 #undef ATTACHMENT_CID
+}
+
+enum isds_error isds_CreateBigMessage(struct isds_ctx *context,
+    struct isds_message *outgoing_message)
+{
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlNs *isds_ns = NULL;
+	xmlNode *request = NULL;
+	xmlDoc *response = NULL;
+	xmlChar *code = NULL;
+	xmlChar *message = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+#endif /* HAVE_LIBCURL */
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if (NULL == outgoing_message) {
+		return IE_INVAL;
+	}
+
+#if HAVE_LIBCURL
+	/*
+	 * Check if connection is established
+	 * TODO: This check should be done downstairs.
+	 */
+	if (NULL == context->curl) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	request = xmlNewNode(NULL, BAD_CAST "CreateBigMessage");
+	if (NULL == request) {
+		isds_log_message(context,
+		    _("Could not build CreateBigMessage request"));
+		return IE_ERROR;
+	}
+	isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+	if(NULL == isds_ns) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		xmlFreeNode(request);
+		return IE_ERROR;
+	}
+	xmlSetNs(request, isds_ns);
+
+	/* Append envelope and files */
+	err = insert_envelope_files(context, outgoing_message, request, 1, 1);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	isds_log(ILF_ISDS, ILL_DEBUG, _("Sending CreateBigMessage request to ISDS\n"));
+
+	/* Send request */
+	err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS, request, &response, NULL, NULL);
+
+	/* Don't' destroy request, we want to provide it to application later */
+
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Processing ISDS response on CreateBigMessage request failed\n"));
+		goto leave;
+	}
+
+	/* Check for response status */
+	err = isds_response_status(context, SERVICE_VODZ_DM_OPERATIONS,
+	    response, &code, &message, NULL);
+	build_isds_status(&(context->status),
+	    _isds_service_to_status_type(SERVICE_VODZ_DM_OPERATIONS),
+	    (char *)code, (char *)message, NULL);
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("ISDS response on CreateBigMessage request is missing status\n"));
+		goto leave;
+	}
+
+	/* Request processed, but refused by server or server failed */
+	if (xmlStrcmp(code, BAD_CAST "0000")) {
+		char *box_id_locale =
+		    _isds_utf82locale((char*)outgoing_message->envelope->dbIDRecipient);
+		char *code_locale = _isds_utf82locale((char*)code);
+		char *message_locale = _isds_utf82locale((char*)message);
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Server did not accept message for %s on CreateBigMessage request (code=%s, message=%s)\n"),
+		    box_id_locale, code_locale, message_locale);
+		isds_log_message(context, message_locale);
+		free(box_id_locale);
+		free(code_locale);
+		free(message_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
+
+	/* Extract data */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (IE_SUCCESS != _isds_register_namespaces(
+	        xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	result = xmlXPathEvalExpression(BAD_CAST "/isds:CreateBigMessageResponse",
+	    xpath_ctx);
+	if (NULL == result) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+		isds_log_message(context, _("Missing CreateBigMessageResponse element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	if (result->nodesetval->nodeNr > 1) {
+		isds_log_message(context, _("Multiple CreateBigMessageResponse element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	xpath_ctx->node = result->nodesetval->nodeTab[0];
+	xmlXPathFreeObject(result); result = NULL;
+
+	if (NULL != outgoing_message->envelope->dmID) {
+		free(outgoing_message->envelope->dmID);
+		outgoing_message->envelope->dmID = NULL;
+	}
+	EXTRACT_STRING("isds:dmID", outgoing_message->envelope->dmID);
+	if (NULL == outgoing_message->envelope->dmID) {
+		isds_log(ILF_ISDS, ILL_ERR,
+		    _("Server accepted sent message, but did not return assigned message ID\n"));
+	}
+
+leave:
+	/* Clean up */
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+
+	free(code);
+	free(message);
+	xmlFreeDoc(response);
+	xmlFreeNode(request);
+
+	if (IE_SUCCESS == err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("CreateBigMessage request processed by server successfully.\n"));
+	}
+#else /* !HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+
+	return err;
 }
 
 /* Get list of messages. This is common core for getting sent or received

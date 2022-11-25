@@ -448,68 +448,84 @@ leave:
 }
 #endif /* HAVE_LIBCURL */
 
+_hidden enum isds_error _isds_check_documents_hierarchy(struct isds_ctx *context,
+    const struct isds_list *documents, const struct isds_list *ext_files)
+{
+	const struct isds_list *item;
+	const struct isds_document *document;
+	const struct isds_dmExtFile *ext_file;
+	_Bool main_exists = 0;
 
-/* Walk through list of isds_documents and check for their types and
- * references.
- * @context is session context
- * @documents is list of isds_document to check
- * @returns IE_SUCCESS if structure is valid, otherwise context' message will
- * be filled with explanation of found problem. */
-_hidden isds_error _isds_check_documents_hierarchy(struct isds_ctx *context,
-        const struct isds_list *documents) {
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (NULL == documents) {
+		return IE_INVAL;
+	}
 
-    const struct isds_list *item;
-    const struct isds_document *document;
-    _Bool main_exists = 0;
+	for (item = documents; NULL != item; item = item->next) {
+		document = (const struct isds_document *)item->data;
+		if (NULL == document) {
+			continue;
+		}
 
-    if (!context) return IE_INVALID_CONTEXT;
-    if (!documents) return IE_INVAL;
+		/* Only one document or ext_file can be main. */
+		if (document->dmFileMetaType == FILEMETATYPE_MAIN) {
+			if (main_exists) {
+				isds_log_message(context,
+				    _("Lists contain multiple document or ExtFile main entries"));
+				return IE_ERROR;
+			}
+			main_exists = 1;
+		}
 
-    for (item = documents; item; item = item->next) {
-        document = (const struct isds_document *) item->data;
-        if (!document) continue;
+		/* All document identifiers should be unique */
+		if (NULL != document->dmFileGuid) {
+			if (isds_find_document_by_id(documents, document->dmFileGuid) !=
+			        document) {
+				isds_printf_message(context,
+				    _("List contains more documents with the same ID `%s'"),
+				    document->dmFileGuid);
+				return IE_ERROR;
+			}
+		}
 
-        /* Only one document can be main */
-        if (document->dmFileMetaType == FILEMETATYPE_MAIN) {
-            if (main_exists) {
-                isds_log_message(context,
-                        _("List contains more main documents"));
-                return IE_ERROR;
-            }
-            main_exists = 1;
-        }
+		/* All document references should point to existing document ID */
+		/* ???: Should we forbid self-referencing? */
+		if (NULL != document->dmUpFileGuid) {
+			if (NULL == isds_find_document_by_id(documents, document->dmUpFileGuid)) {
+				isds_printf_message(context,
+				    _("List contains documents referencing to not existing document ID `%s'"),
+				    document->dmUpFileGuid);
+				return IE_ERROR;
+			}
+		}
+	}
 
-        /* All document identifiers should be unique */
-        if (document->dmFileGuid) {
-            if (isds_find_document_by_id(documents, document->dmFileGuid) !=
-                    document) {
-                isds_printf_message(context, _("List contains more documents "
-                            "with the same ID `%s'"), document->dmFileGuid);
-                return IE_ERROR;
-            }
-        }
+	for (item = ext_files; NULL != item; item = item->next) {
+		ext_file = (struct isds_dmExtFile *)item->data;
+		if (NULL == ext_file) {
+			continue;
+		}
 
-        /* All document references should point to existing document ID */
-        /* ???: Should we forbid self-referencing? */
-        if (document->dmUpFileGuid) {
-            if (!isds_find_document_by_id(documents,
-                        document->dmUpFileGuid)) {
-                isds_printf_message(context, _("List contains documents "
-                            "referencing to not existing document ID `%s'"),
-                        document->dmUpFileGuid);
-                return IE_ERROR;
-            }
-        }
-    }
+		/* Only one document or ext_file can be main. */
+		if (ext_file->dmFileMetaType == FILEMETATYPE_MAIN) {
+			if (main_exists) {
+				isds_log_message(context,
+				    _("Lists contain more main document or ExtFile entries"));
+				return IE_ERROR;
+			}
+			main_exists = 1;
+		}
+	}
 
-    if (!main_exists) {
-        isds_log_message(context, _("List does not contain main document"));
-        return IE_ERROR;
-    }
+	if (!main_exists) {
+		isds_log_message(context, _("List doesn't contain main document or ExtFile"));
+		return IE_ERROR;
+	}
 
-    return IE_SUCCESS;
+	return IE_SUCCESS;
 }
-
 
 /* Check for message ID length
  * @context is session context

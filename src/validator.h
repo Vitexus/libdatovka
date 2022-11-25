@@ -105,10 +105,11 @@ enum isds_error _isds_vodz_mtomxop(struct isds_ctx *context,
  * references.
  * @context is session context
  * @documents is list of isds_document to check
+ * @ext_files is list of isds_dmExtFile to check
  * @returns IE_SUCCESS if structure is valid, otherwise context' message will
  * be filled with explanation of found problem. */
-isds_error _isds_check_documents_hierarchy(struct isds_ctx *context,
-        const struct isds_list *documents);
+enum isds_error _isds_check_documents_hierarchy(struct isds_ctx *context,
+    const struct isds_list *documents, const struct isds_list *ext_files);
 
 /* Check for message ID length
  * @context is session context

@@ -847,6 +847,17 @@ struct isds_message {
                                        can contain any number of other type
                                        documents. Total size of documents
                                        must not exceed 20 MB. */
+    struct isds_list *ext_files; /*
+                                  * List of isds_dmExtFile entries.
+                                  * This list if only used when sending
+                                  * high-volume data messages. Then sending
+                                  * ordinary data messages the list must be empty.
+                                  * Valid message must contain exactly one
+                                  * document or extended file entry of the type
+                                  * FILEMETATYPE_MAIN.
+                                  * Total size of documents must not exceed 2 GB
+                                  * for high-volume data messages.
+                                  */
 };
 
 /* Message copy recipient and assigned message ID */
@@ -1911,7 +1922,8 @@ isds_error isds_disable_box_accessibility_externaly(
  * @outgoing_message is message to send; Some members are mandatory (like
  * dbIDRecipient), some are optional and some are irrelevant (especially data
  * about sender). Included pointer to isds_list documents must contain at
- * least one document of FILEMETATYPE_MAIN. This is read-write structure, some
+ * least one document of FILEMETATYPE_MAIN. List of ExtFiles must be empty.
+ * This is read-write structure, some
  * members will be filled with valid data from ISDS. Exact list of write
  * members is subject to change. Currently dmID is changed.
  * @return ISDS_SUCCESS, or other error code if something goes wrong. */
@@ -1924,7 +1936,7 @@ isds_error isds_send_message(struct isds_ctx *context,
  * some are optional and some are irrelevant (especially data
  * about sender). Data about recipient will be substituted by ISDS from
  * @copies. Included pointer to isds_list documents must
- * contain at least one document of FILEMETATYPE_MAIN.
+ * contain at least one document of FILEMETATYPE_MAIN. List of ExtFiles must be empty.
  * @copies is list of isds_message_copy structures addressing all desired
  * recipients. This is read-write structure, some members will be filled with
  * valid data from ISDS (message IDs, error codes, error descriptions).
@@ -1959,6 +1971,20 @@ enum isds_error isds_UploadAttachment(struct isds_ctx *context,
  */
 enum isds_error isds_UploadAttachment_mtomxop(struct isds_ctx *context,
     const struct isds_dmFile *dm_file, struct isds_dmAtt **dm_att);
+
+/*
+ * Send a high-volume data message to a recipient.
+ * @context is session context
+ * @outgoing_message is message to send; Some members are mandatory (like
+ * dbIDRecipient), some are optional and some are irrelevant (especially data
+ * about sender). Included pointer to isds_list of isds_document or isds_dmExtFile
+ * entries or must contain one document of FILEMETATYPE_MAIN. This is read-write
+ * structure, some members will be filled with valid data from ISDS. Exact
+ * list of write members is subject to change. Currently dmID is changed.
+ * @return ISDS_SUCCESS, or other error code if something goes wrong.
+ */
+enum isds_error isds_CreateBigMessage(struct isds_ctx *context,
+    struct isds_message *outgoing_message);
 
 /* Get list of outgoing (already sent) messages.
  * Any criterion argument can be NULL, if you don't care about it.
