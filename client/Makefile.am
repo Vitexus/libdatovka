@@ -15,7 +15,8 @@ noinst_PROGRAMS = \
 	loadcmssignedsentmessage loaddelivery loadreceivedmessage \
 	loadsentmessagewithxmldocuments logger login manageuser manageuser2 \
 	markasread markasreceived pdz_info progressbar requestnewtestingbox \
-	resetpassword sendmultiple sendxmldoc switchaccessibility \
+	resetpassword sendmultiple sendxmldoc signedsentbigmessagedownload \
+	switchaccessibility \
 	switchcommercial uploadattachment verifyreceivedhash version
 
 common = common.c common.h
@@ -67,6 +68,7 @@ requestnewtestingbox_SOURCES = requestnewtestingbox.c $(common)
 resetpassword_SOURCES = resetpassword.c $(common)
 sendmultiple_SOURCES = sendmultiple.c $(common)
 sendxmldoc_SOURCES = sendxmldoc.c $(common)
+signedsentbigmessagedownload_SOURCES = signedsentbigmessagedownload.c $(common)
 switchaccessibility_SOURCES = switchaccessibility.c $(common)
 switchcommercial_SOURCES = switchcommercial.c $(common)
 uploadattachment_SOURCES = uploadattachment.c $(common)

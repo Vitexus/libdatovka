@@ -750,6 +750,8 @@ void print_envelope(const struct isds_envelope *envelope) {
     printf("\t\tdmAmbiguousRecipient = ");
     print_bool(envelope->dmAmbiguousRecipient);
     printf("\t\tdmType = %s\n", envelope->dmType);
+    printf("\t\tdmVODZ = ");
+    print_bool(envelope->dmVODZ);
 
     printf("\t\tdmSenderOrgUnit = %s\n", envelope->dmSenderOrgUnit);
     printf("\t\tdmSenderOrgUnitNum = ");
