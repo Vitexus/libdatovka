@@ -13497,8 +13497,13 @@ static isds_error build_send_check_message_request(struct isds_ctx *context,
                 service_name_locale, message_id_locale);
 
     /* Send request */
-    err = _isds(context, service, request, response,
-            raw_response, raw_response_length);
+    if (service != SERVICE_VODZ_DM_OPERATIONS) {
+        err = _isds(context, service, request, response,
+                raw_response, raw_response_length);
+    } else {
+        err = _isds_vodz(context, service, request, response,
+                raw_response, raw_response_length);
+    }
     xmlFreeNode(request); request = NULL;
 
     if (err) {
@@ -14646,6 +14651,103 @@ isds_error isds_get_signed_sent_message(struct isds_ctx *context,
     return isds_get_signed_message(context, 1, message_id, message);
 }
 
+/*
+ * Download signed incoming/outgoing high-volume message identified by ID.
+ * @context is session context
+ * @output is true for outgoing message, false for incoming message
+ * @message_id is message identifier (you can get them from
+ * isds_get_list_of_{sent,received}_messages())
+ * @message is automatically reallocated message retrieved from ISDS. The raw
+ * member will be filled with PKCS#7 structure in DER format.
+ */
+static enum isds_error isds_get_signed_big_message(struct isds_ctx *context,
+    const _Bool outgoing, const char *message_id, struct isds_message **message)
+{
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlDoc *response = NULL;
+	xmlChar *code = NULL;
+	xmlChar *status_message = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+	char *encoded_structure = NULL;
+	void *raw = NULL;
+	size_t raw_length = 0;
+#endif
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if (NULL == message) {
+		return IE_INVAL;
+	}
+	isds_message_free(message);
+
+#if HAVE_LIBCURL
+	/* Do request and check for success. */
+	err = build_send_check_message_request(context, SERVICE_VODZ_DM_OPERATIONS,
+	    (outgoing) ? BAD_CAST "SignedSentBigMessageDownload" :
+	        BAD_CAST "SignedBigMessageDownload",
+	    message_id, &response, NULL, NULL, &code, &status_message);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/*
+	 * Find signed message, extract it into raw and maybe free the response.
+	 */
+	err = find_extract_signed_data_free_response(context,
+	    (xmlChar *)message_id, &response,
+	    (outgoing) ? BAD_CAST "SignedSentBigMessageDownload" :
+	        BAD_CAST "SignedBigMessageDownload",
+	    &raw, &raw_length);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/* Parse message */
+	err = isds_load_message(context,
+	    (outgoing) ? RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE :
+	        RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE,
+	    raw, raw_length, message, BUFFER_MOVE);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	raw = NULL;
+
+leave:
+	if (IE_SUCCESS != err) {
+		isds_message_free(message);
+	}
+
+	free(encoded_structure);
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+	free(raw);
+
+	free(code);
+	free(status_message);
+	xmlFreeDoc(response);
+
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG, (outgoing) ?
+		   _("SignedSentBigMessageDownload request processed by server successfully.\n") :
+		   _("SignedBigMessageDownload request processed by server successfully.\n"));
+	}
+#else /* not HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif
+	return err;
+}
+
+enum isds_error isds_SignedSentBigMessageDownload(struct isds_ctx *context,
+    const char *message_id, struct isds_message **message)
+{
+	return isds_get_signed_big_message(context, 1, message_id, message);
+}
 
 /* Get type and name of user who sent a message identified by ID.
  * @context is session context
