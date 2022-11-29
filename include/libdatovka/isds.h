@@ -717,6 +717,8 @@ struct isds_envelope {
                                            message
                                        Length: Exactly 1 UTF-8 character if
                                        defined; */
+    _Bool *dmVODZ;                  /* True when receiving high-volume data
+                                       messages. */
 
     /* Following members apply to outgoing messages only: */
     _Bool *dmOVM;                   /* OVM sending mode.

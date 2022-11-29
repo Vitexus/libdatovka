@@ -410,6 +410,7 @@ void isds_envelope_free(struct isds_envelope **envelope) {
     free((*envelope)->dmPersonalDelivery);
     free((*envelope)->dmAllowSubstDelivery);
     free((*envelope)->dmType);
+    free((*envelope)->dmVODZ);
 
     free((*envelope)->dmOVM);
     free((*envelope)->dmPublishOwnID);
@@ -3613,6 +3614,51 @@ static isds_error eventstring2event(const xmlChar *string,
     } \
 }
 
+#define EXTRACT_BOOLEAN_ATTRIBUTE(attribute, booleanPtr, required) \
+{ \
+	char *string = (char *)xmlGetNsProp(xpath_ctx->node, ( BAD_CAST (attribute)), NULL); \
+	if (NULL != string) { \
+		(booleanPtr) = calloc(1, sizeof(*(booleanPtr))); \
+		if (NULL == (booleanPtr)) { \
+			free(string); \
+			err = IE_NOMEM; \
+			goto leave; \
+		} \
+		 \
+		if ((0 == xmlStrcmp((xmlChar *)string, BAD_CAST "true")) || \
+		    (0 == xmlStrcmp((xmlChar *)string, BAD_CAST "1"))) \
+			*(booleanPtr) = 1; \
+		else if ((0 == xmlStrcmp((xmlChar *)string, BAD_CAST "false")) || \
+		         (0 == xmlStrcmp((xmlChar *)string, BAD_CAST "0"))) \
+			*(booleanPtr) = 0; \
+		else { \
+			char *attribute_locale = _isds_utf82locale(attribute); \
+			char *string_locale = _isds_utf82locale((char*)string); \
+			isds_printf_message(context, \
+			    _("%s attribute value is not valid boolean: %s"), \
+			    attribute_locale, string_locale); \
+			free(string_locale); \
+			free(attribute_locale); \
+			free(string); \
+			err = IE_ERROR; \
+			goto leave; \
+		} \
+		 \
+		free(string); \
+	} else if (required) { \
+		char *attribute_locale = _isds_utf82locale(attribute); \
+		char *element_locale = \
+		    _isds_utf82locale((char *)xpath_ctx->node->name); \
+		isds_printf_message(context, \
+		    _("Could not extract required %s attribute value from %s element"), \
+		    attribute_locale, element_locale); \
+		free(element_locale); \
+		free(attribute_locale); \
+		err = IE_ERROR; \
+		goto leave; \
+	} \
+}
+
 #define EXTRACT_STRING_ATTRIBUTE(attribute, string, required) { \
     (string) = (char *) xmlGetNsProp(xpath_ctx->node, ( BAD_CAST attribute), \
             NULL); \
@@ -5133,8 +5179,8 @@ leave:
     return err;
 }
 
-
-/* Convert message type attribute of current element into isds_envelope
+/*
+ * Convert message type attribute of current element into isds_envelope
  * structure.
  * TODO: This function can be incorporated into append_status_size_times() as
  * they are called always together.
@@ -5144,52 +5190,62 @@ leave:
  * @envelope is automatically allocated message envelope structure
  * @xpath_ctx is XPath context with current node as parent of attribute
  * carrying message type
- * In case of error @envelope will be freed. */
-static isds_error append_message_type(struct isds_ctx *context,
-        struct isds_envelope **envelope, xmlXPathContextPtr xpath_ctx) {
-    isds_error err = IE_SUCCESS;
+ * In case of error @envelope will be freed.
+ */
+static enum isds_error append_message_type(struct isds_ctx *context,
+    struct isds_envelope **envelope, xmlXPathContextPtr xpath_ctx)
+{
+	enum isds_error err = IE_SUCCESS;
 
-    if (!context) return IE_INVALID_CONTEXT;
-    if (!envelope) return IE_INVAL;
-    if (!xpath_ctx) return IE_INVAL;
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (NULL == envelope) {
+		return IE_INVAL;
+	}
+	if (NULL == xpath_ctx) {
+		return IE_INVAL;
+	}
 
+	if (NULL == *envelope) {
+		/* Allocate new */
+		*envelope = calloc(1, sizeof(**envelope));
+		if (NULL == *envelope) {
+			err = IE_NOMEM;
+			goto leave;
+		}
+	} else {
+		/* Free old data */
+		zfree((*envelope)->dmType);
+		zfree((*envelope)->dmVODZ);
+	}
 
-    if (!*envelope) {
-        /* Allocate new */
-        *envelope = calloc(1, sizeof(**envelope));
-        if (!*envelope) {
-            err = IE_NOMEM;
-            goto leave;
-        }
-    } else {
-        /* Free old data */
-        zfree((*envelope)->dmType);
-    }
+	EXTRACT_STRING_ATTRIBUTE("dmType", (*envelope)->dmType, 0);
 
+	if (NULL == (*envelope)->dmType) {
+		/* Use default value */
+		(*envelope)->dmType = strdup("V");
+		if (NULL == (*envelope)->dmType) {
+			err = IE_NOMEM;
+			goto leave;
+		}
+	} else if (1 != xmlUTF8Strlen((xmlChar *) (*envelope)->dmType)) {
+		char *type_locale = _isds_utf82locale((*envelope)->dmType);
+		isds_printf_message(context,
+		    _("Message type in dmType attribute is not 1 character long: %s"),
+		    type_locale);
+		free(type_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
 
-    EXTRACT_STRING_ATTRIBUTE("dmType", (*envelope)->dmType, 0);
-
-    if (!(*envelope)->dmType) {
-        /* Use default value */
-        (*envelope)->dmType = strdup("V");
-        if (!(*envelope)->dmType) {
-            err = IE_NOMEM;
-            goto leave;
-        }
-    } else if (1 != xmlUTF8Strlen((xmlChar *) (*envelope)->dmType)) {
-        char *type_locale = _isds_utf82locale((*envelope)->dmType);
-        isds_printf_message(context,
-                _("Message type in dmType attribute is not 1 character long: "
-                    "%s"),
-                type_locale);
-        free(type_locale);
-        err = IE_ISDS;
-        goto leave;
-    }
+	EXTRACT_BOOLEAN_ATTRIBUTE("dmVODZ", (*envelope)->dmVODZ, 0);
 
 leave:
-    if (err) isds_envelope_free(envelope);
-    return err;
+	if (IE_SUCCESS != err) {
+		isds_envelope_free(envelope);
+	}
+	return err;
 }
 
 
