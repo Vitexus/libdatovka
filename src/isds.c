@@ -411,6 +411,7 @@ void isds_envelope_free(struct isds_envelope **envelope) {
     free((*envelope)->dmAllowSubstDelivery);
     free((*envelope)->dmType);
     free((*envelope)->dmVODZ);
+    free((*envelope)->attsNum);
 
     free((*envelope)->dmOVM);
     free((*envelope)->dmPublishOwnID);
@@ -3659,6 +3660,63 @@ static isds_error eventstring2event(const xmlChar *string,
 	} \
 }
 
+#define EXTRACT_LONGINT_ATTRIBUTE(attribute, longintPtr, required) \
+{ \
+	char *string = (char *)xmlGetNsProp(xpath_ctx->node, ( BAD_CAST (attribute)), NULL); \
+	if (NULL != string) { \
+		long int number; \
+		char *endptr; \
+		 \
+		number = strtol((char*)string, &endptr, 10); \
+		 \
+		if ((*endptr) != '\0') { \
+			char *attribute_locale = _isds_utf82locale(attribute); \
+			char *string_locale = _isds_utf82locale((char *)string); \
+			isds_printf_message(context, \
+			    _("%s attribute value is not valid integer: %s"), \
+			    attribute_locale, string_locale); \
+			free(string_locale); \
+			free(attribute_locale); \
+			free(string); \
+			err = IE_ISDS; \
+			goto leave; \
+		} \
+		 \
+		if ((number == LONG_MIN) || (number == LONG_MAX)) { \
+			char *attribute_locale = _isds_utf82locale(attribute); \
+			char *string_locale = _isds_utf82locale((char *)string); \
+			isds_printf_message(context, \
+			    _("%s attribute value out of range of long int: %s"), \
+			    attribute_locale, string_locale); \
+			free(string_locale); \
+			free(attribute_locale); \
+			free(string); \
+			err = IE_ERROR; \
+			goto leave; \
+		} \
+		 \
+		(longintPtr) = calloc(1, sizeof(*(longintPtr))); \
+		if (NULL == (longintPtr)) { \
+			free(string); \
+			err = IE_NOMEM; \
+			goto leave; \
+		} \
+		*(longintPtr) = number; \
+		 \
+	} else if (required) { \
+		char *attribute_locale = _isds_utf82locale(attribute); \
+		char *element_locale = \
+		    _isds_utf82locale((char *)xpath_ctx->node->name); \
+		isds_printf_message(context, \
+		    _("Could not extract required %s attribute value from %s element"), \
+		    attribute_locale, element_locale); \
+		free(element_locale); \
+		free(attribute_locale); \
+		err = IE_ERROR; \
+		goto leave; \
+	} \
+}
+
 #define EXTRACT_STRING_ATTRIBUTE(attribute, string, required) { \
     (string) = (char *) xmlGetNsProp(xpath_ctx->node, ( BAD_CAST attribute), \
             NULL); \
@@ -5181,7 +5239,7 @@ leave:
 
 /*
  * Convert message type attribute of current element into isds_envelope
- * structure.
+ * structure. Sets the high-volume message flag and number of attachments if found.
  * TODO: This function can be incorporated into append_status_size_times() as
  * they are called always together.
  * The envelope is automatically allocated but not reallocated.
@@ -5192,7 +5250,7 @@ leave:
  * carrying message type
  * In case of error @envelope will be freed.
  */
-static enum isds_error append_message_type(struct isds_ctx *context,
+static enum isds_error append_message_attributes(struct isds_ctx *context,
     struct isds_envelope **envelope, xmlXPathContextPtr xpath_ctx)
 {
 	enum isds_error err = IE_SUCCESS;
@@ -5218,6 +5276,7 @@ static enum isds_error append_message_type(struct isds_ctx *context,
 		/* Free old data */
 		zfree((*envelope)->dmType);
 		zfree((*envelope)->dmVODZ);
+		zfree((*envelope)->attsNum);
 	}
 
 	EXTRACT_STRING_ATTRIBUTE("dmType", (*envelope)->dmType, 0);
@@ -5240,6 +5299,8 @@ static enum isds_error append_message_type(struct isds_ctx *context,
 	}
 
 	EXTRACT_BOOLEAN_ATTRIBUTE("dmVODZ", (*envelope)->dmVODZ, 0);
+
+	EXTRACT_LONGINT_ATTRIBUTE("attsNum", (*envelope)->attsNum, 0);
 
 leave:
 	if (IE_SUCCESS != err) {
@@ -5537,7 +5598,7 @@ static isds_error extract_DmRecord(struct isds_ctx *context,
     if (err) goto leave;
 
     /* Get message type */
-    err = append_message_type(context, envelope, xpath_ctx);
+    err = append_message_attributes(context, envelope, xpath_ctx);
     if (err) goto leave;
 
 
@@ -5836,7 +5897,7 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
     if (err) goto leave;
 
     /* Get message type */
-    err = append_message_type(context, &((*message)->envelope), xpath_ctx);
+    err = append_message_attributes(context, &((*message)->envelope), xpath_ctx);
     if (err) goto leave;
 
 leave:
@@ -12515,7 +12576,7 @@ enum isds_error isds_UploadAttachment(struct isds_ctx *context,
 	isds_log(ILF_ISDS, ILL_DEBUG,
 	    _("Sending UploadAttachment request to ISDS\n"));
 
-	/* Sent request. */
+	/* Send request. */
 	err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS, request,
 	    &response, NULL, NULL);
 
@@ -12666,7 +12727,7 @@ enum isds_error isds_UploadAttachment_mtomxop(struct isds_ctx *context,
 	isds_log(ILF_ISDS, ILL_DEBUG,
 	    _("Sending MTOM/XOP UploadAttachment request to ISDS\n"));
 
-	/* Sent request. */
+	/* Send request. */
 	err = _isds_vodz_mtomxop(context, SERVICE_VODZ_DM_OPERATIONS, request,
 	    ATTACHMENT_CID, dm_file, &response, NULL, NULL);
 

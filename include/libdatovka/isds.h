@@ -719,6 +719,8 @@ struct isds_envelope {
                                        defined; */
     _Bool *dmVODZ;                  /* True when receiving high-volume data
                                        messages. */
+    long int *attsNum;              /* Number of attachments in high-volume
+                                       data message. */
 
     /* Following members apply to outgoing messages only: */
     _Bool *dmOVM;                   /* OVM sending mode.
