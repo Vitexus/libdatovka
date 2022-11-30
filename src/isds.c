@@ -14743,6 +14743,12 @@ leave:
 	return err;
 }
 
+enum isds_error isds_SignedBigMessageDownload(struct isds_ctx *context,
+    const char *message_id, struct isds_message **message)
+{
+	return isds_get_signed_big_message(context, 0, message_id, message);
+}
+
 enum isds_error isds_SignedSentBigMessageDownload(struct isds_ctx *context,
     const char *message_id, struct isds_message **message)
 {
