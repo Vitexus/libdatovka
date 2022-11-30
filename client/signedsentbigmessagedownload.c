@@ -1,9 +1,10 @@
 #define _XOPEN_SOURCE 500 /* strdup() */
+#include <libdatovka/isds.h>
 #include <locale.h> /* setlocale() */
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <string.h> /* strdup() */
+#include <time.h>
 
 #include "common.h"
 
@@ -147,9 +148,9 @@ int main(void)
 		fputs("No sent high-volume message found.\n", stderr);
 	}
 
+fail:
 	free(last_big_message_id);
 
-fail:
 	err = isds_logout(ctx);
 	if (err != IE_SUCCESS) {
 		fprintf(stderr, "isds_logout() failed: %s\n",
