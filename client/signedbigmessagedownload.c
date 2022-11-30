@@ -49,7 +49,7 @@ int main(void)
 		fputs("Logged in :)\n", stdout);
 	}
 
-	/* Get list of sent messages */
+	/* Get list of received messages */
 	{
 		struct tm from_time_tm = {
 			.tm_year = 2000 - 1900,
@@ -71,15 +71,15 @@ int main(void)
 		const struct isds_message *last_big_message = NULL;
 
 		/* TODO: Try different criteria */
-		fputs("Getting list of sent messages\n", stdout);
-		err = isds_get_list_of_sent_messages(ctx, &from_time, NULL, NULL,
+		fputs("Getting list of received messages\n", stdout);
+		err = isds_get_list_of_received_messages(ctx, &from_time, NULL, NULL,
 		    MESSAGESTATE_ANY, 0, &number, &messages);
 		if (err != IE_SUCCESS) {
-			printf("isds_get_list_of_sent_messages() failed: %s: %s\n",
+			printf("isds_get_list_of_received_messages() failed: %s: %s\n",
 			    isds_strerror(err), isds_long_message(ctx));
 		} else {
 			printf(
-			    "isds_get_list_of_sent_messages() succeeded: number of messages = %lu:\n",
+			    "isds_get_list_of_received_messages() succeeded: number of messages = %lu:\n",
 			    number);
 			for(item = messages; NULL != item; item = item->next) {
 				const struct isds_message *last_message =
@@ -103,18 +103,18 @@ int main(void)
 		isds_list_free(&messages);
 	}
 
-	/* Download last signed high-volume message as normal sent message. */
+	/* Download last signed high-volume message as normal received message. */
 	if (NULL != last_big_message_id) {
 		struct isds_message *message = NULL;
 
-		printf("Getting last signed sent message with ID: %s\n",
+		printf("Getting last signed received message with ID: %s\n",
 		    last_big_message_id);
-		err = isds_get_signed_sent_message(ctx, last_big_message_id, &message);
+		err = isds_get_signed_received_message(ctx, last_big_message_id, &message);
 		if (err != IE_SUCCESS) {
-			printf("isds_get_signed_sent_message() failed: %s: %s\n",
+			printf("isds_get_signed_received_message() failed: %s: %s\n",
 			    isds_strerror(err), isds_long_message(ctx));
 		} else {
-			printf("isds_get_signed_sent_message() succeeded:\n");
+			printf("isds_get_signed_received_message() succeeded:\n");
 			print_message(message);
 			save_data("Saving signed message",
 			     message->raw, message->raw_length);
@@ -127,14 +127,14 @@ int main(void)
 	if (NULL != last_big_message_id) {
 		struct isds_message *message = NULL;
 
-		printf("Getting last signed sent high-volume message with ID: %s\n",
+		printf("Getting last signed received high-volume message with ID: %s\n",
 		    last_big_message_id);
-		err = isds_SignedSentBigMessageDownload(ctx, last_big_message_id, &message);
+		err = isds_SignedBigMessageDownload(ctx, last_big_message_id, &message);
 		if (err != IE_SUCCESS) {
-			printf("isds_SignedSentBigMessageDownload() failed: %s: %s\n",
+			printf("isds_SignedBigMessageDownload() failed: %s: %s\n",
 			    isds_strerror(err), isds_long_message(ctx));
 		} else {
-			printf("isds_SignedSentBigMessageDownload() succeeded:\n");
+			printf("isds_SignedBigMessageDownload() succeeded:\n");
 			print_message(message);
 			save_data("Saving signed high-volume message",
 			     message->raw, message->raw_length);
@@ -144,7 +144,7 @@ int main(void)
 	}
 
 	if (NULL == last_big_message_id) {
-		fputs("No sent high-volume message found.\n", stderr);
+		fputs("No received high-volume message found.\n", stderr);
 	}
 
 	free(last_big_message_id);
