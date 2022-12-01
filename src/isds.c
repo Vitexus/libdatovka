@@ -5354,6 +5354,39 @@ leave:
 }
 #endif /* HAVE_LIBCURL */
 
+/*
+ * Normalize MIME type.
+ * @context is ISDS context
+ * @mime_type is pointer to MIME type string to be normalised.
+ */
+static inline enum isds_error normalize_mime_type(struct isds_ctx *context,
+    char **mime_type)
+{
+	enum isds_error err = IE_SUCCESS;
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (NULL == mime_type) {
+		return IE_INVAL;
+	}
+
+	const char *normalized_type = isds_normalize_mime_type(*mime_type);
+	if ((NULL != normalized_type) && (normalized_type != *mime_type)) {
+		char *new_type = strdup(normalized_type);
+		if (NULL == new_type) {
+			isds_printf_message(context,
+			    _("Not enough memory to normalize document MIME type"));
+			err = IE_NOMEM;
+			goto leave;
+		}
+		free(*mime_type);
+		*mime_type = new_type;
+	}
+
+leave:
+	return err;
+}
 
 /* Extract message document into reallocated document structure
  * @context is ISDS context
@@ -5382,19 +5415,9 @@ static isds_error extract_document(struct isds_ctx *context,
     /* Extract document meta data */
     EXTRACT_STRING_ATTRIBUTE("dmMimeType", (*document)->dmMimeType, 1)
     if (context->normalize_mime_type) {
-        const char *normalized_type =
-            isds_normalize_mime_type((*document)->dmMimeType);
-        if (NULL != normalized_type &&
-                normalized_type != (*document)->dmMimeType) {
-            char *new_type = strdup(normalized_type);
-            if (NULL == new_type) {
-                isds_printf_message(context,
-                        _("Not enough memory to normalize document MIME type"));
-                err = IE_NOMEM;
-                goto leave;
-            }
-            free((*document)->dmMimeType);
-            (*document)->dmMimeType = new_type;
+        err = normalize_mime_type(context, &(*document)->dmMimeType);
+        if (err != IE_SUCCESS) {
+            goto leave;
         }
     }
 
@@ -12883,19 +12906,9 @@ static enum isds_error extract_dmFile(struct isds_ctx *context,
 
 	EXTRACT_STRING_ATTRIBUTE("dmMimeType", (*dm_file)->dmMimeType, 0)
 	if (context->normalize_mime_type) {
-		const char *normalized_type =
-		    isds_normalize_mime_type((*dm_file)->dmMimeType);
-		if ((NULL != normalized_type) &&
-		    (normalized_type != (*dm_file)->dmMimeType)) {
-			char *new_type = strdup(normalized_type);
-			if (NULL == new_type) {
-				isds_printf_message(context,
-				    _("Not enough memory to normalize document MIME type"));
-				err = IE_NOMEM;
-				goto leave;
-			}
-			free((*dm_file)->dmMimeType);
-			(*dm_file)->dmMimeType = new_type;
+		err = normalize_mime_type(context, &(*dm_file)->dmMimeType);
+		if (err != IE_SUCCESS) {
+			goto leave;
 		}
 	}
 
