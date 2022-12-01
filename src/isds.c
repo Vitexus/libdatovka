@@ -15012,6 +15012,153 @@ isds_error isds_get_signed_sent_message(struct isds_ctx *context,
     return isds_get_signed_message(context, 1, message_id, message);
 }
 
+enum isds_error isds_BigMessageDownload(struct isds_ctx *context,
+    const char *message_id, struct isds_message **message)
+{
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlDoc *response = NULL;
+	void *xml_stream = NULL;
+	size_t xml_stream_length;
+	xmlChar *code = NULL;
+	xmlChar *status_message = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+	char *phys_path = NULL;
+	size_t phys_start;
+	size_t phys_end;
+#endif /* HAVE_LIBCURL */
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if (NULL == message) {
+		return IE_INVAL;
+	}
+	isds_message_free(message);
+
+#if HAVE_LIBCURL
+	/* Do request and check for success */
+	err = build_send_check_message_request(context, SERVICE_VODZ_DM_OPERATIONS,
+	    BAD_CAST "BigMessageDownload", message_id,
+	    &response, &xml_stream, &xml_stream_length,
+	    &code, &status_message);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/* Extract data */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx,
+	        MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	result = xmlXPathEvalExpression(
+	    BAD_CAST "/isds:BigMessageDownloadResponse/isds:dmReturnedMessage",
+	    xpath_ctx);
+	if (NULL == result) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	/* Empty response */
+	if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+		char *message_id_locale = _isds_utf82locale((char*) message_id);
+		isds_printf_message(context,
+		    _("Server did not return any message for ID `%s' on BigMessageDownload request"),
+		    message_id_locale);
+		free(message_id_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
+	/* More messages */
+	if (result->nodesetval->nodeNr > 1) {
+		char *message_id_locale = _isds_utf82locale((char*) message_id);
+		isds_printf_message(context,
+		    _("Server did return more messages for ID `%s' on BigMessageDownload request"),
+		    message_id_locale);
+		free(message_id_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
+	/* One message */
+	xpath_ctx->node = result->nodesetval->nodeTab[0];
+
+	/* Extract the message */
+	err = extract_TReturnedMessage(context, 1, message, xpath_ctx);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/* Locate raw XML blob */
+	phys_path = strdup(
+	    SOAP_NS PHYSXML_NS_SEPARATOR "Envelope"
+	    PHYSXML_ELEMENT_SEPARATOR
+	    SOAP_NS PHYSXML_NS_SEPARATOR "Body"
+	    PHYSXML_ELEMENT_SEPARATOR
+	    ISDS_NS PHYSXML_NS_SEPARATOR "BigMessageDownloadResponse"
+	);
+	if (NULL == phys_path) {
+		err = IE_NOMEM;
+		goto leave;
+	}
+	err = _isds_find_element_boundary(xml_stream, xml_stream_length,
+	    phys_path, &phys_start, &phys_end);
+	zfree(phys_path);
+	if (IE_SUCCESS != err) {
+		isds_log_message(context,
+		    _("Substring with isds:BigMessageDownloadResponse element could not be located in raw SOAP message"));
+		goto leave;
+	}
+	/* Save XML blob */
+	/*
+	err = serialize_subtree(context, xpath_ctx->node, &(*message)->raw,
+	    &(*message)->raw_length);
+	 */
+	/* TODO: Store name space declarations from ancestors */
+	/* TODO: Handle non-UTF-8 encoding (XML prologue) */
+	(*message)->raw_type = RAWTYPE_INCOMING_MESSAGE;
+	(*message)->raw_length = phys_end - phys_start + 1;
+	(*message)->raw = malloc((*message)->raw_length);
+	if (NULL == (*message)->raw) {
+		err = IE_NOMEM;
+		goto leave;
+	}
+	memcpy((*message)->raw, xml_stream + phys_start, (*message)->raw_length);
+
+leave:
+	if (IE_SUCCESS != err) {
+		isds_message_free(message);
+	}
+
+	free(phys_path);
+
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+
+	free(code);
+	free(status_message);
+	free(xml_stream);
+	if (!*message || !(*message)->xml) {
+		xmlFreeDoc(response);
+	}
+
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		   _("BigMessageDownload request processed by server successfully.\n"));
+	}
+#else /* !HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+	return err;
+}
+
 /*
  * Download signed incoming/outgoing high-volume message identified by ID.
  * @context is session context
