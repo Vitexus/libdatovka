@@ -144,6 +144,44 @@ int main(void)
 		isds_message_free(&message);
 	}
 
+	/* Download message with invalid ID. */
+	if (NULL != last_big_message_id) {
+		struct isds_message *message = NULL;
+		char *id = "123456789112345678921";
+
+		printf("Getting last signed received high-volume message with invalid ID: %s\n",
+		    last_big_message_id);
+		err = isds_SignedBigMessageDownload(ctx, id, &message);
+		if (err != IE_SUCCESS) {
+			printf("isds_SignedBigMessageDownload() failed as assumed: %s: %s\n",
+			    isds_strerror(err), isds_long_message(ctx));
+		} else {
+			printf("isds_SignedBigMessageDownload() succeeded. This should not happen:\n");
+			print_message(message);
+		}
+
+		isds_message_free(&message);
+	}
+
+	/* Download non-existent message. */
+	if (NULL != last_big_message_id) {
+		struct isds_message *message = NULL;
+		char *id = "7777777";
+
+		printf("Getting last signed received high-volume message with ID: %s\n",
+		    last_big_message_id);
+		err = isds_SignedBigMessageDownload(ctx, id, &message);
+		if (err != IE_SUCCESS) {
+			printf("isds_SignedBigMessageDownload() failed as assumed: %s: %s\n",
+			    isds_strerror(err), isds_long_message(ctx));
+		} else {
+			printf("isds_SignedBigMessageDownload() succeeded. This should not happen:\n");
+			print_message(message);
+		}
+
+		isds_message_free(&message);
+	}
+
 	if (NULL == last_big_message_id) {
 		fputs("No received high-volume message found.\n", stderr);
 	}
