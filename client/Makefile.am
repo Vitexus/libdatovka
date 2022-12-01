@@ -7,7 +7,7 @@ noinst_PROGRAMS = \
 	activate addbox authenticatemessage certauth changebox changebox2 \
 	changepassword changeuser check_time_conversion computemessagehash \
 	convertdocument createbigmessage deleteuser deleteuser2 \
-	disableaccesibilityexternaly \
+	disableaccesibilityexternaly downloadattachment \
 	downloadmessagehash dtinfo getboxlist getchangedstates getreceived \
 	getreceiveddelivery getreceivedenvelope getreceivedsigneddelivery \
 	getsenderbyid getsent getsignedreceived getsignedsent \
@@ -36,6 +36,7 @@ createbigmessage_SOURCES = createbigmessage.c $(common)
 deleteuser_SOURCES = deleteuser.c $(common)
 deleteuser2_SOURCES = deleteuser2.c $(common)
 disableaccesibilityexternaly_SOURCES = disableaccesibilityexternaly.c $(common)
+downloadattachment_SOURCES = downloadattachment.c $(common)
 downloadmessagehash_SOURCES = downloadmessagehash.c $(common)
 dtinfo_SOURCES = dtinfo.c $(common)
 getboxlist_SOURCES = getboxlist.c $(common)

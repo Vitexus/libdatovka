@@ -711,6 +711,37 @@ void print_events(const struct isds_list *events) {
     printf("\t\t}\n");
 }
 
+static void print_metaType(FILE *fout, enum isds_FileMetaType metaType)
+{
+	switch(metaType) {
+	case FILEMETATYPE_MAIN: fputs("MAIN\n", fout); break;
+	case FILEMETATYPE_ENCLOSURE: fputs("ENCLOSURE\n", fout); break;
+	case FILEMETATYPE_SIGNATURE: fputs("SIGNATURE\n", fout); break;
+	case FILEMETATYPE_META: fputs("META\n", fout); break;
+	default: fprintf(fout, "<unknown type %d>\n", metaType);
+	}
+}
+
+void print_dmFile(const struct isds_dmFile *dm_file)
+{
+	fputs("\tfile = ", stdout);
+
+	if (NULL == dm_file) {
+		fputs("NULL\n", stdout);
+		return;
+	}
+	fputs("{\n", stdout);
+
+	printf("\t\tdata = %p\n", dm_file->data);
+	printf("\t\tdata_length = %zu\n", dm_file->data_length);
+
+	fputs("\t\tdmFileMetaType = ", stdout);
+	print_metaType(stdout, dm_file->dmFileMetaType);
+	printf("\t\tdmMimeType = %s\n", dm_file->dmMimeType);
+	printf("\t\tdmFileDescr = %s\n", dm_file->dmFileDescr);
+	fputs("\t}\n", stdout);
+}
+
 void print_dmAtt(const struct isds_dmAtt *dm_att)
 {
 	fputs("\tattachment = ", stdout);
@@ -719,7 +750,7 @@ void print_dmAtt(const struct isds_dmAtt *dm_att)
 		fputs("NULL\n", stdout);
 		return;
 	}
-	fputs("\n", stdout);
+	fputs("{\n", stdout);
 
 	printf("\t\tdmAttID = %s\n", dm_att->dmAttID);
 	printf("\t\tdmAttHash1 = %s\n", dm_att->dmAttHash1);
@@ -831,13 +862,7 @@ void print_document(const struct isds_document *document) {
     printf("\t\t\tdmMimeType = %s\n", document->dmMimeType);
 
     printf("\t\t\tdmFileMetaType = ");
-    switch(document->dmFileMetaType) {
-        case FILEMETATYPE_MAIN: printf("MAIN\n"); break;
-        case FILEMETATYPE_ENCLOSURE: printf("ENCLOSURE\n"); break;
-        case FILEMETATYPE_SIGNATURE: printf("SIGNATURE\n"); break;
-        case FILEMETATYPE_META: printf("META\n"); break;
-        default: printf("<unknown type %d>\n", document->dmFileMetaType);
-    }
+    print_metaType(stdout, document->dmFileMetaType);
 
     printf("\t\t\tdmFileGuid = %s\n", document->dmFileGuid);
     printf("\t\t\tdmUpFileGuid = %s\n", document->dmUpFileGuid);

@@ -22,6 +22,7 @@ void print_DTInfoOutput(const struct isds_DTInfoOutput *info);
 void print_timeval(const struct isds_timeval *time);
 void print_hash(const struct isds_hash *hash);
 void print_envelope(const struct isds_envelope *envelope);
+void print_dmFile(const struct isds_dmFile *dm_file);
 void print_dmAtt(const struct isds_dmAtt *dm_att);
 void print_message(const struct isds_message *message);
 void print_copies(const struct isds_list *copies);
