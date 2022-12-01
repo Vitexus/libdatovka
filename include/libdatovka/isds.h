@@ -790,7 +790,7 @@ struct isds_dmFile {
 	             * The encoding and interpretation depends on dmMimeType.
 	             */
 	size_t data_length; /* Length of the data in bytes. */
-	isds_FileMetaType dmFileMetaType; /* Document type to create hierarchy. */
+	enum isds_FileMetaType dmFileMetaType; /* Document type to create hierarchy. */
 	char *dmMimeType; /* MIME type of the data; Mandatory. */
 	char *dmFileDescr; /* Document name (title). E.g. file name; Mandatory. */
 };
@@ -1977,6 +1977,17 @@ enum isds_error isds_UploadAttachment_mtomxop(struct isds_ctx *context,
     const struct isds_dmFile *dm_file, struct isds_dmAtt **dm_att);
 
 /*
+ * Download an attachment (file) of a specified high-volume data message.
+ * @context is session context
+ * @message_id is message identifier of a high-volume data message
+ * @attNum is the ordinary number of the attachment, the attachments are numbered from 0
+ * @dm_file automatically reallocated attachment file
+ * @return ISDS_SUCCESS, or other error codes if something goes wrong.
+ */
+enum isds_error isds_DownloadAttachment(struct isds_ctx *context,
+    const char *message_id, long int attNum, struct isds_dmFile **dm_file);
+
+/*
  * Send a high-volume data message to a recipient.
  * @context is session context
  * @outgoing_message is message to send; Some members are mandatory (like
@@ -2432,6 +2443,9 @@ void isds_envelope_free(struct isds_envelope **envelope);
 
 /* Deallocate struct isds_document recursively and NULL it */
 void isds_document_free(struct isds_document **document);
+
+/* Deallocate struct isds_dmFile recursively and NULL it */
+void isds_dmFile_free(struct isds_dmFile **file);
 
 /* Deallocate struct isds_dmAtt recursively and NULL it */
 void isds_dmAtt_free(struct isds_dmAtt **att);
