@@ -4,7 +4,8 @@ AM_CFLAGS = -I$(srcdir)/$(LIBDIR) -DSRCDIR=\"$(top_srcdir)\"
 LDADD = $(LIBDIR)/libdatovka.la -L$(LIBDIR) @XML_LIBS@
 
 noinst_PROGRAMS = \
-	activate addbox authenticatemessage certauth changebox changebox2 \
+	activate addbox authenticatemessage bigmessagedownload certauth \
+	changebox changebox2 \
 	changepassword changeuser check_time_conversion computemessagehash \
 	convertdocument createbigmessage deleteuser deleteuser2 \
 	disableaccesibilityexternaly downloadattachment \
@@ -24,6 +25,7 @@ common = common.c common.h
 activate_SOURCES = activate.c $(common)
 addbox_SOURCES = addbox.c $(common)
 authenticatemessage_SOURCES = authenticatemessage.c $(common)
+bigmessagedownload_SOURCES = bigmessagedownload.c $(common)
 certauth_SOURCES = certauth.c $(common)
 changebox_SOURCES = changebox.c $(common)
 changebox2_SOURCES = changebox2.c $(common)
