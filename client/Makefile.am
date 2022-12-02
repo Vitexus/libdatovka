@@ -24,6 +24,7 @@ common = common.c common.h
 
 activate_SOURCES = activate.c $(common)
 addbox_SOURCES = addbox.c $(common)
+authenticatebigmessage_SOURCES = authenticatebigmessage.c $(common)
 authenticatemessage_SOURCES = authenticatemessage.c $(common)
 bigmessagedownload_SOURCES = bigmessagedownload.c $(common)
 certauth_SOURCES = certauth.c $(common)
