@@ -113,7 +113,7 @@ int main(void) {
     }
 
 
-    /* Download message with invalid ID*/
+    /* Download message with invalid ID */
     {
         struct isds_message *message = NULL;
         char *id = "123456789112345678921";

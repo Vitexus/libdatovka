@@ -40,7 +40,8 @@ int main(int argc, char *argv[])
 		goto fail;
 	}
 
-	err = isds_set_timeout(ctx, 10000);
+	/* Increased timeout because of transferring large data portions. */
+	err = isds_set_timeout(ctx, 1000000);
 	if (err != IE_SUCCESS) {
 		fprintf(stderr, "isds_set_timeout() failed: %s\n",
 		    isds_strerror(err));
