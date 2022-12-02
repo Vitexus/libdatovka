@@ -576,47 +576,51 @@ static struct curl_slist *build_attachment_headers(
     const char *content_id, const struct isds_dmFile *dm_file)
 {
 	struct curl_slist *headers = NULL;
-	char *string;
+	char *string = NULL;
 
-	{
-		string = _isds_astrcatN("Content-Type: ", dm_file->dmMimeType,
-		    "; name=", dm_file->dmFileDescr, NULL);
-		if (NULL == string) {
-			goto fail;
+	if (NULL != dm_file->dmMimeType) {
+		if (NULL != dm_file->dmFileDescr) {
+			if (-1 == isds_asprintf(&string, "Content-Type: %s; name=%s",
+			        dm_file->dmMimeType, dm_file->dmFileDescr)) {
+				goto fail;
+			}
+		} else {
+			if (-1 == isds_asprintf(&string, "Content-Type: %s",
+			        dm_file->dmMimeType)) {
+				goto fail;
+			}
 		}
 		headers = curl_slist_append(headers, string);
 		free(string); string = NULL;
-	}
-	if (NULL == headers) {
-		goto fail;
+		if (NULL == headers) {
+			goto fail;
+		}
 	}
 	headers = curl_slist_append(headers, "Content-Transfer-Encoding: binary");
 	if (NULL == headers) {
 		goto fail;
 	}
-	{
-		string = _isds_astrcatN("Content-ID: <", content_id, ">", NULL);
-		if (NULL == string) {
+	if (NULL != content_id) {
+		if (-1 == isds_asprintf(&string, "Content-ID: <%s>", content_id)) {
 			goto fail;
 		}
 		headers = curl_slist_append(headers, string);
 		free(string); string = NULL;
+		if (NULL == headers) {
+			goto fail;
+		}
 	}
-	if (NULL == headers) {
-		goto fail;
-	}
-	{
-		string = _isds_astrcatN(
-		    "Content-Disposition: attachment; name=\"", dm_file->dmFileDescr,
-		    "\"; filename=\"", dm_file->dmFileDescr, "\"", NULL);
-		if (NULL == string) {
+	if (NULL != dm_file->dmFileDescr) {
+		if (-1 == isds_asprintf(&string,
+		        "Content-Disposition: attachment; name=\"%s\"; filename=\"%s\"",
+		        dm_file->dmFileDescr, dm_file->dmFileDescr)) {
 			goto fail;
 		}
 		headers = curl_slist_append(headers, string);
 		free(string); string = NULL;
-	}
-	if (NULL == headers) {
-		goto fail;
+		if (NULL == headers) {
+			goto fail;
+		}
 	}
 
 	return headers;
@@ -794,8 +798,8 @@ static struct curl_httppost *formpost(
     struct formpost_header_list **hlist)
 {
 	CURLFORMcode form_err;
-	struct curl_httppost* post = NULL;
-	struct curl_httppost* last = NULL;
+	struct curl_httppost *post = NULL;
+	struct curl_httppost *last = NULL;
 	struct formpost_header_list *hlast;
 
 	/* Headers must be created. */
@@ -836,7 +840,7 @@ static struct curl_httppost *formpost(
 	}
 
 	form_err = curl_formadd(&post, &last,
-	    CURLFORM_COPYNAME, dm_file->dmFileDescr,
+	    CURLFORM_COPYNAME, (NULL != dm_file->dmFileDescr) ? dm_file->dmFileDescr : "",
 	    CURLFORM_CONTENTHEADER, hlast->headers,
 	    CURLFORM_PTRCONTENTS, dm_file->data,
 	    CURLFORM_CONTENTSLENGTH, (long)dm_file->data_length,
