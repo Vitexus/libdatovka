@@ -7669,7 +7669,11 @@ static isds_error send_destroy_request_check_response(
             service_name_locale);
 
     /* Send request */
-    err = _isds(context, service, *request, response, NULL, NULL);
+    if (service != SERVICE_VODZ_DM_OPERATIONS) {
+        err = _isds(context, service, *request, response, NULL, NULL);
+    } else {
+        err = _isds_vodz(context, service, *request, response, NULL, NULL);
+    }
     xmlFreeNode(*request); *request = NULL;
 
     if (err) {
@@ -16306,6 +16310,108 @@ leave:
 #endif
 
     return err;
+}
+
+enum isds_error isds_AuthenticateBigMessage(struct isds_ctx *context,
+    const void *message, size_t length)
+{
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlNs *isds_ns = NULL;
+	xmlNode *request = NULL;
+	xmlDoc *response = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+	_Bool *authentic = NULL;
+#endif /* !HAVE_LIBCURL */
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if ((NULL == message) || (0 == length)) {
+		return IE_INVAL;
+	}
+
+#if HAVE_LIBCURL
+	/*
+	 * Check if connection is established
+	 * TODO: This check should be done downstairs.
+	 */
+	if (NULL == context->curl) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	/* Build AuthenticateBigMessage request */
+	request = xmlNewNode(NULL, BAD_CAST "AuthenticateBigMessage");
+	if (NULL == request) {
+		isds_log_message(context,
+		    _("Could not build AuthenticateBigMessage request"));
+		return IE_ERROR;
+	}
+	isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+	if (NULL == isds_ns) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		xmlFreeNode(request);
+		return IE_ERROR;
+	}
+	xmlSetNs(request, isds_ns);
+
+	/* Insert Base64 encoded message */
+	err = insert_base64_encoded_string(context, request, NULL, "dmMessage",
+	    message, length);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/* Send request to server and process response */
+	err = send_destroy_request_check_response(context,
+	    SERVICE_VODZ_DM_OPERATIONS, BAD_CAST "AuthenticateBigMessage", &request,
+	    &response, NULL, NULL);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/* ISDS has decided */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx,
+	        MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+
+	EXTRACT_BOOLEAN("/isds:AuthenticateBigMessageResponse/isds:dmAuthResult", authentic);
+
+	if (NULL == authentic) {
+		isds_log_message(context,
+		    _("Server did not return any response on AuthenticateBigMessage request"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	if (*authentic) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("ISDS authenticated the message successfully\n"));
+	} else {
+		isds_log_message(context, _("ISDS does not know the message"));
+		err = IE_NOTEQUAL;
+	}
+
+leave:
+	free(authentic);
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+
+	xmlFreeDoc(response);
+	xmlFreeNode(request);
+#else /* not HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif
+	return err;
 }
 
 

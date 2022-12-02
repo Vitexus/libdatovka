@@ -2288,6 +2288,21 @@ isds_error isds_verify_message_hash(struct isds_ctx *context,
 isds_error isds_authenticate_message(struct isds_ctx *context,
         const void *message, size_t length);
 
+/*
+ * Submit CMS signed high-volume message to ISDS to verify its originality.
+ * This is stronger form of isds_verify_message_hash() because ISDS does more
+ * checks than simple one (potentially old weak) hash comparison.
+ * @context is session context
+ * @message is memory with raw CMS signed message bit stream
+ * @length is @message size in bytes
+ * @return
+ *  IE_SUCCESS  if message originates in ISDS
+ *  IE_NOTEQUAL if message is unknown to ISDS
+ *  other code  for other errors
+ */
+enum isds_error isds_AuthenticateBigMessage(struct isds_ctx *context,
+    const void *message, size_t length);
+
 /* Submit CMS signed message or delivery info to ISDS to re-sign the content
  * including adding new CMS time stamp. Only CMS blobs without time stamp can
  * be re-signed.
