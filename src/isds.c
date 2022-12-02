@@ -12356,11 +12356,11 @@ static enum isds_error insert_xop_include(struct isds_ctx *context,
 		return IE_INVAL;
 	}
 
-	node = xmlNewChild(parent, NULL, BAD_CAST "dmEncodedContent", NULL);
+	node = xmlNewChild(parent, NULL, BAD_CAST element, NULL);
 	if (NULL == node) {
 		isds_printf_message(context,
-		    _("Could not add dmEncodedContent child to %s element"),
-		    parent->name);
+		    _("Could not add %s child to %s element"),
+		    element, parent->name);
 		return IE_ERROR;
 	}
 
@@ -12441,7 +12441,7 @@ static enum isds_error insert_dmFile(struct isds_ctx *context,
 		    "dmEncodedContent", dm_file->data, dm_file->data_length);
 	} else {
 		err = insert_xop_include(context, file_node, NULL,
-		    "dmEncodedContent", "att_1");
+		    "dmEncodedContent", xop_cid);
 	}
 	if (IE_SUCCESS != err) {
 		goto leave;
@@ -15428,7 +15428,8 @@ isds_error isds_GetMessageAuthor2(struct isds_ctx *context,
 		err = IE_ERROR;
 		goto leave;
 	}
-	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx,
+	        MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
 		err = IE_ERROR;
 		goto leave;
 	}
