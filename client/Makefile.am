@@ -4,8 +4,8 @@ AM_CFLAGS = -I$(srcdir)/$(LIBDIR) -DSRCDIR=\"$(top_srcdir)\"
 LDADD = $(LIBDIR)/libdatovka.la -L$(LIBDIR) @XML_LIBS@
 
 noinst_PROGRAMS = \
-	activate addbox authenticatemessage bigmessagedownload certauth \
-	changebox changebox2 \
+	activate addbox authenticatebigmessage authenticatemessage \
+	bigmessagedownload certauth changebox changebox2 \
 	changepassword changeuser check_time_conversion computemessagehash \
 	convertdocument createbigmessage deleteuser deleteuser2 \
 	disableaccesibilityexternaly downloadattachment \
