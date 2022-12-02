@@ -2289,6 +2289,7 @@ isds_error isds_authenticate_message(struct isds_ctx *context,
         const void *message, size_t length);
 
 /*
+ * XXX -- The server always returns 0000 here - theres an error in ISDS.
  * Submit CMS signed high-volume message to ISDS to verify its originality.
  * This is stronger form of isds_verify_message_hash() because ISDS does more
  * checks than simple one (potentially old weak) hash comparison.
@@ -2302,6 +2303,24 @@ isds_error isds_authenticate_message(struct isds_ctx *context,
  */
 enum isds_error isds_AuthenticateBigMessage(struct isds_ctx *context,
     const void *message, size_t length);
+
+/*
+ * XXX -- The transmission is somewhere being killed on ISDS. Incomplete ZFO
+ * data are sent to the server.
+ * Submit CMS signed high-volume message to ISDS to verify its originality.
+ * This is stronger form of isds_verify_message_hash() because ISDS does more
+ * checks than simple one (potentially old weak) hash comparison. This
+ * implementation uses the MOTOM/XOP.
+ * @context is session context
+ * @message is memory with raw CMS signed message bit stream
+ * @length is @message size in bytes
+ * @return
+ *  IE_SUCCESS  if message originates in ISDS
+ *  IE_NOTEQUAL if message is unknown to ISDS
+ *  other code  for other errors
+ */
+enum isds_error isds_AuthenticateBigMessage_mtomxop(struct isds_ctx *context,
+    const void *data, size_t length);
 
 /* Submit CMS signed message or delivery info to ISDS to re-sign the content
  * including adding new CMS time stamp. Only CMS blobs without time stamp can

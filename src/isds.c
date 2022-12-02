@@ -16415,6 +16415,152 @@ leave:
 	return err;
 }
 
+enum isds_error isds_AuthenticateBigMessage_mtomxop(struct isds_ctx *context,
+    const void *data, size_t length)
+{
+#define ATTACHMENT_CID "att_1"
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlNs *isds_ns = NULL;
+	xmlNode *request = NULL;
+	xmlDoc *response = NULL;
+	xmlChar *code = NULL;
+	xmlChar *message = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+	_Bool *authentic = NULL;
+#endif /* HAVE_LIBCURL */
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if ((NULL == data) || (0 == length)) {
+		return IE_INVAL;
+	}
+
+#if HAVE_LIBCURL
+	/*
+	 * Check if connection is established
+	 * TODO: This check should be done downstairs.
+	 */
+	if (NULL == context->curl) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	/* Build AuthenticateBigMessage request */
+	request = xmlNewNode(NULL, BAD_CAST "AuthenticateBigMessage");
+	if (NULL == request) {
+		isds_log_message(context,
+		    _("Could not build AuthenticateBigMessage request"));
+		return IE_ERROR;
+	}
+	isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+	if (NULL == isds_ns) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		xmlFreeNode(request);
+		return IE_ERROR;
+	}
+	xmlSetNs(request, isds_ns);
+
+	/* Insert XOP Include. */
+	err = insert_xop_include(context, request, NULL, "dmMessage",
+	    ATTACHMENT_CID);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	isds_log(ILF_ISDS, ILL_DEBUG,
+	    _("Sending MTOM/XOP AuthenticateBigMessage request to ISDS\n"));
+
+	/* Send request. */
+	{
+		struct isds_dmFile dm_file = {
+			.data = (void *)data,
+			.data_length = length,
+			.dmFileMetaType = FILEMETATYPE_MAIN,
+			.dmMimeType = NULL,
+			.dmFileDescr = "message.zfo"
+		};
+		err = _isds_vodz_mtomxop(context, SERVICE_VODZ_DM_OPERATIONS, request,
+		    ATTACHMENT_CID, &dm_file, &response, NULL, NULL);
+	}
+
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Processing ISDS response on MTOM/XOP AuthenticateBigMessage request failed\n"));
+		goto leave;
+	}
+
+	/* Check for response status. */
+	err = isds_response_status(context, SERVICE_VODZ_DM_OPERATIONS,
+	    response, &code, &message, NULL);
+	build_isds_status(&(context->status),
+	    _isds_service_to_status_type(SERVICE_VODZ_DM_OPERATIONS),
+	    (char *)code, (char *)message, NULL);
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		_("ISDS response on MTOM/XOP AuthenticateBigMessage is missing status\n"));
+		goto leave;
+	}
+
+	/* Request processed, but refused by server or server failed. */
+	if (0 != xmlStrcmp(code, BAD_CAST "0000")) {
+		char *code_locale = _isds_utf82locale((char*)code);
+		char *message_locale = _isds_utf82locale((char*)message);
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Server did not accept data on MTOM/XOP AuthenticateBigMessage request (code=%s, message=%s)\n"),
+		    code_locale, message_locale);
+		free(code_locale);
+		free(message_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
+
+	/* ISDS has decided */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx,
+	        MESSAGE_NS_UNSIGNED, SOAP_1_2)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+
+	EXTRACT_BOOLEAN("/isds:AuthenticateBigMessageResponse/isds:dmAuthResult", authentic);
+
+	if (NULL == authentic) {
+		isds_log_message(context,
+		    _("Server did not return any response on AuthenticateBigMessage request"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	if (*authentic) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("ISDS authenticated the message successfully\n"));
+	} else {
+		isds_log_message(context, _("ISDS does not know the message"));
+		err = IE_NOTEQUAL;
+	}
+
+leave:
+	free(authentic);
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+
+	free(code);
+	free(message);
+	xmlFreeDoc(response);
+	xmlFreeNode(request);
+#else /* not HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+	return err;
+#undef ATTACHMENT_CID
+}
 
 /* Submit CMS signed message or delivery info to ISDS to re-sign the content
  * including adding new CMS time stamp. Only CMS blobs without time stamp can
