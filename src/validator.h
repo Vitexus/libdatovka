@@ -14,6 +14,13 @@ typedef enum isds_service {
 	SERVICE_ASWS
 } isds_service;
 
+/* Flags to be used when communicating with VODZ services. */
+enum vodz_flags {
+	VODZ_BASIC = 0x00, /* Send plain XML, receive plain XML. */
+	VODZ_SND_XOP = 0x01, /* Send MTOM/XOP data. */
+	VODZ_RCV_XOP = 0x02 /* Receive XTOM/XOP data. */
+};
+
 /*
  * Convert enum isds_service to enum isds_status_type.
  * @service is ISDS web service identifier
@@ -58,26 +65,6 @@ enum isds_error _isds(struct isds_ctx *context, const enum isds_service service,
     void **raw_response, size_t *raw_response_length);
 
 /*
- * Send @request to ISDS and return ISDS @response as XML document via
- * the high-volume data message interface.
- * Be ware the @response can be invalid (in sense of XML Schema).
- * (And it is because current ISDS server does not follow its own
- * specification. Please apology my government, its herd of incompetent
- * creatures.)
- * @context is ISDS session context,
- * @service identifies ISDS web service
- * @request is tree with ISDS message, can be NULL
- * @response is automatically allocated response from server as XML Document
- * @raw_response is automatically allocated bit stream with response body. Use
- * NULL if you don't care
- * @raw_response_length is size of @raw_response in bytes
- * In case of error, @response and @raw_response will be deallocated.
- */
-enum isds_error _isds_vodz(struct isds_ctx *context, const enum isds_service service,
-    const xmlNodePtr request, xmlDoc **response,
-    void **raw_response, size_t *raw_response_length);
-
-/*
  * Send @request to ISDS and return ISDS @response as MTOM/XOP document via
  * the high-volume data message interface.
  * Be ware the @response can be invalid (in sense of XML Schema).
@@ -86,6 +73,7 @@ enum isds_error _isds_vodz(struct isds_ctx *context, const enum isds_service ser
  * creatures.)
  * @context is ISDS session context,
  * @service identifies ISDS web service
+ * @v_flags flags specifying type of communication, use enum vodz_flags
  * @request is tree with ISDS message, can be NULL
  * @content_id href value of the Include MTOM/XOP element
  * @dm_file file content
@@ -95,8 +83,8 @@ enum isds_error _isds_vodz(struct isds_ctx *context, const enum isds_service ser
  * @raw_response_length is size of @raw_response in bytes
  * In case of error, @response and @raw_response will be deallocated.
  */
-enum isds_error _isds_vodz_mtomxop(struct isds_ctx *context,
-    const enum isds_service service, const xmlNodePtr request,
+enum isds_error _isds_vodz(struct isds_ctx *context,
+    const enum isds_service service, int v_flags, const xmlNodePtr request,
     const char *content_id, const struct isds_dmFile *dm_file,
     xmlDoc **response, void **raw_response, size_t *raw_response_length);
 #endif /* HAVE_LIBCURL */

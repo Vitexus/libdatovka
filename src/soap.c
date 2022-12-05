@@ -6,6 +6,14 @@
 #include <strings.h>    /* strncasecmp(3) */
 #include "system.h"
 
+/* Flags to be used when communicating over HTTP. */
+enum http_communication_flags {
+	HCF_BASIC = 0x00, /* Use POST, send plain XML, receive plain XML. */
+	HCF_USE_GET = 0x01, /* Use GET instead of POST. */
+	HCF_SND_XOP = 0x02, /* Send MTOM/XOP data. */
+	HCF_RCV_XOP = 0x04 /* Receive XTOM/XOP data. */
+};
+
 /* Private structure for write_body() call back */
 struct soap_body {
     void *data;
@@ -860,7 +868,7 @@ fail:
 /* Do HTTP request.
  * @context holds the base URL,
  * @url is a (CGI) file of SOAP URL,
- * @use_get is a false to do a POST request, true to do a GET request.
+ * @h_flags specifies whether to use POST/GET or send/receive multipart data
  * @request is body for POST request
  * @request_length is length of @request in bytes
  * @content_id href value of the Include MTOM/XOP element
@@ -885,7 +893,7 @@ fail:
  * return value means the request could not been sent (e.g. SSL error).
  * Side effect: message buffer */
 static isds_error http(struct isds_ctx *context,
-        const char *url, _Bool use_get,
+        const char *url, const int h_flags,
         const void *request, const size_t request_length,
         const char *content_id, const struct isds_dmFile *dm_file,
         void **response, size_t *response_length,
@@ -908,8 +916,8 @@ static isds_error http(struct isds_ctx *context,
     if (!context) return IE_INVALID_CONTEXT;
     if (!url) return IE_INVAL;
     if (request_length > 0 && !request) return IE_INVAL;
-    if (((NULL == content_id) && (NULL != dm_file)) ||
-        ((NULL != content_id) && (NULL == dm_file))) {
+    if ((HCF_SND_XOP & h_flags) &&
+        ((NULL == content_id) || ('\0' == *content_id) || (NULL == dm_file))) {
         return IE_INVAL;
     }
     if (!response || !response_length) return IE_INVAL;
@@ -1184,7 +1192,7 @@ static isds_error http(struct isds_ctx *context,
             err = IE_NOMEM;
             goto leave;
         }
-        if (NULL == content_id) {
+        if (!(HCF_SND_XOP & h_flags)) {
             headers = curl_slist_append(headers, "Content-Type: text/xml");
         } else {
             headers = curl_slist_append(headers, "Content-Type: multipart/related; type=\"application/xop+xml\"; start=\"<rootpart@soapui.org>\"; start-info=\"application/soap+xml\"; action=\"\"");
@@ -1206,7 +1214,7 @@ static isds_error http(struct isds_ctx *context,
                 "libdatovka/" PACKAGE_VERSION);
     }
 
-    if (use_get) {
+    if (HCF_USE_GET & h_flags) {
         /* Set GET request */
         if (!curl_err) {
             curl_err = curl_easy_setopt(context->curl, CURLOPT_HTTPGET, 1);
@@ -1216,7 +1224,7 @@ static isds_error http(struct isds_ctx *context,
         if (!curl_err) {
             curl_err = curl_easy_setopt(context->curl, CURLOPT_POST, 1);
         }
-        if (NULL == content_id) {
+        if (!(HCF_SND_XOP & h_flags)) {
             if (!curl_err) {
                 curl_err = curl_easy_setopt(context->curl, CURLOPT_POSTFIELDS, request);
             }
@@ -1258,8 +1266,8 @@ static isds_error http(struct isds_ctx *context,
     }
 
     isds_log(ILF_HTTP, ILL_DEBUG, _("Sending %s request to <%s>\n"),
-            use_get ? "GET" : "POST", url);
-    if (!use_get) {
+            (HCF_USE_GET & h_flags) ? "GET" : "POST", url);
+    if (!(HCF_USE_GET & h_flags)) {
         isds_log(ILF_HTTP, ILL_DEBUG,
                 _("POST body length: %zu, content follows:\n"), request_length);
         if (_isds_sizet2int(request_length) >= 0 ) {
@@ -1884,12 +1892,12 @@ redirect:
 
     if ((NULL != context->mep_credentials) && (NULL != context->mep_credentials->intermediate_uri)) {
         /* POST does not work for the intermediate URI, using GET here. */
-        err = http(context, context->mep_credentials->intermediate_uri, 1, NULL, 0, NULL, NULL,
+        err = http(context, context->mep_credentials->intermediate_uri, HCF_USE_GET, NULL, 0, NULL, NULL,
                 &http_response, &response_length,
                 &mime_type, NULL, &http_code,
                 ((context->otp_credentials == NULL) && (context->mep_credentials == NULL)) ? NULL: &response_otp_headers);
     } else {
-        err = http(context, url, 0, http_request->content, http_request->use, NULL, NULL,
+        err = http(context, url, HCF_BASIC, http_request->content, http_request->use, NULL, NULL,
                 &http_response, &response_length,
                 &mime_type, NULL, &http_code,
                 ((context->otp_credentials == NULL) && (context->mep_credentials == NULL)) ? NULL: &response_otp_headers);
@@ -2080,8 +2088,8 @@ leave:
     return err;
 }
 
-_hidden isds_error _isds_soap_vodz(struct isds_ctx *context, const char *file,
-    const xmlNodePtr request,
+_hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
+    const char *file, int s_flags, const xmlNodePtr request,
     const char *content_id, const struct isds_dmFile *dm_file,
     xmlDoc **response_document, xmlNode **response_node_list,
     void **raw_response, size_t *raw_response_length)
@@ -2096,6 +2104,10 @@ _hidden isds_error _isds_soap_vodz(struct isds_ctx *context, const char *file,
 
 	if (NULL == context) {
 		return IE_INVALID_CONTEXT;
+	}
+	if ((SCF_SND_XOP & s_flags) &&
+	    ((NULL == content_id) || ('\0' == *content_id) || (NULL == dm_file))) {
+		return IE_INVAL;
 	}
 	if ((NULL == response_document && NULL != response_node_list) ||
 	    (NULL != response_document && NULL == response_node_list)) {
@@ -2121,7 +2133,7 @@ _hidden isds_error _isds_soap_vodz(struct isds_ctx *context, const char *file,
 	}
 
 	err = build_http_request(context, request, &http_request,
-	    ((NULL == content_id) || ('\0' == *content_id)) ? SOAP_1_1 : SOAP_1_2);
+	    ((SCF_SND_XOP | SCF_RCV_XOP) & s_flags) ? SOAP_1_2 : SOAP_1_1);
 	if (IE_SUCCESS != err) {
 		goto leave;
 	}
@@ -2139,9 +2151,14 @@ _hidden isds_error _isds_soap_vodz(struct isds_ctx *context, const char *file,
 	    url, http_request->use, http_request->content);
 
 	/* Don't handle OTP or MEP login credentials here. */
-	err = http(context, url, 0, http_request->content, http_request->use, content_id, dm_file,
-	    &http_response, &response_length,
-	    &mime_type, NULL, &http_code, NULL);
+	{
+		int h_flags = HCF_BASIC;
+		h_flags |= (SCF_SND_XOP & s_flags) ? HCF_SND_XOP : HCF_BASIC;
+		h_flags |= (SCF_RCV_XOP & s_flags) ? HCF_RCV_XOP : HCF_BASIC;
+		err = http(context, url, h_flags, http_request->content, http_request->use, content_id, dm_file,
+		    &http_response, &response_length,
+		    &mime_type, NULL, &http_code, NULL);
+	}
 
 	/*
 	 * TODO: HTTP binding for SOAP prescribes non-200 HTTP return codes
@@ -2208,7 +2225,7 @@ _hidden isds_error _isds_soap_vodz(struct isds_ctx *context, const char *file,
 
 	err = process_http_response(context, http_response, response_length,
 	    response_document, response_node_list,
-	    ((NULL == content_id) || ('\0' == *content_id)) ? SOAP_1_1 : SOAP_1_2);
+	    ((SCF_SND_XOP | SCF_RCV_XOP) & s_flags) ? SOAP_1_2 : SOAP_1_1);
 	if (IE_SUCCESS != err) {
 		goto leave;
 	}
@@ -2297,7 +2314,7 @@ _hidden isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context) {
 
     /* Invalidate the cookie by GET request */
     err = http(context,
-            url, 1,
+            url, HCF_USE_GET,
             NULL, 0, NULL, NULL,
             &response, &response_length,
             NULL, NULL, &http_code,

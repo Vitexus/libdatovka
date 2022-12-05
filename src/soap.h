@@ -3,6 +3,13 @@
 
 #include "libdatovka/isds.h"
 
+/* Flags to be used when working with SOAP. */
+enum soap_communication_flags {
+	SCF_BASIC = 0x00, /* Send plain XML, receive plain XML. */
+	SCF_SND_XOP = 0x01, /* Send MTOM/XOP data. */
+	SCF_RCV_XOP = 0x02 /* Receive XTOM/XOP data. */
+};
+
 /* Close connection to server and destroy CURL handle associated
  * with @context */
 isds_error _isds_close_connection(struct isds_ctx *context);
@@ -55,7 +62,7 @@ isds_error _isds_soap(struct isds_ctx *context, const char *file,
  * Side effect: message buffer
  */
 enum isds_error _isds_soap_vodz(struct isds_ctx *context, const char *file,
-    const xmlNodePtr request,
+    int s_flags, const xmlNodePtr request,
     const char *content_id, const struct isds_dmFile *dm_file,
     xmlDoc **response_document, xmlNode **response_node_list,
     void **raw_response, size_t *raw_response_length);

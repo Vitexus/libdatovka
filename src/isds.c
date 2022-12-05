@@ -7672,7 +7672,8 @@ static isds_error send_destroy_request_check_response(
     if (service != SERVICE_VODZ_DM_OPERATIONS) {
         err = _isds(context, service, *request, response, NULL, NULL);
     } else {
-        err = _isds_vodz(context, service, *request, response, NULL, NULL);
+        err = _isds_vodz(context, service, VODZ_BASIC, *request, NULL, NULL,
+                response, NULL, NULL);
     }
     xmlFreeNode(*request); *request = NULL;
 
@@ -12614,8 +12615,8 @@ enum isds_error isds_UploadAttachment(struct isds_ctx *context,
 	    _("Sending UploadAttachment request to ISDS\n"));
 
 	/* Send request. */
-	err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS, request,
-	    &response, NULL, NULL);
+	err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS, VODZ_BASIC,
+	    request, NULL, NULL, &response, NULL, NULL);
 
 	if (IE_SUCCESS != err) {
 		isds_log(ILF_ISDS, ILL_DEBUG,
@@ -12765,8 +12766,9 @@ enum isds_error isds_UploadAttachment_mtomxop(struct isds_ctx *context,
 	    _("Sending MTOM/XOP UploadAttachment request to ISDS\n"));
 
 	/* Send request. */
-	err = _isds_vodz_mtomxop(context, SERVICE_VODZ_DM_OPERATIONS, request,
-	    ATTACHMENT_CID, dm_file, &response, NULL, NULL);
+	err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS,
+	    VODZ_SND_XOP, request, ATTACHMENT_CID, dm_file,
+	    &response, NULL, NULL);
 
 	if (IE_SUCCESS != err) {
 		isds_log(ILF_ISDS, ILL_DEBUG,
@@ -13033,8 +13035,8 @@ enum isds_error isds_DownloadAttachment(struct isds_ctx *context,
 	    _("Sending DownloadAttachment request to ISDS\n"));
 
 	/* Send request. */
-	err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS, request,
-	    &response, NULL, NULL);
+	err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS, VODZ_BASIC,
+	    request, NULL, NULL, &response, NULL, NULL);
 
 	if (IE_SUCCESS != err) {
 		isds_log(ILF_ISDS, ILL_DEBUG,
@@ -13182,7 +13184,8 @@ enum isds_error isds_CreateBigMessage(struct isds_ctx *context,
 	isds_log(ILF_ISDS, ILL_DEBUG, _("Sending CreateBigMessage request to ISDS\n"));
 
 	/* Send request */
-	err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS, request, &response, NULL, NULL);
+	err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS, VODZ_BASIC,
+	    request, NULL, NULL, &response, NULL, NULL);
 
 	/* Don't' destroy request, we want to provide it to application later */
 
@@ -13866,8 +13869,8 @@ static isds_error build_send_check_message_request(struct isds_ctx *context,
         err = _isds(context, service, request, response,
                 raw_response, raw_response_length);
     } else {
-        err = _isds_vodz(context, service, request, response,
-                raw_response, raw_response_length);
+        err = _isds_vodz(context, service, VODZ_BASIC, request, NULL, NULL,
+                response, raw_response, raw_response_length);
     }
     xmlFreeNode(request); request = NULL;
 
@@ -14941,7 +14944,7 @@ static isds_error isds_get_signed_message(struct isds_ctx *context,
 #if HAVE_LIBCURL
     /* Do request and check for success */
     err = build_send_check_message_request(context, SERVICE_DM_OPERATIONS,
-            (outgoing) ? BAD_CAST "SignedSentMessageDownload" :
+            outgoing ? BAD_CAST "SignedSentMessageDownload" :
                 BAD_CAST "SignedMessageDownload",
             message_id, &response, NULL, NULL, &code, &status_message);
     if (err) goto leave;
@@ -14950,14 +14953,14 @@ static isds_error isds_get_signed_message(struct isds_ctx *context,
      * response */
     err = find_extract_signed_data_free_response(context,
             (xmlChar *)message_id, &response,
-            (outgoing) ? BAD_CAST "SignedSentMessageDownload" :
+            outgoing ? BAD_CAST "SignedSentMessageDownload" :
                 BAD_CAST "SignedMessageDownload",
             &raw, &raw_length);
     if (err) goto leave;
 
     /* Parse message */
     err = isds_load_message(context,
-            (outgoing) ? RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE :
+            outgoing ? RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE :
                 RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE,
             raw, raw_length, message, BUFFER_MOVE);
     if (err) goto leave;
@@ -16483,8 +16486,9 @@ enum isds_error isds_AuthenticateBigMessage_mtomxop(struct isds_ctx *context,
 			.dmMimeType = NULL,
 			.dmFileDescr = "message.zfo"
 		};
-		err = _isds_vodz_mtomxop(context, SERVICE_VODZ_DM_OPERATIONS, request,
-		    ATTACHMENT_CID, &dm_file, &response, NULL, NULL);
+		err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS,
+		    VODZ_SND_XOP, request, ATTACHMENT_CID, &dm_file,
+		    &response, NULL, NULL);
 	}
 
 	if (IE_SUCCESS != err) {
