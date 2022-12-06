@@ -9,6 +9,7 @@ libdatovka_la_SOURCES = \
 	cdecode.h \
 	cencode.c \
 	cencode.h \
+	compiler.h \
 	crypto.h \
 	gettext.h \
 	isds.c \
