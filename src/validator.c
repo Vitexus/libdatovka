@@ -43,7 +43,7 @@ _hidden enum isds_error isds_response_status(struct isds_ctx *context,
 	xmlXPathContextPtr xpath_ctx = NULL;
 	xmlXPathObjectPtr result = NULL;
 
-	if ((NULL == response) || (NULL == code)) {
+	if (UNLIKELY((NULL == response) || (NULL == code))) {
 		err = IE_INVAL;
 		goto leave;
 	}
@@ -77,25 +77,25 @@ _hidden enum isds_error isds_response_status(struct isds_ctx *context,
 	}
 
 	xpath_ctx = xmlXPathNewContext(response);
-	if (NULL == xpath_ctx) {
+	if (UNLIKELY(NULL == xpath_ctx)) {
 		err = IE_ERROR;
 		goto leave;
 	}
-	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx,
+	if (UNLIKELY(IE_SUCCESS != _isds_register_namespaces(xpath_ctx,
 	        (context->type == CTX_TYPE_TESTING_REQUEST_COLLECTOR) ?
 	            MESSAGE_NS_1 : MESSAGE_NS_UNSIGNED,
-	        SOAP_1_1)) {
+	        SOAP_1_1))) {
 		err = IE_ERROR;
 		goto leave;
 	}
 
 	/* Get status code. */
 	result = xmlXPathEvalExpression(status_code_expr, xpath_ctx);
-	if (NULL == result) {
+	if (UNLIKELY(NULL == result)) {
 		err = IE_ERROR;
 		goto leave;
 	}
-	if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+	if (UNLIKELY(xmlXPathNodeSetIsEmpty(result->nodesetval))) {
 		isds_log_message(context,
 		    (context->type == CTX_TYPE_TESTING_REQUEST_COLLECTOR) ?
 		        _("ISDS1 response is missing StatusCode element") :
@@ -104,7 +104,7 @@ _hidden enum isds_error isds_response_status(struct isds_ctx *context,
 		goto leave;
 	}
 	*code = xmlXPathCastNodeSetToString(result->nodesetval);
-	if (NULL == *code) {
+	if (UNLIKELY(NULL == *code)) {
 		err = IE_ERROR;
 		goto leave;
 	}
@@ -113,7 +113,7 @@ _hidden enum isds_error isds_response_status(struct isds_ctx *context,
 		/* Get status message. */
 		xmlXPathFreeObject(result);
 		result = xmlXPathEvalExpression(status_message_expr, xpath_ctx);
-		if (NULL == result) {
+		if (UNLIKELY(NULL == result)) {
 			err = IE_ERROR;
 			goto leave;
 		}
@@ -125,7 +125,7 @@ _hidden enum isds_error isds_response_status(struct isds_ctx *context,
 			*message = NULL;
 		} else {
 			*message = xmlXPathCastNodeSetToString(result->nodesetval);
-			if (NULL == *message) {
+			if (UNLIKELY(NULL == *message)) {
 				err = IE_ERROR;
 				goto leave;
 			}
@@ -141,7 +141,7 @@ _hidden enum isds_error isds_response_status(struct isds_ctx *context,
 		        BAD_CAST "/*/oisds:dbStatus/oisds:dbStatusRefNumber/text()":
 		        BAD_CAST "/*/isds:dbStatus/isds:dbStatusRefNumber/text()",
 		    xpath_ctx);
-		if (NULL == result) {
+		if (UNLIKELY(NULL == result)) {
 			err = IE_ERROR;
 			goto leave;
 		}
@@ -149,7 +149,7 @@ _hidden enum isds_error isds_response_status(struct isds_ctx *context,
 			*refnumber = NULL;
 		} else {
 			*refnumber = xmlXPathCastNodeSetToString(result->nodesetval);
-			if (NULL == *refnumber) {
+			if (UNLIKELY(NULL == *refnumber)) {
 				err = IE_ERROR;
 				goto leave;
 			}
@@ -172,13 +172,13 @@ _hidden enum isds_error _isds(struct isds_ctx *context,
 	char *file = NULL;
 	const char *name_space = ISDS_NS;
 
-	if (NULL == context) {
+	if (UNLIKELY(NULL == context)) {
 		return IE_INVALID_CONTEXT;
 	}
-	if (NULL == response) {
+	if (UNLIKELY(NULL == response)) {
 		return IE_INVAL;
 	}
-	if ((NULL == raw_response_length) && (NULL != raw_response)) {
+	if (UNLIKELY((NULL == raw_response_length) && (NULL != raw_response))) {
 		return IE_INVAL;
 	}
 
@@ -209,24 +209,24 @@ _hidden enum isds_error _isds(struct isds_ctx *context,
 	err = _isds_soap(context, file, request, &response_document,
 	    &response_body, raw_response, raw_response_length);
 
-	if (IE_SUCCESS != err) {
+	if (UNLIKELY(IE_SUCCESS != err)) {
 		goto leave;
 	}
 
-	if (NULL == response_body) {
+	if (UNLIKELY(NULL == response_body)) {
 		isds_log_message(context, _("SOAP returned empty body"));
 		err = IE_ISDS;
 	}
 
 	/* Find ISDS element. */
-	for (isds_node = response_body; isds_node; isds_node = isds_node->next) {
+	for (isds_node = response_body; NULL != isds_node; isds_node = isds_node->next) {
 		if ((isds_node->type == XML_ELEMENT_NODE) &&
 		    (NULL != isds_node->ns) &&
 		    (0 == xmlStrcmp(isds_node->ns->href, BAD_CAST name_space))) {
 			break;
 		}
 	}
-	if (NULL == isds_node) {
+	if (UNLIKELY(NULL == isds_node)) {
 		char *name_space_local = _isds_utf82locale(name_space);
 		isds_printf_message(context,
 		    _("SOAP response does not contain element from name space %s"),
@@ -240,7 +240,7 @@ _hidden enum isds_error _isds(struct isds_ctx *context,
 
 	/* Build XML document */
 	*response = xmlNewDoc(BAD_CAST "1.0");
-	if (NULL == *response) {
+	if (UNLIKELY(NULL == *response)) {
 		isds_log_message(context,
 		    _("Could not build ISDS response document"));
 		err = IE_ERROR;
@@ -249,7 +249,7 @@ _hidden enum isds_error _isds(struct isds_ctx *context,
 	xmlDocSetRootElement(*response, isds_node);
 
 leave:
-	if (IE_SUCCESS != err) {
+	if (UNLIKELY(IE_SUCCESS != err)) {
 		xmlFreeDoc(*response);
 		if (NULL != raw_response) {
 			zfree(*raw_response);
@@ -271,13 +271,13 @@ _hidden enum isds_error _isds_vodz(struct isds_ctx *context,
 	char *file = NULL;
 	const char *name_space = ISDS_NS;
 
-	if (NULL == context) {
+	if (UNLIKELY(NULL == context)) {
 		return IE_INVALID_CONTEXT;
 	}
-	if (NULL == response) {
+	if (UNLIKELY(NULL == response)) {
 		return IE_INVAL;
 	}
-	if ((NULL == raw_response_length) && (NULL != raw_response)) {
+	if (UNLIKELY((NULL == raw_response_length) && (NULL != raw_response))) {
 		return IE_INVAL;
 	}
 
@@ -309,17 +309,17 @@ _hidden enum isds_error _isds_vodz(struct isds_ctx *context,
 		    &response_body, raw_response, raw_response_length);
 	}
 
-	if (IE_SUCCESS != err) {
+	if (UNLIKELY(IE_SUCCESS != err)) {
 		goto leave;
 	}
 
-	if (NULL == response_body) {
+	if (UNLIKELY(NULL == response_body)) {
 		isds_log_message(context, _("SOAP returned empty body"));
 		err = IE_ISDS;
 	}
 
 	/* Find ISDS element. */
-	for (isds_node = response_body; isds_node; isds_node = isds_node->next) {
+	for (isds_node = response_body; NULL != isds_node; isds_node = isds_node->next) {
 		if ((isds_node->type == XML_ELEMENT_NODE) &&
 		    (NULL != isds_node->ns) &&
 		    (0 == xmlStrcmp(isds_node->ns->href, BAD_CAST name_space))) {
@@ -340,7 +340,7 @@ _hidden enum isds_error _isds_vodz(struct isds_ctx *context,
 
 	/* Build XML document */
 	*response = xmlNewDoc(BAD_CAST "1.0");
-	if (NULL == *response) {
+	if (UNLIKELY(NULL == *response)) {
 		isds_log_message(context,
 		    _("Could not build ISDS response document"));
 		err = IE_ERROR;
@@ -369,22 +369,22 @@ _hidden enum isds_error _isds_check_documents_hierarchy(struct isds_ctx *context
 	const struct isds_dmExtFile *ext_file;
 	_Bool main_exists = 0;
 
-	if (NULL == context) {
+	if (UNLIKELY(NULL == context)) {
 		return IE_INVALID_CONTEXT;
 	}
-	if (NULL == documents) {
+	if (UNLIKELY(NULL == documents)) {
 		return IE_INVAL;
 	}
 
 	for (item = documents; NULL != item; item = item->next) {
 		document = (const struct isds_document *)item->data;
-		if (NULL == document) {
+		if (UNLIKELY(NULL == document)) {
 			continue;
 		}
 
 		/* Only one document or ext_file can be main. */
 		if (document->dmFileMetaType == FILEMETATYPE_MAIN) {
-			if (main_exists) {
+			if (UNLIKELY(main_exists)) {
 				isds_log_message(context,
 				    _("Lists contain multiple document or ExtFile main entries"));
 				return IE_ERROR;
@@ -394,8 +394,8 @@ _hidden enum isds_error _isds_check_documents_hierarchy(struct isds_ctx *context
 
 		/* All document identifiers should be unique */
 		if (NULL != document->dmFileGuid) {
-			if (isds_find_document_by_id(documents, document->dmFileGuid) !=
-			        document) {
+			if (UNLIKELY(isds_find_document_by_id(documents, document->dmFileGuid) !=
+			        document)) {
 				isds_printf_message(context,
 				    _("List contains more documents with the same ID `%s'"),
 				    document->dmFileGuid);
@@ -406,7 +406,7 @@ _hidden enum isds_error _isds_check_documents_hierarchy(struct isds_ctx *context
 		/* All document references should point to existing document ID */
 		/* ???: Should we forbid self-referencing? */
 		if (NULL != document->dmUpFileGuid) {
-			if (NULL == isds_find_document_by_id(documents, document->dmUpFileGuid)) {
+			if (UNLIKELY(NULL == isds_find_document_by_id(documents, document->dmUpFileGuid))) {
 				isds_printf_message(context,
 				    _("List contains documents referencing to not existing document ID `%s'"),
 				    document->dmUpFileGuid);
@@ -417,13 +417,13 @@ _hidden enum isds_error _isds_check_documents_hierarchy(struct isds_ctx *context
 
 	for (item = ext_files; NULL != item; item = item->next) {
 		ext_file = (struct isds_dmExtFile *)item->data;
-		if (NULL == ext_file) {
+		if (UNLIKELY(NULL == ext_file)) {
 			continue;
 		}
 
 		/* Only one document or ext_file can be main. */
 		if (ext_file->dmFileMetaType == FILEMETATYPE_MAIN) {
-			if (main_exists) {
+			if (UNLIKELY(main_exists)) {
 				isds_log_message(context,
 				    _("Lists contain more main document or ExtFile entries"));
 				return IE_ERROR;
@@ -432,7 +432,7 @@ _hidden enum isds_error _isds_check_documents_hierarchy(struct isds_ctx *context
 		}
 	}
 
-	if (!main_exists) {
+	if (UNLIKELY(!main_exists)) {
 		isds_log_message(context, _("List doesn't contain main document or ExtFile"));
 		return IE_ERROR;
 	}

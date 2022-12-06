@@ -592,45 +592,47 @@ static struct curl_slist *build_attachment_headers(
 
 	if (NULL != dm_file->dmMimeType) {
 		if (NULL != dm_file->dmFileDescr) {
-			if (-1 == isds_asprintf(&string, "Content-Type: %s; name=%s",
-			        dm_file->dmMimeType, dm_file->dmFileDescr)) {
+			if (UNLIKELY(-1 == isds_asprintf(&string,
+			        "Content-Type: %s; name=%s",
+			        dm_file->dmMimeType, dm_file->dmFileDescr))) {
 				goto fail;
 			}
 		} else {
-			if (-1 == isds_asprintf(&string, "Content-Type: %s",
-			        dm_file->dmMimeType)) {
+			if (UNLIKELY(-1 == isds_asprintf(&string,
+			        "Content-Type: %s", dm_file->dmMimeType))) {
 				goto fail;
 			}
 		}
 		headers = curl_slist_append(headers, string);
 		free(string); string = NULL;
-		if (NULL == headers) {
+		if (UNLIKELY(NULL == headers)) {
 			goto fail;
 		}
 	}
 	headers = curl_slist_append(headers, "Content-Transfer-Encoding: binary");
-	if (NULL == headers) {
+	if (UNLIKELY(NULL == headers)) {
 		goto fail;
 	}
 	if (NULL != content_id) {
-		if (-1 == isds_asprintf(&string, "Content-ID: <%s>", content_id)) {
+		if (UNLIKELY(-1 == isds_asprintf(&string, "Content-ID: <%s>",
+		        content_id))) {
 			goto fail;
 		}
 		headers = curl_slist_append(headers, string);
 		free(string); string = NULL;
-		if (NULL == headers) {
+		if (UNLIKELY(NULL == headers)) {
 			goto fail;
 		}
 	}
 	if (NULL != dm_file->dmFileDescr) {
-		if (-1 == isds_asprintf(&string,
+		if (UNLIKELY(-1 == isds_asprintf(&string,
 		        "Content-Disposition: attachment; name=\"%s\"; filename=\"%s\"",
-		        dm_file->dmFileDescr, dm_file->dmFileDescr)) {
+		        dm_file->dmFileDescr, dm_file->dmFileDescr))) {
 			goto fail;
 		}
 		headers = curl_slist_append(headers, string);
 		free(string); string = NULL;
-		if (NULL == headers) {
+		if (UNLIKELY(NULL == headers)) {
 			goto fail;
 		}
 	}
@@ -654,7 +656,7 @@ fail:
 static size_t read_callback(char *buffer, size_t size, size_t nitems, void *arg)
 {
 	struct multipart_read_status *p = (struct multipart_read_status *)arg;
-	if (NULL == p) {
+	if (UNLIKELY(NULL == p)) {
 		return CURL_READFUNC_ABORT;
 	}
 	curl_off_t sz = p->size - p->position;
@@ -681,7 +683,7 @@ static size_t read_callback(char *buffer, size_t size, size_t nitems, void *arg)
 static int seek_callback(void *arg, curl_off_t offset, int origin)
 {
 	struct multipart_read_status *p = (struct multipart_read_status *)arg;
-	if (NULL == p) {
+	if (UNLIKELY(NULL == p)) {
 		return CURL_SEEKFUNC_FAIL;
 	}
 
@@ -728,30 +730,30 @@ static struct curl_mime *mimepost(CURL *curl,
 	struct curl_slist *headers = NULL;
 
 	multipart = curl_mime_init(curl);
-	if (NULL == multipart) {
+	if (UNLIKELY(NULL == multipart)) {
 		goto fail;
 	}
 
 	part = curl_mime_addpart(multipart);
-	if (NULL == part) {
+	if (UNLIKELY(NULL == part)) {
 		goto fail;
 	}
 	curl_err = curl_mime_data(part, request, request_length);
-	if (CURLE_OK != curl_err) {
+	if (UNLIKELY(CURLE_OK != curl_err)) {
 		goto fail;
 	}
 	curl_err = curl_mime_type(part, "application/xop+xml; charset=UTF-8; type=\"application/soap+xml\"");
-	if (CURLE_OK != curl_err) {
+	if (UNLIKELY(CURLE_OK != curl_err)) {
 		goto fail;
 	}
 	headers = build_start_headers(0);
-	if (NULL == headers) {
+	if (UNLIKELY(NULL == headers)) {
 		goto fail;
 	}
 	curl_mime_headers(part, headers, 1); headers = NULL;
 
 	part = curl_mime_addpart(multipart);
-	if (NULL == part) {
+	if (UNLIKELY(NULL == part)) {
 		goto fail;
 	}
 	if (NULL != p) {
@@ -762,11 +764,11 @@ static struct curl_mime *mimepost(CURL *curl,
 	} else {
 		curl_err = curl_mime_data(part, dm_file->data, dm_file->data_length);
 	}
-	if (CURLE_OK != curl_err) {
+	if (UNLIKELY(CURLE_OK != curl_err)) {
 		goto fail;
 	}
 	headers = build_attachment_headers(content_id, dm_file);
-	if (NULL == headers) {
+	if (UNLIKELY(NULL == headers)) {
 		goto fail;
 	}
 	curl_mime_headers(part, headers, 1); headers = NULL;
@@ -815,18 +817,18 @@ static struct curl_httppost *formpost(
 	struct formpost_header_list *hlast;
 
 	/* Headers must be created. */
-	if (NULL == hlist) {
+	if (UNLIKELY(NULL == hlist)) {
 		return NULL;
 	}
 
 	*hlist = calloc(1, sizeof(**hlist));
-	if (NULL == hlist) {
+	if (UNLIKELY(NULL == hlist)) {
 		return NULL;
 	}
 	hlast = *hlist;
 
 	hlast->headers = build_start_headers(1);
-	if (NULL == hlast->headers) {
+	if (UNLIKELY(NULL == hlast->headers)) {
 		goto fail;
 	}
 
@@ -836,18 +838,18 @@ static struct curl_httppost *formpost(
 	    CURLFORM_PTRCONTENTS, request,
 	    CURLFORM_CONTENTSLENGTH, (long)request_length,
 	    CURLFORM_END);
-	if (CURL_FORMADD_OK != form_err) {
+	if (UNLIKELY(CURL_FORMADD_OK != form_err)) {
 		goto fail;
 	}
 
 	hlast->next = calloc(1, sizeof(*hlast->next));
-	if (NULL == hlast->next) {
+	if (UNLIKELY(NULL == hlast->next)) {
 		goto fail;
 	}
 	hlast = hlast->next;
 
 	hlast->headers = build_attachment_headers(content_id, dm_file);
-	if (NULL == hlast->headers) {
+	if (UNLIKELY(NULL == hlast->headers)) {
 		goto fail;
 	}
 
@@ -857,7 +859,7 @@ static struct curl_httppost *formpost(
 	    CURLFORM_PTRCONTENTS, dm_file->data,
 	    CURLFORM_CONTENTSLENGTH, (long)dm_file->data_length,
 	    CURLFORM_END);
-	if (CURL_FORMADD_OK != form_err) {
+	if (UNLIKELY(CURL_FORMADD_OK != form_err)) {
 		goto fail;
 	}
 
@@ -2105,7 +2107,7 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 	void *http_response = NULL;
 	size_t response_length = 0;
 
-	if (NULL == context) {
+	if (UNLIKELY(NULL == context)) {
 		return IE_INVALID_CONTEXT;
 	}
 	if (UNLIKELY((SCF_SND_XOP & s_flags) &&
@@ -2114,11 +2116,11 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 	         (NULL == req->dm_file)))) {
 		return IE_INVAL;
 	}
-	if ((NULL == response_document && NULL != response_node_list) ||
-	    (NULL != response_document && NULL == response_node_list)) {
+	if (UNLIKELY((NULL == response_document && NULL != response_node_list)
+	        || (NULL != response_document && NULL == response_node_list))) {
 		return IE_INVAL;
 	}
-	if ((NULL == raw_response_length) && (NULL != raw_response)) {
+	if (UNLIKELY((NULL == raw_response_length) && (NULL != raw_response))) {
 		return IE_INVAL;
 	}
 
@@ -2133,19 +2135,20 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 	}
 
 	url = _isds_astrcat(context->url_vodz, file);
-	if (NULL == url) {
+	if (UNLIKELY(NULL == url)) {
 		return IE_NOMEM;
 	}
 
 	err = build_http_request(context, (NULL != req) ? req->request : NULL,
 	    &http_request,
 	    ((SCF_SND_XOP | SCF_RCV_XOP) & s_flags) ? SOAP_1_2 : SOAP_1_1);
-	if (IE_SUCCESS != err) {
+	if (UNLIKELY(IE_SUCCESS != err)) {
 		goto leave;
 	}
 
 	/* Don't handle OTP or MEP login credentials here. */
-	if ((context->otp_credentials != NULL) || (context->mep_credentials != NULL)) {
+	if (UNLIKELY((context->otp_credentials != NULL) ||
+	        (context->mep_credentials != NULL))) {
 		err = IE_INVAL;
 		isds_printf_message(context,
 		    _("High-volume data message end point doesn't handle OTP nor MEP login credentials."));
@@ -2173,7 +2176,7 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 	 * to be processed too.
 	 */
 
-	if (IE_SUCCESS != err) {
+	if (UNLIKELY(IE_SUCCESS != err)) {
 		goto leave;
 	}
 
@@ -2219,9 +2222,9 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 	 * Do it after HTTP code check because 401 Unauthorized returns HTML web
 	 * page for browsers.
 	 */
-	if ((NULL != mime_type) && (0 != strcmp(mime_type, "text/xml"))
-	    && (0 != strcmp(mime_type, "application/soap+xml"))
-	    && (0 != strcmp(mime_type, "application/xml"))) {
+	if (UNLIKELY((NULL != mime_type) && (0 != strcmp(mime_type, "text/xml"))
+	        && (0 != strcmp(mime_type, "application/soap+xml"))
+	        && (0 != strcmp(mime_type, "application/xml")))) {
 		char *mime_type_locale = _isds_utf82locale(mime_type);
 		isds_printf_message(context,
 		    _("%s: bad MIME type sent by server: %s"), url,
@@ -2234,7 +2237,7 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 	err = process_http_response(context, http_response, response_length,
 	    response_document, response_node_list,
 	    ((SCF_SND_XOP | SCF_RCV_XOP) & s_flags) ? SOAP_1_2 : SOAP_1_1);
-	if (IE_SUCCESS != err) {
+	if (UNLIKELY(IE_SUCCESS != err)) {
 		goto leave;
 	}
 
