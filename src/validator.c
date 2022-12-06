@@ -1,9 +1,12 @@
-#include "isds_priv.h"
-#include "utils.h"
+#include "isds_priv.h" /* Must be included first. */
+
+#include "compiler.h"
+#include "internal_types.h"
 #include "validator.h"
+#include "utils.h"
 #if HAVE_LIBCURL
-    #include "soap.h"
-#endif
+#  include "soap.h"
+#endif /* !HAVE_LIBCURL */
 
 
 #if HAVE_LIBCURL
@@ -258,8 +261,7 @@ leave:
 }
 
 _hidden enum isds_error _isds_vodz(struct isds_ctx *context,
-    const enum isds_service service, int v_flags, const xmlNodePtr request,
-    const char *content_id, const struct isds_dmFile *dm_file,
+    const enum isds_service service, int v_flags, const struct comm_req *req,
     xmlDoc **response, void **raw_response, size_t *raw_response_length)
 {
 	enum isds_error err = IE_SUCCESS;
@@ -302,8 +304,8 @@ _hidden enum isds_error _isds_vodz(struct isds_ctx *context,
 		int s_flags = SCF_BASIC;
 		s_flags |= (VODZ_SND_XOP & v_flags) ? SCF_SND_XOP : SCF_BASIC;
 		s_flags |= (VODZ_RCV_XOP & v_flags) ? SCF_RCV_XOP : SCF_BASIC;
-		err = _isds_soap_vodz(context, file, s_flags, request,
-		    content_id, dm_file, &response_document,
+		err = _isds_soap_vodz(context, file, s_flags, req,
+		    &response_document,
 		    &response_body, raw_response, raw_response_length);
 	}
 

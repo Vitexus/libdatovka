@@ -3,6 +3,8 @@
 
 #include "libdatovka/isds.h"
 
+struct comm_req; /* Forward declaration. */
+
 /* Flags to be used when working with SOAP. */
 enum soap_communication_flags {
 	SCF_BASIC = 0x00, /* Send plain XML, receive plain XML. */
@@ -45,8 +47,7 @@ isds_error _isds_soap(struct isds_ctx *context, const char *file,
  * @request is XML node set with SOAP request body.
  * @file must be NULL, @request should be NULL rather than empty, if they should
  * not be signalled in the SOAP request.
- * @content_id href value of the Include MTOM/XOP element
- * @dm_file file content
+ * @req contains XML request and optionally additional binary data to be added
  * @response_document is an automatically allocated XML document whose subtree
  * identified by @response_node_list holds the SOAP response body content. You
  * must xmlFreeDoc() it. If you don't care pass NULL and also
@@ -62,8 +63,7 @@ isds_error _isds_soap(struct isds_ctx *context, const char *file,
  * Side effect: message buffer
  */
 enum isds_error _isds_soap_vodz(struct isds_ctx *context, const char *file,
-    int s_flags, const xmlNodePtr request,
-    const char *content_id, const struct isds_dmFile *dm_file,
+    int s_flags, const struct comm_req *req,
     xmlDoc **response_document, xmlNode **response_node_list,
     void **raw_response, size_t *raw_response_length);
 

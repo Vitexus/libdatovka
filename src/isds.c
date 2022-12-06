@@ -1,4 +1,5 @@
-#include "isds_priv.h"
+#include "isds_priv.h" /* Must be included first. */
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -7,9 +8,12 @@
 #include <stdint.h>     /* For uint8_t and intmax_t */
 #include <limits.h>     /* Because of LONG_{MIN,MAX} constants */
 #include <inttypes.h>   /* For PRIdMAX formatting macro */
+
+#include "compiler.h"
+#include "internal_types.h"
 #include "utils.h"
 #if HAVE_LIBCURL
-    #include "soap.h"
+#  include "soap.h"
 #endif
 #include "validator.h"
 #include "crypto.h"
@@ -7672,8 +7676,13 @@ static isds_error send_destroy_request_check_response(
     if (service != SERVICE_VODZ_DM_OPERATIONS) {
         err = _isds(context, service, *request, response, NULL, NULL);
     } else {
-        err = _isds_vodz(context, service, VODZ_BASIC, *request, NULL, NULL,
-                response, NULL, NULL);
+        const struct comm_req req = {
+            .request = *request,
+            .content_id = NULL,
+            .dm_file = NULL
+        };
+        err = _isds_vodz(context, service, VODZ_BASIC, &req, response,
+                NULL, NULL);
     }
     xmlFreeNode(*request); *request = NULL;
 
@@ -12615,8 +12624,15 @@ enum isds_error isds_UploadAttachment(struct isds_ctx *context,
 	    _("Sending UploadAttachment request to ISDS\n"));
 
 	/* Send request. */
-	err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS, VODZ_BASIC,
-	    request, NULL, NULL, &response, NULL, NULL);
+	{
+		const struct comm_req req = {
+			.request = request,
+			.content_id = NULL,
+			.dm_file = NULL
+		};
+		err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS,
+		    VODZ_BASIC, &req, &response, NULL, NULL);
+	}
 
 	if (IE_SUCCESS != err) {
 		isds_log(ILF_ISDS, ILL_DEBUG,
@@ -12766,9 +12782,15 @@ enum isds_error isds_UploadAttachment_mtomxop(struct isds_ctx *context,
 	    _("Sending MTOM/XOP UploadAttachment request to ISDS\n"));
 
 	/* Send request. */
-	err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS,
-	    VODZ_SND_XOP, request, ATTACHMENT_CID, dm_file,
-	    &response, NULL, NULL);
+	{
+		const struct comm_req req = {
+			.request = request,
+			.content_id = ATTACHMENT_CID,
+			.dm_file = dm_file
+		};
+		err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS,
+		    VODZ_SND_XOP, &req, &response, NULL, NULL);
+	}
 
 	if (IE_SUCCESS != err) {
 		isds_log(ILF_ISDS, ILL_DEBUG,
@@ -13035,8 +13057,15 @@ enum isds_error isds_DownloadAttachment(struct isds_ctx *context,
 	    _("Sending DownloadAttachment request to ISDS\n"));
 
 	/* Send request. */
-	err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS, VODZ_BASIC,
-	    request, NULL, NULL, &response, NULL, NULL);
+	{
+		const struct comm_req req = {
+			.request = request,
+			.content_id = NULL,
+			.dm_file = NULL
+		};
+		err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS,
+		    VODZ_BASIC, &req, &response, NULL, NULL);
+	}
 
 	if (IE_SUCCESS != err) {
 		isds_log(ILF_ISDS, ILL_DEBUG,
@@ -13184,8 +13213,15 @@ enum isds_error isds_CreateBigMessage(struct isds_ctx *context,
 	isds_log(ILF_ISDS, ILL_DEBUG, _("Sending CreateBigMessage request to ISDS\n"));
 
 	/* Send request */
-	err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS, VODZ_BASIC,
-	    request, NULL, NULL, &response, NULL, NULL);
+	{
+		const struct comm_req req = {
+			.request = request,
+			.content_id = NULL,
+			.dm_file = NULL
+		};
+		err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS,
+		    VODZ_BASIC, &req, &response, NULL, NULL);
+	}
 
 	/* Don't' destroy request, we want to provide it to application later */
 
@@ -13869,8 +13905,13 @@ static isds_error build_send_check_message_request(struct isds_ctx *context,
         err = _isds(context, service, request, response,
                 raw_response, raw_response_length);
     } else {
-        err = _isds_vodz(context, service, VODZ_BASIC, request, NULL, NULL,
-                response, raw_response, raw_response_length);
+        const struct comm_req req = {
+            .request = request,
+            .content_id = NULL,
+            .dm_file = NULL
+        };
+        err = _isds_vodz(context, service, VODZ_BASIC, &req, response,
+                raw_response, raw_response_length);
     }
     xmlFreeNode(request); request = NULL;
 
@@ -16479,16 +16520,20 @@ enum isds_error isds_AuthenticateBigMessage_mtomxop(struct isds_ctx *context,
 
 	/* Send request. */
 	{
-		struct isds_dmFile dm_file = {
+		const struct isds_dmFile dm_file = {
 			.data = (void *)data,
 			.data_length = length,
 			.dmFileMetaType = FILEMETATYPE_MAIN,
 			.dmMimeType = NULL,
 			.dmFileDescr = "message.zfo"
 		};
+		const struct comm_req req = {
+			.request = request,
+			.content_id = ATTACHMENT_CID,
+			.dm_file = &dm_file
+		};
 		err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS,
-		    VODZ_SND_XOP, request, ATTACHMENT_CID, &dm_file,
-		    &response, NULL, NULL);
+		    VODZ_SND_XOP, &req, &response, NULL, NULL);
 	}
 
 	if (IE_SUCCESS != err) {

@@ -1,10 +1,14 @@
-#include "isds_priv.h"
-#include "soap.h"
-#include "utils.h"
+#include "isds_priv.h" /* Must be included first. */
+
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>    /* strncasecmp(3) */
+#include <strings.h> /* strncasecmp(3) */
+
+#include "compiler.h"
+#include "internal_types.h"
+#include "soap.h"
 #include "system.h"
+#include "utils.h"
 
 /* Flags to be used when communicating over HTTP. */
 enum http_communication_flags {
@@ -2089,8 +2093,7 @@ leave:
 }
 
 _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
-    const char *file, int s_flags, const xmlNodePtr request,
-    const char *content_id, const struct isds_dmFile *dm_file,
+    const char *file, int s_flags, const struct comm_req *req,
     xmlDoc **response_document, xmlNode **response_node_list,
     void **raw_response, size_t *raw_response_length)
 {
@@ -2105,8 +2108,10 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 	if (NULL == context) {
 		return IE_INVALID_CONTEXT;
 	}
-	if ((SCF_SND_XOP & s_flags) &&
-	    ((NULL == content_id) || ('\0' == *content_id) || (NULL == dm_file))) {
+	if (UNLIKELY((SCF_SND_XOP & s_flags) &&
+	        ((NULL == req) ||
+	         (NULL == req->content_id) || ('\0' == *req->content_id) ||
+	         (NULL == req->dm_file)))) {
 		return IE_INVAL;
 	}
 	if ((NULL == response_document && NULL != response_node_list) ||
@@ -2132,7 +2137,8 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 		return IE_NOMEM;
 	}
 
-	err = build_http_request(context, request, &http_request,
+	err = build_http_request(context, (NULL != req) ? req->request : NULL,
+	    &http_request,
 	    ((SCF_SND_XOP | SCF_RCV_XOP) & s_flags) ? SOAP_1_2 : SOAP_1_1);
 	if (IE_SUCCESS != err) {
 		goto leave;
@@ -2155,7 +2161,9 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 		int h_flags = HCF_BASIC;
 		h_flags |= (SCF_SND_XOP & s_flags) ? HCF_SND_XOP : HCF_BASIC;
 		h_flags |= (SCF_RCV_XOP & s_flags) ? HCF_RCV_XOP : HCF_BASIC;
-		err = http(context, url, h_flags, http_request->content, http_request->use, content_id, dm_file,
+		err = http(context, url, h_flags, http_request->content, http_request->use,
+		    (NULL != req) ? req->content_id : NULL,
+		    (NULL != req) ? req->dm_file : NULL,
 		    &http_response, &response_length,
 		    &mime_type, NULL, &http_code, NULL);
 	}

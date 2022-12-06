@@ -12,6 +12,7 @@ libdatovka_la_SOURCES = \
 	compiler.h \
 	crypto.h \
 	gettext.h \
+	internal_types.h \
 	isds.c \
 	isds_priv.h \
 	physxml.c \
