@@ -1192,16 +1192,26 @@ static isds_error http(struct isds_ctx *context,
     }
 #endif /* HAVE_DECL_CURLOPT_HEADEROPT */
     if (!curl_err) {
-        headers = curl_slist_append(headers,
-                "Accept: application/soap+xml,application/xml,text/xml");
+        if (!(HCF_RCV_XOP & h_flags)) {
+            headers = curl_slist_append(headers,
+                    "Accept: application/soap+xml,application/xml,text/xml");
+        } else {
+            headers = curl_slist_append(headers,
+                    "Accept: multipart/related");
+        }
         if (!headers) {
             err = IE_NOMEM;
             goto leave;
         }
-        if (!(HCF_SND_XOP & h_flags)) {
+        if (!((HCF_SND_XOP | HCF_RCV_XOP) & h_flags)) {
+            /* Won't receive MTOM/XOP response when using this header value in request. */
             headers = curl_slist_append(headers, "Content-Type: text/xml");
-        } else {
-            headers = curl_slist_append(headers, "Content-Type: multipart/related; type=\"application/xop+xml\"; start=\"<rootpart@soapui.org>\"; start-info=\"application/soap+xml\"; action=\"\"");
+        } else if (HCF_SND_XOP & h_flags) {
+            headers = curl_slist_append(headers,
+                    "Content-Type: multipart/related; type=\"application/xop+xml\"; start=\"<rootpart@soapui.org>\"; start-info=\"application/soap+xml\"; action=\"\"");
+        } else { /* HCF_RCV_XOP & h_flags */
+            headers = curl_slist_append(headers,
+                    "Content-Type: application/soap+xml; charset=utf-8");
         }
         if (!headers) {
             err = IE_NOMEM;
