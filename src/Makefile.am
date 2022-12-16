@@ -1,10 +1,14 @@
 
 localedir = $(datadir)/locale
 
-AM_CPPFLAGS += -I$(top_srcdir)/include
+MULTIPART_PARSER_ROOT = 3rdparty/multipart-parser-c/multipart-parser-c
+
+AM_CPPFLAGS += -I$(top_srcdir)/include -I$(MULTIPART_PARSER_ROOT)
 
 lib_LTLIBRARIES = libdatovka.la
 libdatovka_la_SOURCES = \
+	$(MULTIPART_PARSER_ROOT)/multipart_parser.c \
+	$(MULTIPART_PARSER_ROOT)/multipart_parser.h \
 	cdecode.c \
 	cdecode.h \
 	cencode.c \
