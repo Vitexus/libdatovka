@@ -1,11 +1,13 @@
 #include "isds_priv.h"
-#include "physxml.h"
-#include "utils.h"
-#include "system.h"
 
-#include <string.h>
 #include <expat.h>
 #include <inttypes.h>
+#include <string.h>
+
+#include "compiler.h" /* _hidden */
+#include "physxml.h"
+#include "system.h"
+#include "utils.h" /* PANIC */
 
 #define NS_CHAR_SEPARATOR '>'
 

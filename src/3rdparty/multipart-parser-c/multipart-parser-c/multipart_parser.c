@@ -8,8 +8,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "compiler.h" /* _hidden */
 #include "multipart_parser.h"
-#include "utils.h" /* _hidden */
 
 static void _multipart_log(const char *file, int line, const char * format, ...)
 {

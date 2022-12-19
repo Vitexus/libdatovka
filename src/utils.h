@@ -5,14 +5,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-/* _hidden macro marks library private symbols. GCC can exclude them from global
- * symbols table */
-#if defined(__GNUC__) && (__GNUC__ >= 4) && !defined(_WIN32)
-#define _hidden __attribute__((visibility("hidden")))
-#else
-#define _hidden
-#endif
-
 /* PANIC macro aborts current process without any clean up.
  * Use it as last resort fatal error solution */
 #define PANIC(message) { \

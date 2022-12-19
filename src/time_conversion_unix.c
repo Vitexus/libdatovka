@@ -3,8 +3,9 @@
 #include <stdlib.h> /* getenv */
 #include <string.h>
 
+#include "compiler.h" /* _hidden */
 #include "time_conversion.h"
-#include "utils.h" /* _hidden, PANIC */
+#include "utils.h" /* PANIC */
 
 static char *tz_orig = NULL; /* Copy of original TZ variable */
 

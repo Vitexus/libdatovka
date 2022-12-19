@@ -12,6 +12,7 @@
 #include "utils.h"
 #include "cencode.h"
 #include "cdecode.h"
+#include "compiler.h" /* _hidden */
 #include "system.h"
 
 /* Concatenate two strings into newly allocated buffer.
