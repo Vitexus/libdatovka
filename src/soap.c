@@ -877,9 +877,8 @@ fail:
  * @request_length is length of @request in bytes
  * @content_id href value of the Include MTOM/XOP element
  * @dm_file file content
- * @reponse is automatically reallocated() buffer to fit HTTP response with
- * @response_length (does not need to match allocated memory exactly). You must
- * free() the @response.
+ * @response is automatically reallocated() buffer to fit the HTTP response.
+ * You must free the @response content.
  * @mime_type is automatically allocated MIME type send by server (*NULL if not
  * sent). Set NULL if you don't care.
  * @charset is charset of the body signalled by server. The same constrains
@@ -900,13 +899,12 @@ static isds_error http(struct isds_ctx *context,
         const char *url, const int h_flags,
         const void *request, const size_t request_length,
         const char *content_id, const struct isds_dmFile *dm_file,
-        void **response, size_t *response_length,
+        struct dbuf *response,
         char **mime_type, char **charset, long *http_code,
         struct auth_headers *response_otp_headers) {
 
     CURLcode curl_err;
     isds_error err = IE_SUCCESS;
-    struct dbuf body;
     char *content_type;
     struct curl_slist *headers = NULL;
 #if HAVE_DECL_CURLOPT_MIMEPOST /* Since curl-7.56.0 */
@@ -924,13 +922,14 @@ static isds_error http(struct isds_ctx *context,
         ((NULL == content_id) || ('\0' == *content_id) || (NULL == dm_file))) {
         return IE_INVAL;
     }
-    if (!response || !response_length) return IE_INVAL;
+    if (UNLIKELY(NULL == response)) {
+        return IE_INVAL;
+    }
 
     /* Clean authentication headers */
 
-    /* Set the body here to allow deallocation in leave block */
-    body.data = *response;
-    body.len = 0;
+    /* Use the body here to allow deallocation in leave block */
+    response->len = 0;
 
     /* Set Request-URI */
     curl_err = curl_easy_setopt(context->curl, CURLOPT_URL, url);
@@ -1164,7 +1163,7 @@ static isds_error http(struct isds_ctx *context,
                 write_body);
     }
     if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEDATA, &body);
+        curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEDATA, response);
     }
 
     /* Set get-response-headers function if needed.
@@ -1338,10 +1337,10 @@ static isds_error http(struct isds_ctx *context,
     isds_log(ILF_HTTP, ILL_DEBUG, _("Final response to %s received\n"), url);
     isds_log(ILF_HTTP, ILL_DEBUG,
             _("Response body length: %zu, content follows:\n"),
-            body.len);
-    if (_isds_sizet2int(body.len) >= 0) {
+            response->len);
+    if (_isds_sizet2int(response->len) >= 0) {
         isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n",
-            _isds_sizet2int(body.len), body.data);
+            _isds_sizet2int(response->len), response->data);
     }
     isds_log(ILF_HTTP, ILL_DEBUG, _("End of response body\n"));
 
@@ -1450,7 +1449,7 @@ leave:
 #endif /* HAVE_DECL_CURLOPT_MIMEPOST */
 
     if (err) {
-        dbuf_free_content(&body);
+        dbuf_free_content(response);
 
         if (mime_type) {
             free(*mime_type);
@@ -1464,58 +1463,60 @@ leave:
         if (err != IE_ABORTED) _isds_close_connection(context);
     }
 
-    *response = body.data;
-    *response_length = body.len;
+    /* Response content is passed into caller. */
 
     return err;
 }
 
-/* Converts numeric server response when periodically checking for MEP
+/*
+ * Converts numeric server response when periodically checking for MEP
  * authentication status.
  * @str String containing the numeric server response value
  * @len String length
  * @return server response code or MEP_RESOLUTION_UNKNOWN if the code was not
- * recognised. */
-static isds_mep_resolution mep_ws_state_response(const char *str, size_t len) {
-    isds_mep_resolution res = MEP_RESOLUTION_UNKNOWN; /* Default error. */
+ * recognised.
+ */
+static isds_mep_resolution mep_ws_state_response(const struct dbuf *body)
+{
+	isds_mep_resolution res = MEP_RESOLUTION_UNKNOWN; /* Default error. */
 
-    if ((str == NULL) || (len == 0)) {
-        return res;
-    }
-    /* Ensure trailing '\0' character. */
-    char *tmp_str = malloc(len + 1);
-    if (tmp_str == NULL) {
-        return res;
-    }
-    memcpy(tmp_str, str, len);
-    tmp_str[len] = '\0';
+	if (UNLIKELY((NULL == body) || (NULL == body->data) || (0 == body->len))) {
+		return res;
+	}
+	/* Ensure trailing '\0' character. */
+	char *tmp_str = malloc(body->len + 1);
+	if (UNLIKELY(NULL == tmp_str)) {
+		return res;
+	}
+	memcpy(tmp_str, body->data, body->len);
+	tmp_str[body->len] = '\0';
 
-    char *endptr;
-    long num = strtol(tmp_str, &endptr, 10);
-    if (*endptr != '\0' || LONG_MIN == num || LONG_MAX == num) {
-        return res;
-    }
+	char *endptr;
+	long num = strtol(tmp_str, &endptr, 10);
+	if (UNLIKELY((*endptr != '\0') || (LONG_MIN == num) || (LONG_MAX == num))) {
+		return res;
+	}
 
-    switch (num) {
-        case -1:
-            res = MEP_RESOLUTION_UNRECOGNISED;
-            break;
-        case 1:
-            res = MEP_RESOLUTION_ACK_REQUESTED;
-            break;
-        case 2:
-            res = MEP_RESOLUTION_ACK;
-            break;
-        case 3:
-            res = MEP_RESOLUTION_ACK_EXPIRED;
-            break;
-        default:
-            break;
-    }
+	switch (num) {
+	case -1:
+		res = MEP_RESOLUTION_UNRECOGNISED;
+		break;
+	case 1:
+		res = MEP_RESOLUTION_ACK_REQUESTED;
+		break;
+	case 2:
+		res = MEP_RESOLUTION_ACK;
+		break;
+	case 3:
+		res = MEP_RESOLUTION_ACK_EXPIRED;
+		break;
+	default:
+		break;
+	}
 
-    free(tmp_str);
+	free(tmp_str);
 
-    return res;
+	return res;
 }
 
 /* Build SOAP request.
@@ -1643,8 +1644,7 @@ leave:
 
 /* Process SOAP response.
  * @context needed for error logging,
- * @response is a pointer to a buffer where response data are held,
- * @response_length is the size of the response,
+ * @response is a pointer to a buffer where response data are held
  * @response_document is an automatically allocated XML document whose sub-tree
  * identified by @response_node_list holds the SOAP response body content. You
  * must xmlFreeDoc() it. If you don't care pass NULL and also
@@ -1657,7 +1657,7 @@ leave:
  */
 static
 isds_error process_http_response(struct isds_ctx *context,
-        const void *response, size_t response_length,
+        const struct dbuf *response,
         xmlDocPtr *response_document, xmlNodePtr *response_node_list,
         enum soap_ns_type sv) {
 
@@ -1679,7 +1679,7 @@ isds_error process_http_response(struct isds_ctx *context,
     /* TODO: Convert returned body into XML default encoding */
 
     /* Parse the HTTP body as XML */
-    response_soap_doc = xmlParseMemory(response, response_length);
+    response_soap_doc = xmlParseMemory(response->data, response->len);
     if (NULL == response_soap_doc) {
         err = IE_XML;
         goto leave;
@@ -1697,10 +1697,10 @@ isds_error process_http_response(struct isds_ctx *context,
         goto leave;
     }
 
-    if (_isds_sizet2int(response_length) >= 0) {
+    if (_isds_sizet2int(response->len) >= 0) {
         isds_log(ILF_SOAP, ILL_DEBUG,
             _("SOAP response received:\n%.*s\nEnd of SOAP response\n"),
-            _isds_sizet2int(response_length), response);
+            _isds_sizet2int(response->len), response->data);
     }
 
     /* Check for SOAP version */
@@ -1868,8 +1868,9 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
     long http_code = 0;
     struct auth_headers response_otp_headers;
     xmlBufferPtr http_request = NULL;
-    void *http_response = NULL;
-    size_t response_length = 0;
+    struct dbuf http_response;
+
+    dbuf_init(&http_response);
 
     if (!context) return IE_INVALID_CONTEXT;
     if ( (NULL == response_document && NULL != response_node_list) ||
@@ -1905,12 +1906,12 @@ redirect:
     if ((NULL != context->mep_credentials) && (NULL != context->mep_credentials->intermediate_uri)) {
         /* POST does not work for the intermediate URI, using GET here. */
         err = http(context, context->mep_credentials->intermediate_uri, HCF_USE_GET, NULL, 0, NULL, NULL,
-                &http_response, &response_length,
+                &http_response,
                 &mime_type, NULL, &http_code,
                 ((context->otp_credentials == NULL) && (context->mep_credentials == NULL)) ? NULL: &response_otp_headers);
     } else {
         err = http(context, url, HCF_BASIC, http_request->content, http_request->use, NULL, NULL,
-                &http_response, &response_length,
+                &http_response,
                 &mime_type, NULL, &http_code,
                 ((context->otp_credentials == NULL) && (context->mep_credentials == NULL)) ? NULL: &response_otp_headers);
     }
@@ -1941,7 +1942,7 @@ redirect:
             } else if (NULL != context->mep_credentials) {
                 /* The server returns just a numerical value in the body, nothing else. */
                 context->mep_credentials->resolution =
-                        mep_ws_state_response(http_response, response_length);
+                        mep_ws_state_response(&http_response);
                 switch (context->mep_credentials->resolution) {
                     case MEP_RESOLUTION_ACK_REQUESTED:
                         /* Waiting for the user to acknowledge the login request
@@ -2073,7 +2074,7 @@ redirect:
     }
 
 
-    err = process_http_response(context, http_response, response_length,
+    err = process_http_response(context, &http_response,
             response_document, response_node_list, SOAP_1_1);
     if (IE_SUCCESS != err) {
         goto leave;
@@ -2081,19 +2082,18 @@ redirect:
 
 
     /* Save raw response */
-    if (NULL != raw_response) {
-        *raw_response = http_response;
-        http_response = NULL;
-    }
     if (NULL != raw_response_length) {
-        *raw_response_length = response_length;
+        *raw_response_length = http_response.len;
+    }
+    if (NULL != raw_response) {
+        *raw_response = dbuf_take(&http_response);
     }
 
 leave:
     if ((context->otp_credentials != NULL) || (context->mep_credentials != NULL))
         auth_headers_free(&response_otp_headers);
     free(mime_type);
-    free(http_response);
+    dbuf_free_content(&http_response);
     xmlBufferFree(http_request);
     free(url);
 
@@ -2110,8 +2110,9 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 	char *mime_type = NULL;
 	long http_code = 0;
 	xmlBuffer *http_request = NULL;
-	void *http_response = NULL;
-	size_t response_length = 0;
+	struct dbuf http_response;
+
+	dbuf_init(&http_response);
 
 	if (UNLIKELY(NULL == context)) {
 		return IE_INVALID_CONTEXT;
@@ -2173,7 +2174,7 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 		err = http(context, url, h_flags, http_request->content, http_request->use,
 		    (NULL != req) ? req->content_id : NULL,
 		    (NULL != req) ? req->dm_file : NULL,
-		    &http_response, &response_length,
+		    &http_response,
 		    &mime_type, NULL, &http_code, NULL);
 	}
 
@@ -2224,13 +2225,23 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 	}
 
 	/*
-	 * Check for Content-Type: text/xml.
+	 * Check for Content-Type header value.
 	 * Do it after HTTP code check because 401 Unauthorized returns HTML web
 	 * page for browsers.
 	 */
-	if (UNLIKELY((NULL != mime_type) && (0 != strcmp(mime_type, "text/xml"))
-	        && (0 != strcmp(mime_type, "application/soap+xml"))
-	        && (0 != strcmp(mime_type, "application/xml")))) {
+	if ((NULL == mime_type) || (0 == strcmp(mime_type, "text/xml"))
+	        || (0 == strcmp(mime_type, "application/soap+xml"))
+	        || (0 == strcmp(mime_type, "application/xml"))) {
+		/* Content-Type: text/xml */
+		err = process_http_response(context, &http_response,
+		    response_document, response_node_list,
+		    ((SCF_SND_XOP | SCF_RCV_XOP) & s_flags) ? SOAP_1_2 : SOAP_1_1);
+		if (UNLIKELY(IE_SUCCESS != err)) {
+			goto leave;
+		}
+	} else if (0 == strcmp(mime_type, "multipart/related")) {
+		/* Content-Type: multipart/related */
+	} else {
 		char *mime_type_locale = _isds_utf82locale(mime_type);
 		isds_printf_message(context,
 		    _("%s: bad MIME type sent by server: %s"), url,
@@ -2240,26 +2251,18 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 		goto leave;
 	}
 
-	err = process_http_response(context, http_response, response_length,
-	    response_document, response_node_list,
-	    ((SCF_SND_XOP | SCF_RCV_XOP) & s_flags) ? SOAP_1_2 : SOAP_1_1);
-	if (UNLIKELY(IE_SUCCESS != err)) {
-		goto leave;
-	}
-
 	/* Save raw response */
-	if (NULL != raw_response) {
-		*raw_response = http_response;
-		http_response = NULL;
-	}
 	if (NULL != raw_response_length) {
-		*raw_response_length = response_length;
+		*raw_response_length = http_response.len;
+	}
+	if (NULL != raw_response) {
+		*raw_response = dbuf_take(&http_response);
 	}
 
 leave:
 	/* Don't handle OTP or MEP login credentials here. */
 	free(mime_type);
-	free(http_response);
+	dbuf_free_content(&http_response);
 	xmlBufferFree(http_request);
 	free(url);
 
@@ -2317,8 +2320,9 @@ _hidden isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context) {
     isds_error err;
     char *url = NULL;
     long http_code;
-    void *response = NULL;
-    size_t response_length;
+    struct dbuf response;
+
+    dbuf_init(&response);
 
     if (context == NULL || (!context->otp && !context->mep)) return IE_INVALID_CONTEXT;
     if (context->curl == NULL) return IE_CONNECTION_CLOSED;
@@ -2333,10 +2337,10 @@ _hidden isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context) {
     err = http(context,
             url, HCF_USE_GET,
             NULL, 0, NULL, NULL,
-            &response, &response_length,
+            &response,
             NULL, NULL, &http_code,
             NULL);
-    free(response);
+    dbuf_free_content(&response);
     free(url);
     if (err) {
         /* long message set by http() */
