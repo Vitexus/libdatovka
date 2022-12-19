@@ -21,13 +21,15 @@ libdatovka_la_SOURCES = \
 	isds_priv.h \
 	physxml.c \
 	physxml.h \
-	utils.c \
-	utils.h \
-	validator.c \
-	validator.h \
 	system.h \
 	time_conversion.c \
-	time_conversion.h
+	time_conversion.h \
+	utils.c \
+	utils.h \
+	utils_memory.c \
+	utils_memory.h \
+	validator.c \
+	validator.h
 
 if USE_OPENSSL_BACKEND
 libdatovka_la_SOURCES += \

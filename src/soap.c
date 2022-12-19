@@ -9,6 +9,7 @@
 #include "soap.h"
 #include "system.h"
 #include "utils.h"
+#include "utils_memory.h"
 
 /* Flags to be used when communicating over HTTP. */
 enum http_communication_flags {
@@ -16,12 +17,6 @@ enum http_communication_flags {
 	HCF_USE_GET = 0x01, /* Use GET instead of POST. */
 	HCF_SND_XOP = 0x02, /* Send MTOM/XOP data. */
 	HCF_RCV_XOP = 0x04 /* Receive XTOM/XOP data. */
-};
-
-/* Private structure for write_body() call back */
-struct soap_body {
-    void *data;
-    size_t length;
 };
 
 /* Private structure for write_header() call back */
@@ -380,32 +375,35 @@ static isds_error unset_http_authorization(struct isds_ctx *context) {
     return error;
 }
 
-
-/* CURL call back function called when chunk of HTTP response body is available.
+/*
+ * CURL call back function called when chunk of HTTP response body is available.
  * @buffer points to new data
  * @size * @nmemb is length of the chunk in bytes. Zero means empty body.
  * @userp is private structure.
  * Must return the length of the chunk, otherwise CURL will signal
- * CURL_WRITE_ERROR. */
-static size_t write_body(void *buffer, size_t size, size_t nmemb, void *userp) {
-    struct soap_body *body = (struct soap_body *) userp;
-    void *new_data;
+ * CURL_WRITE_ERROR.
+ */
+static size_t write_body(void *buffer, size_t size, size_t nmemb, void *userp)
+{
+	struct dbuf *body = (struct dbuf *)userp;
 
-    /* FIXME: Check for (size * nmemb + body->lengt) !> SIZE_T_MAX.
-     * Precompute the product then. */
+	/*
+	 * FIXME: Check for (size * nmemb + body->lengt) !> SIZE_T_MAX.
+	 * Precompute the product then.
+	 */
 
-    if (!body) return 0;    /* This should never happen */
-    if (0 == (size * nmemb)) return 0; /* Empty body */
+	if (UNLIKELY(NULL == body)) {
+		return 0; /* This should never happen */
+	}
+	if (UNLIKELY((0 == (size * nmemb)))) {
+		return 0; /* Empty body */
+	}
 
-    new_data = realloc(body->data, body->length + size * nmemb);
-    if (!new_data) return 0;
+	if (UNLIKELY(0 != dbuf_append(body, buffer, size * nmemb))) {
+		return 0;
+	}
 
-    memcpy(new_data + body->length, buffer, size * nmemb);
-
-    body->data = new_data;
-    body->length += size * nmemb;
-
-    return (size * nmemb);
+	return (size * nmemb);
 }
 
 
@@ -908,7 +906,7 @@ static isds_error http(struct isds_ctx *context,
 
     CURLcode curl_err;
     isds_error err = IE_SUCCESS;
-    struct soap_body body;
+    struct dbuf body;
     char *content_type;
     struct curl_slist *headers = NULL;
 #if HAVE_DECL_CURLOPT_MIMEPOST /* Since curl-7.56.0 */
@@ -932,7 +930,7 @@ static isds_error http(struct isds_ctx *context,
 
     /* Set the body here to allow deallocation in leave block */
     body.data = *response;
-    body.length = 0;
+    body.len = 0;
 
     /* Set Request-URI */
     curl_err = curl_easy_setopt(context->curl, CURLOPT_URL, url);
@@ -1340,10 +1338,10 @@ static isds_error http(struct isds_ctx *context,
     isds_log(ILF_HTTP, ILL_DEBUG, _("Final response to %s received\n"), url);
     isds_log(ILF_HTTP, ILL_DEBUG,
             _("Response body length: %zu, content follows:\n"),
-            body.length);
-    if (_isds_sizet2int(body.length) >= 0) {
+            body.len);
+    if (_isds_sizet2int(body.len) >= 0) {
         isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n",
-            _isds_sizet2int(body.length), body.data);
+            _isds_sizet2int(body.len), body.data);
     }
     isds_log(ILF_HTTP, ILL_DEBUG, _("End of response body\n"));
 
@@ -1452,9 +1450,7 @@ leave:
 #endif /* HAVE_DECL_CURLOPT_MIMEPOST */
 
     if (err) {
-        free(body.data);
-        body.data = NULL;
-        body.length = 0;
+        dbuf_free_content(&body);
 
         if (mime_type) {
             free(*mime_type);
@@ -1469,7 +1465,7 @@ leave:
     }
 
     *response = body.data;
-    *response_length = body.length;
+    *response_length = body.len;
 
     return err;
 }

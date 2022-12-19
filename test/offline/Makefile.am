@@ -53,20 +53,24 @@ noinst_PROGRAMS = $(TESTS)
 common = ../test.c ../test.h ../test-tools.h \
 	$(INCLUDEDIR)/libdatovka/isds.h \
 	$(LIBDIR)/cdecode.c \
-	$(LIBDIR)/cencode.c \
-	$(LIBDIR)/isds.c \
-	$(LIBDIR)/physxml.c \
-	$(LIBDIR)/time_conversion.c \
-	$(LIBDIR)/utils.c \
-	$(LIBDIR)/validator.c \
 	$(LIBDIR)/cdecode.h \
+	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/cencode.h \
+	$(LIBDIR)/compiler.h \
 	$(LIBDIR)/crypto.h \
 	$(LIBDIR)/gettext.h \
+	$(LIBDIR)/internal_types.h \
+	$(LIBDIR)/isds.c \
 	$(LIBDIR)/isds_priv.h \
+	$(LIBDIR)/physxml.c \
 	$(LIBDIR)/physxml.h \
+	$(LIBDIR)/time_conversion.c \
 	$(LIBDIR)/time_conversion.h \
+	$(LIBDIR)/utils.c \
 	$(LIBDIR)/utils.h \
+	$(LIBDIR)/utils_memory.c \
+	$(LIBDIR)/utils_memory.h \
+	$(LIBDIR)/validator.c \
 	$(LIBDIR)/validator.h
 if USE_OPENSSL_BACKEND
 common += \
@@ -88,18 +92,22 @@ endif
 isds_common = ../test.c ../test.h ../test-tools.h \
 	$(INCLUDEDIR)/libdatovka/isds.h \
 	$(LIBDIR)/cdecode.c \
-	$(LIBDIR)/cencode.c \
-	$(LIBDIR)/physxml.c \
-	$(LIBDIR)/time_conversion.c \
-	$(LIBDIR)/utils.c \
-	$(LIBDIR)/validator.c \
 	$(LIBDIR)/cdecode.h \
+	$(LIBDIR)/cencode.c \
 	$(LIBDIR)/cencode.h \
+	$(LIBDIR)/compiler.h \
 	$(LIBDIR)/crypto.h \
+	$(LIBDIR)/internal_types.h \
 	$(LIBDIR)/isds_priv.h \
+	$(LIBDIR)/physxml.c \
 	$(LIBDIR)/physxml.h \
+	$(LIBDIR)/time_conversion.c \
 	$(LIBDIR)/time_conversion.h \
+	$(LIBDIR)/utils.c \
 	$(LIBDIR)/utils.h \
+	$(LIBDIR)/utils_memory.c \
+	$(LIBDIR)/utils_memory.h \
+	$(LIBDIR)/validator.c \
 	$(LIBDIR)/validator.h
 if USE_OPENSSL_BACKEND
 isds_common += \
@@ -121,19 +129,23 @@ endif
 soap_common = ../test.c ../test.h ../test-tools.h \
 	$(INCLUDEDIR)/libdatovka/isds.h \
 	$(LIBDIR)/cdecode.c \
+	$(LIBDIR)/cdecode.h \
 	$(LIBDIR)/cencode.c \
+	$(LIBDIR)/cencode.h \
+	$(LIBDIR)/compiler.h \
+	$(LIBDIR)/crypto.h \
+	$(LIBDIR)/internal_types.h \
+	$(LIBDIR)/isds_priv.h \
 	$(LIBDIR)/isds.c \
 	$(LIBDIR)/physxml.c \
-	$(LIBDIR)/time_conversion.c \
-	$(LIBDIR)/utils.c \
-	$(LIBDIR)/validator.c \
-	$(LIBDIR)/cdecode.h \
-	$(LIBDIR)/cencode.h \
-	$(LIBDIR)/crypto.h \
-	$(LIBDIR)/isds_priv.h \
 	$(LIBDIR)/physxml.h \
+	$(LIBDIR)/time_conversion.c \
 	$(LIBDIR)/time_conversion.h \
+	$(LIBDIR)/utils.c \
 	$(LIBDIR)/utils.h \
+	$(LIBDIR)/utils_memory.c \
+	$(LIBDIR)/utils_memory.h \
+	$(LIBDIR)/validator.c \
 	$(LIBDIR)/validator.h
 if USE_OPENSSL_BACKEND
 soap_common += \
