@@ -102,6 +102,17 @@ _hidden int dbuf_append_char(struct dbuf *dbuf, char ch)
 	return 0;
 }
 
+_hidden void *dbuf_take(struct dbuf *dbuf)
+{
+	if (UNLIKELY(NULL == dbuf)) {
+		return NULL;
+	}
+
+	void *data = dbuf->data;
+	dbuf->data = NULL;
+	return data;
+}
+
 _hidden void dbuf_free_content(struct dbuf *dbuf)
 {
 	if (UNLIKELY(NULL == dbuf)) {
