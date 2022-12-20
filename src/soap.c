@@ -562,16 +562,16 @@ static struct curl_slist *build_start_headers(_Bool add_content_type)
 	if (add_content_type) {
 		headers = curl_slist_append(headers,
 		    "Content-Type: application/xop+xml; charset=UTF-8; type=\"application/soap+xml\"");
-		if (NULL == headers) {
+		if (UNLIKELY(NULL == headers)) {
 			goto fail;
 		}
 	}
 	headers = curl_slist_append(headers, "Content-Transfer-Encoding: 8bit");
-	if (NULL == headers) {
+	if (UNLIKELY(NULL == headers)) {
 		goto fail;
 	}
 	headers = curl_slist_append(headers, "Content-ID: <rootpart@soapui.org>");
-	if (NULL == headers) {
+	if (UNLIKELY(NULL == headers)) {
 		goto fail;
 	}
 
@@ -895,577 +895,610 @@ fail:
  * been accepted by the server. You must consult @http_code. OTOH, failure
  * return value means the request could not been sent (e.g. SSL error).
  * Side effect: message buffer */
-static isds_error http(struct isds_ctx *context,
-        const char *url, const int h_flags,
-        const void *request, const size_t request_length,
-        const char *content_id, const struct isds_dmFile *dm_file,
-        struct dbuf *response,
-        char **mime_type, char **charset, long *http_code,
-        struct auth_headers *response_otp_headers) {
+static enum isds_error http(struct isds_ctx *context,
+    const char *url, const int h_flags,
+    const void *request, const size_t request_length,
+    const char *content_id, const struct isds_dmFile *dm_file,
+    struct dbuf *response,
+    char **mime_type, char **charset, long *http_code,
+    struct auth_headers *response_otp_headers) {
 
-    CURLcode curl_err;
-    isds_error err = IE_SUCCESS;
-    char *content_type;
-    struct curl_slist *headers = NULL;
+	CURLcode curl_err;
+	enum isds_error err = IE_SUCCESS;
+	char *content_type;
+	struct curl_slist *headers = NULL;
 #if HAVE_DECL_CURLOPT_MIMEPOST /* Since curl-7.56.0 */
-    struct curl_mime *multipart = NULL;
-    struct multipart_read_status p = {0, };
+	struct curl_mime *multipart = NULL;
+	struct multipart_read_status p = {0, };
 #else /* !HAVE_DECL_CURLOPT_MIMEPOST */
-    struct curl_httppost *post = NULL;
-    struct formpost_header_list *hl = NULL;
+	struct curl_httppost *post = NULL;
+	struct formpost_header_list *hl = NULL;
 #endif /* HAVE_DECL_CURLOPT_MIMEPOST */
 
-    if (!context) return IE_INVALID_CONTEXT;
-    if (!url) return IE_INVAL;
-    if (request_length > 0 && !request) return IE_INVAL;
-    if ((HCF_SND_XOP & h_flags) &&
-        ((NULL == content_id) || ('\0' == *content_id) || (NULL == dm_file))) {
-        return IE_INVAL;
-    }
-    if (UNLIKELY(NULL == response)) {
-        return IE_INVAL;
-    }
+	if (UNLIKELY(NULL == context)) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (UNLIKELY(NULL == url)) {
+		return IE_INVAL;
+	}
+	if (UNLIKELY((request_length > 0) && (NULL == request))) {
+		return IE_INVAL;
+	}
+	if (UNLIKELY((HCF_SND_XOP & h_flags) &&
+	    ((NULL == content_id) || ('\0' == *content_id) || (NULL == dm_file)))) {
+		return IE_INVAL;
+	}
+	if (UNLIKELY(NULL == response)) {
+	return IE_INVAL;
+	}
 
-    /* Clean authentication headers */
+	/* Clean authentication headers */
 
-    /* Use the body here to allow deallocation in leave block */
-    response->len = 0;
+	/* Use the body here to allow deallocation in leave block */
+	response->len = 0;
 
-    /* Set Request-URI */
-    curl_err = curl_easy_setopt(context->curl, CURLOPT_URL, url);
+	/* Set Request-URI */
+	curl_err = curl_easy_setopt(context->curl, CURLOPT_URL, url);
 
-    /* Set TLS options */
-    if (!curl_err && context->tls_verify_server) {
-        if (!*context->tls_verify_server)
-            isds_log(ILF_SEC, ILL_WARNING,
-                    _("Disabling server identity verification. "
-                    "That was your decision.\n"));
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_SSL_VERIFYPEER,
-                (*context->tls_verify_server)? 1L : 0L);
-        if (!curl_err) {
-            curl_err = curl_easy_setopt(context->curl, CURLOPT_SSL_VERIFYHOST,
-                    (*context->tls_verify_server)? 2L : 0L);
-        }
-    }
-    if (!curl_err && context->tls_ca_file) {
-        isds_log(ILF_SEC, ILL_INFO,
-                _("CA certificates will be searched in `%s' file since now\n"),
-                context->tls_ca_file);
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_CAINFO,
-                context->tls_ca_file);
-    }
-    if (!curl_err && context->tls_ca_dir) {
-        isds_log(ILF_SEC, ILL_INFO,
-                _("CA certificates will be searched in `%s' directory "
-                    "since now\n"), context->tls_ca_dir);
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_CAPATH,
-                context->tls_ca_dir);
-    }
-    if (!curl_err && context->tls_crl_file) {
+	/* Set TLS options */
+	if ((CURLE_OK == curl_err) && (NULL != context->tls_verify_server)) {
+		if (!*context->tls_verify_server) {
+			isds_log(ILF_SEC, ILL_WARNING,
+			    _("Disabling server identity verification. That was your decision.\n"));
+		}
+		curl_err = curl_easy_setopt(context->curl, CURLOPT_SSL_VERIFYPEER,
+		    (*context->tls_verify_server) ? 1L : 0L);
+		if (CURLE_OK == curl_err) {
+			curl_err = curl_easy_setopt(context->curl, CURLOPT_SSL_VERIFYHOST,
+			    (*context->tls_verify_server) ? 2L : 0L);
+		}
+	}
+	if ((CURLE_OK == curl_err) && (NULL != context->tls_ca_file)) {
+		isds_log(ILF_SEC, ILL_INFO,
+		    _("CA certificates will be searched in `%s' file since now\n"),
+		    context->tls_ca_file);
+		curl_err = curl_easy_setopt(context->curl, CURLOPT_CAINFO,
+		    context->tls_ca_file);
+	}
+	if ((CURLE_OK == curl_err) && (NULL != context->tls_ca_dir)) {
+		isds_log(ILF_SEC, ILL_INFO,
+		    _("CA certificates will be searched in `%s' directory since now\n"),
+		    context->tls_ca_dir);
+		curl_err = curl_easy_setopt(context->curl, CURLOPT_CAPATH,
+		    context->tls_ca_dir);
+	}
+	if ((CURLE_OK == curl_err) && (NULL != context->tls_crl_file)) {
 #if HAVE_DECL_CURLOPT_CRLFILE /* Since curl-7.19.0 */
-        isds_log(ILF_SEC, ILL_INFO,
-                _("CRLs will be searched in `%s' file since now\n"),
-                context->tls_crl_file);
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_CRLFILE,
-                context->tls_crl_file);
-#else
-        isds_log(ILF_SEC, ILL_WARNING,
-                _("Your curl library cannot pass certificate revocation "
-                    "list to cryptographic library.\n"
-                    "Make sure cryptographic library default setting "
-                    "delivers proper CRLs,\n"
-                    "or upgrade curl.\n"));
-#endif /* not HAVE_DECL_CURLOPT_CRLFILE */
-    }
+		isds_log(ILF_SEC, ILL_INFO,
+		    _("CRLs will be searched in `%s' file since now\n"),
+		    context->tls_crl_file);
+		curl_err = curl_easy_setopt(context->curl, CURLOPT_CRLFILE,
+		    context->tls_crl_file);
+#else /* !HAVE_DECL_CURLOPT_CRLFILE */
+		isds_log(ILF_SEC, ILL_WARNING,
+		    _("Your curl library cannot pass certificate revocation list to cryptographic library.\n"
+		        "Make sure cryptographic library default setting delivers proper CRLs,\n"
+		        "or upgrade curl.\n"));
+#endif /* HAVE_DECL_CURLOPT_CRLFILE */
+	}
 
-
-    if ((NULL == context->mep_credentials) || (NULL == context->mep_credentials->intermediate_uri)) {
-        /* Don't set credentials in intermediate mobile key login state. */
-        /* Set credentials */
+	if ((NULL == context->mep_credentials) || (NULL == context->mep_credentials->intermediate_uri)) {
+		/* Don't set credentials in intermediate mobile key login state. */
+		/* Set credentials */
 #if HAVE_DECL_CURLOPT_USERNAME /* Since curl-7.19.1 */
-        if (!curl_err && context->username) {
-            curl_err = curl_easy_setopt(context->curl, CURLOPT_USERNAME,
-                    context->username);
-        }
-        if (!curl_err && context->password) {
-            curl_err = curl_easy_setopt(context->curl, CURLOPT_PASSWORD,
-                    context->password);
-        }
-#else
-        if (!curl_err && (context->username || context->password)) {
-            char *userpwd =
-                _isds_astrcat3(context->username, ":", context->password);
-            if (!userpwd) {
-                isds_log_message(context, _("Could not pass credentials to CURL"));
-                err = IE_NOMEM;
-                goto leave;
-            }
-            curl_err = curl_easy_setopt(context->curl, CURLOPT_USERPWD, userpwd);
-            free(userpwd);
-        }
-#endif /* not HAVE_DECL_CURLOPT_USERNAME */
-    }
+		if ((CURLE_OK == curl_err) && (NULL != context->username)) {
+			curl_err = curl_easy_setopt(context->curl, CURLOPT_USERNAME,
+			    context->username);
+		}
+		if ((CURLE_OK == curl_err) && (NULL != context->password)) {
+			curl_err = curl_easy_setopt(context->curl, CURLOPT_PASSWORD,
+			    context->password);
+		}
+#else /* !HAVE_DECL_CURLOPT_USERNAME */
+		if ((CURLE_OK == curl_err) &&
+		    ((NULL != context->username) || (NULL != context->password))) {
+			char *userpwd =
+			    _isds_astrcat3(context->username, ":", context->password);
+			if (UNLIKELY(NULL == userpwd)) {
+				isds_log_message(context, _("Could not pass credentials to CURL"));
+				err = IE_NOMEM;
+				goto leave;
+			}
+			curl_err = curl_easy_setopt(context->curl, CURLOPT_USERPWD, userpwd);
+			free(userpwd);
+		}
+#endif /* HAVE_DECL_CURLOPT_USERNAME */
+	}
 
-    /* Set PKI credentials */
-    if (!curl_err && (context->pki_credentials)) {
-        if (context->pki_credentials->engine) {
-            /* Select SSL engine */
-            isds_log(ILF_SEC, ILL_INFO,
-                    _("Cryptographic engine `%s' will be used for "
-                        "key or certificate\n"),
-                    context->pki_credentials->engine);
-            curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLENGINE,
-                    context->pki_credentials->engine);
-        }
+	/* Set PKI credentials */
+	if ((CURLE_OK == curl_err) && (NULL != context->pki_credentials)) {
+		if (NULL != context->pki_credentials->engine) {
+			/* Select SSL engine */
+			isds_log(ILF_SEC, ILL_INFO,
+			    _("Cryptographic engine `%s' will be used for key or certificate\n"),
+			    context->pki_credentials->engine);
+			curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLENGINE,
+			    context->pki_credentials->engine);
+		}
 
-        if (!curl_err) {
-            /* Select certificate format */
+		if (CURLE_OK == curl_err) {
+			/* Select certificate format */
 #if HAVE_DECL_CURLOPT_SSLCERTTYPE /* since curl-7.9.3 */
-            if (context->pki_credentials->certificate_format ==
-                    PKI_FORMAT_ENG) {
-                /* XXX: It's valid to have certificate in engine without name.
-                 * Engines can select certificate according private key and
-                 * vice versa. */
-                if (context->pki_credentials->certificate)
-                    isds_log(ILF_SEC, ILL_INFO, _("Client `%s' certificate "
-                                "will be read from `%s' engine\n"),
-                            context->pki_credentials->certificate,
-                            context->pki_credentials->engine);
-                else
-                    isds_log(ILF_SEC, ILL_INFO, _("Client certificate "
-                                "will be read from `%s' engine\n"),
-                            context->pki_credentials->engine);
-                curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLCERTTYPE,
-                        "ENG");
-            } else if (context->pki_credentials->certificate) {
-                isds_log(ILF_SEC, ILL_INFO, _("Client %s certificate "
-                            "will be read from `%s' file\n"),
-                        (context->pki_credentials->certificate_format ==
-                            PKI_FORMAT_DER) ? _("DER") : _("PEM"),
-                        context->pki_credentials->certificate);
-                curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLCERTTYPE,
-                        (context->pki_credentials->certificate_format ==
-                            PKI_FORMAT_DER) ? "DER" : "PEM");
-            }
-#else
-            if ((context->pki_credentials->certificate_format ==
-                        PKI_FORMAT_ENG ||
-                        context->pki_credentials->certificate))
-                isds_log(ILF_SEC, ILL_WARNING,
-                        _("Your curl library cannot distinguish certificate "
-                            "formats. Make sure your cryptographic library\n"
-                            "understands your certificate file by default, "
-                            "or upgrade curl.\n"));
-#endif /* not HAVE_DECL_CURLOPT_SSLCERTTYPE */
-        }
+			if (context->pki_credentials->certificate_format ==
+			    PKI_FORMAT_ENG) {
+				/*
+				 * XXX: It's valid to have certificate in engine without name.
+				 * Engines can select certificate according private key and
+				 * vice versa.
+				 */
+				if (NULL != context->pki_credentials->certificate) {
+					isds_log(ILF_SEC, ILL_INFO,
+					    _("Client `%s' certificate will be read from `%s' engine\n"),
+					    context->pki_credentials->certificate,
+					    context->pki_credentials->engine);
+				} else {
+					isds_log(ILF_SEC, ILL_INFO,
+					    _("Client certificate will be read from `%s' engine\n"),
+					    context->pki_credentials->engine);
+				}
+				curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLCERTTYPE,
+				        "ENG");
+			} else if (NULL != context->pki_credentials->certificate) {
+				isds_log(ILF_SEC, ILL_INFO,
+				    _("Client %s certificate will be read from `%s' file\n"),
+				    (context->pki_credentials->certificate_format ==
+				        PKI_FORMAT_DER) ? _("DER") : _("PEM"),
+				    context->pki_credentials->certificate);
+				curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLCERTTYPE,
+				    (context->pki_credentials->certificate_format ==
+				        PKI_FORMAT_DER) ? "DER" : "PEM");
+			}
+#else /* !HAVE_DECL_CURLOPT_SSLCERTTYPE */
+			if ((context->pki_credentials->certificate_format ==
+			        PKI_FORMAT_ENG) ||
+			    (NULL != context->pki_credentials->certificate)) {
+				isds_log(ILF_SEC, ILL_WARNING,
+				    _("Your curl library cannot distinguish certificate formats. Make sure your cryptographic library\n"
+				        "understands your certificate file by default, or upgrade curl.\n"));
+			}
+#endif /* HAVE_DECL_CURLOPT_SSLCERTTYPE */
+		}
 
-        if (!curl_err && context->pki_credentials->certificate) {
-            /* Select certificate */
-            if (!curl_err)
-                curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLCERT,
-                        context->pki_credentials->certificate);
-        }
+		if ((CURLE_OK == curl_err) && (NULL != context->pki_credentials->certificate)) {
+			/* Select certificate */
+			curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLCERT,
+			    context->pki_credentials->certificate);
+		}
 
-        if (!curl_err) {
-            /* Select key format */
-            if (context->pki_credentials->key_format == PKI_FORMAT_ENG) {
-                if (context->pki_credentials->key)
-                    isds_log(ILF_SEC, ILL_INFO, _("Client private key `%s' "
-                                "from `%s' engine will be used\n"),
-                            context->pki_credentials->key,
-                            context->pki_credentials->engine);
-                else
-                    isds_log(ILF_SEC, ILL_INFO, _("Client private key "
-                                "from `%s' engine will be used\n"),
-                            context->pki_credentials->engine);
-                curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLKEYTYPE,
-                        "ENG");
-            } else if (context->pki_credentials->key) {
-                isds_log(ILF_SEC, ILL_INFO, _("Client %s private key will be "
-                            "read from `%s' file\n"),
-                        (context->pki_credentials->key_format ==
-                            PKI_FORMAT_DER) ? _("DER") : _("PEM"),
-                        context->pki_credentials->key);
-                curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLKEYTYPE,
-                        (context->pki_credentials->key_format ==
-                            PKI_FORMAT_DER) ? "DER" : "PEM");
-            }
+		if (CURLE_OK == curl_err) {
+			/* Select key format */
+			if (context->pki_credentials->key_format == PKI_FORMAT_ENG) {
+				if (NULL != context->pki_credentials->key) {
+					isds_log(ILF_SEC, ILL_INFO,
+					    _("Client private key `%s' from `%s' engine will be used\n"),
+					    context->pki_credentials->key,
+					    context->pki_credentials->engine);
+				} else {
+					isds_log(ILF_SEC, ILL_INFO,
+					    _("Client private key from `%s' engine will be used\n"),
+					    context->pki_credentials->engine);
+				}
+				curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLKEYTYPE,
+				    "ENG");
+			} else if (NULL != context->pki_credentials->key) {
+				isds_log(ILF_SEC, ILL_INFO,
+				    _("Client %s private key will be read from `%s' file\n"),
+				    (context->pki_credentials->key_format ==
+				        PKI_FORMAT_DER) ? _("DER") : _("PEM"),
+				    context->pki_credentials->key);
+				curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLKEYTYPE,
+				    (context->pki_credentials->key_format ==
+				        PKI_FORMAT_DER) ? "DER" : "PEM");
+			}
 
-            if (!curl_err)
-                /* Select key */
-                curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLKEY,
-                        context->pki_credentials->key);
+			if (CURLE_OK == curl_err) {
+				/* Select key */
+				curl_err = curl_easy_setopt(context->curl, CURLOPT_SSLKEY,
+				    context->pki_credentials->key);
+			}
 
-            if (!curl_err) {
-                /* Pass key pass-phrase */
+			if (CURLE_OK == curl_err) {
+				/* Pass key pass-phrase */
 #if HAVE_DECL_CURLOPT_KEYPASSWD /* since curl-7.16.5 */
-                curl_err = curl_easy_setopt(context->curl,
-                        CURLOPT_KEYPASSWD,
-                        context->pki_credentials->passphrase);
+				curl_err = curl_easy_setopt(context->curl,
+				    CURLOPT_KEYPASSWD,
+				    context->pki_credentials->passphrase);
 #elif HAVE_DECL_CURLOPT_SSLKEYPASSWD /* up to curl-7.16.4 */
-                curl_err = curl_easy_setopt(context->curl,
-                        CURLOPT_SSLKEYPASSWD,
-                        context->pki_credentials->passphrase);
+				curl_err = curl_easy_setopt(context->curl,
+				    CURLOPT_SSLKEYPASSWD,
+				    context->pki_credentials->passphrase);
 #else /* up to curl-7.9.2 */
-                curl_err = curl_easy_setopt(context->curl,
-                        CURLOPT_SSLCERTPASSWD,
-                        context->pki_credentials->passphrase);
-#endif
-            }
-        }
-    }
+				curl_err = curl_easy_setopt(context->curl,
+				    CURLOPT_SSLCERTPASSWD,
+				    context->pki_credentials->passphrase);
+#endif /* HAVE_DECL_CURLOPT_KEYPASSWD */
+			}
+		}
+	}
 
-    /* Set authorization cookie for OTP session */
-    if (!curl_err && (context->otp || context->mep)) {
-        isds_log(ILF_SEC, ILL_INFO,
-                _("Cookies will be stored and sent "
-                    "because context has been authorized by OTP or mobile key.\n"));
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_COOKIEFILE, "");
-    }
+	/* Set authorization cookie for OTP session */
+	if ((CURLE_OK == curl_err) && (context->otp || context->mep)) {
+		isds_log(ILF_SEC, ILL_INFO,
+		    _("Cookies will be stored and sent because context has been authorized by OTP or mobile key.\n"));
+		curl_err = curl_easy_setopt(context->curl, CURLOPT_COOKIEFILE, "");
+	}
 
-    /* Set timeout */
-    if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_NOSIGNAL, 1);
-    }
-    if (!curl_err && context->timeout) {
+	/* Set timeout */
+	if (CURLE_OK == curl_err) {
+		curl_err = curl_easy_setopt(context->curl, CURLOPT_NOSIGNAL, 1);
+	}
+	if ((CURLE_OK == curl_err) && (0 != context->timeout)) {
 #if HAVE_DECL_CURLOPT_TIMEOUT_MS /* Since curl-7.16.2 */
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_TIMEOUT_MS,
-                context->timeout);
-#else
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_TIMEOUT,
-                context->timeout / 1000);
-#endif /* not HAVE_DECL_CURLOPT_TIMEOUT_MS */
-    }
+		curl_err = curl_easy_setopt(context->curl, CURLOPT_TIMEOUT_MS,
+		    context->timeout);
+#else /* !HAVE_DECL_CURLOPT_TIMEOUT_MS */
+		curl_err = curl_easy_setopt(context->curl, CURLOPT_TIMEOUT,
+		    context->timeout / 1000);
+#endif /* HAVE_DECL_CURLOPT_TIMEOUT_MS */
+	}
 
-    /* Register callback */
-    if (context->progress_callback) {
-        if (!curl_err) {
-            curl_err = curl_easy_setopt(context->curl, CURLOPT_NOPROGRESS, 0);
-        }
-        if (!curl_err) {
-            curl_err = curl_easy_setopt(context->curl,
-                    CURLOPT_PROGRESSFUNCTION, progress_proxy);
-        }
-        if (!curl_err) {
-            curl_err = curl_easy_setopt(context->curl, CURLOPT_PROGRESSDATA,
-                    context);
-        }
-    }
+	/* Register callback */
+	if (NULL != context->progress_callback) {
+		if (CURLE_OK == curl_err) {
+			curl_err = curl_easy_setopt(context->curl, CURLOPT_NOPROGRESS, 0);
+		}
+		if (CURLE_OK == curl_err) {
+			curl_err = curl_easy_setopt(context->curl,
+			    CURLOPT_PROGRESSFUNCTION, progress_proxy);
+		}
+		if (CURLE_OK == curl_err) {
+			curl_err = curl_easy_setopt(context->curl, CURLOPT_PROGRESSDATA,
+			    context);
+		}
+	}
 
-    /* Set other CURL features */
-    if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_FAILONERROR, 0);
-    }
+	/* Set other CURL features */
+	if (CURLE_OK == curl_err) {
+		curl_err = curl_easy_setopt(context->curl, CURLOPT_FAILONERROR, 0);
+	}
 
-    /* Set get-response function */
-    if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEFUNCTION,
-                write_body);
-    }
-    if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEDATA, response);
-    }
+	/* Set get-response function */
+	if (CURLE_OK == curl_err) {
+		curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEFUNCTION,
+		    write_body);
+	}
+	if (CURLE_OK == curl_err) {
+		curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEDATA, response);
+	}
 
-    /* Set get-response-headers function if needed.
-     * XXX: Both CURLOPT_HEADERFUNCTION and CURLOPT_WRITEHEADER must be set or
-     * unset at the same time (see curl_easy_setopt(3)) ASAP, otherwise old
-     * invalid CURLOPT_WRITEHEADER value could be dereferenced. */
-    if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_HEADERFUNCTION,
-                (response_otp_headers == NULL) ? NULL: write_header);
-    }
-    if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEHEADER,
-                response_otp_headers);
-    }
+	/*
+	 * Set get-response-headers function if needed.
+	 * XXX: Both CURLOPT_HEADERFUNCTION and CURLOPT_WRITEHEADER must be set or
+	 * unset at the same time (see curl_easy_setopt(3)) ASAP, otherwise old
+	 * invalid CURLOPT_WRITEHEADER value could be dereferenced.
+	 */
+	if (CURLE_OK == curl_err) {
+		curl_err = curl_easy_setopt(context->curl, CURLOPT_HEADERFUNCTION,
+		    (response_otp_headers == NULL) ? NULL: write_header);
+	}
+	if (CURLE_OK == curl_err) {
+		curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEHEADER,
+		    response_otp_headers);
+	}
 
-    /* Set MIME types and headers requires by SOAP 1.1.
-     * SOAP 1.1 requires text/xml, SOAP 1.2 requires application/soap+xml.
-     * But suppress sending the headers to proxies first if supported. */
+	/*
+	 * Set MIME types and headers requires by SOAP 1.1.
+	 * SOAP 1.1 requires text/xml, SOAP 1.2 requires application/soap+xml.
+	 * But suppress sending the headers to proxies first if supported.
+	 */
 #if HAVE_DECL_CURLOPT_HEADEROPT /* since curl-7.37.0 */
-    if (!curl_err) {
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_HEADEROPT,
-                CURLHEADER_SEPARATE);
-    }
+	if (CURLE_OK == curl_err) {
+		curl_err = curl_easy_setopt(context->curl, CURLOPT_HEADEROPT,
+		    CURLHEADER_SEPARATE);
+	}
 #endif /* HAVE_DECL_CURLOPT_HEADEROPT */
-    if (!curl_err) {
-        if (!(HCF_RCV_XOP & h_flags)) {
-            headers = curl_slist_append(headers,
-                    "Accept: application/soap+xml,application/xml,text/xml");
-        } else {
-            headers = curl_slist_append(headers,
-                    "Accept: multipart/related");
-        }
-        if (!headers) {
-            err = IE_NOMEM;
-            goto leave;
-        }
-        if (!((HCF_SND_XOP | HCF_RCV_XOP) & h_flags)) {
-            /* Won't receive MTOM/XOP response when using this header value in request. */
-            headers = curl_slist_append(headers, "Content-Type: text/xml");
-        } else if (HCF_SND_XOP & h_flags) {
-            headers = curl_slist_append(headers,
-                    "Content-Type: multipart/related; type=\"application/xop+xml\"; start=\"<rootpart@soapui.org>\"; start-info=\"application/soap+xml\"; action=\"\"");
-        } else { /* HCF_RCV_XOP & h_flags */
-            headers = curl_slist_append(headers,
-                    "Content-Type: application/soap+xml; charset=utf-8");
-        }
-        if (!headers) {
-            err = IE_NOMEM;
-            goto leave;
-        }
-        headers = curl_slist_append(headers, "SOAPAction: ");
-        if (!headers) {
-            err = IE_NOMEM;
-            goto leave;
-        }
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_HTTPHEADER, headers);
-    }
-    if (!curl_err) {
-        /* Set user agent identification */
-        curl_err = curl_easy_setopt(context->curl, CURLOPT_USERAGENT,
-                "libdatovka/" PACKAGE_VERSION);
-    }
+	if (CURLE_OK == curl_err) {
+		if (!(HCF_RCV_XOP & h_flags)) {
+			headers = curl_slist_append(headers,
+			    "Accept: application/soap+xml,application/xml,text/xml");
+		} else {
+			headers = curl_slist_append(headers,
+			    "Accept: multipart/related");
+		}
+		if (UNLIKELY(NULL == headers)) {
+			err = IE_NOMEM;
+			goto leave;
+		}
+		if (!((HCF_SND_XOP | HCF_RCV_XOP) & h_flags)) {
+			/* Won't receive MTOM/XOP response when using this header value in request. */
+			headers = curl_slist_append(headers, "Content-Type: text/xml");
+		} else if (HCF_SND_XOP & h_flags) {
+			headers = curl_slist_append(headers,
+			    "Content-Type: multipart/related; type=\"application/xop+xml\"; start=\"<rootpart@soapui.org>\"; start-info=\"application/soap+xml\"; action=\"\"");
+		} else { /* HCF_RCV_XOP & h_flags */
+			headers = curl_slist_append(headers,
+			    "Content-Type: application/soap+xml; charset=utf-8");
+		}
+		if (UNLIKELY(NULL == headers)) {
+			err = IE_NOMEM;
+			goto leave;
+		}
+		headers = curl_slist_append(headers, "SOAPAction: ");
+		if (UNLIKELY(NULL == headers)) {
+			err = IE_NOMEM;
+			goto leave;
+		}
+		curl_err = curl_easy_setopt(context->curl, CURLOPT_HTTPHEADER, headers);
+	}
+	if (CURLE_OK == curl_err) {
+		/* Set user agent identification */
+		curl_err = curl_easy_setopt(context->curl, CURLOPT_USERAGENT,
+		    "libdatovka/" PACKAGE_VERSION);
+	}
 
-    if (HCF_USE_GET & h_flags) {
-        /* Set GET request */
-        if (!curl_err) {
-            curl_err = curl_easy_setopt(context->curl, CURLOPT_HTTPGET, 1);
-        }
-    } else {
-        /* Set POST request body */
-        if (!curl_err) {
-            curl_err = curl_easy_setopt(context->curl, CURLOPT_POST, 1);
-        }
-        if (!(HCF_SND_XOP & h_flags)) {
-            if (!curl_err) {
-                curl_err = curl_easy_setopt(context->curl, CURLOPT_POSTFIELDS, request);
-            }
-            if (!curl_err) {
-                curl_err = curl_easy_setopt(context->curl, CURLOPT_POSTFIELDSIZE,
-                    request_length);
-            }
-        } else {
+	if (HCF_USE_GET & h_flags) {
+		/* Set GET request */
+		if (CURLE_OK == curl_err) {
+			curl_err = curl_easy_setopt(context->curl, CURLOPT_HTTPGET, 1);
+		}
+	} else {
+		/* Set POST request body */
+		if (CURLE_OK == curl_err) {
+			curl_err = curl_easy_setopt(context->curl, CURLOPT_POST, 1);
+		}
+		if (!(HCF_SND_XOP & h_flags)) {
+			if (CURLE_OK == curl_err) {
+				curl_err = curl_easy_setopt(context->curl,
+				    CURLOPT_POSTFIELDS, request);
+			}
+			if (CURLE_OK == curl_err) {
+				curl_err = curl_easy_setopt(context->curl,
+				    CURLOPT_POSTFIELDSIZE, request_length);
+			}
+		} else {
 #if HAVE_DECL_CURLOPT_MIMEPOST /* Since curl-7.56.0 */
-            multipart = mimepost(context->curl, request, request_length,
-                content_id, dm_file, &p);
-            curl_err = curl_easy_setopt(context->curl, CURLOPT_MIMEPOST, multipart);
+			multipart = mimepost(context->curl, request, request_length,
+			    content_id, dm_file, &p);
+			if (UNLIKELY(NULL == multipart)) {
+				err = IE_NOMEM;
+				goto leave;
+			}
+			curl_err = curl_easy_setopt(context->curl,
+			    CURLOPT_MIMEPOST, multipart);
 #else /* !HAVE_DECL_CURLOPT_MIMEPOST */
-            post = formpost(request, request_length, content_id, dm_file, &hl);
-            curl_err = curl_easy_setopt(context->curl, CURLOPT_HTTPPOST, post);
+			post = formpost(request, request_length, content_id, dm_file, &hl);
+			if (UNLIKELY(NULL == post)) {
+				err = IE_NOMEM;
+				goto leave;
+			}
+			curl_err = curl_easy_setopt(context->curl,
+			    CURLOPT_HTTPPOST, post);
 #endif /* HAVE_DECL_CURLOPT_MIMEPOST */
-        }
-    }
+		}
+	}
 
-    {
-        /* Debug cURL if requested */
-        _Bool debug_curl =
-            ((log_facilities & ILF_HTTP) && (log_level >= ILL_DEBUG));
-        if (!curl_err) {
-            curl_err = curl_easy_setopt(context->curl, CURLOPT_VERBOSE,
-                    (debug_curl) ? 1 : 0);
-        }
-        if (!curl_err) {
-            curl_err = curl_easy_setopt(context->curl, CURLOPT_DEBUGFUNCTION,
-                    (debug_curl) ? log_curl : NULL);
-        }
-    }
+	{
+		/* Debug cURL if requested */
+		_Bool debug_curl =
+		    ((log_facilities & ILF_HTTP) && (log_level >= ILL_DEBUG));
+		if (CURLE_OK == curl_err) {
+			curl_err = curl_easy_setopt(context->curl, CURLOPT_VERBOSE,
+			    (debug_curl) ? 1 : 0);
+		}
+		if (CURLE_OK == curl_err) {
+			curl_err = curl_easy_setopt(context->curl, CURLOPT_DEBUGFUNCTION,
+			    (debug_curl) ? log_curl : NULL);
+		}
+	}
 
-    /* Check for errors so far */
-    if (curl_err) {
-        isds_log_message(context, curl_easy_strerror(curl_err));
-        err = IE_NETWORK;
-        goto leave;
-    }
+	/* Check for errors so far */
+	if (UNLIKELY(CURLE_OK != curl_err)) {
+		isds_log_message(context, curl_easy_strerror(curl_err));
+		err = IE_NETWORK;
+		goto leave;
+	}
 
-    isds_log(ILF_HTTP, ILL_DEBUG, _("Sending %s request to <%s>\n"),
-            (HCF_USE_GET & h_flags) ? "GET" : "POST", url);
-    if (!(HCF_USE_GET & h_flags)) {
-        isds_log(ILF_HTTP, ILL_DEBUG,
-                _("POST body length: %zu, content follows:\n"), request_length);
-        if (_isds_sizet2int(request_length) >= 0 ) {
-            isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n",
-                _isds_sizet2int(request_length), request);
-        }
-        isds_log(ILF_HTTP, ILL_DEBUG, _("End of POST body\n"));
-    }
+	isds_log(ILF_HTTP, ILL_DEBUG, _("Sending %s request to <%s>\n"),
+	    (HCF_USE_GET & h_flags) ? "GET" : "POST", url);
+	if (!(HCF_USE_GET & h_flags)) {
+		isds_log(ILF_HTTP, ILL_DEBUG,
+		    _("POST body length: %zu, content follows:\n"), request_length);
+		if (_isds_sizet2int(request_length) >= 0) {
+			isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n",
+			    _isds_sizet2int(request_length), request);
+		}
+		isds_log(ILF_HTTP, ILL_DEBUG, _("End of POST body\n"));
+	}
 
 
-    /*  Do the request */
-    curl_err = curl_easy_perform(context->curl);
+	/*  Do the request */
+	curl_err = curl_easy_perform(context->curl);
+
 
 #if HAVE_DECL_CURLOPT_MIMEPOST /* Since curl-7.56.0 */
-    curl_mime_free(multipart); multipart = NULL;
+	curl_mime_free(multipart); multipart = NULL;
 #else /* !HAVE_DECL_CURLOPT_MIMEPOST */
-    curl_formfree(post); post = NULL;
-    formpost_header_list_free(hl); hl = NULL;
+	curl_formfree(post); post = NULL;
+	formpost_header_list_free(hl); hl = NULL;
 #endif /* HAVE_DECL_CURLOPT_MIMEPOST */
 
-    if (!curl_err)
-        curl_err = curl_easy_getinfo(context->curl, CURLINFO_CONTENT_TYPE,
-            &content_type);
+	if (CURLE_OK == curl_err) {
+		curl_err = curl_easy_getinfo(context->curl, CURLINFO_CONTENT_TYPE,
+		    &content_type);
+	}
 
-    if (curl_err) {
-        /* TODO: Use curl_easy_setopt(CURLOPT_ERRORBUFFER) to obtain detailed
-         * error message. */
-        /* TODO: CURL is not internationalized yet. Collect CURL messages for
-         * I18N. */
-        isds_printf_message(context,
-                _("%s: %s"), url, _(curl_easy_strerror(curl_err)));
-        if (curl_err == CURLE_ABORTED_BY_CALLBACK)
-            err = IE_ABORTED;
-        else if (
-                curl_err == CURLE_SSL_CONNECT_ERROR ||
-                curl_err == CURLE_SSL_ENGINE_NOTFOUND ||
-                curl_err == CURLE_SSL_ENGINE_SETFAILED ||
-                curl_err == CURLE_SSL_CERTPROBLEM ||
-                curl_err == CURLE_SSL_CIPHER ||
-                curl_err == CURLE_SSL_CACERT ||
-                curl_err == CURLE_USE_SSL_FAILED ||
-                curl_err == CURLE_SSL_ENGINE_INITFAILED ||
-                curl_err == CURLE_SSL_CACERT_BADFILE ||
-                curl_err == CURLE_SSL_SHUTDOWN_FAILED ||
-                curl_err == CURLE_SSL_CRL_BADFILE ||
-                curl_err == CURLE_SSL_ISSUER_ERROR
-                )
-            err = IE_SECURITY;
-        else
-            err = IE_NETWORK;
-        goto leave;
-    }
+	if (UNLIKELY(CURLE_OK != curl_err)) {
+		/*
+		 * TODO: Use curl_easy_setopt(CURLOPT_ERRORBUFFER) to obtain
+		 * detailed error message.
+		 */
+		/*
+		 * TODO: CURL is not internationalized yet. Collect CURL
+		 * messages for I18N.
+		 */
+		isds_printf_message(context,
+		    _("%s: %s"), url, _(curl_easy_strerror(curl_err)));
+		if (curl_err == CURLE_ABORTED_BY_CALLBACK) {
+			err = IE_ABORTED;
+		} else if (
+		    (curl_err == CURLE_SSL_CONNECT_ERROR) ||
+		    (curl_err == CURLE_SSL_ENGINE_NOTFOUND) ||
+		    (curl_err == CURLE_SSL_ENGINE_SETFAILED) ||
+		    (curl_err == CURLE_SSL_CERTPROBLEM) ||
+		    (curl_err == CURLE_SSL_CIPHER) ||
+		    (curl_err == CURLE_SSL_CACERT) ||
+		    (curl_err == CURLE_USE_SSL_FAILED) ||
+		    (curl_err == CURLE_SSL_ENGINE_INITFAILED) ||
+		    (curl_err == CURLE_SSL_CACERT_BADFILE) ||
+		    (curl_err == CURLE_SSL_SHUTDOWN_FAILED) ||
+		    (curl_err == CURLE_SSL_CRL_BADFILE) ||
+		    (curl_err == CURLE_SSL_ISSUER_ERROR)
+		    ) {
+			err = IE_SECURITY;
+		} else {
+			err = IE_NETWORK;
+		}
+		goto leave;
+	}
 
-    isds_log(ILF_HTTP, ILL_DEBUG, _("Final response to %s received\n"), url);
-    isds_log(ILF_HTTP, ILL_DEBUG,
-            _("Response body length: %zu, content follows:\n"),
-            response->len);
-    if (_isds_sizet2int(response->len) >= 0) {
-        isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n",
-            _isds_sizet2int(response->len), response->data);
-    }
-    isds_log(ILF_HTTP, ILL_DEBUG, _("End of response body\n"));
+	isds_log(ILF_HTTP, ILL_DEBUG, _("Final response to %s received\n"), url);
+	isds_log(ILF_HTTP, ILL_DEBUG,
+	    _("Response body length: %zu, content follows:\n"),
+	    response->len);
+	if (_isds_sizet2int(response->len) >= 0) {
+		isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n",
+		    _isds_sizet2int(response->len), response->data);
+	}
+	isds_log(ILF_HTTP, ILL_DEBUG, _("End of response body\n"));
 
 
-    /* Extract MIME type and charset */
-    if (content_type) {
-        char *sep;
-        size_t offset;
+	/* Extract MIME type and charset */
+	if (NULL != content_type) {
+		char *sep;
+		size_t offset;
 
-        sep = strchr(content_type, ';');
-        if (sep) offset = (size_t) (sep - content_type);
-        else offset = strlen(content_type);
+		sep = strchr(content_type, ';');
+		if (NULL != sep) {
+			offset = (size_t)(sep - content_type);
+		} else {
+			offset = strlen(content_type);
+		}
 
-        if (mime_type) {
-            *mime_type = malloc(offset + 1);
-            if (!*mime_type) {
-                err = IE_NOMEM;
-                goto leave;
-            }
-            memcpy(*mime_type, content_type, offset);
-            (*mime_type)[offset] = '\0';
-        }
+		if (NULL != mime_type) {
+			*mime_type = malloc(offset + 1);
+			if (UNLIKELY(NULL == *mime_type)) {
+				err = IE_NOMEM;
+				goto leave;
+			}
+			memcpy(*mime_type, content_type, offset);
+			(*mime_type)[offset] = '\0';
+		}
 
-        if (charset) {
-            if (!sep) {
-               *charset = NULL;
-            } else {
-                sep = strstr(sep, "charset=");
-                if (!sep) {
-                    *charset = NULL;
-                } else {
-                    *charset = strdup(sep + 8);
-                    if (!*charset) {
-                        err = IE_NOMEM;
-                        goto leave;
-                    }
-                }
-            }
-        }
-    }
+		if (NULL != charset) {
+			if (NULL == sep) {
+				*charset = NULL;
+			} else {
+				sep = strstr(sep, "charset=");
+				if (NULL == sep) {
+					*charset = NULL;
+				} else {
+					*charset = strdup(sep + 8);
+					if (UNLIKELY(NULL == *charset)) {
+						err = IE_NOMEM;
+						goto leave;
+					}
+				}
+			}
+		}
+	}
 
-    /* Get HTTP response code */
-    if (http_code) {
-        curl_err = curl_easy_getinfo(context->curl,
-                CURLINFO_RESPONSE_CODE, http_code);
-        if (curl_err) {
-            err = IE_ERROR;
-            goto leave;
-        }
-    }
+	/* Get HTTP response code */
+	if (NULL != http_code) {
+		curl_err = curl_easy_getinfo(context->curl,
+		        CURLINFO_RESPONSE_CODE, http_code);
+		if (UNLIKELY(CURLE_OK != curl_err)) {
+			err = IE_ERROR;
+			goto leave;
+		}
+	}
 
-    /* Store OTP authentication results */
-    if (response_otp_headers && response_otp_headers->is_complete) {
-        isds_log(ILF_SEC, ILL_DEBUG,
-                _("OTP authentication headers received: "
-                    "method=%s, code=%s, message=%s\n"),
-                response_otp_headers->method, response_otp_headers->code,
-                response_otp_headers->message);
+	/* Store OTP authentication results */
+	if ((NULL != response_otp_headers) && response_otp_headers->is_complete) {
+		isds_log(ILF_SEC, ILL_DEBUG,
+		    _("OTP authentication headers received: method=%s, code=%s, message=%s\n"),
+		    response_otp_headers->method, response_otp_headers->code,
+		    response_otp_headers->message);
 
-        /* XXX: Don't make unknown code fatal. Missing code can be success if
-         * HTTP code is 302. This is checked in _isds_soap(). */
-        response_otp_headers->resolution =
-            string2isds_otp_resolution(response_otp_headers->code);
+		/*
+		 * XXX: Don't make unknown code fatal. Missing code can be success if
+		 * HTTP code is 302. This is checked in _isds_soap().
+		 */
+		response_otp_headers->resolution =
+		    string2isds_otp_resolution(response_otp_headers->code);
 
-        if (response_otp_headers->message != NULL) {
-            char *message_locale = _isds_utf82locale(response_otp_headers->message);
-            /* _isds_utf82locale() return NULL on inconverable string. Do not
-             * panic on it.
-             * TODO: Escape such characters.
-             * if (message_locale == NULL) {
-                err = IE_NOMEM;
-                goto leave;
-            }*/
-            isds_printf_message(context,
-                    _("Server returned OTP authentication message: %s"),
-                    message_locale);
-            free(message_locale);
-        }
+		if (response_otp_headers->message != NULL) {
+			char *message_locale = _isds_utf82locale(response_otp_headers->message);
+			/* _isds_utf82locale() return NULL on inconverable string. Do not
+			 * panic on it.
+			 * TODO: Escape such characters.
+			 * if (message_locale == NULL) {
+			    err = IE_NOMEM;
+			    goto leave;
+			}*/
+			isds_printf_message(context,
+			    _("Server returned OTP authentication message: %s"),
+			    message_locale);
+			free(message_locale);
+		}
 
-        char *next_url = NULL; /* Weak pointer managed by cURL */
-        curl_err = curl_easy_getinfo(context->curl, CURLINFO_REDIRECT_URL,
-                &next_url);
-        if (curl_err) {
-            err = IE_ERROR;
-            goto leave;
-        }
-        if (next_url != NULL) {
-            isds_log(ILF_SEC, ILL_DEBUG,
-                    _("OTP authentication headers redirect to: <%s>\n"),
-                    next_url);
-            free(response_otp_headers->redirect);
-            response_otp_headers->redirect = strdup(next_url);
-            if (response_otp_headers->redirect == NULL) {
-                err = IE_NOMEM;
-                goto leave;
-            }
-        }
-    }
+		char *next_url = NULL; /* Weak pointer managed by cURL */
+		curl_err = curl_easy_getinfo(context->curl, CURLINFO_REDIRECT_URL,
+		    &next_url);
+		if (UNLIKELY(CURLE_OK != curl_err)) {
+			err = IE_ERROR;
+			goto leave;
+		}
+		if (next_url != NULL) {
+			isds_log(ILF_SEC, ILL_DEBUG,
+			    _("OTP authentication headers redirect to: <%s>\n"),
+			    next_url);
+			free(response_otp_headers->redirect);
+			response_otp_headers->redirect = strdup(next_url);
+			if (UNLIKELY(NULL == response_otp_headers->redirect)) {
+				err = IE_NOMEM;
+				goto leave;
+			}
+		}
+	}
 leave:
-    curl_slist_free_all(headers);
+	curl_slist_free_all(headers);
 #if HAVE_DECL_CURLOPT_MIMEPOST /* Since curl-7.56.0 */
-    curl_mime_free(multipart);
+	curl_mime_free(multipart);
 #else /* !HAVE_DECL_CURLOPT_MIMEPOST */
-    curl_formfree(post);
-    formpost_header_list_free(hl);
+	curl_formfree(post);
+	formpost_header_list_free(hl);
 #endif /* HAVE_DECL_CURLOPT_MIMEPOST */
 
-    if (err) {
-        dbuf_free_content(response);
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		dbuf_free_content(response);
 
-        if (mime_type) {
-            free(*mime_type);
-            *mime_type = NULL;
-        }
-        if (charset) {
-            free(*charset);
-            *charset = NULL;
-        }
+		if (NULL != mime_type) {
+			free(*mime_type);
+			*mime_type = NULL;
+		}
+		if (NULL != charset) {
+			free(*charset);
+			*charset = NULL;
+		}
 
-        if (err != IE_ABORTED) _isds_close_connection(context);
-    }
+		if (err != IE_ABORTED) {
+			_isds_close_connection(context);
+		}
+	}
 
-    /* Response content is passed into caller. */
+	/* Response content is passed into caller. */
 
-    return err;
+	return err;
 }
 
 /*
