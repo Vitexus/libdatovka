@@ -206,7 +206,7 @@ _hidden int dbuf_res_append(struct dbuf_res *dbuf, const void *data, size_t len)
 	/* Resize if needed. */
 	if ((dbuf->used + len) >= dbuf->max_size) { /* Leave at least one byte unused. */
 		size_t i = ((dbuf->used + len) / BUF_INCREMENT) + 1; /* Leave at least one byte unused. */
-		if (UNLIKELY(0 != dbuf_res_resize(dbuf, i + BUF_INCREMENT))) {
+		if (UNLIKELY(0 != dbuf_res_resize(dbuf, i * BUF_INCREMENT))) {
 			return -1;
 		}
 	}
@@ -234,7 +234,7 @@ _hidden int dbuf_res_append_lowercase(struct dbuf_res *dbuf, const void *data, s
 	/* Resize if needed. */
 	if ((dbuf->used + len) >= dbuf->max_size) { /* Leave at least one byte unused. */
 		size_t i = ((dbuf->used + len) / BUF_INCREMENT) + 1; /* Leave at least one byte unused. */
-		if (UNLIKELY(0 != dbuf_res_resize(dbuf, i + BUF_INCREMENT))) {
+		if (UNLIKELY(0 != dbuf_res_resize(dbuf, i * BUF_INCREMENT))) {
 			return -1;
 		}
 	}
