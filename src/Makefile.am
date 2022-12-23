@@ -19,6 +19,10 @@ libdatovka_la_SOURCES = \
 	internal_types.h \
 	isds.c \
 	isds_priv.h \
+	multipart_intermediate.c \
+	multipart_intermediate.h \
+	multipart_parts.c \
+	multipart_parts.h \
 	physxml.c \
 	physxml.h \
 	system.h \

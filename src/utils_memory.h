@@ -26,8 +26,10 @@ int dbuf_append_lowercase(struct dbuf *dbuf, const void *data, size_t len);
 
 int dbuf_append_char(struct dbuf *dbuf, char ch);
 
+int dbuf_move(struct dbuf *dest, struct dbuf *src);
+
 /* Take the content. */
-void *dbuf_take(struct dbuf *dbuf);
+int dbuf_take(struct dbuf *dbuf, void **data, size_t *len);
 
 void dbuf_free_content(struct dbuf *dbuf);
 

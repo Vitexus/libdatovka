@@ -1,11 +1,14 @@
 #include "isds_priv.h" /* Must be included first. */
 
+#include <ctype.h> /* tolower() */
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h> /* strncasecmp(3) */
 
 #include "compiler.h"
 #include "internal_types.h"
+#include "multipart_intermediate.h"
+#include "multipart_parts.h"
 #include "soap.h"
 #include "system.h"
 #include "utils.h"
@@ -19,7 +22,7 @@ enum http_communication_flags {
 	HCF_RCV_XOP = 0x04 /* Receive XTOM/XOP data. */
 };
 
-/* Private structure for write_header() call back */
+/* Private structure for write_header() callback */
 struct auth_headers {
     _Bool is_complete;  /* Response has finished, next iteration is new
                            response, values become obsolete. */
@@ -73,6 +76,41 @@ static const char *header_value(const char *line, const char *name) {
     return value;
 }
 
+/*
+ * If given @line is HTTP header of @name,
+ * return pointer to the header value. Otherwise return NULL.
+ * @len is the length of the line, line doesn't have to be null-terminated.
+ * @name is header name without name--value separator, terminated with '\0'.
+ * This version performs a case-insensitive string comparison.
+ */
+static const char *header_value_case_insensitive(const char *line, size_t len,
+    const char *name)
+{
+	size_t i;
+
+	if (UNLIKELY((NULL == line) || (NULL == name))) {
+		return NULL;
+	}
+
+	for (i = 0; ; ++i, ++name) {
+		if (i == len) {
+			return NULL; /* Line too short. */
+		}
+		if ('\0' == *name) {
+			break; /* Name matches. */
+		}
+		if (tolower(line[i]) != tolower(*name)) {
+			return NULL; /* Name does not match */
+		}
+	}
+
+	/* Check separator. RFC2616, section 4.2 requires colon only. */
+	if (':' != line[i]) {
+		return NULL;
+	}
+
+	return line + i + 1;
+}
 
 /* Try to decode header value per RFC 2047.
  * @prepend_space is true if a space should be inserted before decoded word
@@ -376,10 +414,10 @@ static isds_error unset_http_authorization(struct isds_ctx *context) {
 }
 
 /*
- * CURL call back function called when chunk of HTTP response body is available.
+ * CURL callback function called when chunk of HTTP response body is available.
  * @buffer points to new data
  * @size * @nmemb is length of the chunk in bytes. Zero means empty body.
- * @userp is private structure.
+ * @userp is private structure. Expects to be pointing onto a struct dbuf.
  * Must return the length of the chunk, otherwise CURL will signal
  * CURL_WRITE_ERROR.
  */
@@ -406,13 +444,37 @@ static size_t write_body(void *buffer, size_t size, size_t nmemb, void *userp)
 	return (size * nmemb);
 }
 
+/*
+ * CURL callback function called when chunk of HTTP response body is available.
+ * @buffer points to new data
+ * @size * @nmemb is length of the chunk in bytes. Zero means empty body.
+ * @userp is private structure. Expects to be pointing onto a struct multipart_intermediate.
+ * Must return the length of the chunk, otherwise CURL will signal
+ * CURL_WRITE_ERROR.
+ */
+static size_t write_multipart_body(void *buffer, size_t size, size_t nmemb, void *userp)
+{
+	struct multipart_intermediate *interm =
+	    (struct multipart_intermediate *)userp;
 
-/* CURL call back function called when a HTTP response header is available.
+	if (UNLIKELY((NULL == interm) || (NULL == interm->parser))) {
+		 return 0; /* This should never happen */
+	}
+	if (UNLIKELY((0 == (size * nmemb)))) {
+		return 0; /* Empty body */
+	}
+
+	multipart_intermediate_execute(interm, buffer, size * nmemb);
+
+	return size * nmemb;
+}
+
+/* CURL callback function called when a HTTP response header is available.
  * This is called for each header even if reply consists of more responses.
  * @buffer points to new header (no zero terminator, but HTTP EOL is included)
  * @size
  * @nmemb is length of the header in bytes
- * @userp is private structure.
+ * @userp is private structure. Expects to be pointing onto a struct auth_headers.
  * Must return the length of the header, otherwise CURL will signal
  * CURL_WRITE_ERROR. */
 static size_t write_header(void *buffer, size_t size, size_t nmemb, void *userp) {
@@ -510,6 +572,174 @@ leave:
     return (length);
 }
 
+/*
+ * Extract assignment vale from a header value.
+ * @hval is the header value string, doesn't need to be null-terminated.
+ * @hval_len is the length of the @hval string.
+ * @assignment is a assignment name ending with an '=', such as "charset=".
+ * @str is set to point at the start of the assignment, if such is present.
+ * @str_len is the length of the assignment.
+ * Returns 0 on success, even if no assignment is found. Returns -1 on error.
+ */
+static int extract_header_val(const char *hval, size_t hval_len,
+    const char *assignment, const char **str, size_t *str_len)
+{
+	char *start = NULL;
+	const char *end = NULL;
+	size_t offset;
+
+	if (UNLIKELY((NULL == hval) || ('\0' == *hval) ||
+	    (NULL == assignment) || ('\0' == *assignment) ||
+	    (NULL == str) || (NULL == str_len))) {
+		return -1;
+	}
+
+	start = strstr(hval, assignment);
+	if (UNLIKELY(NULL == start)) {
+		/* Not found. */
+		*str = NULL;
+		*str_len = 0;
+		return 0;
+	}
+
+	offset = strlen(assignment);
+	start += offset;
+
+	/* Skip leading white-space characters. */
+	while ((' ' == *start) || ('\t' == *start)) {
+		++start;
+	}
+
+	end = strchr(start, ';');
+	if (NULL == end) {
+		end = hval + hval_len; /* Past last printable character. */
+	}
+	--end; /* Last printable character. */
+
+	/* Skip trailing white-space characters. */
+	if ((start <= end) && ((' ' == *end) || ('\t' == *end))) {
+		--end;
+	}
+
+	if (UNLIKELY(start >= end)) {
+		*str = NULL;
+		*str_len = 0;
+		return 0;
+	}
+
+	if (((end - start) > 1) && ('"' == *start) && ('"' == *end)) {
+		/* Remove quotes. */
+		++start;
+		--end;
+	}
+
+	*str_len = end - start + 1;
+	*str = start;
+	return 0;
+}
+
+/*
+ * Makes a null-terminated copy of a string.
+ * @start points to the start of a string, it doesn't have to be null-terminated.
+ * @len is the string length.
+ * Returns pointer to newly allocated string, NULL on error.
+ */
+static char *copy_header_val(const char *start, size_t len)
+{
+	if (UNLIKELY((NULL == start) || (0 == len))) {
+		return NULL;
+	}
+
+	char *new_str = malloc(len + 1);
+	if (UNLIKELY(NULL == new_str)) {
+		return NULL;
+	}
+
+	memcpy(new_str, start, len);
+	new_str[len] = '\0';
+	return new_str;
+}
+
+/*
+ * CURL callback function called when a HTTP response header is available.
+ * This is called for each header even if reply consists of more responses.
+ * @buffer points to new header (no zero terminator, but HTTP EOL is included)
+ * @size
+ * @nmemb is length of the header in bytes
+ * @userp is private structure. Expects to be pointing onto a struct multipart_intermediate.
+ * Must return the length of the header, otherwise CURL will signal
+ * CURL_WRITE_ERROR.
+ */
+static size_t write_multipart_header(void *buffer, size_t size, size_t nmemb,
+    void *userp)
+{
+	struct multipart_intermediate *interm =
+	    (struct multipart_intermediate *)userp;
+	struct multipart_parts *parts = NULL;
+	size_t length;
+	const char *value;
+	size_t value_length;
+
+	if (UNLIKELY(NULL == interm)) {
+		 return 0; /* This should never happen */
+	}
+
+	parts = (struct multipart_parts *)interm->data;
+	if (UNLIKELY(NULL == parts)) {
+		return 0; /* This should never happen. */
+	}
+
+	/*
+	 * FIXME: Check for (size * nmemb) !> SIZE_T_MAX.
+	 * Pre-compute the product then.
+	 */
+	length = size * nmemb;
+
+	if (UNLIKELY(0 == length)) {
+		/* ??? Is this the empty line delimiter? */
+		return 0; /* Empty headers */
+	}
+
+	/*
+	 * Collect data about the multipart start and boundary.
+	 * Prepare the multipart parser.
+	 */
+	value = header_value_case_insensitive(buffer, length, "content-type");
+	if (NULL != value) {
+		const char *start;
+		size_t len;
+		value_length = length - (value - (char *)buffer);
+		if (0 == extract_header_val(value, value_length, "start=", &start, &len)) {
+			if (UNLIKELY(NULL != parts->expected_root_content_id)) {
+				return 0; /* Duplicate entry. */
+			}
+
+			parts->expected_root_content_id = copy_header_val(start, len);
+			if (UNLIKELY(NULL == parts->expected_root_content_id)) {
+				return 0;
+			}
+		}
+
+		if (0 == extract_header_val(value, value_length, "boundary=", &start, &len)) {
+			if (UNLIKELY(NULL != interm->parser)) {
+				return 0; /* Duplicate entry. */
+			}
+
+			char *boundary = copy_header_val(start, len);
+			if (UNLIKELY(NULL == boundary)) {
+				return 0;
+			}
+
+			if (UNLIKELY(0 != multipart_intermediate_init_parser(interm, boundary))) {
+				return 0;
+			}
+
+			free(boundary);
+		}
+	}
+
+	return length;
+}
 
 /* CURL progress callback proxy to rearrange arguments.
  * @curl_data is session context  */
@@ -533,7 +763,7 @@ static int progress_proxy(void *curl_data, double download_total,
 }
 
 
-/* CURL call back function called when curl has something to log.
+/* CURL callback function called when curl has something to log.
  * @curl is cURL context
  * @type is cURL log facility
  * @buffer points to log data, XXX: not zero-terminated
@@ -869,7 +1099,8 @@ fail:
 }
 #endif /* HAVE_DECL_CURLOPT_MIMEPOST */
 
-/* Do HTTP request.
+/*
+ * Do HTTP request.
  * @context holds the base URL,
  * @url is a (CGI) file of SOAP URL,
  * @h_flags specifies whether to use POST/GET or send/receive multipart data
@@ -879,6 +1110,8 @@ fail:
  * @dm_file file content
  * @response is automatically reallocated() buffer to fit the HTTP response.
  * You must free the @response content.
+ * @interm is structure to hold the multipart parser, intermediate data and
+ * parsed multipart data.
  * @mime_type is automatically allocated MIME type send by server (*NULL if not
  * sent). Set NULL if you don't care.
  * @charset is charset of the body signalled by server. The same constrains
@@ -894,18 +1127,21 @@ fail:
  * Be ware that successful return value does not mean the HTTP request has
  * been accepted by the server. You must consult @http_code. OTOH, failure
  * return value means the request could not been sent (e.g. SSL error).
- * Side effect: message buffer */
+ * Side effect: message buffer
+ */
 static enum isds_error http(struct isds_ctx *context,
     const char *url, const int h_flags,
     const void *request, const size_t request_length,
     const char *content_id, const struct isds_dmFile *dm_file,
-    struct dbuf *response,
+    struct dbuf *response, struct multipart_intermediate *interm,
     char **mime_type, char **charset, long *http_code,
     struct auth_headers *response_otp_headers) {
 
 	CURLcode curl_err;
 	enum isds_error err = IE_SUCCESS;
 	char *content_type;
+	char *_mime_type = NULL;
+	char *_charset = NULL;
 	struct curl_slist *headers = NULL;
 #if HAVE_DECL_CURLOPT_MIMEPOST /* Since curl-7.56.0 */
 	struct curl_mime *multipart = NULL;
@@ -1162,13 +1398,29 @@ static enum isds_error http(struct isds_ctx *context,
 		curl_err = curl_easy_setopt(context->curl, CURLOPT_FAILONERROR, 0);
 	}
 
-	/* Set get-response function */
-	if (CURLE_OK == curl_err) {
-		curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEFUNCTION,
-		    write_body);
-	}
-	if (CURLE_OK == curl_err) {
-		curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEDATA, response);
+	/*
+	 * Set get-response function.
+	 * Just gather response data if no MTOP/XOP response expected.
+	 * Collect multipart parts if MTOP/XOP response expected.
+	 */
+	if (!(HCF_RCV_XOP & h_flags)) {
+		if (CURLE_OK == curl_err) {
+			curl_err = curl_easy_setopt(context->curl,
+			    CURLOPT_WRITEFUNCTION, write_body);
+		}
+		if (CURLE_OK == curl_err) {
+			curl_err = curl_easy_setopt(context->curl,
+			    CURLOPT_WRITEDATA, response);
+		}
+	} else {
+		if (CURLE_OK == curl_err) {
+			curl_err = curl_easy_setopt(context->curl,
+			    CURLOPT_WRITEFUNCTION, write_multipart_body);
+		}
+		if (CURLE_OK == curl_err) {
+			curl_err = curl_easy_setopt(context->curl,
+			    CURLOPT_WRITEDATA, interm);
+		}
 	}
 
 	/*
@@ -1176,14 +1428,29 @@ static enum isds_error http(struct isds_ctx *context,
 	 * XXX: Both CURLOPT_HEADERFUNCTION and CURLOPT_WRITEHEADER must be set or
 	 * unset at the same time (see curl_easy_setopt(3)) ASAP, otherwise old
 	 * invalid CURLOPT_WRITEHEADER value could be dereferenced.
+	 *
+	 * If expecting MOTOM/XOP response, then gather information about
+	 * the start and boundary. No authentication data are expected when
+	 * receiving multipart data.
 	 */
-	if (CURLE_OK == curl_err) {
-		curl_err = curl_easy_setopt(context->curl, CURLOPT_HEADERFUNCTION,
-		    (response_otp_headers == NULL) ? NULL: write_header);
-	}
-	if (CURLE_OK == curl_err) {
-		curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEHEADER,
-		    response_otp_headers);
+	if (!(HCF_RCV_XOP & h_flags)) {
+		if (CURLE_OK == curl_err) {
+			curl_err = curl_easy_setopt(context->curl, CURLOPT_HEADERFUNCTION,
+			    (response_otp_headers == NULL) ? NULL : write_header);
+		}
+		if (CURLE_OK == curl_err) {
+			curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEHEADER,
+			    response_otp_headers);
+		}
+	} else {
+		if (CURLE_OK == curl_err) {
+			curl_err = curl_easy_setopt(context->curl, CURLOPT_HEADERFUNCTION,
+			    (NULL == interm) ? NULL : write_multipart_header);
+		}
+		if (CURLE_OK == curl_err) {
+			curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEHEADER,
+			    interm);
+		}
 	}
 
 	/*
@@ -1376,6 +1643,8 @@ static enum isds_error http(struct isds_ctx *context,
 	if (NULL != content_type) {
 		char *sep;
 		size_t offset;
+		const char *start;
+		size_t len;
 
 		sep = strchr(content_type, ';');
 		if (NULL != sep) {
@@ -1384,30 +1653,28 @@ static enum isds_error http(struct isds_ctx *context,
 			offset = strlen(content_type);
 		}
 
-		if (NULL != mime_type) {
-			*mime_type = malloc(offset + 1);
-			if (UNLIKELY(NULL == *mime_type)) {
+		{
+			_mime_type = malloc(offset + 1);
+			if (UNLIKELY(NULL == _mime_type)) {
 				err = IE_NOMEM;
 				goto leave;
 			}
-			memcpy(*mime_type, content_type, offset);
-			(*mime_type)[offset] = '\0';
+			memcpy(_mime_type, content_type, offset);
+			_mime_type[offset] = '\0';
 		}
 
-		if (NULL != charset) {
-			if (NULL == sep) {
-				*charset = NULL;
-			} else {
-				sep = strstr(sep, "charset=");
-				if (NULL == sep) {
-					*charset = NULL;
-				} else {
-					*charset = strdup(sep + 8);
-					if (UNLIKELY(NULL == *charset)) {
-						err = IE_NOMEM;
-						goto leave;
-					}
-				}
+		size_t content_type_len = strlen(content_type);
+
+		if (UNLIKELY(0 != extract_header_val(content_type,
+		        content_type_len, "charset=", &start, &len))) {
+			err = IE_HTTP;
+			goto leave;
+		}
+		if (NULL != start) {
+			_charset = copy_header_val(start, len);
+			if (UNLIKELY(NULL == _charset)) {
+				err = IE_NOMEM;
+				goto leave;
 			}
 		}
 	}
@@ -1479,17 +1746,30 @@ leave:
 	formpost_header_list_free(hl);
 #endif /* HAVE_DECL_CURLOPT_MIMEPOST */
 
-	if (UNLIKELY(IE_SUCCESS != err)) {
+	if (IE_SUCCESS == err) {
+		if (NULL != mime_type) {
+			*mime_type = _mime_type;
+		} else {
+			free(_mime_type);
+		}
+		if (NULL != charset) {
+			*charset = _charset;
+		} else {
+			free(_charset);
+		}
+	} else {
 		dbuf_free_content(response);
 
 		if (NULL != mime_type) {
 			free(*mime_type);
 			*mime_type = NULL;
 		}
+		free(_mime_type);
 		if (NULL != charset) {
 			free(*charset);
 			*charset = NULL;
 		}
+		free(_charset);
 
 		if (err != IE_ABORTED) {
 			_isds_close_connection(context);
@@ -1939,12 +2219,12 @@ redirect:
     if ((NULL != context->mep_credentials) && (NULL != context->mep_credentials->intermediate_uri)) {
         /* POST does not work for the intermediate URI, using GET here. */
         err = http(context, context->mep_credentials->intermediate_uri, HCF_USE_GET, NULL, 0, NULL, NULL,
-                &http_response,
+                &http_response, NULL,
                 &mime_type, NULL, &http_code,
                 ((context->otp_credentials == NULL) && (context->mep_credentials == NULL)) ? NULL: &response_otp_headers);
     } else {
         err = http(context, url, HCF_BASIC, http_request->content, http_request->use, NULL, NULL,
-                &http_response,
+                &http_response, NULL,
                 &mime_type, NULL, &http_code,
                 ((context->otp_credentials == NULL) && (context->mep_credentials == NULL)) ? NULL: &response_otp_headers);
     }
@@ -2115,12 +2395,7 @@ redirect:
 
 
     /* Save raw response */
-    if (NULL != raw_response_length) {
-        *raw_response_length = http_response.len;
-    }
-    if (NULL != raw_response) {
-        *raw_response = dbuf_take(&http_response);
-    }
+    dbuf_take(&http_response, raw_response, raw_response_length);
 
 leave:
     if ((context->otp_credentials != NULL) || (context->mep_credentials != NULL))
@@ -2136,7 +2411,7 @@ leave:
 _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
     const char *file, int s_flags, const struct comm_req *req,
     xmlDoc **response_document, xmlNode **response_node_list,
-    void **raw_response, size_t *raw_response_length)
+    struct dbuf *raw_response, struct multipart_parts **parts)
 {
 	enum isds_error err = IE_SUCCESS;
 	char *url = NULL;
@@ -2144,6 +2419,9 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 	long http_code = 0;
 	xmlBuffer *http_request = NULL;
 	struct dbuf http_response;
+
+	struct multipart_intermediate *interm = NULL;
+	struct multipart_parts *multipart_response = NULL;
 
 	dbuf_init(&http_response);
 
@@ -2160,9 +2438,6 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 	        || (NULL != response_document && NULL == response_node_list))) {
 		return IE_INVAL;
 	}
-	if (UNLIKELY((NULL == raw_response_length) && (NULL != raw_response))) {
-		return IE_INVAL;
-	}
 
 	if (NULL != response_document) {
 		*response_document = NULL;
@@ -2170,8 +2445,11 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 	if (NULL != response_node_list) {
 		*response_node_list = NULL;
 	}
-	if (NULL != raw_response) {
-		*raw_response = NULL;
+	if ((NULL != raw_response) && (NULL != raw_response->data)) {
+		raw_response->data = NULL;
+	}
+	if (NULL != parts) {
+		multipart_parts_free(*parts); *parts = NULL;
 	}
 
 	url = _isds_astrcat(context->url_vodz, file);
@@ -2195,6 +2473,24 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 		goto leave;
 	}
 
+	if (SCF_RCV_XOP & s_flags) {
+		interm = multipart_intermediate_create(BUF_INCREMENT);
+		if (UNLIKELY(NULL == interm)) {
+			err = IE_NOMEM;
+			goto leave;
+		}
+
+		multipart_response = multipart_parts_create();
+		if (UNLIKELY(NULL == multipart_response)) {
+			err = IE_NOMEM;
+			goto leave;
+		}
+
+		interm->data = multipart_response;
+		interm->on_hfld_and_hval_read = on_hfld_and_hval_read;
+		interm->on_content_read = on_content_read;
+	}
+
 	isds_log(ILF_SOAP, ILL_DEBUG,
 	    _("SOAP request to be sent to %s:\n%.*s\nEnd of SOAP request\n"),
 	    url, http_request->use, http_request->content);
@@ -2207,7 +2503,7 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 		err = http(context, url, h_flags, http_request->content, http_request->use,
 		    (NULL != req) ? req->content_id : NULL,
 		    (NULL != req) ? req->dm_file : NULL,
-		    &http_response,
+		    &http_response, interm,
 		    &mime_type, NULL, &http_code, NULL);
 	}
 
@@ -2274,6 +2570,24 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 		}
 	} else if (0 == strcmp(mime_type, "multipart/related")) {
 		/* Content-Type: multipart/related */
+		if (UNLIKELY(NULL == multipart_response)) {
+			err = IE_HTTP;
+			isds_printf_message(context,
+			    _("Received unexpected multipart response."));
+			goto leave;
+		}
+		if (UNLIKELY(NULL == multipart_response->root)) {
+			err = IE_HTTP;
+			isds_printf_message(context,
+			    _("Cannot localise start part of multipart response."));
+			goto leave;
+		}
+		struct dbuf buf = {
+			.data = multipart_response->root->data,
+			.len = multipart_response->root->data_size
+		};
+		err = process_http_response(context, &buf,
+		    response_document, response_node_list, SOAP_1_2);
 	} else {
 		char *mime_type_locale = _isds_utf82locale(mime_type);
 		isds_printf_message(context,
@@ -2285,14 +2599,17 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 	}
 
 	/* Save raw response */
-	if (NULL != raw_response_length) {
-		*raw_response_length = http_response.len;
-	}
 	if (NULL != raw_response) {
-		*raw_response = dbuf_take(&http_response);
+		dbuf_move(raw_response, &http_response);
+	}
+
+	if (NULL != parts) {
+		*parts = multipart_response; multipart_response = NULL;
 	}
 
 leave:
+	multipart_parts_free(multipart_response);
+	multipart_intermediate_free(interm);
 	/* Don't handle OTP or MEP login credentials here. */
 	free(mime_type);
 	dbuf_free_content(&http_response);
@@ -2370,7 +2687,7 @@ _hidden isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context) {
     err = http(context,
             url, HCF_USE_GET,
             NULL, 0, NULL, NULL,
-            &response,
+            &response, NULL,
             NULL, NULL, &http_code,
             NULL);
     dbuf_free_content(&response);

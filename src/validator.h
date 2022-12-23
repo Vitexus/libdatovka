@@ -4,6 +4,8 @@
 #include "libdatovka/isds.h"
 
 struct comm_req; /* Forward declaration. */
+struct dbuf; /* Forward declaration. */
+struct multipart_parts; /* Forward declaration. */
 
 #if HAVE_LIBCURL
 typedef enum isds_service {
@@ -80,12 +82,13 @@ enum isds_error _isds(struct isds_ctx *context, const enum isds_service service,
  * @response is automatically allocated response from server as XML Document
  * @raw_response is automatically allocated bit stream with response body. Use
  * NULL if you don't care
+ * @parts is automatically allocated container for multipart data.
  * @raw_response_length is size of @raw_response in bytes
  * In case of error, @response and @raw_response will be deallocated.
  */
 enum isds_error _isds_vodz(struct isds_ctx *context,
     const enum isds_service service, int v_flags, const struct comm_req *req,
-    xmlDoc **response, void **raw_response, size_t *raw_response_length);
+    xmlDoc **response, struct dbuf *raw_response, struct multipart_parts **parts);
 #endif /* HAVE_LIBCURL */
 
 /* Walk through list of isds_documents and check for their types and

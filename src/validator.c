@@ -2,11 +2,12 @@
 
 #include "compiler.h"
 #include "internal_types.h"
-#include "validator.h"
-#include "utils.h"
 #if HAVE_LIBCURL
 #  include "soap.h"
 #endif /* !HAVE_LIBCURL */
+#include "utils.h"
+#include "utils_memory.h"
+#include "validator.h"
 
 
 #if HAVE_LIBCURL
@@ -262,7 +263,7 @@ leave:
 
 _hidden enum isds_error _isds_vodz(struct isds_ctx *context,
     const enum isds_service service, int v_flags, const struct comm_req *req,
-    xmlDoc **response, void **raw_response, size_t *raw_response_length)
+    xmlDoc **response, struct dbuf *raw_response, struct multipart_parts **parts)
 {
 	enum isds_error err = IE_SUCCESS;
 	xmlDoc *response_document = NULL;
@@ -275,9 +276,6 @@ _hidden enum isds_error _isds_vodz(struct isds_ctx *context,
 		return IE_INVALID_CONTEXT;
 	}
 	if (UNLIKELY(NULL == response)) {
-		return IE_INVAL;
-	}
-	if (UNLIKELY((NULL == raw_response_length) && (NULL != raw_response))) {
 		return IE_INVAL;
 	}
 
@@ -306,7 +304,7 @@ _hidden enum isds_error _isds_vodz(struct isds_ctx *context,
 		s_flags |= (VODZ_RCV_XOP & v_flags) ? SCF_RCV_XOP : SCF_BASIC;
 		err = _isds_soap_vodz(context, file, s_flags, req,
 		    &response_document,
-		    &response_body, raw_response, raw_response_length);
+		    &response_body, raw_response, parts);
 	}
 
 	if (UNLIKELY(IE_SUCCESS != err)) {
@@ -352,7 +350,7 @@ leave:
 	if (IE_SUCCESS != err) {
 		xmlFreeDoc(*response);
 		if (NULL != raw_response) {
-			zfree(*raw_response);
+			dbuf_free_content(raw_response);
 		}
 	}
 	xmlFreeDoc(response_document);

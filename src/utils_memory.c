@@ -102,15 +102,32 @@ _hidden int dbuf_append_char(struct dbuf *dbuf, char ch)
 	return 0;
 }
 
-_hidden void *dbuf_take(struct dbuf *dbuf)
+_hidden int dbuf_move(struct dbuf *dest, struct dbuf *src)
 {
-	if (UNLIKELY(NULL == dbuf)) {
-		return NULL;
+	if (UNLIKELY((NULL == dest) || (NULL == src))) {
+		return -1;
 	}
 
-	void *data = dbuf->data;
-	dbuf->data = NULL;
-	return data;
+	*dest = *src;
+	src->data = NULL;
+	src->len = 0;
+
+	return 0;
+}
+
+_hidden int dbuf_take(struct dbuf *dbuf, void **data, size_t *len)
+{
+	if (UNLIKELY((NULL == dbuf) || (NULL == data))) {
+		return -1;
+	}
+
+	*data = dbuf->data; dbuf->data = NULL;
+	if (NULL != len) {
+		*len = dbuf->len;
+	}
+	dbuf->len = 0;
+
+	return 0;
 }
 
 _hidden void dbuf_free_content(struct dbuf *dbuf)

@@ -4,6 +4,8 @@
 #include "libdatovka/isds.h"
 
 struct comm_req; /* Forward declaration. */
+struct dbuf; /* Forward declaration. */
+struct multipart_parts; /* Forward declaration. */
 
 /* Flags to be used when working with SOAP. */
 enum soap_communication_flags {
@@ -47,6 +49,8 @@ isds_error _isds_soap(struct isds_ctx *context, const char *file,
  * @request is XML node set with SOAP request body.
  * @file must be NULL, @request should be NULL rather than empty, if they should
  * not be signalled in the SOAP request.
+ * @s_flags are flags indcating how to communicate with the ISDS server,
+ * use bit-masked values of enum soap_communication_flags.
  * @req contains XML request and optionally additional binary data to be added
  * @response_document is an automatically allocated XML document whose subtree
  * identified by @response_node_list holds the SOAP response body content. You
@@ -57,15 +61,18 @@ isds_error _isds_soap(struct isds_ctx *context, const char *file,
  * child of SOAP Body element. Pass NULL and NULL @response_document, if you
  * don't care.
  * @raw_response is automatically allocated bit stream with response body. Use
- * NULL if you don't care
- * @raw_response_length is size of @raw_response in bytes
+ * NULL if you don't care. Raw response is received when SCF_RCV_XOP isn't
+ * being used in @s_flags.
+ * @parts is automatically reallocated container containing parts of
+ * a multipart response. Multipart response is expected when using SCF_RCV_XOP
+ * in @s_flags.
  * In case of error the response will be deallocated automatically.
  * Side effect: message buffer
  */
 enum isds_error _isds_soap_vodz(struct isds_ctx *context, const char *file,
     int s_flags, const struct comm_req *req,
     xmlDoc **response_document, xmlNode **response_node_list,
-    void **raw_response, size_t *raw_response_length);
+    struct dbuf *raw_response, struct multipart_parts **parts);
 
 /* Build new URL from current @context and template.
  * @context is context carrying an URL
