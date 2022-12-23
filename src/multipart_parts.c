@@ -145,6 +145,29 @@ int multipart_parts_set_root_content_id(struct multipart_parts *mparts, const ch
 }
 
 _hidden
+struct multipart_part *multipart_parts_find_part(struct multipart_parts *mparts, const char *cid)
+{
+	if (UNLIKELY(NULL == mparts)) {
+		return NULL;
+	}
+
+	struct multipart_part *part = mparts->part_list;
+
+	while (NULL != part) {
+		if (UNLIKELY((NULL == cid) && (NULL == part->content_id))) {
+			return part;
+		}
+		if (0 == strcmp(cid, part->content_id)) {
+			return part;
+		}
+
+		part = part->next;
+	}
+
+	return NULL;
+}
+
+_hidden
 void multipart_parts_free(struct multipart_parts *mparts)
 {
 	if (UNLIKELY(NULL == mparts)) {

@@ -45,6 +45,8 @@ struct multipart_parts *multipart_parts_create(void);
 
 int multipart_parts_set_root_content_id(struct multipart_parts *mparts, const char *cid);
 
+struct multipart_part *multipart_parts_find_part(struct multipart_parts *mparts, const char *cid);
+
 void multipart_parts_free(struct multipart_parts *mparts);
 
 void on_hfld_and_hval_read(struct multipart_intermediate *mp_ctx);
