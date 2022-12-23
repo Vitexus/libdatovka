@@ -3721,6 +3721,7 @@ static isds_error eventstring2event(const xmlChar *string,
 			goto leave; \
 		} \
 		*(longintPtr) = number; \
+		free(string); \
 		 \
 	} else if (required) { \
 		char *attribute_locale = _isds_utf82locale(attribute); \
