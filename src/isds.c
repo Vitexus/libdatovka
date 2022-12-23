@@ -10,16 +10,18 @@
 #include <inttypes.h>   /* For PRIdMAX formatting macro */
 
 #include "compiler.h"
+#include "crypto.h"
 #include "internal_types.h"
-#include "utils.h"
+#include "multipart_parts.h"
+#include "physxml.h"
 #if HAVE_LIBCURL
 #  include "soap.h"
-#endif
-#include "validator.h"
-#include "crypto.h"
-#include "physxml.h"
+#endif /* HAVE_LIBCURL */
 #include "system.h"
 #include "time_conversion.h"
+#include "utils.h"
+#include "utils_memory.h"
+#include "validator.h"
 
 unsigned long isds_lib_ver_num(void)
 {
@@ -13910,8 +13912,15 @@ static isds_error build_send_check_message_request(struct isds_ctx *context,
             .content_id = NULL,
             .dm_file = NULL
         };
+        struct dbuf buf;
+        dbuf_init(&buf);
+        struct dbuf *buf_ptr = (NULL != raw_response) ? &buf : NULL;
         err = _isds_vodz(context, service, VODZ_BASIC, &req, response,
-                raw_response, raw_response_length);
+                buf_ptr, NULL);
+        if (NULL != raw_response) {
+            dbuf_take(&buf, raw_response, raw_response_length);
+        }
+        dbuf_free_content(&buf);
     }
     xmlFreeNode(request); request = NULL;
 
