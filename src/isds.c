@@ -14069,7 +14069,7 @@ static isds_error find_extract_signed_data_free_response(
 leave:
     if (err) {
         zfree(*raw);
-        raw_length = 0;
+        *raw_length = 0;
     }
 
     free(encoded_structure);
