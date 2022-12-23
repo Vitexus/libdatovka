@@ -14979,9 +14979,6 @@ static isds_error isds_get_signed_message(struct isds_ctx *context,
 #if HAVE_LIBCURL
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *status_message = NULL;
-    xmlXPathContextPtr xpath_ctx = NULL;
-    xmlXPathObjectPtr result = NULL;
-    char *encoded_structure = NULL;
     void *raw = NULL;
     size_t raw_length = 0;
 #endif
@@ -15023,9 +15020,6 @@ leave:
         isds_message_free(message);
     }
 
-    free(encoded_structure);
-    xmlXPathFreeObject(result);
-    xmlXPathFreeContext(xpath_ctx);
     free(raw);
 
     free(code);
