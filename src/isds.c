@@ -1894,7 +1894,8 @@ static const char *determine_vodz_locator(const char *url)
 	    || (0 == strcmp(url, isds_vodz_cert_testing_locator))) {
 		return isds_vodz_cert_testing_locator;
 	} else {
-		return NULL;
+		/* Unknown URL. Fall back to default. */
+		return isds_vodz_locator;
 	}
 }
 
