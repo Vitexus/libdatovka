@@ -27,19 +27,24 @@ void print_dmAtt(const struct isds_dmAtt *dm_att);
 void print_message(const struct isds_message *message);
 void print_copies(const struct isds_list *copies);
 void print_message_status_change(
-        const struct isds_message_status_change *changed_status);
+    const struct isds_message_status_change *changed_status);
 void print_sender_type(const isds_sender_type *type);
 
 void print_dmMessageAuthor(struct isds_dmMessageAuthor *author);
 
 void compare_hashes(const struct isds_hash *hash1,
-        const struct isds_hash *hash2);
+    const struct isds_hash *hash2);
 int progressbar(double upload_total, double upload_current,
     double download_total, double download_current,
     void *data);
 
 int mmap_file(const char *file, int *fd, void **buffer, size_t *length);
 int munmap_file(int fd, void *buffer, size_t length);
+
+int save_data_to_file(const char *message, const char *file,
+    const void *data, const size_t length);
 int save_data(const char *message, const void *data, const size_t length);
+
+int file_cmp(const char *file1, const char *file2);
 
 #endif

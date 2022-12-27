@@ -1100,7 +1100,7 @@ int munmap_file(int fd, void *buffer, size_t length) {
 }
 
 
-static int save_data_to_file(const char *file, const void *data,
+static int _save_data_to_file(const char *file, const void *data,
         const size_t length) {
     int fd;
     ssize_t written, left = length;
@@ -1137,9 +1137,68 @@ static int save_data_to_file(const char *file, const void *data,
     return 0;
 }
 
+int save_data_to_file(const char *message, const char *file,
+    const void *data, const size_t length)
+{
+	if ((NULL == file) || ('\0' == *file)) {
+		return -1;
+	}
+
+	if (NULL != message) {
+		fputs(message, stdout);
+		fputs("\n", stdout);
+		fflush(stdout);
+	}
+
+	return _save_data_to_file(file, data, length);
+}
 
 int save_data(const char *message, const void *data, const size_t length) {
-    if (message)
-        printf("%s\n", message);
-    return save_data_to_file("output", data, length);
+	if (NULL != message) {
+		fputs(message, stdout);
+		fputs("\n", stdout);
+		fflush(stdout);
+	}
+	return _save_data_to_file("output", data, length);
+}
+
+int file_cmp(const char *file1, const char *file2)
+{
+	int ret = 0;
+	_Bool mapped1 = 0;
+	int fd1;
+	void *buffer1;
+	size_t length1;
+	_Bool mapped2 = 0;
+	int fd2;
+	void *buffer2;
+	size_t length2;
+
+	mapped1 = (0 == mmap_file(file1, &fd1, &buffer1, &length1));
+	if (!mapped1) {
+		ret = -3;
+		goto leave;
+	}
+	mapped2 = (0 == mmap_file(file2, &fd2, &buffer2, &length2));
+	if (!mapped2) {
+		ret = 3;
+		goto leave;
+	}
+
+	if (length1 < length2) {
+		ret = -2;
+	} else if (length1 > length2) {
+		ret = 2;
+	} else {
+		ret = memcmp(buffer1, buffer2, length1);
+	}
+
+leave:
+	if (mapped1) {
+		munmap_file(fd1, buffer1, length1);
+	}
+	if (mapped2) {
+		munmap_file(fd2, buffer2, length2);
+	}
+	return ret;
 }
