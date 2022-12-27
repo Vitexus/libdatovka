@@ -14079,6 +14079,152 @@ leave:
 
     return err;
 }
+
+/*
+ * Build ISDS request of XSD tIDMessInput type, sent it and check for error
+ * code
+ * @context is session context
+ * @service is ISDS WS service handler
+ * @service_name is name of SERVICE_VODZ_DM_OPERATIONS
+ * @message_id is message ID to send as service argument to ISDS
+ * @response is reallocated server SOAP body response as XML document
+ * @parts is reallocated container containing parts of multipart response. Use
+ * NULL if you don't care.
+ * @code is reallocated ISDS status code
+ * @status_message is reallocated ISDS status message
+ * @return error coded from lower layer, context message will be set up
+ * appropriately.
+ */
+static enum isds_error build_send_check_message_request_mtomxop(
+    struct isds_ctx *context, const isds_service service,
+    const xmlChar *service_name, const char *message_id,
+    xmlDoc **response, struct multipart_parts **parts,
+    xmlChar **code, xmlChar **status_message)
+{
+	enum isds_error err = IE_SUCCESS;
+	char *service_name_locale = NULL;
+	char *message_id_locale = NULL;
+	xmlNode *request = NULL;
+	xmlNode *node;
+	xmlNs *isds_ns = NULL;
+
+	if (UNLIKELY(NULL == context)) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (UNLIKELY((NULL == service_name) || (NULL == message_id))) {
+		return IE_INVAL;
+	}
+	if (UNLIKELY((NULL == response) ||
+	        (NULL == code) || (NULL == status_message))) {
+		return IE_INVAL;
+	}
+
+	/* Free output arguments. */
+	xmlFreeDoc(*response); *response = NULL;
+	if (NULL != parts) {
+		multipart_parts_free(*parts); *parts = NULL;
+	}
+	zfree(*code);
+	zfree(*status_message);
+
+	/*
+	 * Check if connection is established
+	 * TODO: This check should be done downstairs.
+	 */
+	if (UNLIKELY(NULL == context->curl)) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	service_name_locale = _isds_utf82locale((char*)service_name);
+	message_id_locale = _isds_utf82locale(message_id);
+	if (UNLIKELY((NULL == service_name_locale) || (NULL == message_id_locale))) {
+		err = IE_NOMEM;
+		goto leave;
+	}
+
+	/* Build request */
+	request = xmlNewNode(NULL, service_name);
+	if (UNLIKELY(NULL == request)) {
+		isds_printf_message(context,
+		    _("Could not build %s request for %s message ID"),
+		    service_name_locale, message_id_locale);
+		err = IE_ERROR;
+		goto leave;
+	}
+	isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+	if(UNLIKELY(NULL == isds_ns)) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		err = IE_ERROR;
+		goto leave;
+	}
+	xmlSetNs(request, isds_ns);
+
+	/* Add requested ID */
+	err = validate_message_id_length(context, (xmlChar *) message_id);
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		goto leave;
+	}
+	INSERT_STRING(request, "dmID", message_id);
+
+	isds_log(ILF_ISDS, ILL_DEBUG,
+	    _("Sending %s request for %s message ID to ISDS\n"),
+	    service_name_locale, message_id_locale);
+
+	/* Send request */
+	if (service == SERVICE_VODZ_DM_OPERATIONS) {
+		const struct comm_req req = {
+			.request = request,
+			.content_id = NULL,
+			.dm_file = NULL
+		};
+		err = _isds_vodz(context, service, VODZ_RCV_XOP, &req, response,
+		    NULL, parts);
+	} else {
+		err = IE_NOTSUP;
+		goto leave;
+	}
+
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Processing ISDS response on %s request failed\n"),
+		    service_name_locale);
+		goto leave;
+	}
+
+	/* Check for response status */
+	err = isds_response_status(context, service, *response,
+	    code, status_message, NULL);
+	build_isds_status(&(context->status),
+	    _isds_service_to_status_type(service),
+	    (char *)code, (char *)status_message, NULL);
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("ISDS response on %s request is missing status\n"),
+		    service_name_locale);
+		goto leave;
+	}
+
+	/* Request processed, but nothing found */
+	if (0 != xmlStrcmp(*code, BAD_CAST "0000")) {
+		char *code_locale = _isds_utf82locale((char*) *code);
+		char *status_message_locale = _isds_utf82locale((char*) *status_message);
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Server refused %s request for %s message ID (code=%s, message=%s)\n"),
+		    service_name_locale, message_id_locale,
+		    code_locale, status_message_locale);
+		isds_log_message(context, status_message_locale);
+		free(code_locale);
+		free(status_message_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
+
+leave:
+	free(message_id_locale);
+	free(service_name_locale);
+	xmlFreeNode(request);
+	return err;
+}
 #endif /* HAVE_LIBCURL */
 
 
@@ -15313,6 +15459,258 @@ enum isds_error isds_SignedSentBigMessageDownload(struct isds_ctx *context,
     const char *message_id, struct isds_message **message)
 {
 	return isds_get_signed_big_message(context, 1, message_id, message);
+}
+
+#if HAVE_LIBCURL
+/*
+ * Create content id from XOP Include href attribute value.
+ * I.e. it creates the string "<1>" from the string "cid:1".
+ * @href is a string that must start with the prefix "cid:".
+ * Return newly allocated string with leading and trailing pointy bracket,
+ * NULL on any error.
+ */
+static char *build_content_id_from_href(const char *href)
+{
+	if (UNLIKELY(NULL == href)) {
+		return NULL;
+	}
+
+	if (UNLIKELY(0 != strncmp(href, "cid:", 4))) {
+		return NULL;
+	}
+
+	href += 4; /* Shift the start of the string past the colon. */
+	if (UNLIKELY('\0' == *href)) {
+		return NULL;
+	}
+
+	char *content_id = NULL;
+	if (UNLIKELY(-1 == isds_asprintf(&content_id, "<%s>", href))) {
+		return NULL;
+	}
+
+	return content_id;
+}
+
+/*
+ * Find dmSignature/Include in ISDS response, find content id of the part
+ * containing transmitted binary data, extract decoded CMS structure, extract
+ * signed data and free ISDS response and all parts.
+ * @context is session context
+ * @message_id is UTF-8 encoded message ID for logging purpose
+ * @response is parsed XML document. It will be freed and set to NULL in
+ * the middle of function run to save memory. This is not guaranteed in case
+ * of error.
+ * @parts are parts of the multipart response. All parts are freed and set to NULL in
+ * the middle of function run to save memory. This is not guaranteed in case
+ * of error.
+ * @request_name is name of ISDS request used to construct response root
+ * element name and for logging purpose.
+ * @raw is reallocated output buffer with DER encoded CMS data
+ * @raw_length is size of @raw buffer in bytes
+ * @returns standard error codes, in case of error, @raw will be freed and
+ * set to NULL, @response sometimes.
+ */
+static enum isds_error find_extract_signed_data_free_response_mtomxop(
+    struct isds_ctx *context, const xmlChar *message_id,
+    xmlDoc **response, struct multipart_parts **parts,
+    const xmlChar *request_name, void **raw, size_t *raw_length)
+{
+	enum isds_error err = IE_SUCCESS;
+	char *xpath_expression = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+	char *href = NULL;
+	char *content_id = NULL;
+	struct multipart_part *part = NULL;
+
+	if (UNLIKELY(NULL == context)) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (UNLIKELY(NULL == raw)) {
+		return IE_INVAL;
+	}
+	zfree(*raw);
+	if (UNLIKELY((NULL == message_id) ||
+	        (NULL == response) || (NULL == *response) ||
+	        (NULL == parts) || (NULL == *parts) ||
+	        (NULL == request_name) || (NULL == raw_length))) {
+		return IE_INVAL;
+	}
+
+	/* Build XPath expression */
+	xpath_expression = _isds_astrcat3("/isds:", (char *)request_name,
+	    "Response/isds:dmSignature/xop:Include");
+	if (UNLIKELY(NULL == xpath_expression)) {
+		return IE_NOMEM;
+	}
+
+	/* Extract data */
+	xpath_ctx = xmlXPathNewContext(*response);
+	if (UNLIKELY(NULL == xpath_ctx)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (UNLIKELY(IE_SUCCESS != _isds_register_namespaces(xpath_ctx,
+	        MESSAGE_NS_UNSIGNED, SOAP_1_2))) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	result = xmlXPathEvalExpression(BAD_CAST xpath_expression, xpath_ctx);
+	if (UNLIKELY(NULL == result)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+
+	if (UNLIKELY(xmlXPathNodeSetIsEmpty(result->nodesetval))) {
+		isds_log_message(context, _("Missing Include element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	if (UNLIKELY(result->nodesetval->nodeNr > 1)) {
+		isds_log_message(context, _("Multiple Include elements"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	xpath_ctx->node = result->nodesetval->nodeTab[0];
+	xmlXPathFreeObject(result); result = NULL;
+
+	EXTRACT_STRING_ATTRIBUTE("href", href, 1);
+	xmlXPathFreeContext(xpath_ctx); xpath_ctx = NULL;
+	xmlFreeDoc(*response); *response = NULL;
+
+	content_id = build_content_id_from_href(href);
+	if (UNLIKELY(NULL == content_id)) {
+		err = IE_NOMEM;
+		goto leave;
+	}
+	free(href); href = NULL;
+
+	part = multipart_parts_find_part(*parts, content_id);
+	if (UNLIKELY(NULL == part)) {
+		isds_printf_message(context,
+		    _("Cannot find part with content id %s"),
+		    content_id);
+		err = IE_ERROR;
+		goto leave;
+	}
+	free(content_id); content_id = NULL;
+
+	/* Take the data. */
+	*raw = part->data; part->data = NULL;
+	*raw_length = part->data_size;
+
+	multipart_parts_free(*parts); *parts = NULL;
+
+leave:
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		zfree(*raw);
+		*raw_length = 0;
+	}
+
+	free(content_id);
+	free(href);
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+	free(xpath_expression);
+
+	return err;
+}
+#endif /* HAVE_LIBCURL */
+
+/*
+ * Download signed incoming/outgoing high-volume message identified by ID.
+ * This implementation queries the data in MTOM/XOP format.
+ * @context is session context
+ * @output is true for outgoing message, false for incoming message
+ * @message_id is message identifier (you can get them from
+ * isds_get_list_of_{sent,received}_messages())
+ * @message is automatically reallocated message retrieved from ISDS. The raw
+ * member will be filled with PKCS#7 structure in DER format.
+ */
+static enum isds_error isds_get_signed_big_message_mtomxop(struct isds_ctx *context,
+    const _Bool outgoing, const char *message_id, struct isds_message **message)
+{
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlDoc *response = NULL;
+	xmlChar *code = NULL, *status_message = NULL;
+	struct multipart_parts *parts = NULL;
+	void *raw = NULL;
+	size_t raw_length = 0;
+#endif /* HAVE_LIBCURL */
+
+	if (UNLIKELY(NULL == context)) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if (UNLIKELY(NULL == message)) {
+		return IE_INVAL;
+	}
+	isds_message_free(message);
+
+#if HAVE_LIBCURL
+	/* Do request and check for success */
+	err = build_send_check_message_request_mtomxop(context,
+	    SERVICE_VODZ_DM_OPERATIONS,
+	    outgoing ? BAD_CAST "SignedSentBigMessageDownload" :
+	        BAD_CAST "SignedBigMessageDownload",
+	    message_id, &response, &parts, &code, &status_message);
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		goto leave;
+	}
+
+	/*
+	 * Find signed message, extract it into raw and maybe free response.
+	 */
+	err = find_extract_signed_data_free_response_mtomxop(context,
+	    (xmlChar *)message_id, &response, &parts,
+	    outgoing ? BAD_CAST "SignedSentBigMessageDownload" :
+	        BAD_CAST "SignedBigMessageDownload",
+	    &raw, &raw_length);
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		goto leave;
+	}
+
+	/* Parse message */
+	err = isds_load_message(context,
+	    outgoing ? RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE :
+	        RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE,
+	    raw, raw_length, message, BUFFER_MOVE);
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		goto leave;
+	}
+
+	raw = NULL;
+
+leave:
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		isds_message_free(message);
+	}
+
+	free(raw);
+	multipart_parts_free(parts);
+
+	free(code);
+	free(status_message);
+	xmlFreeDoc(response);
+
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		isds_log(ILF_ISDS, ILL_DEBUG, outgoing ?
+		    _("SignedSentBigMessageDownload MTOM/XOP request processed by server successfully.\n") :
+		    _("SignedBigMessageDownload MTOM/XOP request processed by server successfully.\n"));
+	}
+#else /* !HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+	return err;
+}
+
+enum isds_error isds_SignedBigMessageDownload_mtomxop(struct isds_ctx *context,
+    const char *message_id, struct isds_message **message)
+{
+	return isds_get_signed_big_message_mtomxop(context, 0, message_id, message);
 }
 
 /* Get type and name of user who sent a message identified by ID.
@@ -17128,6 +17526,9 @@ _hidden isds_error _isds_register_namespaces(xmlXPathContextPtr xpath_ctx,
 		return IE_ERROR;
 	}
 	if (0 != xmlXPathRegisterNs(xpath_ctx, BAD_CAST "xs", BAD_CAST SCHEMA_NS)) {
+		return IE_ERROR;
+	}
+	if (UNLIKELY(0 != xmlXPathRegisterNs(xpath_ctx, BAD_CAST "xop", BAD_CAST XOP_INCLUDE_NS))) {
 		return IE_ERROR;
 	}
 	if (0 != xmlXPathRegisterNs(xpath_ctx, BAD_CAST "deposit", BAD_CAST DEPOSIT_NS)) {
