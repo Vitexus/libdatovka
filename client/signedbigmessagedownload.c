@@ -151,7 +151,7 @@ int main(void)
 		{
 			struct isds_message *message = NULL;
 
-			printf("Getting last signed received high-volume message with ID: %s\n",
+			printf("Getting last signed received high-volume message with ID by using MTOM/XOP: %s\n",
 			    last_big_message_id);
 			err = isds_SignedBigMessageDownload_mtomxop(ctx, last_big_message_id, &message);
 			if (err != IE_SUCCESS) {
@@ -196,7 +196,7 @@ int main(void)
 		{
 			struct isds_message *message = NULL;
 
-			printf("Getting last signed received high-volume message with invalid ID: %s\n",
+			printf("Getting last signed received high-volume message with invalid ID by using MTOM/XOP: %s\n",
 			    last_big_message_id);
 			err = isds_SignedBigMessageDownload_mtomxop(ctx, id, &message);
 			if (err != IE_SUCCESS) {
@@ -213,7 +213,7 @@ int main(void)
 
 	/* Download non-existent message. */
 	if (NULL != last_big_message_id) {
-		char *id = "7777777";
+		const char *id = "7777777";
 
 		{
 			struct isds_message *message = NULL;
@@ -234,7 +234,7 @@ int main(void)
 		{
 			struct isds_message *message = NULL;
 
-			printf("Getting last signed received high-volume message with ID: %s\n",
+			printf("Getting last signed received high-volume message with ID by using MTOM/XOP: %s\n",
 			    last_big_message_id);
 			err = isds_SignedBigMessageDownload_mtomxop(ctx, id, &message);
 			if (err != IE_SUCCESS) {

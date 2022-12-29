@@ -2220,6 +2220,18 @@ enum isds_error isds_SignedSentBigMessageDownload(struct isds_ctx *context,
 enum isds_error isds_SignedBigMessageDownload_mtomxop(struct isds_ctx *context,
     const char *message_id, struct isds_message **message);
 
+/*
+ * Download signed outgoing high-volume message identified by ID. This
+ * implementation uses the MTOM/XOP.
+ * @context is session context
+ * @message_id is message identifier (you can get them from
+ * isds_get_list_of_sent_messages())
+ * @message is automatically reallocated message retrieved from ISDS. The raw
+ * member will be filled with PKCS#7 structure in DER format.
+ */
+enum isds_error isds_SignedSentBigMessageDownload_mtomxop(struct isds_ctx *context,
+    const char *message_id, struct isds_message **message);
+
 /* Get type and name of user who sent a message identified by ID.
  * @context is session context
  * @message_id is message identifier

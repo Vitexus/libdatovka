@@ -15714,6 +15714,12 @@ enum isds_error isds_SignedBigMessageDownload_mtomxop(struct isds_ctx *context,
 	return isds_get_signed_big_message_mtomxop(context, 0, message_id, message);
 }
 
+enum isds_error isds_SignedSentBigMessageDownload_mtomxop(struct isds_ctx *context,
+    const char *message_id, struct isds_message **message)
+{
+	return isds_get_signed_big_message_mtomxop(context, 1, message_id, message);
+}
+
 /* Get type and name of user who sent a message identified by ID.
  * @context is session context
  * @message_id is message identifier

@@ -126,60 +126,127 @@ int main(void)
 
 	/* Download last signed high-volume message. */
 	if (NULL != last_big_message_id) {
-		struct isds_message *message = NULL;
+		const char *out_from_base = "output";
+		const char *out_xop = "output_xop";
 
-		printf("Getting last signed sent high-volume message with ID: %s\n",
-		    last_big_message_id);
-		err = isds_SignedSentBigMessageDownload(ctx, last_big_message_id, &message);
-		if (err != IE_SUCCESS) {
-			printf("isds_SignedSentBigMessageDownload() failed: %s: %s\n",
-			    isds_strerror(err), isds_long_message(ctx));
-		} else {
-			printf("isds_SignedSentBigMessageDownload() succeeded:\n");
-			print_message(message);
-			save_data("Saving signed high-volume message",
-			     message->raw, message->raw_length);
+		{
+			struct isds_message *message = NULL;
+
+			printf("Getting last signed sent high-volume message with ID: %s\n",
+			    last_big_message_id);
+			err = isds_SignedSentBigMessageDownload(ctx, last_big_message_id, &message);
+			if (err != IE_SUCCESS) {
+				printf("isds_SignedSentBigMessageDownload() failed: %s: %s\n",
+				    isds_strerror(err), isds_long_message(ctx));
+			} else {
+				printf("isds_SignedSentBigMessageDownload() succeeded:\n");
+				print_message(message);
+				save_data_to_file("Saving signed high-volume message",
+				    out_from_base, message->raw, message->raw_length);
+			}
+
+			isds_message_free(&message);
 		}
 
-		isds_message_free(&message);
+		{
+			struct isds_message *message = NULL;
+
+			printf("Getting last signed sent high-volume message with ID by using MTOM/XOP: %s\n",
+			    last_big_message_id);
+			err = isds_SignedSentBigMessageDownload_mtomxop(ctx, last_big_message_id, &message);
+			if (err != IE_SUCCESS) {
+				printf("isds_SignedSentBigMessageDownload_mtomxop() failed: %s: %s\n",
+				    isds_strerror(err), isds_long_message(ctx));
+			} else {
+				printf("isds_SignedSentBigMessageDownload_mtomxop() succeeded:\n");
+				print_message(message);
+				save_data_to_file("Saving signed high-volume message",
+				    out_xop, message->raw, message->raw_length);
+			}
+
+			isds_message_free(&message);
+		}
+
+		if (0 != file_cmp(out_from_base, out_xop)) {
+			fputs("Data downloaded by isds_SignedSentBigMessageDownload() and isds_SignedSentBigMessageDownload_mtomxop() are different.\n",
+			    stdout);
+		}
 	}
 
 	/* Download message with invalid ID. */
 	if (NULL != last_big_message_id) {
-		struct isds_message *message = NULL;
-		char *id = "123456789112345678921";
+		const char *id = "123456789112345678921";
 
-		printf("Getting last signed sent high-volume message with invalid ID: %s\n",
-		    last_big_message_id);
-		err = isds_SignedSentBigMessageDownload(ctx, id, &message);
-		if (err != IE_SUCCESS) {
-			printf("isds_SignedSentBigMessageDownload() failed as assumed: %s: %s\n",
-			    isds_strerror(err), isds_long_message(ctx));
-		} else {
-			printf("isds_SignedSentBigMessageDownload() succeeded. This should not happen:\n");
-			print_message(message);
+		{
+			struct isds_message *message = NULL;
+
+			printf("Getting last signed sent high-volume message with invalid ID: %s\n",
+			    last_big_message_id);
+			err = isds_SignedSentBigMessageDownload(ctx, id, &message);
+			if (err != IE_SUCCESS) {
+				printf("isds_SignedSentBigMessageDownload() failed as assumed: %s: %s\n",
+				    isds_strerror(err), isds_long_message(ctx));
+			} else {
+				printf("isds_SignedSentBigMessageDownload() succeeded. This should not happen:\n");
+				print_message(message);
+			}
+
+			isds_message_free(&message);
 		}
+		{
+			struct isds_message *message = NULL;
 
-		isds_message_free(&message);
+			printf("Getting last signed sent high-volume message with invalid ID by using MTOM/XOP: %s\n",
+			    last_big_message_id);
+			err = isds_SignedSentBigMessageDownload_mtomxop(ctx, id, &message);
+			if (err != IE_SUCCESS) {
+				printf("isds_SignedSentBigMessageDownload_mtomxop() failed as assumed: %s: %s\n",
+				    isds_strerror(err), isds_long_message(ctx));
+			} else {
+				printf("isds_SignedSentBigMessageDownload_mtomxop() succeeded. This should not happen:\n");
+				print_message(message);
+			}
+
+			isds_message_free(&message);
+		}
 	}
 
 	/* Download non-existent message. */
 	if (NULL != last_big_message_id) {
-		struct isds_message *message = NULL;
-		char *id = "7777777";
+		const char *id = "7777777";
 
-		printf("Getting last signed sent high-volume message with ID: %s\n",
-		    last_big_message_id);
-		err = isds_SignedSentBigMessageDownload(ctx, id, &message);
-		if (err != IE_SUCCESS) {
-			printf("isds_SignedSentBigMessageDownload() failed as assumed: %s: %s\n",
-			    isds_strerror(err), isds_long_message(ctx));
-		} else {
-			printf("isds_SignedSentBigMessageDownload() succeeded. This should not happen:\n");
-			print_message(message);
+		{
+			struct isds_message *message = NULL;
+
+			printf("Getting last signed sent high-volume message with ID: %s\n",
+			    last_big_message_id);
+			err = isds_SignedSentBigMessageDownload(ctx, id, &message);
+			if (err != IE_SUCCESS) {
+				printf("isds_SignedSentBigMessageDownload() failed as assumed: %s: %s\n",
+				    isds_strerror(err), isds_long_message(ctx));
+			} else {
+				printf("isds_SignedSentBigMessageDownload() succeeded. This should not happen:\n");
+				print_message(message);
+			}
+
+			isds_message_free(&message);
 		}
+		{
+			struct isds_message *message = NULL;
 
-		isds_message_free(&message);
+			printf("Getting last signed sent high-volume message with ID by using MTOM/XOP: %s\n",
+			    last_big_message_id);
+			err = isds_SignedSentBigMessageDownload_mtomxop(ctx, id, &message);
+			if (err != IE_SUCCESS) {
+				printf("isds_SignedSentBigMessageDownload_mtomxop() failed as assumed: %s: %s\n",
+				    isds_strerror(err), isds_long_message(ctx));
+			} else {
+				printf("isds_SignedSentBigMessageDownload_mtomxop() succeeded. This should not happen:\n");
+				print_message(message);
+			}
+
+			isds_message_free(&message);
+		}
 	}
 
 	if (NULL == last_big_message_id) {
