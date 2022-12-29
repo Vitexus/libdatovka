@@ -710,31 +710,36 @@ static size_t write_multipart_header(void *buffer, size_t size, size_t nmemb,
 		size_t len;
 		value_length = length - (value - (char *)buffer);
 		if (0 == extract_header_val(value, value_length, "start=", &start, &len)) {
-			if (UNLIKELY(NULL != parts->expected_root_content_id)) {
-				return 0; /* Duplicate entry. */
-			}
+			if (NULL != start) {
+				if (UNLIKELY(NULL != parts->expected_root_content_id)) {
+					return 0; /* Duplicate entry. */
+				}
 
-			parts->expected_root_content_id = copy_header_val(start, len);
-			if (UNLIKELY(NULL == parts->expected_root_content_id)) {
-				return 0;
+				parts->expected_root_content_id = copy_header_val(start, len);
+				if (UNLIKELY(NULL == parts->expected_root_content_id)) {
+					return 0;
+				}
 			}
 		}
 
 		if (0 == extract_header_val(value, value_length, "boundary=", &start, &len)) {
-			if (UNLIKELY(NULL != interm->parser)) {
-				return 0; /* Duplicate entry. */
-			}
+			if (NULL != start) {
+				if (UNLIKELY(NULL != interm->parser)) {
+					return 0; /* Duplicate entry. */
+				}
 
-			char *boundary = copy_header_val(start, len);
-			if (UNLIKELY(NULL == boundary)) {
-				return 0;
-			}
+				char *boundary = copy_header_val(start, len);
+				if (UNLIKELY(NULL == boundary)) {
+					return 0;
+				}
 
-			if (UNLIKELY(0 != multipart_intermediate_init_parser(interm, boundary))) {
-				return 0;
-			}
+				if (UNLIKELY(0 != multipart_intermediate_init_parser(interm, boundary))) {
+					free(boundary);
+					return 0;
+				}
 
-			free(boundary);
+				free(boundary);
+			}
 		}
 	}
 
