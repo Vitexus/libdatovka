@@ -573,6 +573,60 @@ leave:
 }
 
 /*
+ * Extract first header value (i.e. preceding the first semicolon).
+ * @hval is the header value string, doesn't need to be null-terminated.
+ * @hval_len is the length of the @hval string.
+ * @str is set to point at the start of the value, if such is present.
+ * @str_len is the length of the value.
+ * Returns 0 on success, even if no value is found. Returns -1 on error.
+ */
+static int extract_hdr_first_val(const char *hval, size_t hval_len,
+    const char **str, size_t *str_len)
+{
+	char *start = NULL;
+	const char *end = NULL;
+
+	if (UNLIKELY((NULL == hval) || ('\0' == *hval) ||
+	    (NULL == str) || (NULL == str_len))) {
+		return -1;
+	}
+
+	start = (char *)hval;
+
+	/* Skip leading white-space characters. */
+	while ((' ' == *start) || ('\t' == *start)) {
+		++start;
+	}
+
+	end = strchr(start, ';');
+	if (NULL == end) {
+		end = hval + hval_len; /* Past last printable character. */
+	}
+	--end; /* Last printable character. */
+
+	/* Skip trailing white-space characters. */
+	if ((start <= end) && ((' ' == *end) || ('\t' == *end))) {
+		--end;
+	}
+
+	if (UNLIKELY(start >= end)) {
+		*str = NULL;
+		*str_len = 0;
+		return 0;
+	}
+
+	if (((end - start) > 1) && ('"' == *start) && ('"' == *end)) {
+		/* Remove quotes. */
+		++start;
+		--end;
+	}
+
+	*str_len = end - start + 1;
+	*str = start;
+	return 0;
+}
+
+/*
  * Extract assignment vale from a header value.
  * @hval is the header value string, doesn't need to be null-terminated.
  * @hval_len is the length of the @hval string.
@@ -581,7 +635,7 @@ leave:
  * @str_len is the length of the assignment.
  * Returns 0 on success, even if no assignment is found. Returns -1 on error.
  */
-static int extract_header_val(const char *hval, size_t hval_len,
+static int extract_hdr_assign_val(const char *hval, size_t hval_len,
     const char *assignment, const char **str, size_t *str_len)
 {
 	char *start = NULL;
@@ -710,6 +764,7 @@ static size_t write_multipart_header(void *buffer, size_t size, size_t nmemb,
 		size_t len;
 		value_length = length - (value - (char *)buffer);
 		if (0 == extract_header_val(value, value_length, "start=", &start, &len)) {
+		if (0 == extract_hdr_assign_val(value, value_length, "start=", &start, &len)) {
 			if (NULL != start) {
 				if (UNLIKELY(NULL != parts->expected_root_content_id)) {
 					return 0; /* Duplicate entry. */
@@ -717,12 +772,14 @@ static size_t write_multipart_header(void *buffer, size_t size, size_t nmemb,
 
 				parts->expected_root_content_id = copy_header_val(start, len);
 				if (UNLIKELY(NULL == parts->expected_root_content_id)) {
+					isds_log(ILF_HTTP, ILL_ERR,
+					    _("Error while copying root content identifier.\n"));
 					return 0;
 				}
 			}
 		}
 
-		if (0 == extract_header_val(value, value_length, "boundary=", &start, &len)) {
+		if (0 == extract_hdr_assign_val(value, value_length, "boundary=", &start, &len)) {
 			if (NULL != start) {
 				if (UNLIKELY(NULL != interm->parser)) {
 					return 0; /* Duplicate entry. */
@@ -1646,31 +1703,22 @@ static enum isds_error http(struct isds_ctx *context,
 
 	/* Extract MIME type and charset */
 	if (NULL != content_type) {
-		char *sep;
-		size_t offset;
 		const char *start;
 		size_t len;
+		const size_t content_type_len = strlen(content_type);
 
-		sep = strchr(content_type, ';');
-		if (NULL != sep) {
-			offset = (size_t)(sep - content_type);
-		} else {
-			offset = strlen(content_type);
+		if (UNLIKELY(0 != extract_hdr_first_val(content_type,
+		        content_type_len, &start, &len))) {
 		}
-
-		{
-			_mime_type = malloc(offset + 1);
+		if (NULL != start) {
+			_mime_type = copy_header_val(start, len);
 			if (UNLIKELY(NULL == _mime_type)) {
 				err = IE_NOMEM;
 				goto leave;
 			}
-			memcpy(_mime_type, content_type, offset);
-			_mime_type[offset] = '\0';
 		}
 
-		size_t content_type_len = strlen(content_type);
-
-		if (UNLIKELY(0 != extract_header_val(content_type,
+		if (UNLIKELY(0 != extract_hdr_assign_val(content_type,
 		        content_type_len, "charset=", &start, &len))) {
 			err = IE_HTTP;
 			goto leave;
