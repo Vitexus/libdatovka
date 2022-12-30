@@ -1684,6 +1684,14 @@ static enum isds_error http(struct isds_ctx *context,
 	curl_err = curl_easy_perform(context->curl);
 
 
+	if (CURLE_OK == curl_err) {
+		if (UNLIKELY(0 != multipart_intermediate_finish(interm))) {
+			isds_log(ILF_HTTP, ILL_INFO,
+			    _("There have been some unprocessed multipart data. "
+			        "The close delimiter may be missing."));
+		}
+	}
+
 #if HAVE_DECL_CURLOPT_MIMEPOST /* Since curl-7.56.0 */
 	curl_mime_free(multipart); multipart = NULL;
 #else /* !HAVE_DECL_CURLOPT_MIMEPOST */
