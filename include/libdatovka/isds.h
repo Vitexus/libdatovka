@@ -1966,7 +1966,7 @@ enum isds_error isds_UploadAttachment(struct isds_ctx *context,
 
 /*
  * Send an attachment (file) into the ISDS attachment storage. This
- * implementation uses the MOTOM/XOP.
+ * implementation uses the MTOM/XOP.
  * @context is session context
  * @dm_file attachment description, @dmFile->dmFileMetaType value is ignored here.
  * @dm_att automatically reallocated attachment description which can be used
@@ -2125,7 +2125,7 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
 isds_error isds_get_delivery_info(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
 
-/* Download incoming message identified by ID.
+/* Download incoming message identified by ID. It uses the MessageDownload service.
  * @context is session context
  * @message_id is message identifier (you can get them from
  * isds_get_list_of_received_messages())
@@ -2210,7 +2210,7 @@ enum isds_error isds_SignedSentBigMessageDownload(struct isds_ctx *context,
 
 /*
  * Download signed outgoing high-volume message identified by ID. This
- * implementation uses the MOTOM/XOP.
+ * implementation uses the MTOM/XOP.
  * @context is session context
  * @message_id is message identifier (you can get them from
  * isds_get_list_of_sent_messages())
@@ -2334,7 +2334,7 @@ enum isds_error isds_AuthenticateBigMessage(struct isds_ctx *context,
  * Submit CMS signed high-volume message to ISDS to verify its originality.
  * This is stronger form of isds_verify_message_hash() because ISDS does more
  * checks than simple one (potentially old weak) hash comparison. This
- * implementation uses the MOTOM/XOP.
+ * implementation uses the MTOM/XOP.
  * @context is session context
  * @message is memory with raw CMS signed message bit stream
  * @length is @message size in bytes
