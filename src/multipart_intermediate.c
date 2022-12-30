@@ -94,6 +94,7 @@ int read_part_data(struct multipart_parser *p, const char *at, size_t length)
 	//intermediate_log("%.*s", (int)length, at);
 
 	if (0 == dbuf_res_append(dbuf, at, length)) {
+		interm->have_unfinished_content = 1;
 		return 0;
 	} else {
 		return -1;
@@ -220,6 +221,7 @@ int part_data_end(struct multipart_parser *p)
 	}
 
 	dbuf->used = 0;
+	interm->have_unfinished_content = 0;
 	return 0;
 }
 
@@ -297,6 +299,20 @@ size_t multipart_intermediate_execute(struct multipart_intermediate *interm, con
 	}
 
 	return multipart_parser_execute(interm->parser, buf, len);
+}
+
+_hidden
+int multipart_intermediate_finish(struct multipart_intermediate *interm)
+{
+	if (UNLIKELY((NULL == interm) || (NULL == interm->parser))) {
+		return 0;
+	}
+
+	if (interm->have_unfinished_content) {
+		part_data_end(interm->parser);
+		return 1;
+	}
+	return 0;
 }
 
 _hidden

@@ -16,6 +16,8 @@ struct multipart_intermediate {
 	struct dbuf_res last_hval; /* Last header value. */
 	struct dbuf_res content; /* Last content (data). */
 
+	int have_unfinished_content;
+
 	void *data; /* Additional user-defined data to be passed into following callbacks. */
 
 	void (*on_hfld_and_hval_read)(struct multipart_intermediate *ctx);
@@ -33,6 +35,12 @@ int multipart_intermediate_init_parser(struct multipart_intermediate *interm, co
 
 /* Execute the parser on provided data. */
 size_t multipart_intermediate_execute(struct multipart_intermediate *interm, const char *buf, size_t len);
+
+/*
+ * Terminate the parser in case when no terminating boundary has been provoded.
+ * Return non-zero value if there have been some unprocessed data.
+ */
+int multipart_intermediate_finish(struct multipart_intermediate *interm);
 
 /* Doesn't free the data portion. User must free this memory if necessary. */
 void multipart_intermediate_free(struct multipart_intermediate *interm);
