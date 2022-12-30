@@ -8,6 +8,14 @@
 
 #include "common.h"
 
+#define PRINT_MESSAGES
+
+#ifdef PRINT_MESSAGES
+#  define _print_message(msg) print_message(msg)
+#else /* !PRINT_MESSAGES */
+#  define _print_message(msg) (void)(msg)
+#endif /* PRINT_MESSAGES */
+
 int main(void)
 {
 	struct isds_ctx *ctx = NULL;
@@ -116,7 +124,7 @@ int main(void)
 			    isds_strerror(err), isds_long_message(ctx));
 		} else {
 			printf("isds_get_received_message() succeeded:\n");
-			print_message(message);
+			_print_message(message);
 			save_data("Saving message",
 			     message->raw, message->raw_length);
 		}
@@ -126,60 +134,70 @@ int main(void)
 
 	/* Download last signed high-volume message. */
 	if (NULL != last_big_message_id) {
-		struct isds_message *message = NULL;
+		const char *out_from_base = "output";
 
-		printf("Getting last received high-volume message with ID: %s\n",
-		    last_big_message_id);
-		err = isds_BigMessageDownload(ctx, last_big_message_id, &message);
-		if (err != IE_SUCCESS) {
-			printf("isds_BigMessageDownload() failed: %s: %s\n",
-			    isds_strerror(err), isds_long_message(ctx));
-		} else {
-			printf("isds_BigMessageDownload() succeeded:\n");
-			print_message(message);
-			save_data("Saving high-volume message",
-			     message->raw, message->raw_length);
+		{
+			struct isds_message *message = NULL;
+
+			printf("Getting last received high-volume message with ID: %s\n",
+			    last_big_message_id);
+			err = isds_BigMessageDownload(ctx, last_big_message_id, &message);
+			if (err != IE_SUCCESS) {
+				printf("isds_BigMessageDownload() failed: %s: %s\n",
+				    isds_strerror(err), isds_long_message(ctx));
+			} else {
+				printf("isds_BigMessageDownload() succeeded:\n");
+				_print_message(message);
+				save_data_to_file("Saving high-volume message",
+				    out_from_base, message->raw, message->raw_length);
+			}
+
+			isds_message_free(&message);
 		}
-
-		isds_message_free(&message);
 	}
 
 	/* Download message with invalid ID. */
-	if (NULL != last_big_message_id) {
-		struct isds_message *message = NULL;
-		char *id = "123456789112345678921";
+	{
+		const char *id = "123456789112345678921";
 
-		printf("Getting last received high-volume message with invalid ID: %s\n",
-		    last_big_message_id);
-		err = isds_BigMessageDownload(ctx, id, &message);
-		if (err != IE_SUCCESS) {
-			printf("isds_BigMessageDownload() failed as assumed: %s: %s\n",
-			    isds_strerror(err), isds_long_message(ctx));
-		} else {
-			printf("isds_BigMessageDownload() succeeded. This should not happen:\n");
-			print_message(message);
+		{
+			struct isds_message *message = NULL;
+
+			printf("Getting last received high-volume message with invalid ID: %s\n",
+			    id);
+			err = isds_BigMessageDownload(ctx, id, &message);
+			if (err != IE_SUCCESS) {
+				printf("isds_BigMessageDownload() failed as assumed: %s: %s\n",
+				    isds_strerror(err), isds_long_message(ctx));
+			} else {
+				printf("isds_BigMessageDownload() succeeded. This should not happen:\n");
+				_print_message(message);
+			}
+
+			isds_message_free(&message);
 		}
-
-		isds_message_free(&message);
 	}
 
 	/* Download non-existent message. */
-	if (NULL != last_big_message_id) {
-		struct isds_message *message = NULL;
-		char *id = "7777777";
+	{
+		const char *id = "7777777";
 
-		printf("Getting last received high-volume message with ID: %s\n",
-		    last_big_message_id);
-		err = isds_BigMessageDownload(ctx, id, &message);
-		if (err != IE_SUCCESS) {
-			printf("isds_BigMessageDownload() failed as assumed: %s: %s\n",
-			    isds_strerror(err), isds_long_message(ctx));
-		} else {
-			printf("isds_BigMessageDownload() succeeded. This should not happen:\n");
-			print_message(message);
+		{
+			struct isds_message *message = NULL;
+
+			printf("Getting last received high-volume message with ID: %s\n",
+			    id);
+			err = isds_BigMessageDownload(ctx, id, &message);
+			if (err != IE_SUCCESS) {
+				printf("isds_BigMessageDownload() failed as assumed: %s: %s\n",
+				    isds_strerror(err), isds_long_message(ctx));
+			} else {
+				printf("isds_BigMessageDownload() succeeded. This should not happen:\n");
+				_print_message(message);
+			}
+
+			isds_message_free(&message);
 		}
-
-		isds_message_free(&message);
 	}
 
 	if (NULL == last_big_message_id) {

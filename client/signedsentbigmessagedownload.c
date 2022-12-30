@@ -8,6 +8,14 @@
 
 #include "common.h"
 
+#define PRINT_MESSAGES
+
+#ifdef PRINT_MESSAGES
+#  define _print_message(msg) print_message(msg)
+#else /* !PRINT_MESSAGES */
+#  define _print_message(msg) (void)(msg)
+#endif /* PRINT_MESSAGES */
+
 int main(void)
 {
 	struct isds_ctx *ctx = NULL;
@@ -116,7 +124,7 @@ int main(void)
 			    isds_strerror(err), isds_long_message(ctx));
 		} else {
 			printf("isds_get_signed_sent_message() succeeded:\n");
-			print_message(message);
+			_print_message(message);
 			save_data("Saving signed message",
 			     message->raw, message->raw_length);
 		}
@@ -140,7 +148,7 @@ int main(void)
 				    isds_strerror(err), isds_long_message(ctx));
 			} else {
 				printf("isds_SignedSentBigMessageDownload() succeeded:\n");
-				print_message(message);
+				_print_message(message);
 				save_data_to_file("Saving signed high-volume message",
 				    out_from_base, message->raw, message->raw_length);
 			}
@@ -159,7 +167,7 @@ int main(void)
 				    isds_strerror(err), isds_long_message(ctx));
 			} else {
 				printf("isds_SignedSentBigMessageDownload_mtomxop() succeeded:\n");
-				print_message(message);
+				_print_message(message);
 				save_data_to_file("Saving signed high-volume message",
 				    out_xop, message->raw, message->raw_length);
 			}
@@ -174,21 +182,21 @@ int main(void)
 	}
 
 	/* Download message with invalid ID. */
-	if (NULL != last_big_message_id) {
+	{
 		const char *id = "123456789112345678921";
 
 		{
 			struct isds_message *message = NULL;
 
 			printf("Getting last signed sent high-volume message with invalid ID: %s\n",
-			    last_big_message_id);
+			    id);
 			err = isds_SignedSentBigMessageDownload(ctx, id, &message);
 			if (err != IE_SUCCESS) {
 				printf("isds_SignedSentBigMessageDownload() failed as assumed: %s: %s\n",
 				    isds_strerror(err), isds_long_message(ctx));
 			} else {
 				printf("isds_SignedSentBigMessageDownload() succeeded. This should not happen:\n");
-				print_message(message);
+				_print_message(message);
 			}
 
 			isds_message_free(&message);
@@ -197,14 +205,14 @@ int main(void)
 			struct isds_message *message = NULL;
 
 			printf("Getting last signed sent high-volume message with invalid ID by using MTOM/XOP: %s\n",
-			    last_big_message_id);
+			    id);
 			err = isds_SignedSentBigMessageDownload_mtomxop(ctx, id, &message);
 			if (err != IE_SUCCESS) {
 				printf("isds_SignedSentBigMessageDownload_mtomxop() failed as assumed: %s: %s\n",
 				    isds_strerror(err), isds_long_message(ctx));
 			} else {
 				printf("isds_SignedSentBigMessageDownload_mtomxop() succeeded. This should not happen:\n");
-				print_message(message);
+				_print_message(message);
 			}
 
 			isds_message_free(&message);
@@ -212,21 +220,21 @@ int main(void)
 	}
 
 	/* Download non-existent message. */
-	if (NULL != last_big_message_id) {
+	{
 		const char *id = "7777777";
 
 		{
 			struct isds_message *message = NULL;
 
 			printf("Getting last signed sent high-volume message with ID: %s\n",
-			    last_big_message_id);
+			    id);
 			err = isds_SignedSentBigMessageDownload(ctx, id, &message);
 			if (err != IE_SUCCESS) {
 				printf("isds_SignedSentBigMessageDownload() failed as assumed: %s: %s\n",
 				    isds_strerror(err), isds_long_message(ctx));
 			} else {
 				printf("isds_SignedSentBigMessageDownload() succeeded. This should not happen:\n");
-				print_message(message);
+				_print_message(message);
 			}
 
 			isds_message_free(&message);
@@ -235,14 +243,14 @@ int main(void)
 			struct isds_message *message = NULL;
 
 			printf("Getting last signed sent high-volume message with ID by using MTOM/XOP: %s\n",
-			    last_big_message_id);
+			    id);
 			err = isds_SignedSentBigMessageDownload_mtomxop(ctx, id, &message);
 			if (err != IE_SUCCESS) {
 				printf("isds_SignedSentBigMessageDownload_mtomxop() failed as assumed: %s: %s\n",
 				    isds_strerror(err), isds_long_message(ctx));
 			} else {
 				printf("isds_SignedSentBigMessageDownload_mtomxop() succeeded. This should not happen:\n");
-				print_message(message);
+				_print_message(message);
 			}
 
 			isds_message_free(&message);
