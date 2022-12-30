@@ -62,7 +62,7 @@ isds_error _isds_soap(struct isds_ctx *context, const char *file,
  * don't care.
  * @raw_response is automatically allocated bit stream with response body. Use
  * NULL if you don't care. Raw response is received when SCF_RCV_XOP isn't
- * being used in @s_flags.
+ * being used in @s_flags or when server decides not to use MTOM/XOP in response.
  * @parts is automatically reallocated container containing parts of
  * a multipart response. Multipart response is expected when using SCF_RCV_XOP
  * in @s_flags.

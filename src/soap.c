@@ -47,6 +47,13 @@ struct formpost_header_list {
 	struct formpost_header_list *next;
 };
 
+/* Context structure, needed to read multipart data. */
+struct accepted_data {
+	int is_multipart;
+	struct dbuf *raw_monolitic;  /* Where to store raw monolitoc data. */
+	struct multipart_intermediate *interm; /* Intermediate multipart data, parser context, etc. */
+};
+
 /* Deallocate content of struct auth_headers */
 static void auth_headers_free(struct auth_headers *headers) {
     zfree(headers->last_header);
@@ -454,17 +461,33 @@ static size_t write_body(void *buffer, size_t size, size_t nmemb, void *userp)
  */
 static size_t write_multipart_body(void *buffer, size_t size, size_t nmemb, void *userp)
 {
-	struct multipart_intermediate *interm =
-	    (struct multipart_intermediate *)userp;
-
-	if (UNLIKELY((NULL == interm) || (NULL == interm->parser))) {
-		 return 0; /* This should never happen */
+	struct accepted_data *accepted = (struct accepted_data *)userp;
+	if (UNLIKELY(NULL == accepted)) {
+		return 0; /* This should never happen. */
 	}
+	struct multipart_intermediate *interm = accepted->interm;
+
+	if (UNLIKELY(NULL == accepted->raw_monolitic)) {
+		return 0; /* This should never happen. */
+	}
+	if (UNLIKELY(NULL == interm)) {
+		return 0; /* This should never happen. */
+	}
+	if (UNLIKELY(accepted->is_multipart && (NULL == interm->parser))) {
+		return 0; /* This should never happen. */
+	}
+
 	if (UNLIKELY((0 == (size * nmemb)))) {
-		return 0; /* Empty body */
+		return 0; /* Empty body. */
 	}
 
-	multipart_intermediate_execute(interm, buffer, size * nmemb);
+	if (accepted->is_multipart) {
+		multipart_intermediate_execute(interm, buffer, size * nmemb);
+	} else {
+		if (UNLIKELY(0 != dbuf_append(accepted->raw_monolitic, buffer, size * nmemb))) {
+			return 0;
+		}
+	}
 
 	return size * nmemb;
 }
@@ -727,12 +750,14 @@ static char *copy_header_val(const char *start, size_t len)
 static size_t write_multipart_header(void *buffer, size_t size, size_t nmemb,
     void *userp)
 {
-	struct multipart_intermediate *interm =
-	    (struct multipart_intermediate *)userp;
+	struct accepted_data *accepted = (struct accepted_data *)userp;
+	if (UNLIKELY(NULL == accepted)) {
+		return 0; /* This should never happen. */
+	}
+	struct multipart_intermediate *interm = accepted->interm;
 	struct multipart_parts *parts = NULL;
 	size_t length;
 	const char *value;
-	size_t value_length;
 
 	if (UNLIKELY(NULL == interm)) {
 		 return 0; /* This should never happen */
@@ -762,8 +787,15 @@ static size_t write_multipart_header(void *buffer, size_t size, size_t nmemb,
 	if (NULL != value) {
 		const char *start;
 		size_t len;
-		value_length = length - (value - (char *)buffer);
-		if (0 == extract_header_val(value, value_length, "start=", &start, &len)) {
+		const size_t value_length = length - (value - (char *)buffer);
+		if (0 == extract_hdr_first_val(value, value_length, &start, &len)) {
+			if (NULL != start) {
+				if (0 == strncmp(start, "multipart/related", len)) {
+					accepted->is_multipart = 1;
+				}
+			}
+		}
+
 		if (0 == extract_hdr_assign_val(value, value_length, "start=", &start, &len)) {
 			if (NULL != start) {
 				if (UNLIKELY(NULL != parts->expected_root_content_id)) {
@@ -791,6 +823,8 @@ static size_t write_multipart_header(void *buffer, size_t size, size_t nmemb,
 				}
 
 				if (UNLIKELY(0 != multipart_intermediate_init_parser(interm, boundary))) {
+					isds_log(ILF_HTTP, ILL_ERR,
+					    _("Error while copying multipart boundary.\n"));
 					free(boundary);
 					return 0;
 				}
@@ -1170,8 +1204,9 @@ fail:
  * @request_length is length of @request in bytes
  * @content_id href value of the Include MTOM/XOP element
  * @dm_file file content
- * @response is automatically reallocated() buffer to fit the HTTP response.
- * You must free the @response content.
+ * @response is automatically reallocated() buffer to fit the HTTP
+ * non-multipart response. You must free the @response content. Always check
+ * the value. Non-multipart response may be received.
  * @interm is structure to hold the multipart parser, intermediate data and
  * parsed multipart data.
  * @mime_type is automatically allocated MIME type send by server (*NULL if not
@@ -1212,6 +1247,11 @@ static enum isds_error http(struct isds_ctx *context,
 	struct curl_httppost *post = NULL;
 	struct formpost_header_list *hl = NULL;
 #endif /* HAVE_DECL_CURLOPT_MIMEPOST */
+	struct accepted_data accepted_data = {
+		.is_multipart = 0,
+		.raw_monolitic = response,
+		.interm = interm
+	};
 
 	if (UNLIKELY(NULL == context)) {
 		return IE_INVALID_CONTEXT;
@@ -1481,7 +1521,7 @@ static enum isds_error http(struct isds_ctx *context,
 		}
 		if (CURLE_OK == curl_err) {
 			curl_err = curl_easy_setopt(context->curl,
-			    CURLOPT_WRITEDATA, interm);
+			    CURLOPT_WRITEDATA, &accepted_data);
 		}
 	}
 
@@ -1511,7 +1551,7 @@ static enum isds_error http(struct isds_ctx *context,
 		}
 		if (CURLE_OK == curl_err) {
 			curl_err = curl_easy_setopt(context->curl, CURLOPT_WRITEHEADER,
-			    interm);
+			    &accepted_data);
 		}
 	}
 
