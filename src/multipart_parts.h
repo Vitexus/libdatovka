@@ -33,6 +33,9 @@ struct multipart_parts {
 
 struct multipart_part *multipart_part_create(void);
 
+/* Take the content. */
+int multipart_part_take(struct multipart_part *mpart, void **data, size_t *len);
+
 /* Ignores next pointer. */
 void multipart_part_free(struct multipart_part *mpart);
 

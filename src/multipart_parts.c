@@ -73,6 +73,22 @@ struct multipart_part *multipart_part_create(void)
 }
 
 _hidden
+int multipart_part_take(struct multipart_part *mpart, void **data, size_t *len)
+{
+	if (UNLIKELY((NULL == mpart) || (NULL == data))) {
+		return -1;
+	}
+
+	*data = mpart->data; mpart->data = NULL;
+	if (NULL != len) {
+		*len = mpart->data_size;
+	}
+	mpart->data_size = 0;
+
+	return 0;
+}
+
+_hidden
 void multipart_part_free(struct multipart_part *mpart)
 {
 	if (UNLIKELY(NULL == mpart)) {

@@ -1982,9 +1982,21 @@ enum isds_error isds_UploadAttachment_mtomxop(struct isds_ctx *context,
  * @message_id is message identifier of a high-volume data message
  * @attNum is the ordinary number of the attachment, the attachments are numbered from 0
  * @dm_file automatically reallocated attachment file
- * @return ISDS_SUCCESS, or other error codes if something goes wrong.
+ * @return IE_SUCCESS, or other error codes if something goes wrong.
  */
 enum isds_error isds_DownloadAttachment(struct isds_ctx *context,
+    const char *message_id, long int attNum, struct isds_dmFile **dm_file);
+
+/*
+ * Download an attachment (file) of a specified high-volume data message. This
+ * implementation uses the MTOM/XOP.
+ * @context is session context
+ * @message_id is message identifier of a high-volume data message
+ * @attNum is the ordinary number of the attachment, the attachments are numbered from 0
+ * @dm_file automatically reallocated attachment file
+ * @return IE_SUCCESS, or other error codes if something goes wrong.
+ */
+enum isds_error isds_DownloadAttachment_mtomxop(struct isds_ctx *context,
     const char *message_id, long int attNum, struct isds_dmFile **dm_file);
 
 /*
