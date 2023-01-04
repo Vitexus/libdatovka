@@ -471,6 +471,9 @@ void isds_dmFile_free(struct isds_dmFile **file)
 	/* (*file)->dmFileMetaType */
 	free((*file)->dmMimeType);
 	free((*file)->dmFileDescr);
+
+	free(*file);
+	*file = NULL;
 }
 
 void isds_dmAtt_free(struct isds_dmAtt **att)
