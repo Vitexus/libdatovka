@@ -8,6 +8,57 @@
 
 #include "common.h"
 
+static _Bool isds_dmFile_eq(const struct isds_dmFile *dmf1,
+    const struct isds_dmFile *dmf2)
+{
+	if (((NULL == dmf1) && (NULL == dmf2)) || (dmf1 == dmf2)) {
+		/* Both NULL or same. */
+		return 1;
+	} else if (((NULL == dmf1) && (NULL != dmf2)) ||
+	           ((NULL != dmf1) && (NULL == dmf2))) {
+		/* One of them NULL. */
+		return 0;
+	}
+
+	if (dmf1->data_length == dmf2->data_length) {
+		/* Equal data length. */
+		if ((NULL != dmf1->data) && (NULL != dmf2->data)) {
+			if (0 != memcmp(dmf1->data, dmf2->data, dmf1->data_length)) {
+				/* Not equal data content. */
+				return 0;
+			}
+		} else if ((NULL != dmf1->data) || (NULL != dmf2->data)) {
+			/* One has data other has not. */
+			return 0;
+		}
+	} else {
+		/* Not equal data length. */
+		return 0;
+	}
+
+	if (dmf1->dmFileMetaType != dmf2->dmFileMetaType) {
+		return 0;
+	}
+
+	if ((NULL != dmf1->dmMimeType) && (NULL != dmf2->dmMimeType)) {
+		if (0 != strcmp(dmf1->dmMimeType, dmf2->dmMimeType)) {
+			return 0;
+		}
+	} else if ((NULL != dmf1->dmMimeType) || (NULL != dmf2->dmMimeType)) {
+		return 0;
+	}
+
+	if ((NULL != dmf1->dmFileDescr) && (NULL != dmf2->dmFileDescr)) {
+		if (0 != strcmp(dmf1->dmFileDescr, dmf2->dmFileDescr)) {
+			return 0;
+		}
+	} else if ((NULL != dmf1->dmFileDescr) || (NULL != dmf2->dmFileDescr)) {
+		return 0;
+	}
+
+	return 1;
+}
+
 int main(void)
 {
 	struct isds_ctx *ctx = NULL;
@@ -159,23 +210,44 @@ leave1:
 
 	/* Download attachment. */
 	for (int i = 0; i < attsNum; ++i) {
-		struct isds_dmFile *dm_file = NULL;
+		struct isds_dmFile *dm_file_from_base = NULL;
+		struct isds_dmFile *dm_file_xop = NULL;
 
-		err = isds_DownloadAttachment(ctx, last_big_message_id, i, &dm_file);
+		err = isds_DownloadAttachment(ctx, last_big_message_id, i, &dm_file_from_base);
 		if (err != IE_SUCCESS) {
 			printf("isds_DownloadAttachment() failed: %s: %s\n",
 			    isds_strerror(err), isds_long_message(ctx));
 			goto leave2;
 		} else {
-			fputs("isds_DownloadAttachment() suceeded\n", stdout);
-			print_dmFile(dm_file);
+			fputs("isds_DownloadAttachment() succeeded\n", stdout);
+			print_dmFile(dm_file_from_base);
 		}
 
-		isds_dmFile_free(&dm_file);
+		err = isds_DownloadAttachment_mtomxop(ctx, last_big_message_id, i, &dm_file_xop);
+		if (err != IE_SUCCESS) {
+			printf("isds_DownloadAttachment_mtomxop() failed: %s: %s\n",
+			    isds_strerror(err), isds_long_message(ctx));
+			goto leave2;
+		} else {
+			fputs("isds_DownloadAttachment_mtomxop() succeeded\n", stdout);
+			print_dmFile(dm_file_xop);
+		}
+
+		if (isds_dmFile_eq(dm_file_from_base, dm_file_xop)) {
+			fputs("Attachments downloaded by isds_DownloadAttachment() and isds_DownloadAttachment_mtomxop() are equal\n",
+			    stdout);
+		} else {
+			fputs("Attachments downloaded by isds_DownloadAttachment() and isds_DownloadAttachment_mtomxop() differ\n", stderr);
+			goto leave2;
+		}
+
+		isds_dmFile_free(&dm_file_from_base);
+		isds_dmFile_free(&dm_file_xop);
 
 		if (0) {
 leave2:
-			isds_dmFile_free(&dm_file);
+			isds_dmFile_free(&dm_file_from_base);
+			isds_dmFile_free(&dm_file_xop);
 			goto fail;
 		}
 	}
