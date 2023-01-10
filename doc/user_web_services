@@ -897,6 +897,7 @@ PFO_DANPOR
 PFO_AUDITOR
 PFO_ZNALEC
 PFO_TLUMOCNIK
+PFO_REQ
 FO
 
 Output is this list of these optional elements
