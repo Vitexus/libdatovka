@@ -6,6 +6,8 @@
    undefined behaviour in variable argument handling in C.
  * Function isds_check_func_timegm() also checks time conversion using
    struct tm containing negative hour values.
+ * Added support for the new PFO_REQ data-box type
+   introduced in the version 2.36 of the XSD and WSDL definitions.
 
 0.2.1 / 2021-11-03
  * Added function isds_DTInfo() which implements the DTInfo ISDS operation and
