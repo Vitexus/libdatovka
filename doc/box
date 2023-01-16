@@ -39,6 +39,7 @@ PFO_INSSPR     33      Administrator of insolvency
 PFO_AUDITOR    34      Statutory auditor
 PFO_ZNALEC     35      Expert witness
 PFO_TLUMOCNIK  36      Sworn translator
+PFO_REQ        50      Person in business on request
 FO             40      Standard person
 
 

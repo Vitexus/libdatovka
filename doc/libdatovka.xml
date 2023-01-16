@@ -978,6 +978,12 @@ err = isds_cleanup();
           </varlistentry>
 
           <varlistentry>
+            <term><constant>DBTYPE_PFO_REQ</constant></term>
+            <listitem><para>Person in business on its
+                request.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
             <term><constant>DBTYPE_FO</constant></term>
             <listitem><para>Standard person.</para></listitem>
           </varlistentry>
