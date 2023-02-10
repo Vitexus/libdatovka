@@ -566,7 +566,7 @@ struct isds_event {
  * sending a message.
  */
 typedef enum isds_IdLevel_value {
-    PUBLISH_USERTYPE = 0, /* The sender user type isds_UserType us always enabled. */
+    PUBLISH_USERTYPE = 0, /* The sender user type isds_UserType is always enabled. */
     PUBLISH_PERSONNAME = 1, /* Publish name. Comprises pnGivenNames and pnLastName. */
     PUBLISH_BIDATE = 2, /* Publish biDate. */
     PUBLISH_BICITY = 4, /* Publish biCity - only when sender is SENDERTYPE_ENTRUSTED of a FO or PFO box. */
