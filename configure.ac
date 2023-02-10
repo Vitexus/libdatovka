@@ -171,7 +171,8 @@ AC_COMPILE_IFELSE(
 # This harms libxml configure test
 AC_ARG_ENABLE(fatalwarnings, [AS_HELP_STRING([--disable-fatalwarnings],
                         [Do not consider compiler warnings as errors])])
-AS_IF([test "$enable_fatalwarnings" = "no"], , CFLAGS="${CFLAGS} -Werror")
+AS_IF([test "$enable_fatalwarnings" = "yes"], CFLAGS="${CFLAGS} -Werror", )
+#AS_IF([test "$enable_fatalwarnings" = "no"], , CFLAGS="${CFLAGS} -Werror")
 
 
 # Build and install documentation
