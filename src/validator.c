@@ -370,7 +370,9 @@ _hidden enum isds_error _isds_check_documents_hierarchy(struct isds_ctx *context
 	if (UNLIKELY(NULL == context)) {
 		return IE_INVALID_CONTEXT;
 	}
-	if (UNLIKELY(NULL == documents)) {
+	if (UNLIKELY((NULL == documents) && (NULL == ext_files))) {
+		isds_printf_message(context,
+		    _("Message contains neither a document nor an ExtFile entry"));
 		return IE_INVAL;
 	}
 
