@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include "compiler.h" /* _hidden */
 #include "libdatovka/isds.h"
 #include "isds_priv.h"
 #include "utils.h"
