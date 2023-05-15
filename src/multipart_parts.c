@@ -8,7 +8,7 @@
 #include "multipart_parts.h"
 
 static
-char *_strdup(const char *s)
+char *_local_strdup(const char *s)
 {
 	if (UNLIKELY(NULL == s)) {
 		return NULL;
@@ -151,7 +151,7 @@ int multipart_parts_set_root_content_id(struct multipart_parts *mparts, const ch
 	free(mparts->expected_root_content_id); mparts->expected_root_content_id = NULL;
 
 	if (NULL != cid) {
-		mparts->expected_root_content_id = _strdup(cid);
+		mparts->expected_root_content_id = _local_strdup(cid);
 		if (UNLIKELY(NULL == mparts->expected_root_content_id)) {
 			return -1;
 		}
@@ -220,7 +220,7 @@ void on_hfld_and_hval_read(struct multipart_intermediate *mp_ctx)
 	/* Copy header values. */
 	if (0 == strcmp(hfld, "content-id")) {
 		if (NULL == mpart->content_id) {
-			mpart->content_id = _strdup(hval);
+			mpart->content_id = _local_strdup(hval);
 			/* TODO -- Error handling. */
 		} else {
 			/* Already set. */
@@ -228,7 +228,7 @@ void on_hfld_and_hval_read(struct multipart_intermediate *mp_ctx)
 		}
 	} else if (0 == strcmp(hfld, "content-type")) {
 		if (NULL == mpart->content_type) {
-			mpart->content_type = _strdup(hval);
+			mpart->content_type = _local_strdup(hval);
 			/* TODO -- Error handling. */
 		} else {
 			/* Already set. */
@@ -236,7 +236,7 @@ void on_hfld_and_hval_read(struct multipart_intermediate *mp_ctx)
 		}
 	} else if (0 == strcmp(hfld, "content-transfer-encoding")) {
 		if (NULL == mpart->transfer_encoding) {
-			mpart->transfer_encoding = _strdup(hval);
+			mpart->transfer_encoding = _local_strdup(hval);
 			/* TODO -- Error handling. */
 		} else {
 			/* Already set. */
