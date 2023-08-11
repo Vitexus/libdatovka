@@ -17161,13 +17161,18 @@ enum isds_error isds_AuthenticateBigMessage_mtomxop(struct isds_ctx *context,
 	isds_log(ILF_ISDS, ILL_DEBUG,
 	    _("Sending MTOM/XOP AuthenticateBigMessage request to ISDS\n"));
 
-	/* Send request. */
+	/*
+	 * Send request.
+	 * Expecting ZFO file on input therefore there is no check for the MIME
+	 * type. It looks like that the MIME type must be specified,
+	 * using application/vnd.software602.filler.form-xml-zip .
+	 */
 	{
 		const struct isds_dmFile dm_file = {
 			.data = (void *)data,
 			.data_length = length,
 			.dmFileMetaType = FILEMETATYPE_MAIN,
-			.dmMimeType = NULL,
+			.dmMimeType = "application/vnd.software602.filler.form-xml-zip",
 			.dmFileDescr = "message.zfo"
 		};
 		const struct comm_req req = {
