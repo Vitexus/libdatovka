@@ -68,11 +68,21 @@ int main(int argc, char **argv)
 		} else if (err == IE_NOTEQUAL) {
 			fputs("ISDS states: message is unknown or tampered\n", stdout);
 		} else {
-			printf("AuthenticateBigMessage() failed: %s: %s\n",
+			printf("isds_AuthenticateBigMessage() failed: %s: %s\n",
 			    isds_strerror(err), isds_long_message(ctx));
 		}
 
-		munmap_file(fd, buffer,length);
+		err = isds_AuthenticateBigMessage_mtomxop(ctx, buffer, length);
+		if (IE_SUCCESS == err) {
+			fputs("ISDS states: message is original\n", stdout);
+		} else if (err == IE_NOTEQUAL) {
+			fputs("ISDS states: message is unknown or tampered\n", stdout);
+		} else {
+			printf("isds_AuthenticateBigMessage_mtomxop() failed: %s: %s\n",
+			    isds_strerror(err), isds_long_message(ctx));
+		}
+
+		munmap_file(fd, buffer, length);
 	}
 
 fail:
