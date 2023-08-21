@@ -1,3 +1,19 @@
+0.4.0 /
+ * Added functions for ISDS services CreateBigMessage, AuthenticateBigMessage,
+   UploadAttachment, DownloadAttachment, SignedBigMessageDownload,
+   SignedSentBigMessageDownload, BigMessageDownload dealing with high-volume
+   data messages.
+ * Added variants of function sfor services AuthenticateBigMessage,
+   UploadAttachment, DownloadAttachment, SignedBigMessageDownload,
+   SignedSentBigMessageDownload which use MTOM/XOP.
+ * Added new elements dmVODZ and attsNum into struct isds_envelope. These
+   values are set when downloading envelopes of high-volume data messages
+   (using the services GetListOfReceivedMessages, GetListOfSentMessages and
+   MessageEnvelopeDownload).
+ * Added new element ext_files into struct isds_message. The element can be
+   used when sending a high-volume data message (using the service
+   CreateBigMessage).
+
 0.3.0 / 2023-02-10
  * Added idLevel member into struct isds_envelope.
  * Added function isds_GetMessageAuthor2() which implements the
@@ -39,7 +55,7 @@
 
 0.1.0 / 2021-01-25
  * Created libdatovka by forking libisds-0.11.1.
- * Added function for ISDS services GetOwnerInfoFromLogin2,
+ * Added functions for ISDS services GetOwnerInfoFromLogin2,
    GetUserInfoFromLogin2, UpdateDataBoxDescr2, GetDataBoxUsers2,
    UpdateDataBoxUser2, AddDataBoxUser2, DeleteDataBoxUser2 and FindDataBox2.
  * Made ISDS response status available via the function isds_operation_status().
