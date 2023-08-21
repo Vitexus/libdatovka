@@ -6,7 +6,7 @@ For details, see http://sourceforge.net/projects/libb64
 */
 
 #include "cdecode.h"
-#include "utils.h"
+#include "compiler.h" /* _hidden */
 
 static int8_t base64_decode_value(int8_t value_in) {
 	static const int8_t decoding[] = {

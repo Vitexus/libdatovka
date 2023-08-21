@@ -34,7 +34,8 @@ int main(int argc, char **argv) {
         printf("isds_ctx_create() failed");
     }
 
-    err = isds_set_timeout(ctx, 10000);
+    /* Increased timeout because of transferring large data portions. */
+    err = isds_set_timeout(ctx, 1000000);
     if (err) {
         printf("isds_set_timeout() failed: %s\n", isds_strerror(err));
     }
@@ -63,7 +64,7 @@ int main(int argc, char **argv) {
         if (!err)
             printf("ISDS states: message is original\n");
         else if (err == IE_NOTEQUAL)
-            printf("ISDS states: message is unkown or tampered\n");
+            printf("ISDS states: message is unknown or tampered\n");
         else
             printf("isds_authenticate_message() failed: %s: %s\n",
                     isds_strerror(err), isds_long_message(ctx));

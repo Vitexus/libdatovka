@@ -338,9 +338,27 @@ err = isds_cleanup();
           </refsection>
 
           <refsection>
+            <title><varname>isds_vodz_locator</varname></title>
+            <synopsis>extern const char <varname>isds_vodz_locator</varname>[];</synopsis>
+            <para>High-volume data message locator without client certificate authentication.</para>
+          </refsection>
+
+          <refsection>
+            <title><varname>isds_vodz_cert_locator</varname></title>
+            <synopsis>extern const char <varname>isds_vodz_cert_locator</varname>[];</synopsis>
+            <para>High-volume data message locator with client certificate authentication.</para>
+          </refsection>
+
+          <refsection>
             <title><varname>isds_otp_locator</varname></title>
             <synopsis>extern const char <varname>isds_otp_locator</varname>[];</synopsis>
-            <para>Without <abbrev>OTP</abbrev> authentication.</para>
+            <para>With <abbrev>OTP</abbrev> authentication.</para>
+          </refsection>
+
+          <refsection>
+            <title><varname>isds_mep_locator</varname></title>
+            <synopsis>extern const char <varname>isds_mep_locator</varname>[];</synopsis>
+            <para>With <abbrev>MEP</abbrev> authentication.</para>
           </refsection>
         </refsection>
 
@@ -360,9 +378,27 @@ err = isds_cleanup();
           </refsection>
 
           <refsection>
+            <title><varname>isds_vodz_testing_locator</varname></title>
+            <synopsis>extern const char <varname>isds_vodz_testing_locator</varname>[];</synopsis>
+            <para>High-volume data message locator without client certificate authentication.</para>
+          </refsection>
+
+          <refsection>
+            <title><varname>isds_vodz_cert_testing_locator</varname></title>
+            <synopsis>extern const char <varname>isds_vodz_cert_testing_locator</varname>[];</synopsis>
+            <para>High-volume data message locator with client certificate authentication.</para>
+          </refsection>
+
+          <refsection>
             <title><varname>isds_otp_testing_locator</varname></title>
             <synopsis>extern const char <varname>isds_otp_testing_locator</varname>[];</synopsis>
-            <para>Without <abbrev>OTP</abbrev> authentication.</para>
+            <para>With <abbrev>OTP</abbrev> authentication.</para>
+          </refsection>
+
+          <refsection>
+            <title><varname>isds_mep_testing_locator</varname></title>
+            <synopsis>extern const char <varname>isds_mep_testing_locator</varname>[];</synopsis>
+            <para>With <abbrev>MEP</abbrev> authentication.</para>
           </refsection>
         </refsection>
 
@@ -2132,6 +2168,20 @@ err = isds_cleanup();
               <para>Length of the value is exactly 1 UTF-8 character if
                 defined. That means it's still zero-terminated character
                 string.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>_Bool *</type><structfield>dmVODZ</structfield>;</term>
+            <listitem><para>Set to true when downloading lists of sent or
+                received messages and a particular message is a high-volume
+                data message.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>long int *</type><structfield>attsNum</structfield>;</term>
+            <listitem><para>Set to number of attachments when downloading lists
+                of sent or received messages and a particular message is
+                a high-volume data message.</para></listitem>
           </varlistentry>
         </variablelist>
 

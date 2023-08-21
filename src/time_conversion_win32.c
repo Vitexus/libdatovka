@@ -2,8 +2,8 @@
 #include <string.h>
 #include <time.h>
 
+#include "compiler.h" /* _hidden */
 #include "time_conversion.h"
-#include "utils.h" /* _hidden */
 
 _hidden int64_t _isds_timegm(struct tm *broken_utc)
 {

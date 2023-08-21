@@ -1,27 +1,39 @@
 
 localedir = $(datadir)/locale
 
-AM_CPPFLAGS += -I$(top_srcdir)/include
+MULTIPART_PARSER_ROOT = 3rdparty/multipart-parser-c/multipart-parser-c
+
+AM_CPPFLAGS += -I$(top_srcdir)/include -I$(top_srcdir)/src/$(MULTIPART_PARSER_ROOT)
 
 lib_LTLIBRARIES = libdatovka.la
 libdatovka_la_SOURCES = \
+	$(MULTIPART_PARSER_ROOT)/multipart_parser.c \
+	$(MULTIPART_PARSER_ROOT)/multipart_parser.h \
 	cdecode.c \
 	cdecode.h \
 	cencode.c \
 	cencode.h \
+	compiler.h \
 	crypto.h \
 	gettext.h \
+	internal_types.h \
 	isds.c \
 	isds_priv.h \
+	multipart_intermediate.c \
+	multipart_intermediate.h \
+	multipart_parts.c \
+	multipart_parts.h \
 	physxml.c \
 	physxml.h \
-	utils.c \
-	utils.h \
-	validator.c \
-	validator.h \
 	system.h \
 	time_conversion.c \
-	time_conversion.h
+	time_conversion.h \
+	utils.c \
+	utils.h \
+	utils_memory.c \
+	utils_memory.h \
+	validator.c \
+	validator.h
 
 if USE_OPENSSL_BACKEND
 libdatovka_la_SOURCES += \

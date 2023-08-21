@@ -9,6 +9,7 @@
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
 
+#include "compiler.h" /* _hidden */
 #include "isds_priv.h"
 #include "utils.h"
 

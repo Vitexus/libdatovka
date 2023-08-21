@@ -58,15 +58,19 @@ const char *isds_lib_ver_str(void);
 
 /* Service locators */
 /* Base URL of production ISDS instance */
-extern const char isds_locator[];       /* Without client certificate auth. */
-extern const char isds_cert_locator[];  /* With client certificate auth. */
-extern const char isds_otp_locator[];   /* With OTP authentication */
-extern const char isds_mep_locator[];   /* Mobile key application. */
+extern const char isds_locator[]; /* Without client certificate authentication. */
+extern const char isds_cert_locator[]; /* With client certificate authentication. */
+extern const char isds_vodz_locator[]; /* High-volume data message without client certificate. */
+extern const char isds_vodz_cert_locator[]; /* High-volume data message without client certificate. */
+extern const char isds_otp_locator[]; /* With OTP authentication. */
+extern const char isds_mep_locator[]; /* Mobile key application. */
 /* Base URL of testing ISDS instance */
-extern const char isds_testing_locator[];       /* Without client certificate */
-extern const char isds_cert_testing_locator[];  /* With client certificate */
-extern const char isds_otp_testing_locator[];   /* With OTP authentication */
-extern const char isds_mep_testing_locator[];   /* Mobile key application. */
+extern const char isds_testing_locator[]; /* Without client certificate */
+extern const char isds_cert_testing_locator[]; /* With client certificate */
+extern const char isds_vodz_testing_locator[]; /* High-volume data message without client certificate. */
+extern const char isds_vodz_cert_testing_locator[]; /* High-volume data message without client certificate. */
+extern const char isds_otp_testing_locator[]; /* With OTP authentication */
+extern const char isds_mep_testing_locator[]; /* Mobile key application. */
 
 
 struct isds_ctx;    /* Context for specific ISDS box */
@@ -83,7 +87,7 @@ struct isds_timeval {
 	int32_t tv_usec;
 };
 
-typedef enum {
+typedef enum isds_error {
     IE_SUCCESS = 0, /* No error, just for C convenience (0 means Ok) */
     IE_ERROR,       /* Unspecified error */
     IE_NOTSUP,
@@ -713,6 +717,10 @@ struct isds_envelope {
                                            message
                                        Length: Exactly 1 UTF-8 character if
                                        defined; */
+    _Bool *dmVODZ;                  /* True when receiving high-volume data
+                                       messages. */
+    long int *attsNum;              /* Number of attachments in high-volume
+                                       data message. */
 
     /* Following members apply to outgoing messages only: */
     _Bool *dmOVM;                   /* OVM sending mode.
@@ -734,7 +742,7 @@ struct isds_envelope {
 
 
 /* Document type from point of hierarchy */
-typedef enum {
+typedef enum isds_FileMetaType {
     FILEMETATYPE_MAIN,              /* Main document */
     FILEMETATYPE_ENCLOSURE,         /* Appendix */
     FILEMETATYPE_SIGNATURE,         /* Digital signature of other document */
@@ -775,6 +783,37 @@ struct isds_document {
                                        Optional. */
 };
 
+/* Attachment, used for high-volume data messages. */
+struct isds_dmFile {
+	void *data; /*
+	             * Document content.
+	             * The encoding and interpretation depends on dmMimeType.
+	             */
+	size_t data_length; /* Length of the data in bytes. */
+	enum isds_FileMetaType dmFileMetaType; /* Document type to create hierarchy. */
+	char *dmMimeType; /* MIME type of the data; Mandatory. */
+	char *dmFileDescr; /* Document name (title). E.g. file name; Mandatory. */
+};
+
+/*
+ * Response for UploadAttachment.
+ * Complete attachment identification.
+ * Encapsulates the attachment identifier and hashes for high-volume data messages.
+ */
+struct isds_dmAtt {
+	char *dmAttID; /* Attachment identifier, nothing to do with message identifier. */
+	char *dmAttHash1; /* Hash1 value. */
+	char *dmAttHash1Alg; /* Hash1 algorithm identifier. */
+	char *dmAttHash2; /* Hash2 value. */
+	char *dmAttHash2Alg; /* Hash2 algorithm identifier. */
+};
+
+/* Attachment, used for high-volume data messages. */
+struct isds_dmExtFile {
+	enum isds_FileMetaType dmFileMetaType; /* Document type to create hierarchy. */
+	struct isds_dmAtt dmAtt; /* Complete attachment identification. */
+};
+
 /* Raw message representation content type.
  * This is necessary to distinguish between different representations without
  * expensive repeated detection.
@@ -812,6 +851,17 @@ struct isds_message {
                                        can contain any number of other type
                                        documents. Total size of documents
                                        must not exceed 20 MB. */
+    struct isds_list *ext_files; /*
+                                  * List of isds_dmExtFile entries.
+                                  * This list if only used when sending
+                                  * high-volume data messages. Then sending
+                                  * ordinary data messages the list must be empty.
+                                  * Valid message must contain exactly one
+                                  * document or extended file entry of the type
+                                  * FILEMETATYPE_MAIN.
+                                  * Total size of documents must not exceed 2 GB
+                                  * for high-volume data messages.
+                                  */
 };
 
 /* Message copy recipient and assigned message ID */
@@ -1876,7 +1926,8 @@ isds_error isds_disable_box_accessibility_externaly(
  * @outgoing_message is message to send; Some members are mandatory (like
  * dbIDRecipient), some are optional and some are irrelevant (especially data
  * about sender). Included pointer to isds_list documents must contain at
- * least one document of FILEMETATYPE_MAIN. This is read-write structure, some
+ * least one document of FILEMETATYPE_MAIN. List of ExtFiles must be empty.
+ * This is read-write structure, some
  * members will be filled with valid data from ISDS. Exact list of write
  * members is subject to change. Currently dmID is changed.
  * @return ISDS_SUCCESS, or other error code if something goes wrong. */
@@ -1889,7 +1940,7 @@ isds_error isds_send_message(struct isds_ctx *context,
  * some are optional and some are irrelevant (especially data
  * about sender). Data about recipient will be substituted by ISDS from
  * @copies. Included pointer to isds_list documents must
- * contain at least one document of FILEMETATYPE_MAIN.
+ * contain at least one document of FILEMETATYPE_MAIN. List of ExtFiles must be empty.
  * @copies is list of isds_message_copy structures addressing all desired
  * recipients. This is read-write structure, some members will be filled with
  * valid data from ISDS (message IDs, error codes, error descriptions).
@@ -1901,6 +1952,66 @@ isds_error isds_send_message(struct isds_ctx *context,
 isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
         const struct isds_message *outgoing_message,
         struct isds_list *copies);
+
+/*
+ * Send an attachment (file) into the ISDS attachment storage.
+ * @context is session context
+ * @dm_file attachment description, @dmFile->dmFileMetaType value is ignored here.
+ * @dm_att automatically reallocated attachment description which can be used
+ * to create a high-volume data message.
+ * @return ISDS_SUCCESS, or other error codes if something goes wrong.
+ */
+enum isds_error isds_UploadAttachment(struct isds_ctx *context,
+    const struct isds_dmFile *dm_file, struct isds_dmAtt **dm_att);
+
+/*
+ * Send an attachment (file) into the ISDS attachment storage. This
+ * implementation uses the MTOM/XOP.
+ * @context is session context
+ * @dm_file attachment description, @dmFile->dmFileMetaType value is ignored here.
+ * @dm_att automatically reallocated attachment description which can be used
+ * to create a high-volume data message.
+ * @return ISDS_SUCCESS, or other error codes if something goes wrong.
+ */
+enum isds_error isds_UploadAttachment_mtomxop(struct isds_ctx *context,
+    const struct isds_dmFile *dm_file, struct isds_dmAtt **dm_att);
+
+/*
+ * Download an attachment (file) of a specified high-volume data message.
+ * @context is session context
+ * @message_id is message identifier of a high-volume data message
+ * @attNum is the ordinary number of the attachment, the attachments are numbered from 0
+ * @dm_file automatically reallocated attachment file
+ * @return IE_SUCCESS, or other error codes if something goes wrong.
+ */
+enum isds_error isds_DownloadAttachment(struct isds_ctx *context,
+    const char *message_id, long int attNum, struct isds_dmFile **dm_file);
+
+/*
+ * Download an attachment (file) of a specified high-volume data message. This
+ * implementation uses the MTOM/XOP.
+ * @context is session context
+ * @message_id is message identifier of a high-volume data message
+ * @attNum is the ordinary number of the attachment, the attachments are numbered from 0
+ * @dm_file automatically reallocated attachment file
+ * @return IE_SUCCESS, or other error codes if something goes wrong.
+ */
+enum isds_error isds_DownloadAttachment_mtomxop(struct isds_ctx *context,
+    const char *message_id, long int attNum, struct isds_dmFile **dm_file);
+
+/*
+ * Send a high-volume data message to a recipient.
+ * @context is session context
+ * @outgoing_message is message to send; Some members are mandatory (like
+ * dbIDRecipient), some are optional and some are irrelevant (especially data
+ * about sender). Included pointer to isds_list of isds_document or isds_dmExtFile
+ * entries or must contain one document of FILEMETATYPE_MAIN. This is read-write
+ * structure, some members will be filled with valid data from ISDS. Exact
+ * list of write members is subject to change. Currently dmID is changed.
+ * @return ISDS_SUCCESS, or other error code if something goes wrong.
+ */
+enum isds_error isds_CreateBigMessage(struct isds_ctx *context,
+    struct isds_message *outgoing_message);
 
 /* Get list of outgoing (already sent) messages.
  * Any criterion argument can be NULL, if you don't care about it.
@@ -2026,7 +2137,7 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
 isds_error isds_get_delivery_info(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
 
-/* Download incoming message identified by ID.
+/* Download incoming message identified by ID. It uses the MessageDownload service.
  * @context is session context
  * @message_id is message identifier (you can get them from
  * isds_get_list_of_received_messages())
@@ -2076,6 +2187,62 @@ isds_error isds_get_signed_received_message(struct isds_ctx *context,
  * member will be filled with PKCS#7 structure in DER format. */
 isds_error isds_get_signed_sent_message(struct isds_ctx *context,
         const char *message_id, struct isds_message **message);
+
+/*
+ * Download incoming high-volume message identified by ID.
+ * @context is session context
+ * @message_id is message identifier (you can get them from
+ * isds_get_list_of_received_messages())
+ * @message is automatically reallocated message retrieved from ISDS
+ */
+enum isds_error isds_BigMessageDownload(struct isds_ctx *context,
+    const char *message_id, struct isds_message **message);
+
+/*
+ * Download signed incoming high-volume message identified by ID.
+ * @context is session context
+ * @message_id is message identifier (you can get them from
+ * isds_get_list_of_received_messages())
+ * @message is automatically reallocated message retrieved from ISDS. The raw
+ * member will be filled with PKCS#7 structure in DER format.
+ */
+enum isds_error isds_SignedBigMessageDownload(struct isds_ctx *context,
+    const char *message_id, struct isds_message **message);
+
+/*
+ * Download signed outgoing high-volume message identified by ID.
+ * @context is session context
+ * @message_id is message identifier (you can get them from
+ * isds_get_list_of_sent_messages())
+ * @message is automatically reallocated message retrieved from ISDS. The raw
+ * member will be filled with PKCS#7 structure in DER format.
+ */
+enum isds_error isds_SignedSentBigMessageDownload(struct isds_ctx *context,
+    const char *message_id, struct isds_message **message);
+
+/*
+ * Download signed outgoing high-volume message identified by ID. This
+ * implementation uses the MTOM/XOP.
+ * @context is session context
+ * @message_id is message identifier (you can get them from
+ * isds_get_list_of_sent_messages())
+ * @message is automatically reallocated message retrieved from ISDS. The raw
+ * member will be filled with PKCS#7 structure in DER format.
+ */
+enum isds_error isds_SignedBigMessageDownload_mtomxop(struct isds_ctx *context,
+    const char *message_id, struct isds_message **message);
+
+/*
+ * Download signed outgoing high-volume message identified by ID. This
+ * implementation uses the MTOM/XOP.
+ * @context is session context
+ * @message_id is message identifier (you can get them from
+ * isds_get_list_of_sent_messages())
+ * @message is automatically reallocated message retrieved from ISDS. The raw
+ * member will be filled with PKCS#7 structure in DER format.
+ */
+enum isds_error isds_SignedSentBigMessageDownload_mtomxop(struct isds_ctx *context,
+    const char *message_id, struct isds_message **message);
 
 /* Get type and name of user who sent a message identified by ID.
  * @context is session context
@@ -2156,6 +2323,40 @@ isds_error isds_verify_message_hash(struct isds_ctx *context,
  *  other code  for other errors */
 isds_error isds_authenticate_message(struct isds_ctx *context,
         const void *message, size_t length);
+
+/*
+ * XXX -- The server always returns 0000 here - theres an error in ISDS.
+ * Submit CMS signed high-volume message to ISDS to verify its originality.
+ * This is stronger form of isds_verify_message_hash() because ISDS does more
+ * checks than simple one (potentially old weak) hash comparison.
+ * @context is session context
+ * @message is memory with raw CMS signed message bit stream
+ * @length is @message size in bytes
+ * @return
+ *  IE_SUCCESS  if message originates in ISDS
+ *  IE_NOTEQUAL if message is unknown to ISDS
+ *  other code  for other errors
+ */
+enum isds_error isds_AuthenticateBigMessage(struct isds_ctx *context,
+    const void *message, size_t length);
+
+/*
+ * XXX -- The transmission is somewhere being killed on ISDS. Incomplete ZFO
+ * data are sent to the server.
+ * Submit CMS signed high-volume message to ISDS to verify its originality.
+ * This is stronger form of isds_verify_message_hash() because ISDS does more
+ * checks than simple one (potentially old weak) hash comparison. This
+ * implementation uses the MTOM/XOP.
+ * @context is session context
+ * @message is memory with raw CMS signed message bit stream
+ * @length is @message size in bytes
+ * @return
+ *  IE_SUCCESS  if message originates in ISDS
+ *  IE_NOTEQUAL if message is unknown to ISDS
+ *  other code  for other errors
+ */
+enum isds_error isds_AuthenticateBigMessage_mtomxop(struct isds_ctx *context,
+    const void *data, size_t length);
 
 /* Submit CMS signed message or delivery info to ISDS to re-sign the content
  * including adding new CMS time stamp. Only CMS blobs without time stamp can
@@ -2322,6 +2523,15 @@ void isds_envelope_free(struct isds_envelope **envelope);
 
 /* Deallocate struct isds_document recursively and NULL it */
 void isds_document_free(struct isds_document **document);
+
+/* Deallocate struct isds_dmFile recursively and NULL it */
+void isds_dmFile_free(struct isds_dmFile **file);
+
+/* Deallocate struct isds_dmAtt recursively and NULL it */
+void isds_dmAtt_free(struct isds_dmAtt **att);
+
+/* Deallocate struct isds_dmExtFile recursively and NULL it */
+void isds_dmExtFile_free(struct isds_dmExtFile **ext_file);
 
 /* Deallocate struct isds_message recursively and NULL it */
 void isds_message_free(struct isds_message **message);

@@ -10,6 +10,7 @@
 #include <gpgme.h>
 #include <locale.h>
 
+#include "compiler.h" /* _hidden */
 #include "crypto.h"
 
 

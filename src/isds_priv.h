@@ -39,8 +39,14 @@
 #define SISDS_OUTGOING_NS "http://isds.czechpoint.cz/v20/SentMessage"
 #define SISDS_DELIVERY_NS "http://isds.czechpoint.cz/v20/delivery"
 #define SCHEMA_NS "http://www.w3.org/2001/XMLSchema"
+#define XOP_INCLUDE_NS "http://www.w3.org/2004/08/xop/include"
 #define DEPOSIT_NS "urn:uschovnaWSDL"
 
+/* Used to chooses proper name spaces for SOAP elements. */
+typedef enum soap_ns_type {
+	SOAP_1_1, /* SOAP/1.1 */
+	SOAP_1_2 /* SOAP/1.2 */
+} soap_ns_type;
 
 /* Used to choose proper name space for message elements.
  * See _isds_register_namespaces(). */
@@ -82,6 +88,7 @@ struct isds_ctx {
 #if HAVE_LIBCURL
     unsigned int timeout;   /* milliseconds */
     char *url;              /* URL of the ISDS web service */
+    char *url_vodz;         /* URL of the ISDS web service related to high-volume messages. */
     char *username;
     char *password;
     struct isds_pki_credentials *pki_credentials;
@@ -132,9 +139,10 @@ isds_error isds_log(const isds_log_facility facility,
 /* Makes known all relevant namespaces to given XPath context
  * @xpath_ctx is XPath context
  * @message_ns selects proper message name space. Unsigned and signed
- * messages and delivery infos differ in prefix and URI. */
+ * messages and delivery infos differ in prefix and URI.
+ * @sv SOAP version specifier */
 isds_error _isds_register_namespaces(xmlXPathContextPtr xpath_ctx,
-        const message_ns_type message_ns);
+        const message_ns_type message_ns, enum soap_ns_type sv);
 
 #if HAVE_LIBCURL
 /* Discard credentials.

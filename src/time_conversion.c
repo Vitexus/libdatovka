@@ -1,7 +1,7 @@
 
 #include "isds_priv.h" /* _XOPEN_SOURCE -- gmtime_r */
+#include "compiler.h" /* _hidden */
 #include "time_conversion.h"
-#include "utils.h" /* _hidden */
 
 #ifdef _WIN32
 /* time_conversion_win32.c */

@@ -711,6 +711,55 @@ void print_events(const struct isds_list *events) {
     printf("\t\t}\n");
 }
 
+static void print_metaType(FILE *fout, enum isds_FileMetaType metaType)
+{
+	switch(metaType) {
+	case FILEMETATYPE_MAIN: fputs("MAIN\n", fout); break;
+	case FILEMETATYPE_ENCLOSURE: fputs("ENCLOSURE\n", fout); break;
+	case FILEMETATYPE_SIGNATURE: fputs("SIGNATURE\n", fout); break;
+	case FILEMETATYPE_META: fputs("META\n", fout); break;
+	default: fprintf(fout, "<unknown type %d>\n", metaType);
+	}
+}
+
+void print_dmFile(const struct isds_dmFile *dm_file)
+{
+	fputs("\tfile = ", stdout);
+
+	if (NULL == dm_file) {
+		fputs("NULL\n", stdout);
+		return;
+	}
+	fputs("{\n", stdout);
+
+	printf("\t\tdata = %p\n", dm_file->data);
+	printf("\t\tdata_length = %zu\n", dm_file->data_length);
+
+	fputs("\t\tdmFileMetaType = ", stdout);
+	print_metaType(stdout, dm_file->dmFileMetaType);
+	printf("\t\tdmMimeType = %s\n", dm_file->dmMimeType);
+	printf("\t\tdmFileDescr = %s\n", dm_file->dmFileDescr);
+	fputs("\t}\n", stdout);
+}
+
+void print_dmAtt(const struct isds_dmAtt *dm_att)
+{
+	fputs("\tattachment = ", stdout);
+
+	if (NULL == dm_att) {
+		fputs("NULL\n", stdout);
+		return;
+	}
+	fputs("{\n", stdout);
+
+	printf("\t\tdmAttID = %s\n", dm_att->dmAttID);
+	printf("\t\tdmAttHash1 = %s\n", dm_att->dmAttHash1);
+	printf("\t\tdmAttHash1Alg = %s\n", dm_att->dmAttHash1Alg);
+	printf("\t\tdmAttHash2 = %s\n", dm_att->dmAttHash2);
+	printf("\t\tdmAttHash2Alg = %s\n", dm_att->dmAttHash2Alg);
+
+	fputs("\t}\n", stdout);
+}
 
 void print_envelope(const struct isds_envelope *envelope) {
     printf("\tenvelope = ");
@@ -732,6 +781,8 @@ void print_envelope(const struct isds_envelope *envelope) {
     printf("\t\tdmAmbiguousRecipient = ");
     print_bool(envelope->dmAmbiguousRecipient);
     printf("\t\tdmType = %s\n", envelope->dmType);
+    printf("\t\tdmVODZ = ");
+    print_bool(envelope->dmVODZ);
 
     printf("\t\tdmSenderOrgUnit = %s\n", envelope->dmSenderOrgUnit);
     printf("\t\tdmSenderOrgUnitNum = ");
@@ -811,13 +862,7 @@ void print_document(const struct isds_document *document) {
     printf("\t\t\tdmMimeType = %s\n", document->dmMimeType);
 
     printf("\t\t\tdmFileMetaType = ");
-    switch(document->dmFileMetaType) {
-        case FILEMETATYPE_MAIN: printf("MAIN\n"); break;
-        case FILEMETATYPE_ENCLOSURE: printf("ENCLOSURE\n"); break;
-        case FILEMETATYPE_SIGNATURE: printf("SIGNATURE\n"); break;
-        case FILEMETATYPE_META: printf("META\n"); break;
-        default: printf("<unknown type %d>\n", document->dmFileMetaType);
-    }
+    print_metaType(stdout, document->dmFileMetaType);
 
     printf("\t\t\tdmFileGuid = %s\n", document->dmFileGuid);
     printf("\t\t\tdmUpFileGuid = %s\n", document->dmUpFileGuid);
@@ -1055,7 +1100,7 @@ int munmap_file(int fd, void *buffer, size_t length) {
 }
 
 
-static int save_data_to_file(const char *file, const void *data,
+static int _save_data_to_file(const char *file, const void *data,
         const size_t length) {
     int fd;
     ssize_t written, left = length;
@@ -1092,9 +1137,68 @@ static int save_data_to_file(const char *file, const void *data,
     return 0;
 }
 
+int save_data_to_file(const char *message, const char *file,
+    const void *data, const size_t length)
+{
+	if ((NULL == file) || ('\0' == *file)) {
+		return -1;
+	}
+
+	if (NULL != message) {
+		fputs(message, stdout);
+		fputs("\n", stdout);
+		fflush(stdout);
+	}
+
+	return _save_data_to_file(file, data, length);
+}
 
 int save_data(const char *message, const void *data, const size_t length) {
-    if (message)
-        printf("%s\n", message);
-    return save_data_to_file("output", data, length);
+	if (NULL != message) {
+		fputs(message, stdout);
+		fputs("\n", stdout);
+		fflush(stdout);
+	}
+	return _save_data_to_file("output", data, length);
+}
+
+int file_cmp(const char *file1, const char *file2)
+{
+	int ret = 0;
+	_Bool mapped1 = 0;
+	int fd1;
+	void *buffer1;
+	size_t length1;
+	_Bool mapped2 = 0;
+	int fd2;
+	void *buffer2;
+	size_t length2;
+
+	mapped1 = (0 == mmap_file(file1, &fd1, &buffer1, &length1));
+	if (!mapped1) {
+		ret = -3;
+		goto leave;
+	}
+	mapped2 = (0 == mmap_file(file2, &fd2, &buffer2, &length2));
+	if (!mapped2) {
+		ret = 3;
+		goto leave;
+	}
+
+	if (length1 < length2) {
+		ret = -2;
+	} else if (length1 > length2) {
+		ret = 2;
+	} else {
+		ret = memcmp(buffer1, buffer2, length1);
+	}
+
+leave:
+	if (mapped1) {
+		munmap_file(fd1, buffer1, length1);
+	}
+	if (mapped2) {
+		munmap_file(fd2, buffer2, length2);
+	}
+	return ret;
 }

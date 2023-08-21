@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include "compiler.h" /* _hidden */
 #include "libdatovka/isds.h"
-#include "utils.h"
 
 #if HAVE_LIBCURL
 /* Convert UTF-8 @string representation of ISO 8601 date to @time.

@@ -1,4 +1,5 @@
-#include "isds_priv.h"
+#include "isds_priv.h" /* Must be included first. */
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -7,15 +8,20 @@
 #include <stdint.h>     /* For uint8_t and intmax_t */
 #include <limits.h>     /* Because of LONG_{MIN,MAX} constants */
 #include <inttypes.h>   /* For PRIdMAX formatting macro */
-#include "utils.h"
-#if HAVE_LIBCURL
-    #include "soap.h"
-#endif
-#include "validator.h"
+
+#include "compiler.h"
 #include "crypto.h"
+#include "internal_types.h"
+#include "multipart_parts.h"
 #include "physxml.h"
+#if HAVE_LIBCURL
+#  include "soap.h"
+#endif /* HAVE_LIBCURL */
 #include "system.h"
 #include "time_conversion.h"
+#include "utils.h"
+#include "utils_memory.h"
+#include "validator.h"
 
 unsigned long isds_lib_ver_num(void)
 {
@@ -42,12 +48,16 @@ _hidden const char *version_expat = N_("n/a");
 /* Base URL of production ISDS instance */
 const char isds_locator[] = "https://ws1.mojedatovaschranka.cz/";
 const char isds_cert_locator[] = "https://ws1c.mojedatovaschranka.cz/";
+const char isds_vodz_locator[] = "https://ws2.mojedatovaschranka.cz/";
+const char isds_vodz_cert_locator[] = "https://ws2c.mojedatovaschranka.cz/";
 const char isds_otp_locator[] = "https://www.mojedatovaschranka.cz/";
 const char isds_mep_locator[] = "https://www.mojedatovaschranka.cz/";
 
-/* Base URL of production ISDS instance */
+/* Base URL of testing ISDS instance */
 const char isds_testing_locator[] = "https://ws1.czebox.cz/";
 const char isds_cert_testing_locator[] = "https://ws1c.czebox.cz/";
+const char isds_vodz_testing_locator[] = "https://ws2.czebox.cz/";
+const char isds_vodz_cert_testing_locator[] = "https://ws2c.czebox.cz/";
 const char isds_otp_testing_locator[] = "https://www.czebox.cz/";
 const char isds_mep_testing_locator[] = "https://www.czebox.cz/";
 
@@ -406,6 +416,8 @@ void isds_envelope_free(struct isds_envelope **envelope) {
     free((*envelope)->dmPersonalDelivery);
     free((*envelope)->dmAllowSubstDelivery);
     free((*envelope)->dmType);
+    free((*envelope)->dmVODZ);
+    free((*envelope)->attsNum);
 
     free((*envelope)->dmOVM);
     free((*envelope)->dmPublishOwnID);
@@ -423,6 +435,7 @@ void isds_message_free(struct isds_message **message) {
     free((*message)->raw);
     isds_envelope_free(&((*message)->envelope));
     isds_list_free(&((*message)->documents));
+    isds_list_free(&((*message)->ext_files));
     xmlFreeDoc((*message)->xml); (*message)->xml = NULL;
 
     free(*message);
@@ -447,6 +460,53 @@ void isds_document_free(struct isds_document **document) {
     *document = NULL;
 }
 
+void isds_dmFile_free(struct isds_dmFile **file)
+{
+	if ((NULL == file) || (NULL == *file)) {
+		return;
+	}
+
+	free((*file)->data);
+	/* (*file)->data_length */
+	/* (*file)->dmFileMetaType */
+	free((*file)->dmMimeType);
+	free((*file)->dmFileDescr);
+
+	free(*file);
+	*file = NULL;
+}
+
+void isds_dmAtt_free(struct isds_dmAtt **att)
+{
+	if ((NULL == att) || (NULL == *att)) {
+		return;
+	}
+
+	free((*att)->dmAttID);
+	free((*att)->dmAttHash1);
+	free((*att)->dmAttHash1Alg);
+	free((*att)->dmAttHash2);
+	free((*att)->dmAttHash2Alg);
+
+	free(*att);
+	*att = NULL;
+}
+
+void isds_dmExtFile_free(struct isds_dmExtFile **ext_file)
+{
+	if ((NULL == ext_file) || (NULL == *ext_file)) {
+		return;
+	}
+
+	free((*ext_file)->dmAtt.dmAttID);
+	free((*ext_file)->dmAtt.dmAttHash1);
+	free((*ext_file)->dmAtt.dmAttHash1Alg);
+	free((*ext_file)->dmAtt.dmAttHash2);
+	free((*ext_file)->dmAtt.dmAttHash2Alg);
+
+	free(*ext_file);
+	*ext_file = NULL;
+}
 
 /* Deallocate struct isds_message_copy recursively and NULL it */
 void isds_message_copy_free(struct isds_message_copy **copy) {
@@ -1462,6 +1522,7 @@ isds_error isds_ctx_free(struct isds_ctx **context) {
 
     /* Free other structures */
     free((*context)->url);
+    free((*context)->url_vodz);
     free((*context)->tls_verify_server);
     free((*context)->tls_ca_file);
     free((*context)->tls_ca_dir);
@@ -1809,6 +1870,37 @@ static isds_error _isds_store_credentials(struct isds_ctx *context,
 }
 #endif
 
+/*
+ * Determine the high-volume data message locator in relation to other service
+ * locators.
+ * @url is base address of ISDS web service. Passing null causes the default
+ * (non-certificate) production service to be used.
+ * @return high-volume data message ISDS service base URL.
+ */
+static const char *determine_vodz_locator(const char *url)
+{
+	if ((NULL == url)
+	    || (0 == strcmp(url, isds_locator))
+	    || (0 == strcmp(url, isds_vodz_locator))
+	    || (0 == strcmp(url, isds_otp_locator))
+	    || (0 == strcmp(url, isds_mep_locator))) {
+		return isds_vodz_locator;
+	} else if ((0 == strcmp(url, isds_cert_locator))
+	    || (0 == strcmp(url, isds_vodz_cert_locator))) {
+		return isds_vodz_cert_locator;
+	} else if ((0 == strcmp(url, isds_testing_locator))
+	    || (0 == strcmp(url, isds_vodz_testing_locator))
+	    || (0 == strcmp(url, isds_otp_testing_locator))
+	    || (0 == strcmp(url, isds_mep_testing_locator))) {
+		return isds_vodz_testing_locator;
+	} else if ((0 == strcmp(url, isds_cert_testing_locator))
+	    || (0 == strcmp(url, isds_vodz_cert_testing_locator))) {
+		return isds_vodz_cert_testing_locator;
+	} else {
+		/* Unknown URL. Fall back to default. */
+		return isds_vodz_locator;
+	}
+}
 
 /* Connect and log into ISDS server.
  * All required arguments will be copied, you do not have to keep them after
@@ -1880,6 +1972,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     /* Store configuration */
     context->type = CTX_TYPE_ISDS;
     zfree(context->url);
+    zfree(context->url_vodz);
 
     /* Mangle base URI according to requested authentication method */
     if (NULL == pki_credentials) {
@@ -1969,6 +2062,10 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
     }
     if (!(context->url))
         return IE_NOMEM;
+    context->url_vodz = strdup(determine_vodz_locator(url));
+    if (NULL == context->url_vodz) {
+        return IE_NOMEM;
+    }
 
     /* Prepare CURL handle */
     context->curl = curl_easy_init();
@@ -2047,7 +2144,6 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 #endif
 }
 
-
 /* Connect and log into ISDS server using the MEP login method.
  * All arguments are copied, you don't have to keep them after successful
  * return.
@@ -2073,6 +2169,7 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
     isds_error soap_err;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
+    const _Bool testing = (url != NULL) && (0 == strcmp(url, isds_mep_locator));
 #endif /* HAVE_LIBCURL */
 
     if (NULL == context) {
@@ -2083,6 +2180,8 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
 
 #if HAVE_LIBCURL
     context->type = CTX_TYPE_ISDS;
+    zfree(context->url);
+    zfree(context->url_vodz);
 
     if ((NULL != username) && (NULL != code) && (NULL != mep)) {
         isds_log(ILF_SEC, ILL_INFO,
@@ -2103,7 +2202,7 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
 
     if (context->mep) {
         if (NULL == url) {
-            url = isds_mep_locator;
+            url = isds_mep_locator; /* Fall back to default locator. */
         }
         mep->resolution = MEP_RESOLUTION_UNKNOWN;
         const char *authenticator_uri =
@@ -2178,6 +2277,11 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
         if (context->url == NULL) {
             soap_err = IE_NOMEM;
         }
+        context->url_vodz = strdup(
+            (!testing) ? isds_vodz_locator : isds_vodz_testing_locator);
+        if (context->url_vodz == NULL) {
+            soap_err = IE_NOMEM;
+        }
         /* Detach credentials pointer from context. */
         context->mep_credentials = NULL;
     }
@@ -2235,6 +2339,7 @@ isds_error isds_logout(struct isds_ctx *context) {
         _isds_discard_credentials(context, 1);
     }
     zfree(context->url);
+    zfree(context->url_vodz);
     return IE_SUCCESS;
 #else /* not HAVE_LIBCURL */
     return IE_NOTSUP;
@@ -3533,6 +3638,109 @@ static isds_error eventstring2event(const xmlChar *string,
     } \
 }
 
+#define EXTRACT_BOOLEAN_ATTRIBUTE(attribute, booleanPtr, required) \
+{ \
+	char *string = (char *)xmlGetNsProp(xpath_ctx->node, ( BAD_CAST (attribute)), NULL); \
+	if (NULL != string) { \
+		(booleanPtr) = calloc(1, sizeof(*(booleanPtr))); \
+		if (NULL == (booleanPtr)) { \
+			free(string); \
+			err = IE_NOMEM; \
+			goto leave; \
+		} \
+		 \
+		if ((0 == xmlStrcmp((xmlChar *)string, BAD_CAST "true")) || \
+		    (0 == xmlStrcmp((xmlChar *)string, BAD_CAST "1"))) \
+			*(booleanPtr) = 1; \
+		else if ((0 == xmlStrcmp((xmlChar *)string, BAD_CAST "false")) || \
+		         (0 == xmlStrcmp((xmlChar *)string, BAD_CAST "0"))) \
+			*(booleanPtr) = 0; \
+		else { \
+			char *attribute_locale = _isds_utf82locale(attribute); \
+			char *string_locale = _isds_utf82locale((char*)string); \
+			isds_printf_message(context, \
+			    _("%s attribute value is not valid boolean: %s"), \
+			    attribute_locale, string_locale); \
+			free(string_locale); \
+			free(attribute_locale); \
+			free(string); \
+			err = IE_ERROR; \
+			goto leave; \
+		} \
+		 \
+		free(string); \
+	} else if (required) { \
+		char *attribute_locale = _isds_utf82locale(attribute); \
+		char *element_locale = \
+		    _isds_utf82locale((char *)xpath_ctx->node->name); \
+		isds_printf_message(context, \
+		    _("Could not extract required %s attribute value from %s element"), \
+		    attribute_locale, element_locale); \
+		free(element_locale); \
+		free(attribute_locale); \
+		err = IE_ERROR; \
+		goto leave; \
+	} \
+}
+
+#define EXTRACT_LONGINT_ATTRIBUTE(attribute, longintPtr, required) \
+{ \
+	char *string = (char *)xmlGetNsProp(xpath_ctx->node, ( BAD_CAST (attribute)), NULL); \
+	if (NULL != string) { \
+		long int number; \
+		char *endptr; \
+		 \
+		number = strtol((char*)string, &endptr, 10); \
+		 \
+		if ((*endptr) != '\0') { \
+			char *attribute_locale = _isds_utf82locale(attribute); \
+			char *string_locale = _isds_utf82locale((char *)string); \
+			isds_printf_message(context, \
+			    _("%s attribute value is not valid integer: %s"), \
+			    attribute_locale, string_locale); \
+			free(string_locale); \
+			free(attribute_locale); \
+			free(string); \
+			err = IE_ISDS; \
+			goto leave; \
+		} \
+		 \
+		if ((number == LONG_MIN) || (number == LONG_MAX)) { \
+			char *attribute_locale = _isds_utf82locale(attribute); \
+			char *string_locale = _isds_utf82locale((char *)string); \
+			isds_printf_message(context, \
+			    _("%s attribute value out of range of long int: %s"), \
+			    attribute_locale, string_locale); \
+			free(string_locale); \
+			free(attribute_locale); \
+			free(string); \
+			err = IE_ERROR; \
+			goto leave; \
+		} \
+		 \
+		(longintPtr) = calloc(1, sizeof(*(longintPtr))); \
+		if (NULL == (longintPtr)) { \
+			free(string); \
+			err = IE_NOMEM; \
+			goto leave; \
+		} \
+		*(longintPtr) = number; \
+		free(string); \
+		 \
+	} else if (required) { \
+		char *attribute_locale = _isds_utf82locale(attribute); \
+		char *element_locale = \
+		    _isds_utf82locale((char *)xpath_ctx->node->name); \
+		isds_printf_message(context, \
+		    _("Could not extract required %s attribute value from %s element"), \
+		    attribute_locale, element_locale); \
+		free(element_locale); \
+		free(attribute_locale); \
+		err = IE_ERROR; \
+		goto leave; \
+	} \
+}
+
 #define EXTRACT_STRING_ATTRIBUTE(attribute, string, required) { \
     (string) = (char *) xmlGetNsProp(xpath_ctx->node, ( BAD_CAST attribute), \
             NULL); \
@@ -3582,40 +3790,37 @@ static isds_error eventstring2event(const xmlChar *string,
         } \
     }
 
-#define INSERT_LONGINT(parent, element, longintPtr, buffer) { \
-    if ((longintPtr)) { \
-        /* FIXME: locale sensitive */ \
-        if (-1 == isds_asprintf((char **)&(buffer), "%ld", *(longintPtr))) { \
-            err = IE_NOMEM; \
-            goto leave; \
-        } \
-        INSERT_STRING(parent, element, buffer) \
-        free(buffer); (buffer) = NULL; \
-    } else { INSERT_STRING(parent, element, NULL) } \
-}
-
-#define INSERT_ULONGINT(parent, element, ulongintPtr, buffer) { \
-    if ((ulongintPtr)) { \
-        /* FIXME: locale sensitive */ \
-        if (-1 == isds_asprintf((char **)&(buffer), "%lu", *(ulongintPtr))) { \
-            err = IE_NOMEM; \
-            goto leave; \
-        } \
-        INSERT_STRING(parent, element, buffer) \
-        free(buffer); (buffer) = NULL; \
-    } else { INSERT_STRING(parent, element, NULL) } \
-}
-
-#define INSERT_ULONGINTNOPTR(parent, element, ulongint, buffer) \
+#define INSERT_LONGINTNOPTR(parent, element, longint, buffer) \
     { \
         /* FIXME: locale sensitive */ \
-        if (-1 == isds_asprintf((char **)&(buffer), "%lu", ulongint)) { \
+        if (-1 == isds_asprintf((char **)&(buffer), "%ld", (longint))) { \
             err = IE_NOMEM; \
             goto leave; \
         } \
         INSERT_STRING(parent, element, buffer) \
         free(buffer); (buffer) = NULL; \
     }
+
+#define INSERT_LONGINT(parent, element, longintPtr, buffer) \
+    if ((longintPtr)) { \
+        INSERT_LONGINTNOPTR(parent, element, *(longintPtr), buffer); \
+    } else { INSERT_STRING(parent, element, NULL) }
+
+#define INSERT_ULONGINTNOPTR(parent, element, ulongint, buffer) \
+    { \
+        /* FIXME: locale sensitive */ \
+        if (-1 == isds_asprintf((char **)&(buffer), "%lu", (ulongint))) { \
+            err = IE_NOMEM; \
+            goto leave; \
+        } \
+        INSERT_STRING(parent, element, buffer) \
+        free(buffer); (buffer) = NULL; \
+    }
+
+#define INSERT_ULONGINT(parent, element, ulongintPtr, buffer) \
+    if ((ulongintPtr)) { \
+        INSERT_ULONGINTNOPTR(parent, element, *(ulongintPtr), buffer); \
+    } else { INSERT_STRING(parent, element, NULL) }
 
 /* Requires attribute_node variable, do not free it. Can be used to refer to
  * new attribute. */
@@ -5053,9 +5258,9 @@ leave:
     return err;
 }
 
-
-/* Convert message type attribute of current element into isds_envelope
- * structure.
+/*
+ * Convert message type attribute of current element into isds_envelope
+ * structure. Sets the high-volume message flag and number of attachments if found.
  * TODO: This function can be incorporated into append_status_size_times() as
  * they are called always together.
  * The envelope is automatically allocated but not reallocated.
@@ -5064,52 +5269,65 @@ leave:
  * @envelope is automatically allocated message envelope structure
  * @xpath_ctx is XPath context with current node as parent of attribute
  * carrying message type
- * In case of error @envelope will be freed. */
-static isds_error append_message_type(struct isds_ctx *context,
-        struct isds_envelope **envelope, xmlXPathContextPtr xpath_ctx) {
-    isds_error err = IE_SUCCESS;
+ * In case of error @envelope will be freed.
+ */
+static enum isds_error append_message_attributes(struct isds_ctx *context,
+    struct isds_envelope **envelope, xmlXPathContextPtr xpath_ctx)
+{
+	enum isds_error err = IE_SUCCESS;
 
-    if (!context) return IE_INVALID_CONTEXT;
-    if (!envelope) return IE_INVAL;
-    if (!xpath_ctx) return IE_INVAL;
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (NULL == envelope) {
+		return IE_INVAL;
+	}
+	if (NULL == xpath_ctx) {
+		return IE_INVAL;
+	}
 
+	if (NULL == *envelope) {
+		/* Allocate new */
+		*envelope = calloc(1, sizeof(**envelope));
+		if (NULL == *envelope) {
+			err = IE_NOMEM;
+			goto leave;
+		}
+	} else {
+		/* Free old data */
+		zfree((*envelope)->dmType);
+		zfree((*envelope)->dmVODZ);
+		zfree((*envelope)->attsNum);
+	}
 
-    if (!*envelope) {
-        /* Allocate new */
-        *envelope = calloc(1, sizeof(**envelope));
-        if (!*envelope) {
-            err = IE_NOMEM;
-            goto leave;
-        }
-    } else {
-        /* Free old data */
-        zfree((*envelope)->dmType);
-    }
+	EXTRACT_STRING_ATTRIBUTE("dmType", (*envelope)->dmType, 0);
 
+	if (NULL == (*envelope)->dmType) {
+		/* Use default value */
+		(*envelope)->dmType = strdup("V");
+		if (NULL == (*envelope)->dmType) {
+			err = IE_NOMEM;
+			goto leave;
+		}
+	} else if (1 != xmlUTF8Strlen((xmlChar *) (*envelope)->dmType)) {
+		char *type_locale = _isds_utf82locale((*envelope)->dmType);
+		isds_printf_message(context,
+		    _("Message type in dmType attribute is not 1 character long: %s"),
+		    type_locale);
+		free(type_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
 
-    EXTRACT_STRING_ATTRIBUTE("dmType", (*envelope)->dmType, 0);
+	EXTRACT_BOOLEAN_ATTRIBUTE("dmVODZ", (*envelope)->dmVODZ, 0);
 
-    if (!(*envelope)->dmType) {
-        /* Use default value */
-        (*envelope)->dmType = strdup("V");
-        if (!(*envelope)->dmType) {
-            err = IE_NOMEM;
-            goto leave;
-        }
-    } else if (1 != xmlUTF8Strlen((xmlChar *) (*envelope)->dmType)) {
-        char *type_locale = _isds_utf82locale((*envelope)->dmType);
-        isds_printf_message(context,
-                _("Message type in dmType attribute is not 1 character long: "
-                    "%s"),
-                type_locale);
-        free(type_locale);
-        err = IE_ISDS;
-        goto leave;
-    }
+	EXTRACT_LONGINT_ATTRIBUTE("attsNum", (*envelope)->attsNum, 0);
 
 leave:
-    if (err) isds_envelope_free(envelope);
-    return err;
+	if (IE_SUCCESS != err) {
+		isds_envelope_free(envelope);
+	}
+	return err;
 }
 
 
@@ -5147,6 +5365,39 @@ leave:
 }
 #endif /* HAVE_LIBCURL */
 
+/*
+ * Normalize MIME type.
+ * @context is ISDS context
+ * @mime_type is pointer to MIME type string to be normalised.
+ */
+static inline enum isds_error normalize_mime_type(struct isds_ctx *context,
+    char **mime_type)
+{
+	enum isds_error err = IE_SUCCESS;
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (NULL == mime_type) {
+		return IE_INVAL;
+	}
+
+	const char *normalized_type = isds_normalize_mime_type(*mime_type);
+	if ((NULL != normalized_type) && (normalized_type != *mime_type)) {
+		char *new_type = strdup(normalized_type);
+		if (NULL == new_type) {
+			isds_printf_message(context,
+			    _("Not enough memory to normalize document MIME type"));
+			err = IE_NOMEM;
+			goto leave;
+		}
+		free(*mime_type);
+		*mime_type = new_type;
+	}
+
+leave:
+	return err;
+}
 
 /* Extract message document into reallocated document structure
  * @context is ISDS context
@@ -5175,19 +5426,9 @@ static isds_error extract_document(struct isds_ctx *context,
     /* Extract document meta data */
     EXTRACT_STRING_ATTRIBUTE("dmMimeType", (*document)->dmMimeType, 1)
     if (context->normalize_mime_type) {
-        const char *normalized_type =
-            isds_normalize_mime_type((*document)->dmMimeType);
-        if (NULL != normalized_type &&
-                normalized_type != (*document)->dmMimeType) {
-            char *new_type = strdup(normalized_type);
-            if (NULL == new_type) {
-                isds_printf_message(context,
-                        _("Not enough memory to normalize document MIME type"));
-                err = IE_NOMEM;
-                goto leave;
-            }
-            free((*document)->dmMimeType);
-            (*document)->dmMimeType = new_type;
+        err = normalize_mime_type(context, &(*document)->dmMimeType);
+        if (err != IE_SUCCESS) {
+            goto leave;
         }
     }
 
@@ -5401,7 +5642,7 @@ static isds_error extract_DmRecord(struct isds_ctx *context,
     if (err) goto leave;
 
     /* Get message type */
-    err = append_message_type(context, envelope, xpath_ctx);
+    err = append_message_attributes(context, envelope, xpath_ctx);
     if (err) goto leave;
 
 
@@ -5700,7 +5941,7 @@ static isds_error extract_TReturnedMessage(struct isds_ctx *context,
     if (err) goto leave;
 
     /* Get message type */
-    err = append_message_type(context, &((*message)->envelope), xpath_ctx);
+    err = append_message_attributes(context, &((*message)->envelope), xpath_ctx);
     if (err) goto leave;
 
 leave:
@@ -6003,6 +6244,108 @@ leave:
     return err;
 }
 
+/*
+ * Convert isds_dmExtFile structure into XML tree and append to dmFiles node.
+ * @context is session context
+ * @ext_file is ISDS ExtFile
+ * @dm_files is XML element the resulting tree will be appended to as a child.
+ * @return error code, in case of error context' message is filled.
+ */
+static enum isds_error insert_ext_file(struct isds_ctx *context,
+    struct isds_dmExtFile *ext_file, xmlNode *dm_files)
+{
+	enum isds_error err = IE_SUCCESS;
+	xmlNode *new_file = NULL;
+	xmlNode *file = NULL;
+	xmlAttr *attribute_node;
+	const xmlChar *string;
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if ((NULL == ext_file) || (NULL == dm_files)) {
+		return IE_INVAL;
+	}
+
+	/* Allocate new dmExtFile */
+	new_file = xmlNewNode(dm_files->ns, BAD_CAST "dmExtFile");
+	if (NULL == new_file) {
+		isds_printf_message(context, _("Could not allocate main dmExtFile"));
+		err = IE_ERROR;
+		goto leave;
+	}
+	/*
+	 * Append the new dmExtFile.
+	 * XXX: Main document must go first
+	 */
+	if ((ext_file->dmFileMetaType == FILEMETATYPE_MAIN) && (NULL != dm_files->children)) {
+		file = xmlAddPrevSibling(dm_files->children, new_file);
+	} else {
+		file = xmlAddChild(dm_files, new_file);
+	}
+
+	if (NULL == file) {
+		xmlFreeNode(new_file); new_file = NULL;
+		isds_printf_message(context,
+		    _("Could not add dmExtFile child to %s element"), dm_files->name);
+		err = IE_ERROR;
+		goto leave;
+	}
+
+	string = isds_FileMetaType2string(ext_file->dmFileMetaType);
+	if (NULL == string) {
+		isds_printf_message(context,
+		    _("ExtFile has unknown dmFileMetaType: %ld"),
+		    ext_file->dmFileMetaType);
+		err = IE_ENUM;
+		goto leave;
+	}
+	INSERT_STRING_ATTRIBUTE(file, "dmFileMetaType", string);
+
+	/* @dmAttID is required */
+	if (NULL == ext_file->dmAtt.dmAttID) {
+		isds_log_message(context,
+		   _("ExtFile is missing mandatory attachment identifier"));
+		err = IE_INVAL;
+		goto leave;
+	}
+	INSERT_STRING_ATTRIBUTE(file, "dmAttID", ext_file->dmAtt.dmAttID);
+	/* @dmAttHash1 required */
+	if (NULL == ext_file->dmAtt.dmAttHash1) {
+		isds_log_message(context,
+		   _("ExtFile is missing mandatory Hash1 value"));
+		err = IE_INVAL;
+		goto leave;
+	}
+	INSERT_STRING_ATTRIBUTE(file, "dmAttHash1", ext_file->dmAtt.dmAttHash1);
+	/* @dmAttHash1Alg required */
+	if (NULL == ext_file->dmAtt.dmAttHash1Alg) {
+		isds_log_message(context,
+		   _("ExtFile is missing mandatory Hash1 algorithm identifier"));
+		err = IE_INVAL;
+		goto leave;
+	}
+	INSERT_STRING_ATTRIBUTE(file, "dmAttHash1Alg", ext_file->dmAtt.dmAttHash1Alg);
+	/* @dmAttHash2 required */
+	if (NULL == ext_file->dmAtt.dmAttHash2) {
+		isds_log_message(context,
+		   _("ExtFile is missing mandatory Hash2 value"));
+		err = IE_INVAL;
+		goto leave;
+	}
+	INSERT_STRING_ATTRIBUTE(file, "dmAttHash2", ext_file->dmAtt.dmAttHash2);
+	/* @dmAttHash2Alg required */
+	if (NULL == ext_file->dmAtt.dmAttHash2Alg) {
+		isds_log_message(context,
+		   _("ExtFile is missing mandatory Hash2 algorithm identifier"));
+		err = IE_INVAL;
+		goto leave;
+	}
+	INSERT_STRING_ATTRIBUTE(file, "dmAttHash2Alg", ext_file->dmAtt.dmAttHash2Alg);
+
+leave:
+	return err;
+}
 
 /* Append XSD tMStatus XML tree into isds_message_copy structure.
  * The copy must be preallocated, the date are just appended into structure.
@@ -6254,7 +6597,7 @@ isds_error isds_GetOwnerInfoFromLogin(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -6354,7 +6697,7 @@ isds_error isds_GetOwnerInfoFromLogin2(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -6449,7 +6792,7 @@ isds_error isds_GetUserInfoFromLogin(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -6546,7 +6889,7 @@ isds_error isds_GetUserInfoFromLogin2(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -6638,7 +6981,7 @@ isds_error isds_get_password_expiration(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -7337,7 +7680,17 @@ static isds_error send_destroy_request_check_response(
             service_name_locale);
 
     /* Send request */
-    err = _isds(context, service, *request, response, NULL, NULL);
+    if (service != SERVICE_VODZ_DM_OPERATIONS) {
+        err = _isds(context, service, *request, response, NULL, NULL);
+    } else {
+        const struct comm_req req = {
+            .request = *request,
+            .content_id = NULL,
+            .dm_file = NULL
+        };
+        err = _isds_vodz(context, service, VODZ_BASIC, &req, response,
+                NULL, NULL);
+    }
     xmlFreeNode(*request); *request = NULL;
 
     if (err) {
@@ -7506,7 +7859,7 @@ static isds_error extract_credentials_delivery(struct isds_ctx *context,
             err = IE_ERROR;
             goto leave;
         }
-        if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+        if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
             err = IE_ERROR;
             goto leave;
         }
@@ -7719,7 +8072,7 @@ isds_error isds_add_box(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -8164,7 +8517,7 @@ isds_error isds_GetDataBoxUsers(struct isds_ctx *context, const char *box_id,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -8258,7 +8611,7 @@ isds_error isds_GetDataBoxUsers2(struct isds_ctx *context, const char *box_id,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -8508,7 +8861,7 @@ isds_error isds_activate(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -9030,7 +9383,7 @@ isds_error isds_get_box_list_archive(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -9210,7 +9563,7 @@ isds_error isds_FindDataBox(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -9415,7 +9768,7 @@ isds_error isds_FindDataBox2(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -9842,7 +10195,7 @@ isds_error isds_find_box_by_fulltext(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -10030,7 +10383,7 @@ isds_error isds_CheckDataBox(struct isds_ctx *context, const char *box_id,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -10267,7 +10620,7 @@ isds_error isds_get_box_state_history(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -10397,7 +10750,7 @@ isds_error isds_get_commercial_permissions(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -10530,7 +10883,7 @@ isds_error isds_PDZSendInfo(struct isds_ctx *context, const char *box_id,
 		err = IE_ERROR;
 		goto leave;
 	}
-	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
 		err = IE_ERROR;
 		goto leave;
 	}
@@ -10718,7 +11071,7 @@ isds_error isds_get_commercial_credit(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -11074,7 +11427,7 @@ isds_error isds_DTInfo(struct isds_ctx *context, const char *box_id,
 		err = IE_ERROR;
 		goto leave;
 	}
-	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
 		err = IE_ERROR;
 		goto leave;
 	}
@@ -11386,16 +11739,19 @@ leave:
 
 
 #if HAVE_LIBCURL
-/* Insert struct isds_message data (envelope (recipient data optional) and
+/*
+ * Insert struct isds_message data (envelope (recipient data optional) and
  * documents into XML tree
  * @context is session context
  * @outgoing_message is a structure containing message data
  * @create_message is XML CreateMessage or CreateMultipleMessage element
  * @process_recipient true for recipient data serialization, false for no
- * serialization */
+ * serialization
+ * @allow_ext_files true if ext_files should also be added
+ */
 static isds_error insert_envelope_files(struct isds_ctx *context,
         const struct isds_message *outgoing_message, xmlNodePtr create_message,
-        const _Bool process_recipient) {
+        const _Bool process_recipient, const _Bool allow_ext_files) {
 
     isds_error err = IE_SUCCESS;
     xmlNodePtr envelope, dm_files, node;
@@ -11505,9 +11861,15 @@ static isds_error insert_envelope_files(struct isds_ctx *context,
         INSERT_STRING_ATTRIBUTE(node, "IdLevel", string);
     }
 
+    if ((!allow_ext_files) && (NULL != outgoing_message->ext_files)) {
+        isds_log_message(context,
+            _("ExtFile entries are not allowed when sending ordinary data messages."));
+        err = IE_INVAL;
+        goto leave;
+    }
 
     /* Append dmFiles */
-    if (!outgoing_message->documents) {
+    if ((NULL == outgoing_message->documents) && (NULL == outgoing_message->ext_files)) {
         isds_log_message(context,
                 _("Outgoing message is missing list of documents"));
         err = IE_INVAL;
@@ -11522,7 +11884,8 @@ static isds_error insert_envelope_files(struct isds_ctx *context,
     }
 
     /* Check for document hierarchy */
-    err = _isds_check_documents_hierarchy(context, outgoing_message->documents);
+    err = _isds_check_documents_hierarchy(context, outgoing_message->documents,
+        outgoing_message->ext_files);
     if (err) goto leave;
 
     /* Process each document */
@@ -11542,6 +11905,19 @@ static isds_error insert_envelope_files(struct isds_ctx *context,
 
         if (err) goto leave;
     }
+    /* Process each ext_file */
+    for (struct isds_list *item = outgoing_message->ext_files; NULL != item; item = item->next) {
+        if (NULL == item->data) {
+            isds_log_message(context,
+                    _("List of ExtFile entries contains empty item"));
+            err = IE_INVAL;
+            goto leave;
+        }
+        err = insert_ext_file(context, (struct isds_dmExtFile *)item->data, dm_files);
+        if (IE_SUCCESS != err) {
+           goto leave;
+        }
+    }
 
 leave:
     free(string);
@@ -11549,16 +11925,6 @@ leave:
 }
 #endif /* HAVE_LIBCURL */
 
-
-/* Send a message via ISDS to a recipient
- * @context is session context
- * @outgoing_message is message to send; Some members are mandatory (like
- * dbIDRecipient), some are optional and some are irrelevant (especially data
- * about sender). Included pointer to isds_list documents must contain at
- * least one document of FILEMETATYPE_MAIN. This is read-write structure, some
- * members will be filled with valid data from ISDS. Exact list of write
- * members is subject to change. Currently dmID is changed.
- * @return ISDS_SUCCESS, or other error code if something goes wrong. */
 isds_error isds_send_message(struct isds_ctx *context,
         struct isds_message *outgoing_message) {
 
@@ -11600,7 +11966,7 @@ isds_error isds_send_message(struct isds_ctx *context,
     xmlSetNs(request, isds_ns);
 
     /* Append envelope and files */
-    err = insert_envelope_files(context, outgoing_message, request, 1);
+    err = insert_envelope_files(context, outgoing_message, request, 1, 0);
     if (err) goto leave;
 
 
@@ -11660,7 +12026,7 @@ isds_error isds_send_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -11758,22 +12124,6 @@ serialization_failed:
     return err;
 }
 
-
-/* Send a message via ISDS to a multiple recipients
- * @context is session context
- * @outgoing_message is message to send; Some members are mandatory,
- * some are optional and some are irrelevant (especially data
- * about sender). Data about recipient will be substituted by ISDS from
- * @copies. Included pointer to isds_list documents must
- * contain at least one document of FILEMETATYPE_MAIN.
- * @copies is list of isds_message_copy structures addressing all desired
- * recipients. This is read-write structure, some members will be filled with
- * valid data from ISDS (message IDs, error codes, error descriptions).
- * @return
- *  ISDS_SUCCESS if all messages have been sent
- *  ISDS_PARTIAL_SUCCESS if sending of some messages has failed (failed and
- *      succeeded messages can be identified by copies->data->error),
- *  or other error code if something other goes wrong. */
 isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
         const struct isds_message *outgoing_message,
         struct isds_list *copies) {
@@ -11862,7 +12212,7 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
     }
 
     /* Append envelope and files */
-    err = insert_envelope_files(context, outgoing_message, request, 0);
+    err = insert_envelope_files(context, outgoing_message, request, 0, 0);
     if (err) goto leave;
 
 
@@ -11934,7 +12284,7 @@ isds_error isds_send_message_to_multiple_recipients(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -11995,6 +12345,1250 @@ leave:
     return err;
 }
 
+#if HAVE_LIBCURL
+/* Insert XOM include element within another parent element.
+ * @context is session context
+ * @parent is XML node to append @element with Include element
+ *     with @href_cid href attribute as child
+ * @ns is XML namespace of @element, use NULL to inherit from @parent
+ * @element is UTF-8 encoded name of new element
+ * @href_cid Include href attribute value
+ * @return standard error code and fill long error message if needed */
+static enum isds_error insert_xop_include(struct isds_ctx *context,
+    xmlNode *parent, const xmlNs *ns, const char *element,
+    const char *href_cid) {
+#define INC_PREFIX "inc"
+	enum isds_error err = IE_SUCCESS;
+	xmlNs *xop_inc_ns = NULL;
+	xmlNode *node;
+	xmlAttr *attribute_node;
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if ((NULL == parent) || (NULL == element)) {
+		return IE_INVAL;
+	}
+	if ((NULL == href_cid) || ('\0' == *href_cid)) {
+		return IE_INVAL;
+	}
+
+	node = xmlNewChild(parent, NULL, BAD_CAST element, NULL);
+	if (NULL == node) {
+		isds_printf_message(context,
+		    _("Could not add %s child to %s element"),
+		    element, parent->name);
+		return IE_ERROR;
+	}
+
+	/* New parent. */
+	parent = node;
+	node = xmlNewChild(parent, NULL, BAD_CAST "Include", NULL);
+	if (NULL == node) {
+		isds_printf_message(context,
+		    _("Could not add Include child to %s element"),
+		    parent->name);
+		return IE_ERROR;
+	}
+	xop_inc_ns = xmlNewNs(node, BAD_CAST XOP_INCLUDE_NS, BAD_CAST INC_PREFIX);
+	if (NULL == xop_inc_ns) {
+		isds_log_message(context, _("Could not create XOP include name space"));
+		return IE_ERROR;
+	}
+	xmlSetNs(node, xop_inc_ns);
+	{
+		char *href_str = _isds_astrcat("cid:", href_cid);
+		if (NULL == href_str) {
+			isds_printf_message(context,
+			    _("Not enough memory to construct href attribute to %s element"),
+			    node->name);
+			return IE_NOMEM;
+		}
+		INSERT_STRING_ATTRIBUTE(node, "href", href_str);
+		free(href_str);
+	}
+
+leave:
+	return err;
+#undef INC_PREFIX
+}
+
+/*
+ * Insert struct isds_dmFile data (attachment content) into XML tree
+ * @context is session context
+ * @dm_file is a structure containing attachment description
+ * @parent_node is parent XML elemen
+ * @ignore_meta_type indicates whether @dm_file->dmFileMetaType should be inserted
+ * @xop_cid XOP content identifier, pass null value to insert Base64 encoded content
+ * @return error code.
+ */
+static enum isds_error insert_dmFile(struct isds_ctx *context,
+    const struct isds_dmFile *dm_file, xmlNode *parent_node,
+    _Bool ignore_meta_type, const char *xop_cid)
+{
+	enum isds_error err = IE_SUCCESS;
+	xmlNode *file_node;
+	xmlAttr *attribute_node;
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if ((NULL == dm_file) || (NULL == parent_node)) {
+		return IE_INVAL;
+	}
+
+	/* Build dmFile. */
+	file_node = xmlNewChild(parent_node, NULL, BAD_CAST "dmFile", NULL);
+	if (NULL == file_node) {
+		isds_printf_message(context,
+		    _("Could not add dmFile child to %s element"),
+		    parent_node->name);
+		return IE_ERROR;
+	}
+
+	if ((NULL == dm_file->data) || (0 == dm_file->data_length)) {
+		isds_log_message(context, _("dmFile is missing content"));
+		err = IE_INVAL;
+		goto leave;
+	}
+
+	/* Insert content. */
+	if (NULL == xop_cid) {
+		err = insert_base64_encoded_string(context, file_node, NULL,
+		    "dmEncodedContent", dm_file->data, dm_file->data_length);
+	} else {
+		err = insert_xop_include(context, file_node, NULL,
+		    "dmEncodedContent", xop_cid);
+	}
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	if (!ignore_meta_type) {
+		const xmlChar *string = isds_FileMetaType2string(dm_file->dmFileMetaType);
+		if (NULL == string) {
+			isds_printf_message(context,
+			    _("dmFile has unknown dmFileMetaType: %ld"),
+			    dm_file->dmFileMetaType);
+			err = IE_ENUM;
+			goto leave;
+		}
+		INSERT_STRING_ATTRIBUTE(file_node, "dmFileMetaType", string);
+	}
+
+	/* @dmMimeType is required */
+	if (NULL == dm_file->dmMimeType) {
+		isds_log_message(context,
+		    _("dmFile is missing mandatory MIME type definition"));
+		err = IE_INVAL;
+		goto leave;
+	}
+	INSERT_STRING_ATTRIBUTE(file_node, "dmMimeType", dm_file->dmMimeType);
+
+	/* @dmFileDescr is required */
+	if (NULL == dm_file->dmFileDescr) {
+		isds_log_message(context,
+		    _("dmFile is missing mandatory description (title)"));
+		err = IE_INVAL;
+		goto leave;
+	}
+	INSERT_STRING_ATTRIBUTE(file_node, "dmFileDescr", dm_file->dmFileDescr);
+
+leave:
+	return err;
+}
+
+/* Convert XSD:UploadAttachmentResponse XML tree into structure
+ * @context is ISDS context
+ * @dm_att is automatically reallocated attachment identification structure
+ * @xpath_ctx is XPath context with current node as XSD:UploadAttachmentResponse element
+ * In case of error @dm_att will be freed. */
+static enum isds_error extract_dmAtt(struct isds_ctx *context,
+    struct isds_dmAtt **dm_att, xmlXPathContext *xpath_ctx)
+{
+	enum isds_error err = IE_SUCCESS;
+	xmlNode *old_ctx_node;
+	xmlXPathObject *result = NULL;
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (NULL == dm_att) {
+		return IE_INVAL;
+	}
+	isds_dmAtt_free(dm_att);
+	if (NULL == xpath_ctx) {
+		return IE_INVAL;
+	}
+
+	old_ctx_node = xpath_ctx->node;
+
+	*dm_att = calloc(1, sizeof(**dm_att));
+	if (NULL == *dm_att) {
+		err = IE_NOMEM;
+		goto leave;
+	}
+
+	EXTRACT_STRING("isds:dmAttID", (*dm_att)->dmAttID);
+	if (NULL == (*dm_att)->dmAttID) {
+		isds_log(ILF_ISDS, ILL_ERR,
+		    _("Server accepted uploaded attachment, but did not return assigned attachment ID\n"));
+		err = IE_ISDS;
+		goto leave;
+	}
+
+	EXTRACT_STRING("isds:dmAttHash1", (*dm_att)->dmAttHash1);
+	if (NULL == (*dm_att)->dmAttHash1) {
+		isds_log(ILF_ISDS, ILL_ERR,
+		    _("Server accepted uploaded attachment, but did not return first attachment hash\n"));
+	}
+	err = move_xpathctx_to_child(context, BAD_CAST "isds:dmAttHash1", xpath_ctx);
+	if (IE_SUCCESS != err) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	EXTRACT_STRING_ATTRIBUTE("AttHashAlg", (*dm_att)->dmAttHash1Alg, 1);
+
+	/* Return to parent. */
+	xpath_ctx->node = old_ctx_node;
+
+	EXTRACT_STRING("isds:dmAttHash2", (*dm_att)->dmAttHash2);
+	if (NULL == (*dm_att)->dmAttHash2) {
+		isds_log(ILF_ISDS, ILL_ERR,
+		    _("Server accepted uploaded attachment, but did not return second attachment hash\n"));
+	}
+	err = move_xpathctx_to_child(context, BAD_CAST "isds:dmAttHash2", xpath_ctx);
+	if (IE_SUCCESS != err) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	EXTRACT_STRING_ATTRIBUTE("AttHashAlg", (*dm_att)->dmAttHash2Alg, 1);
+
+leave:
+	if (IE_SUCCESS != err) {
+		isds_dmAtt_free(dm_att);
+	}
+	xmlXPathFreeObject(result);
+	xpath_ctx->node = old_ctx_node;
+	return err;
+}
+#endif /* HAVE_LIBCURL */
+
+enum isds_error isds_UploadAttachment(struct isds_ctx *context,
+    const struct isds_dmFile *dm_file, struct isds_dmAtt **dm_att)
+{
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlNs *isds_ns = NULL;
+	xmlNode *request = NULL;
+	xmlDoc *response = NULL;
+	xmlChar *code = NULL;
+	xmlChar *message = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+#endif /* HAVE_LIBCURL */
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if (NULL == dm_file) {
+		return IE_INVAL;
+	}
+	isds_dmAtt_free(dm_att);
+
+#if HAVE_LIBCURL
+	/*
+	 * Check if connection is established
+	 * TODO: This check should be done downstairs.
+	 */
+	if (NULL == context->curl) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	/* Build UploadAttachment request */
+	request = xmlNewNode(NULL, BAD_CAST "UploadAttachment");
+	if (NULL == request) {
+		isds_log_message(context,
+		    _("Could not build UploadAttachment request"));
+		return IE_ERROR;
+	}
+	isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+	if (NULL == isds_ns) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		xmlFreeNode(request);
+		return IE_ERROR;
+	}
+	xmlSetNs(request, isds_ns);
+
+	err = insert_dmFile(context, dm_file, request, 1, NULL);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	isds_log(ILF_ISDS, ILL_DEBUG,
+	    _("Sending UploadAttachment request to ISDS\n"));
+
+	/* Send request. */
+	{
+		const struct comm_req req = {
+			.request = request,
+			.content_id = NULL,
+			.dm_file = NULL
+		};
+		err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS,
+		    VODZ_BASIC, &req, &response, NULL, NULL);
+	}
+
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Processing ISDS response on UploadAttachment request failed\n"));
+		goto leave;
+	}
+
+	/* Check for response status. */
+	err = isds_response_status(context, SERVICE_VODZ_DM_OPERATIONS,
+	    response, &code, &message, NULL);
+	build_isds_status(&(context->status),
+	    _isds_service_to_status_type(SERVICE_VODZ_DM_OPERATIONS),
+	    (char *)code, (char *)message, NULL);
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		_("ISDS response on UploadAttachment is missing status\n"));
+		goto leave;
+	}
+
+	/* Request processed, but refused by server or server failed. */
+	if (0 != xmlStrcmp(code, BAD_CAST "0000")) {
+		char *file_descr_locale = _isds_utf82locale(dm_file->dmFileDescr);
+		char *code_locale = _isds_utf82locale((char*)code);
+		char *message_locale = _isds_utf82locale((char*)message);
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Server did not accept attachment '%s' on UploadAttachment request (code=%s, message=%s)\n"),
+		    file_descr_locale, code_locale, message_locale);
+		free(file_descr_locale);
+		free(code_locale);
+		free(message_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
+
+	/* Extract data. */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	result = xmlXPathEvalExpression(BAD_CAST "/isds:UploadAttachmentResponse",
+	    xpath_ctx);
+	if (NULL == result) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+		isds_log_message(context, _("Missing UploadAttachmentResponse element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	if (result->nodesetval->nodeNr > 1) {
+		isds_log_message(context, _("Multiple UploadAttachmentResponse element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	/* One response */
+	xpath_ctx->node = result->nodesetval->nodeTab[0];
+	xmlXPathFreeObject(result); result = NULL;
+
+	err = extract_dmAtt(context, dm_att, xpath_ctx);
+
+leave:
+	/* Clean up */
+	if (IE_SUCCESS != err) {
+		isds_dmAtt_free(dm_att);
+	}
+
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+
+	free(code);
+	free(message);
+	xmlFreeDoc(response);
+	xmlFreeNode(request);
+
+	if (IE_SUCCESS == err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("UploadAttachment request processed by server successfully.\n"));
+	}
+#else /* not HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+
+	return err;
+}
+
+enum isds_error isds_UploadAttachment_mtomxop(struct isds_ctx *context,
+    const struct isds_dmFile *dm_file, struct isds_dmAtt **dm_att)
+{
+#define ATTACHMENT_CID "att_1"
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlNs *isds_ns = NULL;
+	xmlNode *request = NULL;
+	xmlDoc *response = NULL;
+	xmlChar *code = NULL;
+	xmlChar *message = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+#endif /* HAVE_LIBCURL */
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if (NULL == dm_file) {
+		return IE_INVAL;
+	}
+	isds_dmAtt_free(dm_att);
+
+#if HAVE_LIBCURL
+	/*
+	 * Check if connection is established
+	 * TODO: This check should be done downstairs.
+	 */
+	if (NULL == context->curl) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	/* Build UploadAttachment request */
+	request = xmlNewNode(NULL, BAD_CAST "UploadAttachment");
+	if (NULL == request) {
+		isds_log_message(context,
+		    _("Could not build UploadAttachment request"));
+		return IE_ERROR;
+	}
+	isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+	if (NULL == isds_ns) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		xmlFreeNode(request);
+		return IE_ERROR;
+	}
+	xmlSetNs(request, isds_ns);
+
+	err = insert_dmFile(context, dm_file, request, 1, ATTACHMENT_CID);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	isds_log(ILF_ISDS, ILL_DEBUG,
+	    _("Sending MTOM/XOP UploadAttachment request to ISDS\n"));
+
+	/* Send request. */
+	{
+		const struct comm_req req = {
+			.request = request,
+			.content_id = ATTACHMENT_CID,
+			.dm_file = dm_file
+		};
+		err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS,
+		    VODZ_SND_XOP, &req, &response, NULL, NULL);
+	}
+
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Processing ISDS response on MTOM/XOP UploadAttachment request failed\n"));
+		goto leave;
+	}
+
+	/* Check for response status. */
+	err = isds_response_status(context, SERVICE_VODZ_DM_OPERATIONS,
+	    response, &code, &message, NULL);
+	build_isds_status(&(context->status),
+	    _isds_service_to_status_type(SERVICE_VODZ_DM_OPERATIONS),
+	    (char *)code, (char *)message, NULL);
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		_("ISDS response on MTOM/XOP UploadAttachment is missing status\n"));
+		goto leave;
+	}
+
+	/* Request processed, but refused by server or server failed. */
+	if (0 != xmlStrcmp(code, BAD_CAST "0000")) {
+		char *file_descr_locale = _isds_utf82locale(dm_file->dmFileDescr);
+		char *code_locale = _isds_utf82locale((char*)code);
+		char *message_locale = _isds_utf82locale((char*)message);
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Server did not accept attachment '%s' on MTOM/XOP UploadAttachment request (code=%s, message=%s)\n"),
+		    file_descr_locale, code_locale, message_locale);
+		free(file_descr_locale);
+		free(code_locale);
+		free(message_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
+
+	/* Extract data. */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (IE_SUCCESS != _isds_register_namespaces(
+	        xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_2)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	result = xmlXPathEvalExpression(BAD_CAST "/isds:UploadAttachmentResponse",
+	    xpath_ctx);
+	if (NULL == result) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+		isds_log_message(context, _("Missing UploadAttachmentResponse element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	if (result->nodesetval->nodeNr > 1) {
+		isds_log_message(context, _("Multiple UploadAttachmentResponse element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	/* One response */
+	xpath_ctx->node = result->nodesetval->nodeTab[0];
+	xmlXPathFreeObject(result); result = NULL;
+
+	err = extract_dmAtt(context, dm_att, xpath_ctx);
+
+leave:
+	/* Clean up */
+	if (IE_SUCCESS != err) {
+		isds_dmAtt_free(dm_att);
+	}
+
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+
+	free(code);
+	free(message);
+	xmlFreeDoc(response);
+	xmlFreeNode(request);
+
+	if (IE_SUCCESS == err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("UploadAttachment MTOM/XOP request processed by server successfully.\n"));
+	}
+#else /* not HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+
+	return err;
+#undef ATTACHMENT_CID
+}
+
+#if HAVE_LIBCURL
+/*
+ * Create content id from XOP Include href attribute value.
+ * I.e. it creates the string "<1>" from the string "cid:1".
+ * @href is a string that must start with the prefix "cid:".
+ * Return newly allocated string with leading and trailing pointy bracket,
+ * NULL on any error.
+ */
+static char *build_content_id_from_href(const char *href)
+{
+	if (UNLIKELY(NULL == href)) {
+		return NULL;
+	}
+
+	if (UNLIKELY(0 != strncmp(href, "cid:", 4))) {
+		return NULL;
+	}
+
+	href += 4; /* Shift the start of the string past the colon. */
+	if (UNLIKELY('\0' == *href)) {
+		return NULL;
+	}
+
+	char *content_id = NULL;
+	if (UNLIKELY(-1 == isds_asprintf(&content_id, "<%s>", href))) {
+		return NULL;
+	}
+
+	return content_id;
+}
+
+/*
+ * Extract file content into reallocated file structure.
+ * Similar to extract_document().
+ * @context is ISDS context
+ * @dm_file is automatically reallocated file structure
+ * @xpath_ctx is XPath context with current node as isds:dmFile
+ * @parts holds multipart data, if provided the MTOM/XOP data are expected and
+ * processed
+ * In case of error @dm_file will be freed.
+ */
+static enum isds_error extract_dmFile(struct isds_ctx *context,
+    struct isds_dmFile **dm_file, xmlXPathContext *xpath_ctx,
+    struct multipart_parts *parts)
+{
+	enum isds_error err = IE_SUCCESS;
+	xmlXPathObject *result = NULL;
+	xmlNode *file_node;
+	char *string = NULL;
+	char *href = NULL;
+	char *content_id = NULL;
+
+	if (UNLIKELY(NULL == context)) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (UNLIKELY(NULL == dm_file)) {
+		return IE_INVAL;
+	}
+	isds_dmFile_free(dm_file);
+	if (UNLIKELY(NULL == xpath_ctx)) {
+		return IE_INVAL;
+	}
+	file_node = xpath_ctx->node;
+
+	*dm_file = calloc(1, sizeof(**dm_file));
+	if (UNLIKELY(NULL == *dm_file)) {
+		err = IE_NOMEM;
+		goto leave;
+	}
+
+	EXTRACT_STRING_ATTRIBUTE("dmFileMetaType", string, 0)
+	err = string2isds_FileMetaType((xmlChar*)string,
+	    &((*dm_file)->dmFileMetaType));
+	if (UNLIKELY(IE_SUCCESS != err)) {
+	    char *meta_type_locale = _isds_utf82locale(string);
+	    isds_printf_message(context,
+	            _("Document has invalid dmFileMetaType attribute value: %s"),
+	            meta_type_locale);
+	    free(meta_type_locale);
+	    err = IE_ISDS;
+	    goto leave;
+	}
+	zfree(string);
+
+	EXTRACT_STRING_ATTRIBUTE("dmMimeType", (*dm_file)->dmMimeType, 0)
+	if (context->normalize_mime_type) {
+		err = normalize_mime_type(context, &(*dm_file)->dmMimeType);
+		if (UNLIKELY(IE_SUCCESS != err)) {
+			goto leave;
+		}
+	}
+
+	EXTRACT_STRING_ATTRIBUTE("dmFileDescr", (*dm_file)->dmFileDescr, 0)
+
+	if (NULL == parts) {
+		/*
+		 * Extract document data.
+		 * Base64 encoded blob or XML subtree must be presented.
+		 */
+
+		/* Check for dmEncodedContent */
+		result = xmlXPathEvalExpression(BAD_CAST "isds:dmEncodedContent",
+		    xpath_ctx);
+		if (UNLIKELY(NULL == result)) {
+			err = IE_XML;
+			goto leave;
+		}
+
+		if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+			/* Here we have a Base64 blob. */
+
+			if (UNLIKELY(result->nodesetval->nodeNr > 1)) {
+				isds_printf_message(context,
+				    _("Document has more dmEncodedContent elements"));
+				err = IE_ISDS;
+				goto leave;
+			}
+
+			xmlXPathFreeObject(result); result = NULL;
+			EXTRACT_STRING("isds:dmEncodedContent", string);
+
+			/* Decode non-empty document */
+			if ((NULL != string) && (string[0] != '\0')) {
+				(*dm_file)->data_length =
+				    _isds_b64decode(string, &((*dm_file)->data));
+				if (UNLIKELY((*dm_file)->data_length == (size_t)-1)) {
+					isds_printf_message(context,
+					    _("Error while Base64-decoding document content"));
+					err = IE_ERROR;
+					goto leave;
+				}
+			}
+		} else {
+			/* We don't expect any XML document here. */
+			/* No Base64 blob, nor XML document */
+			isds_printf_message(context,
+			    _("Document contains XML data but only Base64-encoded data are expected."));
+			err = IE_ISDS;
+			goto leave;
+		}
+	} else {
+		/* Extract multipart data. */
+		struct multipart_part *part = NULL;
+
+		/* Check for dmEncodedContent/Include */
+		result = xmlXPathEvalExpression(BAD_CAST "isds:dmEncodedContent/xop:Include",
+		    xpath_ctx);
+		if (UNLIKELY(NULL == result)) {
+			err = IE_XML;
+			goto leave;
+		}
+
+		if (UNLIKELY(xmlXPathNodeSetIsEmpty(result->nodesetval))) {
+			isds_log_message(context, _("Missing Include element"));
+			err = IE_ISDS;
+			goto leave;
+		}
+		if (UNLIKELY(result->nodesetval->nodeNr > 1)) {
+			isds_log_message(context, _("Multiple Include elements"));
+			err = IE_ISDS;
+			goto leave;
+		}
+		xpath_ctx->node = result->nodesetval->nodeTab[0];
+		xmlXPathFreeObject(result); result = NULL;
+
+		EXTRACT_STRING_ATTRIBUTE("href", href, 1);
+
+		content_id = build_content_id_from_href(href);
+		if (UNLIKELY(NULL == content_id)) {
+			err = IE_NOMEM;
+			goto leave;
+		}
+		free(href); href = NULL;
+
+		part = multipart_parts_find_part(parts, content_id);
+		if (UNLIKELY(NULL == part)) {
+			isds_printf_message(context,
+			    _("Cannot find part with content id %s"),
+			    content_id);
+			err = IE_ERROR;
+			goto leave;
+		}
+		free(content_id); content_id = NULL;
+
+		/* Take the data. */
+		multipart_part_take(part, &(*dm_file)->data, &(*dm_file)->data_length);
+	}
+
+leave:
+	free(content_id);
+	free(href);
+	free(string);
+	xmlXPathFreeObject(result);
+	xpath_ctx->node = file_node;
+	return err;
+}
+
+/*
+ * Create a DownloadAttachment request.
+ * @context is session context
+ * @message_id is message identifier of a high-volume data message
+ * @attNum is the ordinary number of the attachment, the attachments are numbered from 0
+ * @request is automatically allocated node holding the request
+ * @return IE_SUCCESS, or other error codes if something goes wrong.
+ */
+static enum isds_error build_DownloadAttachment_request(struct isds_ctx *context,
+    const char *message_id, long int attNum, xmlNode **request)
+{
+	enum isds_error err = IE_SUCCESS;
+	xmlNs *isds_ns = NULL;
+	xmlNode *node;
+	xmlChar *string = NULL;
+
+	if (UNLIKELY(NULL == context)) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (UNLIKELY(NULL == message_id)) {
+		return IE_INVAL;
+	}
+	if (UNLIKELY(NULL == request)) {
+		return IE_ERROR;
+	}
+
+	err = validate_message_id_length(context, (xmlChar *)message_id);
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		goto leave;
+	}
+
+	/* Build DownloadAttachment request. */
+	*request = xmlNewNode(NULL, BAD_CAST "DownloadAttachment");
+	if (UNLIKELY(NULL == *request)) {
+		isds_log_message(context,
+		    _("Could not build DownloadAttachment request"));
+		return IE_ERROR;
+	}
+	isds_ns = xmlNewNs(*request, BAD_CAST ISDS_NS, NULL);
+	if (UNLIKELY(NULL == isds_ns)) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		xmlFreeNode(*request); *request = NULL;
+		return IE_ERROR;
+	}
+	xmlSetNs(*request, isds_ns);
+
+	INSERT_STRING(*request, "dmID", message_id);
+	INSERT_LONGINTNOPTR(*request, "attNum", attNum, string);
+
+leave:
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		xmlFreeNode(*request); *request = NULL;
+	}
+
+	free(string);
+
+	return err;
+}
+#endif /* HAVE_LIBCURL */
+
+enum isds_error isds_DownloadAttachment(struct isds_ctx *context,
+    const char *message_id, long int attNum, struct isds_dmFile **dm_file)
+{
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlNode *request = NULL;
+	xmlDoc *response = NULL;
+	xmlChar *code = NULL;
+	xmlChar *message = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+#endif /* HAVE_LIBCURL */
+
+	if (UNLIKELY(NULL == context)) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	isds_dmFile_free(dm_file);
+
+#if HAVE_LIBCURL
+	/*
+	 * Check if connection is established
+	 * TODO: This check should be done downstairs.
+	 */
+	if (UNLIKELY(NULL == context->curl)) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	err = build_DownloadAttachment_request(context, message_id, attNum, &request);
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		goto leave;
+	}
+
+	isds_log(ILF_ISDS, ILL_DEBUG,
+	    _("Sending DownloadAttachment request to ISDS\n"));
+
+	/* Send request. */
+	{
+		const struct comm_req req = {
+			.request = request,
+			.content_id = NULL,
+			.dm_file = NULL
+		};
+		err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS,
+		    VODZ_BASIC, &req, &response, NULL, NULL);
+	}
+
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Processing ISDS response on DownloadAttachment request failed\n"));
+		goto leave;
+	}
+
+	/* Check for response status. */
+	err = isds_response_status(context, SERVICE_VODZ_DM_OPERATIONS,
+	    response, &code, &message, NULL);
+	build_isds_status(&(context->status),
+	    _isds_service_to_status_type(SERVICE_VODZ_DM_OPERATIONS),
+	    (char *)code, (char *)message, NULL);
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		_("ISDS response on DownloadAttachment is missing status\n"));
+		goto leave;
+	}
+
+	/* Request processed, but refused by server or server failed. */
+	if (UNLIKELY(0 != xmlStrcmp(code, BAD_CAST "0000"))) {
+		char *code_locale = _isds_utf82locale((char*)code);
+		char *message_locale = _isds_utf82locale((char*)message);
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Server refused DownloadAttachment request for attachment number '%ld' of message '%s' (code=%s, message=%s)\n"),
+		    attNum, message_id,
+		    code_locale, message_locale);
+		free(code_locale);
+		free(message_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
+
+	/* Extract data. */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (UNLIKELY(NULL == xpath_ctx)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (UNLIKELY(IE_SUCCESS != _isds_register_namespaces(xpath_ctx,
+	        MESSAGE_NS_UNSIGNED, SOAP_1_1))) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	result = xmlXPathEvalExpression(BAD_CAST "/isds:DownloadAttachmentResponse/isds:dmFile",
+	    xpath_ctx);
+	if (UNLIKELY(NULL == result)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (UNLIKELY(xmlXPathNodeSetIsEmpty(result->nodesetval))) {
+		isds_log_message(context, _("Missing dmFile element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	if (UNLIKELY(result->nodesetval->nodeNr > 1)) {
+		isds_log_message(context, _("Multiple dmFile elements"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	/* One response */
+	xpath_ctx->node = result->nodesetval->nodeTab[0];
+	xmlXPathFreeObject(result); result = NULL;
+
+	/* Extract it. */
+	err = extract_dmFile(context, dm_file, xpath_ctx, NULL);
+
+leave:
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		isds_dmFile_free(dm_file);
+	}
+
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+
+	free(code);
+	free(message);
+	xmlFreeDoc(response);
+	xmlFreeNode(request);
+
+	if (IE_SUCCESS == err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("DownloadAttachment request processed by server successfully.\n"));
+	}
+#else /* not HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+
+	return err;
+}
+
+enum isds_error isds_DownloadAttachment_mtomxop(struct isds_ctx *context,
+    const char *message_id, long int attNum, struct isds_dmFile **dm_file)
+{
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlNode *request = NULL;
+	xmlDoc *response = NULL;
+	struct multipart_parts *parts = NULL;
+	xmlChar *code = NULL;
+	xmlChar *message = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+#endif /* HAVE_LIBCURL */
+
+	if (UNLIKELY(NULL == context)) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	isds_dmFile_free(dm_file);
+
+#if HAVE_LIBCURL
+
+	/*
+	 * Check if connection is established
+	 * TODO: This check should be done downstairs.
+	 */
+	if (UNLIKELY(NULL == context->curl)) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	err = build_DownloadAttachment_request(context, message_id, attNum, &request);
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		goto leave;
+	}
+
+	isds_log(ILF_ISDS, ILL_DEBUG,
+	    _("Sending DownloadAttachment MTOM/XOP request to ISDS\n"));
+
+	/* Send request. */
+	{
+		const struct comm_req req = {
+			.request = request,
+			.content_id = NULL,
+			.dm_file = NULL
+		};
+		err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS,
+		    VODZ_RCV_XOP, &req, &response, NULL, &parts);
+	}
+
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Processing ISDS response on DownloadAttachment MTOM/XOP request failed\n"));
+		goto leave;
+	}
+
+	/* Check for response status. */
+	err = isds_response_status(context, SERVICE_VODZ_DM_OPERATIONS,
+	    response, &code, &message, NULL);
+	build_isds_status(&(context->status),
+	    _isds_service_to_status_type(SERVICE_VODZ_DM_OPERATIONS),
+	    (char *)code, (char *)message, NULL);
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		_("ISDS response on MTOM/XOP DownloadAttachment is missing status\n"));
+		goto leave;
+	}
+
+	/* Request processed, but refused by server or server failed. */
+	if (UNLIKELY(0 != xmlStrcmp(code, BAD_CAST "0000"))) {
+		char *code_locale = _isds_utf82locale((char*)code);
+		char *message_locale = _isds_utf82locale((char*)message);
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Server refused DownloadAttachment MTOM/XOP request for attachment number '%ld' of message '%s' (code=%s, message=%s)\n"),
+		    attNum, message_id,
+		    code_locale, message_locale);
+		free(code_locale);
+		free(message_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
+
+	/* Extract data. */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (UNLIKELY(NULL == xpath_ctx)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (UNLIKELY(IE_SUCCESS != _isds_register_namespaces(xpath_ctx,
+	        MESSAGE_NS_UNSIGNED, SOAP_1_2))) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	result = xmlXPathEvalExpression(BAD_CAST "/isds:DownloadAttachmentResponse/isds:dmFile",
+	    xpath_ctx);
+	if (UNLIKELY(NULL == result)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (UNLIKELY(xmlXPathNodeSetIsEmpty(result->nodesetval))) {
+		isds_log_message(context, _("Missing dmFile element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	if (UNLIKELY(result->nodesetval->nodeNr > 1)) {
+		isds_log_message(context, _("Multiple dmFile elements"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	/* One response */
+	xpath_ctx->node = result->nodesetval->nodeTab[0];
+	xmlXPathFreeObject(result); result = NULL;
+
+	/* Extract it. */
+	err = extract_dmFile(context, dm_file, xpath_ctx, parts);
+
+leave:
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		isds_dmFile_free(dm_file);
+	}
+
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+
+	free(code);
+	free(message);
+	multipart_parts_free(parts);
+	xmlFreeDoc(response);
+	xmlFreeNode(request);
+
+	if (IE_SUCCESS == err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("DownloadAttachment request processed by server successfully.\n"));
+	}
+#else /* not HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+
+	return err;
+}
+
+enum isds_error isds_CreateBigMessage(struct isds_ctx *context,
+    struct isds_message *outgoing_message)
+{
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlNs *isds_ns = NULL;
+	xmlNode *request = NULL;
+	xmlDoc *response = NULL;
+	xmlChar *code = NULL;
+	xmlChar *message = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+#endif /* HAVE_LIBCURL */
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if (NULL == outgoing_message) {
+		return IE_INVAL;
+	}
+
+#if HAVE_LIBCURL
+	/*
+	 * Check if connection is established
+	 * TODO: This check should be done downstairs.
+	 */
+	if (NULL == context->curl) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	request = xmlNewNode(NULL, BAD_CAST "CreateBigMessage");
+	if (NULL == request) {
+		isds_log_message(context,
+		    _("Could not build CreateBigMessage request"));
+		return IE_ERROR;
+	}
+	isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+	if(NULL == isds_ns) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		xmlFreeNode(request);
+		return IE_ERROR;
+	}
+	xmlSetNs(request, isds_ns);
+
+	/* Append envelope and files */
+	err = insert_envelope_files(context, outgoing_message, request, 1, 1);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	isds_log(ILF_ISDS, ILL_DEBUG, _("Sending CreateBigMessage request to ISDS\n"));
+
+	/* Send request */
+	{
+		const struct comm_req req = {
+			.request = request,
+			.content_id = NULL,
+			.dm_file = NULL
+		};
+		err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS,
+		    VODZ_BASIC, &req, &response, NULL, NULL);
+	}
+
+	/* Don't' destroy request, we want to provide it to application later */
+
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Processing ISDS response on CreateBigMessage request failed\n"));
+		goto leave;
+	}
+
+	/* Check for response status */
+	err = isds_response_status(context, SERVICE_VODZ_DM_OPERATIONS,
+	    response, &code, &message, NULL);
+	build_isds_status(&(context->status),
+	    _isds_service_to_status_type(SERVICE_VODZ_DM_OPERATIONS),
+	    (char *)code, (char *)message, NULL);
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("ISDS response on CreateBigMessage request is missing status\n"));
+		goto leave;
+	}
+
+	/* Request processed, but refused by server or server failed */
+	if (xmlStrcmp(code, BAD_CAST "0000")) {
+		char *box_id_locale =
+		    _isds_utf82locale((char*)outgoing_message->envelope->dbIDRecipient);
+		char *code_locale = _isds_utf82locale((char*)code);
+		char *message_locale = _isds_utf82locale((char*)message);
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Server did not accept message for %s on CreateBigMessage request (code=%s, message=%s)\n"),
+		    box_id_locale, code_locale, message_locale);
+		isds_log_message(context, message_locale);
+		free(box_id_locale);
+		free(code_locale);
+		free(message_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
+
+	/* Extract data */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (IE_SUCCESS != _isds_register_namespaces(
+	        xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	result = xmlXPathEvalExpression(BAD_CAST "/isds:CreateBigMessageResponse",
+	    xpath_ctx);
+	if (NULL == result) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+		isds_log_message(context, _("Missing CreateBigMessageResponse element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	if (result->nodesetval->nodeNr > 1) {
+		isds_log_message(context, _("Multiple CreateBigMessageResponse element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	xpath_ctx->node = result->nodesetval->nodeTab[0];
+	xmlXPathFreeObject(result); result = NULL;
+
+	if (NULL != outgoing_message->envelope->dmID) {
+		free(outgoing_message->envelope->dmID);
+		outgoing_message->envelope->dmID = NULL;
+	}
+	EXTRACT_STRING("isds:dmID", outgoing_message->envelope->dmID);
+	if (NULL == outgoing_message->envelope->dmID) {
+		isds_log(ILF_ISDS, ILL_ERR,
+		    _("Server accepted sent message, but did not return assigned message ID\n"));
+	}
+
+leave:
+	/* Clean up */
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+
+	free(code);
+	free(message);
+	xmlFreeDoc(response);
+	xmlFreeNode(request);
+
+	if (IE_SUCCESS == err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("CreateBigMessage request processed by server successfully.\n"));
+	}
+#else /* !HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+
+	return err;
+}
 
 /* Get list of messages. This is common core for getting sent or received
  * messages.
@@ -12184,7 +13778,7 @@ static isds_error isds_get_list_of_messages(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -12430,7 +14024,7 @@ isds_error isds_get_list_of_sent_message_state_changes(
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -12576,8 +14170,25 @@ static isds_error build_send_check_message_request(struct isds_ctx *context,
                 service_name_locale, message_id_locale);
 
     /* Send request */
-    err = _isds(context, service, request, response,
-            raw_response, raw_response_length);
+    if (service != SERVICE_VODZ_DM_OPERATIONS) {
+        err = _isds(context, service, request, response,
+                raw_response, raw_response_length);
+    } else {
+        const struct comm_req req = {
+            .request = request,
+            .content_id = NULL,
+            .dm_file = NULL
+        };
+        struct dbuf buf;
+        dbuf_init(&buf);
+        struct dbuf *buf_ptr = (NULL != raw_response) ? &buf : NULL;
+        err = _isds_vodz(context, service, VODZ_BASIC, &req, response,
+                buf_ptr, NULL);
+        if (NULL != raw_response) {
+            dbuf_take(&buf, raw_response, raw_response_length);
+        }
+        dbuf_free_content(&buf);
+    }
     xmlFreeNode(request); request = NULL;
 
     if (err) {
@@ -12665,7 +14276,7 @@ static isds_error find_extract_signed_data_free_response(
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -12724,7 +14335,7 @@ static isds_error find_extract_signed_data_free_response(
 leave:
     if (err) {
         zfree(*raw);
-        raw_length = 0;
+        *raw_length = 0;
     }
 
     free(encoded_structure);
@@ -12733,6 +14344,152 @@ leave:
     free(xpath_expression);
 
     return err;
+}
+
+/*
+ * Build ISDS request of XSD tIDMessInput type, sent it and check for error
+ * code
+ * @context is session context
+ * @service is ISDS WS service handler
+ * @service_name is name of SERVICE_VODZ_DM_OPERATIONS
+ * @message_id is message ID to send as service argument to ISDS
+ * @response is reallocated server SOAP body response as XML document
+ * @parts is reallocated container containing parts of multipart response. Use
+ * NULL if you don't care.
+ * @code is reallocated ISDS status code
+ * @status_message is reallocated ISDS status message
+ * @return error coded from lower layer, context message will be set up
+ * appropriately.
+ */
+static enum isds_error build_send_check_message_request_mtomxop(
+    struct isds_ctx *context, const isds_service service,
+    const xmlChar *service_name, const char *message_id,
+    xmlDoc **response, struct multipart_parts **parts,
+    xmlChar **code, xmlChar **status_message)
+{
+	enum isds_error err = IE_SUCCESS;
+	char *service_name_locale = NULL;
+	char *message_id_locale = NULL;
+	xmlNode *request = NULL;
+	xmlNode *node;
+	xmlNs *isds_ns = NULL;
+
+	if (UNLIKELY(NULL == context)) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (UNLIKELY((NULL == service_name) || (NULL == message_id))) {
+		return IE_INVAL;
+	}
+	if (UNLIKELY((NULL == response) ||
+	        (NULL == code) || (NULL == status_message))) {
+		return IE_INVAL;
+	}
+
+	/* Free output arguments. */
+	xmlFreeDoc(*response); *response = NULL;
+	if (NULL != parts) {
+		multipart_parts_free(*parts); *parts = NULL;
+	}
+	zfree(*code);
+	zfree(*status_message);
+
+	/*
+	 * Check if connection is established
+	 * TODO: This check should be done downstairs.
+	 */
+	if (UNLIKELY(NULL == context->curl)) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	service_name_locale = _isds_utf82locale((char*)service_name);
+	message_id_locale = _isds_utf82locale(message_id);
+	if (UNLIKELY((NULL == service_name_locale) || (NULL == message_id_locale))) {
+		err = IE_NOMEM;
+		goto leave;
+	}
+
+	/* Build request */
+	request = xmlNewNode(NULL, service_name);
+	if (UNLIKELY(NULL == request)) {
+		isds_printf_message(context,
+		    _("Could not build %s request for %s message ID"),
+		    service_name_locale, message_id_locale);
+		err = IE_ERROR;
+		goto leave;
+	}
+	isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+	if(UNLIKELY(NULL == isds_ns)) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		err = IE_ERROR;
+		goto leave;
+	}
+	xmlSetNs(request, isds_ns);
+
+	/* Add requested ID */
+	err = validate_message_id_length(context, (xmlChar *) message_id);
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		goto leave;
+	}
+	INSERT_STRING(request, "dmID", message_id);
+
+	isds_log(ILF_ISDS, ILL_DEBUG,
+	    _("Sending %s request for %s message ID to ISDS\n"),
+	    service_name_locale, message_id_locale);
+
+	/* Send request */
+	if (service == SERVICE_VODZ_DM_OPERATIONS) {
+		const struct comm_req req = {
+			.request = request,
+			.content_id = NULL,
+			.dm_file = NULL
+		};
+		err = _isds_vodz(context, service, VODZ_RCV_XOP, &req, response,
+		    NULL, parts);
+	} else {
+		err = IE_NOTSUP;
+		goto leave;
+	}
+
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Processing ISDS response on %s request failed\n"),
+		    service_name_locale);
+		goto leave;
+	}
+
+	/* Check for response status */
+	err = isds_response_status(context, service, *response,
+	    code, status_message, NULL);
+	build_isds_status(&(context->status),
+	    _isds_service_to_status_type(service),
+	    (char *)code, (char *)status_message, NULL);
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("ISDS response on %s request is missing status\n"),
+		    service_name_locale);
+		goto leave;
+	}
+
+	/* Request processed, but nothing found */
+	if (0 != xmlStrcmp(*code, BAD_CAST "0000")) {
+		char *code_locale = _isds_utf82locale((char*) *code);
+		char *status_message_locale = _isds_utf82locale((char*) *status_message);
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Server refused %s request for %s message ID (code=%s, message=%s)\n"),
+		    service_name_locale, message_id_locale,
+		    code_locale, status_message_locale);
+		isds_log_message(context, status_message_locale);
+		free(code_locale);
+		free(status_message_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
+
+leave:
+	free(message_id_locale);
+	free(service_name_locale);
+	xmlFreeNode(request);
+	return err;
 }
 #endif /* HAVE_LIBCURL */
 
@@ -12777,7 +14534,7 @@ isds_error isds_get_received_envelope(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -12937,7 +14694,7 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
      *   </q:dmDelivery>
      * </q:GetDeliveryInfoResponse>
      * */
-    if (_isds_register_namespaces(xpath_ctx, message_ns)) {
+    if (_isds_register_namespaces(xpath_ctx, message_ns, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -13218,7 +14975,7 @@ isds_error isds_get_received_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -13444,7 +15201,7 @@ isds_error isds_load_message(struct isds_ctx *context,
      * </q:MessageDownloadResponse>
      *
      * Stupidity of ISDS developers is unlimited */
-    if (_isds_register_namespaces(xpath_ctx, message_ns)) {
+    if (_isds_register_namespaces(xpath_ctx, message_ns, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -13634,9 +15391,6 @@ static isds_error isds_get_signed_message(struct isds_ctx *context,
 #if HAVE_LIBCURL
     xmlDocPtr response = NULL;
     xmlChar *code = NULL, *status_message = NULL;
-    xmlXPathContextPtr xpath_ctx = NULL;
-    xmlXPathObjectPtr result = NULL;
-    char *encoded_structure = NULL;
     void *raw = NULL;
     size_t raw_length = 0;
 #endif
@@ -13650,7 +15404,7 @@ static isds_error isds_get_signed_message(struct isds_ctx *context,
 #if HAVE_LIBCURL
     /* Do request and check for success */
     err = build_send_check_message_request(context, SERVICE_DM_OPERATIONS,
-            (outgoing) ? BAD_CAST "SignedSentMessageDownload" :
+            outgoing ? BAD_CAST "SignedSentMessageDownload" :
                 BAD_CAST "SignedMessageDownload",
             message_id, &response, NULL, NULL, &code, &status_message);
     if (err) goto leave;
@@ -13659,14 +15413,14 @@ static isds_error isds_get_signed_message(struct isds_ctx *context,
      * response */
     err = find_extract_signed_data_free_response(context,
             (xmlChar *)message_id, &response,
-            (outgoing) ? BAD_CAST "SignedSentMessageDownload" :
+            outgoing ? BAD_CAST "SignedSentMessageDownload" :
                 BAD_CAST "SignedMessageDownload",
             &raw, &raw_length);
     if (err) goto leave;
 
     /* Parse message */
     err = isds_load_message(context,
-            (outgoing) ? RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE :
+            outgoing ? RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE :
                 RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE,
             raw, raw_length, message, BUFFER_MOVE);
     if (err) goto leave;
@@ -13678,9 +15432,6 @@ leave:
         isds_message_free(message);
     }
 
-    free(encoded_structure);
-    xmlXPathFreeObject(result);
-    xmlXPathFreeContext(xpath_ctx);
     free(raw);
 
     free(code);
@@ -13725,6 +15476,483 @@ isds_error isds_get_signed_sent_message(struct isds_ctx *context,
     return isds_get_signed_message(context, 1, message_id, message);
 }
 
+enum isds_error isds_BigMessageDownload(struct isds_ctx *context,
+    const char *message_id, struct isds_message **message)
+{
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlDoc *response = NULL;
+	void *xml_stream = NULL;
+	size_t xml_stream_length;
+	xmlChar *code = NULL;
+	xmlChar *status_message = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+	char *phys_path = NULL;
+	size_t phys_start;
+	size_t phys_end;
+#endif /* HAVE_LIBCURL */
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if (NULL == message) {
+		return IE_INVAL;
+	}
+	isds_message_free(message);
+
+#if HAVE_LIBCURL
+	/* Do request and check for success */
+	err = build_send_check_message_request(context, SERVICE_VODZ_DM_OPERATIONS,
+	    BAD_CAST "BigMessageDownload", message_id,
+	    &response, &xml_stream, &xml_stream_length,
+	    &code, &status_message);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/* Extract data */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx,
+	        MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	result = xmlXPathEvalExpression(
+	    BAD_CAST "/isds:BigMessageDownloadResponse/isds:dmReturnedMessage",
+	    xpath_ctx);
+	if (NULL == result) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	/* Empty response */
+	if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+		char *message_id_locale = _isds_utf82locale((char*) message_id);
+		isds_printf_message(context,
+		    _("Server did not return any message for ID `%s' on BigMessageDownload request"),
+		    message_id_locale);
+		free(message_id_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
+	/* More messages */
+	if (result->nodesetval->nodeNr > 1) {
+		char *message_id_locale = _isds_utf82locale((char*) message_id);
+		isds_printf_message(context,
+		    _("Server did return more messages for ID `%s' on BigMessageDownload request"),
+		    message_id_locale);
+		free(message_id_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
+	/* One message */
+	xpath_ctx->node = result->nodesetval->nodeTab[0];
+
+	/* Extract the message */
+	err = extract_TReturnedMessage(context, 1, message, xpath_ctx);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/* Locate raw XML blob */
+	phys_path = strdup(
+	    SOAP_NS PHYSXML_NS_SEPARATOR "Envelope"
+	    PHYSXML_ELEMENT_SEPARATOR
+	    SOAP_NS PHYSXML_NS_SEPARATOR "Body"
+	    PHYSXML_ELEMENT_SEPARATOR
+	    ISDS_NS PHYSXML_NS_SEPARATOR "BigMessageDownloadResponse"
+	);
+	if (NULL == phys_path) {
+		err = IE_NOMEM;
+		goto leave;
+	}
+	err = _isds_find_element_boundary(xml_stream, xml_stream_length,
+	    phys_path, &phys_start, &phys_end);
+	zfree(phys_path);
+	if (IE_SUCCESS != err) {
+		isds_log_message(context,
+		    _("Substring with isds:BigMessageDownloadResponse element could not be located in raw SOAP message"));
+		goto leave;
+	}
+	/* Save XML blob */
+	/*
+	err = serialize_subtree(context, xpath_ctx->node, &(*message)->raw,
+	    &(*message)->raw_length);
+	 */
+	/* TODO: Store name space declarations from ancestors */
+	/* TODO: Handle non-UTF-8 encoding (XML prologue) */
+	(*message)->raw_type = RAWTYPE_INCOMING_MESSAGE;
+	(*message)->raw_length = phys_end - phys_start + 1;
+	(*message)->raw = malloc((*message)->raw_length);
+	if (NULL == (*message)->raw) {
+		err = IE_NOMEM;
+		goto leave;
+	}
+	memcpy((*message)->raw, xml_stream + phys_start, (*message)->raw_length);
+
+leave:
+	if (IE_SUCCESS != err) {
+		isds_message_free(message);
+	}
+
+	free(phys_path);
+
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+
+	free(code);
+	free(status_message);
+	free(xml_stream);
+	if (!*message || !(*message)->xml) {
+		xmlFreeDoc(response);
+	}
+
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		   _("BigMessageDownload request processed by server successfully.\n"));
+	}
+#else /* !HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+	return err;
+}
+
+/*
+ * Download signed incoming/outgoing high-volume message identified by ID.
+ * @context is session context
+ * @output is true for outgoing message, false for incoming message
+ * @message_id is message identifier (you can get them from
+ * isds_get_list_of_{sent,received}_messages())
+ * @message is automatically reallocated message retrieved from ISDS. The raw
+ * member will be filled with PKCS#7 structure in DER format.
+ */
+static enum isds_error isds_get_signed_big_message(struct isds_ctx *context,
+    const _Bool outgoing, const char *message_id, struct isds_message **message)
+{
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlDoc *response = NULL;
+	xmlChar *code = NULL;
+	xmlChar *status_message = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+	char *encoded_structure = NULL;
+	void *raw = NULL;
+	size_t raw_length = 0;
+#endif
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if (NULL == message) {
+		return IE_INVAL;
+	}
+	isds_message_free(message);
+
+#if HAVE_LIBCURL
+	/* Do request and check for success. */
+	err = build_send_check_message_request(context, SERVICE_VODZ_DM_OPERATIONS,
+	    (outgoing) ? BAD_CAST "SignedSentBigMessageDownload" :
+	        BAD_CAST "SignedBigMessageDownload",
+	    message_id, &response, NULL, NULL, &code, &status_message);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/*
+	 * Find signed message, extract it into raw and maybe free the response.
+	 */
+	err = find_extract_signed_data_free_response(context,
+	    (xmlChar *)message_id, &response,
+	    (outgoing) ? BAD_CAST "SignedSentBigMessageDownload" :
+	        BAD_CAST "SignedBigMessageDownload",
+	    &raw, &raw_length);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/* Parse message */
+	err = isds_load_message(context,
+	    (outgoing) ? RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE :
+	        RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE,
+	    raw, raw_length, message, BUFFER_MOVE);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	raw = NULL;
+
+leave:
+	if (IE_SUCCESS != err) {
+		isds_message_free(message);
+	}
+
+	free(encoded_structure);
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+	free(raw);
+
+	free(code);
+	free(status_message);
+	xmlFreeDoc(response);
+
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG, (outgoing) ?
+		   _("SignedSentBigMessageDownload request processed by server successfully.\n") :
+		   _("SignedBigMessageDownload request processed by server successfully.\n"));
+	}
+#else /* not HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif
+	return err;
+}
+
+enum isds_error isds_SignedBigMessageDownload(struct isds_ctx *context,
+    const char *message_id, struct isds_message **message)
+{
+	return isds_get_signed_big_message(context, 0, message_id, message);
+}
+
+enum isds_error isds_SignedSentBigMessageDownload(struct isds_ctx *context,
+    const char *message_id, struct isds_message **message)
+{
+	return isds_get_signed_big_message(context, 1, message_id, message);
+}
+
+#if HAVE_LIBCURL
+/*
+ * Find dmSignature/Include in ISDS response, find content id of the part
+ * containing transmitted binary data, extract decoded CMS structure, extract
+ * signed data and free ISDS response and all parts.
+ * @context is session context
+ * @message_id is UTF-8 encoded message ID for logging purpose
+ * @response is parsed XML document. It will be freed and set to NULL in
+ * the middle of function run to save memory. This is not guaranteed in case
+ * of error.
+ * @parts are parts of the multipart response. All parts are freed and set to NULL in
+ * the middle of function run to save memory. This is not guaranteed in case
+ * of error.
+ * @request_name is name of ISDS request used to construct response root
+ * element name and for logging purpose.
+ * @raw is reallocated output buffer with DER encoded CMS data
+ * @raw_length is size of @raw buffer in bytes
+ * @returns standard error codes, in case of error, @raw will be freed and
+ * set to NULL, @response sometimes.
+ */
+static enum isds_error find_extract_signed_data_free_response_mtomxop(
+    struct isds_ctx *context, const xmlChar *message_id,
+    xmlDoc **response, struct multipart_parts **parts,
+    const xmlChar *request_name, void **raw, size_t *raw_length)
+{
+	enum isds_error err = IE_SUCCESS;
+	char *xpath_expression = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+	char *href = NULL;
+	char *content_id = NULL;
+	struct multipart_part *part = NULL;
+
+	if (UNLIKELY(NULL == context)) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (UNLIKELY(NULL == raw)) {
+		return IE_INVAL;
+	}
+	zfree(*raw);
+	if (UNLIKELY((NULL == message_id) ||
+	        (NULL == response) || (NULL == *response) ||
+	        (NULL == parts) || (NULL == *parts) ||
+	        (NULL == request_name) || (NULL == raw_length))) {
+		return IE_INVAL;
+	}
+
+	/* Build XPath expression */
+	xpath_expression = _isds_astrcat3("/isds:", (char *)request_name,
+	    "Response/isds:dmSignature/xop:Include");
+	if (UNLIKELY(NULL == xpath_expression)) {
+		return IE_NOMEM;
+	}
+
+	/* Extract data */
+	xpath_ctx = xmlXPathNewContext(*response);
+	if (UNLIKELY(NULL == xpath_ctx)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (UNLIKELY(IE_SUCCESS != _isds_register_namespaces(xpath_ctx,
+	        MESSAGE_NS_UNSIGNED, SOAP_1_2))) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	result = xmlXPathEvalExpression(BAD_CAST xpath_expression, xpath_ctx);
+	if (UNLIKELY(NULL == result)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+
+	if (UNLIKELY(xmlXPathNodeSetIsEmpty(result->nodesetval))) {
+		isds_log_message(context, _("Missing Include element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	if (UNLIKELY(result->nodesetval->nodeNr > 1)) {
+		isds_log_message(context, _("Multiple Include elements"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	xpath_ctx->node = result->nodesetval->nodeTab[0];
+	xmlXPathFreeObject(result); result = NULL;
+
+	EXTRACT_STRING_ATTRIBUTE("href", href, 1);
+	xmlXPathFreeContext(xpath_ctx); xpath_ctx = NULL;
+	xmlFreeDoc(*response); *response = NULL;
+
+	content_id = build_content_id_from_href(href);
+	if (UNLIKELY(NULL == content_id)) {
+		err = IE_NOMEM;
+		goto leave;
+	}
+	free(href); href = NULL;
+
+	part = multipart_parts_find_part(*parts, content_id);
+	if (UNLIKELY(NULL == part)) {
+		isds_printf_message(context,
+		    _("Cannot find part with content id %s"),
+		    content_id);
+		err = IE_ERROR;
+		goto leave;
+	}
+	free(content_id); content_id = NULL;
+
+	/* Take the data. */
+	multipart_part_take(part, raw, raw_length);
+
+	multipart_parts_free(*parts); *parts = NULL;
+
+leave:
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		zfree(*raw);
+		*raw_length = 0;
+	}
+
+	free(content_id);
+	free(href);
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+	free(xpath_expression);
+
+	return err;
+}
+#endif /* HAVE_LIBCURL */
+
+/*
+ * Download signed incoming/outgoing high-volume message identified by ID.
+ * This implementation queries the data in MTOM/XOP format.
+ * @context is session context
+ * @output is true for outgoing message, false for incoming message
+ * @message_id is message identifier (you can get them from
+ * isds_get_list_of_{sent,received}_messages())
+ * @message is automatically reallocated message retrieved from ISDS. The raw
+ * member will be filled with PKCS#7 structure in DER format.
+ */
+static enum isds_error isds_get_signed_big_message_mtomxop(struct isds_ctx *context,
+    const _Bool outgoing, const char *message_id, struct isds_message **message)
+{
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlDoc *response = NULL;
+	xmlChar *code = NULL, *status_message = NULL;
+	struct multipart_parts *parts = NULL;
+	void *raw = NULL;
+	size_t raw_length = 0;
+#endif /* HAVE_LIBCURL */
+
+	if (UNLIKELY(NULL == context)) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if (UNLIKELY(NULL == message)) {
+		return IE_INVAL;
+	}
+	isds_message_free(message);
+
+#if HAVE_LIBCURL
+	/* Do request and check for success */
+	err = build_send_check_message_request_mtomxop(context,
+	    SERVICE_VODZ_DM_OPERATIONS,
+	    outgoing ? BAD_CAST "SignedSentBigMessageDownload" :
+	        BAD_CAST "SignedBigMessageDownload",
+	    message_id, &response, &parts, &code, &status_message);
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		goto leave;
+	}
+
+	/*
+	 * Find signed message, extract it into raw and maybe free response.
+	 */
+	err = find_extract_signed_data_free_response_mtomxop(context,
+	    (xmlChar *)message_id, &response, &parts,
+	    outgoing ? BAD_CAST "SignedSentBigMessageDownload" :
+	        BAD_CAST "SignedBigMessageDownload",
+	    &raw, &raw_length);
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		goto leave;
+	}
+
+	/* Parse message */
+	err = isds_load_message(context,
+	    outgoing ? RAWTYPE_CMS_SIGNED_OUTGOING_MESSAGE :
+	        RAWTYPE_CMS_SIGNED_INCOMING_MESSAGE,
+	    raw, raw_length, message, BUFFER_MOVE);
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		goto leave;
+	}
+
+	raw = NULL;
+
+leave:
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		isds_message_free(message);
+	}
+
+	free(raw);
+	multipart_parts_free(parts);
+
+	free(code);
+	free(status_message);
+	xmlFreeDoc(response);
+
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		isds_log(ILF_ISDS, ILL_DEBUG, outgoing ?
+		    _("SignedSentBigMessageDownload MTOM/XOP request processed by server successfully.\n") :
+		    _("SignedBigMessageDownload MTOM/XOP request processed by server successfully.\n"));
+	}
+#else /* !HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+	return err;
+}
+
+enum isds_error isds_SignedBigMessageDownload_mtomxop(struct isds_ctx *context,
+    const char *message_id, struct isds_message **message)
+{
+	return isds_get_signed_big_message_mtomxop(context, 0, message_id, message);
+}
+
+enum isds_error isds_SignedSentBigMessageDownload_mtomxop(struct isds_ctx *context,
+    const char *message_id, struct isds_message **message)
+{
+	return isds_get_signed_big_message_mtomxop(context, 1, message_id, message);
+}
 
 /* Get type and name of user who sent a message identified by ID.
  * @context is session context
@@ -13770,7 +15998,7 @@ isds_error isds_get_message_sender(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -13887,7 +16115,8 @@ isds_error isds_GetMessageAuthor2(struct isds_ctx *context,
 		err = IE_ERROR;
 		goto leave;
 	}
-	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx,
+	        MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
 		err = IE_ERROR;
 		goto leave;
 	}
@@ -14094,7 +16323,7 @@ isds_error isds_download_message_hash(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -14464,7 +16693,7 @@ isds_error czp_convert_document(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -14644,7 +16873,7 @@ isds_error isds_request_new_testing_box(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -14734,7 +16963,7 @@ isds_error isds_authenticate_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -14771,6 +17000,264 @@ leave:
     return err;
 }
 
+enum isds_error isds_AuthenticateBigMessage(struct isds_ctx *context,
+    const void *message, size_t length)
+{
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlNs *isds_ns = NULL;
+	xmlNode *request = NULL;
+	xmlDoc *response = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+	_Bool *authentic = NULL;
+#endif /* !HAVE_LIBCURL */
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if ((NULL == message) || (0 == length)) {
+		return IE_INVAL;
+	}
+
+#if HAVE_LIBCURL
+	/*
+	 * Check if connection is established
+	 * TODO: This check should be done downstairs.
+	 */
+	if (NULL == context->curl) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	/* Build AuthenticateBigMessage request */
+	request = xmlNewNode(NULL, BAD_CAST "AuthenticateBigMessage");
+	if (NULL == request) {
+		isds_log_message(context,
+		    _("Could not build AuthenticateBigMessage request"));
+		return IE_ERROR;
+	}
+	isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+	if (NULL == isds_ns) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		xmlFreeNode(request);
+		return IE_ERROR;
+	}
+	xmlSetNs(request, isds_ns);
+
+	/* Insert Base64 encoded message */
+	err = insert_base64_encoded_string(context, request, NULL, "dmMessage",
+	    message, length);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/* Send request to server and process response */
+	err = send_destroy_request_check_response(context,
+	    SERVICE_VODZ_DM_OPERATIONS, BAD_CAST "AuthenticateBigMessage", &request,
+	    &response, NULL, NULL);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/* ISDS has decided */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx,
+	        MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+
+	EXTRACT_BOOLEAN("/isds:AuthenticateBigMessageResponse/isds:dmAuthResult", authentic);
+
+	if (NULL == authentic) {
+		isds_log_message(context,
+		    _("Server did not return any response on AuthenticateBigMessage request"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	if (*authentic) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("ISDS authenticated the message successfully\n"));
+	} else {
+		isds_log_message(context, _("ISDS does not know the message"));
+		err = IE_NOTEQUAL;
+	}
+
+leave:
+	free(authentic);
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+
+	xmlFreeDoc(response);
+	xmlFreeNode(request);
+#else /* not HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif
+	return err;
+}
+
+enum isds_error isds_AuthenticateBigMessage_mtomxop(struct isds_ctx *context,
+    const void *data, size_t length)
+{
+#define ATTACHMENT_CID "att_1"
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlNs *isds_ns = NULL;
+	xmlNode *request = NULL;
+	xmlDoc *response = NULL;
+	xmlChar *code = NULL;
+	xmlChar *message = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+	_Bool *authentic = NULL;
+#endif /* HAVE_LIBCURL */
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if ((NULL == data) || (0 == length)) {
+		return IE_INVAL;
+	}
+
+#if HAVE_LIBCURL
+	/*
+	 * Check if connection is established
+	 * TODO: This check should be done downstairs.
+	 */
+	if (NULL == context->curl) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	/* Build AuthenticateBigMessage request */
+	request = xmlNewNode(NULL, BAD_CAST "AuthenticateBigMessage");
+	if (NULL == request) {
+		isds_log_message(context,
+		    _("Could not build AuthenticateBigMessage request"));
+		return IE_ERROR;
+	}
+	isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+	if (NULL == isds_ns) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		xmlFreeNode(request);
+		return IE_ERROR;
+	}
+	xmlSetNs(request, isds_ns);
+
+	/* Insert XOP Include. */
+	err = insert_xop_include(context, request, NULL, "dmMessage",
+	    ATTACHMENT_CID);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	isds_log(ILF_ISDS, ILL_DEBUG,
+	    _("Sending MTOM/XOP AuthenticateBigMessage request to ISDS\n"));
+
+	/*
+	 * Send request.
+	 * Expecting ZFO file on input therefore there is no check for the MIME
+	 * type. It looks like that the MIME type must be specified,
+	 * using application/vnd.software602.filler.form-xml-zip .
+	 */
+	{
+		const struct isds_dmFile dm_file = {
+			.data = (void *)data,
+			.data_length = length,
+			.dmFileMetaType = FILEMETATYPE_MAIN,
+			.dmMimeType = "application/vnd.software602.filler.form-xml-zip",
+			.dmFileDescr = "message.zfo"
+		};
+		const struct comm_req req = {
+			.request = request,
+			.content_id = ATTACHMENT_CID,
+			.dm_file = &dm_file
+		};
+		err = _isds_vodz(context, SERVICE_VODZ_DM_OPERATIONS,
+		    VODZ_SND_XOP, &req, &response, NULL, NULL);
+	}
+
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Processing ISDS response on MTOM/XOP AuthenticateBigMessage request failed\n"));
+		goto leave;
+	}
+
+	/* Check for response status. */
+	err = isds_response_status(context, SERVICE_VODZ_DM_OPERATIONS,
+	    response, &code, &message, NULL);
+	build_isds_status(&(context->status),
+	    _isds_service_to_status_type(SERVICE_VODZ_DM_OPERATIONS),
+	    (char *)code, (char *)message, NULL);
+	if (IE_SUCCESS != err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		_("ISDS response on MTOM/XOP AuthenticateBigMessage is missing status\n"));
+		goto leave;
+	}
+
+	/* Request processed, but refused by server or server failed. */
+	if (0 != xmlStrcmp(code, BAD_CAST "0000")) {
+		char *code_locale = _isds_utf82locale((char*)code);
+		char *message_locale = _isds_utf82locale((char*)message);
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Server did not accept data on MTOM/XOP AuthenticateBigMessage request (code=%s, message=%s)\n"),
+		    code_locale, message_locale);
+		free(code_locale);
+		free(message_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
+
+	/* ISDS has decided */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx,
+	        MESSAGE_NS_UNSIGNED, SOAP_1_2)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+
+	EXTRACT_BOOLEAN("/isds:AuthenticateBigMessageResponse/isds:dmAuthResult", authentic);
+
+	if (NULL == authentic) {
+		isds_log_message(context,
+		    _("Server did not return any response on AuthenticateBigMessage request"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	if (*authentic) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("ISDS authenticated the message successfully\n"));
+	} else {
+		isds_log_message(context, _("ISDS does not know the message"));
+		err = IE_NOTEQUAL;
+	}
+
+leave:
+	free(authentic);
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+
+	free(code);
+	free(message);
+	xmlFreeDoc(response);
+	xmlFreeNode(request);
+#else /* not HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+	return err;
+#undef ATTACHMENT_CID
+}
 
 /* Submit CMS signed message or delivery info to ISDS to re-sign the content
  * including adding new CMS time stamp. Only CMS blobs without time stamp can
@@ -14880,7 +17367,7 @@ isds_error isds_resign_message(struct isds_ctx *context,
         err = IE_ERROR;
         goto leave;
     }
-    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED)) {
+    if (_isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
         err = IE_ERROR;
         goto leave;
     }
@@ -15236,43 +17723,62 @@ int isds_message_free(struct isds_message **message);
 int isds_address_free(struct isds_address **address);
 */
 
-
-/* Makes known all relevant namespaces to given XPath context
- * @xpath_ctx is XPath context
- * @message_ns selects proper message name space. Unsigned and signed
- * messages and delivery infos differ in prefix and URI. */
 _hidden isds_error _isds_register_namespaces(xmlXPathContextPtr xpath_ctx,
-        const message_ns_type message_ns) {
-    const xmlChar *message_namespace = NULL;
+    const message_ns_type message_ns, enum soap_ns_type sv)
+{
+	const xmlChar *message_namespace = NULL;
 
-    if (!xpath_ctx) return IE_ERROR;
+	if (NULL == xpath_ctx) {
+		return IE_ERROR;
+	}
 
-    switch(message_ns) {
-        case MESSAGE_NS_1:
-            message_namespace = BAD_CAST ISDS1_NS; break;
-        case MESSAGE_NS_UNSIGNED:
-            message_namespace = BAD_CAST ISDS_NS; break;
-        case MESSAGE_NS_SIGNED_INCOMING:
-            message_namespace = BAD_CAST SISDS_INCOMING_NS; break;
-        case MESSAGE_NS_SIGNED_OUTGOING:
-            message_namespace = BAD_CAST SISDS_OUTGOING_NS; break;
-        case MESSAGE_NS_SIGNED_DELIVERY:
-            message_namespace = BAD_CAST SISDS_DELIVERY_NS; break;
-        default:
-            return IE_ENUM;
-    }
+	switch(message_ns) {
+	case MESSAGE_NS_1:
+		message_namespace = BAD_CAST ISDS1_NS;
+		break;
+	case MESSAGE_NS_UNSIGNED:
+		message_namespace = BAD_CAST ISDS_NS;
+		break;
+	case MESSAGE_NS_SIGNED_INCOMING:
+		message_namespace = BAD_CAST SISDS_INCOMING_NS;
+		break;
+	case MESSAGE_NS_SIGNED_OUTGOING:
+		message_namespace = BAD_CAST SISDS_OUTGOING_NS;
+		break;
+	case MESSAGE_NS_SIGNED_DELIVERY:
+		message_namespace = BAD_CAST SISDS_DELIVERY_NS;
+		break;
+	default:
+		return IE_ENUM;
+		break;
+	}
 
-    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "soap", BAD_CAST SOAP_NS))
-        return IE_ERROR;
-    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "isds", BAD_CAST ISDS_NS))
-        return IE_ERROR;
-    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "oisds", BAD_CAST OISDS_NS))
-        return IE_ERROR;
-    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "sisds", message_namespace))
-        return IE_ERROR;
-    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "xs", BAD_CAST SCHEMA_NS))
-        return IE_ERROR;
-    if (xmlXPathRegisterNs(xpath_ctx, BAD_CAST "deposit", BAD_CAST DEPOSIT_NS))
-        return IE_ERROR;
-    return IE_SUCCESS;
+	if (SOAP_1_1 == sv) {
+		if (UNLIKELY(0 != xmlXPathRegisterNs(xpath_ctx, BAD_CAST "soap", BAD_CAST SOAP_NS))) {
+			return IE_ERROR;
+		}
+	} else {
+		if (UNLIKELY(0 != xmlXPathRegisterNs(xpath_ctx, BAD_CAST "soap", BAD_CAST SOAP2_NS))) {
+			return IE_ERROR;
+		}
+	}
+	if (UNLIKELY(0 != xmlXPathRegisterNs(xpath_ctx, BAD_CAST "isds", BAD_CAST ISDS_NS))) {
+		return IE_ERROR;
+	}
+	if (UNLIKELY(0 != xmlXPathRegisterNs(xpath_ctx, BAD_CAST "oisds", BAD_CAST OISDS_NS))) {
+		return IE_ERROR;
+	}
+	if (UNLIKELY(0 != xmlXPathRegisterNs(xpath_ctx, BAD_CAST "sisds", message_namespace))) {
+		return IE_ERROR;
+	}
+	if (UNLIKELY(0 != xmlXPathRegisterNs(xpath_ctx, BAD_CAST "xs", BAD_CAST SCHEMA_NS))) {
+		return IE_ERROR;
+	}
+	if (UNLIKELY(0 != xmlXPathRegisterNs(xpath_ctx, BAD_CAST "xop", BAD_CAST XOP_INCLUDE_NS))) {
+		return IE_ERROR;
+	}
+	if (UNLIKELY(0 != xmlXPathRegisterNs(xpath_ctx, BAD_CAST "deposit", BAD_CAST DEPOSIT_NS))) {
+		return IE_ERROR;
+	}
+	return IE_SUCCESS;
 }

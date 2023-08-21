@@ -85,6 +85,11 @@ AS_IF([test -z "$LIBCURL"],
                      declaration.
                      Consider upgrade to 7.19.0 version.]),
         [[#include <curl/curl.h>]])
+    AC_CHECK_DECLS([CURLOPT_MIMEPOST], [],
+        AC_MSG_WARN([Your libcurl does not support sending data from MIME
+                     structures.
+                     Consider upgrading to version 7.56.0.]),
+        [[#include <curl/curl.h>]])
     AC_CHECK_DECLS([CURLINFO_REDIRECT_URL], [],
         AC_MSG_ERROR([Your libcurl does not support getting redirected URL.
                      You must upgrade to 7.18.2 version.]),
@@ -228,7 +233,7 @@ dnl Check for strdup() feature test macros
 dnl strdup() is provided since SUSv2, thus _XOPEN_SOURCE >= 500 has to be
 dnl defined with -std=c99. However Mac OS X requires 600. Reported as
 dnl <rdar://problem/19363342>.
-AC_MSG_CHECKING([Checking for _XOPEN_SOURCE level needed for strdup()])
+AC_MSG_CHECKING([for _XOPEN_SOURCE level needed for strdup()])
 AC_COMPILE_IFELSE(
     [AC_LANG_PROGRAM([[#define _XOPEN_SOURCE 500
        #include <string.h>]], [[(void)strdup("");]])],
@@ -243,6 +248,15 @@ AC_MSG_RESULT([$xopen_source_level_for_strdup])
 AC_DEFINE_UNQUOTED([XOPEN_SOURCE_LEVEL_FOR_STRDUP],
                    [$xopen_source_level_for_strdup],
                    [_XOPEN_SOURCE level needed for strdup()])
+
+# Check for __builtin_expect()
+AC_MSG_CHECKING([for __builtin_expect()])
+AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM(, return __builtin_expect(main != 0, 1))],
+    [AC_DEFINE(HAVE_BUILTIN_EXPECT, 1,
+        Define to 1 if compiler supports __builtin_expect)
+     AC_MSG_RESULT([yes])],
+    [AC_MSG_RESULT([no])])
 
 # Default preprocessor flags
 AC_SUBST([AM_CPPFLAGS], [""])

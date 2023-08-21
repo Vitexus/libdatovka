@@ -6,7 +6,7 @@ For details, see http://sourceforge.net/projects/libb64
 */
 
 #include "cencode.h"
-#include "utils.h"
+#include "compiler.h" /* _hidden */
 
 static const int CHARS_PER_LINE = 72;
 
