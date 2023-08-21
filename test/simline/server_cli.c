@@ -9,6 +9,7 @@
 #include <sys/select.h>
 #include <sys/types.h> /* For pid_t */
 #include <string.h> /* memset() */
+#include <unistd.h> /* getopt(3) */
 
 static const char *username = NULL;
 static const char *password = NULL;
