@@ -51,7 +51,7 @@ AM_CONDITIONAL([WIN32], [test "$ac_cv_have_decl__WIN32" = "yes"])
 
 # Checks for libraries.
 #TODO: Verify minimal version. libxml2-2.6.26 is just a guess.
-AM_PATH_XML2([2.6.26])
+AM_PATH_XML2([2.6.26]) # Sets XML_CPPFLAGS and XML_LIBS.
 
 # Checks for CURL
 LIBCURL_CHECK_CONFIG()
@@ -225,6 +225,15 @@ AC_FUNC_MALLOC
 AC_FUNC_MKTIME
 AC_FUNC_MMAP
 AC_CHECK_FUNCS([localtime_r memset munmap setlocale strdup strerror])
+
+# Check for libxml2 functions.
+cppflags_orig="${CPPFLAGS}"
+CPPFLAGS="${CPPFLAGS} ${XML_CPPFLAGS}"
+libs_orig="${LIBS}"
+LIBS="${LIBS} ${XML_LIBS}"
+AC_CHECK_FUNCS([xmlBufferDetach])
+LIBS="${libs_orig}"
+CPPFLAGS="${cppflags_orig}"
 
 # Default CFLAGS
 CFLAGS="${CFLAGS} -std=c99 -Wall"

@@ -2603,9 +2603,13 @@ static isds_error serialize_subtree(struct isds_ctx *context,
 
 
     /* Store and detach buffer from xml_buffer */
-    *buffer = xml_buffer->content;
     *length = xml_buffer->use;
+#if HAVE_XMLBUFFERDETACH
+    *buffer = xmlBufferDetach(xml_buffer);
+#else /* !HAVE_XMLBUFFERDETACH */
+    *buffer = xml_buffer->content;
     xmlBufferSetAllocationScheme(xml_buffer, XML_BUFFER_ALLOC_IMMUTABLE);
+#endif /* HAVE_XMLBUFFERDETACH */
 
     /* Shrink buffer */
     new_buffer = realloc(*buffer, *length);
@@ -2672,9 +2676,13 @@ static isds_error dump_nodeset(struct isds_ctx *context,
     }
 
     /* Store and detach buffer from xml_buffer */
-    *buffer = xml_buffer->content;
     *length = xml_buffer->use;
+#if HAVE_XMLBUFFERDETACH
+    *buffer = xmlBufferDetach(xml_buffer);
+#else /* !HAVE_XMLBUFFERDETACH */
+    *buffer = xml_buffer->content;
     xmlBufferSetAllocationScheme(xml_buffer, XML_BUFFER_ALLOC_IMMUTABLE);
+#endif /* HAVE_XMLBUFFERDETACH */
 
     /* Shrink buffer */
     new_buffer = realloc(*buffer, *length);
@@ -2771,9 +2779,13 @@ static isds_error dump_nodeset(struct isds_ctx *context,
     xmlSaveClose(save_ctx); save_ctx = NULL;
 
     /* Store and detach buffer from xml_buffer */
-    *buffer = xml_buffer->content;
     *length = xml_buffer->use;
+#if HAVE_XMLBUFFERDETACH
+    *buffer = xmlBufferDetach(xml_buffer);
+#else /* !HAVE_XMLBUFFERDETACH */
+    *buffer = xml_buffer->content;
     xmlBufferSetAllocationScheme(xml_buffer, XML_BUFFER_ALLOC_IMMUTABLE);
+#endif /* HAVE_XMLBUFFERDETACH */
 
     /* Shrink buffer */
     new_buffer = realloc(*buffer, *length);
