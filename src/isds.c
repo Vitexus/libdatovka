@@ -53,7 +53,7 @@ const char isds_vodz_cert_locator[] = "https://ws2c.mojedatovaschranka.cz/";
 const char isds_otp_locator[] = "https://www.mojedatovaschranka.cz/";
 const char isds_mep_locator[] = "https://www.mojedatovaschranka.cz/";
 
-/* Base URL of production ISDS instance */
+/* Base URL of testing ISDS instance */
 const char isds_testing_locator[] = "https://ws1.czebox.cz/";
 const char isds_cert_testing_locator[] = "https://ws1c.czebox.cz/";
 const char isds_vodz_testing_locator[] = "https://ws2.czebox.cz/";
