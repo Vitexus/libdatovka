@@ -14,6 +14,7 @@
    used when sending a high-volume data message (using the service
    CreateBigMessage).
  * Fixed compilation of simline/server_cli with musl libc.
+ * Favouring xmlBufferDetach() over setting XML_BUFFER_ALLOC_IMMUTABLE.
 
 0.3.0 / 2023-02-10
  * Added idLevel member into struct isds_envelope.
