@@ -1751,7 +1751,7 @@ msgid ""
 msgstr ""
 
 #: src/isds.c:12896
-msgid "UploadAttachment MTOM/XOP request processed by server successfully.\n"
+msgid "MTOM/XOP UploadAttachment request processed by server successfully.\n"
 msgstr ""
 
 #: src/isds.c:13042
@@ -1807,12 +1807,12 @@ msgid "DownloadAttachment request processed by server successfully.\n"
 msgstr ""
 
 #: src/isds.c:13338
-msgid "Sending DownloadAttachment MTOM/XOP request to ISDS\n"
+msgid "Sending MTOM/XOP DownloadAttachment request to ISDS\n"
 msgstr ""
 
 #: src/isds.c:13353
 msgid ""
-"Processing ISDS response on DownloadAttachment MTOM/XOP request failed\n"
+"Processing ISDS response on MTOM/XOP DownloadAttachment request failed\n"
 msgstr ""
 
 #: src/isds.c:13365
@@ -1822,7 +1822,7 @@ msgstr ""
 #: src/isds.c:13374
 #, c-format
 msgid ""
-"Server refused DownloadAttachment MTOM/XOP request for attachment number "
+"Server refused MTOM/XOP DownloadAttachment request for attachment number "
 "'%ld' of message '%s' (code=%s, message=%s)\n"
 msgstr ""
 
@@ -2125,13 +2125,13 @@ msgstr ""
 
 #: src/isds.c:15948
 msgid ""
-"SignedSentBigMessageDownload MTOM/XOP request processed by server "
+"MTOM/XOP SignedSentBigMessageDownload request processed by server "
 "successfully.\n"
 msgstr ""
 
 #: src/isds.c:15949
 msgid ""
-"SignedBigMessageDownload MTOM/XOP request processed by server successfully.\n"
+"MTOM/XOP SignedBigMessageDownload request processed by server successfully.\n"
 msgstr ""
 
 #: src/isds.c:16025

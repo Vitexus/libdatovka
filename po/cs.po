@@ -1581,7 +1581,7 @@ msgstr "Odchozí zpráva postrádá identifikátor schránky příjemce"
 
 #: src/isds.c:11878
 msgid "ExtFile entries are not allowed when sending ordinary data messages."
-msgstr ""
+msgstr "Položky ExtFile nejsou dovoleny při odesílání obyčejných datových zpráv."
 
 #: src/isds.c:11886
 msgid "Outgoing message is missing list of documents"
@@ -1742,7 +1742,8 @@ msgid ""
 "Server accepted uploaded attachment, but did not return assigned attachment "
 "ID\n"
 msgstr ""
-"Server přijal odeslanou přílohu, ale nevrátil identifikátor přidělený příloze\n"
+"Server přijal odeslanou přílohu, ale nevrátil identifikátor přidělený "
+"příloze\n"
 
 #: src/isds.c:12555
 msgid ""
@@ -1778,7 +1779,8 @@ msgid ""
 "Server did not accept attachment '%s' on UploadAttachment request (code=%s, "
 "message=%s)\n"
 msgstr ""
-"Server nepřijal přílohu '%s' z požadavku UploadAttachment pro (kód=%s, zpráva=%s)\n"
+"Server nepřijal přílohu '%s' z požadavku UploadAttachment pro (kód=%s, "
+"zpráva=%s)\n"
 
 #: src/isds.c:12706 src/isds.c:12865
 msgid "Missing UploadAttachmentResponse element"
@@ -1798,7 +1800,8 @@ msgstr "Odesílá se požadavek MTOM/XOP UploadAttachment do ISDS\n"
 
 #: src/isds.c:12816
 msgid "Processing ISDS response on MTOM/XOP UploadAttachment request failed\n"
-msgstr "Zpracování odpovědi ISDS na požadavek MTOM/XOP UploadAttachment selhalo\n"
+msgstr ""
+"Zpracování odpovědi ISDS na požadavek MTOM/XOP UploadAttachment selhalo\n"
 
 #: src/isds.c:12828
 msgid "ISDS response on MTOM/XOP UploadAttachment is missing status\n"
@@ -1810,7 +1813,8 @@ msgid ""
 "Server did not accept attachment '%s' on MTOM/XOP UploadAttachment request "
 "(code=%s, message=%s)\n"
 msgstr ""
-"Server nepřijal přílohu '%s' z požadavku MTOM/XOP UploadAttachment pro (kód=%s, zpráva=%s)\n"
+"Server nepřijal přílohu '%s' z požadavku MTOM/XOP UploadAttachment pro "
+"(kód=%s, zpráva=%s)\n"
 
 #: src/isds.c:12896
 msgid "MTOM/XOP UploadAttachment request processed by server successfully.\n"
@@ -1818,7 +1822,9 @@ msgstr "Požadavek MTOM/XOP UploadAttachment úspěšně zpracován serverem.\n"
 
 #: src/isds.c:13042
 msgid "Document contains XML data but only Base64-encoded data are expected."
-msgstr "Dokument obsahuje XML data, ale jsou očekávána pouze data zakódována v Base64."
+msgstr ""
+"Dokument obsahuje XML data, ale jsou očekávána pouze data zakódována v "
+"Base64."
 
 #: src/isds.c:13059 src/isds.c:15814
 msgid "Missing Include element"
@@ -1854,7 +1860,9 @@ msgstr "Odpověď ISDS na požadavek DownloadAttachment postrádá status\n"
 msgid ""
 "Server refused DownloadAttachment request for attachment number '%ld' of "
 "message '%s' (code=%s, message=%s)\n"
-msgstr "Server odmítl požadavek DownloadAttachment na přílohu číslo '%ld' zprávy '%s' (kód=%s, zpráva=%s)\n"
+msgstr ""
+"Server odmítl požadavek DownloadAttachment na přílohu číslo '%ld' zprávy "
+"'%s' (kód=%s, zpráva=%s)\n"
 
 #: src/isds.c:13261 src/isds.c:13401
 msgid "Missing dmFile element"
@@ -1875,18 +1883,22 @@ msgstr "Odesílá se požadavek MTOM/XOP DownloadAttachment do ISDS\n"
 #: src/isds.c:13353
 msgid ""
 "Processing ISDS response on MTOM/XOP DownloadAttachment request failed\n"
-msgstr "Zpracování odpovědi ISDS na požadavek MTOM/XOP DownloadAttachment selhalo\n"
+msgstr ""
+"Zpracování odpovědi ISDS na požadavek MTOM/XOP DownloadAttachment selhalo\n"
 
 #: src/isds.c:13365
 msgid "ISDS response on MTOM/XOP DownloadAttachment is missing status\n"
-msgstr "Odpověď ISDS na požadavek MTOM/XOP DownloadAttachment postrádá status\n"
+msgstr ""
+"Odpověď ISDS na požadavek MTOM/XOP DownloadAttachment postrádá status\n"
 
 #: src/isds.c:13374
 #, c-format
 msgid ""
 "Server refused MTOM/XOP DownloadAttachment request for attachment number "
 "'%ld' of message '%s' (code=%s, message=%s)\n"
-msgstr "Server odmítl požadavek MTOM/XOP DownloadAttachment na přílohu číslo '%ld' zprávy '%s' (kód=%s, zpráva=%s)\n"
+msgstr ""
+"Server odmítl požadavek MTOM/XOP DownloadAttachment na přílohu číslo '%ld' "
+"zprávy '%s' (kód=%s, zpráva=%s)\n"
 
 #: src/isds.c:13477
 msgid "Could not build CreateBigMessage request"
@@ -1910,7 +1922,8 @@ msgid ""
 "Server did not accept message for %s on CreateBigMessage request (code=%s, "
 "message=%s)\n"
 msgstr ""
-"Server nepřijal zprávu z požadavku CreateBigMessage pro %s (kód=%s, zpráva=%s)\n"
+"Server nepřijal zprávu z požadavku CreateBigMessage pro %s (kód=%s, "
+"zpráva=%s)\n"
 
 #: src/isds.c:13562
 msgid "Missing CreateBigMessageResponse element"
@@ -2174,7 +2187,8 @@ msgstr "Požadavek SignedMessageDownload úspěšně zpracován serverem.\n"
 #, c-format
 msgid ""
 "Server did not return any message for ID `%s' on BigMessageDownload request"
-msgstr "Server na požadavek BigMessageDownload s ID „%s“ nevrátil žádnou zprávu"
+msgstr ""
+"Server na požadavek BigMessageDownload s ID „%s“ nevrátil žádnou zprávu"
 
 #: src/isds.c:15560
 #, c-format
@@ -2207,12 +2221,14 @@ msgstr "Požadavek SignedBigMessageDownload úspěšně zpracován serverem.\n"
 msgid ""
 "MTOM/XOP SignedSentBigMessageDownload request processed by server "
 "successfully.\n"
-msgstr "Požadavek MTOM/XOP SignedSentBigMessageDownload úspěšně zpracován serverem.\n"
+msgstr ""
+"Požadavek MTOM/XOP SignedSentBigMessageDownload úspěšně zpracován serverem.\n"
 
 #: src/isds.c:15949
 msgid ""
 "MTOM/XOP SignedBigMessageDownload request processed by server successfully.\n"
-msgstr "Požadavek MTOM/XOP SignedBigMessageDownload úspěšně zpracován serverem.\n"
+msgstr ""
+"Požadavek MTOM/XOP SignedBigMessageDownload úspěšně zpracován serverem.\n"
 
 #: src/isds.c:16025
 msgid "Missing GetMessageAuthorResponse element"
@@ -2409,11 +2425,14 @@ msgstr "Požadavek MTOM/XOP AuthenticateBigMessage se odesílá do ISDS\n"
 #: src/isds.c:17201
 msgid ""
 "Processing ISDS response on MTOM/XOP AuthenticateBigMessage request failed\n"
-msgstr "Zpracování odpovědi ISDS na požadavek MTOM/XOP AuthenticateBigMessage selhalo\n"
+msgstr ""
+"Zpracování odpovědi ISDS na požadavek MTOM/XOP AuthenticateBigMessage "
+"selhalo\n"
 
 #: src/isds.c:17213
 msgid "ISDS response on MTOM/XOP AuthenticateBigMessage is missing status\n"
-msgstr "Odpověď ISDS na požadavek MTOM/XOP AuthenticateBigMessage postrádá status\n"
+msgstr ""
+"Odpověď ISDS na požadavek MTOM/XOP AuthenticateBigMessage postrádá status\n"
 
 #: src/isds.c:17222
 #, c-format
@@ -2421,7 +2440,8 @@ msgid ""
 "Server did not accept data on MTOM/XOP AuthenticateBigMessage request "
 "(code=%s, message=%s)\n"
 msgstr ""
-"Server nepřijal data z požadavku MTOM/XOP AuthenticateBigMessage pro (kód=%s, zpráva=%s)\n"
+"Server nepřijal data z požadavku MTOM/XOP AuthenticateBigMessage pro "
+"(kód=%s, zpráva=%s)\n"
 
 #: src/isds.c:17334
 msgid "Empty CMS blob on input"
@@ -2557,7 +2577,7 @@ msgstr "Chyba při kopírování kořenového identifikátoru obsahu.\n"
 
 #: src/soap.c:827
 msgid "Error while copying multipart boundary.\n"
-msgstr ""
+msgstr "Chyba při kopírování multipart hranice.\n"
 
 #: src/soap.c:854
 msgid "Application aborted HTTP transfer"
@@ -2677,7 +2697,7 @@ msgstr "Konec těla POSTu\n"
 msgid ""
 "There have been some unprocessed multipart data. The close delimiter may be "
 "missing."
-msgstr ""
+msgstr "Některá multipart data nebyla zpracována. Možná chybí ukončovací oddělovač."
 
 #: src/soap.c:1717
 #, c-format
@@ -2847,15 +2867,15 @@ msgstr "%s: server zaslal chybný typ MIME: %s"
 msgid ""
 "High-volume data message end point doesn't handle OTP nor MEP login "
 "credentials."
-msgstr ""
+msgstr "Koncový bod pro velkoobjemové datové zprávy nezpracovává přihlašovací údaje pro OTP nebo MEP."
 
 #: src/soap.c:2677
 msgid "Received unexpected multipart response."
-msgstr ""
+msgstr "Obdržena neočekávána multipart odpověď."
 
 #: src/soap.c:2683
 msgid "Cannot localise start part of multipart response."
-msgstr ""
+msgstr "Nelze lokalizovat počáteční část multipart odpovědi."
 
 #: src/soap.c:2744
 msgid ""
@@ -2907,7 +2927,7 @@ msgstr "Dokument s odpovědí ISDS nebylo možné sestavit"
 
 #: src/validator.c:375
 msgid "Message contains neither a document nor an ExtFile entry"
-msgstr ""
+msgstr "Zpráva neobsahuje ani dokument ani záznam ExtFile"
 
 #: src/validator.c:389
 msgid "Lists contain multiple document or ExtFile main entries"
