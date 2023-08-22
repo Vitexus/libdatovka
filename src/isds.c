@@ -12893,7 +12893,7 @@ leave:
 
 	if (IE_SUCCESS == err) {
 		isds_log(ILF_ISDS, ILL_DEBUG,
-		    _("UploadAttachment MTOM/XOP request processed by server successfully.\n"));
+		    _("MTOM/XOP UploadAttachment request processed by server successfully.\n"));
 	}
 #else /* not HAVE_LIBCURL */
 	err = IE_NOTSUP;
@@ -13335,7 +13335,7 @@ enum isds_error isds_DownloadAttachment_mtomxop(struct isds_ctx *context,
 	}
 
 	isds_log(ILF_ISDS, ILL_DEBUG,
-	    _("Sending DownloadAttachment MTOM/XOP request to ISDS\n"));
+	    _("Sending MTOM/XOP DownloadAttachment request to ISDS\n"));
 
 	/* Send request. */
 	{
@@ -13350,7 +13350,7 @@ enum isds_error isds_DownloadAttachment_mtomxop(struct isds_ctx *context,
 
 	if (UNLIKELY(IE_SUCCESS != err)) {
 		isds_log(ILF_ISDS, ILL_DEBUG,
-		    _("Processing ISDS response on DownloadAttachment MTOM/XOP request failed\n"));
+		    _("Processing ISDS response on MTOM/XOP DownloadAttachment request failed\n"));
 		goto leave;
 	}
 
@@ -13371,7 +13371,7 @@ enum isds_error isds_DownloadAttachment_mtomxop(struct isds_ctx *context,
 		char *code_locale = _isds_utf82locale((char*)code);
 		char *message_locale = _isds_utf82locale((char*)message);
 		isds_log(ILF_ISDS, ILL_DEBUG,
-		    _("Server refused DownloadAttachment MTOM/XOP request for attachment number '%ld' of message '%s' (code=%s, message=%s)\n"),
+		    _("Server refused MTOM/XOP DownloadAttachment request for attachment number '%ld' of message '%s' (code=%s, message=%s)\n"),
 		    attNum, message_id,
 		    code_locale, message_locale);
 		free(code_locale);
@@ -15945,8 +15945,8 @@ leave:
 
 	if (UNLIKELY(IE_SUCCESS != err)) {
 		isds_log(ILF_ISDS, ILL_DEBUG, outgoing ?
-		    _("SignedSentBigMessageDownload MTOM/XOP request processed by server successfully.\n") :
-		    _("SignedBigMessageDownload MTOM/XOP request processed by server successfully.\n"));
+		    _("MTOM/XOP SignedSentBigMessageDownload request processed by server successfully.\n") :
+		    _("MTOM/XOP SignedBigMessageDownload request processed by server successfully.\n"));
 	}
 #else /* !HAVE_LIBCURL */
 	err = IE_NOTSUP;
