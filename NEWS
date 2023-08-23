@@ -3,7 +3,7 @@
    UploadAttachment, DownloadAttachment, SignedBigMessageDownload,
    SignedSentBigMessageDownload, BigMessageDownload dealing with high-volume
    data messages.
- * Added variants of function sfor services AuthenticateBigMessage,
+ * Added variants of functions for services AuthenticateBigMessage,
    UploadAttachment, DownloadAttachment, SignedBigMessageDownload,
    SignedSentBigMessageDownload which use MTOM/XOP.
  * Added new elements dmVODZ and attsNum into struct isds_envelope. These
