@@ -1,4 +1,4 @@
-libdatovka.so.0 libdatovka0 #MINVER#
+libdatovka.so.5 libdatovka5 #MINVER#
  czp_close_connection@Base 0.1
  czp_convert_document@Base 0.1
  isds_AddDataBoxUser2@Base 0.1
@@ -6,8 +6,14 @@ libdatovka.so.0 libdatovka0 #MINVER#
  isds_AddressExt2_free@Base 0.1
  isds_Address_duplicate@Base 0.1
  isds_Address_free@Base 0.1
+ isds_AuthenticateBigMessage@Base 0.4
+ isds_AuthenticateBigMessage_mtomxop@Base 0.4
+ isds_BigMessageDownload@Base 0.4
  isds_BirthInfo_free@Base 0.1
  isds_CheckDataBox@Base 0.1
+ isds_CreateBigMessage@Base 0.4
+ isds_DTInfo@Base 0.2
+ isds_DTInfoOutput_free@Base 0.2
  isds_DbOwnerInfoExt2_duplicate@Base 0.1
  isds_DbOwnerInfoExt2_free@Base 0.1
  isds_DbOwnerInfo_duplicate@Base 0.1
@@ -17,8 +23,8 @@ libdatovka.so.0 libdatovka0 #MINVER#
  isds_DbUserInfo_duplicate@Base 0.1
  isds_DbUserInfo_free@Base 0.1
  isds_DeleteDataBoxUser2@Base 0.1
- isds_DTInfo@Base 0.2
- isds_DTInfoOutput_free@Base 0.2
+ isds_DownloadAttachment@Base 0.4
+ isds_DownloadAttachment_mtomxop@Base 0.4
  isds_FindDataBox@Base 0.1
  isds_FindDataBox2@Base 0.1
  isds_GetDataBoxUsers@Base 0.1
@@ -33,10 +39,16 @@ libdatovka.so.0 libdatovka0 #MINVER#
  isds_PersonName2_free@Base 0.1
  isds_PersonName_duplicate@Base 0.1
  isds_PersonName_free@Base 0.1
+ isds_SignedBigMessageDownload@Base 0.4
+ isds_SignedBigMessageDownload_mtomxop@Base 0.4
+ isds_SignedSentBigMessageDownload@Base 0.4
+ isds_SignedSentBigMessageDownload_mtomxop@Base 0.4
  isds_UpdateDataBoxDescr@Base 0.1
  isds_UpdateDataBoxDescr2@Base 0.1
  isds_UpdateDataBoxUser@Base 0.1
  isds_UpdateDataBoxUser2@Base 0.1
+ isds_UploadAttachment@Base 0.4
+ isds_UploadAttachment_mtomxop@Base 0.4
  isds_activate@Base 0.1
  isds_add_box@Base 0.1
  isds_add_pfoinfo@Base 0.1
@@ -63,6 +75,9 @@ libdatovka.so.0 libdatovka0 #MINVER#
  isds_delete_message_from_storage@Base 0.1
  isds_delete_user@Base 0.1
  isds_disable_box_accessibility_externaly@Base 0.1
+ isds_dmAtt_free@Base 0.4
+ isds_dmExtFile_free@Base 0.4
+ isds_dmFile_free@Base 0.4
  isds_dmMessageAuthor_free@Base 0.3
  isds_document_free@Base 0.1
  isds_download_message_hash@Base 0.1
@@ -134,3 +149,7 @@ libdatovka.so.0 libdatovka0 #MINVER#
  isds_testing_locator@Base 0.1
  isds_verify_message_hash@Base 0.1
  isds_version@Base 0.1
+ isds_vodz_cert_locator@Base 0.4
+ isds_vodz_cert_testing_locator@Base 0.4
+ isds_vodz_locator@Base 0.4
+ isds_vodz_testing_locator@Base 0.4
