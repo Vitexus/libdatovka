@@ -1164,6 +1164,24 @@ struct isds_dmMessageAuthor {
     _Bool *robIdent; /* Flag whether the person is identifiers within the ROB. */
 };
 
+/*
+ * Used in GetListOfErasedMessages.
+ * Described in pril_2/WS_manipulace_s_datovymi_zpravami.pdf.
+ */
+typedef enum isds_dmMessageType {
+	MESSAGE_TYPE_SENT,
+	MESSAGE_TYPE_RECEIVED
+} isds_dmMessageType;
+
+/*
+ * Used in GetListOfErasedMessages.
+ * Described in pril_2/WS_manipulace_s_datovymi_zpravami.pdf.
+ */
+typedef enum isds_dmOutFormat {
+	OUT_XML,
+	OUT_CSV
+} isds_dmOutFormat;
+
 /* Initialize ISDS library.
  * Global function, must be called before other functions.
  * If it fails you can not use ISDS library and must call isds_cleanup() to
@@ -2267,6 +2285,11 @@ isds_error isds_get_message_sender(struct isds_ctx *context,
  */
 isds_error isds_GetMessageAuthor2(struct isds_ctx *context,
     const char *message_id, struct isds_dmMessageAuthor **author);
+
+enum isds_error isds_GetListOfErasedMessages_interval(struct isds_ctx *context,
+    const struct tm *from_date, const struct tm *to_date,
+    enum isds_dmMessageType msg_type, enum isds_dmOutFormat out_format,
+    char **async_id);
 
 /* Retrieve hash of message identified by ID stored in ISDS.
  * @context is session context

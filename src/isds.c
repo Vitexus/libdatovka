@@ -16362,6 +16362,144 @@ leave:
 #undef REQ_NAME
 }
 
+static const char *isds_dmMessageType_to_text(enum isds_dmMessageType msg_type)
+{
+	static const char *sent = "SENT";
+	static const char *received = "received";
+
+	switch (msg_type) {
+	case MESSAGE_TYPE_SENT:
+		return sent;
+	case MESSAGE_TYPE_RECEIVED:
+		return received;
+	default:
+		return NULL;
+	}
+}
+
+static const char *isds_dmOutFormat_to_text(enum isds_dmOutFormat out_format)
+{
+	static const char *xml = "XML";
+	static const char *csv = "CSV";
+
+	switch (out_format) {
+	case OUT_XML:
+		return xml;
+	case OUT_CSV:
+		return csv;
+	default:
+		return NULL;
+	}
+}
+
+enum isds_error isds_GetListOfErasedMessages_interval(struct isds_ctx *context,
+    const struct tm *from_date, const struct tm *to_date,
+    enum isds_dmMessageType msg_type, enum isds_dmOutFormat out_format,
+    char **async_id)
+{
+#define REQ_NAME "GetListOfErasedMessages"
+
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlNs *isds_ns = NULL;
+	xmlNode *request = NULL;
+	xmlNode *node;
+	xmlChar *string = NULL;
+
+	xmlDoc *response = NULL;
+#endif /* HAVE_LIBCURL */
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if ((NULL == from_date) || (NULL == to_date)) {
+		return IE_INVAL;
+	}
+	if (NULL == async_id) {
+		return IE_INVAL;
+	}
+
+	/* Free output argument. */
+	zfree(*async_id);
+
+#if HAVE_LIBCURL
+	/*
+	 * Check if connection is established
+	 * TODO: This check should be done downstairs.
+	 */
+	if (NULL == context->curl) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	/* Build GetListOfErasedMessages request. */
+	request = xmlNewNode(NULL, BAD_CAST REQ_NAME);
+	if (NULL == request) {
+		isds_printf_message(context,
+		    _("Could not build %s request"), REQ_NAME);
+		return IE_ERROR;
+	}
+	isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+	if (NULL == isds_ns) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		xmlFreeNode(request);
+		return IE_ERROR;
+	}
+	xmlSetNs(request, isds_ns);
+
+	{
+		err = tm2datestring(from_date, &string);
+		if (IE_SUCCESS != err) {
+			isds_printf_message(context,
+			    _("Could not convert `%s' argument to ISO date string"),
+			    "from_date");
+			goto leave;
+		}
+		INSERT_STRING(request, "dmFromDate", string);
+		zfree(string);
+	}
+	{
+		err = tm2datestring(to_date, &string);
+		if (IE_SUCCESS != err) {
+			isds_printf_message(context,
+			    _("Could not convert `%s' argument to ISO date string"),
+			    "to_date");
+			goto leave;
+		}
+		INSERT_STRING(request, "dmToDate", string);
+	        zfree(string);
+	}
+	INSERT_STRING(request, "dmMessageType", isds_dmMessageType_to_text(msg_type));
+	INSERT_STRING(request, "dmOutFormat", isds_dmOutFormat_to_text(out_format));
+
+	/* Send request to server and process response */
+	err = send_destroy_request_check_response(context,
+	    SERVICE_DM_INFO, BAD_CAST REQ_NAME, &request,
+	    &response, NULL, NULL);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	// TODO -- parse response
+
+leave:
+	xmlFreeDoc(response);
+	xmlFreeNode(request);
+
+	if (IE_SUCCESS == err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("%s request processed by server successfully.\n"),
+		    REQ_NAME);
+	}
+#else /* !HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+	return err;
+
+#undef REQ_NAME
+}
+
 /* Retrieve hash of message identified by ID stored in ISDS.
  * @context is session context
  * @message_id is message identifier
