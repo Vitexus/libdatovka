@@ -9,7 +9,8 @@ noinst_PROGRAMS = \
 	changepassword changeuser check_time_conversion computemessagehash \
 	convertdocument createbigmessage deleteuser deleteuser2 \
 	disableaccesibilityexternaly downloadattachment \
-	downloadmessagehash dtinfo getboxlist getchangedstates getreceived \
+	downloadmessagehash dtinfo getboxlist getchangedstates \
+	getlistoferasedmessages getreceived \
 	getreceiveddelivery getreceivedenvelope getreceivedsigneddelivery \
 	getsenderbyid getsent getsignedreceived getsignedsent \
 	getsignedsentbyid getuserboxinfo getuserboxinfo2 isdsclient \
@@ -44,6 +45,7 @@ downloadmessagehash_SOURCES = downloadmessagehash.c $(common)
 dtinfo_SOURCES = dtinfo.c $(common)
 getboxlist_SOURCES = getboxlist.c $(common)
 getchangedstates_SOURCES = getchangedstates.c $(common)
+getlistoferasedmessages_SOURCES = getlistoferasedmessages.c $(common)
 getreceived_SOURCES = getreceived.c $(common)
 getreceiveddelivery_SOURCES = getreceiveddelivery.c $(common)
 getreceivedenvelope_SOURCES = getreceivedenvelope.c $(common)
