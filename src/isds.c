@@ -16398,6 +16398,7 @@ enum isds_error isds_GetListOfErasedMessages_interval(struct isds_ctx *context,
     char **async_id)
 {
 #define REQ_NAME "GetListOfErasedMessages"
+#define RESP_NAME "GetListOfErasedMessagesResponse"
 
 	enum isds_error err = IE_SUCCESS;
 #if HAVE_LIBCURL
@@ -16407,6 +16408,8 @@ enum isds_error isds_GetListOfErasedMessages_interval(struct isds_ctx *context,
 	xmlChar *string = NULL;
 
 	xmlDoc *response = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
 #endif /* HAVE_LIBCURL */
 
 	if (NULL == context) {
@@ -16481,9 +16484,41 @@ enum isds_error isds_GetListOfErasedMessages_interval(struct isds_ctx *context,
 		goto leave;
 	}
 
-	// TODO -- parse response
+	/* Extract data. */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	result = xmlXPathEvalExpression(BAD_CAST "/isds:" RESP_NAME,
+	    xpath_ctx);
+	if (NULL == result) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+		isds_printf_message(context, _("Missing %s element"), RESP_NAME);
+		err = IE_ISDS;
+		goto leave;
+	}
+	if (result->nodesetval->nodeNr > 1) {
+		isds_printf_message(context, _("Multiple %s elements"), RESP_NAME);
+		err = IE_ISDS;
+		goto leave;
+	}
+	/* One response. */
+	xpath_ctx->node = result->nodesetval->nodeTab[0];
+	xmlXPathFreeObject(result); result = NULL;
+
+	EXTRACT_STRING("isds:asyncID", *async_id);
 
 leave:
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
 	xmlFreeDoc(response);
 	xmlFreeNode(request);
 
@@ -16498,6 +16533,7 @@ leave:
 	return err;
 
 #undef REQ_NAME
+#undef RESP_NAME
 }
 
 /* Retrieve hash of message identified by ID stored in ISDS.
