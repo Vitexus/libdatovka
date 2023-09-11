@@ -3389,9 +3389,55 @@ static isds_error eventstring2event(const xmlChar *string,
     return IE_SUCCESS;
 }
 
+/*
+ * Returns pointer to text content of the node without copying any data.
+ * Inspired by xmlXPathCastNodeSetToString(), xmlXPathCastNodeToString() and
+ *     xmlNodeGetContent().
+ */
+static
+const xmlChar *node_string_value(const xmlNodeSet *ns)
+{
+	const xmlChar *str = NULL;
+
+	if ((ns == NULL) || (ns->nodeNr == 0) || (ns->nodeTab == NULL)) {
+		return str;
+	}
+	if (ns->nodeNr > 1) {
+		return str;
+	}
+	const xmlNode *node = ns->nodeTab[0];
+	if (node->type == XML_TEXT_NODE) {
+		str = node->content;
+	}
+
+	return str;
+}
 
 /* Following EXTRACT_* macros expect @result, @xpath_ctx, @err, @context
  * and leave label */
+
+#define EXTRACT_CONST_STRING(element, string) \
+    { \
+        xmlXPathFreeObject(result); \
+        result = xmlXPathEvalExpression(BAD_CAST element "/text()", xpath_ctx); \
+        if (NULL == (result)) { \
+            err = IE_ERROR; \
+            goto leave; \
+        } \
+        if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) { \
+            if (result->nodesetval->nodeNr > 1) { \
+                isds_printf_message(context, _("Multiple %s element"), element); \
+                err = IE_ERROR; \
+                goto leave; \
+            } \
+            (string) = node_string_value(result->nodesetval); \
+            if (NULL == (string)) { \
+                err = IE_ERROR; \
+                goto leave; \
+            } \
+        } \
+    }
+
 #define EXTRACT_STRING(element, string) { \
     xmlXPathFreeObject(result); \
     result = xmlXPathEvalExpression(BAD_CAST element "/text()", xpath_ctx); \
@@ -16800,7 +16846,7 @@ enum isds_error isds_PickUpAsyncResponse(struct isds_ctx *context,
 	xmlXPathContext *xpath_ctx = NULL;
 	xmlXPathObject *result = NULL;
 
-	char *string = NULL;
+	const xmlChar *xmlString = NULL;
 #endif /* HAVE_LIBCURL */
 
 	if (NULL != output_data) {
@@ -16890,27 +16936,27 @@ enum isds_error isds_PickUpAsyncResponse(struct isds_ctx *context,
 	xpath_ctx->node = result->nodesetval->nodeTab[0];
 	xmlXPathFreeObject(result); result = NULL;
 
-	EXTRACT_STRING("isds:asyncReqType", string);
-	if (NULL != string) {
+	EXTRACT_CONST_STRING("isds:asyncReqType", xmlString);
+	if (NULL != xmlString) {
 		enum isds_asyncReqType type;
-		err = _string2isds_asyncReqType((const xmlChar *)string, &type);
+		err = _string2isds_asyncReqType(xmlString, &type);
 		if (IE_SUCCESS != err) {
 			goto leave;
 		}
 		if (type != req_type) {
 			isds_printf_message(context,
 			    _("Received unexpected asynchronous response type `%s' but expected `%s'"),
-			    string, _isds_asyncReqType2string(req_type));
+			    (char *)xmlString, _isds_asyncReqType2string(req_type));
 			err = IE_ISDS;
 			goto leave;
 		}
 	}
-	zfree(string);
+	xmlString = NULL;
 
-	EXTRACT_STRING("isds:asyncResponse", string);
+	EXTRACT_CONST_STRING("isds:asyncResponse", xmlString);
 	/* Decode non-empty data. */
-	if ((NULL != string) && ('\0' != string[0])) {
-		*output_length = _isds_b64decode(string, output_data);
+	if ((NULL != xmlString) && ('\0' != xmlString[0])) {
+		*output_length = _isds_b64decode((const char *)xmlString, output_data);
 		if (*output_length == (size_t)-1) {
 			isds_log_message(context,
 			    _("Error while Base64-decoding asynchronous response data"));
@@ -16925,7 +16971,7 @@ enum isds_error isds_PickUpAsyncResponse(struct isds_ctx *context,
 	}
 
 leave:
-	free(string);
+	xmlString = NULL;
 
 	xmlXPathFreeObject(result);
 	xmlXPathFreeContext(xpath_ctx);
