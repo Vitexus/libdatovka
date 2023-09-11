@@ -3778,7 +3778,6 @@ const xmlChar *attribute_string_value(const xmlNode *node,
 				 * Optimization for the common case: only 1 text node.
 				 */
 				str = attPtr->children->content;
-				fprintf(stderr, "BBB %s\n", (char *)str);
 			}
 		}
 	}
