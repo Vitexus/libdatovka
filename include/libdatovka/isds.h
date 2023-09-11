@@ -2286,8 +2286,52 @@ isds_error isds_get_message_sender(struct isds_ctx *context,
 isds_error isds_GetMessageAuthor2(struct isds_ctx *context,
     const char *message_id, struct isds_dmMessageAuthor **author);
 
+/*
+ * Request list of erased messages for given interval.
+ * @context is session context
+ * @from_date is first day of specified interval. Only tm_year, tm_mon and
+ * tm_mday carry sane values.
+ * @to_date is last day of specified interval. Only tm_year, tm_mon and tm_mday
+ * carry sane values.
+ * @msg_type specifies whether sent or erased messages should be listed.
+ * @out_format specifies the format of the resulting list.
+ * @async_id is automatically reallocated string containing the asynchronous
+ * transaction identifier. Use isds_PickUpAsyncResponse() to acquire requested
+ * data.
+ */
 enum isds_error isds_GetListOfErasedMessages_interval(struct isds_ctx *context,
     const struct tm *from_date, const struct tm *to_date,
+    enum isds_dmMessageType msg_type, enum isds_dmOutFormat out_format,
+    char **async_id);
+
+/*
+ * Request list of erased messages for given interval.
+ * @context is session context
+ * @year is the year of the month
+ * @month is the requested month, use values 1 to 12.
+ * @msg_type specifies whether sent or erased messages should be listed.
+ * @out_format specifies the format of the resulting list.
+ * @async_id is automatically reallocated string containing the asynchronous
+ * transaction identifier. Use isds_PickUpAsyncResponse() to acquire requested
+ * data.
+ */
+enum isds_error isds_GetListOfErasedMessages_month(struct isds_ctx *context,
+    unsigned int year, unsigned int month,
+    enum isds_dmMessageType msg_type, enum isds_dmOutFormat out_format,
+    char **async_id);
+
+/*
+ * Request list of erased messages for given interval.
+ * @context is session context
+ * @year is the year
+ * @msg_type specifies whether sent or erased messages should be listed.
+ * @out_format specifies the format of the resulting list.
+ * @async_id is automatically reallocated string containing the asynchronous
+ * transaction identifier. Use isds_PickUpAsyncResponse() to acquire requested
+ * data.
+ */
+enum isds_error isds_GetListOfErasedMessages_year(struct isds_ctx *context,
+    unsigned int year,
     enum isds_dmMessageType msg_type, enum isds_dmOutFormat out_format,
     char **async_id);
 
