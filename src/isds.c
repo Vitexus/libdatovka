@@ -16362,10 +16362,10 @@ leave:
 #undef REQ_NAME
 }
 
-static const char *isds_dmMessageType_to_text(enum isds_dmMessageType msg_type)
+static const char *_isds_dmMessageType2string(enum isds_dmMessageType msg_type)
 {
 	static const char *sent = "SENT";
-	static const char *received = "received";
+	static const char *received = "RECEIVED";
 
 	switch (msg_type) {
 	case MESSAGE_TYPE_SENT:
@@ -16377,7 +16377,7 @@ static const char *isds_dmMessageType_to_text(enum isds_dmMessageType msg_type)
 	}
 }
 
-static const char *isds_dmOutFormat_to_text(enum isds_dmOutFormat out_format)
+static const char *_isds_dmOutFormat2string(enum isds_dmOutFormat out_format)
 {
 	static const char *xml = "XML";
 	static const char *csv = "CSV";
@@ -16541,8 +16541,8 @@ enum isds_error isds_GetListOfErasedMessages_interval(struct isds_ctx *context,
 		INSERT_STRING(request, "dmToDate", string);
 	        zfree(string);
 	}
-	INSERT_STRING(request, "dmMessageType", isds_dmMessageType_to_text(msg_type));
-	INSERT_STRING(request, "dmOutFormat", isds_dmOutFormat_to_text(out_format));
+	INSERT_STRING(request, "dmMessageType", _isds_dmMessageType2string(msg_type));
+	INSERT_STRING(request, "dmOutFormat", _isds_dmOutFormat2string(out_format));
 
 	/* Send request to server and process response */
 	err = send_destroy_request_check_response(context,
@@ -16633,8 +16633,8 @@ enum isds_error isds_GetListOfErasedMessages_month(struct isds_ctx *context,
 
 	INSERT_ULONGINTNOPTR(request, "dmYear", (unsigned long int)year, string);
 	INSERT_ULONGINTNOPTR(request, "dmMonth", (unsigned long int)month, string);
-	INSERT_STRING(request, "dmMessageType", isds_dmMessageType_to_text(msg_type));
-	INSERT_STRING(request, "dmOutFormat", isds_dmOutFormat_to_text(out_format));
+	INSERT_STRING(request, "dmMessageType", _isds_dmMessageType2string(msg_type));
+	INSERT_STRING(request, "dmOutFormat", _isds_dmOutFormat2string(out_format));
 
 	/* Send request to server and process response */
 	err = send_destroy_request_check_response(context,
@@ -16721,8 +16721,8 @@ enum isds_error isds_GetListOfErasedMessages_year(struct isds_ctx *context,
 	xmlSetNs(request, isds_ns);
 
 	INSERT_ULONGINTNOPTR(request, "dmYear", (unsigned long int)year, string);
-	INSERT_STRING(request, "dmMessageType", isds_dmMessageType_to_text(msg_type));
-	INSERT_STRING(request, "dmOutFormat", isds_dmOutFormat_to_text(out_format));
+	INSERT_STRING(request, "dmMessageType", _isds_dmMessageType2string(msg_type));
+	INSERT_STRING(request, "dmOutFormat", _isds_dmOutFormat2string(out_format));
 
 	/* Send request to server and process response */
 	err = send_destroy_request_check_response(context,
@@ -16753,6 +16753,199 @@ leave:
 	return err;
 
 #undef REQ_NAME
+}
+
+static const char *_isds_asyncReqType2string(enum isds_asyncReqType req_type)
+{
+	static const char *list_erased = "LIST_ERASED";
+
+	switch (req_type) {
+	case ASYNC_REQ_TYPE_LIST_ERASED:
+		return list_erased;
+	default:
+		return NULL;
+	}
+}
+
+static enum isds_error _string2isds_asyncReqType(const xmlChar *string,
+    enum isds_asyncReqType *type)
+{
+	if ((NULL == string) || (NULL == type)) {
+		return IE_INVAL;
+	}
+
+	if (0 == xmlStrcmp(string, BAD_CAST "LIST_ERASED")) {
+		*type = ASYNC_REQ_TYPE_LIST_ERASED;
+	} else {
+		return IE_ENUM;
+	}
+
+	return IE_SUCCESS;
+}
+
+enum isds_error isds_PickUpAsyncResponse(struct isds_ctx *context,
+    const char *async_id, enum isds_asyncReqType req_type,
+    void **output_data, size_t *output_length)
+{
+#define REQ_NAME "PickUpAsyncResponse"
+#define RESP_NAME "PickUpAsyncResponseResponse"
+
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlNs *isds_ns = NULL;
+	xmlNode *request = NULL;
+	xmlNode *node;
+
+	xmlDoc *response = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+
+	char *string = NULL;
+#endif /* HAVE_LIBCURL */
+
+	if (NULL != output_data) {
+		*output_data = NULL;
+	}
+	if (NULL != output_length) {
+		*output_length = 0;
+	}
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if (NULL == async_id) {
+		return IE_INVAL;
+	}
+
+	if ((NULL == output_data) || (NULL == output_length)) {
+		isds_log_message(context,
+		    _("NULL pointer provided for output request blob"));
+		return IE_INVAL;
+	}
+
+#if HAVE_LIBCURL
+	/*
+	 * Check if connection is established
+	 * TODO: This check should be done downstairs.
+	 */
+	if (NULL == context->curl) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	/* Build GetListOfErasedMessages request. */
+	request = xmlNewNode(NULL, BAD_CAST REQ_NAME);
+	if (NULL == request) {
+		isds_printf_message(context,
+		    _("Could not build %s request"), REQ_NAME);
+		return IE_ERROR;
+	}
+	isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+	if (NULL == isds_ns) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		xmlFreeNode(request);
+		return IE_ERROR;
+	}
+	xmlSetNs(request, isds_ns);
+
+	INSERT_STRING(request, "asyncID", async_id);
+	INSERT_STRING(request, "asyncReqType", _isds_asyncReqType2string(req_type));
+
+	/* Send request to server and process response */
+	err = send_destroy_request_check_response(context,
+	    SERVICE_DM_INFO, BAD_CAST REQ_NAME, &request,
+	    &response, NULL, NULL);
+	if (IE_SUCCESS != err) {
+		goto leave;
+	}
+
+	/* Extract data. */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	result = xmlXPathEvalExpression(BAD_CAST "/isds:" RESP_NAME,
+	    xpath_ctx);
+	if (NULL == result) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+		isds_printf_message(context, _("Missing %s element"), RESP_NAME);
+		err = IE_ISDS;
+		goto leave;
+	}
+	if (result->nodesetval->nodeNr > 1) {
+		isds_printf_message(context, _("Multiple %s elements"), RESP_NAME);
+		err = IE_ISDS;
+		goto leave;
+	}
+	/* One response. */
+	xpath_ctx->node = result->nodesetval->nodeTab[0];
+	xmlXPathFreeObject(result); result = NULL;
+
+	EXTRACT_STRING("isds:asyncReqType", string);
+	if (NULL != string) {
+		enum isds_asyncReqType type;
+		err = _string2isds_asyncReqType((const xmlChar *)string, &type);
+		if (IE_SUCCESS != err) {
+			goto leave;
+		}
+		if (type != req_type) {
+			isds_printf_message(context,
+			    _("Received unexpected asynchronous response type `%s' but expected `%s'"),
+			    string, _isds_asyncReqType2string(req_type));
+			err = IE_ISDS;
+			goto leave;
+		}
+	}
+	zfree(string);
+
+	EXTRACT_STRING("isds:asyncResponse", string);
+	/* Decode non-empty data. */
+	if ((NULL != string) && ('\0' != string[0])) {
+		*output_length = _isds_b64decode(string, output_data);
+		if (*output_length == (size_t)-1) {
+			isds_log_message(context,
+			    _("Error while Base64-decoding asynchronous response data"));
+			err = IE_ERROR;
+			goto leave;
+		}
+	} else {
+		isds_log_message(context,
+		    _("Server didn't send asynchronous response data"));
+		err = IE_ISDS;
+		goto leave;
+	}
+
+leave:
+	free(string);
+
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+
+	xmlFreeDoc(response);
+	xmlFreeNode(request);
+
+	if (IE_SUCCESS == err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("%s request processed by server successfully.\n"),
+		    REQ_NAME);
+	}
+#else /* !HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+
+	return err;
+
+#undef REQ_NAME
+#undef RESP_NAME
 }
 
 /* Retrieve hash of message identified by ID stored in ISDS.
@@ -17735,7 +17928,7 @@ leave:
  * @input_length is @input_data size in bytes
  * @output_data is pointer to auto-allocated memory where to store re-signed
  * input data blob. Caller must free it.
- * @output_data is pointer where to store @output_data size in bytes
+ * @output_length is pointer where to store @output_data size in bytes
  * @valid_to is pointer to auto-allocated date of time stamp expiration.
  * Only tm_year, tm_mon and tm_mday will be set. Pass NULL, if you don't care.
  * @return

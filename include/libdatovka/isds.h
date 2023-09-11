@@ -1182,6 +1182,14 @@ typedef enum isds_dmOutFormat {
 	OUT_CSV
 } isds_dmOutFormat;
 
+/*
+ * Used in PickUpAsyncResponse.
+ * Described in pril_2/WS_manipulace_s_datovymi_zpravami.pdf.
+ */
+typedef enum isds_asyncReqType {
+	ASYNC_REQ_TYPE_LIST_ERASED
+} isds_asyncReqType;
+
 /* Initialize ISDS library.
  * Global function, must be called before other functions.
  * If it fails you can not use ISDS library and must call isds_cleanup() to
@@ -2335,6 +2343,19 @@ enum isds_error isds_GetListOfErasedMessages_year(struct isds_ctx *context,
     enum isds_dmMessageType msg_type, enum isds_dmOutFormat out_format,
     char **async_id);
 
+/*
+ * Pick up asynchronous response data.
+ * @context is session context
+ * @async_id is the asynchronous transaction identifier
+ * @req_type asynchronous request type
+ * @output_data is pointer to auto-allocated memory where to store the
+ * downloaded data blob. Caller must free it.
+ * @output_length is pointer where to store @output_data size in bytes
+ */
+enum isds_error isds_PickUpAsyncResponse(struct isds_ctx *context,
+    const char *async_id, enum isds_asyncReqType req_type,
+    void **output_data, size_t *output_length);
+
 /* Retrieve hash of message identified by ID stored in ISDS.
  * @context is session context
  * @message_id is message identifier
@@ -2434,7 +2455,7 @@ enum isds_error isds_AuthenticateBigMessage_mtomxop(struct isds_ctx *context,
  * @input_length is @input_data size in bytes
  * @output_data is pointer to auto-allocated memory where to store re-signed
  * input data blob. Caller must free it.
- * @output_data is pointer where to store @output_data size in bytes
+ * @output_length is pointer where to store @output_data size in bytes
  * @valid_to is pointer to auto-allocated date of time stamp expiration.
  * Only tm_year, tm_mon and tm_mday will be set. Pass NULL, if you don't care.
  * @return
