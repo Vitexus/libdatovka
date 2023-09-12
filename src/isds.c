@@ -16847,6 +16847,28 @@ enum isds_error isds_PickUpAsyncResponse(struct isds_ctx *context,
 	xmlXPathObject *result = NULL;
 
 	const xmlChar *xmlString = NULL;
+
+	const xmlChar *codes[] = {
+	    BAD_CAST "2351",
+	    BAD_CAST "2352",
+	    BAD_CAST "2353",
+	    NULL
+	};
+	const char *meanings[] = {
+	    N_("Evidence of asynchronous responses has been erased, repeat the complete asynchronous request"),
+	    N_("The asynchronous response has not been processed yet, try picking up the response later"),
+	    N_("Unclaimed asynchronous response has been erased, repeat the complete asynchronous request")
+	};
+	const isds_error errors[] = {
+	    IE_ISDS,
+	    IE_PARTIAL_SUCCESS,
+	    IE_ISDS
+	};
+	struct code_map_isds_error map = {
+	    .codes = codes,
+	    .meanings = meanings,
+	    .errors = errors
+	};
 #endif /* HAVE_LIBCURL */
 
 	if (NULL != output_data) {
@@ -16901,7 +16923,7 @@ enum isds_error isds_PickUpAsyncResponse(struct isds_ctx *context,
 	/* Send request to server and process response */
 	err = send_destroy_request_check_response(context,
 	    SERVICE_DM_INFO, BAD_CAST REQ_NAME, &request,
-	    &response, NULL, NULL);
+	    &response, NULL, &map);
 	if (IE_SUCCESS != err) {
 		goto leave;
 	}

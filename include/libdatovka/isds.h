@@ -2351,6 +2351,11 @@ enum isds_error isds_GetListOfErasedMessages_year(struct isds_ctx *context,
  * @output_data is pointer to auto-allocated memory where to store the
  * downloaded data blob. Caller must free it.
  * @output_length is pointer where to store @output_data size in bytes
+ * @return
+ *  IE_SUCCESS if response has been successfully downloaded
+ *  IE_PARTIAL_SUCCESS if the response is not available yet,
+ *      try calling isds_PickUpAsyncResponse() later
+ *  other code for other errors
  */
 enum isds_error isds_PickUpAsyncResponse(struct isds_ctx *context,
     const char *async_id, enum isds_asyncReqType req_type,
