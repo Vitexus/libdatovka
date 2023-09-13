@@ -326,7 +326,7 @@ typedef enum {
 } isds_privileges;
 
 /* Message status */
-typedef enum {
+typedef enum isds_message_status {
     MESSAGESTATE_SENT = 0x2,            /* Message has been put into ISDS */
     MESSAGESTATE_STAMPED = 0x4,         /* Message stamped by TSA */
     MESSAGESTATE_INFECTED = 0x8,        /* Message included viruses,
@@ -1189,6 +1189,23 @@ typedef enum isds_dmOutFormat {
 typedef enum isds_asyncReqType {
 	ASYNC_REQ_TYPE_LIST_ERASED
 } isds_asyncReqType;
+
+/*
+ * List of this entries is acquired when querying GetListOfErasedMessages.
+ */
+struct erased_message {
+	char *dmID; /* Message ID. */
+	char *dbIDSender; /* Box ID of sender. */
+	char *dmSender; /* Sender name. */
+	char *dbIDRecipient; /* Box ID of recipient. */
+	char *dmRecipient; /* Recipient name. */
+	char *dmAnnotation; /* Subject (title) of the message. */
+	enum isds_message_status *dmMessageStatus;  /* Message state. */
+	struct isds_timeval *dmDeliveryTime; /* Time of delivery into a box. */
+	struct isds_timeval *dmAcceptanceTime; /* Time of acceptance of the
+	                                          message by a user. */
+	char *dmType; /* Message type. */
+};
 
 /* Initialize ISDS library.
  * Global function, must be called before other functions.
@@ -2361,6 +2378,19 @@ enum isds_error isds_PickUpAsyncResponse(struct isds_ctx *context,
     const char *async_id, enum isds_asyncReqType req_type,
     void **output_data, size_t *output_length);
 
+/*
+ * Load decompressed asynchronous GetListOfErasedMessages response.
+ * @context is session context.
+ * @format specifies the format of the list, only OUT_XML is supported.
+ * @buffer is XML encoded uncompressed data.
+ * @length is length of buffer in bytes.
+ * @erased_messages is automatically reallocated list passed from @buffer.
+ */
+enum isds_error isds_load_erased_messages(struct isds_ctx *context,
+        enum isds_dmOutFormat format,
+        const void *buffer, const size_t length,
+        struct isds_list **erased_messages);
+
 /* Retrieve hash of message identified by ID stored in ISDS.
  * @context is session context
  * @message_id is message identifier
@@ -2663,6 +2693,9 @@ void isds_box_state_period_free(struct isds_box_state_period **period);
 
 /* Deallocate struct isds_dmMessageAuthor recursively and NULL it. */
 void isds_dmMessageAuthor_free(struct isds_dmMessageAuthor **author);
+
+/* Deallocate struct isds_erased_message recursively and NULL it. */
+void isds_erased_message_free(struct erased_message **entry);
 
 /* Copy structure isds_status recursively */
 struct isds_status *isds_status_duplicate(const struct isds_status *src);

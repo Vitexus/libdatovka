@@ -670,6 +670,26 @@ void isds_dmMessageAuthor_free(struct isds_dmMessageAuthor **author)
 	zfree(*author);
 }
 
+void isds_erased_message_free(struct erased_message **entry)
+{
+	if ((NULL == entry) || (NULL == *entry)) {
+		return;
+	}
+
+	free((*entry)->dmID);
+	free((*entry)->dbIDSender);
+	free((*entry)->dmSender);
+	free((*entry)->dbIDRecipient);
+	free((*entry)->dmRecipient);
+	free((*entry)->dmAnnotation);
+	free((*entry)->dmMessageStatus);
+	free((*entry)->dmDeliveryTime);
+	free((*entry)->dmAcceptanceTime);
+	free((*entry)->dmType);
+
+	zfree(*entry);
+}
+
 /* *DUP_OR_ERROR macros needs error label */
 #define STRDUP_OR_ERROR(new, template) { \
     if (!template) { \
@@ -17014,6 +17034,199 @@ leave:
 
 #undef REQ_NAME
 #undef RESP_NAME
+}
+
+/*
+ * Convert dmRecord XML tree into structure
+ * @context is ISDS context
+ * @erased_message is automatically reallocated erased message structure
+ * @xpath_ctx is XPath context with current node as dmRecord element
+ * In case of error @erased_message will be freed.
+ */
+static enum isds_error extract_erased_message(struct isds_ctx *context,
+    struct erased_message **erased_message, xmlXPathContext *xpath_ctx)
+{
+	enum isds_error err = IE_SUCCESS;
+	xmlXPathObject *result = NULL;
+	unsigned long int *unumber = NULL;
+	const xmlChar *xmlString = NULL;
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (NULL == erased_message) {
+		return IE_INVAL;
+	}
+	isds_erased_message_free(erased_message);
+	if (NULL == xpath_ctx) {
+		return IE_INVAL;
+	}
+
+	*erased_message = calloc(1, sizeof(**erased_message));
+	if (NULL == *erased_message) {
+		err = IE_NOMEM;
+		goto leave;
+	}
+
+	EXTRACT_STRING("isds:dmID", (*erased_message)->dmID);
+	EXTRACT_STRING("isds:dbIDSender", (*erased_message)->dbIDSender);
+	EXTRACT_STRING("isds:dmSender", (*erased_message)->dmSender);
+	EXTRACT_STRING("isds:dbIDRecipient", (*erased_message)->dbIDRecipient);
+	EXTRACT_STRING("isds:dmRecipient", (*erased_message)->dmRecipient);
+	EXTRACT_STRING("isds:dmAnnotation", (*erased_message)->dmAnnotation);
+
+	EXTRACT_ULONGINT("isds:dmMessageStatus", unumber, 0);
+	if (NULL != unumber) {
+		err = uint2isds_message_status(context, unumber,
+		    &((*erased_message)->dmMessageStatus));
+		if (IE_SUCCESS != err) {
+			if (IE_ENUM == err) {
+				err = IE_ISDS;
+			}
+			goto leave;
+		}
+		free(unumber); unumber = NULL;
+	}
+
+	EXTRACT_CONST_STRING("isds:dmDeliveryTime", xmlString);
+	if (NULL != xmlString) {
+		err = timestring2timeval(xmlString,
+		        &((*erased_message)->dmDeliveryTime));
+		if (IE_SUCCESS != err) {
+			char *string_locale = _isds_utf82locale((const char *)xmlString);
+			if (IE_DATE == err) {
+				err = IE_ISDS;
+			}
+			isds_printf_message(context,
+			    _("Could not convert dmDeliveryTime as ISO time: %s"),
+			    string_locale);
+			free(string_locale);
+			goto leave;
+		}
+		xmlString = NULL;
+	}
+
+	EXTRACT_CONST_STRING("isds:dmAcceptanceTime", xmlString);
+	if (NULL != xmlString) {
+		err = timestring2timeval(xmlString,
+		        &((*erased_message)->dmAcceptanceTime));
+		if (IE_SUCCESS != err) {
+			char *string_locale = _isds_utf82locale((const char *)xmlString);
+			if (IE_DATE == err) {
+				err = IE_ISDS;
+			}
+			isds_printf_message(context,
+			    _("Could not convert dmAcceptanceTime as ISO time: %s"),
+			    string_locale);
+			free(string_locale);
+			goto leave;
+		}
+		xmlString = NULL;
+	}
+
+	/* May not be present in XML data, but is listed in CMS data. */
+	EXTRACT_STRING("isds:dmType", (*erased_message)->dmType);
+
+leave:
+	if (IE_SUCCESS != err) {
+		isds_erased_message_free(erased_message);
+	}
+	free(unumber);
+	xmlXPathFreeObject(result);
+	return err;
+}
+
+enum isds_error isds_load_erased_messages(struct isds_ctx *context,
+        enum isds_dmOutFormat format,
+        const void *buffer, const size_t length,
+        struct isds_list **erased_messages)
+{
+	enum isds_error err = IE_SUCCESS;
+
+	xmlDoc *list_doc = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	if (OUT_XML != format) {
+		return IE_INVAL;
+	}
+	if ((NULL == buffer) || (0 == length)) {
+		return IE_INVAL;
+	}
+	if (NULL == erased_messages) {
+		return IE_INVAL;
+	}
+
+	isds_list_free(erased_messages);
+
+	/* Extract data */
+	/* Convert XML stream into XPath context */
+	list_doc = xmlParseMemory(buffer, length);
+	if (NULL == list_doc) {
+		err = IE_XML;
+		goto leave;
+	}
+	/* Prepare structure */
+	xpath_ctx = xmlXPathNewContext(list_doc);
+	if (NULL == xpath_ctx) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+
+	/* Set context node */
+	result = xmlXPathEvalExpression(
+	    BAD_CAST "/isds:dmRecords/isds:dmRecord", xpath_ctx);
+	if (NULL == result) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (!xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+		/* Iterate over all records. */
+		struct isds_list *item;
+		struct isds_list *prev_item = NULL;
+		for (int i = 0; i < result->nodesetval->nodeNr; ++i) {
+			/* Prepare the structure. */
+			item = calloc(1, sizeof(*item));
+			if (NULL == item) {
+				err = IE_NOMEM;
+				goto leave;
+			}
+			item->destructor = (void(*)(void**))isds_erased_message_free;
+			if (0 == i) {
+				*erased_messages = item;
+			} else {
+				prev_item->next = item;
+			}
+			prev_item = item;
+
+			/* Extract it */
+			xpath_ctx->node = result->nodesetval->nodeTab[i];
+			err = extract_erased_message(context,
+			    (struct erased_message **)(&item->data), xpath_ctx);
+			if (IE_SUCCESS !=err) {
+				goto leave;
+			}
+		}
+	}
+
+leave:
+	if (IE_SUCCESS != err) {
+		isds_list_free(erased_messages);
+	}
+
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+
+	xmlFreeDoc(list_doc);
+
+	return err;
 }
 
 /* Retrieve hash of message identified by ID stored in ISDS.
