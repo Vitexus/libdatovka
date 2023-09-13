@@ -28,7 +28,8 @@ TESTS = prepare_environment \
 		isds_Address_free isds_AddressExt2_free \
 		isds_DbOwnerInfo_free isds_DbOwnerInfoExt2_free \
 		isds_DbUserInfo_free isds_DbUserInfoExt2_free isds_event_free \
-		isds_envelope_free isds_document_free isds_message_free \
+		isds_envelope_free isds_document_free \
+		isds_load_erased_messages isds_message_free \
 		isds_message_copy_free isds_message_status_change_free isds_approval_free \
 		isds_commercial_permission_free isds_credentials_delivery_free \
 		isds_credit_event_free isds_fulltext_result_free \
@@ -208,6 +209,7 @@ isds_DbUserInfoExt2_free_SOURCES	= isds_DbUserInfoExt2_free.c $(common)
 isds_event_free_SOURCES 	= isds_event_free.c $(common)
 isds_envelope_free_SOURCES 	= isds_envelope_free.c $(common)
 isds_document_free_SOURCES 	= isds_document_free.c $(common)
+isds_load_erased_messages_SOURCES = isds_load_erased_messages.c $(common)
 isds_message_free_SOURCES 	= isds_message_free.c $(common)
 isds_message_copy_free_SOURCES 	= isds_message_copy_free.c $(common)
 isds_message_status_change_free_SOURCES	= isds_message_status_change_free.c \
