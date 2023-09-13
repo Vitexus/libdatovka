@@ -670,7 +670,7 @@ void isds_dmMessageAuthor_free(struct isds_dmMessageAuthor **author)
 	zfree(*author);
 }
 
-void isds_erased_message_free(struct erased_message **entry)
+void isds_erased_message_free(struct isds_erased_message **entry)
 {
 	if ((NULL == entry) || (NULL == *entry)) {
 		return;
@@ -17044,7 +17044,7 @@ leave:
  * In case of error @erased_message will be freed.
  */
 static enum isds_error extract_erased_message(struct isds_ctx *context,
-    struct erased_message **erased_message, xmlXPathContext *xpath_ctx)
+    struct isds_erased_message **erased_message, xmlXPathContext *xpath_ctx)
 {
 	enum isds_error err = IE_SUCCESS;
 	xmlXPathObject *result = NULL;
@@ -17209,7 +17209,7 @@ enum isds_error isds_load_erased_messages(struct isds_ctx *context,
 			/* Extract it */
 			xpath_ctx->node = result->nodesetval->nodeTab[i];
 			err = extract_erased_message(context,
-			    (struct erased_message **)(&item->data), xpath_ctx);
+			    (struct isds_erased_message **)(&item->data), xpath_ctx);
 			if (IE_SUCCESS !=err) {
 				goto leave;
 			}

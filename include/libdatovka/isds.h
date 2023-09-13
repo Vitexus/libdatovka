@@ -1193,7 +1193,7 @@ typedef enum isds_asyncReqType {
 /*
  * List of this entries is acquired when querying GetListOfErasedMessages.
  */
-struct erased_message {
+struct isds_erased_message {
 	char *dmID; /* Message ID. */
 	char *dbIDSender; /* Box ID of sender. */
 	char *dmSender; /* Sender name. */
@@ -2695,7 +2695,7 @@ void isds_box_state_period_free(struct isds_box_state_period **period);
 void isds_dmMessageAuthor_free(struct isds_dmMessageAuthor **author);
 
 /* Deallocate struct isds_erased_message recursively and NULL it. */
-void isds_erased_message_free(struct erased_message **entry);
+void isds_erased_message_free(struct isds_erased_message **entry);
 
 /* Copy structure isds_status recursively */
 struct isds_status *isds_status_duplicate(const struct isds_status *src);
