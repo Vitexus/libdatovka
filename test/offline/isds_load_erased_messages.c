@@ -8,7 +8,7 @@
 struct test {
 	char *name;
 	char *file;
-	enum isds_dmOutFormat format;
+	enum isds_data_format format;
 	enum isds_error error;
 };
 
@@ -149,13 +149,13 @@ int main(void) {
 		{
 			.name = "decompressed XML response",
 			.file = SRCDIR "/test/offline/data/GetListOfErasedMessages-async-response-extracted.xml",
-			.format = OUT_XML,
+			.format = FORMAT_XML,
 			.error = IE_SUCCESS
 		},
 		{
 			.name = "decompressed XML response with missing values",
 			.file = SRCDIR "/test/offline/data/GetListOfErasedMessages-missing-entries.xml",
-			.format = OUT_XML,
+			.format = FORMAT_XML,
 			.error = IE_SUCCESS
 		},
 		{

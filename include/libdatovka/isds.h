@@ -1168,19 +1168,19 @@ struct isds_dmMessageAuthor {
  * Used in GetListOfErasedMessages.
  * Described in pril_2/WS_manipulace_s_datovymi_zpravami.pdf.
  */
-typedef enum isds_dmMessageType {
-	MESSAGE_TYPE_SENT,
-	MESSAGE_TYPE_RECEIVED
-} isds_dmMessageType;
+typedef enum isds_message_type {
+	MESSAGE_TYPE_RECEIVED,
+	MESSAGE_TYPE_SENT
+} isds_message_type;
 
 /*
  * Used in GetListOfErasedMessages.
  * Described in pril_2/WS_manipulace_s_datovymi_zpravami.pdf.
  */
-typedef enum isds_dmOutFormat {
-	OUT_XML,
-	OUT_CSV
-} isds_dmOutFormat;
+typedef enum isds_data_format {
+	FORMAT_CSV,
+	FORMAT_XML
+} isds_data_format;
 
 /*
  * Used in PickUpAsyncResponse.
@@ -2326,7 +2326,7 @@ isds_error isds_GetMessageAuthor2(struct isds_ctx *context,
  */
 enum isds_error isds_GetListOfErasedMessages_interval(struct isds_ctx *context,
     const struct tm *from_date, const struct tm *to_date,
-    enum isds_dmMessageType msg_type, enum isds_dmOutFormat out_format,
+    enum isds_message_type msg_type, enum isds_data_format out_format,
     char **async_id);
 
 /*
@@ -2342,7 +2342,7 @@ enum isds_error isds_GetListOfErasedMessages_interval(struct isds_ctx *context,
  */
 enum isds_error isds_GetListOfErasedMessages_month(struct isds_ctx *context,
     unsigned int year, unsigned int month,
-    enum isds_dmMessageType msg_type, enum isds_dmOutFormat out_format,
+    enum isds_message_type msg_type, enum isds_data_format out_format,
     char **async_id);
 
 /*
@@ -2357,7 +2357,7 @@ enum isds_error isds_GetListOfErasedMessages_month(struct isds_ctx *context,
  */
 enum isds_error isds_GetListOfErasedMessages_year(struct isds_ctx *context,
     unsigned int year,
-    enum isds_dmMessageType msg_type, enum isds_dmOutFormat out_format,
+    enum isds_message_type msg_type, enum isds_data_format out_format,
     char **async_id);
 
 /*
@@ -2381,15 +2381,14 @@ enum isds_error isds_PickUpAsyncResponse(struct isds_ctx *context,
 /*
  * Load decompressed asynchronous GetListOfErasedMessages response.
  * @context is session context.
- * @format specifies the format of the list, only OUT_XML is supported.
+ * @format specifies the format of the list, only FORMAT_XML is supported.
  * @buffer is XML encoded uncompressed data.
  * @length is length of buffer in bytes.
  * @erased_messages is automatically reallocated list passed from @buffer.
  */
 enum isds_error isds_load_erased_messages(struct isds_ctx *context,
-        enum isds_dmOutFormat format,
-        const void *buffer, const size_t length,
-        struct isds_list **erased_messages);
+    enum isds_data_format format, const void *buffer, const size_t length,
+    struct isds_list **erased_messages);
 
 /* Retrieve hash of message identified by ID stored in ISDS.
  * @context is session context

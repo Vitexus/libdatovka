@@ -16428,31 +16428,31 @@ leave:
 #undef REQ_NAME
 }
 
-static const char *_isds_dmMessageType2string(enum isds_dmMessageType msg_type)
+static const char *_isds_message_type2string(enum isds_message_type msg_type)
 {
-	static const char *sent = "SENT";
 	static const char *received = "RECEIVED";
+	static const char *sent = "SENT";
 
 	switch (msg_type) {
-	case MESSAGE_TYPE_SENT:
-		return sent;
 	case MESSAGE_TYPE_RECEIVED:
 		return received;
+	case MESSAGE_TYPE_SENT:
+		return sent;
 	default:
 		return NULL;
 	}
 }
 
-static const char *_isds_dmOutFormat2string(enum isds_dmOutFormat out_format)
+static const char *_isds_data_format2string(enum isds_data_format out_format)
 {
-	static const char *xml = "XML";
 	static const char *csv = "CSV";
+	static const char *xml = "XML";
 
 	switch (out_format) {
-	case OUT_XML:
-		return xml;
-	case OUT_CSV:
+	case FORMAT_CSV:
 		return csv;
+	case FORMAT_XML:
+		return xml;
 	default:
 		return NULL;
 	}
@@ -16531,7 +16531,7 @@ leave:
 
 enum isds_error isds_GetListOfErasedMessages_interval(struct isds_ctx *context,
     const struct tm *from_date, const struct tm *to_date,
-    enum isds_dmMessageType msg_type, enum isds_dmOutFormat out_format,
+    enum isds_message_type msg_type, enum isds_data_format out_format,
     char **async_id)
 {
 #define REQ_NAME "GetListOfErasedMessages"
@@ -16607,8 +16607,8 @@ enum isds_error isds_GetListOfErasedMessages_interval(struct isds_ctx *context,
 		INSERT_STRING(request, "dmToDate", string);
 	        zfree(string);
 	}
-	INSERT_STRING(request, "dmMessageType", _isds_dmMessageType2string(msg_type));
-	INSERT_STRING(request, "dmOutFormat", _isds_dmOutFormat2string(out_format));
+	INSERT_STRING(request, "dmMessageType", _isds_message_type2string(msg_type));
+	INSERT_STRING(request, "dmOutFormat", _isds_data_format2string(out_format));
 
 	/* Send request to server and process response */
 	err = send_destroy_request_check_response(context,
@@ -16643,7 +16643,7 @@ leave:
 
 enum isds_error isds_GetListOfErasedMessages_month(struct isds_ctx *context,
     unsigned int year, unsigned int month,
-    enum isds_dmMessageType msg_type, enum isds_dmOutFormat out_format,
+    enum isds_message_type msg_type, enum isds_data_format out_format,
     char **async_id)
 {
 #define REQ_NAME "GetListOfErasedMessages"
@@ -16699,8 +16699,8 @@ enum isds_error isds_GetListOfErasedMessages_month(struct isds_ctx *context,
 
 	INSERT_ULONGINTNOPTR(request, "dmYear", (unsigned long int)year, string);
 	INSERT_ULONGINTNOPTR(request, "dmMonth", (unsigned long int)month, string);
-	INSERT_STRING(request, "dmMessageType", _isds_dmMessageType2string(msg_type));
-	INSERT_STRING(request, "dmOutFormat", _isds_dmOutFormat2string(out_format));
+	INSERT_STRING(request, "dmMessageType", _isds_message_type2string(msg_type));
+	INSERT_STRING(request, "dmOutFormat", _isds_data_format2string(out_format));
 
 	/* Send request to server and process response */
 	err = send_destroy_request_check_response(context,
@@ -16735,7 +16735,7 @@ leave:
 
 enum isds_error isds_GetListOfErasedMessages_year(struct isds_ctx *context,
     unsigned int year,
-    enum isds_dmMessageType msg_type, enum isds_dmOutFormat out_format,
+    enum isds_message_type msg_type, enum isds_data_format out_format,
     char **async_id)
 {
 #define REQ_NAME "GetListOfErasedMessages"
@@ -16787,8 +16787,8 @@ enum isds_error isds_GetListOfErasedMessages_year(struct isds_ctx *context,
 	xmlSetNs(request, isds_ns);
 
 	INSERT_ULONGINTNOPTR(request, "dmYear", (unsigned long int)year, string);
-	INSERT_STRING(request, "dmMessageType", _isds_dmMessageType2string(msg_type));
-	INSERT_STRING(request, "dmOutFormat", _isds_dmOutFormat2string(out_format));
+	INSERT_STRING(request, "dmMessageType", _isds_message_type2string(msg_type));
+	INSERT_STRING(request, "dmOutFormat", _isds_data_format2string(out_format));
 
 	/* Send request to server and process response */
 	err = send_destroy_request_check_response(context,
@@ -17137,7 +17137,7 @@ leave:
 }
 
 enum isds_error isds_load_erased_messages(struct isds_ctx *context,
-        enum isds_dmOutFormat format,
+        enum isds_data_format format,
         const void *buffer, const size_t length,
         struct isds_list **erased_messages)
 {
@@ -17150,7 +17150,7 @@ enum isds_error isds_load_erased_messages(struct isds_ctx *context,
 	if (NULL == context) {
 		return IE_INVALID_CONTEXT;
 	}
-	if (OUT_XML != format) {
+	if (FORMAT_XML != format) {
 		return IE_INVAL;
 	}
 	if ((NULL == buffer) || (0 == length)) {

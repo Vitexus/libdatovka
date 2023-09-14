@@ -126,7 +126,7 @@ int main(void)
 
 			fputs("Getting list of erased messages\n", stdout);
 			err = isds_GetListOfErasedMessages_interval(ctx,
-			    &from_tm, &to_tm, MESSAGE_TYPE_SENT, OUT_XML, &async_id);
+			    &from_tm, &to_tm, MESSAGE_TYPE_SENT, FORMAT_XML, &async_id);
 			if (err != IE_SUCCESS) {
 				fprintf(stderr,
 				    "isds_GetListOfErasedMessages_interval() failed: %s: %s\n",
@@ -149,7 +149,7 @@ int main(void)
 
 			fputs("Getting list of erased messages\n", stdout);
 			err = isds_GetListOfErasedMessages_interval(ctx,
-			    &from_tm, &to_tm, MESSAGE_TYPE_RECEIVED, OUT_XML, &async_id);
+			    &from_tm, &to_tm, MESSAGE_TYPE_RECEIVED, FORMAT_XML, &async_id);
 			if (err != IE_SUCCESS) {
 				fprintf(stderr,
 				    "isds_GetListOfErasedMessages_interval() failed: %s: %s\n",
@@ -178,7 +178,7 @@ int main(void)
 
 			fputs("Getting list of erased messages\n", stdout);
 			err = isds_GetListOfErasedMessages_month(ctx,
-			    year, month, MESSAGE_TYPE_SENT, OUT_CSV, &async_id);
+			    year, month, MESSAGE_TYPE_SENT, FORMAT_CSV, &async_id);
 			if (err != IE_SUCCESS) {
 				fprintf(stderr,
 				    "isds_GetListOfErasedMessages_month() failed: %s: %s\n",
@@ -201,7 +201,7 @@ int main(void)
 
 			fputs("Getting list of erased messages\n", stdout);
 			err = isds_GetListOfErasedMessages_month(ctx,
-			    year, month, MESSAGE_TYPE_RECEIVED, OUT_CSV, &async_id);
+			    year, month, MESSAGE_TYPE_RECEIVED, FORMAT_CSV, &async_id);
 			if (err != IE_SUCCESS) {
 				fprintf(stderr,
 				    "isds_GetListOfErasedMessages_month() failed: %s: %s\n",
@@ -229,7 +229,7 @@ int main(void)
 
 			fputs("Getting list of erased messages\n", stdout);
 			err = isds_GetListOfErasedMessages_year(ctx,
-			    year, MESSAGE_TYPE_SENT, OUT_XML, &async_id);
+			    year, MESSAGE_TYPE_SENT, FORMAT_XML, &async_id);
 			if (err != IE_SUCCESS) {
 				fprintf(stderr,
 				    "isds_GetListOfErasedMessages_year() failed: %s: %s\n",
@@ -252,7 +252,7 @@ int main(void)
 
 			fputs("Getting list of erased messages\n", stdout);
 			err = isds_GetListOfErasedMessages_year(ctx,
-			    year, MESSAGE_TYPE_RECEIVED, OUT_XML, &async_id);
+			    year, MESSAGE_TYPE_RECEIVED, FORMAT_XML, &async_id);
 			if (err != IE_SUCCESS) {
 				fprintf(stderr,
 				    "isds_GetListOfErasedMessages_year() failed: %s: %s\n",
@@ -275,7 +275,7 @@ int main(void)
 
 			fputs("Getting list of erased messages\n", stdout);
 			err = isds_GetListOfErasedMessages_year(ctx,
-			    year, MESSAGE_TYPE_SENT, OUT_CSV, &async_id);
+			    year, MESSAGE_TYPE_SENT, FORMAT_CSV, &async_id);
 			if (err != IE_SUCCESS) {
 				fprintf(stderr,
 				    "isds_GetListOfErasedMessages_year() failed: %s: %s\n",
@@ -298,7 +298,7 @@ int main(void)
 
 			fputs("Getting list of erased messages\n", stdout);
 			err = isds_GetListOfErasedMessages_year(ctx,
-			    year, MESSAGE_TYPE_RECEIVED, OUT_CSV, &async_id);
+			    year, MESSAGE_TYPE_RECEIVED, FORMAT_CSV, &async_id);
 			if (err != IE_SUCCESS) {
 				fprintf(stderr,
 				    "isds_GetListOfErasedMessages_year() failed: %s: %s\n",
@@ -327,9 +327,7 @@ int main(void)
 		    NULL};
 
 		for (const char **aid = async_ids; NULL != *aid; ++aid) {
-#define MAX_LEN 1024
 			pick_up_response_wait(ctx, *aid, "output");
-#undef MAX_LEN
 		}
 	}
 
