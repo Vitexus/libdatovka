@@ -1,3 +1,7 @@
+0.4.1 /
+ * Optimisations inside isds_GetMessageAuthor2(), avoided copying of attribute
+   names.
+
 0.4.0 / 2023-08-23
  * Added functions for ISDS services CreateBigMessage, AuthenticateBigMessage,
    UploadAttachment, DownloadAttachment, SignedBigMessageDownload,
