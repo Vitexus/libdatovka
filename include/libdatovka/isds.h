@@ -610,7 +610,7 @@ struct isds_envelope {
      * life cycle. */
     unsigned long int *dmOrdinal;   /* Ordinal number in list of
                                        incoming/outgoing messages */
-    isds_message_status *dmMessageStatus;  /* Message state */
+    enum isds_message_status *dmMessageStatus; /* Message state */
     long int *dmAttachmentSize;     /* Size of message documents in
                                        kilobytes (rounded). */
     struct isds_timeval *dmDeliveryTime; /* Time of delivery into a box
@@ -888,7 +888,7 @@ struct isds_message_copy {
 /* Message state change event */
 struct isds_message_status_change {
     char *dmID; /* Message ID. */
-    isds_message_status *dmMessageStatus; /* Message state */
+    enum isds_message_status *dmMessageStatus; /* Message state */
     struct isds_timeval *time; /* When the state changed */
 };
 

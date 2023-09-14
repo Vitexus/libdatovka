@@ -1133,8 +1133,8 @@ err = isds_cleanup();
       </refsection>
 
       <refsection>
-        <title><type>isds_message_status</type></title>
-        <synopsis>typedef enum <type>isds_message_status</type>;</synopsis>
+        <title><type>enum isds_message_status</type></title>
+        <synopsis>typedef enum isds_message_status <type>isds_message_status</type>;</synopsis>
         <para>Message status. Known values are:</para>
         <variablelist>
           <varlistentry>
@@ -1852,7 +1852,7 @@ err = isds_cleanup();
           </varlistentry>
 
           <varlistentry>
-            <term><type>isds_message_status *</type><structfield>dmMessageStatus</structfield>;</term>
+            <term><type>enum isds_message_status *</type><structfield>dmMessageStatus</structfield>;</term>
             <listitem><para>Message state.</para></listitem>
           </varlistentry>
 
@@ -2377,6 +2377,158 @@ err = isds_cleanup();
         </variablelist>
       </refsection>
 
+      <refsection>
+        <title>struct <structname>isds_dmMessageAuthor</structname></title>
+        <synopsis>struct <structname>isds_dmMessageAuthor</structname>;</synopsis>
+        <para>Response for GetMessageAuthor2. Members are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><type>isds_sender_type *</type><structfield>userType</structfield>;</term>
+            <listitem><para>Message sender type.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>struct isds_PersonName2 *</type><structfield>personName</structfield>;</term>
+            <listitem><para>Contains pnGivenNames and pnLastName.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>struct tm *</type><structfield>biDate</structfield>;</term>
+            <listitem><para>Date of birth in local time at birth place,
+                only tm_year, tm_mon and tm_mday carry sane
+                value.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>biCity</structfield>;</term>
+            <listitem><para>City of birth.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>biCounty</structfield>;</term>
+            <listitem><para>County of birth (German: Bezirk, Czech: okres).</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>adCode</structfield>;</term>
+            <listitem><para>RUIAN address code.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>fullAddress</structfield>;</term>
+            <listitem><para>Full address.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>_Bool *</type><structfield>robIdent</structfield>;</term>
+            <listitem><para>Flag whether the person is identifiers within the ROB.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title><type>enum isds_message_type</type></title>
+        <synopsis>typedef enum isds_message_type <type>isds_message_type</type>;</synopsis>
+        <para>Specifies the direction of the message - whether the message is
+          received or sent:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>MESSAGE_TYPE_RECEIVED</constant></term>
+            <listitem><para>Specifies a received message.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>MESSAGE_TYPE_SENT</constant></term>
+            <listitem><para>Specifies a sent message.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title><type>enum isds_data_format</type></title>
+        <synopsis>typedef enum isds_data_format <type>isds_data_format</type>;</synopsis>
+        <para>Specifies data format:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>FORMAT_XML</constant></term>
+            <listitem><para>Data in XML format.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><constant>FORMAT_CSV</constant></term>
+            <listitem><para>Data in CSV format.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title><type>enum isds_asyncReqType</type></title>
+        <synopsis>typedef enum isds_asyncReqType <type>isds_asyncReqType</type>;</synopsis>
+        <para>Specifies synchronous request type:</para>
+        <variablelist>
+          <varlistentry>
+            <term><constant>ASYNC_REQ_TYPE_LIST_ERASED</constant></term>
+            <listitem><para>Response for the GetListOfErasedMessages request.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
+
+      <refsection>
+        <title>struct <structname>isds_erased_message</structname></title>
+        <synopsis>struct <structname>isds_erased_message</structname>;</synopsis>
+        <para>Describes entries in the lists of erased messages. Members are:</para>
+        <variablelist>
+          <varlistentry>
+            <term><type>char *</type><structfield>dmID</structfield>;</term>
+            <listitem><para>Message ID.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dbIDSender</structfield>;</term>
+            <listitem><para>Box ID of sender.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmSender</structfield>;</term>
+            <listitem><para>Sender name.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dbIDRecipient</structfield>;</term>
+            <listitem><para>Box ID of recipient.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmRecipient</structfield>;</term>
+            <listitem><para>Recipient name.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmAnnotation</structfield>;</term>
+            <listitem><para>Subject (title) of the message.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>enum isds_message_status *</type><structfield>dmMessageStatus</structfield>;</term>
+            <listitem><para>Message state.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>struct isds_timeval *</type><structfield>dmDeliveryTime</structfield>;</term>
+            <listitem><para>Time of delivery into a box.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>struct isds_timeval *</type><structfield>dmAcceptanceTime</structfield>;</term>
+            <listitem><para>Time of acceptance of the message by a user.</para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><type>char *</type><structfield>dmType</structfield>;</term>
+            <listitem><para>Message type.</para></listitem>
+          </varlistentry>
+        </variablelist>
+      </refsection>
 
     </refsection>
 
