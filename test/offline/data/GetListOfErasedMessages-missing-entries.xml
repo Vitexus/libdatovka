@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<q:dmRecords xmlns:q="http://isds.czechpoint.cz/v20" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <q:dmRecord>
+    <q:dmID>8546621</q:dmID>
+    <q:dbIDSender>4nwahuq</q:dbIDSender>
+    <q:dmSender>Řád rytířů Jedi</q:dmSender>
+    <q:dbIDRecipient>qrdae26</q:dbIDRecipient>
+    <q:dmRecipient>Barbucha Holding</q:dmRecipient>
+    <q:dmAnnotation>test vodz a message author 2</q:dmAnnotation>
+    <q:dmMessageStatus>6</q:dmMessageStatus>
+    <q:dmDeliveryTime>2023-01-10T14:31:31.772+01:00</q:dmDeliveryTime>
+    <q:dmAcceptanceTime>2023-01-10T14:31:40.458+01:00</q:dmAcceptanceTime>
+    <q:dmType>V</q:dmType>
+  </q:dmRecord>
+  <q:dmRecord>
+    <q:dmID>8546621</q:dmID>
+  </q:dmRecord>
+  <q:dmRecord>
+    <q:dbIDSender>4nwahuq</q:dbIDSender>
+  </q:dmRecord>
+  <q:dmRecord>
+    <q:dmSender>Řád rytířů Jedi</q:dmSender>
+  </q:dmRecord>
+  <q:dmRecord>
+    <q:dbIDRecipient>qrdae26</q:dbIDRecipient>
+  </q:dmRecord>
+  <q:dmRecord>
+    <q:dmRecipient>Barbucha Holding</q:dmRecipient>
+  </q:dmRecord>
+  <q:dmRecord>
+    <q:dmAnnotation>test vodz a message author 2</q:dmAnnotation>
+  </q:dmRecord>
+  <q:dmRecord>
+    <q:dmMessageStatus>6</q:dmMessageStatus>
+  </q:dmRecord>
+  <q:dmRecord>
+    <q:dmDeliveryTime>2023-01-10T14:31:31.772+01:00</q:dmDeliveryTime>
+  </q:dmRecord>
+  <q:dmRecord>
+    <q:dmAcceptanceTime>2023-01-10T14:31:40.458+01:00</q:dmAcceptanceTime>
+  </q:dmRecord>
+  <q:dmRecord>
+    <q:dmType>V</q:dmType>
+  </q:dmRecord>
+  <q:dmRecord>
+  </q:dmRecord>
+</q:dmRecords>

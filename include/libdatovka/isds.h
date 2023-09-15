@@ -326,7 +326,7 @@ typedef enum {
 } isds_privileges;
 
 /* Message status */
-typedef enum {
+typedef enum isds_message_status {
     MESSAGESTATE_SENT = 0x2,            /* Message has been put into ISDS */
     MESSAGESTATE_STAMPED = 0x4,         /* Message stamped by TSA */
     MESSAGESTATE_INFECTED = 0x8,        /* Message included viruses,
@@ -610,7 +610,7 @@ struct isds_envelope {
      * life cycle. */
     unsigned long int *dmOrdinal;   /* Ordinal number in list of
                                        incoming/outgoing messages */
-    isds_message_status *dmMessageStatus;  /* Message state */
+    enum isds_message_status *dmMessageStatus; /* Message state */
     long int *dmAttachmentSize;     /* Size of message documents in
                                        kilobytes (rounded). */
     struct isds_timeval *dmDeliveryTime; /* Time of delivery into a box
@@ -888,7 +888,7 @@ struct isds_message_copy {
 /* Message state change event */
 struct isds_message_status_change {
     char *dmID; /* Message ID. */
-    isds_message_status *dmMessageStatus; /* Message state */
+    enum isds_message_status *dmMessageStatus; /* Message state */
     struct isds_timeval *time; /* When the state changed */
 };
 
@@ -1162,6 +1162,49 @@ struct isds_dmMessageAuthor {
     char *adCode; /* RUIAN address code */
     char *fullAddress;
     _Bool *robIdent; /* Flag whether the person is identifiers within the ROB. */
+};
+
+/*
+ * Used in GetListOfErasedMessages.
+ * Described in pril_2/WS_manipulace_s_datovymi_zpravami.pdf.
+ */
+typedef enum isds_message_type {
+	MESSAGE_TYPE_RECEIVED,
+	MESSAGE_TYPE_SENT
+} isds_message_type;
+
+/*
+ * Used in GetListOfErasedMessages.
+ * Described in pril_2/WS_manipulace_s_datovymi_zpravami.pdf.
+ */
+typedef enum isds_data_format {
+	FORMAT_CSV,
+	FORMAT_XML
+} isds_data_format;
+
+/*
+ * Used in PickUpAsyncResponse.
+ * Described in pril_2/WS_manipulace_s_datovymi_zpravami.pdf.
+ */
+typedef enum isds_asyncReqType {
+	ASYNC_REQ_TYPE_LIST_ERASED
+} isds_asyncReqType;
+
+/*
+ * List of this entries is acquired when querying GetListOfErasedMessages.
+ */
+struct isds_erased_message {
+	char *dmID; /* Message ID. */
+	char *dbIDSender; /* Box ID of sender. */
+	char *dmSender; /* Sender name. */
+	char *dbIDRecipient; /* Box ID of recipient. */
+	char *dmRecipient; /* Recipient name. */
+	char *dmAnnotation; /* Subject (title) of the message. */
+	enum isds_message_status *dmMessageStatus;  /* Message state. */
+	struct isds_timeval *dmDeliveryTime; /* Time of delivery into a box. */
+	struct isds_timeval *dmAcceptanceTime; /* Time of acceptance of the
+	                                          message by a user. */
+	char *dmType; /* Message type. */
 };
 
 /* Initialize ISDS library.
@@ -2268,6 +2311,85 @@ isds_error isds_get_message_sender(struct isds_ctx *context,
 isds_error isds_GetMessageAuthor2(struct isds_ctx *context,
     const char *message_id, struct isds_dmMessageAuthor **author);
 
+/*
+ * Request list of erased messages for given interval.
+ * @context is session context
+ * @from_date is first day of specified interval. Only tm_year, tm_mon and
+ * tm_mday carry sane values.
+ * @to_date is last day of specified interval. Only tm_year, tm_mon and tm_mday
+ * carry sane values.
+ * @msg_type specifies whether sent or erased messages should be listed.
+ * @out_format specifies the format of the resulting list.
+ * @async_id is automatically reallocated string containing the asynchronous
+ * transaction identifier. Use isds_PickUpAsyncResponse() to acquire requested
+ * data.
+ */
+enum isds_error isds_GetListOfErasedMessages_interval(struct isds_ctx *context,
+    const struct tm *from_date, const struct tm *to_date,
+    enum isds_message_type msg_type, enum isds_data_format out_format,
+    char **async_id);
+
+/*
+ * Request list of erased messages for given interval.
+ * @context is session context
+ * @year is the year of the month
+ * @month is the requested month, use values 1 to 12.
+ * @msg_type specifies whether sent or erased messages should be listed.
+ * @out_format specifies the format of the resulting list.
+ * @async_id is automatically reallocated string containing the asynchronous
+ * transaction identifier. Use isds_PickUpAsyncResponse() to acquire requested
+ * data.
+ */
+enum isds_error isds_GetListOfErasedMessages_month(struct isds_ctx *context,
+    unsigned int year, unsigned int month,
+    enum isds_message_type msg_type, enum isds_data_format out_format,
+    char **async_id);
+
+/*
+ * Request list of erased messages for given interval.
+ * @context is session context
+ * @year is the year
+ * @msg_type specifies whether sent or erased messages should be listed.
+ * @out_format specifies the format of the resulting list.
+ * @async_id is automatically reallocated string containing the asynchronous
+ * transaction identifier. Use isds_PickUpAsyncResponse() to acquire requested
+ * data.
+ */
+enum isds_error isds_GetListOfErasedMessages_year(struct isds_ctx *context,
+    unsigned int year,
+    enum isds_message_type msg_type, enum isds_data_format out_format,
+    char **async_id);
+
+/*
+ * Pick up asynchronous response data.
+ * @context is session context
+ * @async_id is the asynchronous transaction identifier
+ * @req_type asynchronous request type
+ * @output_data is pointer to auto-allocated memory where to store the
+ * downloaded data blob. Caller must free it.
+ * @output_length is pointer where to store @output_data size in bytes
+ * @return
+ *  IE_SUCCESS if response has been successfully downloaded
+ *  IE_PARTIAL_SUCCESS if the response is not available yet,
+ *      try calling isds_PickUpAsyncResponse() later
+ *  other code for other errors
+ */
+enum isds_error isds_PickUpAsyncResponse(struct isds_ctx *context,
+    const char *async_id, enum isds_asyncReqType req_type,
+    void **output_data, size_t *output_length);
+
+/*
+ * Load decompressed asynchronous GetListOfErasedMessages response.
+ * @context is session context.
+ * @format specifies the format of the list, only FORMAT_XML is supported.
+ * @buffer is XML encoded uncompressed data.
+ * @length is length of buffer in bytes.
+ * @erased_messages is automatically reallocated list passed from @buffer.
+ */
+enum isds_error isds_load_erased_messages(struct isds_ctx *context,
+    enum isds_data_format format, const void *buffer, const size_t length,
+    struct isds_list **erased_messages);
+
 /* Retrieve hash of message identified by ID stored in ISDS.
  * @context is session context
  * @message_id is message identifier
@@ -2367,7 +2489,7 @@ enum isds_error isds_AuthenticateBigMessage_mtomxop(struct isds_ctx *context,
  * @input_length is @input_data size in bytes
  * @output_data is pointer to auto-allocated memory where to store re-signed
  * input data blob. Caller must free it.
- * @output_data is pointer where to store @output_data size in bytes
+ * @output_length is pointer where to store @output_data size in bytes
  * @valid_to is pointer to auto-allocated date of time stamp expiration.
  * Only tm_year, tm_mon and tm_mday will be set. Pass NULL, if you don't care.
  * @return
@@ -2570,6 +2692,9 @@ void isds_box_state_period_free(struct isds_box_state_period **period);
 
 /* Deallocate struct isds_dmMessageAuthor recursively and NULL it. */
 void isds_dmMessageAuthor_free(struct isds_dmMessageAuthor **author);
+
+/* Deallocate struct isds_erased_message recursively and NULL it. */
+void isds_erased_message_free(struct isds_erased_message **entry);
 
 /* Copy structure isds_status recursively */
 struct isds_status *isds_status_duplicate(const struct isds_status *src);
