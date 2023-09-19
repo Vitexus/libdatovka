@@ -995,7 +995,8 @@ err = isds_cleanup();
 
           <varlistentry>
             <term><constant>DBTYPE_PFO_INSSPR</constant></term>
-            <listitem><para>Administrator of insolvency.</para></listitem>
+            <listitem><para>Administrator of insolvency (stopped being used,
+                replaced with <abbrev>OVM_PFO</abbrev>).</para></listitem>
           </varlistentry>
 
           <varlistentry>
