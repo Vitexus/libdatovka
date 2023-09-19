@@ -16877,7 +16877,7 @@ enum isds_error isds_PickUpAsyncResponse(struct isds_ctx *context,
 	const char *meanings[] = {
 	    N_("Evidence of asynchronous responses has been erased, repeat the complete asynchronous request"),
 	    N_("The asynchronous response has not been processed yet, try picking up the response later"),
-	    N_("Unclaimed asynchronous response has been erased, repeat the complete asynchronous request")
+	    N_("Asynchronous response has been erased, repeat the complete asynchronous request")
 	};
 	const isds_error errors[] = {
 	    IE_ISDS,
