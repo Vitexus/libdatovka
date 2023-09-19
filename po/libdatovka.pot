@@ -2191,8 +2191,8 @@ msgstr ""
 
 #: src/isds.c:16880
 msgid ""
-"Unclaimed asynchronous response has been erased, repeat the complete "
-"asynchronous request"
+"Asynchronous response has been erased, repeat the complete asynchronous "
+"request"
 msgstr ""
 
 #: src/isds.c:16912

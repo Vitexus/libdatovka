@@ -2293,8 +2293,7 @@ msgstr ""
 msgid ""
 "Asynchronous response has been erased, repeat the complete asynchronous "
 "request"
-msgstr ""
-"Asynchronní odpověď byla smazána, zopakujte celý asynchronní požadavek"
+msgstr "Asynchronní odpověď byla smazána, zopakujte celý asynchronní požadavek"
 
 #: src/isds.c:16912
 msgid "NULL pointer provided for output request blob"
@@ -2303,8 +2302,7 @@ msgstr "Pro výstupní data byl předán ukazatel NULL"
 #: src/isds.c:16990
 #, c-format
 msgid "Received unexpected asynchronous response type `%s' but expected `%s'"
-msgstr ""
-"Obdržen neočekávaný typ asynchronní odpovědi „%s“, byl očekáván „%s“"
+msgstr "Obdržen neočekávaný typ asynchronní odpovědi „%s“, byl očekáván „%s“"
 
 #: src/isds.c:17004
 msgid "Error while Base64-decoding asynchronous response data"
