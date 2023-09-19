@@ -285,7 +285,7 @@ typedef enum {
     DBTYPE_PFO = 30,
     DBTYPE_PFO_ADVOK = 31,
     DBTYPE_PFO_DANPOR = 32,
-    DBTYPE_PFO_INSSPR = 33,
+    DBTYPE_PFO_INSSPR = 33,     /* This type has been replaced with OVM_PFO. */
     DBTYPE_PFO_AUDITOR = 34,
     DBTYPE_PFO_ZNALEC = 35,
     DBTYPE_PFO_TLUMOCNIK = 36,
