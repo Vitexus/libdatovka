@@ -1,6 +1,15 @@
 0.4.1 /
  * Optimisations inside isds_GetMessageAuthor2(), avoided copying of attribute
    names.
+ * Added functions isds_GetListOfErasedMessages_interval(),
+   isds_GetListOfErasedMessages_month() and isds_GetListOfErasedMessages_year()
+   which implement the GetListOfErasedMessages ISDS operation.
+ * Added function isds_PickUpAsyncResponse() which implements the
+   PickUpAsyncResponse ISDS operation.
+ * Added function isds_load_erased_messages() which can be used to read data
+   from a XML-formatted decompressed asynchronous GetListOfErasedMessages
+   response. Actual decompression of obtained ZIP-compressed data isn't handled
+   by this library.
 
 0.4.0 / 2023-08-23
  * Added functions for ISDS services CreateBigMessage, AuthenticateBigMessage,
