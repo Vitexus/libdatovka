@@ -289,6 +289,9 @@ typedef enum {
     DBTYPE_PFO_AUDITOR = 34,
     DBTYPE_PFO_ZNALEC = 35,
     DBTYPE_PFO_TLUMOCNIK = 36,
+    DBTYPE_PFO_ARCH = 37,
+    DBTYPE_PFO_AIAT = 38,
+    DBTYPE_PFO_AZI = 39,
     DBTYPE_PFO_REQ = 50,
     DBTYPE_FO = 40
 } isds_DbType;

@@ -65,6 +65,9 @@ int main(void) {
         DBTYPE_PFO_AUDITOR,
         DBTYPE_PFO_ZNALEC,
         DBTYPE_PFO_TLUMOCNIK,
+        DBTYPE_PFO_ARCH,
+        DBTYPE_PFO_AIAT,
+        DBTYPE_PFO_AZI,
         DBTYPE_PFO_REQ,
         DBTYPE_FO
     };
@@ -87,6 +90,9 @@ int main(void) {
         BAD_CAST "PFO_AUDITOR",
         BAD_CAST "PFO_ZNALEC",
         BAD_CAST "PFO_TLUMOCNIK",
+        BAD_CAST "PFO_ARCH",
+        BAD_CAST "PFO_AIAT",
+        BAD_CAST "PFO_AZI",
         BAD_CAST "PFO_REQ",
         BAD_CAST "FO"
     };

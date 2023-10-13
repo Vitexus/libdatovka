@@ -2845,6 +2845,12 @@ static isds_error string2isds_DbType(xmlChar *string, isds_DbType *type) {
         *type = DBTYPE_PFO_ZNALEC;
     else if (!xmlStrcmp(string, BAD_CAST "PFO_TLUMOCNIK"))
         *type = DBTYPE_PFO_TLUMOCNIK;
+    else if (!xmlStrcmp(string, BAD_CAST "PFO_ARCH"))
+        *type = DBTYPE_PFO_ARCH;
+    else if (!xmlStrcmp(string, BAD_CAST "PFO_AIAT"))
+        *type = DBTYPE_PFO_AIAT;
+    else if (!xmlStrcmp(string, BAD_CAST "PFO_AZI"))
+        *type = DBTYPE_PFO_AZI;
     else if (!xmlStrcmp(string, BAD_CAST "PFO_REQ"))
         *type = DBTYPE_PFO_REQ;
     else if (!xmlStrcmp(string, BAD_CAST "PO"))
@@ -2887,6 +2893,9 @@ static const xmlChar *isds_DbType2string(const isds_DbType type) {
             case DBTYPE_PFO_AUDITOR: return(BAD_CAST "PFO_AUDITOR"); break;
             case DBTYPE_PFO_ZNALEC: return(BAD_CAST "PFO_ZNALEC"); break;
             case DBTYPE_PFO_TLUMOCNIK: return(BAD_CAST "PFO_TLUMOCNIK"); break;
+            case DBTYPE_PFO_ARCH: return(BAD_CAST "PFO_ARCH"); break;
+            case DBTYPE_PFO_AIAT: return(BAD_CAST "PFO_AIAT"); break;
+            case DBTYPE_PFO_AZI: return(BAD_CAST "PFO_AZI"); break;
             case DBTYPE_PFO_REQ: return(BAD_CAST "PFO_REQ"); break;
             case DBTYPE_PO: return(BAD_CAST "PO"); break;
             case DBTYPE_PO_ZAK: return(BAD_CAST "PO_ZAK"); break;

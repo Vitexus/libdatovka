@@ -103,6 +103,9 @@ void print_DbType(const long int *type) {
             case DBTYPE_PFO_AUDITOR: printf("PFO_AUDITOR\n"); break;
             case DBTYPE_PFO_ZNALEC: printf("PFO_ZNALEC\n"); break;
             case DBTYPE_PFO_TLUMOCNIK: printf("PFO_TLUMOCNIK\n"); break;
+            case DBTYPE_PFO_ARCH: printf("PFO_ARCH\n"); break;
+            case DBTYPE_PFO_AIAT: printf("PFO_AIAT\n"); break;
+            case DBTYPE_PFO_AZI: printf("PFO_AZI\n"); break;
             case DBTYPE_PFO_REQ: printf("PFO_REQ\n"); break;
             case DBTYPE_PO: printf("PO\n"); break;
             case DBTYPE_PO_ZAK: printf("PO_ZAK\n"); break;

@@ -39,6 +39,9 @@ PFO_INSSPR     33      Administrator of insolvency
 PFO_AUDITOR    34      Statutory auditor
 PFO_ZNALEC     35      Expert witness
 PFO_TLUMOCNIK  36      Sworn translator
+PFO_ARCH       37      Architect
+PFO_AIAT       38      Authorised engineer / technician
+PFO_AZI        39      Authorised geodetics engineer
 PFO_REQ        50      Person in business on request
 FO             40      Standard person
 
