@@ -796,6 +796,9 @@ struct isds_dmFile {
 	enum isds_FileMetaType dmFileMetaType; /* Document type to create hierarchy. */
 	char *dmMimeType; /* MIME type of the data; Mandatory. */
 	char *dmFileDescr; /* Document name (title). E.g. file name; Mandatory. */
+	char *dmFileGuid; /* Message-local document identifier; Optional. */
+	char *dmUpFileGuid; /* Reference to upper document identifier
+                               (dmFileGuid); Optional. */
 };
 
 /*
@@ -815,6 +818,9 @@ struct isds_dmAtt {
 struct isds_dmExtFile {
 	enum isds_FileMetaType dmFileMetaType; /* Document type to create hierarchy. */
 	struct isds_dmAtt dmAtt; /* Complete attachment identification. */
+	char *dmFileGuid; /* Message-local document identifier; Optional. */
+	char *dmUpFileGuid; /* Reference to upper document identifier
+                               (dmFileGuid); Optional. */
 };
 
 /* Raw message representation content type.

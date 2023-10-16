@@ -471,6 +471,8 @@ void isds_dmFile_free(struct isds_dmFile **file)
 	/* (*file)->dmFileMetaType */
 	free((*file)->dmMimeType);
 	free((*file)->dmFileDescr);
+	free((*file)->dmFileGuid);
+	free((*file)->dmUpFileGuid);
 
 	free(*file);
 	*file = NULL;
@@ -503,6 +505,9 @@ void isds_dmExtFile_free(struct isds_dmExtFile **ext_file)
 	free((*ext_file)->dmAtt.dmAttHash1Alg);
 	free((*ext_file)->dmAtt.dmAttHash2);
 	free((*ext_file)->dmAtt.dmAttHash2Alg);
+
+	free((*ext_file)->dmFileGuid);
+	free((*ext_file)->dmUpFileGuid);
 
 	free(*ext_file);
 	*ext_file = NULL;
@@ -6305,9 +6310,11 @@ static isds_error insert_document(struct isds_ctx *context,
     }
     INSERT_STRING_ATTRIBUTE(file, "dmFileMetaType", string);
 
+    /* @dmFileGuid is optional */
     if (document->dmFileGuid) {
         INSERT_STRING_ATTRIBUTE(file, "dmFileGuid", document->dmFileGuid);
     }
+    /* @dmUpFileGuid is optional */
     if (document->dmUpFileGuid) {
         INSERT_STRING_ATTRIBUTE(file, "dmUpFileGuid", document->dmUpFileGuid);
     }
@@ -6479,6 +6486,15 @@ static enum isds_error insert_ext_file(struct isds_ctx *context,
 		goto leave;
 	}
 	INSERT_STRING_ATTRIBUTE(file, "dmAttHash2Alg", ext_file->dmAtt.dmAttHash2Alg);
+
+	/* @dmFileGuid is optional */
+	if (NULL != ext_file->dmFileGuid) {
+		INSERT_STRING_ATTRIBUTE(file, "dmFileGuid", ext_file->dmFileGuid);
+	}
+	/* @dmUpFileGuid is optional */
+	if (NULL != ext_file->dmUpFileGuid) {
+		INSERT_STRING_ATTRIBUTE(file, "dmUpFileGuid", ext_file->dmUpFileGuid);
+	}
 
 leave:
 	return err;
@@ -12631,6 +12647,15 @@ static enum isds_error insert_dmFile(struct isds_ctx *context,
 	}
 	INSERT_STRING_ATTRIBUTE(file_node, "dmFileDescr", dm_file->dmFileDescr);
 
+	/* @dmFileGuid is optional */
+	if (NULL != dm_file->dmFileGuid) {
+		INSERT_STRING_ATTRIBUTE(file_node, "dmFileGuid", dm_file->dmFileGuid);
+	}
+	/* @dmUpFileGuid is optional */
+	if (NULL != dm_file->dmUpFileGuid) {
+		INSERT_STRING_ATTRIBUTE(file_node, "dmUpFileGuid", dm_file->dmUpFileGuid);
+	}
+
 leave:
 	return err;
 }
@@ -13121,6 +13146,8 @@ static enum isds_error extract_dmFile(struct isds_ctx *context,
 	}
 
 	EXTRACT_STRING_ATTRIBUTE("dmFileDescr", (*dm_file)->dmFileDescr, 0)
+	EXTRACT_STRING_ATTRIBUTE("dmFileGuid", (*dm_file)->dmFileGuid, 0)
+	EXTRACT_STRING_ATTRIBUTE("dmUpFileGuid", (*dm_file)->dmUpFileGuid, 0)
 
 	if (NULL == parts) {
 		/*
