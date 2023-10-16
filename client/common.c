@@ -742,6 +742,8 @@ void print_dmFile(const struct isds_dmFile *dm_file)
 	print_metaType(stdout, dm_file->dmFileMetaType);
 	printf("\t\tdmMimeType = %s\n", dm_file->dmMimeType);
 	printf("\t\tdmFileDescr = %s\n", dm_file->dmFileDescr);
+	printf("\t\tdmFileGuid = %s\n", dm_file->dmFileGuid);
+	printf("\t\tdmUpFileGuid = %s\n", dm_file->dmUpFileGuid);
 	fputs("\t}\n", stdout);
 }
 

@@ -140,6 +140,9 @@ int main(void)
 
 		dm_file.dmFileDescr = (char *)file_name;
 
+		dm_file.dmFileGuid = "FileGuid";
+		dm_file.dmUpFileGuid = "UpFileGuid";
+
 		err = isds_UploadAttachment_mtomxop(ctx, &dm_file, &dm_att);
 		if (err != IE_SUCCESS) {
 			fprintf(stderr, "isds_UploadAttachment_mtomxop() failed: %s: %s\n",
@@ -226,7 +229,9 @@ leave:
 			/* XXX: This should fail */
 			/* .dmFileMetaType = FILEMETATYPE_ENCLOSURE, */
 			.dmFileMetaType = FILEMETATYPE_MAIN,
-			.dmAtt = *dm_att
+			.dmAtt = *dm_att,
+			.dmFileGuid = "0",
+			.dmUpFileGuid = "0";
 		};
 
 		struct isds_list ext_file_main_item = {
