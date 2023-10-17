@@ -12571,13 +12571,15 @@ leave:
  * @context is session context
  * @dm_file is a structure containing attachment description
  * @parent_node is parent XML elemen
- * @ignore_meta_type indicates whether @dm_file->dmFileMetaType should be inserted
+ * @ignore_meta_typeand_guid indicates whether @dm_file->dmFileMetaType,
+ *                           @dm_file->dmFileGuid and @dm_file->dmUpFileGuid
+ *                           should be inserted
  * @xop_cid XOP content identifier, pass null value to insert Base64 encoded content
  * @return error code.
  */
 static enum isds_error insert_dmFile(struct isds_ctx *context,
     const struct isds_dmFile *dm_file, xmlNode *parent_node,
-    _Bool ignore_meta_type, const char *xop_cid)
+    _Bool ignore_meta_type_and_guid, const char *xop_cid)
 {
 	enum isds_error err = IE_SUCCESS;
 	xmlNode *file_node;
@@ -12617,7 +12619,7 @@ static enum isds_error insert_dmFile(struct isds_ctx *context,
 		goto leave;
 	}
 
-	if (!ignore_meta_type) {
+	if (!ignore_meta_type_and_guid) {
 		const xmlChar *string = isds_FileMetaType2string(dm_file->dmFileMetaType);
 		if (NULL == string) {
 			isds_printf_message(context,
@@ -12647,13 +12649,15 @@ static enum isds_error insert_dmFile(struct isds_ctx *context,
 	}
 	INSERT_STRING_ATTRIBUTE(file_node, "dmFileDescr", dm_file->dmFileDescr);
 
-	/* @dmFileGuid is optional */
-	if (NULL != dm_file->dmFileGuid) {
-		INSERT_STRING_ATTRIBUTE(file_node, "dmFileGuid", dm_file->dmFileGuid);
-	}
-	/* @dmUpFileGuid is optional */
-	if (NULL != dm_file->dmUpFileGuid) {
-		INSERT_STRING_ATTRIBUTE(file_node, "dmUpFileGuid", dm_file->dmUpFileGuid);
+	if (!ignore_meta_type_and_guid) {
+		/* @dmFileGuid is optional */
+		if (NULL != dm_file->dmFileGuid) {
+			INSERT_STRING_ATTRIBUTE(file_node, "dmFileGuid", dm_file->dmFileGuid);
+		}
+		/* @dmUpFileGuid is optional */
+		if (NULL != dm_file->dmUpFileGuid) {
+			INSERT_STRING_ATTRIBUTE(file_node, "dmUpFileGuid", dm_file->dmUpFileGuid);
+		}
 	}
 
 leave:
