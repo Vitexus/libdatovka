@@ -12571,9 +12571,9 @@ leave:
  * @context is session context
  * @dm_file is a structure containing attachment description
  * @parent_node is parent XML elemen
- * @ignore_meta_typeand_guid indicates whether @dm_file->dmFileMetaType,
- *                           @dm_file->dmFileGuid and @dm_file->dmUpFileGuid
- *                           should be inserted
+ * @ignore_meta_type_and_guid indicates whether @dm_file->dmFileMetaType,
+ *                            @dm_file->dmFileGuid and @dm_file->dmUpFileGuid
+ *                            should be inserted
  * @xop_cid XOP content identifier, pass null value to insert Base64 encoded content
  * @return error code.
  */
