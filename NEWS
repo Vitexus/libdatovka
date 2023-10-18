@@ -10,6 +10,10 @@
    from a XML-formatted decompressed asynchronous GetListOfErasedMessages
    response. Actual decompression of obtained ZIP-compressed data isn't handled
    by this library.
+ * Added support for the new PFO_ARCH, PFO_AIAT and PFO_AZI data-box types
+   introduced in the version 3.04 of the XSD and WSDL definitions.
+ * Added new elements dmFileGuid and dmUpFileGuid into struct isds_dmFile and
+   struct isds_dmExtFile.
 
 0.4.0 / 2023-08-23
  * Added functions for ISDS services CreateBigMessage, AuthenticateBigMessage,
