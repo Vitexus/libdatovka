@@ -471,6 +471,8 @@ void isds_dmFile_free(struct isds_dmFile **file)
 	/* (*file)->dmFileMetaType */
 	free((*file)->dmMimeType);
 	free((*file)->dmFileDescr);
+	free((*file)->dmFileGuid);
+	free((*file)->dmUpFileGuid);
 
 	free(*file);
 	*file = NULL;
@@ -503,6 +505,9 @@ void isds_dmExtFile_free(struct isds_dmExtFile **ext_file)
 	free((*ext_file)->dmAtt.dmAttHash1Alg);
 	free((*ext_file)->dmAtt.dmAttHash2);
 	free((*ext_file)->dmAtt.dmAttHash2Alg);
+
+	free((*ext_file)->dmFileGuid);
+	free((*ext_file)->dmUpFileGuid);
 
 	free(*ext_file);
 	*ext_file = NULL;
@@ -2845,6 +2850,12 @@ static isds_error string2isds_DbType(xmlChar *string, isds_DbType *type) {
         *type = DBTYPE_PFO_ZNALEC;
     else if (!xmlStrcmp(string, BAD_CAST "PFO_TLUMOCNIK"))
         *type = DBTYPE_PFO_TLUMOCNIK;
+    else if (!xmlStrcmp(string, BAD_CAST "PFO_ARCH"))
+        *type = DBTYPE_PFO_ARCH;
+    else if (!xmlStrcmp(string, BAD_CAST "PFO_AIAT"))
+        *type = DBTYPE_PFO_AIAT;
+    else if (!xmlStrcmp(string, BAD_CAST "PFO_AZI"))
+        *type = DBTYPE_PFO_AZI;
     else if (!xmlStrcmp(string, BAD_CAST "PFO_REQ"))
         *type = DBTYPE_PFO_REQ;
     else if (!xmlStrcmp(string, BAD_CAST "PO"))
@@ -2887,6 +2898,9 @@ static const xmlChar *isds_DbType2string(const isds_DbType type) {
             case DBTYPE_PFO_AUDITOR: return(BAD_CAST "PFO_AUDITOR"); break;
             case DBTYPE_PFO_ZNALEC: return(BAD_CAST "PFO_ZNALEC"); break;
             case DBTYPE_PFO_TLUMOCNIK: return(BAD_CAST "PFO_TLUMOCNIK"); break;
+            case DBTYPE_PFO_ARCH: return(BAD_CAST "PFO_ARCH"); break;
+            case DBTYPE_PFO_AIAT: return(BAD_CAST "PFO_AIAT"); break;
+            case DBTYPE_PFO_AZI: return(BAD_CAST "PFO_AZI"); break;
             case DBTYPE_PFO_REQ: return(BAD_CAST "PFO_REQ"); break;
             case DBTYPE_PO: return(BAD_CAST "PO"); break;
             case DBTYPE_PO_ZAK: return(BAD_CAST "PO_ZAK"); break;
@@ -6296,9 +6310,11 @@ static isds_error insert_document(struct isds_ctx *context,
     }
     INSERT_STRING_ATTRIBUTE(file, "dmFileMetaType", string);
 
+    /* @dmFileGuid is optional */
     if (document->dmFileGuid) {
         INSERT_STRING_ATTRIBUTE(file, "dmFileGuid", document->dmFileGuid);
     }
+    /* @dmUpFileGuid is optional */
     if (document->dmUpFileGuid) {
         INSERT_STRING_ATTRIBUTE(file, "dmUpFileGuid", document->dmUpFileGuid);
     }
@@ -6470,6 +6486,15 @@ static enum isds_error insert_ext_file(struct isds_ctx *context,
 		goto leave;
 	}
 	INSERT_STRING_ATTRIBUTE(file, "dmAttHash2Alg", ext_file->dmAtt.dmAttHash2Alg);
+
+	/* @dmFileGuid is optional */
+	if (NULL != ext_file->dmFileGuid) {
+		INSERT_STRING_ATTRIBUTE(file, "dmFileGuid", ext_file->dmFileGuid);
+	}
+	/* @dmUpFileGuid is optional */
+	if (NULL != ext_file->dmUpFileGuid) {
+		INSERT_STRING_ATTRIBUTE(file, "dmUpFileGuid", ext_file->dmUpFileGuid);
+	}
 
 leave:
 	return err;
@@ -12546,13 +12571,15 @@ leave:
  * @context is session context
  * @dm_file is a structure containing attachment description
  * @parent_node is parent XML elemen
- * @ignore_meta_type indicates whether @dm_file->dmFileMetaType should be inserted
+ * @ignore_meta_type_and_guid indicates whether @dm_file->dmFileMetaType,
+ *                            @dm_file->dmFileGuid and @dm_file->dmUpFileGuid
+ *                            should be inserted
  * @xop_cid XOP content identifier, pass null value to insert Base64 encoded content
  * @return error code.
  */
 static enum isds_error insert_dmFile(struct isds_ctx *context,
     const struct isds_dmFile *dm_file, xmlNode *parent_node,
-    _Bool ignore_meta_type, const char *xop_cid)
+    _Bool ignore_meta_type_and_guid, const char *xop_cid)
 {
 	enum isds_error err = IE_SUCCESS;
 	xmlNode *file_node;
@@ -12592,7 +12619,7 @@ static enum isds_error insert_dmFile(struct isds_ctx *context,
 		goto leave;
 	}
 
-	if (!ignore_meta_type) {
+	if (!ignore_meta_type_and_guid) {
 		const xmlChar *string = isds_FileMetaType2string(dm_file->dmFileMetaType);
 		if (NULL == string) {
 			isds_printf_message(context,
@@ -12621,6 +12648,17 @@ static enum isds_error insert_dmFile(struct isds_ctx *context,
 		goto leave;
 	}
 	INSERT_STRING_ATTRIBUTE(file_node, "dmFileDescr", dm_file->dmFileDescr);
+
+	if (!ignore_meta_type_and_guid) {
+		/* @dmFileGuid is optional */
+		if (NULL != dm_file->dmFileGuid) {
+			INSERT_STRING_ATTRIBUTE(file_node, "dmFileGuid", dm_file->dmFileGuid);
+		}
+		/* @dmUpFileGuid is optional */
+		if (NULL != dm_file->dmUpFileGuid) {
+			INSERT_STRING_ATTRIBUTE(file_node, "dmUpFileGuid", dm_file->dmUpFileGuid);
+		}
+	}
 
 leave:
 	return err;
@@ -13112,6 +13150,8 @@ static enum isds_error extract_dmFile(struct isds_ctx *context,
 	}
 
 	EXTRACT_STRING_ATTRIBUTE("dmFileDescr", (*dm_file)->dmFileDescr, 0)
+	EXTRACT_STRING_ATTRIBUTE("dmFileGuid", (*dm_file)->dmFileGuid, 0)
+	EXTRACT_STRING_ATTRIBUTE("dmUpFileGuid", (*dm_file)->dmUpFileGuid, 0)
 
 	if (NULL == parts) {
 		/*

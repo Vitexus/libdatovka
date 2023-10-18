@@ -103,6 +103,9 @@ void print_DbType(const long int *type) {
             case DBTYPE_PFO_AUDITOR: printf("PFO_AUDITOR\n"); break;
             case DBTYPE_PFO_ZNALEC: printf("PFO_ZNALEC\n"); break;
             case DBTYPE_PFO_TLUMOCNIK: printf("PFO_TLUMOCNIK\n"); break;
+            case DBTYPE_PFO_ARCH: printf("PFO_ARCH\n"); break;
+            case DBTYPE_PFO_AIAT: printf("PFO_AIAT\n"); break;
+            case DBTYPE_PFO_AZI: printf("PFO_AZI\n"); break;
             case DBTYPE_PFO_REQ: printf("PFO_REQ\n"); break;
             case DBTYPE_PO: printf("PO\n"); break;
             case DBTYPE_PO_ZAK: printf("PO_ZAK\n"); break;
@@ -739,6 +742,8 @@ void print_dmFile(const struct isds_dmFile *dm_file)
 	print_metaType(stdout, dm_file->dmFileMetaType);
 	printf("\t\tdmMimeType = %s\n", dm_file->dmMimeType);
 	printf("\t\tdmFileDescr = %s\n", dm_file->dmFileDescr);
+	printf("\t\tdmFileGuid = %s\n", dm_file->dmFileGuid);
+	printf("\t\tdmUpFileGuid = %s\n", dm_file->dmUpFileGuid);
 	fputs("\t}\n", stdout);
 }
 

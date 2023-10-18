@@ -226,7 +226,9 @@ leave:
 			/* XXX: This should fail */
 			/* .dmFileMetaType = FILEMETATYPE_ENCLOSURE, */
 			.dmFileMetaType = FILEMETATYPE_MAIN,
-			.dmAtt = *dm_att
+			.dmAtt = *dm_att,
+			.dmFileGuid = "0",
+			.dmUpFileGuid = "0"
 		};
 
 		struct isds_list ext_file_main_item = {
