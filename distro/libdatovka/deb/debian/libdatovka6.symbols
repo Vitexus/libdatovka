@@ -1,4 +1,4 @@
-libdatovka.so.5 libdatovka5 #MINVER#
+libdatovka.so.6 libdatovka6 #MINVER#
  czp_close_connection@Base 0.1
  czp_convert_document@Base 0.1
  isds_AddDataBoxUser2@Base 0.1
@@ -29,6 +29,9 @@ libdatovka.so.5 libdatovka5 #MINVER#
  isds_FindDataBox2@Base 0.1
  isds_GetDataBoxUsers@Base 0.1
  isds_GetDataBoxUsers2@Base 0.1
+ isds_GetListOfErasedMessages_interval@Base 0.5
+ isds_GetListOfErasedMessages_month@Base 0.5
+ isds_GetListOfErasedMessages_year@Base 0.5
  isds_GetMessageAuthor2@Base 0.3
  isds_GetOwnerInfoFromLogin@Base 0.1
  isds_GetOwnerInfoFromLogin2@Base 0.1
@@ -39,6 +42,7 @@ libdatovka.so.5 libdatovka5 #MINVER#
  isds_PersonName2_free@Base 0.1
  isds_PersonName_duplicate@Base 0.1
  isds_PersonName_free@Base 0.1
+ isds_PickUpAsyncResponse@Base 0.5
  isds_SignedBigMessageDownload@Base 0.4
  isds_SignedBigMessageDownload_mtomxop@Base 0.4
  isds_SignedSentBigMessageDownload@Base 0.4
@@ -82,6 +86,7 @@ libdatovka.so.5 libdatovka5 #MINVER#
  isds_document_free@Base 0.1
  isds_download_message_hash@Base 0.1
  isds_envelope_free@Base 0.1
+ isds_erased_message_free@Base 0.5
  isds_event_free@Base 0.1
  isds_find_box_by_fulltext@Base 0.1
  isds_find_document_by_id@Base 0.1
@@ -109,6 +114,7 @@ libdatovka.so.5 libdatovka5 #MINVER#
  isds_lib_ver_str@Base 0.1
  isds_list_free@Base 0.1
  isds_load_delivery_info@Base 0.1
+ isds_load_erased_messages@Base 0.5
  isds_load_message@Base 0.1
  isds_locator@Base 0.1
  isds_login@Base 0.1

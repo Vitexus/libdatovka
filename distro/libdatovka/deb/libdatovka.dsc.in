@@ -1,6 +1,6 @@
 Format: 3.0 (quilt)
 Source: libdatovka
-Binary: libdatovka5, libdatovka-dev
+Binary: libdatovka6, libdatovka-dev
 Architecture: any all
 Version: __VERSION__-__RELEASE__
 Maintainer: Datovka <datove-schranky@labs.nic.cz>
@@ -14,6 +14,6 @@ Build-Depends: debhelper (>= 9),
                libssl-dev,
                libxml2-dev
 Package-List:
- libdatovka5 deb libs optional arch=any
+ libdatovka6 deb libs optional arch=any
  libdatovka-dev deb libdevel arch=any
 Files:

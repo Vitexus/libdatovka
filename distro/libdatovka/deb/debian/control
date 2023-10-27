@@ -14,7 +14,7 @@ Homepage: http://www.datovka.cz/
 Vcs-Git: https://gitlab.nic.cz/datovka/libdatovka.git
 Vcs-Browser: https://gitlab.nic.cz/datovka/libdatovka/
 
-Package: libdatovka5
+Package: libdatovka6
 Architecture: any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
@@ -33,7 +33,7 @@ Package: libdatovka-dev
 Section: libdevel
 Architecture: any
 Multi-Arch: same
-Depends: libdatovka5 (= ${binary:Version}),
+Depends: libdatovka6 (= ${binary:Version}),
          libxml2-dev,
          ${misc:Depends}
 Description: Czech Data Boxes access library (development files)
