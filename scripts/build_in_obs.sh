@@ -144,7 +144,7 @@ x${P_LIBDATOVKA})
 		echo "" > /dev/null
 	else
 		# Use latest release as default.
-		VERSION="0.5.0"
+		VERSION="0.5.1"
 	fi
 	RELEASE="1"
 	;;
