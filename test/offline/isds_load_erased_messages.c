@@ -148,13 +148,13 @@ int main(void) {
 	struct test tests[] = {
 		{
 			.name = "decompressed XML response",
-			.file = SRCDIR "/test/offline/data/GetListOfErasedMessages-async-response-extracted.xml",
+			.file = SRCDIR "/server/responses/GetListOfErasedMessages-async-response-extracted.xml",
 			.format = FORMAT_XML,
 			.error = IE_SUCCESS
 		},
 		{
 			.name = "decompressed XML response with missing values",
-			.file = SRCDIR "/test/offline/data/GetListOfErasedMessages-missing-entries.xml",
+			.file = SRCDIR "/server/responses/GetListOfErasedMessages-missing-entries.xml",
 			.format = FORMAT_XML,
 			.error = IE_SUCCESS
 		},
