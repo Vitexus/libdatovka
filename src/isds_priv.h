@@ -100,11 +100,16 @@ struct isds_ctx {
                                password change */
     CURL *curl;             /* CURL session handle */
     _Bool *tls_verify_server;   /* Verify the server? */
-    isds_progress_callback progress_callback;  /* Call it during
-                                                   communication with server.
-                                                   NULL for nothing */
-    void *progress_callback_data;       /* Application provided argument
-                                           for progress_callback */
+    isds_xferinfo_callback xferinfo_callback; /* Call it during
+                                                 communication with server.
+                                                 NULL for nothing */
+    void *xferinfo_callback_data; /* Application provided argument
+                                     for xferinfo_callback */
+    isds_progress_callback progress_callback; /* Call it during
+                                                 communication with server.
+                                                 NULL for nothing */
+    void *progress_callback_data; /* Application provided argument
+                                     for progress_callback */
     char *tls_ca_file;      /* File name with CA certificates */
     char *tls_ca_dir;       /* Directory name with CA certificates */
     char *tls_crl_file;     /* File name with CRL in PEM format */

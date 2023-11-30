@@ -96,6 +96,7 @@ AS_IF([test -z "$LIBCURL"],
         [[#include <curl/curl.h>]])
     AC_CHECK_DECLS([CURLOPT_KEYPASSWD], [], [], [[#include <curl/curl.h>]])
     AC_CHECK_DECLS([CURLOPT_SSLKEYPASSWD], [], [], [[#include <curl/curl.h>]])
+    AC_CHECK_DECLS([CURLOPT_XFERINFOFUNCTION], [], [], [[#include <curl/curl.h>]])
     CPPFLAGS="$cppflags_orig"
     ])
 AM_CONDITIONAL([BUILD_CURL], [test -n "$LIBCURL"])

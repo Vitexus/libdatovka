@@ -1742,13 +1742,25 @@ isds_error isds_set_timeout(struct isds_ctx *context,
 #endif
 }
 
+enum isds_error isds_set_xferinfo_callback(struct isds_ctx *context,
+    isds_xferinfo_callback callback, void *data)
+{
+	if (NULL == context) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
 
-/* Register a callback function which the library calls periodically during
- * a HTTP data transfer.
- * @context is session context
- * @callback is function provided by application which the library will call.
- * See type definition for @callback argument explanation.
- * @data is application specific data @callback gets as last argument */
+#if HAVE_LIBCURL
+	context->xferinfo_callback = callback;
+	context->xferinfo_callback_data = data;
+
+	return IE_SUCCESS;
+#else /* not HAVE_LIBCURL */
+	return IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+}
+
 isds_error isds_set_progress_callback(struct isds_ctx *context,
         isds_progress_callback callback, void *data) {
     if (!context) return IE_INVALID_CONTEXT;
