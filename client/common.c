@@ -1020,19 +1020,33 @@ void compare_hashes(const struct isds_hash *hash1,
         printf("isds_hash_cmp() failed: %s\n", isds_strerror(err));
 }
 
+int progressbar_int(int64_t upload_total, int64_t upload_current,
+    int64_t download_total, int64_t download_current,
+    void *data)
+{
+	fprintf(stdout,
+	    "Progress: upload %" PRId64 "/%" PRId64 ", download %" PRId64 "/%" PRId64 ", data=%p\n",
+	    upload_current, upload_total, download_current, download_total,
+	    data);
+	if (NULL != data) {
+		fputs("Aborting transfer...\n", stdout);
+		return 1;
+	}
+	return 0;
+}
 
 int progressbar(double upload_total, double upload_current,
     double download_total, double download_current,
-    void *data) {
-
-    printf("Progress: upload %0f/%0f, download %0f/%0f, data=%p\n",
-            upload_current, upload_total, download_current, download_total,
-            data);
-    if (data) {
-        printf("Aborting transfer...\n");
-        return 1;
-    }
-    return 0;
+    void *data)
+{
+	fprintf(stdout, "Progress: upload %0f/%0f, download %0f/%0f, data=%p\n",
+	    upload_current, upload_total, download_current, download_total,
+	    data);
+	if (NULL != data) {
+		fputs("Aborting transfer...\n", stdout);
+		return 1;
+	}
+	return 0;
 }
 
 

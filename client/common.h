@@ -34,6 +34,9 @@ void print_dmMessageAuthor(struct isds_dmMessageAuthor *author);
 
 void compare_hashes(const struct isds_hash *hash1,
     const struct isds_hash *hash2);
+int progressbar_int(int64_t upload_total, int64_t upload_current,
+    int64_t download_total, int64_t download_current,
+    void *data);
 int progressbar(double upload_total, double upload_current,
     double download_total, double download_current,
     void *data);
