@@ -1,6 +1,20 @@
 #ifndef __ISDS_ISDS_H__
 #define __ISDS_ISDS_H__
 
+/* Compile-time deprecation macros. */
+#if defined(__GNUC__) && \
+    !defined(__INTEL_COMPILER) && \
+    !defined(ISDS_DISABLE_DEPRECATION) && !defined(BUILDING_LIBDATOVKA)
+#  if ((__GNUC__ > 12) || ((__GNUC__ == 12) && (__GNUC_MINOR__ >= 1 )))
+#    define _isds_deprecated(version, message) \
+      __attribute__((deprecated("since " # version ". " message)))
+#  else
+#    define _isds_deprecated(version, message) __attribute__((deprecated))
+#  endif
+#else
+#  define _isds_deprecated(version, message)
+#endif
+
 /* Public interface for libdatovka.
  * Private declarations in isds_priv.h. */
 
@@ -47,14 +61,6 @@ unsigned long isds_lib_ver_num(void);
  * compiled against.
  */
 const char *isds_lib_ver_str(void);
-
-/* _deprecated macro marks library symbols as deprecated. Application should
- * avoid using such function as soon as possible. */
-#if defined(__GNUC__)
-#  define _deprecated __attribute__((deprecated))
-#else
-#  define _deprecated
-#endif
 
 /* Service locators */
 /* Base URL of production ISDS instance */
@@ -1358,7 +1364,7 @@ typedef int (*isds_progress_callback)(
  * See type definition for @callback argument explanation.
  * @data is application specific data @callback gets as last argument */
 isds_error isds_set_progress_callback(struct isds_ctx *context,
-        isds_progress_callback callback, void *data);
+        isds_progress_callback callback, void *data) _isds_deprecated(0.6.0, "Use isds_set_xferinfo_callback()");
 
 /*
  * Change context settings.

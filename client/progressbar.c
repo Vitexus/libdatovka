@@ -1,4 +1,7 @@
 #define _XOPEN_SOURCE 500
+
+#define ISDS_DISABLE_DEPRECATION 1
+
 #include <libdatovka/isds.h>
 #include <locale.h>
 #include <stdio.h>
