@@ -146,6 +146,7 @@ libdatovka.so.6 libdatovka6 #MINVER#
  isds_set_opt@Base 0.1
  isds_set_progress_callback@Base 0.1
  isds_set_timeout@Base 0.1
+ isds_set_xferinfo_callback@Base 0.6
  isds_status_duplicate@Base 0.1
  isds_status_free@Base 0.1
  isds_strerror@Base 0.1

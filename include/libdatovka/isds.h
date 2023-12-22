@@ -1,6 +1,20 @@
 #ifndef __ISDS_ISDS_H__
 #define __ISDS_ISDS_H__
 
+/* Compile-time deprecation macros. */
+#if defined(__GNUC__) && \
+    !defined(__INTEL_COMPILER) && \
+    !defined(ISDS_DISABLE_DEPRECATION) && !defined(BUILDING_LIBDATOVKA)
+#  if ((__GNUC__ > 12) || ((__GNUC__ == 12) && (__GNUC_MINOR__ >= 1 )))
+#    define _isds_deprecated(version, message) \
+      __attribute__((deprecated("since " # version ". " message)))
+#  else
+#    define _isds_deprecated(version, message) __attribute__((deprecated))
+#  endif
+#else
+#  define _isds_deprecated(version, message)
+#endif
+
 /* Public interface for libdatovka.
  * Private declarations in isds_priv.h. */
 
@@ -47,14 +61,6 @@ unsigned long isds_lib_ver_num(void);
  * compiled against.
  */
 const char *isds_lib_ver_str(void);
-
-/* _deprecated macro marks library symbols as deprecated. Application should
- * avoid using such function as soon as possible. */
-#if defined(__GNUC__)
-#define _deprecated __attribute__((deprecated))
-#else
-#define _deprecated
-#endif
 
 /* Service locators */
 /* Base URL of production ISDS instance */
@@ -1322,19 +1328,43 @@ isds_error isds_set_timeout(struct isds_ctx *context,
  * @download_current is cumulative current download progress
  * @data is pointer that will be passed unchanged to this function at run-time
  * @return 0 to continue HTTP transfer, or non-zero to abort transfer */
+typedef int (*isds_xferinfo_callback)(
+    int64_t upload_total, int64_t upload_current,
+    int64_t download_total, int64_t download_current,
+    void *data);
+
+/* Register a callback function which the library calls periodically during
+ * a HTTP data transfer. This function replaces isds_set_progress_callback().
+ * @context is session context
+ * @callback is function provided by application which the library will call.
+ * See type definition for @callback argument explanation.
+ * @data is application specific data @callback gets as last argument */
+enum isds_error isds_set_xferinfo_callback(struct isds_ctx *context,
+    isds_xferinfo_callback callback, void *data);
+
+/* Function provided by application which the library will call with
+ * following five arguments. Value zero of any argument means the value is
+ * unknown.
+ * @upload_total is expected total upload,
+ * @upload_current is cumulative current upload progress
+ * @download_total is expected total download
+ * @download_current is cumulative current download progress
+ * @data is pointer that will be passed unchanged to this function at run-time
+ * @return 0 to continue HTTP transfer, or non-zero to abort transfer */
 typedef int (*isds_progress_callback)(
         double upload_total, double upload_current,
         double download_total, double download_current,
         void *data);
 
 /* Register a callback function which the library calls periodically during
- * a HTTP data transfer.
+ * a HTTP data transfer. This function is deprecated use
+ * isds_set_xferinfo_callback() instead.
  * @context is session context
  * @callback is function provided by application which the library will call.
  * See type definition for @callback argument explanation.
  * @data is application specific data @callback gets as last argument */
 isds_error isds_set_progress_callback(struct isds_ctx *context,
-        isds_progress_callback callback, void *data);
+        isds_progress_callback callback, void *data) _isds_deprecated(0.6.0, "Use isds_set_xferinfo_callback()");
 
 /*
  * Change context settings.

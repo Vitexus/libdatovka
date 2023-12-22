@@ -837,27 +837,74 @@ static size_t write_multipart_header(void *buffer, size_t size, size_t nmemb,
 	return length;
 }
 
+#if HAVE_DECL_CURLOPT_XFERINFOFUNCTION /* Since curl-7.32.0 */
+static
+size_t xferinfo_proxy(void *curl_data, curl_off_t download_total,
+    curl_off_t download_current, curl_off_t upload_total,
+    curl_off_t upload_current)
+{
+	struct isds_ctx *context = (struct isds_ctx *)curl_data;
+	int abort = 0;
+
+	if (NULL != context) {
+		if (NULL != context->xferinfo_callback) {
+			abort = context->xferinfo_callback(
+			    (int64_t)upload_total, (int64_t)upload_current,
+			    (int64_t)download_total, (int64_t)download_current,
+			    context->xferinfo_callback_data);
+			if (abort) {
+				isds_log(ILF_HTTP, ILL_INFO,
+				    _("Application aborted HTTP transfer"));
+			}
+		} else if (NULL != context->progress_callback) {
+			abort = context->progress_callback(
+			    (double)upload_total, (double)upload_current,
+			    (double)download_total, (double)download_current,
+			    context->progress_callback_data);
+			if (abort) {
+				isds_log(ILF_HTTP, ILL_INFO,
+				    _("Application aborted HTTP transfer"));
+			}
+		}
+	}
+
+	return abort;
+}
+#else /* !HAVE_DECL_CURLOPT_XFERINFOFUNCTION */
 /* CURL progress callback proxy to rearrange arguments.
  * @curl_data is session context  */
-static int progress_proxy(void *curl_data, double download_total,
-        double download_current, double upload_total, double upload_current) {
-    struct isds_ctx *context = (struct isds_ctx *) curl_data;
-    int abort = 0;
+static
+int progress_proxy(void *curl_data, double download_total,
+    double download_current, double upload_total, double upload_current)
+{
+	struct isds_ctx *context = (struct isds_ctx *)curl_data;
+	int abort = 0;
 
-    if (context && context->progress_callback) {
-        abort = context->progress_callback(
-                upload_total, upload_current,
-                download_total, download_current,
-                context->progress_callback_data);
-        if (abort) {
-            isds_log(ILF_HTTP, ILL_INFO,
-                    _("Application aborted HTTP transfer"));
-        }
-    }
+	if (NULL != context) {
+		if (NULL != context->xferinfo_callback) {
+			abort = context->xferinfo_callback(
+			    (int64_t)upload_total, (int64_t)upload_current,
+			    (int64_t)download_total, (int64_t)download_current,
+			    context->xferinfo_callback_data);
+			if (abort) {
+				isds_log(ILF_HTTP, ILL_INFO,
+				    _("Application aborted HTTP transfer"));
+			}
+		} else if (NULL != context->progress_callback) {
+			abort = context->progress_callback(
+			    upload_total, upload_current,
+			    download_total, download_current,
+			    context->progress_callback_data);
+			if (abort) {
+				isds_log(ILF_HTTP, ILL_INFO,
+				    _("Application aborted HTTP transfer"));
+			}
+		}
+	}
 
-    return abort;
+	return abort;
 }
-
+#endif /* HAVE_DECL_CURLOPT_TIMEOUT_MS */
 
 /* CURL callback function called when curl has something to log.
  * @curl is cURL context
@@ -1481,10 +1528,20 @@ static enum isds_error http(struct isds_ctx *context,
 	}
 
 	/* Register callback */
-	if (NULL != context->progress_callback) {
+	if ((NULL != context->xferinfo_callback) || (NULL != context->progress_callback)) {
 		if (CURLE_OK == curl_err) {
 			curl_err = curl_easy_setopt(context->curl, CURLOPT_NOPROGRESS, 0);
 		}
+#if HAVE_DECL_CURLOPT_XFERINFOFUNCTION /* Since curl-7.32.0 */
+		if (CURLE_OK == curl_err) {
+			curl_err = curl_easy_setopt(context->curl,
+			    CURLOPT_XFERINFOFUNCTION, xferinfo_proxy);
+		}
+		if (CURLE_OK == curl_err) {
+			curl_err = curl_easy_setopt(context->curl,
+			    CURLOPT_XFERINFODATA, context);
+		}
+#else /* !HAVE_DECL_CURLOPT_XFERINFOFUNCTION */
 		if (CURLE_OK == curl_err) {
 			curl_err = curl_easy_setopt(context->curl,
 			    CURLOPT_PROGRESSFUNCTION, progress_proxy);
@@ -1493,6 +1550,7 @@ static enum isds_error http(struct isds_ctx *context,
 			curl_err = curl_easy_setopt(context->curl, CURLOPT_PROGRESSDATA,
 			    context);
 		}
+#endif /* HAVE_DECL_CURLOPT_TIMEOUT_MS */
 	}
 
 	/* Set other CURL features */

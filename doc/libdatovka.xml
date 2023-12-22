@@ -237,12 +237,16 @@ err = isds_cleanup();
 
       <para>Network operation progress can be monitored by a call-back
         function. The call-back function can be registered using
-        <function>isds_set_progress_callback</function> function. Registered
+        <function>isds_set_xferinfo_callback</function> function. Registered
         call-back function will be called periodically with arguments
         declaring amount of transferred data. The call-back return value
         determines whether to continue in the network operation or to cancel
         the operation. Functions failed owing to cancelling network operation
-        will return <errorname>IE_ABORTED</errorname>.</para>
+        will return <errorname>IE_ABORTED</errorname>. The now deprecated
+        call-back function <function>isds_set_progress_callback</function>
+        behaves similarly but uses floating-point values to pass amounts
+        of transferred data. Is is discouraged to use
+        <function>isds_set_progress_callback</function> in new code.</para>
     </refsection>
 
     <refsection>
