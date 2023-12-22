@@ -1,4 +1,4 @@
-0.6.0 /
+0.6.0 / 2023-12-22
  * Added isds_set_xferinfo_callback() as a replacement for
    isds_set_progress_callback(). Marked isds_set_progress_callback() as
    deprecated.
