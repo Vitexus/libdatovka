@@ -233,6 +233,7 @@ CPPFLAGS="${CPPFLAGS} ${XML_CPPFLAGS}"
 libs_orig="${LIBS}"
 LIBS="${LIBS} ${XML_LIBS}"
 AC_CHECK_FUNCS([xmlBufferDetach])
+AC_CHECK_DECLS([XML_PARSE_HUGE], [], [], [[#include <libxml/parser.h>]])
 LIBS="${libs_orig}"
 CPPFLAGS="${cppflags_orig}"
 

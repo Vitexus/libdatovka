@@ -14875,7 +14875,11 @@ isds_error isds_load_delivery_info(struct isds_ctx *context,
     }
 
     /* Convert delivery info XML stream into XPath context */
+#if HAVE_DECL_XML_PARSE_HUGE
+    message_doc = xmlReadMemory(xml_stream, xml_stream_length, NULL, NULL, XML_PARSE_HUGE);
+#else /* !HAVE_DECL_XML_PARSE_HUGE */
     message_doc = xmlParseMemory(xml_stream, xml_stream_length);
+#endif /* HAVE_DECL_XML_PARSE_HUGE */
     if (!message_doc) {
         err = IE_XML;
         goto leave;
@@ -15361,7 +15365,11 @@ isds_error isds_load_message(struct isds_ctx *context,
     }
 
     /* Convert messages XML stream into XPath context */
+#if HAVE_DECL_XML_PARSE_HUGE
+    message_doc = xmlReadMemory(xml_stream, xml_stream_length, NULL, NULL, XML_PARSE_HUGE);
+#else /* !HAVE_DECL_XML_PARSE_HUGE */
     message_doc = xmlParseMemory(xml_stream, xml_stream_length);
+#endif /* HAVE_DECL_XML_PARSE_HUGE */
     if (!message_doc) {
         err = IE_XML;
         goto leave;
@@ -15515,7 +15523,11 @@ isds_error isds_guess_raw_type(struct isds_ctx *context,
     }
 
     /* Try XML */
+#if HAVE_DECL_XML_PARSE_HUGE
+    document = xmlReadMemory(xml_stream, xml_stream_length, NULL, NULL, XML_PARSE_HUGE);
+#else /* !HAVE_DECL_XML_PARSE_HUGE */
     document = xmlParseMemory(xml_stream, xml_stream_length);
+#endif /* HAVE_DECL_XML_PARSE_HUGE */
     if (!document) {
         isds_printf_message(context,
                 _("Could not parse data as XML document"));
@@ -17242,7 +17254,11 @@ enum isds_error isds_load_erased_messages(struct isds_ctx *context,
 
 	/* Extract data */
 	/* Convert XML stream into XPath context */
+#if HAVE_DECL_XML_PARSE_HUGE
+	list_doc = xmlReadMemory(buffer, length, NULL, NULL, XML_PARSE_HUGE);
+#else /* !HAVE_DECL_XML_PARSE_HUGE */
 	list_doc = xmlParseMemory(buffer, length);
+#endif /* HAVE_DECL_XML_PARSE_HUGE */
 	if (NULL == list_doc) {
 		err = IE_XML;
 		goto leave;
