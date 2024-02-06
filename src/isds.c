@@ -1914,25 +1914,34 @@ static isds_error _isds_store_credentials(struct isds_ctx *context,
  * (non-certificate) production service to be used.
  * @return high-volume data message ISDS service base URL.
  */
-static const char *determine_vodz_locator(const char *url)
+static const char *determine_vodz_basic_locator(const char *url)
 {
+	/*
+	 * VoDZ locators for OTP and MEP authentications methods are equal
+	 * to non-VoDZ OTP and MEP locators.
+	 */
+
 	if ((NULL == url)
 	    || (0 == strcmp(url, isds_locator))
-	    || (0 == strcmp(url, isds_vodz_locator))
-	    || (0 == strcmp(url, isds_otp_locator))
-	    || (0 == strcmp(url, isds_mep_locator))) {
+	    || (0 == strcmp(url, isds_vodz_locator))) {
 		return isds_vodz_locator;
 	} else if ((0 == strcmp(url, isds_cert_locator))
 	    || (0 == strcmp(url, isds_vodz_cert_locator))) {
 		return isds_vodz_cert_locator;
+	} else if ((0 == strcmp(url, isds_otp_locator))) {
+		return isds_otp_locator;
+	} else if ((0 == strcmp(url, isds_mep_locator))) {
+		return isds_mep_locator;
 	} else if ((0 == strcmp(url, isds_testing_locator))
-	    || (0 == strcmp(url, isds_vodz_testing_locator))
-	    || (0 == strcmp(url, isds_otp_testing_locator))
-	    || (0 == strcmp(url, isds_mep_testing_locator))) {
+	    || (0 == strcmp(url, isds_vodz_testing_locator))) {
 		return isds_vodz_testing_locator;
 	} else if ((0 == strcmp(url, isds_cert_testing_locator))
 	    || (0 == strcmp(url, isds_vodz_cert_testing_locator))) {
 		return isds_vodz_cert_testing_locator;
+	} else if ((0 == strcmp(url, isds_otp_testing_locator))) {
+		return isds_otp_testing_locator;
+	} else if ((0 == strcmp(url, isds_mep_testing_locator))) {
+		return isds_mep_testing_locator;
 	} else {
 		/* Unknown URL. Fall back to default. */
 		return isds_vodz_locator;
@@ -2028,6 +2037,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
             /* Default locator is official system (without certificate or
              * OTP) */
             context->url = strdup((NULL != url) ? url : isds_locator);
+            context->url_vodz = strdup(determine_vodz_basic_locator(url));
         } else {
             const char *authenticator_uri = NULL;
             if (!url) url = isds_otp_locator;
@@ -2070,6 +2080,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
             }
             if (-1 == isds_asprintf(&context->url, authenticator_uri, url, url))
                 return IE_NOMEM;
+            context->url_vodz = strdup(determine_vodz_basic_locator(url));
         }
     } else {
         /* Default locator is official system (with client certificate) */
@@ -2083,23 +2094,25 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
                         "no username and no password\n"));
             password = NULL;
             context->url = _isds_astrcat(url, "cert/");
+            context->url_vodz = _isds_astrcat(determine_vodz_basic_locator(url), "cert/");
         } else {
             if (!password) {
                 isds_log(ILF_SEC, ILL_INFO,
                         _("Selected authentication method: system certificate, "
                             "box ID and no password\n"));
                 context->url = _isds_astrcat(url, "hspis/");
+                context->url_vodz = _isds_astrcat(determine_vodz_basic_locator(url), "hspis/");
             } else {
                 isds_log(ILF_SEC, ILL_INFO,
                         _("Selected authentication method: commercial "
                             "certificate, username and password\n"));
                 context->url = _isds_astrcat(url, "certds/");
+                context->url_vodz = _isds_astrcat(determine_vodz_basic_locator(url), "certds/");
             }
         }
     }
     if (!(context->url))
         return IE_NOMEM;
-    context->url_vodz = strdup(determine_vodz_locator(url));
     if (NULL == context->url_vodz) {
         return IE_NOMEM;
     }
@@ -2150,6 +2163,11 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
         zfree(context->url);
         context->url = _isds_astrcat(url, "apps/");
         if (context->url == NULL) {
+            soap_err = IE_NOMEM;
+        }
+        zfree(context->url_vodz);
+        context->url_vodz = _isds_astrcat(determine_vodz_basic_locator(url), "apps/");
+        if (context->url_vodz == NULL) {
             soap_err = IE_NOMEM;
         }
         /* Detach pointer to OTP credentials from context */
