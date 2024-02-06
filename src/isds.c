@@ -2314,8 +2314,16 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
         if (context->url == NULL) {
             soap_err = IE_NOMEM;
         }
-        context->url_vodz = strdup(
-            (!testing) ? isds_vodz_locator : isds_vodz_testing_locator);
+        {
+            /*
+             * Cannot use:
+             *   (!testing) ? isds_vodz_locator : isds_vodz_testing_locator
+             * VoDZ messages are sent  through the MEP locator when the user
+             * uses the MEP login method.
+             */
+            const char *vodz_url = (!testing) ? isds_mep_locator : isds_mep_testing_locator;
+            context->url_vodz = _isds_astrcat(vodz_url, "apps/");
+        }
         if (context->url_vodz == NULL) {
             soap_err = IE_NOMEM;
         }
