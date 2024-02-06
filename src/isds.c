@@ -2206,7 +2206,7 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
     isds_error soap_err;
     xmlNsPtr isds_ns = NULL;
     xmlNodePtr request = NULL;
-    const _Bool testing = (url != NULL) && (0 == strcmp(url, isds_mep_locator));
+    const _Bool testing = (url != NULL) && (0 != strcmp(url, isds_mep_locator));
 #endif /* HAVE_LIBCURL */
 
     if (NULL == context) {
