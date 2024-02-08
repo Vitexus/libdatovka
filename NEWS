@@ -1,6 +1,8 @@
 0.6.1 /
  * Fixed VoDZ service locator assignment for MEP and TOTP (SMS) authentication
    methods.
+ * Fixed parsing of large (mainly VoDZ) ZFO files with recent libxml2 versions.
+   Using xmlReadMemory() with XML_PARSE_HUGE option set.
 
 0.6.0 / 2023-12-22
  * Added isds_set_xferinfo_callback() as a replacement for
