@@ -1,4 +1,4 @@
-0.6.1 /
+0.6.1 / 2024-02-08
  * Fixed VoDZ service locator assignment for MEP and TOTP (SMS) authentication
    methods.
  * Fixed parsing of large (mainly VoDZ) ZFO files with recent libxml2 versions.

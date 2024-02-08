@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.63])
-AC_INIT([libdatovka], [0.6.0], [datove-schranky@labs.nic.cz])
+AC_INIT([libdatovka], [0.6.1], [datove-schranky@labs.nic.cz])
 AM_INIT_AUTOMAKE([tar-ustar]) # File names longer than 99 characters.
 AC_LANG([C])
 AC_CONFIG_SRCDIR([src/isds.c])
