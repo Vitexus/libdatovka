@@ -2039,7 +2039,11 @@ void soap(const struct http_connection *connection,
         return;
     }
 
+#if HAVE_DECL_XML_PARSE_HUGE
+    request_doc = xmlReadMemory(request, request_length, NULL, NULL, XML_PARSE_HUGE);
+#else /* !HAVE_DECL_XML_PARSE_HUGE */
     request_doc = xmlParseMemory(request, request_length);
+#endif /* HAVE_DECL_XML_PARSE_HUGE */
     if (NULL == request_doc) {
         http_send_response_400(connection, "Client sent invalid XML document");
         return;
