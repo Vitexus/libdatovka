@@ -5,7 +5,7 @@ Source: https://secure.nic.cz/files/datove_schranky/libdatovka/
 
 Files: *
 Copyright: 2009-2010 Petr Písař <petr.pisar@atlas.cz>
-           2018-2021 CZ.NIC, z. s. p. o. <datove-schranky@labs.nic.cz>
+           2018-2024 CZ.NIC, z. s. p. o. <datove-schranky@labs.nic.cz>
 License: LGPL-3+
 
 Files: src/cdecode.*
@@ -13,9 +13,8 @@ Copyright: Chris Venter <chris.venter@gmail.com>
 License: CC0-1
 
 Files: debian/*
-Copyright: 2018-2020 CZ.NIC, z.s.p.o.
-           2015-2017 Ondřej Surý <ondrej@debian.org>
-           2018-2021 CZ.NIC, z. s. p. o. <datove-schranky@labs.nic.cz>
+Copyright: 2015-2017 Ondřej Surý <ondrej@debian.org>
+           2018-2024 CZ.NIC, z. s. p. o. <datove-schranky@labs.nic.cz>
 License: CC0-1
 
 License: LGPL-3+
