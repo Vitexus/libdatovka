@@ -2152,7 +2152,7 @@ isds_error process_http_response(struct isds_ctx *context,
 
     /* Parse the HTTP body as XML */
 #if HAVE_DECL_XML_PARSE_HUGE
-    response_soap_doc = xmlReadMemory(response->data, response->len, NULL, NULL, XML_PARSE_HUGE);
+    response_soap_doc = xmlReadMemory(response->data, response->len, NULL, NULL, XML_PARSE_NODICT | XML_PARSE_HUGE);
 #else /* !HAVE_DECL_XML_PARSE_HUGE */
     response_soap_doc = xmlParseMemory(response->data, response->len);
 #endif /* HAVE_DECL_XML_PARSE_HUGE */
@@ -2888,7 +2888,7 @@ _hidden isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context) {
  *  Parse in-memory NULL-terminated document @cur.
  *
  * xmlDocPtr xmlParseMemory(const char * buffer, int size)
- * xmlDocPtr xmlReadMemory(const char * buffer, int size, NULL, NULL, XML_PARSE_HUGE)
+ * xmlDocPtr xmlReadMemory(const char * buffer, int size, NULL, NULL, XML_PARSE_NODICT | XML_PARSE_HUGE)
  *  Parse an XML in-memory block and build a tree.
  *
  * xmlParserCtxtPtr xmlCreateMemoryParserCtxt(const char * buffer, int
