@@ -2040,7 +2040,7 @@ void soap(const struct http_connection *connection,
     }
 
 #if HAVE_DECL_XML_PARSE_HUGE
-    request_doc = xmlReadMemory(request, request_length, NULL, NULL, XML_PARSE_HUGE);
+    request_doc = xmlReadMemory(request, request_length, NULL, NULL, XML_PARSE_NODICT | XML_PARSE_HUGE);
 #else /* !HAVE_DECL_XML_PARSE_HUGE */
     request_doc = xmlParseMemory(request, request_length);
 #endif /* HAVE_DECL_XML_PARSE_HUGE */

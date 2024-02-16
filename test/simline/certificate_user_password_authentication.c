@@ -13,6 +13,8 @@
 #define _XOPEN_SOURCE 600   /* For unsetenv(3) */
 #endif
 
+#include <signal.h> /* signal */
+
 #include "../test.h"
 #include "server.h"
 #include "libdatovka/isds.h"
@@ -53,6 +55,16 @@ int main(void) {
     pid_t server_process;
     struct isds_ctx *context = NULL;
     char *url = NULL;
+
+    /*
+     * The library sets the CURLOPT_NOSIGNAL option.
+     * Depending on the Linux distribution the main process may receive SIGPIPE
+     * if the test server closes the client socket.
+     * This happens on Debian 10, 11 and Ubuntu 20.04, 22.04 (Debian 9, 12,
+     * Ubuntu 18.04, 23.04, 23.10 seem to be unaffected).
+     * The main process should therefore ignore the received SIGPIPE.
+     */
+    signal(SIGPIPE, SIG_IGN);
 
     INIT_TEST("authentication with client certificate and username and "
             "password");
