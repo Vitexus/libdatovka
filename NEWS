@@ -1,3 +1,7 @@
+0.6.2 /
+ * Using XML_PARSE_NODICT in xmlReadMemory() because of old libxml2 versions
+   which may cause segmentation faults.
+
 0.6.1 / 2024-02-08
  * Fixed VoDZ service locator assignment for MEP and TOTP (SMS) authentication
    methods.
