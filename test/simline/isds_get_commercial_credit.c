@@ -144,6 +144,10 @@ static int test_isds_get_commercial_credit(const isds_error error,
                 break;
             case ISDS_CREDIT_EXPIRED:
                 break;
+            case ISDS_CREDIT_DELETED_MESSAGE_RECOVERED:
+                TEST_STRING_DUPLICITY(event->details.deleted_message_recovered.initiator,
+                        returned_event->details.deleted_message_recovered.initiator);
+                break;
             default:
                 FAIL_TEST("Unknown credit event type returned");
         }
@@ -216,6 +220,35 @@ int main(void) {
             .tv_usec = 123456
         };
 
+        struct isds_credit_event event_credit_deleted_message_recovered = {
+            .time = &event_time,
+            .credit_change = 133,
+            .new_credit = 244,
+            .type = ISDS_CREDIT_DELETED_MESSAGE_RECOVERED,
+            .details.deleted_message_recovered = {
+                .initiator = "Foo",
+            },
+        };
+        struct server_credit_event server_event_credit_deleted_message_recovered = {
+            .time = &event_time,
+            .credit_change = 133,
+            .new_credit = 244,
+            .type = SERVER_CREDIT_DELETED_MESSAGE_RECOVERED,
+            .details.deleted_message_recovered = {
+                .initiator = "Foo",
+            },
+        };
+        struct isds_list history_deleted_message_recovered = {
+            .next = NULL,
+            .data = &event_credit_deleted_message_recovered,
+            .destructor = NULL
+        };
+        struct server_list server_history_deleted_message_recovered = {
+            .next = NULL,
+            .data = &server_event_credit_deleted_message_recovered,
+            .destructor = NULL
+        };
+
         struct isds_credit_event event_credit_expired = {
             .time = &event_time,
             .credit_change = 133,
@@ -229,12 +262,12 @@ int main(void) {
             .type = SERVER_CREDIT_EXPIRED,
         };
         struct isds_list history_expired = {
-            .next = NULL,
+            .next = &history_deleted_message_recovered,
             .data = &event_credit_expired,
             .destructor = NULL
         };
         struct server_list server_history_expired = {
-            .next = NULL,
+            .next = &server_history_deleted_message_recovered,
             .data = &server_event_credit_expired,
             .destructor = NULL
         };

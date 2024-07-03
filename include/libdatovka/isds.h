@@ -1001,14 +1001,14 @@ typedef enum isds_credit_event_type {
 	                               */
 	ISDS_CREDIT_STORAGE_SET = 4, /*
 	                              * Credit has been spent for setting
-	                              * of a credit-based long-term storage.
+	                              * a credit-based long-term storage.
 	                              */
 	ISDS_CREDIT_EXPIRED = 5, /* Credit has expired */
 	ISDS_CREDIT_DELETED_MESSAGE_RECOVERED = 7 /*
-	                                         * Message previously deleted
-	                                         * from long-term storage
-	                                         * has been recovered.
-	                                         */
+	                                           * Message previously deleted
+	                                           * from long-term storage
+	                                           * has been recovered.
+	                                           */
 } isds_credit_event_type;
 
 /* Data specific for ISDS_CREDIT_CHARGED isds_credit_event_type */
@@ -1062,7 +1062,7 @@ struct isds_credit_event {
 	                      * Credit value after this event.
 	                      * The unit is 1/100 CZK.
 	                     */
-	isds_credit_event_type type; /* Type of the event */
+	enum isds_credit_event_type type; /* Type of the event */
 
 	/* Details specific for the type */
 	union {

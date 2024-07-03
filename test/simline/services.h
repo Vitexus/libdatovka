@@ -25,13 +25,22 @@ struct service_configuration {
 
 /* Type of credit change event */
 typedef enum {
-    SERVER_CREDIT_CHARGED,        /* Credit has been charged */
-    SERVER_CREDIT_DISCHARGED,     /* Credit has been discharged */
-    SERVER_CREDIT_MESSAGE_SENT,   /* Credit has been spent for sending
-                                   a commercial message */
-    SERVER_CREDIT_STORAGE_SET,    /* Credit has been spent for setting
-                                   a long-term storage */
-    SERVER_CREDIT_EXPIRED         /* Credit has expired */
+    SERVER_CREDIT_CHARGED = 1, /* Credit has been charged. */
+    SERVER_CREDIT_DISCHARGED = 2, /* Credit has been discharged. */
+    SERVER_CREDIT_MESSAGE_SENT = 3, /*
+                                     * Credit has been spent for sending
+                                     * a commercial message.
+                                     */
+    SERVER_CREDIT_STORAGE_SET = 4, /*
+                                    * Credit has been spent for setting
+                                    * a long-term storage.
+                                    */
+    SERVER_CREDIT_EXPIRED = 5, /* Credit has expired. */
+    SERVER_CREDIT_DELETED_MESSAGE_RECOVERED = 7 /*
+                                                 * Message previously deleted
+                                                 * from long-term storage
+                                                 * has been recovered.
+                                                 */
 } server_credit_event_type;
 
 /* Data specific for SERVER_CREDIT_CHARGED server_credit_event_type */
@@ -68,6 +77,11 @@ struct server_credit_event_storage_set {
                                        change; Optional. */
 };
 
+/* Data specific for SERVER_CREDIT_DELETED_MESSAGE_RECOVERED server_credit_event_type */
+struct server_credit_event_deleted_message_recovered {
+    char *initiator; /* Name of a user who initiated this change; Optional. */
+};
+
 /* Event about change of credit for sending commercial services */
 struct server_credit_event {
     /* Common fields */
@@ -80,14 +94,16 @@ struct server_credit_event {
 
     /* Details specific for the type */
     union {
+        /* SERVER_CREDIT_CHARGED */
         struct server_credit_event_charged charged;
-                                                /* SERVER_CREDIT_CHARGED */
+        /* SERVER_CREDIT_DISCHAGED */
         struct server_credit_event_discharged discharged;
-                                                /* SERVER_CREDIT_DISCHAGED */
+        /* SERVER_CREDIT_MESSAGE_SENT */
         struct server_credit_event_message_sent message_sent;
-                                                /* SERVER_CREDIT_MESSAGE_SENT */
+        /* SERVER_CREDIT_STORAGE_SET */
         struct server_credit_event_storage_set storage_set;
-                                                /* SERVER_CREDIT_STORAGE_SET */
+        /* SERVER_CREDIT_DELETED_MESSAGE_RECOVERED */
+        struct server_credit_event_deleted_message_recovered deleted_message_recovered;
     } details;
 };
 
