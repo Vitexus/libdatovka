@@ -3059,7 +3059,8 @@ static isds_error string2isds_payment_type(const xmlChar *string,
  * ciEventType is integer but we convert it from string representation
  * directly.
  */
-static enum isds_error string2isds_credit_event_type(const xmlChar *string,
+static
+enum isds_error string2isds_credit_event_type(const xmlChar *string,
     enum isds_credit_event_type *type)
 {
 	if (UNLIKELY((NULL == string) || (NULL == type))) {
@@ -5107,12 +5108,13 @@ leave:
  * @xpath_ctx is XPath context with current node as XSD:tCiRecord element
  * In case of error @event will be freed.
  */
-static enum isds_error extract_CiRecord(struct isds_ctx *context,
+static
+enum isds_error extract_CiRecord(struct isds_ctx *context,
     struct isds_credit_event **event, xmlXPathContext *xpath_ctx)
 {
 	enum isds_error err = IE_SUCCESS;
 	xmlXPathObject *result = NULL;
-	char *string = NULL;
+	const xmlChar *xmlString = NULL;
 	long int *number_ptr;
 
 	if (UNLIKELY(NULL == context)) {
@@ -5132,11 +5134,11 @@ static enum isds_error extract_CiRecord(struct isds_ctx *context,
 		goto leave;
 	}
 
-	EXTRACT_STRING("isds:ciEventTime", string);
-	if (NULL != string) {
-		err = timestring2timeval((xmlChar *)string, &(*event)->time);
+	EXTRACT_CONST_STRING("isds:ciEventTime", xmlString);
+	if (NULL != xmlString) {
+		err = timestring2timeval(xmlString, &(*event)->time);
 		if (UNLIKELY(IE_SUCCESS != err)) {
-			char *string_locale = _isds_utf82locale(string);
+			char *string_locale = _isds_utf82locale((const char *)xmlString);
 			if (err == IE_DATE) {
 				err = IE_ISDS;
 			}
@@ -5146,17 +5148,16 @@ static enum isds_error extract_CiRecord(struct isds_ctx *context,
 			free(string_locale);
 			goto leave;
 		}
-		zfree(string);
+		xmlString = NULL;
 	}
 
-	EXTRACT_STRING("isds:ciEventType", string);
-	if (NULL != string) {
-		err = string2isds_credit_event_type((xmlChar *)string,
-		    &(*event)->type);
+	EXTRACT_CONST_STRING("isds:ciEventType", xmlString);
+	if (NULL != xmlString) {
+		err = string2isds_credit_event_type(xmlString, &(*event)->type);
 		if (UNLIKELY(IE_SUCCESS != err)) {
 			if (err == IE_ENUM) {
 				err = IE_ISDS;
-				char *string_locale = _isds_utf82locale(string);
+				char *string_locale = _isds_utf82locale((const char *)xmlString);
 				isds_printf_message(context,
 				    _("Unknown isds:ciEventType value: %s"),
 				    string_locale);
@@ -5164,7 +5165,7 @@ static enum isds_error extract_CiRecord(struct isds_ctx *context,
 			}
 			goto leave;
 		}
-		zfree(string);
+		xmlString = NULL;
 	}
 
 	number_ptr = &((*event)->credit_change);
@@ -5215,7 +5216,6 @@ leave:
 	if (UNLIKELY(IE_SUCCESS != err)) {
 		isds_credit_event_free(event);
 	}
-	free(string);
 	xmlXPathFreeObject(result);
 	return err;
 }
