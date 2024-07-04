@@ -600,37 +600,42 @@ void isds_DTInfoOutput_free(struct isds_DTInfoOutput **info)
 	zfree(*info);
 }
 
-/* Deallocate struct isds_credit_event recursively and NULL it */
-void isds_credit_event_free(struct isds_credit_event **event) {
-    if (NULL == event || NULL == *event) return;
+/* Deallocate struct isds_credit_event recursively and NULL it. */
+void isds_credit_event_free(struct isds_credit_event **event)
+{
+	if (UNLIKELY((NULL == event) || (NULL == *event))) {
+		return;
+	}
 
-    free((*event)->time);
-    switch ((*event)->type) {
-        case ISDS_CREDIT_CHARGED:
-            free((*event)->details.charged.transaction);
-            break;
-        case ISDS_CREDIT_DISCHARGED:
-            free((*event)->details.discharged.transaction);
-            break;
-        case ISDS_CREDIT_MESSAGE_SENT:
-            free((*event)->details.message_sent.recipient);
-            free((*event)->details.message_sent.message_id);
-            break;
-        case ISDS_CREDIT_STORAGE_SET:
-            free((*event)->details.storage_set.new_valid_from);
-            free((*event)->details.storage_set.new_valid_to);
-            free((*event)->details.storage_set.old_capacity);
-            free((*event)->details.storage_set.old_valid_from);
-            free((*event)->details.storage_set.old_valid_to);
-            free((*event)->details.storage_set.initiator);
-            break;
-        case ISDS_CREDIT_EXPIRED:
-            break;
-    }
+	free((*event)->time);
+	switch ((*event)->type) {
+	case ISDS_CREDIT_CHARGED:
+		free((*event)->details.charged.transaction);
+		break;
+	case ISDS_CREDIT_DISCHARGED:
+		free((*event)->details.discharged.transaction);
+		break;
+	case ISDS_CREDIT_MESSAGE_SENT:
+		free((*event)->details.message_sent.recipient);
+		free((*event)->details.message_sent.message_id);
+		break;
+	case ISDS_CREDIT_STORAGE_SET:
+		free((*event)->details.storage_set.new_valid_from);
+		free((*event)->details.storage_set.new_valid_to);
+		free((*event)->details.storage_set.old_capacity);
+		free((*event)->details.storage_set.old_valid_from);
+		free((*event)->details.storage_set.old_valid_to);
+		free((*event)->details.storage_set.initiator);
+		break;
+	case ISDS_CREDIT_EXPIRED:
+		break;
+	case ISDS_CREDIT_DELETED_MESSAGE_RECOVERED:
+		free((*event)->details.deleted_message_recovered.initiator);
+		break;
+	}
 
-    zfree(*event);
+	zfree(*event);
 }
-
 
 /* Deallocate struct isds_fulltext_result recursively and NULL it */
 void isds_fulltext_result_free(
@@ -3049,29 +3054,36 @@ static isds_error string2isds_payment_type(const xmlChar *string,
     return IE_SUCCESS;
 }
 
-
-/* Convert UTF-8 @string representation of ISDS ciEventType to enum @type.
+/*
+ * Convert UTF-8 @string representation of ISDS ciEventType to enum @type.
  * ciEventType is integer but we convert it from string representation
- * directly. */
-static isds_error string2isds_credit_event_type(const xmlChar *string,
-        isds_credit_event_type *type) {
-    if (!string || !type) return IE_INVAL;
+ * directly.
+ */
+static
+enum isds_error string2isds_credit_event_type(const xmlChar *string,
+    enum isds_credit_event_type *type)
+{
+	if (UNLIKELY((NULL == string) || (NULL == type))) {
+		return IE_INVAL;
+	}
 
-    if (!xmlStrcmp(string, BAD_CAST "1"))
-        *type = ISDS_CREDIT_CHARGED;
-    else if (!xmlStrcmp(string, BAD_CAST "2"))
-        *type = ISDS_CREDIT_DISCHARGED;
-    else if (!xmlStrcmp(string, BAD_CAST "3"))
-        *type = ISDS_CREDIT_MESSAGE_SENT;
-    else if (!xmlStrcmp(string, BAD_CAST "4"))
-        *type = ISDS_CREDIT_STORAGE_SET;
-    else if (!xmlStrcmp(string, BAD_CAST "5"))
-        *type = ISDS_CREDIT_EXPIRED;
-    else
-        return IE_ENUM;
-    return IE_SUCCESS;
+	if (0 == xmlStrcmp(string, BAD_CAST "1")) {
+		*type = ISDS_CREDIT_CHARGED;
+	} else if (0 == xmlStrcmp(string, BAD_CAST "2")) {
+		*type = ISDS_CREDIT_DISCHARGED;
+	} else if (0 == xmlStrcmp(string, BAD_CAST "3")) {
+		*type = ISDS_CREDIT_MESSAGE_SENT;
+	} else if (0 == xmlStrcmp(string, BAD_CAST "4")) {
+		*type = ISDS_CREDIT_STORAGE_SET;
+	} else if (0 == xmlStrcmp(string, BAD_CAST "5")) {
+		*type = ISDS_CREDIT_EXPIRED;
+	} else if (0 == xmlStrcmp(string, BAD_CAST "7")) {
+		*type = ISDS_CREDIT_DELETED_MESSAGE_RECOVERED;
+	} else {
+		return IE_ENUM;
+	}
+	return IE_SUCCESS;
 }
-
 
 /* Convert ISDS dmFileMetaType enum @type to UTF-8 string.
  * @Return pointer to static string, or NULL if unknown enum value */
@@ -5089,110 +5101,123 @@ leave:
     return err;
 }
 
-
-/* Convert XSD:tCiRecord XML tree into structure
+/*
+ * Convert XSD:tCiRecord XML tree into structure
  * @context is ISDS context
  * @event is automatically reallocated commercial credit event structure
  * @xpath_ctx is XPath context with current node as XSD:tCiRecord element
- * In case of error @event will be freed. */
-static isds_error extract_CiRecord(struct isds_ctx *context,
-        struct isds_credit_event **event,
-        xmlXPathContextPtr xpath_ctx) {
-    isds_error err = IE_SUCCESS;
-    xmlXPathObjectPtr result = NULL;
-    char *string = NULL;
-    long int *number_ptr;
+ * In case of error @event will be freed.
+ */
+static
+enum isds_error extract_CiRecord(struct isds_ctx *context,
+    struct isds_credit_event **event, xmlXPathContext *xpath_ctx)
+{
+	enum isds_error err = IE_SUCCESS;
+	xmlXPathObject *result = NULL;
+	const xmlChar *xmlString = NULL;
+	long int *number_ptr;
 
-    if (!context) return IE_INVALID_CONTEXT;
-    if (!event) return IE_INVAL;
-    isds_credit_event_free(event);
-    if (!xpath_ctx) return IE_INVAL;
+	if (UNLIKELY(NULL == context)) {
+		 return IE_INVALID_CONTEXT;
+	}
+	if (UNLIKELY(NULL == event)) {
+		return IE_INVAL;
+	}
+	isds_credit_event_free(event);
+	if (UNLIKELY(NULL == xpath_ctx)) {
+		 return IE_INVAL;
+	}
 
+	*event = calloc(1, sizeof(**event));
+	if (UNLIKELY(NULL == *event)) {
+		err = IE_NOMEM;
+		goto leave;
+	}
 
-    *event = calloc(1, sizeof(**event));
-    if (!*event) {
-        err = IE_NOMEM;
-        goto leave;
-    }
+	EXTRACT_CONST_STRING("isds:ciEventTime", xmlString);
+	if (NULL != xmlString) {
+		err = timestring2timeval(xmlString, &(*event)->time);
+		if (UNLIKELY(IE_SUCCESS != err)) {
+			char *string_locale = _isds_utf82locale((const char *)xmlString);
+			if (err == IE_DATE) {
+				err = IE_ISDS;
+			}
+			isds_printf_message(context,
+			    _("Could not convert ciEventTime as ISO time: %s"),
+			    string_locale);
+			free(string_locale);
+			goto leave;
+		}
+		xmlString = NULL;
+	}
 
-    EXTRACT_STRING("isds:ciEventTime", string);
-    if (string) {
-        err = timestring2timeval((xmlChar *) string,
-                &(*event)->time);
-        if (err) {
-            char *string_locale = _isds_utf82locale(string);
-            if (err == IE_DATE) err = IE_ISDS;
-            isds_printf_message(context,
-                    _("Could not convert ciEventTime as ISO time: %s"),
-                    string_locale);
-            free(string_locale);
-            goto leave;
-        }
-        zfree(string);
-    }
+	EXTRACT_CONST_STRING("isds:ciEventType", xmlString);
+	if (NULL != xmlString) {
+		err = string2isds_credit_event_type(xmlString, &(*event)->type);
+		if (UNLIKELY(IE_SUCCESS != err)) {
+			if (err == IE_ENUM) {
+				err = IE_ISDS;
+				char *string_locale = _isds_utf82locale((const char *)xmlString);
+				isds_printf_message(context,
+				    _("Unknown isds:ciEventType value: %s"),
+				    string_locale);
+				free(string_locale);
+			}
+			goto leave;
+		}
+		xmlString = NULL;
+	}
 
-    EXTRACT_STRING("isds:ciEventType", string);
-    if (string) {
-        err = string2isds_credit_event_type((xmlChar *)string,
-                &(*event)->type);
-        if (err) {
-            if (err == IE_ENUM) {
-                err = IE_ISDS;
-                char *string_locale = _isds_utf82locale(string);
-                isds_printf_message(context,
-                        _("Unknown isds:ciEventType value: %s"), string_locale);
-                free(string_locale);
-            }
-            goto leave;
-        }
-        zfree(string);
-    }
+	number_ptr = &((*event)->credit_change);
+	EXTRACT_LONGINT("isds:ciCreditChange", number_ptr, 1);
+	number_ptr = &(*event)->new_credit;
+	EXTRACT_LONGINT("isds:ciCreditAfter", number_ptr, 1);
 
-    number_ptr = &((*event)->credit_change);
-    EXTRACT_LONGINT("isds:ciCreditChange", number_ptr, 1);
-    number_ptr = &(*event)->new_credit;
-    EXTRACT_LONGINT("isds:ciCreditAfter", number_ptr, 1);
-
-    switch((*event)->type) {
-        case ISDS_CREDIT_CHARGED:
-            EXTRACT_STRING("isds:ciTransID",
-                    (*event)->details.charged.transaction);
-            break;
-        case ISDS_CREDIT_DISCHARGED:
-            EXTRACT_STRING("isds:ciTransID",
-                    (*event)->details.discharged.transaction);
-            break;
-        case ISDS_CREDIT_MESSAGE_SENT:
-            EXTRACT_STRING("isds:ciRecipientID",
-                (*event)->details.message_sent.recipient);
-            EXTRACT_STRING("isds:ciPDZID",
-                (*event)->details.message_sent.message_id);
-            break;
-        case ISDS_CREDIT_STORAGE_SET:
-            number_ptr = &((*event)->details.storage_set.new_capacity);
-            EXTRACT_LONGINT("isds:ciNewCapacity", number_ptr, 1);
-            EXTRACT_DATE("isds:ciNewFrom",
-                (*event)->details.storage_set.new_valid_from);
-            EXTRACT_DATE("isds:ciNewTo",
-                (*event)->details.storage_set.new_valid_to);
-            EXTRACT_LONGINT("isds:ciOldCapacity",
-                (*event)->details.storage_set.old_capacity, 0);
-            EXTRACT_DATE("isds:ciOldFrom",
-                (*event)->details.storage_set.old_valid_from);
-            EXTRACT_DATE("isds:ciOldTo",
-                (*event)->details.storage_set.old_valid_to);
-            EXTRACT_STRING("isds:ciDoneBy",
-                    (*event)->details.storage_set.initiator);
-            break;
-        case ISDS_CREDIT_EXPIRED:
-            break;
-    }
+	switch((*event)->type) {
+	case ISDS_CREDIT_CHARGED:
+		EXTRACT_STRING("isds:ciTransID",
+		    (*event)->details.charged.transaction);
+		break;
+	case ISDS_CREDIT_DISCHARGED:
+		EXTRACT_STRING("isds:ciTransID",
+		    (*event)->details.discharged.transaction);
+		break;
+	case ISDS_CREDIT_MESSAGE_SENT:
+		EXTRACT_STRING("isds:ciRecipientID",
+		    (*event)->details.message_sent.recipient);
+		EXTRACT_STRING("isds:ciPDZID",
+		    (*event)->details.message_sent.message_id);
+		break;
+	case ISDS_CREDIT_STORAGE_SET:
+		number_ptr = &((*event)->details.storage_set.new_capacity);
+		EXTRACT_LONGINT("isds:ciNewCapacity", number_ptr, 1);
+		EXTRACT_DATE("isds:ciNewFrom",
+		    (*event)->details.storage_set.new_valid_from);
+		EXTRACT_DATE("isds:ciNewTo",
+		    (*event)->details.storage_set.new_valid_to);
+		EXTRACT_LONGINT("isds:ciOldCapacity",
+		    (*event)->details.storage_set.old_capacity, 0);
+		EXTRACT_DATE("isds:ciOldFrom",
+		    (*event)->details.storage_set.old_valid_from);
+		EXTRACT_DATE("isds:ciOldTo",
+		    (*event)->details.storage_set.old_valid_to);
+		EXTRACT_STRING("isds:ciDoneBy",
+		    (*event)->details.storage_set.initiator);
+		break;
+	case ISDS_CREDIT_EXPIRED:
+		break;
+	case ISDS_CREDIT_DELETED_MESSAGE_RECOVERED:
+		EXTRACT_STRING("isds:ciDoneBy",
+		    (*event)->details.deleted_message_recovered.initiator);
+		break;
+	}
 
 leave:
-    if (err) isds_credit_event_free(event);
-    free(string);
-    xmlXPathFreeObject(result);
-    return err;
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		isds_credit_event_free(event);
+	}
+	xmlXPathFreeObject(result);
+	return err;
 }
 
 

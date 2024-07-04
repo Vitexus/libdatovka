@@ -974,17 +974,17 @@ typedef enum isds_vault_payment_status {
  */
 struct isds_DTInfoOutput {
 	enum isds_vault_type *actDTType; /*
-	                                 * Type of the active long term storage.
-	                                 * It is suggested in dbTypes.xsd that this value may not be presented.
-	                                 */
+	                                  * Type of the active long term storage.
+	                                  * It is suggested in dbTypes.xsd that this value may not be presented.
+	                                  */
 	unsigned long int *actDTCapacity; /* The capacity of the long term storage. */
 	struct tm *actDTFrom; /* Inception date of the current active status. */
 	struct tm *actDTTo; /* Termination date of the current active status. */
 	unsigned long int *actDTCapUsed; /* Used capacity in units of messages. */
 	enum isds_vault_type *futDTType; /*
-	                                 * Type of the future long term storage.
-	                                 * It is suggested in dbTypes.xsd that this value may not be presented.
-	                                 */
+	                                  * Type of the future long term storage.
+	                                  * It is suggested in dbTypes.xsd that this value may not be presented.
+	                                  */
 	unsigned long int *futDTCapacity; /* Ordered capacity of the long term storage. */
 	struct tm *futDTFrom; /* Ordered from. */
 	struct tm *futDTTo; /* Ordered to. */
@@ -992,14 +992,23 @@ struct isds_DTInfoOutput {
 };
 
 /* Type of credit change event */
-typedef enum {
-    ISDS_CREDIT_CHARGED,        /* Credit has been charged */
-    ISDS_CREDIT_DISCHARGED,     /* Credit has been discharged */
-    ISDS_CREDIT_MESSAGE_SENT,   /* Credit has been spent for sending
-                                   a commercial message */
-    ISDS_CREDIT_STORAGE_SET,    /* Credit has been spent for setting
-                                   a long-term storage */
-    ISDS_CREDIT_EXPIRED         /* Credit has expired */
+typedef enum isds_credit_event_type {
+	ISDS_CREDIT_CHARGED = 1, /* Credit has been charged. */
+	ISDS_CREDIT_DISCHARGED = 2, /* Credit has been discharged. */
+	ISDS_CREDIT_MESSAGE_SENT = 3, /*
+	                               * Credit has been spent for sending
+	                               * a commercial message.
+	                               */
+	ISDS_CREDIT_STORAGE_SET = 4, /*
+	                              * Credit has been spent for setting
+	                              * a credit-based long-term storage.
+	                              */
+	ISDS_CREDIT_EXPIRED = 5, /* Credit has expired */
+	ISDS_CREDIT_DELETED_MESSAGE_RECOVERED = 7 /*
+	                                           * Message previously deleted
+	                                           * from long-term storage
+	                                           * has been recovered.
+	                                           */
 } isds_credit_event_type;
 
 /* Data specific for ISDS_CREDIT_CHARGED isds_credit_event_type */
@@ -1036,31 +1045,39 @@ struct isds_credit_event_storage_set {
                                        change; Optional. */
 };
 
+/* Data specific for ISDS_CREDIT_DELETED_MESSAGE_RECOVERED isds_credit_event_type */
+struct isds_credit_event_deleted_message_recovered {
+	char *initiator; /* Name of a user who initiated this change; Optional. */
+};
+
 /* Event about change of credit for sending commercial services */
 struct isds_credit_event {
-    /* Common fields */
-    struct isds_timeval *time; /* When the credit was changed. */
-    long int credit_change; /*
-                             * Difference in credit value caused by
-                             * this event. The unit is 1/100 CZK.
-                             */
-    long int new_credit; /*
-                          * Credit value after this event.
-                          * The unit is 1/100 CZK.
-                         */
-    isds_credit_event_type type; /* Type of the event */
+	/* Common fields */
+	struct isds_timeval *time; /* When the credit was changed. */
+	long int credit_change; /*
+	                         * Difference in credit value caused by
+	                         * this event. The unit is 1/100 CZK.
+	                         */
+	long int new_credit; /*
+	                      * Credit value after this event.
+	                      * The unit is 1/100 CZK.
+	                     */
+	enum isds_credit_event_type type; /* Type of the event */
 
-    /* Details specific for the type */
-    union {
-        struct isds_credit_event_charged charged;
-                                                /* ISDS_CREDIT_CHARGED */
-        struct isds_credit_event_discharged discharged;
-                                                /* ISDS_CREDIT_DISCHARGED */
-        struct isds_credit_event_message_sent message_sent;
-                                                /* ISDS_CREDIT_MESSAGE_SENT */
-        struct isds_credit_event_storage_set storage_set;
-                                                /* ISDS_CREDIT_STORAGE_SET */
-    } details;
+	/* Details specific for the type */
+	union {
+		/* ISDS_CREDIT_CHARGED */
+		struct isds_credit_event_charged charged;
+		/* ISDS_CREDIT_DISCHARGED */
+		struct isds_credit_event_discharged discharged;
+		/* ISDS_CREDIT_MESSAGE_SENT */
+		struct isds_credit_event_message_sent message_sent;
+		/* ISDS_CREDIT_STORAGE_SET */
+		struct isds_credit_event_storage_set storage_set;
+		/* ISDS_CREDIT_EXPIRED - Has no special event data. */
+		/* ISDS_CREDIT_DELETED_MESSAGE_RECOVERED */
+		struct isds_credit_event_deleted_message_recovered deleted_message_recovered;
+	} details;
 };
 
 /* General linked list */

@@ -1162,6 +1162,11 @@ static http_error insert_ciRecords(xmlNodePtr isds_response,
             case SERVER_CREDIT_EXPIRED:
                 INSERT_STRING(record, "ciEventType", "5");
                 break;
+            case SERVER_CREDIT_DELETED_MESSAGE_RECOVERED:
+                INSERT_STRING(record, "ciEventType", "7");
+                INSERT_STRING(record, "ciDoneBy",
+                        event->details.deleted_message_recovered.initiator);
+                break;
             default:
                 error = HTTP_ERROR_SERVER;
                 goto leave;
