@@ -1,7 +1,7 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: libdatovka
 Upstream-Contact: datove-schranky@labs.nic.cz
-Source: https://secure.nic.cz/files/datove_schranky/libdatovka/
+Source: https://datovka.nic.cz/libdatovka/
 
 Files: *
 Copyright: 2009-2010 Petr Písař <petr.pisar@atlas.cz>
