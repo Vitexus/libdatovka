@@ -110,7 +110,7 @@ x${P_LIBDATOVKA})
 		VERSION="0.6.2"
 
 		ensure_source_presence "${SRC_ROOT}" "${PACKAGE}-${VERSION}.tar.xz" \
-		    "https://secure.nic.cz/files/datove_schranky/libdatovka/" "bbf0b0f3b95b8dc7f2fdb99a1f4a1dcf6ea2180e1300449acb67beb9e7700f8c" "" "" || exit 1
+		    "https://datovka.nic.cz/libdatovka/" "bbf0b0f3b95b8dc7f2fdb99a1f4a1dcf6ea2180e1300449acb67beb9e7700f8c" "" "" || exit 1
 	fi
 
 	RELEASE="1"
