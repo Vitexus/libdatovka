@@ -1,4 +1,4 @@
-0.7.0 /
+0.7.0 / 2024-08-29
  * Assigned explicit values to enum isds_credit_event_type values.
  * Added new value ISDS_CREDIT_DELETED_MESSAGE_RECOVERED and added
    struct isds_credit_event_deleted_message_recovered.

@@ -38,8 +38,8 @@ extern "C" {
  * 0.1.2                     0x00010200
  * 1.2.3                     0x01020300
  */
-#define ISDS_LIB_VER_NUM 0x00060200L
-#define ISDS_LIB_VER_STR "libdatovka 0.6.2"
+#define ISDS_LIB_VER_NUM 0x00070000L
+#define ISDS_LIB_VER_STR "libdatovka 0.7.0"
 
 /*
  * Can be used like:
