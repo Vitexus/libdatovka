@@ -1,4 +1,4 @@
-libdatovka.so.6 libdatovka6 #MINVER#
+libdatovka.so.8 libdatovka8 #MINVER#
  czp_close_connection@Base 0.1
  czp_convert_document@Base 0.1
  isds_AddDataBoxUser2@Base 0.1
