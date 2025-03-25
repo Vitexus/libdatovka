@@ -14410,15 +14410,15 @@ static isds_error build_send_check_message_request(struct isds_ctx *context,
             .content_id = NULL,
             .dm_file = NULL
         };
-        struct dbuf buf;
-        dbuf_init(&buf);
-        struct dbuf *buf_ptr = (NULL != raw_response) ? &buf : NULL;
+        struct dbuf_res buf;
+        dbuf_res_init(&buf, BUF_RES_INCREMENT);
+        struct dbuf_res *buf_ptr = (NULL != raw_response) ? &buf : NULL;
         err = _isds_vodz(context, service, VODZ_BASIC, &req, response,
                 buf_ptr, NULL);
         if (NULL != raw_response) {
-            dbuf_take(&buf, raw_response, raw_response_length);
+            dbuf_res_take(&buf, raw_response, raw_response_length);
         }
-        dbuf_free_content(&buf);
+        dbuf_res_free_content(&buf);
     }
     xmlFreeNode(request); request = NULL;
 

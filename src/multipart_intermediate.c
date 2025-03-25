@@ -70,7 +70,7 @@ int read_header_value(struct multipart_parser *p, const char *at, size_t length)
 
 	//intermediate_log("%.*s", (int)length, at);
 
-	if (0 == dbuf_res_append(dbuf, at, length)) {
+	if (0 == dbuf_res_append_2(dbuf, BUF_RES_INCREMENT, at, length)) {
 		return 0;
 	} else {
 		return -1;
@@ -93,7 +93,7 @@ int read_part_data(struct multipart_parser *p, const char *at, size_t length)
 
 	//intermediate_log("%.*s", (int)length, at);
 
-	if (0 == dbuf_res_append(dbuf, at, length)) {
+	if (0 == dbuf_res_append_2(dbuf, BUF_RES_INCREMENT, at, length)) {
 		interm->have_unfinished_content = 1;
 		return 0;
 	} else {
