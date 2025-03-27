@@ -2609,7 +2609,7 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 		*response_node_list = NULL;
 	}
 	if ((NULL != raw_response) && (NULL != raw_response->data)) {
-		raw_response->data = NULL;
+		dbuf_res_free_content(raw_response);
 	}
 	if (NULL != parts) {
 		multipart_parts_free(*parts); *parts = NULL;

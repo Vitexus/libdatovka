@@ -4,6 +4,7 @@
 #include <stddef.h> /* size_t */
 
 #define BUF_INCREMENT 4096
+#define BUF_RES_ZERO 0
 #define BUF_RES_INCREMENT (10 * 1024 * 1024) /* 10 MiB */
 
 /* Data buffer with no reserve. */

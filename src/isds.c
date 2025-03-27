@@ -14411,7 +14411,7 @@ static isds_error build_send_check_message_request(struct isds_ctx *context,
             .dm_file = NULL
         };
         struct dbuf_res buf;
-        dbuf_res_init(&buf, BUF_RES_INCREMENT);
+        dbuf_res_init(&buf, BUF_RES_ZERO);
         struct dbuf_res *buf_ptr = (NULL != raw_response) ? &buf : NULL;
         err = _isds_vodz(context, service, VODZ_BASIC, &req, response,
                 buf_ptr, NULL);
