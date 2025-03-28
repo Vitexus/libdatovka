@@ -1,3 +1,7 @@
+0.7.1 /
+ * Reserving a 10 MB buffer when reading HTTP data from libcurl to reduce
+   memory reallocation. The size of the buffer is increased in 10 MB increments.
+
 0.7.0 / 2024-08-29
  * Assigned explicit values to enum isds_credit_event_type values.
  * Added new value ISDS_CREDIT_DELETED_MESSAGE_RECOVERED and added
