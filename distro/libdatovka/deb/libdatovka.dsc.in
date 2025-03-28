@@ -12,7 +12,8 @@ Build-Depends: debhelper (>= 9),
                libcurl4-openssl-dev,
                libexpat-dev,
                libssl-dev,
-               libxml2-dev
+               libxml2-dev,
+               pkgconf
 Package-List:
  libdatovka8 deb libs optional arch=any
  libdatovka-dev deb libdevel arch=any
