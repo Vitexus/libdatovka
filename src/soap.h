@@ -4,7 +4,7 @@
 #include "libdatovka/isds.h"
 
 struct comm_req; /* Forward declaration. */
-struct dbuf; /* Forward declaration. */
+struct dbuf_res; /* Forward declaration. */
 struct multipart_parts; /* Forward declaration. */
 
 /* Flags to be used when working with SOAP. */
@@ -72,7 +72,7 @@ isds_error _isds_soap(struct isds_ctx *context, const char *file,
 enum isds_error _isds_soap_vodz(struct isds_ctx *context, const char *file,
     int s_flags, const struct comm_req *req,
     xmlDoc **response_document, xmlNode **response_node_list,
-    struct dbuf *raw_response, struct multipart_parts **parts);
+    struct dbuf_res *raw_response, struct multipart_parts **parts);
 
 /* Build new URL from current @context and template.
  * @context is context carrying an URL

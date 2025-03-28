@@ -4,6 +4,8 @@
 #include <stddef.h> /* size_t */
 
 #define BUF_INCREMENT 4096
+#define BUF_RES_ZERO 0
+#define BUF_RES_INCREMENT (10 * 1024 * 1024) /* 10 MiB */
 
 /* Data buffer with no reserve. */
 struct dbuf {
@@ -42,9 +44,16 @@ int dbuf_res_resize(struct dbuf_res *dbuf, size_t new_max_size);
 
 int dbuf_res_append(struct dbuf_res *dbuf, const void *data, size_t len);
 
+int dbuf_res_append_2(struct dbuf_res *dbuf, size_t increment, const void *data, size_t len);
+
 int dbuf_res_append_lowercase(struct dbuf_res *dbuf, const void *data, size_t len);
 
 int dbuf_res_append_char(struct dbuf_res *dbuf, char ch);
+
+int dbuf_res_move(struct dbuf_res *dest, struct dbuf_res *src);
+
+/* Take the content. Resizes to actual length. */
+int dbuf_res_take(struct dbuf_res *dbuf, void **data, size_t *len);
 
 /* Just free the memory held by the data in the buffer. */
 void dbuf_res_free_content(struct dbuf_res *dbuf);

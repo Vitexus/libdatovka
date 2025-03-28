@@ -50,7 +50,7 @@ struct formpost_header_list {
 /* Context structure, needed to read multipart data. */
 struct accepted_data {
 	int is_multipart;
-	struct dbuf *raw_monolitic;  /* Where to store raw monolitoc data. */
+	struct dbuf_res *raw_monolitic;  /* Where to store raw monolitoc data. */
 	struct multipart_intermediate *interm; /* Intermediate multipart data, parser context, etc. */
 };
 
@@ -430,7 +430,7 @@ static isds_error unset_http_authorization(struct isds_ctx *context) {
  */
 static size_t write_body(void *buffer, size_t size, size_t nmemb, void *userp)
 {
-	struct dbuf *body = (struct dbuf *)userp;
+	struct dbuf_res *body = (struct dbuf_res *)userp;
 
 	/*
 	 * FIXME: Check for (size * nmemb + body->lengt) !> SIZE_T_MAX.
@@ -444,7 +444,7 @@ static size_t write_body(void *buffer, size_t size, size_t nmemb, void *userp)
 		return 0; /* Empty body */
 	}
 
-	if (UNLIKELY(0 != dbuf_append(body, buffer, size * nmemb))) {
+	if (UNLIKELY(0 != dbuf_res_append_2(body, BUF_RES_INCREMENT, buffer, size * nmemb))) {
 		return 0;
 	}
 
@@ -484,7 +484,7 @@ static size_t write_multipart_body(void *buffer, size_t size, size_t nmemb, void
 	if (accepted->is_multipart) {
 		multipart_intermediate_execute(interm, buffer, size * nmemb);
 	} else {
-		if (UNLIKELY(0 != dbuf_append(accepted->raw_monolitic, buffer, size * nmemb))) {
+		if (UNLIKELY(0 != dbuf_res_append_2(accepted->raw_monolitic, BUF_RES_INCREMENT, buffer, size * nmemb))) {
 			return 0;
 		}
 	}
@@ -1277,7 +1277,7 @@ static enum isds_error http(struct isds_ctx *context,
     const char *url, const int h_flags,
     const void *request, const size_t request_length,
     const char *content_id, const struct isds_dmFile *dm_file,
-    struct dbuf *response, struct multipart_intermediate *interm,
+    struct dbuf_res *response, struct multipart_intermediate *interm,
     char **mime_type, char **charset, long *http_code,
     struct auth_headers *response_otp_headers) {
 
@@ -1314,13 +1314,13 @@ static enum isds_error http(struct isds_ctx *context,
 		return IE_INVAL;
 	}
 	if (UNLIKELY(NULL == response)) {
-	return IE_INVAL;
+		return IE_INVAL;
 	}
 
 	/* Clean authentication headers */
 
 	/* Use the body here to allow deallocation in leave block */
-	response->len = 0;
+	response->used = 0;
 
 	/* Set Request-URI */
 	curl_err = curl_easy_setopt(context->curl, CURLOPT_URL, url);
@@ -1799,10 +1799,10 @@ static enum isds_error http(struct isds_ctx *context,
 	isds_log(ILF_HTTP, ILL_DEBUG, _("Final response to %s received\n"), url);
 	isds_log(ILF_HTTP, ILL_DEBUG,
 	    _("Response body length: %zu, content follows:\n"),
-	    response->len);
-	if (_isds_sizet2int(response->len) >= 0) {
+	    response->used);
+	if (_isds_sizet2int(response->used) >= 0) {
 		isds_log(ILF_HTTP, ILL_DEBUG, "%.*s\n",
-		    _isds_sizet2int(response->len), response->data);
+		    _isds_sizet2int(response->used), response->data);
 	}
 	isds_log(ILF_HTTP, ILL_DEBUG, _("End of response body\n"));
 
@@ -1917,7 +1917,7 @@ leave:
 			free(_charset);
 		}
 	} else {
-		dbuf_free_content(response);
+		dbuf_res_free_content(response);
 
 		if (NULL != mime_type) {
 			free(*mime_type);
@@ -1948,20 +1948,20 @@ leave:
  * @return server response code or MEP_RESOLUTION_UNKNOWN if the code was not
  * recognised.
  */
-static isds_mep_resolution mep_ws_state_response(const struct dbuf *body)
+static isds_mep_resolution mep_ws_state_response(const struct dbuf_res *body)
 {
 	isds_mep_resolution res = MEP_RESOLUTION_UNKNOWN; /* Default error. */
 
-	if (UNLIKELY((NULL == body) || (NULL == body->data) || (0 == body->len))) {
+	if (UNLIKELY((NULL == body) || (NULL == body->data) || (0 == body->used))) {
 		return res;
 	}
 	/* Ensure trailing '\0' character. */
-	char *tmp_str = malloc(body->len + 1);
+	char *tmp_str = malloc(body->used + 1);
 	if (UNLIKELY(NULL == tmp_str)) {
 		return res;
 	}
-	memcpy(tmp_str, body->data, body->len);
-	tmp_str[body->len] = '\0';
+	memcpy(tmp_str, body->data, body->used);
+	tmp_str[body->used] = '\0';
 
 	char *endptr;
 	long num = strtol(tmp_str, &endptr, 10);
@@ -2129,7 +2129,7 @@ leave:
  */
 static
 isds_error process_http_response(struct isds_ctx *context,
-        const struct dbuf *response,
+        const struct dbuf_res *response,
         xmlDocPtr *response_document, xmlNodePtr *response_node_list,
         enum soap_ns_type sv) {
 
@@ -2152,9 +2152,9 @@ isds_error process_http_response(struct isds_ctx *context,
 
     /* Parse the HTTP body as XML */
 #if HAVE_DECL_XML_PARSE_HUGE
-    response_soap_doc = xmlReadMemory(response->data, response->len, NULL, NULL, XML_PARSE_NODICT | XML_PARSE_HUGE);
+    response_soap_doc = xmlReadMemory(response->data, response->used, NULL, NULL, XML_PARSE_NODICT | XML_PARSE_HUGE);
 #else /* !HAVE_DECL_XML_PARSE_HUGE */
-    response_soap_doc = xmlParseMemory(response->data, response->len);
+    response_soap_doc = xmlParseMemory(response->data, response->used);
 #endif /* HAVE_DECL_XML_PARSE_HUGE */
     if (NULL == response_soap_doc) {
         err = IE_XML;
@@ -2173,10 +2173,10 @@ isds_error process_http_response(struct isds_ctx *context,
         goto leave;
     }
 
-    if (_isds_sizet2int(response->len) >= 0) {
+    if (_isds_sizet2int(response->used) >= 0) {
         isds_log(ILF_SOAP, ILL_DEBUG,
             _("SOAP response received:\n%.*s\nEnd of SOAP response\n"),
-            _isds_sizet2int(response->len), response->data);
+            _isds_sizet2int(response->used), response->data);
     }
 
     /* Check for SOAP version */
@@ -2344,9 +2344,9 @@ _hidden isds_error _isds_soap(struct isds_ctx *context, const char *file,
     long http_code = 0;
     struct auth_headers response_otp_headers;
     xmlBufferPtr http_request = NULL;
-    struct dbuf http_response;
+    struct dbuf_res http_response;
 
-    dbuf_init(&http_response);
+    dbuf_res_init(&http_response, BUF_RES_INCREMENT);
 
     if (!context) return IE_INVALID_CONTEXT;
     if ( (NULL == response_document && NULL != response_node_list) ||
@@ -2558,13 +2558,13 @@ redirect:
 
 
     /* Save raw response */
-    dbuf_take(&http_response, raw_response, raw_response_length);
+    dbuf_res_take(&http_response, raw_response, raw_response_length);
 
 leave:
     if ((context->otp_credentials != NULL) || (context->mep_credentials != NULL))
         auth_headers_free(&response_otp_headers);
     free(mime_type);
-    dbuf_free_content(&http_response);
+    dbuf_res_free_content(&http_response);
     xmlBufferFree(http_request);
     free(url);
 
@@ -2574,19 +2574,19 @@ leave:
 _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
     const char *file, int s_flags, const struct comm_req *req,
     xmlDoc **response_document, xmlNode **response_node_list,
-    struct dbuf *raw_response, struct multipart_parts **parts)
+    struct dbuf_res *raw_response, struct multipart_parts **parts)
 {
 	enum isds_error err = IE_SUCCESS;
 	char *url = NULL;
 	char *mime_type = NULL;
 	long http_code = 0;
 	xmlBuffer *http_request = NULL;
-	struct dbuf http_response;
+	struct dbuf_res http_response;
 
 	struct multipart_intermediate *interm = NULL;
 	struct multipart_parts *multipart_response = NULL;
 
-	dbuf_init(&http_response);
+	dbuf_res_init(&http_response, BUF_RES_INCREMENT);
 
 	if (UNLIKELY(NULL == context)) {
 		return IE_INVALID_CONTEXT;
@@ -2609,7 +2609,7 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 		*response_node_list = NULL;
 	}
 	if ((NULL != raw_response) && (NULL != raw_response->data)) {
-		raw_response->data = NULL;
+		dbuf_res_free_content(raw_response);
 	}
 	if (NULL != parts) {
 		multipart_parts_free(*parts); *parts = NULL;
@@ -2745,9 +2745,10 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 			    _("Cannot localise start part of multipart response."));
 			goto leave;
 		}
-		struct dbuf buf = {
+		struct dbuf_res buf = {
 			.data = multipart_response->root->data,
-			.len = multipart_response->root->data_size
+			.used = multipart_response->root->data_size,
+			.max_size = multipart_response->root->data_size
 		};
 		err = process_http_response(context, &buf,
 		    response_document, response_node_list, SOAP_1_2);
@@ -2763,7 +2764,7 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 
 	/* Save raw response */
 	if (NULL != raw_response) {
-		dbuf_move(raw_response, &http_response);
+		dbuf_res_move(raw_response, &http_response);
 	}
 
 	if (NULL != parts) {
@@ -2775,7 +2776,7 @@ leave:
 	multipart_intermediate_free(interm);
 	/* Don't handle OTP or MEP login credentials here. */
 	free(mime_type);
-	dbuf_free_content(&http_response);
+	dbuf_res_free_content(&http_response);
 	xmlBufferFree(http_request);
 	free(url);
 
@@ -2833,9 +2834,9 @@ _hidden isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context) {
     isds_error err;
     char *url = NULL;
     long http_code;
-    struct dbuf response;
+    struct dbuf_res response;
 
-    dbuf_init(&response);
+    dbuf_res_init(&response, BUF_RES_INCREMENT);
 
     if (context == NULL || (!context->otp && !context->mep)) return IE_INVALID_CONTEXT;
     if (context->curl == NULL) return IE_CONNECTION_CLOSED;
@@ -2853,7 +2854,7 @@ _hidden isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context) {
             &response, NULL,
             NULL, NULL, &http_code,
             NULL);
-    dbuf_free_content(&response);
+    dbuf_res_free_content(&response);
     free(url);
     if (err) {
         /* long message set by http() */

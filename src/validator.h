@@ -4,7 +4,7 @@
 #include "libdatovka/isds.h"
 
 struct comm_req; /* Forward declaration. */
-struct dbuf; /* Forward declaration. */
+struct dbuf_res; /* Forward declaration. */
 struct multipart_parts; /* Forward declaration. */
 
 #if HAVE_LIBCURL
@@ -88,7 +88,7 @@ enum isds_error _isds(struct isds_ctx *context, const enum isds_service service,
  */
 enum isds_error _isds_vodz(struct isds_ctx *context,
     const enum isds_service service, int v_flags, const struct comm_req *req,
-    xmlDoc **response, struct dbuf *raw_response, struct multipart_parts **parts);
+    xmlDoc **response, struct dbuf_res *raw_response, struct multipart_parts **parts);
 #endif /* HAVE_LIBCURL */
 
 /* Walk through list of isds_documents and check for their types and

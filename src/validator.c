@@ -263,7 +263,7 @@ leave:
 
 _hidden enum isds_error _isds_vodz(struct isds_ctx *context,
     const enum isds_service service, int v_flags, const struct comm_req *req,
-    xmlDoc **response, struct dbuf *raw_response, struct multipart_parts **parts)
+    xmlDoc **response, struct dbuf_res *raw_response, struct multipart_parts **parts)
 {
 	enum isds_error err = IE_SUCCESS;
 	xmlDoc *response_document = NULL;
@@ -350,7 +350,7 @@ leave:
 	if (IE_SUCCESS != err) {
 		xmlFreeDoc(*response);
 		if (NULL != raw_response) {
-			dbuf_free_content(raw_response);
+			dbuf_res_free_content(raw_response);
 		}
 	}
 	xmlFreeDoc(response_document);

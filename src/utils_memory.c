@@ -234,6 +234,34 @@ _hidden int dbuf_res_append(struct dbuf_res *dbuf, const void *data, size_t len)
 	return 0;
 }
 
+_hidden int dbuf_res_append_2(struct dbuf_res *dbuf, size_t increment, const void *data, size_t len)
+{
+	if (UNLIKELY(NULL == dbuf)) {
+		return -1;
+	}
+
+	if (UNLIKELY((NULL == data) && (0 != len))) {
+		return -1;
+	}
+
+	if (UNLIKELY(0 == len)) {
+		return 0;
+	}
+
+	/* Resize if needed. */
+	if ((dbuf->used + len) >= dbuf->max_size) { /* Leave at least one byte unused. */
+		size_t i = ((dbuf->used + len) / increment) + 1; /* Leave at least one byte unused. */
+		if (UNLIKELY(0 != dbuf_res_resize(dbuf, i * increment))) {
+			return -1;
+		}
+	}
+
+	/* Copy data. */
+	memcpy((char *)dbuf->data + dbuf->used, data, len);
+	dbuf->used += len;
+	return 0;
+}
+
 _hidden int dbuf_res_append_lowercase(struct dbuf_res *dbuf, const void *data, size_t len)
 {
 	if (UNLIKELY(NULL == dbuf)) {
@@ -277,6 +305,44 @@ _hidden int dbuf_res_append_char(struct dbuf_res *dbuf, char ch)
 
 	((char *)dbuf->data)[dbuf->used] = ch;
 	++dbuf->used;
+	return 0;
+}
+
+_hidden int dbuf_res_move(struct dbuf_res *dest, struct dbuf_res *src)
+{
+	if (UNLIKELY((NULL == dest) || (NULL == src))) {
+		return -1;
+	}
+
+	*dest = *src;
+	src->data = NULL;
+	src->used = 0;
+	src->max_size = 0;
+
+	return 0;
+}
+
+_hidden int dbuf_res_take(struct dbuf_res *dbuf, void **data, size_t *len)
+{
+	if (UNLIKELY((NULL == dbuf) || (NULL == data))) {
+		return -1;
+	}
+
+	/* Resize. */
+	void *new_buf = realloc(dbuf->data, dbuf->used);
+	if (NULL != new_buf) {
+		dbuf->data = new_buf;
+		dbuf->max_size = dbuf->used;
+	}
+	/* If resizing fails then just continue. */
+
+	*data = dbuf->data; dbuf->data = NULL;
+	if (NULL != len) {
+		*len = dbuf->used;
+	}
+	dbuf->used = 0;
+	dbuf->max_size = 0;
+
 	return 0;
 }
 
