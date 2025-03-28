@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libdatovka 0.7.0\n"
 "Report-Msgid-Bugs-To: datove-schranky@labs.nic.cz\n"
-"POT-Creation-Date: 2024-08-29 15:08+0200\n"
+"POT-Creation-Date: 2025-03-28 11:36+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2749,7 +2749,7 @@ msgstr ""
 msgid "Code 404: Document (%s) not found on server"
 msgstr ""
 
-#: src/soap.c:2545 src/soap.c:2757
+#: src/soap.c:2545 src/soap.c:2758
 #, c-format
 msgid "%s: bad MIME type sent by server: %s"
 msgstr ""
@@ -2768,23 +2768,23 @@ msgstr ""
 msgid "Cannot localise start part of multipart response."
 msgstr ""
 
-#: src/soap.c:2806
+#: src/soap.c:2807
 msgid ""
 "Base URL could not have been determined from context URL because there was "
 "no URL set in the context"
 msgstr ""
 
-#: src/soap.c:2816
+#: src/soap.c:2817
 msgid "Base URL could not have been determined from context URL"
 msgstr ""
 
-#: src/soap.c:2865
+#: src/soap.c:2866
 #, c-format
 msgid ""
 "Cookie for OTP authenticated connection to <%s> could not been invalidated"
 msgstr ""
 
-#: src/soap.c:2869
+#: src/soap.c:2870
 #, c-format
 msgid "Cookie for OTP authenticated connection to <%s> has been invalidated.\n"
 msgstr ""
