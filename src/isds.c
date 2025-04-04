@@ -7896,7 +7896,7 @@ static isds_error send_destroy_request_check_response(
             service_name_locale);
 
     /* Send request */
-    if (service != SERVICE_VODZ_DM_OPERATIONS) {
+    if ((service != SERVICE_VODZ_DM_ARCH) && (service != SERVICE_VODZ_DM_OPERATIONS)) {
         err = _isds(context, service, *request, response, NULL, NULL);
     } else {
         const struct comm_req req = {
@@ -18580,7 +18580,7 @@ enum isds_error isds_ArchiveISDSDocument(struct isds_ctx *context,
 
 	/* Send request to server and process response. */
 	err = send_destroy_request_check_response(context,
-	    SERVICE_DM_OPERATIONS, BAD_CAST "ArchiveISDSDocument", &request,
+	    SERVICE_VODZ_DM_ARCH, BAD_CAST "ArchiveISDSDocument", &request,
 	    &response, NULL, NULL);
 	if (UNLIKELY(IE_SUCCESS != err)) {
 		goto leave;
