@@ -18507,6 +18507,104 @@ leave:
     return err;
 }
 
+enum isds_error isds_ArchiveISDSDocument(struct isds_ctx *context,
+   const void *input_data, size_t input_length,
+   void **output_data, size_t *output_length, struct tm **valid_to)
+{
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlNs *isds_ns = NULL;
+	xmlNode *request = NULL;
+	xmlDoc *response = NULL;
+	/* TODO -- use map? */
+#endif /* HAVE_LIBCURL */
+
+	if (UNLIKELY(NULL != output_data)) {
+		*output_data = NULL;
+	}
+	if (UNLIKELY(NULL != output_length)) {
+		*output_length = 0;
+	}
+	if (UNLIKELY(NULL != valid_to)) {
+		*valid_to = NULL;
+	}
+
+	if (UNLIKELY(NULL == context)) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if (UNLIKELY((NULL == input_data) || (0 == input_length))) {
+		isds_log_message(context, _("Empty CMS blob on input"));
+		return IE_INVAL;
+	}
+	if (UNLIKELY((NULL == output_data) || (NULL == output_length))) {
+		isds_log_message(context,
+		    _("NULL pointer provided for output CMS blob"));
+		return IE_INVAL;
+	}
+
+#if HAVE_LIBCURL
+	/*
+	 * Check if connection is established
+	 * TODO: This check should be done downstairs.
+	 */
+	if (UNLIKELY(NULL == context->curl)) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	/* Build ArchiveISDSDocument request. */
+	request = xmlNewNode(NULL, BAD_CAST "ArchiveISDSDocument");
+	if (UNLIKELY(NULL == request)) {
+		isds_log_message(context,
+		    _("Could not build ArchiveISDSDocument request"));
+		return IE_ERROR;
+	}
+	isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+	if(UNLIKELY(NULL == isds_ns)) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		xmlFreeNode(request);
+		return IE_ERROR;
+	}
+	xmlSetNs(request, isds_ns);
+
+	/*
+	 * Insert Base64 encoded CMS blob.
+	 * TODO -- use somoething like insert_dmFile.
+	 */
+	err = insert_base64_encoded_string(context, request, NULL, "dmMessage",
+	    input_data, input_length);
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		goto leave;
+	}
+
+	/* Send request to server and process response. */
+	err = send_destroy_request_check_response(context,
+	    SERVICE_DM_OPERATIONS, BAD_CAST "ArchiveISDSDocument", &request,
+	    &response, NULL, NULL);
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		goto leave;
+	}
+
+	/* TODO */
+
+leave:
+
+	xmlFreeDoc(response);
+	xmlFreeNode(request);
+
+	if (IE_SUCCESS == err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("ArchiveISDSDocument request processed by server successfully.\n"));
+	}
+
+#else /* not HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+
+	return err;
+}
+
 #undef INSERT_ELEMENT
 #undef CHECK_FOR_STRING_LENGTH
 #undef INSERT_STRING_ATTRIBUTE

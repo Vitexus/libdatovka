@@ -2555,6 +2555,10 @@ isds_error isds_resign_message(struct isds_ctx *context,
         const void *input_data, size_t input_length,
         void **output_data, size_t *output_length, struct tm **valid_to);
 
+enum isds_error isds_ArchiveISDSDocument(struct isds_ctx *context,
+    const void *input_data, size_t input_length,
+    void **output_data, size_t *output_length, struct tm **valid_to);
+
 /* Erase message specified by @message_id from long term storage. Other
  * message cannot be erased on user request.
  * @context is session context
