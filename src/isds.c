@@ -18509,13 +18509,16 @@ leave:
 
 enum isds_error isds_ArchiveISDSDocument(struct isds_ctx *context,
    const void *input_data, size_t input_length,
-   void **output_data, size_t *output_length, struct tm **valid_to)
+   void **output_data, size_t *output_length, struct tm **next_stamp_to)
 {
 	enum isds_error err = IE_SUCCESS;
 #if HAVE_LIBCURL
 	xmlNs *isds_ns = NULL;
 	xmlNode *request = NULL;
 	xmlDoc *response = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+	char *string = NULL;
 	/* TODO -- use map? */
 #endif /* HAVE_LIBCURL */
 
@@ -18525,8 +18528,8 @@ enum isds_error isds_ArchiveISDSDocument(struct isds_ctx *context,
 	if (UNLIKELY(NULL != output_length)) {
 		*output_length = 0;
 	}
-	if (UNLIKELY(NULL != valid_to)) {
-		*valid_to = NULL;
+	if (UNLIKELY(NULL != next_stamp_to)) {
+		*next_stamp_to = NULL;
 	}
 
 	if (UNLIKELY(NULL == context)) {
@@ -18546,7 +18549,7 @@ enum isds_error isds_ArchiveISDSDocument(struct isds_ctx *context,
 
 #if HAVE_LIBCURL
 	/*
-	 * Check if connection is established
+	 * Check whether connection is established.
 	 * TODO: This check should be done downstairs.
 	 */
 	if (UNLIKELY(NULL == context->curl)) {
@@ -18570,7 +18573,7 @@ enum isds_error isds_ArchiveISDSDocument(struct isds_ctx *context,
 
 	/*
 	 * Insert Base64 encoded CMS blob.
-	 * TODO -- use somoething like insert_dmFile.
+	 * TODO -- use something like insert_dmFile.
 	 */
 	err = insert_base64_encoded_string(context, request, NULL, "dmMessage",
 	    input_data, input_length);
@@ -18578,7 +18581,10 @@ enum isds_error isds_ArchiveISDSDocument(struct isds_ctx *context,
 		goto leave;
 	}
 
-	/* Send request to server and process response. */
+	/*
+	 * Send request to server and process response.
+	 * TODO -- How to choose between SERVICE_DM_ARCH and SERVICE_VODZ_DM_ARCH?
+	 */
 	err = send_destroy_request_check_response(context,
 	    SERVICE_VODZ_DM_ARCH, BAD_CAST "ArchiveISDSDocument", &request,
 	    &response, NULL, NULL);
@@ -18586,9 +18592,82 @@ enum isds_error isds_ArchiveISDSDocument(struct isds_ctx *context,
 		goto leave;
 	}
 
-	/* TODO */
+	/* Extract re-signed data. */
+	xpath_ctx = xmlXPathNewContext(response);
+	if (UNLIKELY(NULL == xpath_ctx)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (UNLIKELY(IE_SUCCESS != _isds_register_namespaces(xpath_ctx, MESSAGE_NS_UNSIGNED, SOAP_1_1))) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	result = xmlXPathEvalExpression(
+	    BAD_CAST "/isds:ArchiveISDSDocumentResponse", xpath_ctx);
+	if (UNLIKELY(NULL == result)) {
+		err = IE_ERROR;
+		goto leave;
+	}
+	if (UNLIKELY(xmlXPathNodeSetIsEmpty(result->nodesetval))) {
+		isds_log_message(context,
+		    _("Missing ArchiveISDSDocumentResponse element"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	if (UNLIKELY(result->nodesetval->nodeNr > 1)) {
+		isds_log_message(context,
+		    _("Multiple ArchiveISDSDocumentResponse elements"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	xpath_ctx->node = result->nodesetval->nodeTab[0];
+	xmlXPathFreeObject(result); result = NULL;
+
+	EXTRACT_STRING("isds:dmResultDoc", string);
+	/* Decode non-empty data. */
+	if ((NULL != string) && (string[0] != '\0')) {
+		*output_length = _isds_b64decode(string, output_data);
+		if (UNLIKELY(*output_length == (size_t)-1)) {
+			isds_log_message(context,
+			    _("Error while Base64-decoding re-signed data"));
+			err = IE_ERROR;
+			goto leave;
+		}
+	} else {
+		isds_log_message(context, _("Server did not send re-signed data"));
+		err = IE_ISDS;
+		goto leave;
+	}
+	zfree(string);
+
+	if (NULL != next_stamp_to) {
+		/* Get time stamp expiration date. */
+		EXTRACT_STRING("isds:nextStampTo", string);
+		if (NULL != string) {
+			*next_stamp_to = calloc(1, sizeof(**next_stamp_to));
+			if (UNLIKELY(NULL == *next_stamp_to)) {
+				err = IE_NOMEM;
+				goto leave;
+			}
+			err = _isds_datestring2tm((xmlChar *)string, *next_stamp_to);
+			if (UNLIKELY(IE_SUCCESS != err)) {
+				if (err == IE_NOTSUP) {
+					err = IE_ISDS;
+					char *string_locale = _isds_utf82locale(string);
+					isds_printf_message(context,
+					    _("Invalid nextStampTo value: %s"), string_locale);
+					free(string_locale);
+				}
+				goto leave;
+			}
+		}
+	}
 
 leave:
+	free(string);
+
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
 
 	xmlFreeDoc(response);
 	xmlFreeNode(request);
