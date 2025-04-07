@@ -18684,6 +18684,161 @@ leave:
 	return err;
 }
 
+enum isds_error isds_ArchiveISDSDocument_mtomxop(struct isds_ctx *context,
+    const void *input_data, size_t input_length,
+    void **output_data, size_t *output_length, struct tm **next_stamp_to)
+{
+#define ATTACHMENT_CID "att_1"
+	enum isds_error err = IE_SUCCESS;
+#if HAVE_LIBCURL
+	xmlNs *isds_ns = NULL;
+	xmlNode *request = NULL;
+	xmlDoc *response = NULL;
+	struct multipart_parts *parts = NULL;
+	xmlChar *code = NULL;
+	xmlChar *message = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *result = NULL;
+#endif /* HAVE_LIBCURL */
+
+	if (UNLIKELY(NULL != output_data)) {
+		*output_data = NULL;
+	}
+	if (UNLIKELY(NULL != output_length)) {
+		*output_length = 0;
+	}
+	if (UNLIKELY(NULL != next_stamp_to)) {
+		*next_stamp_to = NULL;
+	}
+
+	if (UNLIKELY(NULL == context)) {
+		return IE_INVALID_CONTEXT;
+	}
+	zfree(context->long_message);
+	isds_status_free(&(context->status));
+	if (UNLIKELY((NULL == input_data) || (0 == input_length))) {
+		isds_log_message(context, _("Empty CMS blob on input"));
+		return IE_INVAL;
+	}
+	if (UNLIKELY((NULL == output_data) || (NULL == output_length))) {
+		isds_log_message(context,
+		    _("NULL pointer provided for output CMS blob"));
+		return IE_INVAL;
+	}
+
+#if HAVE_LIBCURL
+	/*
+	 * Check whether connection is established.
+	 * TODO: This check should be done downstairs.
+	 */
+	if (UNLIKELY(NULL == context->curl)) {
+		return IE_CONNECTION_CLOSED;
+	}
+
+	/* Build ArchiveISDSDocument request. */
+	request = xmlNewNode(NULL, BAD_CAST "ArchiveISDSDocument");
+	if (UNLIKELY(NULL == request)) {
+		isds_log_message(context,
+		    _("Could not build ArchiveISDSDocument request"));
+		return IE_ERROR;
+	}
+	isds_ns = xmlNewNs(request, BAD_CAST ISDS_NS, NULL);
+	if(UNLIKELY(NULL == isds_ns)) {
+		isds_log_message(context, _("Could not create ISDS name space"));
+		xmlFreeNode(request);
+		return IE_ERROR;
+	}
+	xmlSetNs(request, isds_ns);
+
+	/* Insert XOP Include. */
+	err = insert_xop_include(context, request, NULL, "dmMessage",
+	    ATTACHMENT_CID);
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		goto leave;
+	}
+
+	isds_log(ILF_ISDS, ILL_DEBUG,
+	    _("Sending MTOM/XOP ArchiveISDSDocument request to ISDS\n"));
+
+	/*
+	 * Send request.
+	 * Expecting ZFO file on input therefore there is no check for the MIME
+	 * type. It looks like that the MIME type must be specified,
+	 * using application/vnd.software602.filler.form-xml-zip .
+	 */
+	{
+		const struct isds_dmFile dm_file = {
+			.data = (void *)input_data,
+			.data_length = input_length,
+			.dmFileMetaType = FILEMETATYPE_MAIN,
+			.dmMimeType = "application/vnd.software602.filler.form-xml-zip",
+			.dmFileDescr = "message.zfo"
+		};
+		const struct comm_req req = {
+			.request = request,
+			.content_id = ATTACHMENT_CID,
+			.dm_file = &dm_file
+		};
+		err = _isds_vodz(context, SERVICE_VODZ_DM_ARCH,
+		    VODZ_SND_XOP | VODZ_RCV_XOP, &req, &response, NULL, &parts);
+	}
+
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Processing ISDS response on MTOM/XOP ArchiveISDSDocument request failed\n"));
+		goto leave;
+	}
+
+	/* Check for response status. */
+	err = isds_response_status(context, SERVICE_VODZ_DM_ARCH,
+	    response, &code, &message, NULL);
+	build_isds_status(&(context->status),
+	    _isds_service_to_status_type(SERVICE_VODZ_DM_ARCH),
+	    (char *)code, (char *)message, NULL);
+	if (UNLIKELY(IE_SUCCESS != err)) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		_("ISDS response on MTOM/XOP ArchiveISDSDocument is missing status\n"));
+		goto leave;
+	}
+
+	/* Request processed, but refused by server or server failed. */
+	if (UNLIKELY(0 != xmlStrcmp(code, BAD_CAST "0000"))) {
+		char *code_locale = _isds_utf82locale((char*)code);
+		char *message_locale = _isds_utf82locale((char*)message);
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("Server refused MTOM/XOP ArchiveISDSDocument request (code=%s, message=%s)\n"),
+		    code_locale, message_locale);
+		free(code_locale);
+		free(message_locale);
+		err = IE_ISDS;
+		goto leave;
+	}
+
+	/* TODO */
+
+leave:
+
+	xmlXPathFreeObject(result);
+	xmlXPathFreeContext(xpath_ctx);
+
+	free(code);
+	free(message);
+	multipart_parts_free(parts);
+	xmlFreeDoc(response);
+	xmlFreeNode(request);
+
+	if (IE_SUCCESS == err) {
+		isds_log(ILF_ISDS, ILL_DEBUG,
+		    _("MTOM/XOP ArchiveISDSDocument request processed by server successfully.\n"));
+	}
+
+#else /* not HAVE_LIBCURL */
+	err = IE_NOTSUP;
+#endif /* HAVE_LIBCURL */
+	return err;
+#undef ATTACHMENT_CID
+}
+
 #undef INSERT_ELEMENT
 #undef CHECK_FOR_STRING_LENGTH
 #undef INSERT_STRING_ATTRIBUTE
