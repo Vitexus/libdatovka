@@ -58,6 +58,7 @@ int main(int argc, char **argv)
 		struct tm *next_stamp_to = NULL;
 
 		const char *out_from_base = "output_resigned.zfo";
+		const char *out_from_xop = "output_resigned_xop.zfo";
 
 		if (0 != mmap_file(file_path, &fd, &buffer, &length)) {
 			fprintf(stderr, "Cannot map file '%s'.\n", file_path);
@@ -80,6 +81,30 @@ int main(int argc, char **argv)
 			printf("isds_ArchiveISDSDocument() succeeded\n");
 			save_data_to_file("Saving signed high-volume message",
 			    out_from_base, output_data, output_length);
+			if (NULL != next_stamp_to) {
+				fputs("New signature valid to (-1 day): ", stdout);
+				print_date(next_stamp_to);
+			}
+		}
+
+		free(output_data); output_data = NULL;
+		output_length = 0;
+		free(next_stamp_to); next_stamp_to = NULL;
+
+		printf("Sending content from file '%s' by using MTOM/XOP to ISDS to add a new signature...\n",
+		    file_path);
+
+		err = isds_ArchiveISDSDocument_mtomxop(ctx, buffer, length,
+		    &output_data, &output_length, &next_stamp_to);
+		if (err != IE_SUCCESS) {
+			fprintf(stderr, "isds_ArchiveISDSDocument_mtomxop() failed: %s: %s\n",
+			    isds_strerror(err), isds_long_message(ctx));
+			ret = EXIT_FAILURE;
+			goto fail;
+		} else {
+			printf("isds_ArchiveISDSDocument_mtomxop() succeeded\n");
+			save_data_to_file("Saving signed high-volume message",
+			    out_from_xop, output_data, output_length);
 			if (NULL != next_stamp_to) {
 				fputs("New signature valid to (-1 day): ", stdout);
 				print_date(next_stamp_to);
