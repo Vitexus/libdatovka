@@ -17,8 +17,10 @@ _hidden enum isds_status_type _isds_service_to_status_type(
 	enum isds_status_type type = STAT_DB;
 
 	switch (service) {
+	case SERVICE_DM_ARCH:
 	case SERVICE_DM_OPERATIONS:
 	case SERVICE_DM_INFO:
+	case SERVICE_VODZ_DM_ARCH:
 	case SERVICE_VODZ_DM_OPERATIONS:
 		type = STAT_DM;
 		break;
@@ -50,8 +52,10 @@ _hidden enum isds_error isds_response_status(struct isds_ctx *context,
 	}
 
 	switch (service) {
+	case SERVICE_DM_ARCH:
 	case SERVICE_DM_OPERATIONS:
 	case SERVICE_DM_INFO:
+	case SERVICE_VODZ_DM_ARCH:
 	case SERVICE_VODZ_DM_OPERATIONS:
 		status_code_expr = BAD_CAST
 		    "/*/isds:dmStatus/isds:dmStatusCode/text()";
@@ -189,12 +193,14 @@ _hidden enum isds_error _isds(struct isds_ctx *context,
 	 */
 	if (context->type == CTX_TYPE_ISDS) {
 		switch (service) {
+		case SERVICE_DM_ARCH:            file = "DS/arch"; break;
 		case SERVICE_DM_OPERATIONS:      file = "DS/dz"; break;
 		case SERVICE_DM_INFO:            file = "DS/dx"; break;
 		case SERVICE_DB_SEARCH:          file = "DS/df"; break;
 		case SERVICE_DB_ACCESS:          file = "DS/DsManage"; break;
 		case SERVICE_DB_MANIPULATION:    file = "DS/DsManage"; break;
 		case SERVICE_ASWS:               file = ""; break;
+		case SERVICE_VODZ_DM_ARCH:       /* VODZ not supported here. */
 		case SERVICE_VODZ_DM_OPERATIONS: /* VODZ not supported here. */
 		default: return (IE_INVAL); break;
 		}
@@ -285,6 +291,7 @@ _hidden enum isds_error _isds_vodz(struct isds_ctx *context,
 	 */
 	if (context->type == CTX_TYPE_ISDS) {
 		switch (service) {
+		case SERVICE_VODZ_DM_ARCH:       file = "DS/arch"; break;
 		case SERVICE_VODZ_DM_OPERATIONS: file = "DS/vodz"; break;
 		/* Only VODZ supported. */
 		default: return (IE_INVAL); break;

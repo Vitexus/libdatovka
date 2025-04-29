@@ -9,8 +9,10 @@ struct multipart_parts; /* Forward declaration. */
 
 #if HAVE_LIBCURL
 typedef enum isds_service {
+	SERVICE_DM_ARCH,
 	SERVICE_DM_OPERATIONS,
 	SERVICE_DM_INFO,
+	SERVICE_VODZ_DM_ARCH,
 	SERVICE_VODZ_DM_OPERATIONS,
 	SERVICE_DB_SEARCH,
 	SERVICE_DB_ACCESS,
