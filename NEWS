@@ -1,3 +1,6 @@
+0.7.2 /
+ * Added functions for the ISDS service ArchiveISDSDocument.
+
 0.7.1 / 2025-03-28
  * Reserving a 10 MB buffer when reading HTTP data from libcurl to reduce
    memory reallocation. The size of the buffer is increased in 10 MB increments.
