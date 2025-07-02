@@ -18857,6 +18857,9 @@ enum isds_error isds_ArchiveISDSDocument_mtomxop(struct isds_ctx *context,
 		goto leave;
 	}
 
+	/* Ignore ret. */
+	err = statuscode2isds_error(context, NULL, code, message);
+
 	/* Request processed, but refused by server or server failed. */
 	if (UNLIKELY(0 != xmlStrcmp(code, BAD_CAST "0000"))) {
 		char *code_locale = _isds_utf82locale((char*)code);
