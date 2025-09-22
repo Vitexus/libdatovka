@@ -6,6 +6,8 @@ libdatovka.so.8 libdatovka8 #MINVER#
  isds_AddressExt2_free@Base 0.1
  isds_Address_duplicate@Base 0.1
  isds_Address_free@Base 0.1
+ isds_ArchiveISDSDocument@Base 0.7
+ isds_ArchiveISDSDocument_mtomxop@Base 0.7
  isds_AuthenticateBigMessage@Base 0.4
  isds_AuthenticateBigMessage_mtomxop@Base 0.4
  isds_BigMessageDownload@Base 0.4

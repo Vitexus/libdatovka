@@ -107,10 +107,10 @@ x${P_LIBDATOVKA})
 		fi
 	else
 		# Use latest release as default.
-		VERSION="0.7.1"
+		VERSION="0.7.2"
 
 		ensure_source_presence "${SRC_ROOT}" "${PACKAGE}-${VERSION}.tar.xz" \
-		    "https://datovka.nic.cz/libdatovka/" "c8d5cbc1009a6d98c507a6537664b7d62f31f372cd1635185d285b79e92ebcff" "" "" || exit 1
+		    "https://datovka.nic.cz/libdatovka/" "efbcaa658066e60bb7dde6c3ebe0b7147aeb466130461cb4784085d103490706" "" "" || exit 1
 	fi
 
 	RELEASE="1"
