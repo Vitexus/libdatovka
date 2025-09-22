@@ -69,5 +69,5 @@ endif
 libdatovka_la_CPPFLAGS = @XML_CPPFLAGS@ @LIBCURL_CPPFLAGS@ \
 	-DLOCALEDIR=\"$(localedir)\" $(AM_CPPFLAGS)
 libdatovka_la_CFLAGS = @LIBGCRYPT_CFLAGS@ @GPGME_CFLAGS@
-libdatovka_la_LDFLAGS = -version-info 8:1:0 @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ \
+libdatovka_la_LDFLAGS = -version-info 9:0:1 @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ \
 	@GPGME_LIBS@ @EXPAT_LIBS@ @LTLIBINTL@
