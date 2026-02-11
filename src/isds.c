@@ -2244,9 +2244,9 @@ enum isds_error _isds_login_mep(struct isds_ctx *context, const char *url,
 	}
 
 	context->mep_credentials = mep;
-	context->mep = (NULL != context->mep_credentials);
+	context->mep = (NULL != context->mep_credentials) ? MEP_BASIC : MEP_NONE;
 
-	if (context->mep) {
+	if (MEP_NONE != context->mep) {
 		if (NULL == url) {
 			url = isds_mep_locator; /* Fall back to default locator. */
 		}
@@ -2317,7 +2317,7 @@ enum isds_error _isds_login_mep(struct isds_ctx *context, const char *url,
 	/* Send log-in request */
 	soap_err = _isds_soap(context, "DS/dz", request, NULL, NULL, NULL, NULL);
 
-	if (context->mep) {
+	if (MEP_NONE != context->mep) {
 		/*
 		 * Revert context URL from mobile key authentication service to web
 		 * service base URL for subsequent calls.
@@ -2350,7 +2350,7 @@ enum isds_error _isds_login_mep(struct isds_ctx *context, const char *url,
 	/* Destroy log-in request */
 	xmlFreeNode(request);
 
-	if ((IE_SUCCESS != soap_err) && (context->mep && (IE_PARTIAL_SUCCESS != soap_err))) {
+	if ((IE_SUCCESS != soap_err) && ((MEP_NONE != context->mep) && (IE_PARTIAL_SUCCESS != soap_err))) {
 		/* Don't close connection when using MEP authentication. */
 		_isds_close_connection(context);
 		return soap_err;
@@ -2388,7 +2388,7 @@ isds_error isds_logout(struct isds_ctx *context) {
 
 #if HAVE_LIBCURL
     if (context->curl) {
-        if (context->otp || context->mep) {
+        if (context->otp || (MEP_NONE != context->mep)) {
             isds_error err = _isds_invalidate_otp_cookie(context);
             if (err) return err;
         }

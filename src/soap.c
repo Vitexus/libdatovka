@@ -1507,7 +1507,7 @@ static enum isds_error http(struct isds_ctx *context,
 	}
 
 	/* Set authorization cookie for OTP session */
-	if ((CURLE_OK == curl_err) && (context->otp || context->mep)) {
+	if ((CURLE_OK == curl_err) && (context->otp || (MEP_NONE != context->mep))) {
 		isds_log(ILF_SEC, ILL_INFO,
 		    _("Cookies will be stored and sent because context has been authorized by OTP or mobile key.\n"));
 		curl_err = curl_easy_setopt(context->curl, CURLOPT_COOKIEFILE, "");
@@ -1948,9 +1948,10 @@ leave:
  * @return server response code or MEP_RESOLUTION_UNKNOWN if the code was not
  * recognised.
  */
-static isds_mep_resolution mep_ws_state_response(const struct dbuf_res *body)
+static
+enum isds_mep_resolution _mep_ws_state_response(const struct dbuf_res *body)
 {
-	isds_mep_resolution res = MEP_RESOLUTION_UNKNOWN; /* Default error. */
+	enum isds_mep_resolution res = MEP_RESOLUTION_UNKNOWN; /* Default error. */
 
 	if (UNLIKELY((NULL == body) || (NULL == body->data) || (0 == body->used))) {
 		return res;
@@ -2418,7 +2419,7 @@ redirect:
             } else if (NULL != context->mep_credentials) {
                 /* The server returns just a numerical value in the body, nothing else. */
                 context->mep_credentials->resolution =
-                        mep_ws_state_response(&http_response);
+                        _mep_ws_state_response(&http_response);
                 switch (context->mep_credentials->resolution) {
                     case MEP_RESOLUTION_ACK_REQUESTED:
                         /* Waiting for the user to acknowledge the login request
@@ -2838,7 +2839,7 @@ _hidden isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context) {
 
     dbuf_res_init(&response, BUF_RES_INCREMENT);
 
-    if (context == NULL || (!context->otp && !context->mep)) return IE_INVALID_CONTEXT;
+    if (context == NULL || (!context->otp && (MEP_NONE == context->mep))) return IE_INVALID_CONTEXT;
     if (context->curl == NULL) return IE_CONNECTION_CLOSED;
 
     /* Build logout URL */
