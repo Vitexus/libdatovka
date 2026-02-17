@@ -234,16 +234,44 @@ struct isds_otp {
 };
 
 /* Mobile key authentication resolution. */
-typedef enum {
+typedef enum isds_mep_resolution {
     MEP_RESOLUTION_SUCCESS = 0,    /* Authentication succeeded */
     MEP_RESOLUTION_UNKNOWN,        /* Status is unknown */
-    MEP_RESOLUTION_UNRECOGNISED,   /* Authentication request not recognised. */
-    MEP_RESOLUTION_ACK_REQUESTED,  /* Waiting for acknowledgement. */
-    MEP_RESOLUTION_ACK,            /* Acknowledged. */
-    MEP_RESOLUTION_ACK_EXPIRED     /* Acknowledgement request expired. */
+    MEP_RESOLUTION_UNRECOGNISED,   /* -1; Authentication request not recognised. */
+    MEP_RESOLUTION_ACK_REQUESTED,  /*  1; Waiting for acknowledgement. */
+    MEP_RESOLUTION_ACK,            /*  2; Acknowledged. */
+    MEP_RESOLUTION_ACK_EXPIRED     /*  3; Acknowledgement request expired. */
 } isds_mep_resolution;
 
-/* Mobile key context to authenticate client */
+/* Mobile key authentication status. */
+typedef enum isds_mep_status_values {
+	MEP_STATUS_UNKNOWN = -2, /* Convenience value, converted from any unrecognised value. */
+	MEP_STATUS_UNRECOGNISED = -1, /* Authentication request not recognised. */
+	MEP_STATUS_WAIT_TO_SEND = 1, /* Waiting to be sent to mobile device. */
+	MEP_STATUS_SENT = 11, /* Push notification sent to mobile device. */
+	MEP_STATUS_NOTIF = 12, /* Created notification in mobile device's notification centre. */
+	MEP_STATUS_LAUNCHED = 13, /* The mobile key application has been launched. */
+	MEP_STATUS_SENDING_FAIL = 19, /* Failed to send to mobile device. */
+	MEP_STATUS_ACK = 2, /* Login attempt acknowledged. */
+	MEP_STATUS_EXPIRED = 3 /* Denied by the user or expired. */
+} isds_mep_status_values;
+
+/*
+ * Mobile key authentication resolution status structure.
+ * Generated from JSON data from the mepWsStateUpdate2 service response.
+ */
+struct isds_mep_ext_resolution {
+	enum isds_mep_status_values status; /* Status value as returned by ISDS. */
+	char *description; /* Description string as returned by ISDS. */
+};
+
+/*
+ * Mobile key context to authenticate client.
+ *
+ * @ext_res is ignored by isds_login_mep().
+ * It is created/reallocated by isds_login_mep(). It should be free by the
+ * user if not needed any more.
+ */
 struct isds_mep {
     /* Input members. */
     char *app_name;                 /* Client application name. This name is
@@ -254,8 +282,10 @@ struct isds_mep {
     /* Intermediate members. */
     char *intermediate_uri;         /* Intermediate authentication URI. */
     /* Output members. */
-    isds_mep_resolution resolution; /* Fine-grade resolution of mobile key
+    isds_mep_resolution resolution; /* Resolution of mobile key
                                        authentication attempt. */
+    struct isds_mep_ext_resolution *ext_res; /* Extended resolution of the
+                                                authentication attempt. */
 };
 
 /* Type of status message. Can refer to dbStatus or dmStatus. */
