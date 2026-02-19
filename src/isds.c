@@ -140,6 +140,17 @@ struct code_map_isds_error {
     const isds_error *errors;  /* Mapping to isds_error code */
 };
 
+void isds_mep_ext_resolution_free(struct isds_mep_ext_resolution **resolution)
+{
+	if (UNLIKELY((NULL == resolution) || (NULL == *resolution))) {
+		return;
+	}
+
+	free((*resolution)->description);
+
+	zfree((*resolution));
+}
+
 void isds_status_free(struct isds_status **status) {
     if ((status == NULL) || (*status == NULL)) {
         return;

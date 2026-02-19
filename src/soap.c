@@ -2101,6 +2101,9 @@ _Bool read_json_status_content(struct isds_ctx *context,
 				*status = status_val;
 			}
 			if ((NULL != description) && (NULL != description_val)) {
+				if (UNLIKELY(NULL != *description)) {
+					free(*description);
+				}
 				*description = strdup(description_val);
 				if (UNLIKELY(NULL == *description)) {
 					goto fail;
@@ -2206,6 +2209,7 @@ enum isds_mep_status_values _mep_ws_state_response_extended(struct isds_ctx *con
 			free(tmp_str);
 			return status;
 		}
+		free(tmp_str);
 
 		status = int_to_isds_mep_status_values(status_int);
 	}

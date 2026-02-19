@@ -2722,6 +2722,8 @@ const struct isds_document *isds_find_document_by_id(
  * constant static UTF-8 encoded string with proper MIME type. */
 const char *isds_normalize_mime_type(const char *mime_type);
 
+void isds_mep_ext_resolution_free(struct isds_mep_ext_resolution **resolution);
+
 /* Deallocate structure isds_status and NULL it.
  * @status  status to be freed */
 void isds_status_free(struct isds_status **status);
