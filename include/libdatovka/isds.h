@@ -1497,6 +1497,9 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 isds_error isds_login_mep(struct isds_ctx *context, const char *url,
         const char *username, const char *code, struct isds_mep *mep);
 
+enum isds_error isds_login_mep2(struct isds_ctx *context, const char *url,
+    const char *username, const char *code, struct isds_mep *mep);
+
 /* Log out from ISDS server and close connection. */
 isds_error isds_logout(struct isds_ctx *context);
 

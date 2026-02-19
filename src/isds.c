@@ -2206,7 +2206,8 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 
 static
 enum isds_error _isds_login_mep(struct isds_ctx *context, const char *url,
-    const char *username, const char *code, struct isds_mep *mep)
+    const char *username, const char *code, enum mep_type type,
+    struct isds_mep *mep)
 {
 #if HAVE_LIBCURL
 	enum isds_error err = IE_NOT_LOGGED_IN;
@@ -2227,12 +2228,12 @@ enum isds_error _isds_login_mep(struct isds_ctx *context, const char *url,
 	zfree(context->url);
 	zfree(context->url_vodz);
 
-	if ((NULL != username) && (NULL != code) && (NULL != mep)) {
+	if ((NULL != username) && (NULL != code) && (MEP_NONE != type) && (NULL != mep)) {
 		isds_log(ILF_SEC, ILL_INFO,
 		    _("Selected authentication method: username and mobile key\n"));
 	} else {
 		isds_log_message(context,
-		    "Username, communication code and MEP context must be supplied.\n");
+		    "Username, communication code, MEP type and context must be supplied.\n");
 		return IE_INVAL;
 	}
 	/*
@@ -2244,7 +2245,7 @@ enum isds_error _isds_login_mep(struct isds_ctx *context, const char *url,
 	}
 
 	context->mep_credentials = mep;
-	context->mep = (NULL != context->mep_credentials) ? MEP_BASIC : MEP_NONE;
+	context->mep = (NULL != context->mep_credentials) ? type : MEP_NONE;
 
 	if (MEP_NONE != context->mep) {
 		if (NULL == url) {
@@ -2376,9 +2377,14 @@ enum isds_error _isds_login_mep(struct isds_ctx *context, const char *url,
 enum isds_error isds_login_mep(struct isds_ctx *context, const char *url,
     const char *username, const char *code, struct isds_mep *mep)
 {
-	return _isds_login_mep(context, url, username, code, mep);
+	return _isds_login_mep(context, url, username, code, MEP_BASIC, mep);
 }
 
+enum isds_error isds_login_mep2(struct isds_ctx *context, const char *url,
+    const char *username, const char *code, struct isds_mep *mep)
+{
+	return _isds_login_mep(context, url, username, code, MEP_EXTENDED, mep);
+}
 
 /* Log out from ISDS server discards credentials and connection configuration. */
 isds_error isds_logout(struct isds_ctx *context) {
