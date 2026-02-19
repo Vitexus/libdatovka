@@ -1912,11 +1912,13 @@ leave:
 
 	if (IE_SUCCESS == err) {
 		if (NULL != mime_type) {
+			zfree(*mime_type);
 			*mime_type = _mime_type;
 		} else {
 			free(_mime_type);
 		}
 		if (NULL != charset) {
+			zfree(*charset);
 			*charset = _charset;
 		} else {
 			free(_charset);
