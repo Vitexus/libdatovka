@@ -1972,6 +1972,7 @@ enum isds_mep_resolution _mep_ws_state_response(const struct dbuf_res *body)
 	char *endptr;
 	long num = strtol(tmp_str, &endptr, 10);
 	if (UNLIKELY((*endptr != '\0') || (LONG_MIN == num) || (LONG_MAX == num))) {
+		free(tmp_str);
 		return res;
 	}
 
