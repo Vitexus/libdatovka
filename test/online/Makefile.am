@@ -12,11 +12,11 @@ AM_CPPFLAGS = -I$(INCLUDEDIR) -I$(LIBDIR) -I$(MULTIPART_PARSER_ROOT) \
 # Large files needed by GPGME
 AM_CPPFLAGS += @XML_CPPFLAGS@ @LIBCURL_CPPFLAGS@ \
 					  -DLOCALEDIR=\"$(localedir)\"
-AM_CFLAGS = @LIBGCRYPT_CFLAGS@ @GPGME_CFLAGS@
+AM_CFLAGS = @LIBGCRYPT_CFLAGS@ @GPGME_CFLAGS@ @JSON_C_CFLAGS@
 LDADD = @XML_LIBS@ @LIBCURL@ @LIBGCRYPT_LIBS@ @GPGME_LIBS@ @EXPAT_LIBS@ \
-		@LTLIBINTL@
+		@LTLIBINTL@ @JSON_C_LIBS@
 
-TESTS = login login_mep
+TESTS = login login_mep login_mep2
 
 noinst_PROGRAMS = $(TESTS)
 
@@ -121,6 +121,7 @@ endif
 #compute_hash_SOURCES 	= compute_hash.c $(common)
 login_SOURCES 			= login.c $(common)
 login_mep_SOURCES		= login_mep.c $(common)
+login_mep2_SOURCES		= login_mep2.c $(common)
 
 # Access static symbols from isds.c
 #isds_dbtype_SOURCES 		= isds-dbtype.c $(isds_common)
