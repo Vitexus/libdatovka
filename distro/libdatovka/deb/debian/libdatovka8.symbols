@@ -121,10 +121,12 @@ libdatovka.so.8 libdatovka8 #MINVER#
  isds_locator@Base 0.1
  isds_login@Base 0.1
  isds_login_mep@Base 0.1
+ isds_login_mep2@Base 0.7
  isds_logout@Base 0.1
  isds_long_message@Base 0.1
  isds_mark_message_read@Base 0.1
  isds_mark_message_received@Base 0.1
+ isds_mep_ext_resolution_free@Base 0.7
  isds_mep_locator@Base 0.1
  isds_mep_testing_locator@Base 0.1
  isds_message_copy_free@Base 0.1
