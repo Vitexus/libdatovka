@@ -94,7 +94,8 @@ int main(void) {
 	struct isds_mep mep = {
 		.app_name = "libdatovka-test",
 		.intermediate_uri = NULL,
-		.resolution = MEP_RESOLUTION_SUCCESS
+		.resolution = MEP_RESOLUTION_SUCCESS,
+		.ext_res = NULL
 	};
 
 	TEST("invalid context", test_login_mep2, IE_INVALID_CONTEXT, NULL,

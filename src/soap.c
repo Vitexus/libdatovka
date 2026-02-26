@@ -2000,6 +2000,14 @@ enum isds_mep_resolution _mep_ws_state_response(const struct dbuf_res *body)
 	return res;
 }
 
+/*
+ * Read integer JSON value.
+ *
+ * @json_val JSON value
+ * @ok Set to false if @json_val is not an integer value, otherwise set to true
+ * @return:
+ *  Read integer value or -1 on any error.
+ */
 static
 int json_val_int(const json_object *json_val, _Bool *ok)
 {
@@ -2019,6 +2027,14 @@ fail:
 	return -1;
 }
 
+/*
+ * Read string JSON value.
+ *
+ * @json_val JSON value
+ * @ok Set to false if @json_val is not a string, otherwise set to true.
+ * @return:
+ *  Read string value. The string must not be freed.
+ */
 static
 const char *json_val_str(json_object *json_val, _Bool *ok)
 {
@@ -2038,6 +2054,18 @@ fail:
 	return NULL;
 }
 
+/*
+ * Parse MEP status JSON object from string.
+ *
+ * @context Session context.
+ * @json_str String containing JSON object data.
+ * @status Pointer where to store the integer status value, can be NULL if not desired.
+ * @description Pointer where to store the copy of the status description string, can be NULL if not desired.
+ * The string at @description should be freed by the caller code.
+ * @return:
+ *  0 on any error
+ *  1 on success
+ */
 static
 _Bool read_json_status_content(struct isds_ctx *context,
     const char *json_str, int *status, char **description)
@@ -2128,6 +2156,13 @@ fail:
 #undef DESCRIPTION_KEY
 }
 
+/*
+ * Convert integer values to enum isds_mep_status_values.
+ *
+ * @val Integer.
+ * @return:
+ *  enum isds_mep_status_values
+ */
 static
 enum isds_mep_status_values int_to_isds_mep_status_values(int val)
 {
@@ -2149,6 +2184,13 @@ enum isds_mep_status_values int_to_isds_mep_status_values(int val)
 	}
 }
 
+/*
+ * Convert enum isds_mep_status_values to enum isds_mep_resolution.
+ *
+ * @val enum isds_mep_status_values
+ * @return:
+ *  enum isds_mep_resolution
+ */
 static
 enum isds_mep_resolution mep_status_values_to_mep_resolution(
     enum isds_mep_status_values val)
@@ -2181,9 +2223,19 @@ enum isds_mep_resolution mep_status_values_to_mep_resolution(
 	}
 }
 
+/*
+ * Read extended MEP resolution data from HTTP response.
+ *
+ * @context Session context.
+ * @body HTTP response.
+ * @ext_mep_res Extended MEP resolution structure whose content should be set.
+ * @return:
+ *  MEP resolution status value from @ext_mep_res->status
+ */
 static
-enum isds_mep_status_values _mep_ws_state_response_extended(struct isds_ctx *context,
-    const struct dbuf_res *body, struct isds_mep_ext_resolution *ext_mep_res)
+enum isds_mep_status_values _mep_ws_state_response_extended(
+    struct isds_ctx *context, const struct dbuf_res *body,
+    struct isds_mep_ext_resolution *ext_mep_res)
 {
 	enum isds_mep_status_values status = MEP_STATUS_UNKNOWN; /* Default error. */
 	char *description = NULL;
@@ -2225,6 +2277,16 @@ enum isds_mep_status_values _mep_ws_state_response_extended(struct isds_ctx *con
 	return status;
 }
 
+/*
+ * Change @intermediate_uri to ".*mepWsStateUpdate2" if @intermediate_uri
+ * matches ".*mepWsStateUpdate" and @type is MEP_EXTENDED.
+ *
+ * @intermediate_uri URI to be changed.
+ * @type MEP type.
+ * @return:
+ *  IE_SUCCESS on success,
+ *  IE_NOMEM if string copy could not be created.
+ */
 static
 enum isds_error _mep_adjust_intermediate(char **intermediate_uri,
     enum mep_type type)

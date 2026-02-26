@@ -2215,6 +2215,32 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 #endif
 }
 
+/*
+ * Connect and log into ISDS server using the MEP login method.
+ * All arguments are copied, you don't have to keep them after successful
+ * return.
+ *
+ * @context is session context
+ * @url is base address of ISDS web service. Pass extern isds_mep_locator to use
+ * the production ISDS environment (pass extern isds_mep_testing_locator to
+ * access the testing environment). Passing null causes the production
+ * environment locator to be used.
+ * @username is the username of ISDS user or box ID
+ * @code is the communication code. The code is generated when enabling
+ * the mobile key authentication and can be found in the web-based portal
+ * of the data-box service.
+ * @type MEP authentication type.
+ * @mep Structure to old intermediate data during the MEP login procedure. The
+ * structure must be provided. Its content is emptied on successful return
+ * except for @mep->ext_res which must be freed by the caller.
+ * @return:
+ *  IE_SUCCESS if authentication succeeds
+ *  IE_NOT_LOGGED_IN if authentication fails
+ *  IE_PARTIAL_SUCCESS if MEP authentication has been requested, fine-grade
+ *  resolution is returned via @mep->resolution, keep arguments unchanged and
+ *  repeat the function call as long as IE_PARTIAL_SUCCESS is being returned;
+ *  or other appropriate error.
+ */
 static
 enum isds_error _isds_login_mep(struct isds_ctx *context, const char *url,
     const char *username, const char *code, enum mep_type type,

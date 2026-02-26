@@ -67,7 +67,7 @@ typedef enum {
                                           new testing box requests */
 } context_type;
 
-/* Mep authentication type. */
+/* MEP authentication type. */
 enum mep_type {
 	MEP_NONE = 0, /* Not using mep. */
 	MEP_BASIC, /* Basic mep as provided by mepWsStateUpdate. */
@@ -101,7 +101,7 @@ struct isds_ctx {
     struct isds_pki_credentials *pki_credentials;
     _Bool otp;              /* This is OTP-authenticated context */
     struct isds_otp *otp_credentials;   /* Weak pointer to OTP credentials */
-    enum mep_type mep;      /* This is mobile-key-authenticated context. */
+    enum mep_type mep;      /* If this is a mobile-key-authenticated context then mep != MEP_NONE. */
     struct isds_mep *mep_credentials;   /* Weak pointer to mobile key credentials. */
     char *saved_username;   /* User name preserved after OTP log-in for OTP
                                password change */
