@@ -11,6 +11,7 @@ Build-Depends: debhelper (>= 9),
                gettext,
                libcurl4-openssl-dev,
                libexpat-dev,
+               libjson-c-dev,
                libssl-dev,
                libxml2-dev,
                pkgconf
