@@ -130,7 +130,7 @@ dnl MEP status prasing requires json-c
 json_c_min_version="0.9"
 PKG_CHECK_MODULES([JSON_C], [json-c >= ${json_c_min_version}],
     [],
-    [AC_MSG_FAILURE(Install or upgrade json-c to ${json_c_min_version})]
+    [AC_MSG_FAILURE(Install or upgrade to json-c >= ${json_c_min_version})]
 )
 
 AC_ARG_ENABLE([openssl-backend],
