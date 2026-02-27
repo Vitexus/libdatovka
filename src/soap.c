@@ -2228,14 +2228,14 @@ enum isds_mep_resolution mep_status_values_to_mep_resolution(
  *
  * @context Session context.
  * @body HTTP response.
- * @ext_mep_res Extended MEP resolution structure whose content should be set.
+ * @mep_ext_res Extended MEP resolution structure whose content should be set.
  * @return:
- *  MEP resolution status value from @ext_mep_res->status
+ *  MEP resolution status value from @mep_ext_res->status
  */
 static
 enum isds_mep_status_values _mep_ws_state_response_extended(
     struct isds_ctx *context, const struct dbuf_res *body,
-    struct isds_mep_ext_resolution *ext_mep_res)
+    struct isds_mep_ext_resolution *mep_ext_res)
 {
 	enum isds_mep_status_values status = MEP_STATUS_UNKNOWN; /* Default error. */
 	char *description = NULL;
@@ -2244,7 +2244,7 @@ enum isds_mep_status_values _mep_ws_state_response_extended(
 		return status;
 	}
 
-	if (UNLIKELY((NULL == ext_mep_res) || (NULL == body->data) || (0 == body->used))) {
+	if (UNLIKELY((NULL == body->data) || (0 == body->used))) {
 		return status;
 	}
 	/* Ensure trailing '\0' character. */
@@ -2266,10 +2266,10 @@ enum isds_mep_status_values _mep_ws_state_response_extended(
 		status = int_to_isds_mep_status_values(status_int);
 	}
 
-	if (NULL != ext_mep_res) {
-		ext_mep_res->status = status;
-		free(ext_mep_res->description);
-		ext_mep_res->description = description;
+	if (NULL != mep_ext_res) {
+		mep_ext_res->status = status;
+		free(mep_ext_res->description);
+		mep_ext_res->description = description;
 		description = NULL;
 	}
 
@@ -2778,15 +2778,8 @@ redirect:
                     }
                 } else if (MEP_EXTENDED == context->mep) {
                     /* Server returns JSON data. */
-                    if (NULL == context->mep_credentials->ext_res) {
-                        context->mep_credentials->ext_res = calloc(1, sizeof(*(context->mep_credentials->ext_res)));
-                        if (UNLIKELY(NULL == context->mep_credentials->ext_res)) {
-                            err = IE_NOMEM;
-                            goto leave;
-                        }
-                    }
                     enum isds_mep_status_values status =
-                        _mep_ws_state_response_extended(context, &http_response, context->mep_credentials->ext_res);
+                        _mep_ws_state_response_extended(context, &http_response, context->mep_ext_res);
                     context->mep_credentials->resolution =
                         mep_status_values_to_mep_resolution(status);
                     switch (status) {

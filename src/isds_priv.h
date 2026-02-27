@@ -103,6 +103,7 @@ struct isds_ctx {
     struct isds_otp *otp_credentials;   /* Weak pointer to OTP credentials */
     enum mep_type mep;      /* If this is a mobile-key-authenticated context then mep != MEP_NONE. */
     struct isds_mep *mep_credentials;   /* Weak pointer to mobile key credentials. */
+    struct isds_mep_ext_resolution *mep_ext_res; /* Weak pointer to mobile ke extended resolution. */
     char *saved_username;   /* User name preserved after OTP log-in for OTP
                                password change */
     CURL *curl;             /* CURL session handle */

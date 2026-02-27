@@ -15,9 +15,10 @@
 static
 int test_login_mep2(const enum isds_error error, struct isds_ctx *context,
     const char *url, const char *username, const char *code,
-    struct isds_mep *mep)
+    struct isds_mep *mep, struct isds_mep_ext_resolution *mep_ext_res)
 {
-	enum isds_error err = isds_login_mep2(context, url, username, code, mep);
+	enum isds_error err = isds_login_mep2(context, url, username, code,
+	    mep, mep_ext_res);
 	if (error != err) {
 		FAIL_TEST("Wrong return code: expected=%s, returned=%s (%s)",
 		    isds_strerror(error), isds_strerror(err),
@@ -31,9 +32,11 @@ int test_login_mep2(const enum isds_error error, struct isds_ctx *context,
 static
 int test_login_mep2_02(const enum isds_error error1, const enum isds_error error2,
     struct isds_ctx *context, const char *url, const char *username,
-    const char *code, struct isds_mep *mep)
+    const char *code, struct isds_mep *mep,
+    struct isds_mep_ext_resolution *mep_ext_res)
 {
-	enum isds_error err = isds_login_mep2(context, url, username, code, mep);
+	enum isds_error err = isds_login_mep2(context, url, username, code,
+	    mep, mep_ext_res);
 	if ((error1 != err) && (error2 != err)) {
 		FAIL_TEST(
 		    "Wrong return code: must_differ=%s, must_differ=%s, returned=%s (%s)",
@@ -49,18 +52,18 @@ int test_login_mep2_02(const enum isds_error error1, const enum isds_error error
 static
 int test_login_mep2_cycle(const enum isds_error error,
     struct isds_ctx *context, const char *url, const char *username,
-    const char *code, struct isds_mep *mep)
+    const char *code, struct isds_mep *mep,
+    struct isds_mep_ext_resolution *mep_ext_res)
 {
 	isds_set_timeout(context, 60000);
 
-	enum isds_error err = isds_login_mep2(context, url, username, code, mep);
+	enum isds_error err = isds_login_mep2(context, url, username, code,
+	    mep, mep_ext_res);
 	while (err == IE_PARTIAL_SUCCESS) {
 		sleep(1);
-		err = isds_login_mep2(context, url, username, code, mep);
-		if (NULL == mep->ext_res) {
-			FAIL_TEST("Expected to receive extended resolution status information.");
-		}
-		if (NULL == mep->ext_res->description) {
+		err = isds_login_mep2(context, url, username, code, mep,
+		    mep_ext_res);
+		if ((NULL != mep_ext_res) && (NULL == mep_ext_res->description)) {
 			FAIL_TEST("Expected to receive status description within extended resolution status information.");
 		}
 	}
@@ -70,7 +73,9 @@ int test_login_mep2_cycle(const enum isds_error error,
 		    isds_long_message(context));
 	}
 
-	isds_mep_ext_resolution_free(&(mep->ext_res));
+	if (NULL != mep_ext_res) {
+		free(mep_ext_res->description); mep_ext_res->description = NULL;
+	}
 
 	isds_logout(context);
 	PASS_TEST;
@@ -94,36 +99,46 @@ int main(void) {
 	struct isds_mep mep = {
 		.app_name = "libdatovka-test",
 		.intermediate_uri = NULL,
-		.resolution = MEP_RESOLUTION_SUCCESS,
-		.ext_res = NULL
+		.resolution = MEP_RESOLUTION_SUCCESS
+	};
+
+	struct isds_mep_ext_resolution mep_ext_res = {
+		.status = MEP_STATUS_UNKNOWN,
+		.description = NULL
 	};
 
 	TEST("invalid context", test_login_mep2, IE_INVALID_CONTEXT, NULL,
-	    url, username_mep(), code_mep(), &mep);
+	    url, username_mep(), code_mep(), &mep, &mep_ext_res);
 	TEST("NULL URL with invalid credentials", test_login_mep2, IE_NOT_LOGGED_IN,
-	    context, NULL, username_mep(), code_mep(), &mep);
+	    context, NULL, username_mep(), code_mep(), &mep, &mep_ext_res);
 	TEST("NULL username", test_login_mep2, IE_INVAL, context, url, NULL,
-	    code_mep(), &mep);
+	    code_mep(), &mep, &mep_ext_res);
 	TEST("NULL communication code", test_login_mep2, IE_INVAL, context, url,
-	    username_mep(), NULL, &mep);
+	    username_mep(), NULL, &mep, &mep_ext_res);
 	TEST("NULL MEP context", test_login_mep2, IE_INVAL, context, url,
-	    username_mep(), code_mep(), NULL);
+	    username_mep(), code_mep(), NULL, &mep_ext_res);
 
 	TEST("invalid URL", test_login_mep2, IE_NETWORK, context,
-	    "invalid://", username_mep(), code_mep(), &mep);
+	    "invalid://", username_mep(), code_mep(), &mep, &mep_ext_res);
 	/*
 	 * Direct connection fails on local resolution, connection trough proxy
 	 * fails on HTTP code.
 	 */
 	TEST("unresolvable host name", test_login_mep2_02, IE_NETWORK, IE_HTTP,
 	    context, "http://unresolvable.example.com/", username_mep(),
-	    code_mep(), &mep);
+	    code_mep(), &mep, &mep_ext_res);
 
 	TEST("invalid credentials", test_login_mep2, IE_NOT_LOGGED_IN, context,
-	    url, "7777777", "nbuusr1", &mep);
+	    url, "7777777", "nbuusr1", &mep, &mep_ext_res);
 
 	TEST("valid MEP login", test_login_mep2_cycle, IE_SUCCESS, context, url,
-	    username_mep(), code_mep(), &mep);
+	    username_mep(), code_mep(), &mep, &mep_ext_res);
+
+	isds_logout(context);
+
+	TEST("valid MEP login with NULL extended resolution",
+	    test_login_mep2_cycle, IE_SUCCESS, context, url,
+	    username_mep(), code_mep(), &mep, NULL);
 
 	isds_ctx_free(&context);
 	isds_cleanup();

@@ -257,15 +257,6 @@ typedef enum isds_mep_status_values {
 } isds_mep_status_values;
 
 /*
- * Mobile key authentication resolution status structure.
- * Generated from JSON data from the mepWsStateUpdate2 service response.
- */
-struct isds_mep_ext_resolution {
-	enum isds_mep_status_values status; /* Status value as returned by ISDS. */
-	char *description; /* Description string as returned by ISDS. */
-};
-
-/*
  * Mobile key context to authenticate client.
  *
  * @ext_res is ignored by isds_login_mep().
@@ -284,8 +275,15 @@ struct isds_mep {
     /* Output members. */
     isds_mep_resolution resolution; /* Resolution of mobile key
                                        authentication attempt. */
-    struct isds_mep_ext_resolution *ext_res; /* Extended resolution of the
-                                                authentication attempt. */
+};
+
+/*
+ * Mobile key authentication resolution status structure.
+ * Generated from JSON data from the mepWsStateUpdate2 service response.
+ */
+struct isds_mep_ext_resolution {
+	enum isds_mep_status_values status; /* Status value as returned by ISDS. */
+	char *description; /* Description string as returned by ISDS. */
 };
 
 /* Type of status message. Can refer to dbStatus or dmStatus. */
@@ -1514,7 +1512,10 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
  * the mobile key authentication and can be found in the web-based portal
  * of the data-box service.
  * @mep Structure to old intermediate data during the MEP login procedure. The
- * structure must be provided. Its content is emptied on successful return
+ * structure must be provided. Its content is emptied on successful return.
+ * @mep_ext_res Extended MEP resolution data. May be NULL if you don't need the
+ * data. If non-NULL then content of @mep_ext_res->description is reallocated
+ * and must be freed by the caller.
  * except for @mep->ext_res. The @mep->ext_res structure must be freed using
  * isds_mep_ext_resolution_free().
  * @return:
@@ -1529,7 +1530,8 @@ isds_error isds_login_mep(struct isds_ctx *context, const char *url,
  *  isds_login_mep2().
  */
 enum isds_error isds_login_mep2(struct isds_ctx *context, const char *url,
-    const char *username, const char *code, struct isds_mep *mep);
+    const char *username, const char *code, struct isds_mep *mep,
+    struct isds_mep_ext_resolution *mep_ext_res);
 
 /* Log out from ISDS server and close connection. */
 isds_error isds_logout(struct isds_ctx *context);

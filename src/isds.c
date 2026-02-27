@@ -2231,8 +2231,10 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
  * of the data-box service.
  * @type MEP authentication type.
  * @mep Structure to old intermediate data during the MEP login procedure. The
- * structure must be provided. Its content is emptied on successful return
- * except for @mep->ext_res which must be freed by the caller.
+ * structure must be provided. Its content is emptied on successful return.
+ * @mep_ext_res Extended MEP resolution data. May be NULL if you don't need the
+ * data. If non-NULL then content of @mep_ext_res->description is reallocated
+ * and must be freed by the caller.
  * @return:
  *  IE_SUCCESS if authentication succeeds
  *  IE_NOT_LOGGED_IN if authentication fails
@@ -2244,7 +2246,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 static
 enum isds_error _isds_login_mep(struct isds_ctx *context, const char *url,
     const char *username, const char *code, enum mep_type type,
-    struct isds_mep *mep)
+    struct isds_mep *mep, struct isds_mep_ext_resolution *mep_ext_res)
 {
 #if HAVE_LIBCURL
 	enum isds_error err = IE_NOT_LOGGED_IN;
@@ -2282,6 +2284,7 @@ enum isds_error _isds_login_mep(struct isds_ctx *context, const char *url,
 	}
 
 	context->mep_credentials = mep;
+	context->mep_ext_res = mep_ext_res;
 	context->mep = (NULL != context->mep_credentials) ? type : MEP_NONE;
 
 	if (MEP_NONE != context->mep) {
@@ -2380,6 +2383,7 @@ enum isds_error _isds_login_mep(struct isds_ctx *context, const char *url,
 		}
 		/* Detach credentials pointer from context. */
 		context->mep_credentials = NULL;
+		context->mep_ext_res = NULL;
 	}
 
 	/* Remove credentials */
@@ -2414,13 +2418,16 @@ enum isds_error _isds_login_mep(struct isds_ctx *context, const char *url,
 enum isds_error isds_login_mep(struct isds_ctx *context, const char *url,
     const char *username, const char *code, struct isds_mep *mep)
 {
-	return _isds_login_mep(context, url, username, code, MEP_BASIC, mep);
+	return _isds_login_mep(context, url, username, code, MEP_BASIC, mep,
+	    NULL);
 }
 
 enum isds_error isds_login_mep2(struct isds_ctx *context, const char *url,
-    const char *username, const char *code, struct isds_mep *mep)
+    const char *username, const char *code, struct isds_mep *mep,
+    struct isds_mep_ext_resolution *mep_ext_res)
 {
-	return _isds_login_mep(context, url, username, code, MEP_EXTENDED, mep);
+	return _isds_login_mep(context, url, username, code, MEP_EXTENDED, mep,
+	    mep_ext_res);
 }
 
 /* Log out from ISDS server discards credentials and connection configuration. */
