@@ -234,16 +234,35 @@ struct isds_otp {
 };
 
 /* Mobile key authentication resolution. */
-typedef enum {
+typedef enum isds_mep_resolution {
     MEP_RESOLUTION_SUCCESS = 0,    /* Authentication succeeded */
     MEP_RESOLUTION_UNKNOWN,        /* Status is unknown */
-    MEP_RESOLUTION_UNRECOGNISED,   /* Authentication request not recognised. */
-    MEP_RESOLUTION_ACK_REQUESTED,  /* Waiting for acknowledgement. */
-    MEP_RESOLUTION_ACK,            /* Acknowledged. */
-    MEP_RESOLUTION_ACK_EXPIRED     /* Acknowledgement request expired. */
+    MEP_RESOLUTION_UNRECOGNISED,   /* -1; Authentication request not recognised. */
+    MEP_RESOLUTION_ACK_REQUESTED,  /*  1; Waiting for acknowledgement. */
+    MEP_RESOLUTION_ACK,            /*  2; Acknowledged. */
+    MEP_RESOLUTION_ACK_EXPIRED     /*  3; Acknowledgement request expired. */
 } isds_mep_resolution;
 
-/* Mobile key context to authenticate client */
+/* Mobile key authentication status. */
+typedef enum isds_mep_status_values {
+	MEP_STATUS_UNKNOWN = -2, /* Convenience value, converted from any unrecognised value. */
+	MEP_STATUS_UNRECOGNISED = -1, /* Authentication request not recognised. */
+	MEP_STATUS_WAIT_TO_SEND = 1, /* Waiting to be sent to mobile device. */
+	MEP_STATUS_SENT = 11, /* Push notification sent to mobile device. */
+	MEP_STATUS_NOTIF = 12, /* Created notification in mobile device's notification centre. */
+	MEP_STATUS_LAUNCHED = 13, /* The mobile key application has been launched. */
+	MEP_STATUS_SENDING_FAIL = 19, /* Failed to send to mobile device. */
+	MEP_STATUS_ACK = 2, /* Login attempt acknowledged. */
+	MEP_STATUS_EXPIRED = 3 /* Denied by the user or expired. */
+} isds_mep_status_values;
+
+/*
+ * Mobile key context to authenticate client.
+ *
+ * @ext_res is ignored by isds_login_mep().
+ * It is created/reallocated by isds_login_mep(). It should be free by the
+ * user if not needed any more.
+ */
 struct isds_mep {
     /* Input members. */
     char *app_name;                 /* Client application name. This name is
@@ -254,8 +273,17 @@ struct isds_mep {
     /* Intermediate members. */
     char *intermediate_uri;         /* Intermediate authentication URI. */
     /* Output members. */
-    isds_mep_resolution resolution; /* Fine-grade resolution of mobile key
+    isds_mep_resolution resolution; /* Resolution of mobile key
                                        authentication attempt. */
+};
+
+/*
+ * Mobile key authentication resolution status structure.
+ * Generated from JSON data from the mepWsStateUpdate2 service response.
+ */
+struct isds_mep_ext_resolution {
+	enum isds_mep_status_values status; /* Status value as returned by ISDS. */
+	char *description; /* Description string as returned by ISDS. */
 };
 
 /* Type of status message. Can refer to dbStatus or dmStatus. */
@@ -1449,6 +1477,7 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
 /* Connect and log into ISDS server using the MEP login method.
  * All arguments are copied, you don't have to keep them after successful
  * return.
+ * @context is session context
  * @url is base address of ISDS web service. Pass extern isds_mep_locator to use
  * the production ISDS environment (pass extern isds_mep_testing_locator to
  * access the testing environment). Passing null causes the production
@@ -1457,6 +1486,8 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
  * @code is the communication code. The code is generated when enabling
  * the mobile key authentication and can be found in the web-based portal
  * of the data-box service.
+ * @mep Structure to old intermediate data during the MEP login procedure. The
+ * structure must be provided. Its content is emptied on successful return.
  * @return:
  *  IE_SUCCESS if authentication succeeds
  *  IE_NOT_LOGGED_IN if authentication fails
@@ -1466,6 +1497,41 @@ isds_error isds_login(struct isds_ctx *context, const char *url,
  *  or other appropriate error. */
 isds_error isds_login_mep(struct isds_ctx *context, const char *url,
         const char *username, const char *code, struct isds_mep *mep);
+
+/*
+ * Connect and log into ISDS server using the MEP login method.
+ * You don't have to keep the arguments after successful return.
+ *
+ * @context is session context
+ * @url is base address of ISDS web service. Pass extern isds_mep_locator to use
+ * the production ISDS environment (pass extern isds_mep_testing_locator to
+ * access the testing environment). Passing null causes the production
+ * environment locator to be used.
+ * @username is the username of ISDS user or box ID
+ * @code is the communication code. The code is generated when enabling
+ * the mobile key authentication and can be found in the web-based portal
+ * of the data-box service.
+ * @mep Structure to old intermediate data during the MEP login procedure. The
+ * structure must be provided. Its content is emptied on successful return.
+ * @mep_ext_res Extended MEP resolution data. May be NULL if you don't need the
+ * data. If non-NULL then content of @mep_ext_res->description is reallocated
+ * and must be freed by the caller.
+ * except for @mep->ext_res. The @mep->ext_res structure must be freed using
+ * isds_mep_ext_resolution_free().
+ * @return:
+ *  IE_SUCCESS if authentication succeeds
+ *  IE_NOT_LOGGED_IN if authentication fails
+ *  IE_PARTIAL_SUCCESS if MEP authentication has been requested, fine-grade
+ *  resolution is returned via @mep->resolution, even more detailed resolution
+ *  can be found under @mep->ext_res, keep arguments unchanged and
+ *  repeat the function call as long as IE_PARTIAL_SUCCESS is being returned;
+ *  or other appropriate error.
+ *  Use isds_mep_ext_resolution_free() on @mep->ext_res after last call to
+ *  isds_login_mep2().
+ */
+enum isds_error isds_login_mep2(struct isds_ctx *context, const char *url,
+    const char *username, const char *code, struct isds_mep *mep,
+    struct isds_mep_ext_resolution *mep_ext_res);
 
 /* Log out from ISDS server and close connection. */
 isds_error isds_logout(struct isds_ctx *context);
@@ -2688,6 +2754,10 @@ const struct isds_document *isds_find_document_by_id(
  * @return original @mime_type if no better interpretation exists, or
  * constant static UTF-8 encoded string with proper MIME type. */
 const char *isds_normalize_mime_type(const char *mime_type);
+
+/* Deallocate structure isds_mep_ext_resolution and NULL it.
+ * @resolution  resolution to be freed */
+void isds_mep_ext_resolution_free(struct isds_mep_ext_resolution **resolution);
 
 /* Deallocate structure isds_status and NULL it.
  * @status  status to be freed */

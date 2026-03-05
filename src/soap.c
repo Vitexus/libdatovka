@@ -1,6 +1,7 @@
 #include "isds_priv.h" /* Must be included first. */
 
 #include <ctype.h> /* tolower() */
+#include <json-c/json.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h> /* strncasecmp(3) */
@@ -19,7 +20,8 @@ enum http_communication_flags {
 	HCF_BASIC = 0x00, /* Use POST, send plain XML, receive plain XML. */
 	HCF_USE_GET = 0x01, /* Use GET instead of POST. */
 	HCF_SND_XOP = 0x02, /* Send MTOM/XOP data. */
-	HCF_RCV_XOP = 0x04 /* Receive XTOM/XOP data. */
+	HCF_RCV_XOP = 0x04, /* Receive XTOM/XOP data. */
+	HCF_RCV_JSON = 0x08 /* Receive JSON data. */
 };
 
 /* Private structure for write_header() callback */
@@ -1507,7 +1509,7 @@ static enum isds_error http(struct isds_ctx *context,
 	}
 
 	/* Set authorization cookie for OTP session */
-	if ((CURLE_OK == curl_err) && (context->otp || context->mep)) {
+	if ((CURLE_OK == curl_err) && (context->otp || (MEP_NONE != context->mep))) {
 		isds_log(ILF_SEC, ILL_INFO,
 		    _("Cookies will be stored and sent because context has been authorized by OTP or mobile key.\n"));
 		curl_err = curl_easy_setopt(context->curl, CURLOPT_COOKIEFILE, "");
@@ -1625,7 +1627,10 @@ static enum isds_error http(struct isds_ctx *context,
 	}
 #endif /* HAVE_DECL_CURLOPT_HEADEROPT */
 	if (CURLE_OK == curl_err) {
-		if (!(HCF_RCV_XOP & h_flags)) {
+		if (HCF_RCV_JSON & h_flags) {
+			headers = curl_slist_append(headers,
+			    "Accept: application/json");
+		} else if (!(HCF_RCV_XOP & h_flags)) {
 			headers = curl_slist_append(headers,
 			    "Accept: application/soap+xml,application/xml,text/xml");
 		} else {
@@ -1907,11 +1912,13 @@ leave:
 
 	if (IE_SUCCESS == err) {
 		if (NULL != mime_type) {
+			zfree(*mime_type);
 			*mime_type = _mime_type;
 		} else {
 			free(_mime_type);
 		}
 		if (NULL != charset) {
+			zfree(*charset);
 			*charset = _charset;
 		} else {
 			free(_charset);
@@ -1948,9 +1955,10 @@ leave:
  * @return server response code or MEP_RESOLUTION_UNKNOWN if the code was not
  * recognised.
  */
-static isds_mep_resolution mep_ws_state_response(const struct dbuf_res *body)
+static
+enum isds_mep_resolution _mep_ws_state_response(const struct dbuf_res *body)
 {
-	isds_mep_resolution res = MEP_RESOLUTION_UNKNOWN; /* Default error. */
+	enum isds_mep_resolution res = MEP_RESOLUTION_UNKNOWN; /* Default error. */
 
 	if (UNLIKELY((NULL == body) || (NULL == body->data) || (0 == body->used))) {
 		return res;
@@ -1966,6 +1974,7 @@ static isds_mep_resolution mep_ws_state_response(const struct dbuf_res *body)
 	char *endptr;
 	long num = strtol(tmp_str, &endptr, 10);
 	if (UNLIKELY((*endptr != '\0') || (LONG_MIN == num) || (LONG_MAX == num))) {
+		free(tmp_str);
 		return res;
 	}
 
@@ -1989,6 +1998,329 @@ static isds_mep_resolution mep_ws_state_response(const struct dbuf_res *body)
 	free(tmp_str);
 
 	return res;
+}
+
+/*
+ * Read integer JSON value.
+ *
+ * @json_val JSON value
+ * @ok Set to false if @json_val is not an integer value, otherwise set to true
+ * @return:
+ *  Read integer value or -1 on any error.
+ */
+static
+int json_val_int(const json_object *json_val, _Bool *ok)
+{
+	if (UNLIKELY(!json_object_is_type(json_val, json_type_int))) {
+		goto fail;
+	}
+
+	if (NULL != ok) {
+		*ok = 1;
+	}
+	return json_object_get_int(json_val);
+
+fail:
+	if (NULL != ok) {
+		*ok = 0;
+	}
+	return -1;
+}
+
+/*
+ * Read string JSON value.
+ *
+ * @json_val JSON value
+ * @ok Set to false if @json_val is not a string, otherwise set to true.
+ * @return:
+ *  Read string value. The string must not be freed.
+ */
+static
+const char *json_val_str(json_object *json_val, _Bool *ok)
+{
+	if (UNLIKELY(!json_object_is_type(json_val, json_type_string))) {
+		goto fail;
+	}
+
+	if (NULL != ok) {
+		*ok = 1;
+	}
+	return json_object_get_string(json_val);
+
+fail:
+	if (NULL != ok) {
+		*ok = 0;
+	}
+	return NULL;
+}
+
+/*
+ * Parse MEP status JSON object from string.
+ *
+ * @context Session context.
+ * @json_str String containing JSON object data.
+ * @status Pointer where to store the integer status value, can be NULL if not desired.
+ * @description Pointer where to store the copy of the status description string, can be NULL if not desired.
+ * The string at @description should be freed by the caller code.
+ * @return:
+ *  0 on any error
+ *  1 on success
+ */
+static
+_Bool read_json_status_content(struct isds_ctx *context,
+    const char *json_str, int *status, char **description)
+{
+#define STATUS_KEY "status"
+#define DESCRIPTION_KEY "description"
+	json_object *json_obj = NULL;
+
+	if ((NULL != description) && (NULL != *description)) {
+		free(*description); *description = NULL;
+	}
+
+	if (UNLIKELY(NULL == json_str)) {
+		goto fail;
+	}
+
+	json_obj = json_tokener_parse(json_str);
+	if (UNLIKELY(NULL == json_obj)) {
+		goto fail;
+	}
+
+	{
+		struct json_object_iterator it = json_object_iter_begin(json_obj);
+		struct json_object_iterator it_end = json_object_iter_end(json_obj);
+
+		_Bool have_status = 0;
+		int status_val = MEP_STATUS_UNKNOWN;
+		_Bool have_description = 0;
+		const char *description_val = NULL;
+
+		while (!json_object_iter_equal(&it, &it_end)) {
+			const char *key = json_object_iter_peek_name(&it);
+			json_object *json_val = json_object_iter_peek_value(&it);
+			_Bool i_ok = 0;
+
+			if (0 == strcmp(key, STATUS_KEY)) {
+				status_val = json_val_int(json_val, &i_ok);
+				if (UNLIKELY(!i_ok)) {
+					isds_printf_message(context,
+					    _("Unexpected JSON value type for key '%d'."),
+					    STATUS_KEY);
+					goto fail;
+				}
+				have_status = 1;
+			} else if (0 == strcmp(key, DESCRIPTION_KEY)) {
+				description_val = json_val_str(json_val, &i_ok);
+				if (UNLIKELY(!i_ok)) {
+					isds_printf_message(context,
+					    _("Unexpected JSON value type for key '%d'."),
+					    DESCRIPTION_KEY);
+					goto fail;
+				}
+				have_description = 1;
+			}
+
+			json_object_iter_next(&it);
+		}
+
+		if (have_status && have_description) {
+			if (NULL != status) {
+				*status = status_val;
+			}
+			if ((NULL != description) && (NULL != description_val)) {
+				if (UNLIKELY(NULL != *description)) {
+					free(*description);
+				}
+				*description = strdup(description_val);
+				if (UNLIKELY(NULL == *description)) {
+					goto fail;
+				}
+			}
+		} else {
+			goto fail;
+		}
+	}
+
+	json_object_put(json_obj);
+	return 1;
+
+fail:
+	json_object_put(json_obj);
+	if (NULL != status) {
+		*status = MEP_STATUS_UNKNOWN;
+	}
+	/* No need to free (*description). */
+	return 0;
+#undef STATUS_KEY
+#undef DESCRIPTION_KEY
+}
+
+/*
+ * Convert integer values to enum isds_mep_status_values.
+ *
+ * @val Integer.
+ * @return:
+ *  enum isds_mep_status_values
+ */
+static
+enum isds_mep_status_values int_to_isds_mep_status_values(int val)
+{
+	switch (val) {
+	case MEP_STATUS_UNKNOWN:
+	case MEP_STATUS_UNRECOGNISED:
+	case MEP_STATUS_WAIT_TO_SEND:
+	case MEP_STATUS_SENT:
+	case MEP_STATUS_NOTIF:
+	case MEP_STATUS_LAUNCHED:
+	case MEP_STATUS_SENDING_FAIL:
+	case MEP_STATUS_ACK:
+	case MEP_STATUS_EXPIRED:
+		return (enum isds_mep_status_values)val;
+		break;
+	default:
+		return MEP_STATUS_UNKNOWN;
+		break;
+	}
+}
+
+/*
+ * Convert enum isds_mep_status_values to enum isds_mep_resolution.
+ *
+ * @val enum isds_mep_status_values
+ * @return:
+ *  enum isds_mep_resolution
+ */
+static
+enum isds_mep_resolution mep_status_values_to_mep_resolution(
+    enum isds_mep_status_values val)
+{
+	switch (val) {
+	case MEP_STATUS_UNKNOWN:
+		return MEP_RESOLUTION_UNKNOWN;
+		break;
+	case MEP_STATUS_UNRECOGNISED:
+		return MEP_RESOLUTION_UNRECOGNISED;
+		break;
+	case MEP_STATUS_WAIT_TO_SEND:
+	case MEP_STATUS_SENT:
+	case MEP_STATUS_NOTIF:
+	case MEP_STATUS_LAUNCHED:
+		return MEP_RESOLUTION_ACK_REQUESTED;
+		break;
+	case MEP_STATUS_SENDING_FAIL:
+		return MEP_RESOLUTION_ACK_REQUESTED; /* TODO -- Really? */
+		break;
+	case MEP_STATUS_ACK:
+		return MEP_RESOLUTION_ACK;
+		break;
+	case MEP_STATUS_EXPIRED:
+		return MEP_RESOLUTION_ACK_EXPIRED;
+		break;
+	default:
+		return MEP_RESOLUTION_UNKNOWN;
+		break;
+	}
+}
+
+/*
+ * Read extended MEP resolution data from HTTP response.
+ *
+ * @context Session context.
+ * @body HTTP response.
+ * @mep_ext_res Extended MEP resolution structure whose content should be set.
+ * @return:
+ *  MEP resolution status value from @mep_ext_res->status
+ */
+static
+enum isds_mep_status_values _mep_ws_state_response_extended(
+    struct isds_ctx *context, const struct dbuf_res *body,
+    struct isds_mep_ext_resolution *mep_ext_res)
+{
+	enum isds_mep_status_values status = MEP_STATUS_UNKNOWN; /* Default error. */
+	char *description = NULL;
+
+	if (UNLIKELY(NULL == context)) {
+		return status;
+	}
+
+	if (UNLIKELY((NULL == body->data) || (0 == body->used))) {
+		return status;
+	}
+	/* Ensure trailing '\0' character. */
+	char *tmp_str = malloc(body->used + 1);
+	if (UNLIKELY(NULL == tmp_str)) {
+		return status;
+	}
+	memcpy(tmp_str, body->data, body->used);
+	tmp_str[body->used] = '\0';
+
+	{
+		int status_int = status;
+		if (UNLIKELY(!read_json_status_content(context, tmp_str, &status_int, &description))) {
+			free(tmp_str);
+			return status;
+		}
+		free(tmp_str);
+
+		status = int_to_isds_mep_status_values(status_int);
+	}
+
+	if (NULL != mep_ext_res) {
+		mep_ext_res->status = status;
+		free(mep_ext_res->description);
+		mep_ext_res->description = description;
+		description = NULL;
+	}
+
+	free(description);
+	return status;
+}
+
+/*
+ * Change @intermediate_uri to ".*mepWsStateUpdate2" if @intermediate_uri
+ * matches ".*mepWsStateUpdate" and @type is MEP_EXTENDED.
+ *
+ * @intermediate_uri URI to be changed.
+ * @type MEP type.
+ * @return:
+ *  IE_SUCCESS on success,
+ *  IE_NOMEM if string copy could not be created.
+ */
+static
+enum isds_error _mep_adjust_intermediate(char **intermediate_uri,
+    enum mep_type type)
+{
+	if (UNLIKELY((NULL == intermediate_uri) && (NULL == *intermediate_uri))) {
+		return IE_SUCCESS;
+	}
+	if (MEP_EXTENDED != type) {
+		return IE_SUCCESS;
+	}
+
+#define EXPECTED_WS_NAME "mepWsStateUpdate"
+#define EXPECTED_WS_LEN 16 /* = strlen(EXPECTED_WS_NAME) */
+	size_t len = strlen(*intermediate_uri);
+	if (len > EXPECTED_WS_LEN) {
+		size_t ws_start_idx = len - EXPECTED_WS_LEN;
+		if (0 == strncmp((*intermediate_uri) + ws_start_idx, EXPECTED_WS_NAME, EXPECTED_WS_LEN)) {
+			/* "mepWsStateUpdate" -> "mepWsStateUpdate2" */
+			char *old_uri = *intermediate_uri;
+			*intermediate_uri = _isds_astrcat(old_uri, "2");
+			if (UNLIKELY(NULL == *intermediate_uri)) {
+				zfree(old_uri);
+				return IE_NOMEM;
+			}
+			zfree(old_uri);
+		} else {
+			/* Leave as is. */
+			return IE_SUCCESS;
+		}
+	}
+#undef EXPECTED_WS_LEN
+#undef EXPECTED_WS_NAME
+
+	return IE_SUCCESS;
 }
 
 /* Build SOAP request.
@@ -2381,7 +2713,9 @@ redirect:
 
     if ((NULL != context->mep_credentials) && (NULL != context->mep_credentials->intermediate_uri)) {
         /* POST does not work for the intermediate URI, using GET here. */
-        err = http(context, context->mep_credentials->intermediate_uri, HCF_USE_GET, NULL, 0, NULL, NULL,
+        int h_flags = HCF_USE_GET;
+        h_flags |= (MEP_EXTENDED == context->mep) ? HCF_RCV_JSON : HCF_BASIC;
+        err = http(context, context->mep_credentials->intermediate_uri, h_flags, NULL, 0, NULL, NULL,
                 &http_response, NULL,
                 &mime_type, NULL, &http_code,
                 ((context->otp_credentials == NULL) && (context->mep_credentials == NULL)) ? NULL: &response_otp_headers);
@@ -2416,10 +2750,11 @@ redirect:
                     context->otp_credentials->resolution =
                         OTP_RESOLUTION_SUCCESS;
             } else if (NULL != context->mep_credentials) {
-                /* The server returns just a numerical value in the body, nothing else. */
-                context->mep_credentials->resolution =
-                        mep_ws_state_response(&http_response);
-                switch (context->mep_credentials->resolution) {
+                if (MEP_BASIC == context->mep) {
+                    /* The server returns just a numerical value in the body, nothing else. */
+                    context->mep_credentials->resolution =
+                            _mep_ws_state_response(&http_response);
+                    switch (context->mep_credentials->resolution) {
                     case MEP_RESOLUTION_ACK_REQUESTED:
                         /* Waiting for the user to acknowledge the login request
                          * in the mobile application. This may take a while.
@@ -2440,6 +2775,35 @@ redirect:
                         /* No SOAP data are returned here just plain response code. */
                         goto leave;
                         break;
+                    }
+                } else if (MEP_EXTENDED == context->mep) {
+                    /* Server returns JSON data. */
+                    enum isds_mep_status_values status =
+                        _mep_ws_state_response_extended(context, &http_response, context->mep_ext_res);
+                    context->mep_credentials->resolution =
+                        mep_status_values_to_mep_resolution(status);
+                    switch (status) {
+                    case MEP_STATUS_WAIT_TO_SEND:
+                    case MEP_STATUS_SENT:
+                    case MEP_STATUS_NOTIF:
+                    case MEP_STATUS_LAUNCHED:
+                    /* case MEP_STATUS_SENDING_FAIL: -- This is an error state. */
+                        err = IE_PARTIAL_SUCCESS;
+                        goto leave;
+                        break;
+                    case MEP_STATUS_ACK:
+                        /* Immediately redirect to login finalisation. */
+                        zfree(context->mep_credentials->intermediate_uri);
+                        err = IE_PARTIAL_SUCCESS;
+                        goto redirect;
+                        break;
+                    default:
+                        zfree(context->mep_credentials->intermediate_uri);
+                        err = IE_NOT_LOGGED_IN;
+                        /* No SOAP data are returned here just JSON data. */
+                        goto leave;
+                        break;
+                    }
                 }
             }
             break;
@@ -2479,6 +2843,11 @@ redirect:
                     context->mep_credentials->resolution = MEP_RESOLUTION_ACK_REQUESTED;
                     if ((context->mep_credentials->intermediate_uri == NULL) &&
                             (response_otp_headers.redirect != NULL)) {
+                        err = _mep_adjust_intermediate(&(response_otp_headers.redirect), context->mep);
+                        if (IE_SUCCESS != err) {
+                            goto leave;
+                        }
+
                         /* This is the first attempt. */
                         isds_printf_message(context,
                                 _("Server redirects on <%s> because mobile key authentication "
@@ -2486,6 +2855,7 @@ redirect:
                                 url);
                         context->mep_credentials->intermediate_uri =
                                 _isds_astrcat(response_otp_headers.redirect, NULL);
+
                         err = IE_PARTIAL_SUCCESS;
                         goto redirect;
                     }
@@ -2838,7 +3208,7 @@ _hidden isds_error _isds_invalidate_otp_cookie(struct isds_ctx *context) {
 
     dbuf_res_init(&response, BUF_RES_INCREMENT);
 
-    if (context == NULL || (!context->otp && !context->mep)) return IE_INVALID_CONTEXT;
+    if (context == NULL || (!context->otp && (MEP_NONE == context->mep))) return IE_INVALID_CONTEXT;
     if (context->curl == NULL) return IE_CONNECTION_CLOSED;
 
     /* Build logout URL */

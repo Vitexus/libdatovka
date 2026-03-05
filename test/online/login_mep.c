@@ -26,7 +26,7 @@ static int test_login_mep(const isds_error error, struct isds_ctx *context,
     PASS_TEST;
 }
 
-static int test_login_mep2(const isds_error error1, const isds_error error2,
+static int test_login_mep_02(const isds_error error1, const isds_error error2,
         struct isds_ctx *context, const char *url, const char *username,
         const char *code, struct isds_mep *mep) {
 
@@ -72,6 +72,7 @@ int main(void) {
     if (IE_SUCCESS != isds_init()) {
         ABORT_UNIT("isds_init() failed\n");
     }
+
     context = isds_ctx_create();
     if (NULL == context) {
         ABORT_UNIT("isds_ctx_create() failed\n");
@@ -98,7 +99,7 @@ int main(void) {
             "invalid://", username_mep(), code_mep(), &mep);
     /* Direct connection fails on local resolution, connection trough proxy
      * fails on HTTP code. */
-    TEST("unresolvable host name", test_login_mep2, IE_NETWORK, IE_HTTP,
+    TEST("unresolvable host name", test_login_mep_02, IE_NETWORK, IE_HTTP,
             context, "http://unresolvable.example.com/", username_mep(),
             code_mep(), &mep);
 

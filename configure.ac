@@ -126,6 +126,13 @@ AS_IF([test "$enable_test" = "yes"], [
      AC_SUBST(LIBGNUTLS_LIBS)
      ])
 
+dnl MEP status prasing requires json-c
+json_c_min_version="0.9"
+PKG_CHECK_MODULES([JSON_C], [json-c >= ${json_c_min_version}],
+    [],
+    [AC_MSG_FAILURE(Install or upgrade to json-c >= ${json_c_min_version})]
+)
+
 AC_ARG_ENABLE([openssl-backend],
   AS_HELP_STRING([--enable-openssl-backend], [Enable OpenSSL as cryptographic back-end.]))
 AS_IF([test "x${enable_openssl_backend}" = "xyes"], [

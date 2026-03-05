@@ -14,6 +14,7 @@ BuildRequires: findutils
 BuildRequires: gcc
 BuildRequires: libxml2-devel
 BuildRequires: libcurl-devel
+BuildRequires: json-c-devel
 BuildRequires: make
 BuildRequires: openssl-devel >= 1.0.2
 BuildRequires: expat-devel >= 2.0.0
