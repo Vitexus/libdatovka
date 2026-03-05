@@ -2709,7 +2709,7 @@ redirect:
     }
     isds_log(ILF_SOAP, ILL_DEBUG,
             _("SOAP request to be sent to %s:\n%.*s\nEnd of SOAP request\n"),
-            url, http_request->use, http_request->content);
+            url, xmlBufferLength(http_request), xmlBufferContent(http_request));
 
     if ((NULL != context->mep_credentials) && (NULL != context->mep_credentials->intermediate_uri)) {
         /* POST does not work for the intermediate URI, using GET here. */
@@ -2720,7 +2720,7 @@ redirect:
                 &mime_type, NULL, &http_code,
                 ((context->otp_credentials == NULL) && (context->mep_credentials == NULL)) ? NULL: &response_otp_headers);
     } else {
-        err = http(context, url, HCF_BASIC, http_request->content, http_request->use, NULL, NULL,
+        err = http(context, url, HCF_BASIC, xmlBufferContent(http_request), xmlBufferLength(http_request), NULL, NULL,
                 &http_response, NULL,
                 &mime_type, NULL, &http_code,
                 ((context->otp_credentials == NULL) && (context->mep_credentials == NULL)) ? NULL: &response_otp_headers);
@@ -3026,14 +3026,14 @@ _hidden enum isds_error _isds_soap_vodz(struct isds_ctx *context,
 
 	isds_log(ILF_SOAP, ILL_DEBUG,
 	    _("SOAP request to be sent to %s:\n%.*s\nEnd of SOAP request\n"),
-	    url, http_request->use, http_request->content);
+	    url, xmlBufferLength(http_request), xmlBufferContent(http_request));
 
 	/* Don't handle OTP or MEP login credentials here. */
 	{
 		int h_flags = HCF_BASIC;
 		h_flags |= (SCF_SND_XOP & s_flags) ? HCF_SND_XOP : HCF_BASIC;
 		h_flags |= (SCF_RCV_XOP & s_flags) ? HCF_RCV_XOP : HCF_BASIC;
-		err = http(context, url, h_flags, http_request->content, http_request->use,
+		err = http(context, url, h_flags, xmlBufferContent(http_request), xmlBufferLength(http_request),
 		    (NULL != req) ? req->content_id : NULL,
 		    (NULL != req) ? req->dm_file : NULL,
 		    &http_response, interm,
