@@ -2227,8 +2227,8 @@ void soap(const struct http_connection *connection,
             goto leave;
         }
 
-        http_send_response_200(connection, http_response_body->content,
-                http_response_body->use, soap_mime_type);
+        http_send_response_200(connection, xmlBufferContent(http_response_body),
+                xmlBufferLength(http_response_body), soap_mime_type);
     }
 
 leave:
