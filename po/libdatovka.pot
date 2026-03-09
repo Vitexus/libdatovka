@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: libdatovka 0.7.2\n"
-"Report-Msgid-Bugs-To: datove-schranky@labs.nic.cz\n"
-"POT-Creation-Date: 2026-02-27 11:30+0100\n"
+"Project-Id-Version: libdatovka 0.7.3\n"
+"Report-Msgid-Bugs-To: datovka@labs.nic.cz\n"
+"POT-Creation-Date: 2026-03-09 13:46+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
