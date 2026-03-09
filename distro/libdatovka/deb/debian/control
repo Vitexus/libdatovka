@@ -1,7 +1,7 @@
 Source: libdatovka
 Section: libs
 Priority: optional
-Maintainer: Datovka <datove-schranky@labs.nic.cz>
+Maintainer: Datovka <datovka@labs.nic.cz>
 Uploaders: Karel Slany <karel.slany@nic.cz>
 Build-Depends: debhelper (>= 9),
                gettext,

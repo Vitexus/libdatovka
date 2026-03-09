@@ -3,7 +3,7 @@ Source: libdatovka
 Binary: libdatovka8, libdatovka-dev
 Architecture: any all
 Version: __VERSION__-__RELEASE__
-Maintainer: Datovka <datove-schranky@labs.nic.cz>
+Maintainer: Datovka <datovka@labs.nic.cz>
 Uploaders: Karel Slany <karel.slany@nic.cz>
 Homepage: http://www.datovka.cz/
 Testsuite: autopkgtest

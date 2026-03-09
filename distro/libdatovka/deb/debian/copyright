@@ -1,11 +1,11 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: libdatovka
-Upstream-Contact: datove-schranky@labs.nic.cz
+Upstream-Contact: datovka@labs.nic.cz
 Source: https://datovka.nic.cz/libdatovka/
 
 Files: *
 Copyright: 2009-2010 Petr Písař <petr.pisar@atlas.cz>
-           2018-2024 CZ.NIC, z. s. p. o. <datove-schranky@labs.nic.cz>
+           2018-2026 CZ.NIC, z. s. p. o. <datovka@labs.nic.cz>
 License: LGPL-3+
 
 Files: src/cdecode.*
@@ -14,7 +14,7 @@ License: CC0-1
 
 Files: debian/*
 Copyright: 2015-2017 Ondřej Surý <ondrej@debian.org>
-           2018-2024 CZ.NIC, z. s. p. o. <datove-schranky@labs.nic.cz>
+           2018-2026 CZ.NIC, z. s. p. o. <datovka@labs.nic.cz>
 License: CC0-1
 
 License: LGPL-3+

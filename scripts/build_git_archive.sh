@@ -388,7 +388,7 @@ directory_override_version() {
 		return 1
 	fi
 
-	sed -e "s/^AC_INIT.*$/AC_INIT([libdatovka], [${VER}], [datove-schranky@labs.nic.cz])/g" -i "${DIR}/configure.ac"
+	sed -e "s/^AC_INIT.*$/AC_INIT([libdatovka], [${VER}], [datovka@labs.nic.cz])/g" -i "${DIR}/configure.ac"
 	# Has to be \\\\n beacuse of double quotes.
 	sed -e "s/^.*Project-Id-Version:.*$/\"Project-Id-Version: libdatovka ${VER}\\\\n\"/g" -i "${DIR}/po/cs.po"
 	sed -e "s/^.*Project-Id-Version:.*$/\"Project-Id-Version: libdatovka ${VER}\\\\n\"/g" -i "${DIR}/po/libdatovka.pot"
