@@ -65,8 +65,6 @@ rm -rf client/.deps client/Makefile{,.in}
 
 %postun -p /sbin/ldconfig
 
-#%%ldconfig_scriptlets
-
 %files -f %{name}.lang
 %license COPYING
 %doc README AUTHORS NEWS TODO
