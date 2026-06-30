@@ -61,11 +61,14 @@ mv doc specification
 # Remove multilib unsafe files
 rm -rf client/.deps client/Makefile{,.in}
 
+# https://fedoraproject.org/wiki/Changes/Removing_ldconfig_scriptlets
+%if (0%{?fedora_version} >= 28) || (0%{?rhel} >= 8)
+# There should be no need to run ldconfig scriptlets.
+#%ldconfig_scriptlets
+%else
 %post -p /sbin/ldconfig
-
 %postun -p /sbin/ldconfig
-
-#%%ldconfig_scriptlets
+%endif
 
 %files -f %{name}.lang
 %license COPYING
