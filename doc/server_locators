@@ -16,8 +16,8 @@ Two ISDS instances exist. Each instance has a unique two-level domain name:
 
 ISDS Instance           Base domain
 ---------------------------------------------
-Production instance     mojedatovaschranka.cz
-Testing instance        czebox.cz
+Production instance     datovka.gov.cz
+Testing instance        datovka-test.gov.cz
 
 
 Different log-in methods require different subdomains and URL path infixes:
@@ -33,6 +33,6 @@ Mobile key                              www         /apps/DS/
 
 
 For example, when logging into the production instance with HTTP basic
-authentication, a base URL is <https://ws1.mojedatovaschranka.cz/DS/>. When
+authentication, a base URL is <https://ws1.datovka.gov.cz/DS/>. When
 logging into the testing instance with the OTP method, the base URL is
-<https://www.czebox.cz/apps/DS/>.
+<https://www.datovka-test.gov.cz/apps/DS/>.
