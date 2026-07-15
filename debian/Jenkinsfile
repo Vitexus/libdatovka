@@ -43,7 +43,11 @@ node() {
                 if (line.trim()) {
                     def (key, value) = line.split(': ').collect { it.trim() }
                     if (key == 'Architecture') {
-                        architectures = (value == 'any') ? ['amd64', 'armhf', 'aarch64'] : [value]
+                        // 'armhf' and 'aarch64' are commented out: as of 2026-07-15 this
+                        // Jenkins controller has no 'armhf' agent at all and its 'aarch64'
+                        // agent(s) are offline, so node(architecture) blocks forever and
+                        // hangs the whole parallel build. Re-add once those agents are back.
+                        architectures = (value == 'any') ? ['amd64' /*, 'armhf', 'aarch64' */] : [value]
                     }
                 }
             }
