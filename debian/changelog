@@ -1,0 +1,5 @@
+libdatovka (0.7.3) unstable; urgency=medium
+
+  * Initial Debian packaging.
+
+ -- Vítězslav Dvořák <info@vitexsoftware.cz>  Wed, 15 Jul 2026 15:34:02 +0200

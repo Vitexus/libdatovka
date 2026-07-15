@@ -1,0 +1,61 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: libdatovka
+Upstream-Contact: datovka@labs.nic.cz
+Source: https://gitlab.nic.cz/datovka/libdatovka/
+Comment: Packaged from the Vitexus GitHub fork at
+ https://github.com/Vitexus/libdatovka
+
+Files: *
+Copyright: 2009-2019 Petr Písař <petr.pisar@atlas.cz>
+           2019-2026 CZ.NIC, z. s. p. o. <https://www.nic.cz/>
+License: LGPL-3+
+
+Files: src/cdecode.*
+Copyright: Chris Venter <chris.venter@gmail.com>
+License: CC0-1
+
+Files: debian/*
+Copyright: 2026 Vítězslav Dvořák <info@vitexsoftware.cz>
+License: CC0-1
+
+License: LGPL-3+
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 3 of the License, or (at your option) any later version.
+ .
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Lesser General Public License for more details.
+ .
+ On Debian systems, you can find the LGPL license in:
+ /usr/share/common-licenses/LGPL-3
+
+License: CC0-1
+ The person who associated a work with this deed has dedicated the
+ work to the public domain by waiving all of his or her rights to the
+ work worldwide under copyright law, including all related and
+ neighboring rights, to the extent allowed by law.
+ .
+ You can copy, modify, distribute and perform the work, even for
+ commercial purposes, all without asking permission.  See Other
+ Information below.
+ .
+ Other information:
+ .
+ a) In no way are the patent or trademark rights of any person
+    affected by CC0, nor are the rights that other persons may have in
+    the work or in how the work is used, such as publicity or privacy
+    rights.
+ .
+ b) Unless expressly stated otherwise, the person who associated a
+    work with this deed makes no warranties about the work, and
+    disclaims liability for all uses of the work, to the fullest
+    extent permitted by applicable law.
+ .
+ c) When using or citing the work, you should not imply endorsement by
+    the author or the affirmer.
+ .
+ On Debian systems, the complete text of the GNU Lesser General Public
+ License Version 3 can be found in `/usr/share/common-licenses/LGPL-3'.

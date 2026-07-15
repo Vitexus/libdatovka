@@ -1,0 +1,53 @@
+Source: libdatovka
+Section: libs
+Priority: optional
+Maintainer: Vítězslav Dvořák <info@vitexsoftware.cz>
+Build-Depends:
+ debhelper-compat (= 13),
+ dh-autoreconf,
+ gettext,
+ libcurl4-openssl-dev,
+ libexpat1-dev,
+ libjson-c-dev,
+ libssl-dev,
+ libxml2-dev,
+ pkg-config,
+Standards-Version: 4.7.0
+Homepage: https://gitlab.nic.cz/datovka/libdatovka
+Vcs-Git: https://github.com/Vitexus/libdatovka.git
+Vcs-Browser: https://github.com/Vitexus/libdatovka
+Rules-Requires-Root: no
+
+Package: libdatovka8
+Architecture: any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: Czech Data Boxes access library (shared library)
+ This library implements all client SOAP services defined in ISDS
+ (Informační systém datových schránek) specification as defined in
+ Czech ISDS Act (300/2008 Coll.) and implied documents. This library
+ can also submit document for authorized conversion into Czech POINT
+ deposit.
+ .
+ This package contains the shared runtime library.
+
+Package: libdatovka-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends:
+ libdatovka8 (= ${binary:Version}),
+ libxml2-dev,
+ ${misc:Depends},
+Description: Czech Data Boxes access library (development files)
+ This library implements all client SOAP services defined in ISDS
+ (Informační systém datových schránek) specification as defined in
+ Czech ISDS Act (300/2008 Coll.) and implied documents. This library
+ can also submit document for authorized conversion into Czech POINT
+ deposit.
+ .
+ This package contains the static library, headers, and pkg-config file.
