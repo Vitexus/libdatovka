@@ -19,13 +19,9 @@
     </p>
   </description>
   <url type="homepage">https://gitlab.nic.cz/datovka/libdatovka</url>
-  <url type="vcs-browser">https://github.com/Vitexus/libdatovka</url>
   <icon type="stock">io.github.vitexus.libdatovka</icon>
   <provides>
     <library>libdatovka.so.8</library>
   </provides>
-  <developer id="cz.nic">
-    <name>CZ.NIC, z. s. p. o.</name>
-  </developer>
   <project_group>Datovka</project_group>
 </component>
