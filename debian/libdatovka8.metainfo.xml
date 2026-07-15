@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="generic">
+  <id>io.github.vitexus.libdatovka</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>LGPL-3.0-or-later</project_license>
+  <name>libdatovka</name>
+  <summary>Czech Data Boxes (ISDS) client library</summary>
+  <description>
+    <p>
+      libdatovka implements the client SOAP services defined in the ISDS
+      (Informační systém datových schránek) specification, as required by
+      the Czech ISDS Act (300/2008 Coll.) and related documents.
+    </p>
+    <p>
+      Applications linking against this library can authenticate to the
+      Czech Data Box information system, send and receive messages, manage
+      data box users, and submit documents for authorized conversion into
+      the Czech POINT deposit.
+    </p>
+  </description>
+  <url type="homepage">https://gitlab.nic.cz/datovka/libdatovka</url>
+  <url type="vcs-browser">https://github.com/Vitexus/libdatovka</url>
+  <icon type="stock">io.github.vitexus.libdatovka</icon>
+  <provides>
+    <library>libdatovka.so.8</library>
+  </provides>
+  <developer id="cz.nic">
+    <name>CZ.NIC, z. s. p. o.</name>
+  </developer>
+  <project_group>Datovka</project_group>
+</component>
