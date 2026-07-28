@@ -19,7 +19,16 @@
 #endif /* !SHA1_DIGEST_LENGTH */
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
-static EVP_MD_CTX *EVP_MD_CTX_new(void) {
+/*
+ * https://openssl-library.org/post/2026-04-13-asn1_string/
+ */
+static const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x)
+{
+    return (x)->data;
+}
+
+static EVP_MD_CTX *EVP_MD_CTX_new(void)
+{
     EVP_MD_CTX *mdctx = malloc(sizeof(*mdctx));
     if (NULL != mdctx) {
         EVP_MD_CTX_init(mdctx);
@@ -27,7 +36,8 @@ static EVP_MD_CTX *EVP_MD_CTX_new(void) {
     return mdctx;
 }
 
-static void EVP_MD_CTX_free(EVP_MD_CTX *mdctx) {
+static void EVP_MD_CTX_free(EVP_MD_CTX *mdctx)
+{
     EVP_MD_CTX_cleanup(mdctx);
     free(mdctx);
 }
@@ -229,13 +239,13 @@ _hidden isds_error _isds_extract_cms_data(struct isds_ctx *context,
         goto fail;
     }
 
-    *data = malloc((*pos)->length);
+    *data = malloc(ASN1_STRING_length(*pos));
     if (NULL == *data) {
         retval = IE_NOMEM;
         goto fail;
     }
-    *data_length = (*pos)->length;
-    memcpy(*data, (*pos)->data, (*pos)->length);
+    *data_length = ASN1_STRING_length(*pos);
+    memcpy(*data, ASN1_STRING_get0_data(*pos), ASN1_STRING_length(*pos));
 
     CMS_ContentInfo_free(cms_ci); cms_ci = NULL;
 
