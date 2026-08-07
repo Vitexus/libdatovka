@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libdatovka 0.7.3\n"
 "Report-Msgid-Bugs-To: datovka@labs.nic.cz\n"
-"POT-Creation-Date: 2026-03-09 13:46+0100\n"
+"POT-Creation-Date: 2026-08-07 10:46+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -27,7 +27,7 @@ msgstr ""
 msgid "gcrypt version in use: %s\n"
 msgstr ""
 
-#: src/crypto_gpg.c:61 src/crypto_openssl.c:72
+#: src/crypto_gpg.c:61 src/crypto_openssl.c:82
 #, c-format
 msgid ""
 "Data hash requested, length=%zu, content:\n"
@@ -192,11 +192,11 @@ msgstr ""
 msgid "Could not get plain data from GPGME after verifying CMS structure"
 msgstr ""
 
-#: src/crypto_openssl.c:175
+#: src/crypto_openssl.c:185
 msgid "Creating CMS reader BIO failed"
 msgstr ""
 
-#: src/crypto_openssl.c:189
+#: src/crypto_openssl.c:199
 msgid "Cannot parse CMS"
 msgstr ""
 
