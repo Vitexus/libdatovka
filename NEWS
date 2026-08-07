@@ -1,4 +1,4 @@
-0.7.4 /
+0.7.4 / 2026-08-07
  * Can be compiled against OpenSSL-4.0.
  * The library uses new endpoint domains datovka.gov.cz and
    datovka-test.gov.cz.
