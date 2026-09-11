@@ -13,9 +13,7 @@ String[] architectures = [] // inferred from debian/control below
 String[] distributions = [
 			'debian:bookworm',
 			'debian:trixie',
-			// 'debian:forky', // Disabled: Forky is still unstable/research-only.
-			//                 // The full Debian package ecosystem is not yet available for Forky.
-			//                 // Re-enable once the stack builds cleanly for Forky.
+			'debian:forky',
 			'ubuntu:jammy',
 			'ubuntu:noble',
 			'ubuntu:resolute',
