@@ -35,6 +35,10 @@ node() {
         stage('SCM Checkout') {
             sh 'sudo chown -R jenkins:jenkins . 2>/dev/null || true'
             checkout scm
+            // Checked out once here; every parallel branch below unstashes
+            // this instead of hitting GitHub again, so a wide build matrix
+            // costs one clone instead of one per branch.
+            stash name: 'src', useDefaultExcludes: false
             def control = readFile(file: env.WORKSPACE + '/debian/control')
             def lines = control.readLines()
             for (line in lines) {
@@ -73,7 +77,7 @@ distributions.each { distro ->
                 ansiColor('xterm') {
                     stage('Checkout ' + branchKey) {
                         sh 'sudo chown -R jenkins:jenkins . 2>/dev/null || true'
-                        checkout scm
+                        unstash 'src'
                         buildImage = docker.image(vendor + '/' + distroName)
                     }
                     stage('Build ' + branchKey) {
@@ -203,7 +207,7 @@ distributions.each { distro ->
 
 parallel branches
 
-node {
+node('aptly') {
     stage('Publish to Aptly') {
 	publishDebToAptly()
     }
