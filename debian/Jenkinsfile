@@ -73,6 +73,9 @@ distributions.each { distro ->
                 ansiColor('xterm') {
                     stage('Checkout ' + branchKey) {
                         sh 'sudo chown -R jenkins:jenkins . 2>/dev/null || true'
+                        // The first branch on a node reuses the SCM Checkout workspace;
+                        // unstash cannot overwrite its read-only .git pack files.
+                        deleteDir()
                         unstash 'src'
                         buildImage = docker.image(vendor + '/' + distroName)
                     }
