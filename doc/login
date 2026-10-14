@@ -82,7 +82,7 @@ session by sending GET request to
 <https://DOMAINNAME/as/processLogout?uri=https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT>.
 
 The DOMAINNAME variable is one from server locators (e.g.
-`www.mojedatovaschranka.cz'). WEB_SERVICE_ENDPOINT is request-URI postfix
+`www.datovka.gov.cz'). WEB_SERVICE_ENDPOINT is request-URI postfix
 specific for family of requested SOAP service (e.g `dz').
 
 Specification requires client to send first POST request without
@@ -123,7 +123,7 @@ authentication.error.badRole                    User name is not permitted to
 If authentication succeeds, server will return 302 response:
 
 Set-Cookie:IPCZ-X-COOKIE=01-5c1047cb9f3545f68cf987e6750acac4;
-    Domain=.mojedatovaschranka.cz; secure, HttpOnly
+    Domain=.datovka.gov.cz; secure, HttpOnly
 Location: https://DOMAINNAME/apps/DS/WEB_SERVICE_ENDPOINT
 
 With cookie used to track session and redirects to new URL where client should

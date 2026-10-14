@@ -7,9 +7,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: libdatovka 0.7.3\n"
+"Project-Id-Version: libdatovka 0.7.4\n"
 "Report-Msgid-Bugs-To: datovka@labs.nic.cz\n"
-"POT-Creation-Date: 2026-03-09 13:46+0100\n"
+"POT-Creation-Date: 2026-08-07 10:46+0200\n"
 "PO-Revision-Date: 2019-09-04 22:42+02:00\n"
 "Last-Translator: CZ.NIC, z. s. p. o. <datovka@labs.nic.cz>\n"
 "Language-Team: Czech <translation-team-cs@lists.sourceforge.net>\n"
@@ -28,7 +28,7 @@ msgstr "Nebylo možné zkontrolovat verzi grcypt\n"
 msgid "gcrypt version in use: %s\n"
 msgstr "Používá se gcrypt ve verzi: %s\n"
 
-#: src/crypto_gpg.c:61 src/crypto_openssl.c:72
+#: src/crypto_gpg.c:61 src/crypto_openssl.c:82
 #, c-format
 msgid ""
 "Data hash requested, length=%zu, content:\n"
@@ -204,11 +204,11 @@ msgid "Could not get plain data from GPGME after verifying CMS structure"
 msgstr ""
 "Nepodařilo se získat prostá data z GPGME po té, co byla struktura CMS ověřena"
 
-#: src/crypto_openssl.c:175
+#: src/crypto_openssl.c:185
 msgid "Creating CMS reader BIO failed"
 msgstr "Vytvoření BIO čtedla pro CMS selhalo"
 
-#: src/crypto_openssl.c:189
+#: src/crypto_openssl.c:199
 msgid "Cannot parse CMS"
 msgstr "CMS nelze rozebrat"
 
